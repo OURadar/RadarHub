@@ -1,0 +1,4 @@
+django
+channels
+numpy
+asgiref==3.3.4
