@@ -1,0 +1,76 @@
+/* 
+Mobile style sheet
+Copyright Boonleng Cheong
+*/
+:root {
+  padding: 0;
+  --indicator-height: 36px;
+}
+.healthContainer {
+  display: block;
+}
+.indicatorContainer {
+  display: block;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.ledIndicator,
+.labelIndicator {
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  height: var(--indicator-height);
+  padding: 0;
+  vertical-align: middle;
+  border-top: solid 0.5px var(--gray);
+  box-sizing: border-box;
+}
+.ledTitle {
+  display: inline-block;
+  position: absolute;
+  top: calc(var(--indicator-height) * 0.2);
+  left: var(--padding);
+  width: 90%;
+  font-size: calc(var(--indicator-height) * 0.6);
+  line-height: calc(var(--indicator-height) * 0.6);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ledValue {
+  display: block;
+  position: absolute;
+  top: calc(var(--indicator-height) * 0.2);
+  right: var(--padding);
+  width: calc(var(--indicator-height) * 0.6);
+  height: calc(var(--indicator-height) * 0.6);
+  border-radius: 50%;
+  box-sizing: border-box;
+  z-index: 102;
+}
+.labelTitle {
+  position: absolute;
+  top: calc(var(--indicator-height) * 0.2);
+  left: var(--padding);
+  width: calc(50% - var(--padding));
+  height: var(--indicator-height);
+  font-size: calc(var(--indicator-height) * 0.6);
+  line-height: calc(var(--indicator-height) * 0.6);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.labelValue {
+  position: absolute;
+  top: calc(var(--indicator-height) * 0.2);
+  right: var(--padding);
+  width: 50%;
+  font-size: calc(var(--indicator-height) * 0.6);
+  line-height: calc(var(--indicator-height) * 0.6);
+  font-weight: 600;
+  text-align: right;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

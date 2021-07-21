@@ -1,0 +1,81 @@
+/* 
+Desktop style sheet
+Copyright Boonleng Cheong
+*/
+:root {
+  --indicator-height: 25px;
+}
+.healthContainer {
+  padding: var(--padding);
+  column-count: 2;
+}
+.indicatorContainer {
+  display: inline-block;
+  position: relative;
+  overflow: auto;
+  width: 100%;
+  columns: 5 220px;
+}
+.ledIndicator,
+.labelIndicator {
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  height: var(--indicator-height);
+  margin-bottom: calc(var(--indicator-height) * 0.2);
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+.ledTitle {
+  position: absolute;
+  top: calc(var(--indicator-height) * 0.2);
+  left: var(--indicator-height);
+  width: 90%;
+  font-size: calc(var(--indicator-height) * 0.6);
+  line-height: calc(var(--indicator-height) * 0.6);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ledValue {
+  display: block;
+  position: absolute;
+  top: calc(var(--indicator-height) * 0.25);
+  width: calc(var(--indicator-height) * 0.5);
+  height: calc(var(--indicator-height) * 0.5);
+  border-radius: 50%;
+  box-sizing: border-box;
+  z-index: 102;
+}
+.labelTitle {
+  position: absolute;
+  top: calc(var(--indicator-height) * 0.2);
+  right: calc(50% + var(--padding));
+  width: calc(50% - var(--padding));
+  font-size: calc(var(--indicator-height) * 0.6);
+  line-height: calc(var(--indicator-height) * 0.6);
+  text-align: right;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.labelValue {
+  display: block;
+  position: absolute;
+  background-color: var(--gray7);
+  top: 0;
+  right: 0;
+  width: 50%;
+  height: var(--indicator-height);
+  border-radius: 4px;
+  border: 1px solid var(--border-accent);
+  box-sizing: border-box;
+  padding-top: calc(var(--indicator-height) * 0.2 - 1px);
+  padding-left: calc(0.3 * var(--indicator-height));
+  padding-right: calc(0.3 * var(--indicator-height));
+  font-size: calc(var(--indicator-height) * 0.6);
+  line-height: calc(var(--indicator-height) * 0.6);
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

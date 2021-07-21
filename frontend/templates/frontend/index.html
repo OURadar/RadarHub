@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% load static %}
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link
+      href="{% static 'images/iradar-icon-57x57.png' %}"
+      sizes="57x57"
+      rel="apple-touch-icon"
+    />
+    <link
+      href="{% static 'images/iradar-icon-114x114.png' %}"
+      sizes="114x114"
+      rel="apple-touch-icon"
+    />
+    <link
+      rel="shortcut icon"
+      type="image/jpg"
+      href="{% static 'images/favicon.ico' %}"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'css/index.css' %}?r={% now 'U' %}"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen and (max-device-width: 550px)"
+      href="{% static 'css/mobile.css' %}?r={% now 'U' %}"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen and (min-device-width: 550px)"
+      href="{% static 'css/desktop.css' %}?r={% now 'U' %}"
+    />
+    {{ radar|json_script:"radar-name" }} {{ receiver|json_script:"receiver" }}
+    <title>RadarHub</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="reload" onClick="window.location.reload()">Reload</div>
+    <div id="test"></div>
+  </body>
+  <script src="{% static 'frontend/main.js' %}?v={% now 'U' %}"></script>
+</html>
