@@ -68,8 +68,9 @@ class App extends Component {
     this.setState({
       message: "Connecting ...",
     });
+    const prot = window.location.protocol == "https:" ? "wss" : "ws";
     const url =
-      "ws://" + window.location.host + "/ws/" + this.props.radar + "/";
+      prot + "://" + window.location.host + "/ws/" + this.props.radar + "/";
     this.socket = new WebSocket(url);
     this.socket.binaryType = "arraybuffer";
     this.socket.onopen = (_e) => {

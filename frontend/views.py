@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 # Create your views here.
 def index(request):
-    return render(request, 'frontend/index.html', {'radar': 'horus', 'receiver': 0})
+    return render(request, 'frontend/index.html', {'radar': 'tesla', 'receiver': 0})
 
 def radar(request, radar):
     return render(request, 'frontend/index.html', {'radar': radar, 'receiver': 0})
