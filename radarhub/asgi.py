@@ -12,6 +12,9 @@ import os
 from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
+
+# Initialize Django ASGI application early to ensure the AppRegistry
+# is populated before importing code that may import ORM models.
 django_asgi_app = get_asgi_application()
 
 from channels.auth import AuthMiddlewareStack
@@ -20,12 +23,17 @@ import frontend.routing
 import backhaul.routing
 
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
+    # Django's ASGI application to handle traditional HTTP requests
+    "http": django_asgi_app,
+
+    # WebSocket interface
     "websocket": AuthMiddlewareStack(
         URLRouter([
             *frontend.routing.websocket_urlpatterns,
         ]),
     ),
+
+    # Channel backend
     "channel": ChannelNameRouter({
         **backhaul.routing.channel_urlpatterns,
     }),
