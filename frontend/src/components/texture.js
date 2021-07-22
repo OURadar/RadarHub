@@ -49,7 +49,7 @@ class Texture {
 
     let font = new FontFace(
       "LabelFont",
-      "url(../static/blob/helveticaneue/HelveticaNeueMed.ttf)"
+      "url(/static/blob/helveticaneue/HelveticaNeueMed.ttf)"
     );
     font.load().then(() => {
       this.fontLoaded = true;

@@ -1,8 +1,8 @@
 # Folders
 __pycache__
 node_modules
-dist
-build/
+build
+frontend/static/frontend
 
 # Programs, etc.
 .DS_Store
