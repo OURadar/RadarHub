@@ -22,14 +22,14 @@ Some design constraints:
 
 - [x] 0.1 Can run
 - [x] 0.2 Scope + Health working
-- [ ] v0.3 Some button actions to backhaul
-- [ ] v0.4 Get an external websocket client
-- [ ] v0.5 PPI / 3D view
-- [ ] v0.6 SQLite / product browser
-- [ ] v0.7 General page template + stylesheets
-- [ ] v0.8 Authentication
-- [ ] v0.9 Landing page
-- [ ] v1.0 RadarKit communicates with RadarHub
+- [ ] 0.3 Some button actions to backhaul
+- [ ] 0.4 Get an external websocket client
+- [ ] 0.5 PPI / 3D view
+- [ ] 0.6 SQLite / product browser
+- [ ] 0.7 General page template + stylesheets
+- [ ] 0.8 Authentication
+- [ ] 0.9 Landing page
+- [ ] 1.0 RadarKit communicates with RadarHub
 
 ## Help Me Remember
 
@@ -39,9 +39,25 @@ To restart the app on the production server:
 sudo supervisorctl restart asgi:*
 ```
 
-## Server Setup
 
-On a production server, I use Ubuntu the nginx-supervisor recommendation in [channels]
+# Development
+
+I recommend VSCode and the plugin Prettier. Be sure to have [redis] going for the [channels] module.
+
+```shell
+docker run -p 6379:6379 -d redis:6
+```
+
+Run three terminals:
+
+1. `cd frontend; npm run dev`
+2. `python manage.py runserver 0:8000`
+3. `python manage.py runworker backhaul`
+
+
+# Deploying
+
+On a production server, I use the Ubuntu nginx-supervisor recommendation in [channels].
 
 ### Nginx
 
