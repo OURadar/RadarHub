@@ -2,45 +2,48 @@
 
 This is a [Django]-[Channels] for web interface to the radar operations.
 
-IMPORTANT: This is a work in progress. I just wanted to start the source control early.
+**IMPORTANT**: This is a work in progress. I just wanted to start the source control early.
 
 Three main parts:
 
 - [Django] backend
 - [React] frontend
-- Backhaul for general radar communication
+- [Python] backhaul
+
+Some design constraints:
+
+- Keep backend-frontend responsive, mostly async functions
+- Input from clients gets routed to a specific group (radar)
+- Output from a radar gets broadcast to all users in a specific group (radar)
+- All input gets picked up by backhaul, routed to a the specific radar based on group source
+- Radar reporter does not receive anything from the radar itself (different behavior than a chat room)
 
 ## Milestones
 
-- v0.1 - Can run
-- v0.2 - Scope + Health working
-- v0.3 - Some button actions to backhaul
-- v0.4 - Get an external websocket client
-- v0.5 - PPI / 3D view
-- v0.6 - SQLite / product browser
-- v0.7 - General page template + stylesheets
-- v0.8 - Authentication
-- v0.9 - Landing page
-- v1.0 - RadarKit communicates with RadarHub
-
-[channels]: https://channels.readthedocs.io
-[django]: https://www.djangoproject.com
-[node.js]: https://nodejs.org
-[react]: https://reactjs.org
+- v0.1 - [x] Can run
+- v0.2 - [x] Scope + Health working
+- v0.3 - [ ] Some button actions to backhaul
+- v0.4 - [ ] Get an external websocket client
+- v0.5 - [ ] PPI / 3D view
+- v0.6 - [ ] SQLite / product browser
+- v0.7 - [ ] General page template + stylesheets
+- v0.8 - [ ] Authentication
+- v0.9 - [ ] Landing page
+- v1.0 - [ ] RadarKit communicates with RadarHub
 
 ## Help Me Remember
 
 To restart the app on the production server:
 
 ```shell
-sudo supervisorctl restart all
+sudo supervisorctl restart asgi:*
 ```
 
 ## Server Setup
 
 On a production server, I use Ubuntu the nginx-supervisor recommendation in [channels]
 
-### nginx
+### Nginx
 
 Configure through the file `/etc/nginx/sites-enabled/radarhub` as:
 
@@ -88,7 +91,7 @@ server {
 }
 ```
 
-### supervisor
+### Supervisor
 
 Configure through the file `/etc/supervisor/conf.d/radarhub.conf` as:
 
@@ -102,7 +105,10 @@ directory=/home/radarhub/app
 
 # Each process needs to have a separate socket file, so we use process_num
 # Make sure to update "mysite.asgi" to match your project name
-command=/home/radarhub/.pyenv/shims/python -m daphne  -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers radarhub.asgi:application
+command=/home/radarhub/.pyenv/shims/python -m daphne \
+    -u /run/daphne/daphne%(process_num)d.sock \
+    --fd 0 --access-log - \
+    --proxy-headers radarhub.asgi:application
 
 # Number of processes to startup, roughly the number of CPUs you have
 numprocs=4
@@ -126,3 +132,12 @@ The websocket component depends on redis version 5 through docker:
 ```shell
 sudo docker run -d --restart unless-stopped -p 6379:6379 redis:5
 ```
+
+[channels]: https://channels.readthedocs.io
+[django]: https://www.djangoproject.com
+[node.js]: https://nodejs.org
+[react]: https://reactjs.org
+[python]: https://www.python.org
+[docker]: https://www.docker.com
+[nginx]: https://www.nginx.com
+[supervisor]: http://supervisord.org
