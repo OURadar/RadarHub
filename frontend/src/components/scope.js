@@ -80,7 +80,14 @@ class Scope extends Component {
       viewport: { x: 0, y: 0, width: 1, height: 1 },
       grid: [0, 0],
       labelParameters: {
+        labels: [],
+        positions: [],
+        alignments: [],
         foreground: props.colors.foreground,
+        colors: [],
+        sizes: [],
+        countX: 0,
+        countY: 0,
       },
     };
     // Our artists
@@ -297,88 +304,93 @@ class Scope extends Component {
     ) {
       this.updateProjection();
     }
-    this.regl.clear({
-      color: this.props.colors.canvas,
+    this.setState((state, props) => {
+      this.regl.clear({
+        color: props.colors.canvas,
+      });
+      this.monet([
+        {
+          primitive: "triangle strip",
+          color: props.colors.pane,
+          projection: state.screen,
+          viewport: state.viewport,
+          points: state.pane,
+          count: state.pane.length / 2,
+        },
+      ]);
+      if (props.data.t !== null) {
+        const segments = props.data.t.length - 1;
+        this.picaso([
+          {
+            dataX: props.data.t,
+            dataY: props.data.a,
+            width: props.linewidth,
+            color: props.colors.lines[0],
+            projection: state.projection,
+            resolution: [state.dataport.width, state.dataport.height],
+            segments: segments,
+            viewport: state.dataport,
+          },
+          {
+            dataX: props.data.t,
+            dataY: props.data.i,
+            width: props.linewidth,
+            color: props.colors.lines[1],
+            projection: state.projection,
+            resolution: [state.dataport.width, state.dataport.height],
+            segments: segments,
+            viewport: state.dataport,
+          },
+          {
+            dataX: props.data.t,
+            dataY: props.data.q,
+            width: props.linewidth,
+            color: props.colors.lines[2],
+            projection: state.projection,
+            resolution: [state.dataport.width, state.dataport.height],
+            segments: segments,
+            viewport: state.dataport,
+          },
+        ]);
+      }
+      this.monet([
+        {
+          primitive: "lines",
+          color: props.colors.grid,
+          projection: state.screen,
+          viewport: state.viewport,
+          points: state.grid,
+          count: state.grid.length / 2,
+        },
+        {
+          primitive: "line loop",
+          color: props.colors.spline,
+          projection: state.screen,
+          viewport: state.viewport,
+          points: state.spline,
+          count: state.spline.length / 2,
+        },
+      ]);
+      if (state.label !== undefined) {
+        this.gogh([
+          {
+            projection: state.screen,
+            viewport: state.viewport,
+            scale: props.textureScale,
+            color: props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
+            bound: [this.texture.canvas.width, this.texture.canvas.height],
+            texture: state.label.texture,
+            points: state.label.position,
+            origin: state.label.origin,
+            spread: state.label.spread,
+            count: state.label.position.length / 2,
+          },
+        ]);
+      }
+      return {
+        tic: state.tic + 1,
+      };
     });
-    this.monet([
-      {
-        primitive: "triangle strip",
-        color: this.props.colors.pane,
-        projection: this.state.screen,
-        viewport: this.state.viewport,
-        points: this.state.pane,
-        count: this.state.pane.length / 2,
-      },
-    ]);
-    if (this.props.data.t !== null) {
-      const segments = this.props.data.t.length - 1;
-      this.picaso([
-        {
-          dataX: this.props.data.t,
-          dataY: this.props.data.a,
-          width: this.props.linewidth,
-          color: this.props.colors.lines[0],
-          projection: this.state.projection,
-          resolution: [this.state.dataport.width, this.state.dataport.height],
-          segments: segments,
-          viewport: this.state.dataport,
-        },
-        {
-          dataX: this.props.data.t,
-          dataY: this.props.data.i,
-          width: this.props.linewidth,
-          color: this.props.colors.lines[1],
-          projection: this.state.projection,
-          resolution: [this.state.dataport.width, this.state.dataport.height],
-          segments: segments,
-          viewport: this.state.dataport,
-        },
-        {
-          dataX: this.props.data.t,
-          dataY: this.props.data.q,
-          width: this.props.linewidth,
-          color: this.props.colors.lines[2],
-          projection: this.state.projection,
-          resolution: [this.state.dataport.width, this.state.dataport.height],
-          segments: segments,
-          viewport: this.state.dataport,
-        },
-      ]);
-    }
-    this.monet([
-      {
-        primitive: "lines",
-        color: this.props.colors.grid,
-        projection: this.state.screen,
-        viewport: this.state.viewport,
-        points: this.state.grid,
-        count: this.state.grid.length / 2,
-      },
-      {
-        primitive: "line loop",
-        color: this.props.colors.spline,
-        projection: this.state.screen,
-        viewport: this.state.viewport,
-        points: this.state.spline,
-        count: this.state.spline.length / 2,
-      },
-    ]);
-    if (this.state.label !== undefined) {
-      this.gogh([
-        {
-          projection: this.state.screen,
-          viewport: this.state.viewport,
-          scale: this.props.textureScale,
-          color: this.props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
-          bound: [this.texture.canvas.width, this.texture.canvas.height],
-          texture: this.state.label.texture,
-          points: this.state.label.position,
-          origin: this.state.label.origin,
-          spread: this.state.label.spread,
-          count: this.state.label.position.length / 2,
-        },
-      ]);
-    }
     if (this.stats !== undefined) this.stats.update();
   }
 

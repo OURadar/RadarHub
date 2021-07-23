@@ -1,4 +1,4 @@
-# scope/consumers.py
+# frontend/consumers.py
 
 import base64
 import numpy as np

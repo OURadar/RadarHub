@@ -158,158 +158,163 @@ class Scope2 extends Scope {
     ) {
       this.updateProjection();
     }
-    this.regl.clear({
-      color: this.props.colors.canvas,
+    this.setState((state, props) => {
+      this.regl.clear({
+        color: props.colors.canvas,
+      });
+      this.monet([
+        {
+          primitive: "triangle strip",
+          color: props.colors.pane,
+          projection: state.screen1,
+          viewport: state.viewport,
+          points: state.pane,
+          count: state.pane.length / 2,
+        },
+        {
+          primitive: "triangle strip",
+          color: props.colors.pane,
+          projection: state.screen2,
+          viewport: state.viewport,
+          points: state.pane,
+          count: state.pane.length / 2,
+        },
+      ]);
+      if (props.data.t !== null) {
+        const segments = props.data.t.length - 1;
+        this.picaso([
+          {
+            dataX: props.data.t,
+            dataY: props.data.a1,
+            width: props.linewidth,
+            color: props.colors.lines[0],
+            projection: state.projection,
+            resolution: [state.dataport1.width, state.dataport1.height],
+            segments: segments,
+            viewport: state.dataport1,
+          },
+          {
+            dataX: props.data.t,
+            dataY: props.data.i1,
+            width: props.linewidth,
+            color: props.colors.lines[5],
+            projection: state.projection,
+            resolution: [state.dataport1.width, state.dataport1.height],
+            segments: segments,
+            viewport: state.dataport1,
+          },
+          {
+            dataX: props.data.t,
+            dataY: props.data.q1,
+            width: props.linewidth,
+            color: props.colors.lines[6],
+            projection: state.projection,
+            resolution: [state.dataport1.width, state.dataport1.height],
+            segments: segments,
+            viewport: state.dataport1,
+          },
+          {
+            dataX: props.data.t,
+            dataY: props.data.a2,
+            width: props.linewidth,
+            color: props.colors.lines[0],
+            projection: state.projection,
+            resolution: [state.dataport2.width, state.dataport2.height],
+            segments: segments,
+            viewport: state.dataport2,
+          },
+          {
+            dataX: props.data.t,
+            dataY: props.data.i2,
+            width: props.linewidth,
+            color: props.colors.lines[3],
+            projection: state.projection,
+            resolution: [state.dataport2.width, state.dataport2.height],
+            segments: segments,
+            viewport: state.dataport2,
+          },
+          {
+            dataX: props.data.t,
+            dataY: props.data.q2,
+            width: props.linewidth,
+            color: props.colors.lines[4],
+            projection: state.projection,
+            resolution: [state.dataport2.width, state.dataport2.height],
+            segments: segments,
+            viewport: state.dataport2,
+          },
+        ]);
+      }
+      this.monet([
+        {
+          primitive: "lines",
+          color: props.colors.grid,
+          projection: state.screen1,
+          viewport: state.viewport,
+          points: state.grid,
+          count: state.grid.length / 2,
+        },
+        {
+          primitive: "lines",
+          color: props.colors.grid,
+          projection: state.screen2,
+          viewport: state.viewport,
+          points: state.grid,
+          count: state.grid.length / 2,
+        },
+        {
+          primitive: "line loop",
+          color: props.colors.spline,
+          projection: state.screen1,
+          viewport: state.viewport,
+          points: state.spline,
+          count: state.spline.length / 2,
+        },
+        {
+          primitive: "line loop",
+          color: props.colors.spline,
+          projection: state.screen2,
+          viewport: state.viewport,
+          points: state.spline,
+          count: state.spline.length / 2,
+        },
+      ]);
+      if (state.label !== undefined) {
+        let origin = 2 * state.labelParameters.countX;
+        let ypoints = state.label.position.slice(origin);
+        let yorigin = state.label.origin.slice(origin);
+        let yspread = state.label.spread.slice(origin);
+        this.gogh([
+          {
+            projection: state.screen1,
+            viewport: state.viewport,
+            scale: props.textureScale,
+            color: props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
+            bound: [this.texture.canvas.width, this.texture.canvas.height],
+            texture: state.label.texture,
+            points: state.label.position,
+            origin: state.label.origin,
+            spread: state.label.spread,
+            count: state.label.position.length / 2,
+          },
+          {
+            projection: state.screen2,
+            viewport: state.viewport,
+            scale: props.textureScale,
+            color: props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
+            bound: [this.texture.canvas.width, this.texture.canvas.height],
+            texture: state.label.texture,
+            points: ypoints,
+            origin: yorigin,
+            spread: yspread,
+            count: ypoints.length / 2,
+          },
+        ]);
+      }
+      return {
+        tic: state.tic + 1,
+      };
     });
-    this.monet([
-      {
-        primitive: "triangle strip",
-        color: this.props.colors.pane,
-        projection: this.state.screen1,
-        viewport: this.state.viewport,
-        points: this.state.pane,
-        count: this.state.pane.length / 2,
-      },
-      {
-        primitive: "triangle strip",
-        color: this.props.colors.pane,
-        projection: this.state.screen2,
-        viewport: this.state.viewport,
-        points: this.state.pane,
-        count: this.state.pane.length / 2,
-      },
-    ]);
-    if (this.props.data.t !== null) {
-      const segments = this.props.data.t.length - 1;
-      this.picaso([
-        {
-          dataX: this.props.data.t,
-          dataY: this.props.data.a1,
-          width: this.props.linewidth,
-          color: this.props.colors.lines[0],
-          projection: this.state.projection,
-          resolution: [this.state.dataport1.width, this.state.dataport1.height],
-          segments: segments,
-          viewport: this.state.dataport1,
-        },
-        {
-          dataX: this.props.data.t,
-          dataY: this.props.data.i1,
-          width: this.props.linewidth,
-          color: this.props.colors.lines[5],
-          projection: this.state.projection,
-          resolution: [this.state.dataport1.width, this.state.dataport1.height],
-          segments: segments,
-          viewport: this.state.dataport1,
-        },
-        {
-          dataX: this.props.data.t,
-          dataY: this.props.data.q1,
-          width: this.props.linewidth,
-          color: this.props.colors.lines[6],
-          projection: this.state.projection,
-          resolution: [this.state.dataport1.width, this.state.dataport1.height],
-          segments: segments,
-          viewport: this.state.dataport1,
-        },
-        {
-          dataX: this.props.data.t,
-          dataY: this.props.data.a2,
-          width: this.props.linewidth,
-          color: this.props.colors.lines[0],
-          projection: this.state.projection,
-          resolution: [this.state.dataport2.width, this.state.dataport2.height],
-          segments: segments,
-          viewport: this.state.dataport2,
-        },
-        {
-          dataX: this.props.data.t,
-          dataY: this.props.data.i2,
-          width: this.props.linewidth,
-          color: this.props.colors.lines[3],
-          projection: this.state.projection,
-          resolution: [this.state.dataport2.width, this.state.dataport2.height],
-          segments: segments,
-          viewport: this.state.dataport2,
-        },
-        {
-          dataX: this.props.data.t,
-          dataY: this.props.data.q2,
-          width: this.props.linewidth,
-          color: this.props.colors.lines[4],
-          projection: this.state.projection,
-          resolution: [this.state.dataport2.width, this.state.dataport2.height],
-          segments: segments,
-          viewport: this.state.dataport2,
-        },
-      ]);
-    }
-    this.monet([
-      {
-        primitive: "lines",
-        color: this.props.colors.grid,
-        projection: this.state.screen1,
-        viewport: this.state.viewport,
-        points: this.state.grid,
-        count: this.state.grid.length / 2,
-      },
-      {
-        primitive: "lines",
-        color: this.props.colors.grid,
-        projection: this.state.screen2,
-        viewport: this.state.viewport,
-        points: this.state.grid,
-        count: this.state.grid.length / 2,
-      },
-      {
-        primitive: "line loop",
-        color: this.props.colors.spline,
-        projection: this.state.screen1,
-        viewport: this.state.viewport,
-        points: this.state.spline,
-        count: this.state.spline.length / 2,
-      },
-      {
-        primitive: "line loop",
-        color: this.props.colors.spline,
-        projection: this.state.screen2,
-        viewport: this.state.viewport,
-        points: this.state.spline,
-        count: this.state.spline.length / 2,
-      },
-    ]);
-    if (this.state.label !== undefined) {
-      let origin = 2 * this.state.labelParameters.countX;
-      let ypoints = this.state.label.position.slice(origin);
-      let yorigin = this.state.label.origin.slice(origin);
-      let yspread = this.state.label.spread.slice(origin);
-      this.gogh([
-        {
-          projection: this.state.screen1,
-          viewport: this.state.viewport,
-          scale: this.props.textureScale,
-          color: this.props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
-          bound: [this.texture.canvas.width, this.texture.canvas.height],
-          texture: this.state.label.texture,
-          points: this.state.label.position,
-          origin: this.state.label.origin,
-          spread: this.state.label.spread,
-          count: this.state.label.position.length / 2,
-        },
-        {
-          projection: this.state.screen2,
-          viewport: this.state.viewport,
-          scale: this.props.textureScale,
-          color: this.props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
-          bound: [this.texture.canvas.width, this.texture.canvas.height],
-          texture: this.state.label.texture,
-          points: ypoints,
-          origin: yorigin,
-          spread: yspread,
-          count: ypoints.length / 2,
-        },
-      ]);
-    }
     if (this.stats !== undefined) this.stats.update();
   }
 }
