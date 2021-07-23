@@ -2,6 +2,8 @@
 
 This is a [Django]-[Channels] for web interface to the radar operations.
 
+IMPORTANT: This is a work in progress. I just wanted to start the source control early.
+
 Three main parts:
 
 - [Django] backend
@@ -21,8 +23,9 @@ Three main parts:
 - v0.9 - Landing page
 - v1.0 - RadarKit communicates with RadarHub
 
+[channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
-[channels]: https://channels.readthedocs.io/en/stable/
+[node.js]: https://nodejs.org
 [react]: https://reactjs.org
 
 ## Help Me Remember
