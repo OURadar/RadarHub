@@ -10,16 +10,16 @@ Three main parts:
 
 ## Milestones
 
-0.1 - Can run
-0.2 - Scope + Health working
-0.3 - Some button actions to backhaul
-0.4 - Get an external websocket client
-0.5 - PPI / 3D view
-0.6 - SQLite / product browser
-0.7 - General page template + stylesheets
-0.8 - Authentication
-0.9 - Landing page
-1.0 - RadarKit communicates with RadarHub
+- v0.1 - Can run
+- v0.2 - Scope + Health working
+- v0.3 - Some button actions to backhaul
+- v0.4 - Get an external websocket client
+- v0.5 - PPI / 3D view
+- v0.6 - SQLite / product browser
+- v0.7 - General page template + stylesheets
+- v0.8 - Authentication
+- v0.9 - Landing page
+- v1.0 - RadarKit communicates with RadarHub
 
 [django]: https://www.djangoproject.com
 [channels]: https://channels.readthedocs.io/en/stable/
