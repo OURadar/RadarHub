@@ -24,7 +24,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.send(
             'backhaul',
             {
-                'type': 'stream',
+                'type': 'hello',
                 'radar': self.radar
             }
         )
@@ -39,7 +39,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.send(
             'backhaul',
             {
-                'type': 'stop',
+                'type': 'bye',
                 'radar': self.radar
             }
         )

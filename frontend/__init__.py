@@ -1,5 +1,5 @@
-import os
-print('{} init {}'.format(__name__, os.getpid()))
+# import os
+# print('{} init {}'.format(__name__, os.getpid()))
 
 # import atexit
 
