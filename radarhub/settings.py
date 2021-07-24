@@ -22,8 +22,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-&uc2s5)c^wy#^0l9h*v_bo9+_xum)5zk9_rg=98@@h+e6*iw63'
-if os.path.exists('/root/secret-key'):
-    with open('/root/secret-key') as fid:
+if os.path.exists(BASE_DIR / 'secret-key'):
+    with open(BASE_DIR / 'secret-key') as fid:
         SECRET_KEY = fid.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
