@@ -31,15 +31,6 @@ Some design constraints:
 - [ ] 0.9 Landing page
 - [ ] 1.0 RadarKit communicates with RadarHub
 
-## Help Me Remember
-
-To restart the app on the production server:
-
-```shell
-sudo supervisorctl restart asgi:*
-```
-
-
 # Development
 
 I recommend VSCode and the plugin Prettier. Be sure to have [redis] going for the [channels] module.
@@ -50,9 +41,24 @@ docker run -p 6379:6379 -d redis:6
 
 Run three terminals:
 
-1. `cd frontend; npm run dev`
-2. `python manage.py runserver 0:8000`
-3. `python manage.py runworker backhaul`
+1. webpack
+
+```shell
+cd frontend
+npm run dev
+```
+
+2. main django server
+
+```shell
+python manage.py runserver 0:8000`
+```
+
+3. background worker
+
+```shell
+python manage.py runworker backhaul
+```
 
 
 # Deploying
@@ -155,5 +161,6 @@ sudo docker run -d --restart unless-stopped -p 6379:6379 redis:5
 [react]: https://reactjs.org
 [python]: https://www.python.org
 [docker]: https://www.docker.com
+[redis]: https://redis.io
 [nginx]: https://www.nginx.com
 [supervisor]: http://supervisord.org
