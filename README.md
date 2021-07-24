@@ -71,7 +71,6 @@ python manage.py runworker backhaul
 
 Off you go, you should be able to view the RadarHub interface through a web browser at http://localhost:8000
 
-
 # Deploying
 
 On a production server, I use the Ubuntu nginx-supervisor recommendation in [channels].
@@ -80,7 +79,7 @@ On a production server, I use the Ubuntu nginx-supervisor recommendation in [cha
 
 Configure through the file `/etc/nginx/sites-enabled/radarhub` as:
 
-```
+```nginx
 upstream channels-backend {
     server localhost:8000;
 }
@@ -129,7 +128,7 @@ server {
 
 Configure through the file `/etc/supervisor/conf.d/radarhub.conf` as:
 
-```
+```conf
 [fcgi-program:asgi]
 # TCP socket used by Nginx backend upstream
 socket=tcp://localhost:8000
@@ -139,7 +138,7 @@ directory=/home/radarhub/app
 
 # Each process needs to have a separate socket file, so we use process_num
 # Make sure to update "mysite.asgi" to match your project name
-command=/home/radarhub/.pyenv/shims/python -m daphne \
+command=/home/radarhub/.pyenv/shims/daphne \
     -u /run/daphne/daphne%(process_num)d.sock \
     --fd 0 --access-log - \
     --proxy-headers radarhub.asgi:application

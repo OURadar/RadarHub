@@ -21,8 +21,7 @@ async def _runloop(radar):
     if channel_layer is None:
         channel_layer = get_channel_layer()
 
-    print('\033[38;5;296m{} - {} {}\033[m'.format(__name__, radar, channel_layer.ring_size))
-    print('{}'.format(channel_layer.hosts))
+    print('\033[38;5;296m{}  radar={}  channel_layer.ring_size={}\033[m'.format(__name__, radar, channel_layer.ring_size))
 
     # Request data from the radar only if there are clients (from frontend) for the data stream
     while data.count(radar) > 0:
@@ -59,17 +58,23 @@ def runloop(radar):
 
 class BackhaulConsumer(AsyncConsumer):
     async def hello(self, message):
-        radar = message['radar'] if 'radar' in message else 'horus'
+        if 'radar' not in message:
+            return
+        radar = message['radar']
         data.register(radar)
         if data.count(radar) == 1:
             tid = threading.Thread(target=runloop, args=(radar,))
             tid.start()
-        channel_layer = get_channel_layer()
-        print('{} {}'.format(radar, channel_layer.ring_size))
 
     async def bye(self, message):
-        radar = message['radar'] if 'radar' in message else 'horus'
+        if 'radar' not in message:
+            return
+        radar = message['radar']
         data.unregister(radar)
 
-    async def handle(self, body):
-        print('handle() not implemented.')
+    async def handle(self, message):
+        if 'radar' not in message:
+            return
+        radar = message['radar']
+        command = message['command']
+        print('handle() for {} - {}'.format(radar, command))
