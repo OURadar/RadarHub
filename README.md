@@ -33,7 +33,16 @@ Some design constraints:
 
 # Development
 
-I recommend VSCode and the plugin Prettier. Be sure to have [redis] going for the [channels] module.
+I recommend VSCode and the plugin Prettier (of course, use what you prefer). The very first thing to do right after cloning the repository is to indstall the Python requirements and node dependencies, which can be accomplished as:
+
+```shell
+python install -r requirements.txt
+
+cd frontend
+npm install
+```
+
+Be sure to have [redis] going for the [channels] module.
 
 ```shell
 docker run -p 6379:6379 -d redis:6
@@ -51,7 +60,7 @@ npm run dev
 2. main django server
 
 ```shell
-python manage.py runserver 0:8000`
+python manage.py runserver 0:8000
 ```
 
 3. background worker
@@ -59,6 +68,8 @@ python manage.py runserver 0:8000`
 ```shell
 python manage.py runworker backhaul
 ```
+
+Off you go, you should be able to view the RadarHub interface through a web browser at http://localhost:8000
 
 
 # Deploying
@@ -89,11 +100,12 @@ server {
     location /static/ {
         root /home/radarhub/app/frontend;
     }
+
     location /favicon.ico {
         root /home/radarhub/app/frontend/static/images/favicon.ico;
     }
 
-   location / {
+    location / {
         try_files $uri @proxy_to_app;
     }
 
