@@ -82,49 +82,38 @@ class App extends Component {
       }, 2000);
     };
     this.socket.onmessage = (e) => {
-      // Message comes in as (cargo 0) (cargo 1) (cargo 0) (cargo 1) ...
-      if (this.state.cargo == 0) {
-        const h = new Int32Array(e.data);
-        this.setState({
-          cargo: 1,
-          header: { type: h[0], length: h[1] },
-        });
-      } else if (this.state.cargo == 1) {
-        // Switch to cargo 0 no matter what
-        var stateToChange = {
-          cargo: 0,
-        };
-        // Interpret the data based on header.type
-        if (this.state.header.type == 1) {
-          // AScope data - convert arraybuffer to int16 typed array
-          const samples = new Int16Array(e.data);
-          // Parse out the array into I/Q/A arrays for Scope
-          const len = Math.floor(samples.length / 2);
-          const i = new Float32Array(samples.slice(0, len));
-          const q = new Float32Array(samples.slice(len));
-          const a = new Float32Array(len);
-          for (var k = 0; k < len; k++) {
-            a[k] = Math.sqrt(i[k] * i[k] + q[k] * q[k]);
-          }
-          stateToChange.samples = samples;
-          stateToChange.i = i;
-          stateToChange.q = q;
-          stateToChange.a = a;
-          stateToChange.tic = this.state.tic + 1;
-          if (this.state.len != len) {
-            stateToChange.len = len;
-            stateToChange.t = new Float32Array(Array(len).keys());
-          }
-        } else if (this.state.header.type == 2) {
-          // Health data in JSON
-          const health = JSON.parse(e.data);
-          stateToChange.health = health;
-        } else {
-          // Unknown type, ignore the data but increases the u counter
-          stateToChange.u = this.state.u + 1;
+      const type = new Int8Array(e.data.slice(0, 1));
+      var stateToChange = {};
+      // Interpret the data based on header.type
+      if (type == 1) {
+        // AScope data - convert arraybuffer to int16 typed array
+        const samples = new Int16Array(e.data.slice(1));
+        // Parse out the array into I/Q/A arrays for Scope
+        const len = Math.floor(samples.length / 2);
+        const i = new Float32Array(samples.slice(0, len));
+        const q = new Float32Array(samples.slice(len));
+        const a = new Float32Array(len);
+        for (var k = 0; k < len; k++) {
+          a[k] = Math.sqrt(i[k] * i[k] + q[k] * q[k]);
         }
-        this.setState(stateToChange);
+        stateToChange.samples = samples;
+        stateToChange.i = i;
+        stateToChange.q = q;
+        stateToChange.a = a;
+        stateToChange.tic = this.state.tic + 1;
+        if (this.state.len != len) {
+          stateToChange.len = len;
+          stateToChange.t = new Float32Array(Array(len).keys());
+        }
+      } else if (type == 2) {
+        // Health data in JSON
+        const health = JSON.parse(new TextDecoder().decode(e.data.slice(1)));
+        stateToChange.health = health;
+      } else {
+        // Unknown type, ignore the data but increases the u counter
+        stateToChange.u = this.state.u + 1;
       }
+      this.setState(stateToChange);
     };
     this.socket.onclose = (_e) => {
       this.setState({ cargo: 0, wait: 5.0, message: "No connection" });

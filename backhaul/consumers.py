@@ -9,6 +9,7 @@ from . import data
 from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
+channels = []
 channel_layer = None
 
 async def _runloop(radar):
@@ -26,24 +27,24 @@ async def _runloop(radar):
     # Request data from the radar only if there are clients (from frontend) for the data stream
     while data.count(radar) > 0:
         # Will eventually make this a radar-dependent function
-        s, s0 = data.getSamples()
+        payload, s0 = data.getSamples()
         if s1 != s0:
             await channel_layer.group_send(
                 radar,
                 {
                     'type': 'sendSamples',
-                    'samples': base64.b64encode(s.tobytes())
+                    'samples': base64.b64encode(payload.tobytes())
                 }
             )
             s1 = s0
         # Will eventually make this a radar-dependent function
-        h, h0 = data.getHealth()
+        payload, h0 = data.getHealth()
         if h1 != h0:
             await channel_layer.group_send(
                 radar,
                 {
                     'type': 'sendHealth',
-                    'health': h
+                    'health': payload
                 }
             )
             h1 = h0
@@ -59,9 +60,13 @@ def runloop(radar):
 class BackhaulConsumer(AsyncConsumer):
     async def hello(self, message):
         if 'radar' not in message:
+            print('The key "radar" is expected in the message.');
             return
         radar = message['radar']
+        channel = message['channel']
+        print('channel = "{}"'.format(channel))
         data.register(radar)
+        channels.append(channel)
         if data.count(radar) == 1:
             tid = threading.Thread(target=runloop, args=(radar,))
             tid.start()

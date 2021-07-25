@@ -25,7 +25,8 @@ class AsyncConsumer(AsyncWebsocketConsumer):
             'backhaul',
             {
                 'type': 'hello',
-                'radar': self.radar
+                'radar': self.radar,
+                'channel': self.channel_name
             }
         )
 
@@ -40,7 +41,8 @@ class AsyncConsumer(AsyncWebsocketConsumer):
             'backhaul',
             {
                 'type': 'bye',
-                'radar': self.radar
+                'radar': self.radar,
+                'channel': self.channel_name
             }
         )
         # Leave the group
@@ -50,19 +52,12 @@ class AsyncConsumer(AsyncWebsocketConsumer):
         )
 
     async def sendSamples(self, event):
-        y = base64.b64decode(event['samples'])
-        self.meta[0] = 1
-        self.meta[1] = len(y)
-        await self.send(bytes_data=self.meta.tobytes())
+        y = b'\x01' + base64.b64decode(event['samples'])
         await self.send(bytes_data=y)
 
     async def sendHealth(self, event):
-        h = event['health']
-        self.meta[0] = 2
-        self.meta[1] = len(h)
-        await self.send(bytes_data=self.meta.tobytes())
-        await self.send(text_data=h)
-
+        h = b'\x02' + bytearray(event['health'], 'utf-8')
+        await self.send(bytes_data=h)
 
 def hook(sender, **kwargs):
     print('handleRequestFinished() from {} --> {}'.format(sender, kwargs['signal']))

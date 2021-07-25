@@ -33,7 +33,7 @@ Some design constraints:
 
 # Development
 
-I recommend VSCode and the plugin Prettier (of course, use what you prefer). The very first thing to do right after cloning the repository is to indstall the Python requirements and node dependencies, which can be accomplished as:
+Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. The very first thing to do right after cloning the repository is to install the Python requirements and node dependencies, which can be accomplished as:
 
 ```shell
 python install -r requirements.txt
@@ -42,7 +42,7 @@ cd frontend
 npm install
 ```
 
-Be sure to have [redis] going for the [channels] module.
+Be sure to have [redis] going for the [channels] module every you rebooted the machine.
 
 ```shell
 docker run -p 6379:6379 -d redis:6
@@ -69,13 +69,13 @@ python manage.py runserver 0:8000
 python manage.py runworker backhaul
 ```
 
-Off you go, you should be able to view the RadarHub interface through a web browser at http://localhost:8000
+Off you go, you should be able to view the RadarHub interface through a web browser at http://localhost:8000 and tinker with the source codes and see the changes when you reload the page. Happy coding.
 
 # Deploying
 
-On a production server, I use the Ubuntu nginx-supervisor recommendation in [channels].
+On a production server, the Ubuntu nginx-supervisor was recommended in [channels].
 
-### Nginx
+## Nginx
 
 Configure through the file `/etc/nginx/sites-enabled/radarhub` as:
 
@@ -124,7 +124,7 @@ server {
 }
 ```
 
-### Supervisor
+## Supervisor
 
 Configure through the file `/etc/supervisor/conf.d/radarhub.conf` as:
 
@@ -158,13 +158,19 @@ stdout_logfile=/home/radarhub/log/asgi.log
 redirect_stderr=true
 ```
 
-### Docker
+## Docker
 
-The websocket component depends on redis version 5 through docker:
+The websocket component depends on [redis] through docker:
 
 ```shell
 sudo docker run -d --restart unless-stopped -p 6379:6379 redis:5
 ```
+
+# Concept of Operations
+
+The [channels] library operates in text only. So, all internal data routing must be translated into text, which is accomplished through Base64 encodings. While there is an expansion of data size internally (memory), this is a very small trade-off compared the advantages brought by the framework. The external data (network) is still in binary form.
+
+Currently, RadarHub is almost like chat program. Each radar is considered a group (chat room), named after tha radar name. There is a special group named 'backhaul', which all radar commands will be routed to. The backhaul then routes the command to the designated radar, only if the radar has succesfully connected to the RadarHub. The backhaul sends whatever data stream available from each radar to the radar group so that all users in that group receive the same data stream. All users receive all data stream even it is not requested. This may change in the future but for simplicity to move towards subsequent milestones.
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
