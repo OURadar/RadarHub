@@ -64,12 +64,14 @@ class BackhaulConsumer(AsyncConsumer):
             return
         radar = message['radar']
         channel = message['channel']
-        print('channel = "{}"'.format(channel))
+
         data.register(radar)
-        channels.append(channel)
         if data.count(radar) == 1:
             tid = threading.Thread(target=runloop, args=(radar,))
             tid.start()
+
+        global channels
+        channels.append(channel)
 
     async def bye(self, message):
         if 'radar' not in message:

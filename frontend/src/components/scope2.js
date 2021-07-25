@@ -185,7 +185,7 @@ class Scope2 extends Scope {
         this.picaso([
           {
             dataX: props.data.t,
-            dataY: props.data.a1,
+            dataY: props.data.ch1.a,
             width: props.linewidth,
             color: props.colors.lines[0],
             projection: state.projection,
@@ -195,7 +195,7 @@ class Scope2 extends Scope {
           },
           {
             dataX: props.data.t,
-            dataY: props.data.i1,
+            dataY: props.data.ch1.i,
             width: props.linewidth,
             color: props.colors.lines[5],
             projection: state.projection,
@@ -205,7 +205,7 @@ class Scope2 extends Scope {
           },
           {
             dataX: props.data.t,
-            dataY: props.data.q1,
+            dataY: props.data.ch1.q,
             width: props.linewidth,
             color: props.colors.lines[6],
             projection: state.projection,
@@ -215,7 +215,7 @@ class Scope2 extends Scope {
           },
           {
             dataX: props.data.t,
-            dataY: props.data.a2,
+            dataY: props.data.ch2.a,
             width: props.linewidth,
             color: props.colors.lines[0],
             projection: state.projection,
@@ -225,7 +225,7 @@ class Scope2 extends Scope {
           },
           {
             dataX: props.data.t,
-            dataY: props.data.i2,
+            dataY: props.data.ch2.i,
             width: props.linewidth,
             color: props.colors.lines[3],
             projection: state.projection,
@@ -235,7 +235,7 @@ class Scope2 extends Scope {
           },
           {
             dataX: props.data.t,
-            dataY: props.data.q2,
+            dataY: props.data.ch2.q,
             width: props.linewidth,
             color: props.colors.lines[4],
             projection: state.projection,
