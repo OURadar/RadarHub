@@ -68,7 +68,10 @@ class AsyncConsumer(AsyncWebsocketConsumer):
         bytes = b'\x03' + event['control']
         await self.send(bytes_data=bytes)
 
+    # Rays, etc.
+
+
 # def hook(sender, **kwargs):
 #     print('handleRequestFinished() from {} --> {}'.format(sender, kwargs['signal']))
-
+#
 # request_finished.connect(hook)

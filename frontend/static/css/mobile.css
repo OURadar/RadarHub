@@ -6,8 +6,15 @@ Copyright Boonleng Cheong
   padding: 0;
   --indicator-height: 36px;
 }
-.healthContainer {
-  display: block;
+.controlButton {
+  display: inline-block;
+  width: 100%;
+  height: var(--indicator-height);
+  padding: 0;
+  border-top: solid 0.5px var(--gray);
+}
+.controlButton {
+  position: relative;
 }
 .indicatorContainer {
   display: block;

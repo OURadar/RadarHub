@@ -109,9 +109,13 @@ class Data {
       } else if (type == 3) {
         // Control data in JSON
         const text = new TextDecoder().decode(e.data.slice(1));
-        const control = JSON.parse(text);
-        newData.control = control;
-        console.log(control);
+        const dict = JSON.parse(text);
+        console.log(dict.name, this.radar);
+        if (dict.name) {
+          newData.control = dict["Controls"];
+        } else {
+          console.log("dict.name = " + dict.name + " /= " + this.radar);
+        }
       } else {
         // Unknown type, ignore the data but increases the u counter
         this.u += 1;

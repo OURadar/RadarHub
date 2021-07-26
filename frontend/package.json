@@ -24,6 +24,8 @@
     "webpack-cli": "^4.7.2"
   },
   "dependencies": {
+    "@material-ui/core": "^4.12.2",
+    "@material-ui/icons": "^4.11.2",
     "gl-matrix": "^3.3.0",
     "regl": "^2.1.0",
     "stats-js": "^1.0.1"

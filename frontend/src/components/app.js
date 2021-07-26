@@ -11,6 +11,7 @@ import { Data } from "./data";
 import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
+import { Control } from "./control";
 
 function StatusBar(props) {
   return (
@@ -72,8 +73,10 @@ class App extends Component {
           radar: {this.props.radar} &nbsp; receiver: {this.props.receiver}
         </div>
         <StatusBar message={this.ingest.message} />
+        <h2>Control</h2>
+        <Control array={this.ingest.data.control} />
         <h2>Health Status</h2>
-        <Health message={this.ingest.data.health} />
+        <Health dict={this.ingest.data.health} />
         <h2>Single-Channel Scope</h2>
         <div className="scopeSingle">
           <Scope data={single} colors={this.state.colors} />

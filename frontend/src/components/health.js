@@ -1,5 +1,5 @@
 //
-//  Health.js
+//  health.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong
@@ -44,7 +44,7 @@ function Health(props) {
   // Split health indicators into two sets: LEDs and Labels
   const leds = {};
   const labels = {};
-  for (const [key, value] of Object.entries(props.message)) {
+  for (let [key, value] of Object.entries(props.dict)) {
     if (typeof value == "object" && "Value" in value) {
       if (typeof value["Value"] == "boolean") {
         leds[key] = value;

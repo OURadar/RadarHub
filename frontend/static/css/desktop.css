@@ -5,6 +5,31 @@ Copyright Boonleng Cheong
 :root {
   --indicator-height: 25px;
 }
+.controlButtonLabel {
+  display: block;
+  top: calc(var(--indicator-height) * 0.2);
+  padding-top: calc(var(--indicator-height) * 0.2 - 1px);
+  padding-bottom: 5px;
+  font-size: calc(var(--indicator-height) * 0.6);
+  line-height: calc(var(--indicator-height) * 0.6);
+  text-align: center;
+}
+.controlButton {
+  display: inline-block;
+  width: 100%;
+  height: var(--indicator-height);
+  margin-bottom: 7px;
+  border-radius: 5px;
+  box-sizing: border-box;
+  border: solid 1px var(--border-accent);
+  cursor: pointer;
+}
+.controlContainer {
+  position: relative;
+  overflow: auto;
+  width: 100%;
+  columns: 7 250px;
+}
 .healthContainer {
   padding: var(--padding);
   column-count: 2;

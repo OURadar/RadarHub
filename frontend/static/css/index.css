@@ -191,7 +191,8 @@ h2 {
   vertical-align: middle;
 }
 
-.healthContainer {
+.healthContainer,
+.controlContainer {
   display: block;
   overflow: auto;
 }
