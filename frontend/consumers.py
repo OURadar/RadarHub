@@ -49,7 +49,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
 
     # Receive message from frontend
     async def receive(self, text_data=None, bytes_data=None):
-        print('receive()')
+        print('frontend.consumer.receive()')
 
     # The following are methods called by backhaul
 
@@ -63,7 +63,12 @@ class AsyncConsumer(AsyncWebsocketConsumer):
         bytes = b'\x02' + event['health']
         await self.send(bytes_data=bytes)
 
-def hook(sender, **kwargs):
-    print('handleRequestFinished() from {} --> {}'.format(sender, kwargs['signal']))
+    # Control buttons
+    async def sendControl(self, event):
+        bytes = b'\x03' + event['control']
+        await self.send(bytes_data=bytes)
+
+# def hook(sender, **kwargs):
+#     print('handleRequestFinished() from {} --> {}'.format(sender, kwargs['signal']))
 
 # request_finished.connect(hook)

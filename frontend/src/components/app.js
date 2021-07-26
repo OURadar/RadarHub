@@ -72,6 +72,8 @@ class App extends Component {
           radar: {this.props.radar} &nbsp; receiver: {this.props.receiver}
         </div>
         <StatusBar message={this.ingest.message} />
+        <h2>Health Status</h2>
+        <Health message={this.ingest.data.health} />
         <h2>Single-Channel Scope</h2>
         <div className="scopeSingle">
           <Scope data={single} colors={this.state.colors} />
@@ -80,8 +82,6 @@ class App extends Component {
         <div className="scopeDouble">
           <Scope2 data={this.ingest.data} colors={this.state.colors} />
         </div>
-        <h2>Health Status</h2>
-        <Health message={this.ingest.data.health} />
       </div>
     );
   }

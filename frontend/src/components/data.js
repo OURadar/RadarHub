@@ -22,6 +22,7 @@ class Data {
         a: [],
       },
       health: { time: 0 },
+      control: { time: 0 },
       ppi: {
         az: null,
         z: [],
@@ -105,6 +106,12 @@ class Data {
         const health = JSON.parse(text);
         newData.health = health;
         this.tic += 1;
+      } else if (type == 3) {
+        // Control data in JSON
+        const text = new TextDecoder().decode(e.data.slice(1));
+        const control = JSON.parse(text);
+        newData.control = control;
+        console.log(control);
       } else {
         // Unknown type, ignore the data but increases the u counter
         this.u += 1;

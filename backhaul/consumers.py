@@ -9,17 +9,13 @@ from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
 channels = []
-channel_layer = None
+channel_layer = get_channel_layer()
 
 async def _runloop(radar):
     data.start()
     s1 = 0
     h1 = 0
     freq = 20
-
-    global channel_layer
-    if channel_layer is None:
-        channel_layer = get_channel_layer()
 
     print('\033[38;5;296m{}  radar={}  channel_layer.ring_size={}\033[m'.format(__name__, radar, channel_layer.ring_size))
 
@@ -59,7 +55,7 @@ def runloop(radar):
 class BackhaulConsumer(AsyncConsumer):
     async def hello(self, message):
         if 'radar' not in message:
-            print('The key "radar" is expected in the message.');
+            print('The "radar" key is expected in the message.');
             return
         radar = message['radar']
         channel = message['channel']
@@ -70,13 +66,28 @@ class BackhaulConsumer(AsyncConsumer):
             tid.start()
 
         global channels
-        channels.append(channel)
+        if channel not in channels:
+            channels.append(channel)
+
+        payload, _ = data.getControl()
+        await channel_layer.send(
+            channel,
+            {
+                'type': 'sendControl',
+                'control': bytearray(payload, 'utf-8'),
+            }
+        )
 
     async def bye(self, message):
         if 'radar' not in message:
             return
         radar = message['radar']
+        channel = message['channel']
+
         data.unregister(radar)
+
+        global channels
+        channels.remove(channel)
 
     async def handle(self, message):
         if 'radar' not in message:
