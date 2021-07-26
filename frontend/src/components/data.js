@@ -54,6 +54,7 @@ class Data {
 
   connect() {
     this.message = "Connecting ...";
+    this.onupdate(this.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
     const url = p + "://" + window.location.host + "/ws/" + this.radar + "/";
     this.socket = new WebSocket(url);
@@ -106,7 +107,7 @@ class Data {
         this.tic += 1;
       } else {
         // Unknown type, ignore the data but increases the u counter
-        this.u = this.u + 1;
+        this.u += 1;
       }
       this.data = { ...this.data, ...newData };
       this.onupdate(this.tic);

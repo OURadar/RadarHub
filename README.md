@@ -144,7 +144,7 @@ command=/home/radarhub/.pyenv/shims/daphne \
     --proxy-headers radarhub.asgi:application
 
 # Number of processes to startup, roughly the number of CPUs you have
-numprocs=4
+numprocs=2
 
 # Give each process a unique name so they can be told apart
 process_name=asgi%(process_num)d

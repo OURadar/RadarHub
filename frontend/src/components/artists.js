@@ -1,12 +1,11 @@
 //
-//  draw.js
+//  artists.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong
 //
-//  A simple artist with basic shaders
-//
 
+//  A simple artist with basic shaders
 export function basic(regl) {
   return regl({
     vert: `
@@ -51,6 +50,7 @@ export function basic(regl) {
   });
 }
 
+// A point drawing artist to paint points based on a large texture
 export function sprite(regl) {
   return regl({
     vert: `

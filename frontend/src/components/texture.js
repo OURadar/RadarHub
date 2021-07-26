@@ -1,5 +1,5 @@
 //
-//  Texture.js
+//  texture.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong on 7/20/2021.

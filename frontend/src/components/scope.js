@@ -1,5 +1,5 @@
 //
-//  Scope.js
+//  scope.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong
