@@ -86,7 +86,7 @@ upstream channels-backend {
 
 server {
     listen 443;
-    server_name radarhub.arrc.ou.edu;
+    server_name radarhub.arrc.ou.edu 10.197.14.38;
     rewrite ^(.*) http://$host$1 permanent;
 }
 
@@ -94,7 +94,7 @@ server {
     listen 80;
     listen [::]:80;
 
-    server_name radarhub.arrc.ou.edu;
+    server_name radarhub.arrc.ou.edu 10.197.14.38;
 
     location /static/ {
         root /home/radarhub/app/frontend;
@@ -137,23 +137,20 @@ directory=/home/radarhub/app
 
 # Each process needs to have a separate socket file, so we use process_num
 # Make sure to update "mysite.asgi" to match your project name
-command=/home/radarhub/.pyenv/shims/daphne \
-    -u /run/daphne/daphne%(process_num)d.sock \
-    --fd 0 --access-log - \
-    --proxy-headers radarhub.asgi:application
+command=/home/radarhub/.pyenv/shims/daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers radarhub.asgi:application
 
 # Number of processes to startup, roughly the number of CPUs you have
 numprocs=2
 
 # Give each process a unique name so they can be told apart
-process_name=asgi%(process_num)d
+process_name=radarhub%(process_num)d
 
 # Automatically start and recover processes
 autostart=true
 autorestart=true
 
 # Choose where you want your log to go
-stdout_logfile=/home/radarhub/log/asgi.log
+stdout_logfile=/home/radarhub/log/backhaul.log
 redirect_stderr=true
 ```
 
@@ -171,12 +168,11 @@ Currently, the RadarHub is almost like chat program. Each radar is considered a 
 
 # Pending Decisions
 
-| One Channel Per Radar | Multiple Channels Per Radar |
-| --- | --- |
-| Use less channels | Use more channels |
-| Need to track channels based on user priviledge | Simple broadcast |
-| A user joins one group only | A user joins multiple groups based on priviledge |
-
+| One Channel Per Radar                           | Multiple Channels Per Radar                      |
+| ----------------------------------------------- | ------------------------------------------------ |
+| Use less channels                               | Use more channels                                |
+| Need to track channels based on user priviledge | Simple broadcast, each stream per channel        |
+| A user joins one group only                     | A user joins multiple groups based on priviledge |
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com

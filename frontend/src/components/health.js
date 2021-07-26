@@ -6,17 +6,11 @@
 //
 
 import React from "react";
+import { prettyString } from "./common";
 
 function styleFromEnum(x) {
   const enumStyle = ["-3", "-2", "-1", "normal", "ready", "alert", "old", ""];
   return enumStyle[x + 3];
-}
-
-function prettyString(input) {
-  return input
-    .replace(/(?:[\s])deg/g, "°")
-    .replace(/degC/g, "°C")
-    .replace(/degF/g, "°F");
 }
 
 function IndicatorLight(props) {

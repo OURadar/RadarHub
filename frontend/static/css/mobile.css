@@ -3,18 +3,14 @@ Mobile style sheet
 Copyright Boonleng Cheong
 */
 :root {
-  padding: 0;
+  --button-height: 46px;
   --indicator-height: 36px;
-}
-.controlButton {
-  display: inline-block;
-  width: 100%;
-  height: var(--indicator-height);
   padding: 0;
-  border-top: solid 0.5px var(--gray);
+  --font-size: calc(var(--indicator-height) * 0.6);
+  --line-height: calc(var(--indicator-height) * 0.6);
 }
-.controlButton {
-  position: relative;
+.healthContainer {
+  display: block;
 }
 .indicatorContainer {
   display: block;
@@ -30,7 +26,7 @@ Copyright Boonleng Cheong
   height: var(--indicator-height);
   padding: 0;
   vertical-align: middle;
-  border-top: solid 0.5px var(--gray);
+  border-top: solid 1px var(--border-accent);
   box-sizing: border-box;
 }
 .ledTitle {
@@ -39,8 +35,6 @@ Copyright Boonleng Cheong
   top: calc(var(--indicator-height) * 0.2);
   left: var(--padding);
   width: 90%;
-  font-size: calc(var(--indicator-height) * 0.6);
-  line-height: calc(var(--indicator-height) * 0.6);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -62,8 +56,6 @@ Copyright Boonleng Cheong
   left: var(--padding);
   width: calc(50% - var(--padding));
   height: var(--indicator-height);
-  font-size: calc(var(--indicator-height) * 0.6);
-  line-height: calc(var(--indicator-height) * 0.6);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;

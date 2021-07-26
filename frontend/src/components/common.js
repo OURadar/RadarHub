@@ -39,6 +39,13 @@ export function tickChoices(i, count) {
   return a.flat();
 }
 
+export function prettyString(input) {
+  return input
+    .replace(/(?:[\s])deg/g, "°")
+    .replace(/degC/g, "°C")
+    .replace(/degF/g, "°F");
+}
+
 export function array2rgba(array) {
   return (
     "rgba(" +
