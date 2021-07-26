@@ -169,6 +169,15 @@ sudo docker run -d --restart unless-stopped -p 6379:6379 redis:5
 
 Currently, the RadarHub is almost like chat program. Each radar is considered a group (chat room), named after tha radar name. There is a special group named 'backhaul', which all radar commands will be routed to. The backhaul then routes the command to the designated radar, only if the radar has succesfully connected to the RadarHub. The backhaul sends whatever data stream available from each radar to the radar group so that all users in that group receive the same data stream. All users receive all data stream even it is not requested. This may change in the future but for simplicity to move towards subsequent milestones.
 
+# Pending Decisions
+
+| One Channel Per Radar | Multiple Channels Per Radar |
+| --- | --- |
+| Use less channels | Use more channels |
+| Need to track channels based on user priviledge | Simple broadcast |
+| A user joins one group only | A user joins multiple groups based on priviledge |
+
+
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
 [node.js]: https://nodejs.org
