@@ -1,6 +1,5 @@
 # backhaul/consumers.py
 
-import base64
 import asyncio
 import threading
 
@@ -33,7 +32,7 @@ async def _runloop(radar):
                 radar,
                 {
                     'type': 'sendSamples',
-                    'samples': base64.b64encode(payload.tobytes())
+                    'samples': payload.tobytes()
                 }
             )
             s1 = s0
@@ -44,7 +43,7 @@ async def _runloop(radar):
                 radar,
                 {
                     'type': 'sendHealth',
-                    'health': payload
+                    'health': bytearray(payload, 'utf-8')
                 }
             )
             h1 = h0

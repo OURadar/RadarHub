@@ -430,8 +430,8 @@ class Scope extends Component {
       return;
     }
     const t = this.props.data.t;
-    const i = "i" in this.props.data ? this.props.data.i : this.props.data.i1;
-    const q = "q" in this.props.data ? this.props.data.q : this.props.data.q1;
+    const i = this.props.data.i || this.props.data.ch1.i;
+    const q = this.props.data.q || this.props.data.ch1.q;
     const ymin = Math.min(
       i.reduce((x, y) => Math.min(x, y)),
       q.reduce((x, y) => Math.min(x, y))

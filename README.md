@@ -168,9 +168,7 @@ sudo docker run -d --restart unless-stopped -p 6379:6379 redis:5
 
 # Concept of Operations
 
-The [channels] library operates in text only. So, all internal data routing must be translated into text, which is accomplished through Base64 encodings. While there is an expansion of data size internally (memory), this is a very small trade-off compared the advantages brought by the framework. The external data (network) is still in binary form.
-
-Currently, RadarHub is almost like chat program. Each radar is considered a group (chat room), named after tha radar name. There is a special group named 'backhaul', which all radar commands will be routed to. The backhaul then routes the command to the designated radar, only if the radar has succesfully connected to the RadarHub. The backhaul sends whatever data stream available from each radar to the radar group so that all users in that group receive the same data stream. All users receive all data stream even it is not requested. This may change in the future but for simplicity to move towards subsequent milestones.
+Currently, the RadarHub is almost like chat program. Each radar is considered a group (chat room), named after tha radar name. There is a special group named 'backhaul', which all radar commands will be routed to. The backhaul then routes the command to the designated radar, only if the radar has succesfully connected to the RadarHub. The backhaul sends whatever data stream available from each radar to the radar group so that all users in that group receive the same data stream. All users receive all data stream even it is not requested. This may change in the future but for simplicity to move towards subsequent milestones.
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com

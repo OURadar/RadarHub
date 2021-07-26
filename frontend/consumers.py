@@ -15,7 +15,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
 
         print('Joining group \033[38;5;82m{}\033[m'.format(self.radar))
 
-        # Join radar
+        # Join radar, accept the connection and say hello to backhaul
         await self.channel_layer.group_add(
             self.radar,
             self.channel_name
@@ -29,10 +29,6 @@ class AsyncConsumer(AsyncWebsocketConsumer):
                 'channel': self.channel_name
             }
         )
-
-    # Receive message from frontend
-    async def receive(self, text_data=None, bytes_data=None):
-        print('receive()')
 
     async def disconnect(self, close_code):
         print('Leaving group \033[38;5;82m{}\033[m'.format(self.radar))
@@ -51,13 +47,21 @@ class AsyncConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-    async def sendSamples(self, event):
-        y = b'\x01' + base64.b64decode(event['samples'])
-        await self.send(bytes_data=y)
+    # Receive message from frontend
+    async def receive(self, text_data=None, bytes_data=None):
+        print('receive()')
 
+    # The following are methods called by backhaul
+
+    # Pulse samples
+    async def sendSamples(self, event):
+        bytes = b'\x01' + event['samples']
+        await self.send(bytes_data=bytes)
+
+    # Health status
     async def sendHealth(self, event):
-        h = b'\x02' + bytearray(event['health'], 'utf-8')
-        await self.send(bytes_data=h)
+        bytes = b'\x02' + event['health']
+        await self.send(bytes_data=bytes)
 
 def hook(sender, **kwargs):
     print('handleRequestFinished() from {} --> {}'.format(sender, kwargs['signal']))
