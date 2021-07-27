@@ -10,10 +10,14 @@ Copyright Boonleng Cheong
   --button-border-bottom: none;
   --button-border-left: none;
   --button-margin-bottom: 0;
+  --button-border-radius: 0;
   padding: 0;
 }
+.controlContainer,
 .healthContainer {
   display: block;
+  height: 353px;
+  overflow-y: scroll;
 }
 .indicatorContainer {
   display: block;
@@ -22,27 +26,15 @@ Copyright Boonleng Cheong
 }
 .ledIndicator,
 .labelIndicator {
-  display: inline-block;
-  position: relative;
-  width: 100%;
   height: var(--button-height);
-  padding: 0;
   vertical-align: middle;
   border-top: solid 1px var(--border-accent);
-  box-sizing: border-box;
 }
 .ledTitle,
 .ledValue,
 .labelTitle,
 .labelValue {
-  position: absolute;
   top: calc(var(--button-height) * 0.275);
-  font-size: var(--font-size);
-  line-height: var(--font-size);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-weight: 500;
 }
 .ledTitle {
   display: inline-block;

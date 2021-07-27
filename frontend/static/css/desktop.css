@@ -11,14 +11,13 @@ Copyright Boonleng Cheong
   --button-border-bottom: solid 1px var(--border-accent);
   --button-border-left: solid 1px var(--border-accent);
   --button-margin-bottom: 5px;
+  --button-border-radius: 5px;
 }
 .controlContainer,
 .healthContainer {
   display: inline-block;
   padding: var(--padding);
-  overflow: auto;
 }
-
 .controlContainer {
   columns: 7 220px;
 }
@@ -27,29 +26,15 @@ Copyright Boonleng Cheong
 }
 .indicatorContainer {
   display: inline-block;
-  overflow: auto;
   columns: 5 220px;
+  overflow: auto;
 }
 .ledIndicator,
 .labelIndicator {
-  display: inline-block;
-  position: relative;
-  width: 100%;
   height: var(--indicator-height);
   margin-bottom: calc(var(--indicator-height) * 0.2);
   box-sizing: border-box;
   vertical-align: middle;
-}
-.ledTitle,
-.ledValue,
-.labelTitle,
-.labelValue {
-  position: absolute;
-  font-size: var(--font-size);
-  line-height: var(--font-size);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 .ledTitle {
   top: calc(var(--indicator-height) * 0.2);
@@ -88,16 +73,3 @@ Copyright Boonleng Cheong
   padding-right: calc(0.3 * var(--indicator-height));
   font-weight: 500;
 }
-/* 
-.MuiButton-root {
-  display: inline-block;
-  width: 100%;
-  height: 36;
-  font-size: 16;
-  overflow: auto;
-  padding: 0 30px;
-  border: solid 1px var(--border-accent);
-  border-radius: 5px;
-  margin-bottom: 5px;
-}
-*/

@@ -36,6 +36,7 @@ html {
 :root {
   --padding: 12pt;
   --base-size: 14;
+  box-sizing: border-box;
 }
 
 /* https://developer.apple.com/design/human-interface-guidelines/ios/visual-design/color/ */
@@ -64,13 +65,10 @@ html {
     --gray5: rgb(229, 229, 234);
     --gray6: rgb(242, 242, 247);
     --gray7: rgb(252, 252, 255);
-    --system-background: #ffffffff;
+    --system-foreground: #000000;
+    --system-background: #ffffff;
     --secondary-system-background: #f2f2f7ff;
     --tertiary-system-background: #ffffffff;
-  }
-  body {
-    color: black;
-    background-color: white;
   }
 }
 @media (prefers-color-scheme: dark) {
@@ -98,14 +96,16 @@ html {
     --gray5: rgb(44, 44, 46);
     --gray6: rgb(28, 28, 30);
     --gray7: rgb(16, 16, 18);
-    --system-background: #000000ff;
+    --system-foreground: #ffffff;
+    --system-background: #000000;
     --secondary-system-background: #1c1c1eff;
     --tertiary-system-background: #2c2c2eff;
   }
-  body {
-    color: white;
-    background-color: var(--secondary-system-background);
-  }
+}
+
+body {
+  color: var(--system-foreground);
+  background-color: var(--system-background);
 }
 
 @font-face {
@@ -139,11 +139,11 @@ h2 {
 .statusBar {
   display: inline-block;
   width: 100%;
-  height: 2.5em;
+  height: 44px;
   margin-top: 10px;
   color: var(--brown);
   font-size: 1em;
-  line-height: 2.5em;
+  line-height: 44px;
   vertical-align: middle;
   border-top: solid 1px var(--border-accent);
   border-bottom: solid 1px var(--border-accent);
@@ -195,6 +195,25 @@ h2 {
 .controlContainer {
   display: block;
   overflow: auto;
+}
+.ledIndicator,
+.labelIndicator {
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  height: var(--indicator-height);
+  font-weight: 500;
+}
+.ledTitle,
+.ledValue,
+.labelTitle,
+.labelValue {
+  position: absolute;
+  font-size: var(--font-size);
+  line-height: var(--font-size);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .ledIndicator .normal {
   background-color: var(--green);

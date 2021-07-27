@@ -32,9 +32,8 @@ export const theme = createTheme({
       root: {
         width: "100%",
         height: "var(--button-height)",
-        overflow: "auto",
         padding: "0 30px",
-        borderRadius: "5px",
+        borderRadius: "var(--button-border-radius)",
         borderTop: "var(--button-border-top)",
         borderRight: "var(--button-border-right)",
         borderBottom: "var(--button-border-bottom)",
@@ -43,6 +42,7 @@ export const theme = createTheme({
       },
       text: {
         display: "inline-block",
+        color: "var(--system-foreground)",
         fontSize: "var(--font-size)",
         lineHeight: "var(--font-size)",
         overflow: "hidden",
