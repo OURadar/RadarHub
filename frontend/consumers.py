@@ -1,6 +1,5 @@
 # frontend/consumers.py
 
-import base64
 import numpy as np
 
 from django.core.signals import request_finished
