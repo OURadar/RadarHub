@@ -6,40 +6,23 @@ Copyright Boonleng Cheong
   --button-height: 36px;
   --indicator-height: 25px;
   --font-size: calc(var(--indicator-height) * 0.6);
-  --line-height: calc(var(--indicator-height) * 0.6);
+  --button-border-top: solid 1px var(--border-accent);
+  --button-border-right: solid 1px var(--border-accent);
+  --button-border-bottom: solid 1px var(--border-accent);
+  --button-border-left: solid 1px var(--border-accent);
+  --button-margin-bottom: 5px;
 }
-.controlButtonLabel {
+.controlContainer,
+.healthContainer {
   display: inline-block;
-  top: calc(var(--indicator-height) * 0.2);
-  padding-top: calc(var(--indicator-height) * 0.2 - 1px);
-  padding-bottom: 5px;
-  font-size: calc(var(--indicator-height) * 0.6);
-  line-height: calc(var(--indicator-height) * 0.6);
-  text-align: center;
-}
-.controlButton {
-  display: block;
-  width: 100%;
-  height: var(--indicator-height);
-  margin-bottom: 7px;
-  border-radius: 5px;
-  box-sizing: border-box;
-  border: solid 1px var(--border-accent);
-  cursor: pointer;
-}
-.buttonContainer {
-  display: inline-block;
-  width: 100%;
-}
-.controlContainer {
-  display: inline-block;
-  position: relative;
+  padding: var(--padding);
   overflow: auto;
-  width: 100%;
-  columns: 6 200px;
+}
+
+.controlContainer {
+  columns: 7 220px;
 }
 .healthContainer {
-  padding: var(--padding);
   column-count: 2;
 }
 .indicatorContainer {
@@ -57,42 +40,41 @@ Copyright Boonleng Cheong
   box-sizing: border-box;
   vertical-align: middle;
 }
-.ledTitle {
+.ledTitle,
+.ledValue,
+.labelTitle,
+.labelValue {
   position: absolute;
-  top: calc(var(--indicator-height) * 0.2);
-  left: var(--indicator-height);
-  width: 90%;
-  font-size: calc(var(--indicator-height) * 0.6);
-  line-height: calc(var(--indicator-height) * 0.6);
+  font-size: var(--font-size);
+  line-height: var(--font-size);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+.ledTitle {
+  top: calc(var(--indicator-height) * 0.2);
+  left: var(--indicator-height);
+  width: 90%;
+}
 .ledValue {
   display: block;
-  position: absolute;
   top: calc(var(--indicator-height) * 0.25);
   width: calc(var(--indicator-height) * 0.5);
   height: calc(var(--indicator-height) * 0.5);
+  font-weight: 500;
   border-radius: 50%;
   box-sizing: border-box;
   z-index: 102;
 }
 .labelTitle {
-  position: absolute;
   top: calc(var(--indicator-height) * 0.2);
   right: calc(50% + var(--padding));
   width: calc(50% - var(--padding));
-  font-size: calc(var(--indicator-height) * 0.6);
-  line-height: calc(var(--indicator-height) * 0.6);
+  font-weight: 500;
   text-align: right;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 .labelValue {
   display: block;
-  position: absolute;
   background-color: var(--gray7);
   top: 0;
   right: 0;
@@ -104,11 +86,7 @@ Copyright Boonleng Cheong
   padding-top: calc(var(--indicator-height) * 0.2 - 1px);
   padding-left: calc(0.3 * var(--indicator-height));
   padding-right: calc(0.3 * var(--indicator-height));
-  font-size: calc(var(--indicator-height) * 0.6);
-  line-height: calc(var(--indicator-height) * 0.6);
   font-weight: 500;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 /* 
 .MuiButton-root {

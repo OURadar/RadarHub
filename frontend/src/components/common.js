@@ -41,9 +41,9 @@ export function tickChoices(i, count) {
 
 export function prettyString(input) {
   return input
-    .replace(/(?:[\s])deg/g, "°")
     .replace(/degC/g, "°C")
-    .replace(/degF/g, "°F");
+    .replace(/degF/g, "°F")
+    .replace(/(?:[\s])deg/g, "°");
 }
 
 export function array2rgba(array) {
@@ -59,6 +59,7 @@ export function array2rgba(array) {
     ")"
   );
 }
+
 export function colordict(theme) {
   // Retrieve the body color so we can match the canvas with it
   let body = window.getComputedStyle(document.body).backgroundColor;
