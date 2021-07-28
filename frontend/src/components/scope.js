@@ -280,7 +280,7 @@ class Scope extends Component {
       alignments: alignments,
       foreground: this.props.colors.foreground,
       colors: common.array2rgba(this.props.colors.foreground),
-      sizes: 16,
+      sizes: 14,
       countX: count,
       countY: labels.length - count,
     };

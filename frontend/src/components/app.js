@@ -7,7 +7,7 @@
 
 import React, { Component } from "react";
 import { colordict } from "./common";
-import { Data } from "./data";
+import { Ingest } from "./ingest";
 import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
@@ -21,7 +21,7 @@ class App extends Component {
       colors: colordict(),
       tic: 0,
     };
-    this.ingest = new Data(props.radar);
+    this.ingest = new Ingest(props.radar);
     this.ingest.onupdate = () => {
       this.forceUpdate();
     };
@@ -63,10 +63,11 @@ class App extends Component {
       <div>
         <div className="topbar">
           <h1>RadarHub</h1>
-          <div className="leftPadded">radar: {this.props.radar}</div>
+          <div className="leftPadded">
+            radar: {this.props.radar} {this.ingest.message}{" "}
+          </div>
         </div>
         <Pad />
-        <StatusBar message={this.ingest.message} />
         <h2>Control</h2>
         <Control ingest={this.ingest} />
         <h2>Health Status</h2>

@@ -37,7 +37,7 @@ class Texture {
     };
     this.busy = false;
     this.fontLoaded = false;
-    this.context.font = "32px LabelFont";
+    this.context.font = "14px LabelFont";
     let meas = this.context.measureText("hello");
     this.initWidth = meas.width;
     this.hasDetails =
@@ -110,7 +110,7 @@ class Texture {
       const color = Array.isArray(text.colors) ? text.colors[k] : text.colors;
       const size = Array.isArray(text.sizes) ? text.sizes[k] : text.sizes;
       // Measure the label extent
-      context.font = size + "px LabelFont";
+      context.font = size * this.scale + "px LabelFont";
       const meas = context.measureText(label);
       const w = Math.ceil(meas.width);
       const h = this.hasDetails
@@ -127,7 +127,7 @@ class Texture {
       const xx = position[0] + alignment[0] * w;
       const yy = position[1] + alignment[1] * h;
       origins.push(x, y);
-      spreads.push(ww, hh);
+      spreads.push(ww / this.scale, hh / this.scale);
       points.push(xx, yy);
       if (this.debug) {
         context.strokeStyle = "skyblue";

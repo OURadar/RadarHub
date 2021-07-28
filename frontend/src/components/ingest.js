@@ -1,11 +1,11 @@
 //
-//  data.js
+//  ingest.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong on 7/25/2021.
 //
 
-class Data {
+class Ingest {
   constructor(radar) {
     this.radar = radar;
     this.socket = null;
@@ -145,4 +145,4 @@ class Data {
   }
 }
 
-export { Data };
+export { Ingest };
