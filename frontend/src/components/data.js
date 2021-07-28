@@ -37,20 +37,7 @@ class Data {
     this.connect = this.connect.bind(this);
     this.disconnect = this.disconnect.bind(this);
     this.waitOrConnect = this.waitOrConnect.bind(this);
-  }
-
-  waitOrConnect() {
-    if (this.wait <= 0.5) {
-      this.connect();
-    } else {
-      const t = this.wait.toFixed(0);
-      if (t <= 3) {
-        this.message = "Connect in " + t + " second" + (t > 1 ? "s" : "");
-        this.onupdate(this.tic++);
-      }
-      setTimeout(this.waitOrConnect, 200);
-      this.wait = this.wait - 0.2;
-    }
+    this.execute = this.execute.bind(this);
   }
 
   connect() {
@@ -136,6 +123,25 @@ class Data {
 
   disconnect() {
     this.socket.close();
+  }
+
+  waitOrConnect() {
+    if (this.wait <= 0.5) {
+      this.connect();
+    } else {
+      const t = this.wait.toFixed(0);
+      if (t <= 3) {
+        this.message = "Connect in " + t + " second" + (t > 1 ? "s" : "");
+        this.onupdate(this.tic++);
+      }
+      setTimeout(this.waitOrConnect, 200);
+      this.wait = this.wait - 0.2;
+    }
+  }
+
+  execute(e) {
+    console.log("execute()");
+    console.log(e);
   }
 }
 

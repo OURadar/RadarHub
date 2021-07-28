@@ -73,3 +73,8 @@ Copyright Boonleng Cheong
   padding-right: calc(0.3 * var(--indicator-height));
   font-weight: 500;
 }
+.scopeSingle,
+.scopeDouble {
+  padding-left: var(--padding);
+  padding-right: var(--padding);
+}

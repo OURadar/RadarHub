@@ -12,9 +12,10 @@ import { prettyString } from "./common";
 import { theme } from "./theme";
 
 function Control(props) {
+  const dict = props.ingest.data.control;
   const controls = [];
-  for (let k = 0; k < props.array.length; k++) {
-    let b = props.array[k];
+  for (let k = 0; k < dict.length; k++) {
+    let b = dict[k];
     if (typeof b == "object" && "Label" in b) {
       let label = prettyString(b.Label);
       controls.push(<Button key={k}>{label}</Button>);

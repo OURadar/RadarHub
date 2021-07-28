@@ -55,14 +55,13 @@ function Health(props) {
   for (let k in labels) {
     listLabels.push(<IndicatorLabel name={k} value={labels[k]} key={k} />);
   }
+  if (listLEDs.length == 0 && listLabels.length == 0) {
+    return <div className="healthContainer"></div>;
+  }
   return (
     <div className="healthContainer">
-      <div>
-        <div className="indicatorContainer">{listLEDs}</div>
-      </div>
-      <div>
-        <div className="indicatorContainer">{listLabels}</div>
-      </div>
+      <div className="indicatorContainer">{listLEDs}</div>
+      <div className="indicatorContainer">{listLabels}</div>
     </div>
   );
 }

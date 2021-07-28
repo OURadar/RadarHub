@@ -3,9 +3,9 @@
   <head>
     {% load static %}
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="translucent" />
     <link
       href="{% static 'images/iradar-icon-57x57.png' %}"
       sizes="57x57"
@@ -43,7 +43,7 @@
   </head>
   <body>
     <div id="app"></div>
-    <div id="reload" onClick="window.location.reload()">Reload</div>
+    {% comment %} <div id="reload" onClick="window.location.reload()">Reload</div> {% endcomment %}
     <div id="test"></div>
   </body>
   <script src="{% static 'frontend/main.js' %}?v={% now 'U' %}"></script>

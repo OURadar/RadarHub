@@ -39,6 +39,7 @@ export const theme = createTheme({
         borderBottom: "var(--button-border-bottom)",
         borderLeft: "var(--button-border-left)",
         marginBottom: "var(--button-margin-bottom)",
+        boxSizing: "border-box",
       },
       text: {
         display: "inline-block",
@@ -47,8 +48,9 @@ export const theme = createTheme({
         lineHeight: "var(--font-size)",
         overflow: "hidden",
         textOverflow: "ellipsis",
-        textTransform: "none",
         verticalAlign: "middle",
+        textTransform: "none",
+        boxSizing: "border-box",
       },
       label: {
         display: "inline-block",
@@ -58,6 +60,8 @@ export const theme = createTheme({
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
         verticalAlign: "middle",
+        textTransform: "none",
+        boxSizing: "border-box",
       },
     },
   },

@@ -4,19 +4,20 @@ Copyright Boonleng Cheong
 */
 :root {
   --button-height: 44px;
-  --font-size: calc(var(--button-height) * 0.45);
-  --button-border-top: solid 1px var(--border-accent);
+  --font-size: 18px;
+  --button-border-top: none;
   --button-border-right: none;
-  --button-border-bottom: none;
+  --button-border-bottom: solid 1px var(--border-accent);
   --button-border-left: none;
   --button-margin-bottom: 0;
   --button-border-radius: 0;
+  --padding: 20px;
   padding: 0;
 }
 .controlContainer,
 .healthContainer {
   display: block;
-  height: 353px;
+  height: 351px;
   overflow-y: scroll;
 }
 .indicatorContainer {
@@ -28,13 +29,14 @@ Copyright Boonleng Cheong
 .labelIndicator {
   height: var(--button-height);
   vertical-align: middle;
-  border-top: solid 1px var(--border-accent);
+  border-bottom: solid 1px var(--border-accent);
+  box-sizing: border-box;
 }
 .ledTitle,
 .ledValue,
 .labelTitle,
 .labelValue {
-  top: calc(var(--button-height) * 0.275);
+  top: calc((var(--button-height) - var(--font-size)) * 0.5);
 }
 .ledTitle {
   display: inline-block;
@@ -47,7 +49,6 @@ Copyright Boonleng Cheong
   width: var(--font-size);
   height: var(--font-size);
   border-radius: 50%;
-  box-sizing: border-box;
   z-index: 102;
 }
 .labelTitle {
@@ -63,5 +64,5 @@ Copyright Boonleng Cheong
 }
 .MuiButton-text:last-child,
 .labelIndicator:last-child {
-  border-bottom: solid 1px var(--border-accent);
+  border-bottom: none;
 }

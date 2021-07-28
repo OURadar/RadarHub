@@ -12,14 +12,7 @@ import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
-
-function StatusBar(props) {
-  return (
-    <div className="statusBar">
-      <div className="leftPadded">{props.message}</div>
-    </div>
-  );
-}
+import { StatusBar, Pad } from "./simple";
 
 class App extends Component {
   constructor(props) {
@@ -68,20 +61,22 @@ class App extends Component {
     let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
     return (
       <div>
-        <h1>RadarHub</h1>
-        <div className="leftPadded">
-          radar: {this.props.radar} &nbsp; receiver: {this.props.receiver}
+        <div className="topbar">
+          <h1>RadarHub</h1>
+          <div className="leftPadded">radar: {this.props.radar}</div>
         </div>
+        <Pad />
         <StatusBar message={this.ingest.message} />
         <h2>Control</h2>
-        <Control array={this.ingest.data.control} />
+        <Control ingest={this.ingest} />
         <h2>Health Status</h2>
         <Health dict={this.ingest.data.health} />
-        <h2>Single-Channel Scope</h2>
+        <h2>Scopes</h2>
+        <h3>Single-Channel</h3>
         <div className="scopeSingle">
           <Scope data={single} colors={this.state.colors} />
         </div>
-        <h2>Dual-Channel Scope</h2>
+        <h3>Dual-Channel</h3>
         <div className="scopeDouble">
           <Scope2 data={this.ingest.data} colors={this.state.colors} />
         </div>

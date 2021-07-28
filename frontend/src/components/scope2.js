@@ -68,7 +68,7 @@ class Scope2 extends Scope {
       const x1 = x0 + ww;
       const y1 = y0 + hh;
       // const y2 = y1 + d;
-      const y2 = h - hh - 1;
+      const y2 = h - hh;
       const minX = -state.offsetX / w / state.scaleX;
       const maxX = (w - state.offsetX) / w / state.scaleX;
       const minY = (-h2 - state.offsetY) / h / state.scaleY;
