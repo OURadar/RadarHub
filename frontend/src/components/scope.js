@@ -115,7 +115,7 @@ class Scope extends Component {
     debug: false,
     debugGL: false,
     showStats: false,
-    colors: common.colordict(),
+    colors: common.colorDict(),
     linewidth: 1.4,
     textureScale: 1.0,
   };

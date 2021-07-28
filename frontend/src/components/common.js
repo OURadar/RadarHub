@@ -60,7 +60,7 @@ export function array2rgba(array) {
   );
 }
 
-export function colordict(theme) {
+export function colorDict(theme) {
   // Retrieve the body color so we can match the canvas with it
   let body = window.getComputedStyle(document.body).backgroundColor;
   body = body.match(/\d+/g).map((x) => x / 255);

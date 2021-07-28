@@ -6,7 +6,7 @@
 //
 
 import React, { Component } from "react";
-import { colordict } from "./common";
+import { colorDict } from "./common";
 import { Ingest } from "./ingest";
 import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
@@ -18,7 +18,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      colors: colordict(),
+      colors: colorDict(),
       tic: 0,
     };
     this.ingest = new Ingest(props.radar);
@@ -39,11 +39,11 @@ class App extends Component {
       .addEventListener("change", (e) => {
         if (e.matches) {
           this.setState({
-            colors: colordict("dark"),
+            colors: colorDict("dark"),
           });
         } else {
           this.setState({
-            colors: colordict("light"),
+            colors: colorDict("light"),
           });
         }
       });

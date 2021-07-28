@@ -47,7 +47,7 @@ import * as common from "./common";
 class Scope2 extends Scope {
   static defaultProps = {
     ...super.defaultProps,
-    colors: common.colordict(),
+    colors: common.colorDict(),
   };
 
   updateProjection() {
