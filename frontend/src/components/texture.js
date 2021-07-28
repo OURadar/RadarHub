@@ -135,6 +135,7 @@ class Texture {
         context.strokeStyle = "orange";
         context.strokeRect(x, y, ww, hh);
       }
+      //context.strokeStyle = "white";
       context.fillStyle = color;
       context.fillText(
         label,

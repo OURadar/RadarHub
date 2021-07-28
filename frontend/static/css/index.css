@@ -80,16 +80,16 @@ html {
   }
 }
 
-body {
-  color: var(--system-foreground);
-  background-color: var(--system-background);
-  margin: 0;
-}
-
 @font-face {
   font-family: "LabelFont";
   font-style: normal;
   src: url("../blob/helveticaneue/HelveticaNeueMed.ttf") format("truetype");
+}
+
+body {
+  color: var(--system-foreground);
+  background-color: var(--system-background);
+  margin: 0;
 }
 
 canvas {

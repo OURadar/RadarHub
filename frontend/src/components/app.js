@@ -12,7 +12,7 @@ import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
-import { StatusBar, Pad } from "./simple";
+import { Pad } from "./simple";
 
 class App extends Component {
   constructor(props) {
