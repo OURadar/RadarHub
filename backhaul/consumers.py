@@ -1,5 +1,6 @@
 # backhaul/consumers.py
 
+import sys
 import asyncio
 import threading
 
@@ -17,7 +18,7 @@ async def _runloop(radar):
     h1 = 0
     freq = 20
 
-    print(f'\033[38;5;204m{__name__}._runloop  radar={radar}  channel_layer.ring_size={channel_layer.ring_size}\033[m')
+    print(f'\033[38;5;203m{__name__}._runloop  radar={radar}  channel_layer.ring_size={channel_layer.ring_size}\033[m')
 
     # Request data from the radar only if there are clients (from frontend) for the data stream
     while data.count(radar) > 0:
@@ -87,7 +88,8 @@ class BackhaulConsumer(AsyncConsumer):
         data.unregister(radar)
 
         global channels
-        channels.remove(channel)
+        if channel in channels:
+            channels.remove(channel)
 
     async def relay(self, message):
         print('backhaul.consumers.relay()')

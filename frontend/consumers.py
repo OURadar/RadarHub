@@ -23,7 +23,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
-        print('Leaving group \033[38;5;82m{}\033[m'.format(self.radar))
+        print('Leaving group \033[38;5;87m{}\033[m'.format(self.radar))
         self.is_connected = False
         await self.channel_layer.send(
             'backhaul',

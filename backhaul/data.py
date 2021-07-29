@@ -80,6 +80,8 @@ def attach():
     try:
         _shm = shared_memory.SharedMemory(_key)
     except:
+        _shm = None
+    if _shm is None:
         if verbose:
             print('Creating shared memory ...')
         _shm = shared_memory.SharedMemory(_key, create=True, size=4096)
@@ -103,10 +105,11 @@ def detach():
         print('not sync')
         return
     blob = bytes(json.dumps(_radar_set), 'utf-8') + b'\x00'
-    if verbose:
+    if verbose > 1:
         print(f'detach: {blob} ({len(blob)})')
     if _shm.buf is None:
         print('ERROR. Unexpected.')
+        return
     _shm.buf[:len(blob)] = blob
     _shm.close()
 
@@ -223,12 +226,13 @@ def getControl():
     return (controlString, 0)
 
 def relayCommand(name, command):
-    attach()
     global _radar_set
     print(f'data.relayCommand() - {name} - "\033[38;5;82m{command}\033[m"')
-    time.sleep(0.5)
-    _radar_set[name]['relay'] += 1
-    pp.pprint(_radar_set)
-    detach()
+    time.sleep(0.8)
+    with _lock:
+        attach()
+        _radar_set[name]['relay'] += 1
+        pp.pprint(_radar_set)
+        detach()
     message = f'ACK "{command}" executed'
     return message;
