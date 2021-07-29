@@ -15,7 +15,6 @@ Copyright Boonleng Cheong
 }
 .controlContainer,
 .healthContainer {
-  display: inline-block;
   padding: var(--padding);
 }
 .controlContainer {

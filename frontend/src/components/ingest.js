@@ -77,14 +77,17 @@ class Ingest {
       if (type == 1) {
         // AScope data - convert arraybuffer to int16 typed array
         const samples = new Int16Array(e.data.slice(1));
+
         // Parse out the array into I/Q/A arrays for Scope
         const len = Math.floor(samples.length / 2);
         const i = new Float32Array(samples.slice(0, len));
         const q = new Float32Array(samples.slice(len));
         const a = new Float32Array(len);
+
         for (var k = 0; k < len; k++) {
           a[k] = Math.sqrt(i[k] * i[k] + q[k] * q[k]);
         }
+
         newData.ch1 = {
           i: i,
           q: q,
@@ -110,7 +113,6 @@ class Ingest {
         // Control data in JSON
         const text = new TextDecoder().decode(e.data.slice(1));
         const dict = JSON.parse(text);
-        console.log(dict.name, this.radar);
         if (dict.name) {
           newData.control = dict["Controls"];
         } else {
