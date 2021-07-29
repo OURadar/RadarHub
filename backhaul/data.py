@@ -76,18 +76,17 @@ pp = pprint.PrettyPrinter(indent=4)
 def attach():
     remove_shm_from_resource_tracker()
     global _shm
+    global _radar_set
     try:
         _shm = shared_memory.SharedMemory(_key)
     except:
         if verbose:
             print('Creating shared memory ...')
         _shm = shared_memory.SharedMemory(_key, create=True, size=4096)
-        _shm.buf[:2] = b'{}'
+        _shm.buf[:2] = b'{}\x00'
 
     b = _shm.buf.tobytes().decode('utf-8')
     s = '{}'.format(b[:b.index('\x00')])
-    print(s)
-    global _radar_set
     try:
         _radar_set = json.loads(s)
     except:
@@ -95,16 +94,19 @@ def attach():
         _radar_set = {}
         detach()
     if verbose > 1:
-        print('attach() {} ({})'.format(_radar_set, len(_radar_set)))
+        print(f'attach: {_radar_set} ({len(_radar_set)})')
 
 def detach():
     global _shm
+    global _radar_set
     if _shm is None:
         print('not sync')
         return
     blob = bytes(json.dumps(_radar_set), 'utf-8') + b'\x00'
-    if verbose > 1:
-        print('detach() {} ({})'.format(blob, len(blob)))
+    if verbose:
+        print(f'detach: {blob} ({len(blob)})')
+    if _shm.buf is None:
+        print('ERROR. Unexpected.')
     _shm.buf[:len(blob)] = blob
     _shm.close()
 
@@ -113,50 +115,55 @@ def destroy():
     if _shm is None:
         print('not sync')
         return
-    _shm.unlink()
+    with _lock:
+        _shm.unlink()
 
 def register(name):
-    attach()
     with _lock:
+        attach()
         if name in _radar_set:
             _radar_set[name]['clients'] += 1
         else:
             _radar_set[name] = blank
             _radar_set[name]['clients'] = 1
-    if verbose > 1:
-        print('unregister: {}\nradar_set ='.format(name))
-        pp.pprint(_radar_set)
-    detach()
+        if verbose:
+            print(f'register: \033[38;5;87m{name}\033[m\nradar_set =')
+            pp.pprint(_radar_set)
+        detach()
 
 def unregister(name):
-    attach()
     with _lock:
+        attach()
         if name in _radar_set:
             _radar_set[name]['clients'] -= 1
             if _radar_set[name]['clients'] < 0:
-                print('Unexpected client count. Backhaul worker probably restarted with active clients.')
-                _radar_set[name]['clients'] = 0
+                print('Unexpected client count. Resetting ...')
+                _radar_set[name] = blank
         else:
             _radar_set[name] = blank
-    if verbose >  1:
-        print('unregister: {}\nradar_set ='.format(name))
-        pp.pprint(_radar_set)
-    detach()
+        if verbose:
+            print(f'unregister: \033[38;5;87m{name}\033[m\nradar_set =')
+            pp.pprint(_radar_set)
+        detach()
 
 def reset():
-    attach()
     global _radar_set
-    if verbose > 1:
-        print('reset() radar_set =')
-        pp.pprint(_radar_set)
-    for (k, _) in _radar_set.items():
-        _radar_set[k] = blank
-    if verbose > 1:
-        print('-->')
-        pp.pprint(_radar_set)
-    detach()
+    with _lock:
+        attach()
+        if verbose > 1:
+            print('reset: radar_set =')
+            pp.pprint(_radar_set)
+        for (k, _) in _radar_set.items():
+            _radar_set[k] = blank
+        if verbose > 1:
+            print('-->')
+            pp.pprint(_radar_set)
+        detach()
 
 def count(name):
+    with _lock:
+        attach()
+        detach()
     if name not in _radar_set:
         return 0
     return _radar_set[name]['clients']
@@ -218,10 +225,10 @@ def getControl():
 def relayCommand(name, command):
     attach()
     global _radar_set
-    print('data.relayCommand() - {} - "\033[38;5;82m{}\033[m"'.format(name, command))
+    print(f'data.relayCommand() - {name} - "\033[38;5;82m{command}\033[m"')
     time.sleep(0.5)
     _radar_set[name]['relay'] += 1
     pp.pprint(_radar_set)
     detach()
-    message = 'ACK "{}" executed'.format(command)
+    message = f'ACK "{command}" executed'
     return message;

@@ -64,7 +64,8 @@ class App extends Component {
         <div className="topbar">
           <h1>RadarHub</h1>
           <div className="leftPadded">
-            radar: {this.props.radar} {this.ingest.message}{" "}
+            {this.props.radar}{" "}
+            {this.ingest.message.length ? " / " + this.ingest.message : ""}
           </div>
         </div>
         <Pad />

@@ -13,7 +13,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
             self.radar = self.scope['url_route']['kwargs']['radar']
         self.meta = np.array([0, 0], dtype=np.uint32)
 
-        print('Joining group \033[38;5;82m{}\033[m'.format(self.radar))
+        print('Joining group \033[38;5;87m{}\033[m'.format(self.radar))
 
         # Join radar, accept the connection and say hello to backhaul
         await self.channel_layer.group_add(
@@ -43,16 +43,16 @@ class AsyncConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data=None):
         print('frontend.consumer.receive() - "\033[38;5;82m{}\033[m"'.format(text_data))
         packet = json.loads(text_data)
-        if 'type' not in packet:
-            print('Ignore unknown message')
-            return
         if 'radar' not in packet:
             print('Message has no radar')
             return
+        if 'route' not in packet:
+            print('Message has no route')
+            return
         if packet['radar'] != self.radar:
             print('\033[38;5;197mBUG: radar = {} != self.radar = {}\033[m'.format(packet['radar'], self.radar))
-        if packet['type'] == "command":
-            if packet['value'] == "hello":
+        if packet['route'] == 'home':
+            if packet['value'] == 'hello':
                 await self.channel_layer.send(
                     'backhaul',
                     {
@@ -62,12 +62,12 @@ class AsyncConsumer(AsyncWebsocketConsumer):
                     }
                 )
             else:
-                print("Expected command value = {}".format(packet['value']))
-        elif packet['type'] == "relay":
+                print('Expected command value = {}'.format(packet['value']))
+        elif packet['route'] == 'away':
             await self.channel_layer.send(
                 'backhaul',
                 {
-                    'type': 'handle',
+                    'type': 'relay',
                     'radar': self.radar,
                     'channel': self.channel_name,
                     'command': packet['value']

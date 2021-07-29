@@ -17,7 +17,7 @@ async def _runloop(radar):
     h1 = 0
     freq = 20
 
-    print('\033[38;5;296m{}  radar={}  channel_layer.ring_size={}\033[m'.format(__name__, radar, channel_layer.ring_size))
+    print(f'\033[38;5;204m{__name__}._runloop  radar={radar}  channel_layer.ring_size={channel_layer.ring_size}\033[m')
 
     # Request data from the radar only if there are clients (from frontend) for the data stream
     while data.count(radar) > 0:
@@ -44,7 +44,7 @@ async def _runloop(radar):
             )
             h1 = h0
         await asyncio.sleep(1 / freq)
-    print('No more connections for radar = {} (len = {}). Retiring ...'.format(radar, len(channel_layer.hosts)))
+    print(f'No more connections for radar = {radar}. Retiring ...')
 
 def runloop(radar):
     loop = asyncio.new_event_loop()
@@ -89,9 +89,9 @@ class BackhaulConsumer(AsyncConsumer):
         global channels
         channels.remove(channel)
 
-    async def handle(self, message):
-        print('backhaul.consumers.handle()')
-        if 'radar' not in message:
+    async def relay(self, message):
+        print('backhaul.consumers.relay()')
+        if 'radar' not in message or 'command' not in message:
             return
         radar = message['radar']
         channel = message['channel']
