@@ -90,8 +90,20 @@ class BackhaulConsumer(AsyncConsumer):
         channels.remove(channel)
 
     async def handle(self, message):
+        print('backhaul.consumers.handle()')
         if 'radar' not in message:
             return
         radar = message['radar']
+        channel = message['channel']
         command = message['command']
-        print('handle() for {} - {}'.format(radar, command))
+
+        # Will be replaced with actual radar communication here
+        payload = data.relayCommand(radar, command);
+
+        await channel_layer.send(
+            channel,
+            {
+                'type': 'sendResponse',
+                'response': bytearray(payload, 'utf-8'),
+            }
+        )

@@ -2,6 +2,7 @@
 
 import json
 import time
+import pprint
 import threading
 import numpy as np
 
@@ -36,7 +37,7 @@ def remove_shm_from_resource_tracker():
 
 N = 1000         # number of samples
 nm = 1000        # noise magnitude
-verbose = 2      # printing something
+verbose = 1      # printing something
 
 # state
 active = False
@@ -61,6 +62,17 @@ healthString = [
 
 controlString = '{"name": "px1000", "Controls": [{"Label": "Go", "Command": "t y"}, {"Label": "Stop", "Command": "t z"}, {"Label": "PRF 1,000 Hz (84 km)", "Command": "t prf 1000"}, {"Label": "PRF 1,475 Hz (75 km)", "Command": "t prf 1475"}, {"Label": "PRF 2,000 Hz (65 km)", "Command": "t prf 2000"}, {"Label": "PRF 3,000 Hz (40 km)", "Command": "t prf 3003"}, {"Label": "PRF 4,000 Hz (28 km)", "Command": "t prf 4000"}, {"Label": "PRF 5,000 Hz (17.6 km)", "Command": "t prf 5000"}, {"Label": "Stop Pedestal", "Command": "p stop"}, {"Label": "Park", "Command": "p point 0 90"}, {"Label": "DC PSU On", "Command": "h pow on"}, {"Label": "DC PSU Off", "Command": "h pow off"}, {"Label": "Measure Noise", "Command": "t n"}, {"Label": "Transmit Toggle", "Command": "t tx"}, {"Label": "10us pulse", "Command": "t w s10"}, {"Label": "12us LFM", "Command": "t w q0412"}, {"Label": "20us pulse", "Command": "t w s20"}, {"Label": "50us pulse", "Command": "t w s50"}, {"Label": "TFM + OFM", "Command": "t w ofm"}, {"Label": "OFM", "Command": "t w ofmd"}, {"Label": "1-tilt EL 2.4 deg @ 18 deg/s", "Command": "p vol p 2.4 300 18"}, {"Label": "5-tilt VCP @ 45 deg/s", "Command": "p vol p 2 300 45/p 4 300 45/p 6 300 45/p 8 300 45/p 10 300 45"}, {"Label": "5-tilt VCP @ 25 deg/s", "Command": "p vol p 2 300 25/p 4 300 25/p 6 300 25/p 8 300 25/p 10 300 25"}, {"Label": "5-tilt VCP @ 18 deg/s", "Command": "p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18"}, {"Label": "5-tilt VCP @ 12 deg/s", "Command": "p vol p 2 300 12/p 4 300 12/p 6 300 12/p 8 300 12/p 10 300 12"}, {"Label": "6-tilt VCP @ 18 deg/s", "Command": "p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18/p 12 300 18"}]}'
 
+#
+# radar = {
+#   'px1000': {'clients': 0, 'relay': 0},
+#   'pair': {'clients': 0, 'relay': 0},
+#   ...
+# }
+#
+blank = {'clients': 0, 'relay': 0}
+
+pp = pprint.PrettyPrinter(indent=4)
+
 def attach():
     remove_shm_from_resource_tracker()
     global _shm
@@ -74,9 +86,16 @@ def attach():
 
     b = _shm.buf.tobytes().decode('utf-8')
     s = '{}'.format(b[:b.index('\x00')])
+    print(s)
     global _radar_set
-    _radar_set = json.loads(s)
-    #print('attach() --> "{}" ({}) --> {}'.format(s, len(s), _radar_set))
+    try:
+        _radar_set = json.loads(s)
+    except:
+        print('Bad JSON, reset to empty')
+        _radar_set = {}
+        detach()
+    if verbose > 1:
+        print('attach() {} ({})'.format(_radar_set, len(_radar_set)))
 
 def detach():
     global _shm
@@ -84,6 +103,8 @@ def detach():
         print('not sync')
         return
     blob = bytes(json.dumps(_radar_set), 'utf-8') + b'\x00'
+    if verbose > 1:
+        print('detach() {} ({})'.format(blob, len(blob)))
     _shm.buf[:len(blob)] = blob
     _shm.close()
 
@@ -98,42 +119,47 @@ def register(name):
     attach()
     with _lock:
         if name in _radar_set:
-            _radar_set[name] += 1
+            _radar_set[name]['clients'] += 1
         else:
-            _radar_set[name] = 1
+            _radar_set[name] = blank
+            _radar_set[name]['clients'] = 1
     if verbose > 1:
-        print('register: radar_set = {}'.format(_radar_set))
+        print('unregister: {}\nradar_set ='.format(name))
+        pp.pprint(_radar_set)
     detach()
 
 def unregister(name):
     attach()
     with _lock:
         if name in _radar_set:
-            _radar_set[name] -= 1
-            if _radar_set[name] < 0:
-                print('Unexpected count. Backhaul worker probably restarted with active clients.')
-                _radar_set[name] = 0
+            _radar_set[name]['clients'] -= 1
+            if _radar_set[name]['clients'] < 0:
+                print('Unexpected client count. Backhaul worker probably restarted with active clients.')
+                _radar_set[name]['clients'] = 0
         else:
-            _radar_set[name] = 0
+            _radar_set[name]['clients'] = 0
     if verbose >  1:
-        print('unregister: radar_set = {}'.format(_radar_set))
+        print('unregister: {}\nradar_set ='.format(name))
+        pp.pprint(_radar_set)
     detach()
 
 def reset():
     attach()
     global _radar_set
-    print('radar_set --> {}'.format(_radar_set))
+    if verbose > 1:
+        print('reset() radar_set =')
+        pp.pprint(_radar_set)
     for (k, _) in _radar_set.items():
-        _radar_set[k] = 0
-    print('          --> {}'.format(_radar_set))
+        _radar_set[k] = blank
+    if verbose > 1:
+        print('-->')
+        pp.pprint(_radar_set)
     detach()
 
 def count(name):
-    attach()
-    detach()
     if name not in _radar_set:
         return 0
-    return _radar_set[name]
+    return _radar_set[name]['clients']
 
 
 # This will eventually become requestor to the radar API
@@ -177,6 +203,8 @@ def stop():
         print('\033[38;5;15;48;5;196mData interface\033[m stopped')
     tid = None
 
+# Methods for backhaul.consumers
+
 def getSamples():
     return (y, tic)
 
@@ -186,3 +214,14 @@ def getHealth():
 
 def getControl():
     return (controlString, 0)
+
+def relayCommand(name, command):
+    attach()
+    global _radar_set
+    print('data.relayCommand() - {} - "\033[38;5;82m{}\033[m"'.format(name, command))
+    time.sleep(0.5)
+    _radar_set[name]['relay'] += 1
+    pp.pprint(_radar_set)
+    detach()
+    message = 'ACK "{}" executed'.format(command)
+    return message;

@@ -46,9 +46,18 @@ class AsyncConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-    # Receive message from frontend
-    async def receive(self, text_data=None, bytes_data=None):
-        print('frontend.consumer.receive()')
+    # Receive message from frontend, which relays commands from the web app
+    async def receive(self, text_data=None):
+        print('frontend.consumer.receive() - "\033[38;5;82m{}\033[m"'.format(text_data))
+        await self.channel_layer.send(
+            'backhaul',
+            {
+                'type': 'handle',
+                'radar': self.radar,
+                'channel': self.channel_name,
+                'command': text_data
+            }
+        )
 
     # The following are methods called by backhaul
 
@@ -65,6 +74,11 @@ class AsyncConsumer(AsyncWebsocketConsumer):
     # Control buttons
     async def sendControl(self, event):
         bytes = b'\x03' + event['control']
+        await self.send(bytes_data=bytes)
+
+    # Send response
+    async def sendResponse(self, event):
+        bytes = b'\x04' + event['response']
         await self.send(bytes_data=bytes)
 
     # Rays, etc.

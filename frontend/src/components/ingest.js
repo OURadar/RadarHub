@@ -103,12 +103,26 @@ class Ingest {
         } else {
           console.log("dict.name = " + dict.name + " /= " + this.radar);
         }
+      } else if (type == 4) {
+        // Response of a command
+        let text = new TextDecoder().decode(e.data.slice(1));
+        if (text.includes("ACK")) {
+          text = " 👍🏼 " + text + " 😎 ";
+        }
+        console.log("response = " + text);
+        this.message = text;
+        setTimeout(() => {
+          if (this.message == text) {
+            this.message = "";
+            this.onupdate(this.tic++);
+          }
+        }, 2000);
       } else {
         // Unknown type, ignore the data but increases the u counter
         this.u += 1;
       }
       this.data = { ...this.data, ...newData };
-      this.onupdate(this.tic);
+      this.onupdate(this.tic++);
     };
     this.socket.onclose = (_e) => {
       this.wait = 5.0;
@@ -139,9 +153,8 @@ class Ingest {
     }
   }
 
-  execute(e) {
-    console.log("execute()");
-    console.log(e);
+  execute(command) {
+    this.socket.send(command);
   }
 }
 

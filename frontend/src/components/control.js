@@ -12,13 +12,21 @@ import { prettyString } from "./common";
 import { theme } from "./theme";
 
 function Control(props) {
-  const dict = props.ingest.data.control;
+  const elements = props.ingest.data.control;
   const controls = [];
-  for (let k = 0; k < dict.length; k++) {
-    let b = dict[k];
-    if (typeof b == "object" && "Label" in b) {
-      let label = prettyString(b.Label);
-      controls.push(<Button key={k}>{label}</Button>);
+  for (let k = 0; k < elements.length; k++) {
+    let item = elements[k];
+    if (typeof item == "object" && "Label" in item && "Command" in item) {
+      controls.push(
+        <Button
+          onClick={() => {
+            props.ingest.execute(item.Command);
+          }}
+          key={k}
+        >
+          {prettyString(item.Label)}
+        </Button>
+      );
     }
   }
   return (

@@ -8,5 +8,5 @@ import os
 print('\033[38;5;214m{}\033[m init {}'.format(__name__, os.getpid()))
 # print(channel_layer);
 
-print(dir())
-print(__loader__)
+# print(dir())
+# print(__loader__)
