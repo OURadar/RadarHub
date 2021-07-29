@@ -55,6 +55,13 @@ class Ingest {
           this.onupdate(this.tic++);
         }
       }, 2000);
+      this.socket.send(
+        JSON.stringify({
+          type: "command",
+          radar: this.radar,
+          value: "hello",
+        })
+      );
       this.onupdate(this.tic++);
     };
     this.socket.onmessage = (e) => {
@@ -154,7 +161,13 @@ class Ingest {
   }
 
   execute(command) {
-    this.socket.send(command);
+    this.socket.send(
+      JSON.stringify({
+        type: "relay",
+        radar: this.radar,
+        value: command,
+      })
+    );
   }
 }
 

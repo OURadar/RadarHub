@@ -1,5 +1,6 @@
 # frontend/consumers.py
 
+import json
 import numpy as np
 
 from django.core.signals import request_finished
@@ -20,14 +21,6 @@ class AsyncConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
         await self.accept()
-        await self.channel_layer.send(
-            'backhaul',
-            {
-                'type': 'hello',
-                'radar': self.radar,
-                'channel': self.channel_name
-            }
-        )
 
     async def disconnect(self, close_code):
         print('Leaving group \033[38;5;82m{}\033[m'.format(self.radar))
@@ -49,16 +42,39 @@ class AsyncConsumer(AsyncWebsocketConsumer):
     # Receive message from frontend, which relays commands from the web app
     async def receive(self, text_data=None):
         print('frontend.consumer.receive() - "\033[38;5;82m{}\033[m"'.format(text_data))
-        await self.channel_layer.send(
-            'backhaul',
-            {
-                'type': 'handle',
-                'radar': self.radar,
-                'channel': self.channel_name,
-                'command': text_data
-            }
-        )
-
+        packet = json.loads(text_data)
+        if 'type' not in packet:
+            print('Ignore unknown message')
+            return
+        if 'radar' not in packet:
+            print('Message has no radar')
+            return
+        if packet['radar'] != self.radar:
+            print('\033[38;5;197mBUG: radar = {} != self.radar = {}\033[m'.format(packet['radar'], self.radar))
+        if packet['type'] == "command":
+            if packet['value'] == "hello":
+                await self.channel_layer.send(
+                    'backhaul',
+                    {
+                        'type': 'hello',
+                        'radar': self.radar,
+                        'channel': self.channel_name
+                    }
+                )
+            else:
+                print("Expected command value = {}".format(packet['value']))
+        elif packet['type'] == "relay":
+            await self.channel_layer.send(
+                'backhaul',
+                {
+                    'type': 'handle',
+                    'radar': self.radar,
+                    'channel': self.channel_name,
+                    'command': packet['value']
+                }
+            )
+        else:
+            print("Unexpected message = {}".format(text_data))
     # The following are methods called by backhaul
 
     # Pulse samples

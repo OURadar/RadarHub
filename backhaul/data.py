@@ -21,13 +21,13 @@ def remove_shm_from_resource_tracker():
     def fix_register(name, rtype):
         if rtype == "shared_memory":
             return
-        return resource_tracker._resource_tracker.register(self, name, rtype)
+        return resource_tracker._resource_tracker.register(None, name, rtype)
     resource_tracker.register = fix_register
 
     def fix_unregister(name, rtype):
         if rtype == "shared_memory":
             return
-        return resource_tracker._resource_tracker.unregister(self, name, rtype)
+        return resource_tracker._resource_tracker.unregister(None, name, rtype)
     resource_tracker.unregister = fix_unregister
 
     if "shared_memory" in resource_tracker._CLEANUP_FUNCS:
@@ -137,7 +137,7 @@ def unregister(name):
                 print('Unexpected client count. Backhaul worker probably restarted with active clients.')
                 _radar_set[name]['clients'] = 0
         else:
-            _radar_set[name]['clients'] = 0
+            _radar_set[name] = blank
     if verbose >  1:
         print('unregister: {}\nradar_set ='.format(name))
         pp.pprint(_radar_set)
