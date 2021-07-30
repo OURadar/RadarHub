@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     {% load static %}
@@ -7,14 +7,25 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="translucent" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
     <link
       href="{% static 'images/iradar-icon-57x57.png' %}"
       sizes="57x57"
       rel="apple-touch-icon"
     />
     <link
+      href="{% static 'images/iradar-icon-72x72.png' %}"
+      sizes="72x72"
+      rel="apple-touch-icon"
+    />
+    <link
       href="{% static 'images/iradar-icon-114x114.png' %}"
       sizes="114x114"
+      rel="apple-touch-icon"
+    />
+    <link
+      href="{% static 'images/iradar-icon-144x144.png' %}"
+      sizes="144x144"
       rel="apple-touch-icon"
     />
     <link

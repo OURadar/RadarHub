@@ -10,8 +10,8 @@ Copyright Boonleng Cheong
   --button-border-right: solid 1px var(--border-accent);
   --button-border-bottom: solid 1px var(--border-accent);
   --button-border-left: solid 1px var(--border-accent);
-  --button-margin-bottom: 5px;
   --button-border-radius: 5px;
+  --button-margin-bottom: 5px;
 }
 .controlContainer,
 .healthContainer {

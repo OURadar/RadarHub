@@ -13,6 +13,7 @@ html {
 :root {
   --padding: 20px;
   --base-size: 14;
+  --gradient-shifter: linear-gradient(to bottom, #bc4e9c 20%, #f80759 80%);
   box-sizing: border-box;
 }
 
@@ -46,6 +47,7 @@ html {
     --system-background: #ffffff;
     --secondary-system-background: #f2f2f7ff;
     --tertiary-system-background: #ffffffff;
+    --gradient-aqua: linear-gradient(45deg, #02aab0 30%, #00cdac 90%);
   }
 }
 @media (prefers-color-scheme: dark) {
@@ -77,6 +79,7 @@ html {
     --system-background: #000000;
     --secondary-system-background: #1c1c1eff;
     --tertiary-system-background: #2c2c2eff;
+    --gradient-aqua: linear-gradient(45deg, #13547a 30%, #80d0c7 90%);
   }
 }
 
@@ -110,8 +113,6 @@ canvas {
 }
 .sectionHeader {
   background-color: var(--gray6);
-  border-top: solid 1px var(--border-accent);
-  border-bottom: solid 1px var(--border-accent);
   padding: 10px 20px;
   height: 24px;
 }
@@ -147,8 +148,8 @@ h3 {
   color: white;
   padding-bottom: 10px;
   overflow-y: auto;
-  background: linear-gradient(45deg, #02aab0 30%, #00cdac 90%);
-  border-bottom: solie 1px blue;
+  background: var(--gradient-aqua);
+  border-bottom: solid 1px var(--border-accent);
 }
 .header {
   background-color: var(--gray5);

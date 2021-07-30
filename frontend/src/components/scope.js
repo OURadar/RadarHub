@@ -240,7 +240,7 @@ class Scope extends Component {
   makeGrid(v2dx, x0, x1, minX, maxX, v2dy, y0, y1, minY, maxY) {
     // Across the width, we want to allow about 120px in between grid lines
     const p = 6;
-    const n = Math.round(this.canvas.width / 120);
+    const n = Math.round(this.canvas.width / 100);
     const xticks = common.ticksInRange(n, minX, maxX, this.constants.rangeX);
     const yticks = common.ticksInRange(5, minY, maxY, this.constants.rangeY);
     let j;

@@ -41,7 +41,7 @@ export function Console(props) {
 export function SectionHeader(props) {
   let icon;
   if (props.name == "control") {
-    icon = <Keyboard />;
+    icon = <Keyboard color="action" />;
   } else if (props.name == "health") {
     icon = <Favorite style={{ color: "var(--red)" }} />;
   } else if (props.name == "scope") {

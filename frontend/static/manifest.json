@@ -1,0 +1,30 @@
+{
+  "background_color": "black",
+  "description": "A hub where radars and users connect",
+  "display": "fullscreen",
+  "icons": [
+    {
+      "src": "/static/images/iradar-icon-57x57.png",
+      "sizes": "57x57",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/images/iradar-icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/images/iradar-icon-114x114.png",
+      "sizes": "114x114",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/images/iradar-icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    }
+  ],
+  "name": "RadarHub",
+  "short_name": "RadarHub",
+  "start_url": "/"
+}

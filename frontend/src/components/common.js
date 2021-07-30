@@ -18,8 +18,8 @@ export function ticksInRange(count, min, max, choices) {
   let score = 1;
   let delta = choices[0];
   choices.forEach((x) => {
-    let tmp = Math.abs((range - x) / x);
-    if (score > tmp) {
+    let tmp = Math.abs(range - x) / x;
+    if (score >= tmp) {
       score = tmp;
       delta = x;
     }

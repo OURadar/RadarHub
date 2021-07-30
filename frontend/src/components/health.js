@@ -63,8 +63,12 @@ function Health(props) {
     <div>
       <SectionHeader name="health" />
       <div className="healthContainer">
-        <div className="indicatorContainer">{listLEDs}</div>
-        <div className="indicatorContainer">{listLabels}</div>
+        <div>
+          <div className="indicatorContainer">{listLEDs}</div>
+        </div>
+        <div>
+          <div className="indicatorContainer">{listLabels}</div>
+        </div>
       </div>
     </div>
   );

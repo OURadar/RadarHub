@@ -61,6 +61,7 @@ class App extends Component {
 
   awesome() {
     console.log("some awesome action");
+    document.documentElement.webkitRequestFullScreen();
   }
 
   render() {
