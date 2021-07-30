@@ -45,7 +45,7 @@ async def _runloop(radar):
             )
             h1 = h0
         await asyncio.sleep(1 / freq)
-    print(f'No more connections for radar = {radar}. Retiring ...')
+    print(f'No more connections for {radar}. Retiring ...')
 
 def runloop(radar):
     loop = asyncio.new_event_loop()

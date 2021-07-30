@@ -41,7 +41,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
 
     # Receive message from frontend, which relays commands from the web app
     async def receive(self, text_data=None):
-        print('frontend.consumer.receive() - "\033[38;5;82m{}\033[m"'.format(text_data))
+        print('frontend.consumer.receive() - "\033[38;5;154m{}\033[m"'.format(text_data))
         packet = json.loads(text_data)
         if 'radar' not in packet:
             print('Message has no radar')

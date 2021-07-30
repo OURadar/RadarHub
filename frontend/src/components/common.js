@@ -90,6 +90,7 @@ export function colorDict(theme) {
   // Pick the dictionary according to the final theme value
   const themes = {
     light: {
+      name: "light",
       canvas: body,
       background: [1, 1, 1, 1],
       foreground: [0, 0, 0, 1],
@@ -110,6 +111,7 @@ export function colorDict(theme) {
       grid: [0.3, 0.3, 0.3, 0.6],
     },
     dark: {
+      name: "dark",
       canvas: body,
       background: [0, 0, 0, 1],
       foreground: [1, 1, 1, 1],
@@ -130,6 +132,7 @@ export function colorDict(theme) {
       grid: [1.0, 1.0, 1.0, 0.18],
     },
     vibrant: {
+      name: "vibrant",
       canvas: [0, 0.07, 0.07, 1],
       background: [0, 0.07, 0.07, 1],
       foreground: [1, 1, 1, 1],
@@ -150,6 +153,7 @@ export function colorDict(theme) {
       grid: [1.0, 1.0, 1.0, 0.18],
     },
     sat: {
+      name: "sat",
       canvas: body,
       background: [0, 0, 0, 1],
       foreground: [1, 1, 1, 1],
@@ -167,6 +171,7 @@ export function colorDict(theme) {
       grid: [0.3, 0.3, 0.3, 0.6],
     },
     baby: {
+      name: "baby",
       canvas: body,
       background: [0, 0, 0, 1],
       foreground: [1, 1, 1, 1],

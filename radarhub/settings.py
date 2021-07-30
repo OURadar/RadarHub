@@ -30,7 +30,7 @@ if os.path.exists(BASE_DIR / 'secret-key'):
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
 # print('\033[38;5;220mSECRET_KEY = {}\033[m'.format(SECRET_KEY))
-print('\033[38;5;220mDEBUG = {}\033[m'.format(DEBUG))
+print('\033[38;5;15mDEBUG = {}\033[m'.format(DEBUG))
 
 ALLOWED_HOSTS = ['*']
 

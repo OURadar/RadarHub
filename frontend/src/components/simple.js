@@ -24,7 +24,12 @@ export function Pad(props) {
         >
           <Refresh style={{ color: "var(--system-background)" }} />
         </IconButton>
-        <IconButton>
+        <IconButton
+          aria-label="Account"
+          onClick={() => {
+            props.callback();
+          }}
+        >
           <AccountCircle style={{ color: "var(--system-background)" }} />
         </IconButton>
       </ThemeProvider>

@@ -6,6 +6,7 @@
 //
 
 import React, { Component } from "react";
+import { Keyboard, Favorite, BrokenImage } from "@material-ui/icons";
 import { colorDict } from "./common";
 import { Ingest } from "./ingest";
 import { Scope } from "./scope";
@@ -57,6 +58,10 @@ class App extends Component {
     this.ingest.disconnect();
   }
 
+  awesome() {
+    console.log("some awesome action");
+  }
+
   render() {
     let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
     return (
@@ -64,16 +69,25 @@ class App extends Component {
         <div className="topbar">
           <h1>RadarHub</h1>
           <div className="leftPadded">
-            {this.props.radar}{" "}
+            v0.3.1 / {this.props.radar}{" "}
             {this.ingest.message.length ? " / " + this.ingest.message : ""}
           </div>
         </div>
-        <Pad />
-        <h2>Control</h2>
+        <Pad callback={this.awesome} />
+        <div className="sectionHeader">
+          <Keyboard />
+          <div className="sectionTitle">Control</div>
+        </div>
         <Control ingest={this.ingest} />
-        <h2>Health Status</h2>
+        <div className="sectionHeader">
+          <Favorite />
+          <div className="sectionTitle">Health</div>
+        </div>
         <Health dict={this.ingest.data.health} />
-        <h2>Scopes</h2>
+        <div className="sectionHeader">
+          <BrokenImage />
+          <div className="sectionTitle">Scopes</div>
+        </div>
         <h3>Single-Channel</h3>
         <div className="scopeSingle">
           <Scope data={single} colors={this.state.colors} />

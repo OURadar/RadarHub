@@ -21,8 +21,8 @@ Some design constraints:
 ## Milestones
 
 - [x] 0.1 Can run
-- [x] 0.2 Scope + Health working
-- [ ] 0.3 Some button actions to backhaul
+- [x] 0.2 Scope + Health working (7/21/2021)
+- [x] 0.3 Some button actions to backhaul (7/29/2021)
 - [ ] 0.4 Get an external websocket client
 - [ ] 0.5 PPI / 3D view
 - [ ] 0.6 SQLite / product browser

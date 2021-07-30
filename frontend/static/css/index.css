@@ -108,7 +108,21 @@ canvas {
 .leftPadded {
   padding-left: 20px;
 }
-
+.sectionHeader {
+  background-color: var(--gray5);
+  border-top: solid 1px var(--border-accent);
+  border-bottom: solid 1px var(--border-accent);
+  padding: 10px 20px;
+  height: 24px;
+}
+.sectionTitle {
+  display: inline-block;
+  font-size: 20px;
+  font-weight: 600;
+  height: 20px;
+  padding-left: 10px;
+  vertical-align: 5px;
+}
 h1,
 h2,
 h3 {
@@ -121,6 +135,7 @@ h2 {
   border-bottom: solid 1px var(--border-accent);
   font-size: 20px;
   font-weight: 600;
+  padding: 0;
 }
 h3 {
   font-weight: 600;
