@@ -118,9 +118,7 @@ class Ingest {
       } else if (type == 4) {
         // Response of a command
         let text = new TextDecoder().decode(e.data.slice(1));
-        if (text.includes("ACK")) {
-          text = " 👍🏼 " + text + " 😎 ";
-        }
+        text = " 👍🏼 " + text + " 😎 ";
         this.message = text;
         setTimeout(() => {
           if (this.message == text) {

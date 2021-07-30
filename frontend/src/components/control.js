@@ -7,9 +7,8 @@
 
 import React from "react";
 import Button from "@material-ui/core/Button";
-import { ThemeProvider } from "@material-ui/core/styles";
+import { SectionHeader } from "./simple";
 import { prettyString } from "./common";
-import { theme } from "./theme";
 
 function Control(props) {
   const elements = props.ingest.data.control;
@@ -30,9 +29,10 @@ function Control(props) {
     }
   }
   return (
-    <ThemeProvider theme={theme}>
+    <div>
+      <SectionHeader name="control" />
       <div className="controlContainer">{controls}</div>
-    </ThemeProvider>
+    </div>
   );
 }
 

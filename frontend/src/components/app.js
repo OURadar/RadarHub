@@ -6,14 +6,15 @@
 //
 
 import React, { Component } from "react";
-import { Keyboard, Favorite, BrokenImage } from "@material-ui/icons";
+import { ThemeProvider } from "@material-ui/core/styles";
 import { colorDict } from "./common";
 import { Ingest } from "./ingest";
 import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
-import { Pad } from "./simple";
+import { Console, SectionHeader } from "./simple";
+import { theme } from "./theme";
 
 class App extends Component {
   constructor(props) {
@@ -65,7 +66,7 @@ class App extends Component {
   render() {
     let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
     return (
-      <div>
+      <ThemeProvider theme={theme}>
         <div className="topbar">
           <h1>RadarHub</h1>
           <div className="leftPadded">
@@ -73,21 +74,10 @@ class App extends Component {
             {this.ingest.message.length ? " / " + this.ingest.message : ""}
           </div>
         </div>
-        <Pad callback={this.awesome} />
-        <div className="sectionHeader">
-          <Keyboard />
-          <div className="sectionTitle">Control</div>
-        </div>
+        <Console callback={this.awesome} />
         <Control ingest={this.ingest} />
-        <div className="sectionHeader">
-          <Favorite />
-          <div className="sectionTitle">Health</div>
-        </div>
         <Health dict={this.ingest.data.health} />
-        <div className="sectionHeader">
-          <BrokenImage />
-          <div className="sectionTitle">Scopes</div>
-        </div>
+        <SectionHeader name="scope" />
         <h3>Single-Channel</h3>
         <div className="scopeSingle">
           <Scope data={single} colors={this.state.colors} />
@@ -96,7 +86,7 @@ class App extends Component {
         <div className="scopeDouble">
           <Scope2 data={this.ingest.data} colors={this.state.colors} />
         </div>
-      </div>
+      </ThemeProvider>
     );
   }
 }

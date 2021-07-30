@@ -109,7 +109,7 @@ canvas {
   padding-left: 20px;
 }
 .sectionHeader {
-  background-color: var(--gray5);
+  background-color: var(--gray6);
   border-top: solid 1px var(--border-accent);
   border-bottom: solid 1px var(--border-accent);
   padding: 10px 20px;
@@ -121,6 +121,7 @@ canvas {
   font-weight: 600;
   height: 20px;
   padding-left: 10px;
+  text-transform: capitalize;
   vertical-align: 5px;
 }
 h1,

@@ -234,5 +234,5 @@ def relayCommand(name, command):
         _radar_set[name]['relay'] += 1
         pp.pprint(_radar_set)
         detach()
-    message = f'ACK "{command}" executed'
+    message = f'"{command}"'
     return message;

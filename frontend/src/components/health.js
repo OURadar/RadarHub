@@ -6,6 +6,7 @@
 //
 
 import React from "react";
+import { SectionHeader } from "./simple";
 import { prettyString } from "./common";
 
 function styleFromEnum(x) {
@@ -59,9 +60,12 @@ function Health(props) {
     return <div className="healthContainer"></div>;
   }
   return (
-    <div className="healthContainer">
-      <div className="indicatorContainer">{listLEDs}</div>
-      <div className="indicatorContainer">{listLabels}</div>
+    <div>
+      <SectionHeader name="health" />
+      <div className="healthContainer">
+        <div className="indicatorContainer">{listLEDs}</div>
+        <div className="indicatorContainer">{listLabels}</div>
+      </div>
     </div>
   );
 }
