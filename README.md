@@ -75,6 +75,14 @@ Off you go, you should be able to view the RadarHub interface through a web brow
 
 On a production server, the Ubuntu nginx-supervisor was recommended in [channels].
 
+## Docker
+
+The websocket component depends on [redis] through docker:
+
+```shell
+sudo docker run -d --restart unless-stopped -p 6379:6379 redis:5
+```
+
 ## Nginx
 
 Configure through the file `/etc/nginx/sites-enabled/radarhub` as:
@@ -154,12 +162,22 @@ stdout_logfile=/home/radarhub/log/backhaul.log
 redirect_stderr=true
 ```
 
-## Docker
+## Systemctl
 
-The websocket component depends on [redis] through docker:
+Configure through the file ` /etc/systemd/system/backhaul.service` as:
 
-```shell
-sudo docker run -d --restart unless-stopped -p 6379:6379 redis:5
+```conf
+[Unit]
+Description=backhaul
+After=network.target
+
+[Service]
+WorkingDirectory=/home/radarhub/app
+ExecStart=/home/radarhub/.pyenv/shims/python /home/radarhub/app/manage.py runworker backhaul
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 # Concept of Operations
