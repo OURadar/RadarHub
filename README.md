@@ -164,7 +164,7 @@ redirect_stderr=true
 
 ## Systemctl
 
-Configure through the file ` /etc/systemd/system/backhaul.service` as:
+Configure through the file `/etc/systemd/system/backhaul.service` as:
 
 ```conf
 [Unit]
