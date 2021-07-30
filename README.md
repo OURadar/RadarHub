@@ -1,6 +1,6 @@
 # RadarHub
 
-This is a [Django]-[Channels] for web interface to the radar operations.
+This is a [Django]-[Channels] web interface for ARRC radar operations.
 
 **IMPORTANT**: This is a work in progress. I just wanted to start the source control early.
 
