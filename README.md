@@ -94,7 +94,7 @@ upstream channels-backend {
 
 server {
     listen 443;
-    server_name radarhub.arrc.ou.edu 10.197.14.38;
+    server_name radarhub.arrc.ou.edu;
     rewrite ^(.*) http://$host$1 permanent;
 }
 
@@ -102,7 +102,7 @@ server {
     listen 80;
     listen [::]:80;
 
-    server_name radarhub.arrc.ou.edu 10.197.14.38;
+    server_name radarhub.arrc.ou.edu;
 
     location /static/ {
         root /home/radarhub/app/frontend;
@@ -145,7 +145,7 @@ directory=/home/radarhub/app
 
 # Each process needs to have a separate socket file, so we use process_num
 # Make sure to update "mysite.asgi" to match your project name
-command=/home/radarhub/.pyenv/shims/daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers radarhub.asgi:application
+command=/home/radarhub/.pyenv/shims/python -m daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers radarhub.asgi:application
 
 # Number of processes to startup, roughly the number of CPUs you have
 numprocs=2
