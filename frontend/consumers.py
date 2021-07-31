@@ -12,14 +12,6 @@ class AsyncConsumer(AsyncWebsocketConsumer):
         if 'radar' in self.scope['url_route']['kwargs']:
             self.radar = self.scope['url_route']['kwargs']['radar']
         self.meta = np.array([0, 0], dtype=np.uint32)
-
-        print('Joining group \033[38;5;87m{}\033[m'.format(self.radar))
-
-        # Join radar, accept the connection and say hello to backhaul
-        await self.channel_layer.group_add(
-            self.radar,
-            self.channel_name
-        )
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -53,6 +45,11 @@ class AsyncConsumer(AsyncWebsocketConsumer):
             print('\033[38;5;197mBUG: radar = {} != self.radar = {}\033[m'.format(packet['radar'], self.radar))
         if packet['route'] == 'home':
             if packet['value'] == 'hello':
+                print('Joining group \033[38;5;87m{}\033[m'.format(self.radar))
+                await self.channel_layer.group_add(
+                    self.radar,
+                    self.channel_name
+                )
                 await self.channel_layer.send(
                     'backhaul',
                     {
