@@ -1,56 +1,19 @@
-import React, { Component } from "react";
+import React from "react";
+
 import IconButton from "@material-ui/core/IconButton";
-import { Refresh, AccountCircle } from "@material-ui/icons";
+import { Refresh, Fullscreen, AccountCircle } from "@material-ui/icons";
 import { Keyboard, Favorite, BrokenImage } from "@material-ui/icons";
 import { ThemeProvider } from "@material-ui/core/styles";
+
+import { Notification } from "./notification";
 import { theme } from "./theme";
 
 const version = require("/package.json").version;
 
-class StatusBody extends Component {
-  constructor(props) {
-    super(props);
-    this.timer = null;
-    this.state = {
-      message: "",
-      class: "fadeOut",
-    };
-  }
-  componentWillUnmount() {
-    if (this.timer) {
-      clearTimeout(this.state.timer);
-    }
-  }
-
-  update = () => {
-    if (this.timer) {
-      clearTimeout(this.timer);
-    }
-    let stateToChange = {
-      class: this.props.message.length > 1 ? "fadeIn" : "fadeOut",
-    };
-    if (this.props.message.length == 0) {
-      this.timer = setTimeout(() => {
-        this.setState({
-          message: this.props.message,
-        });
-        this.timer = null;
-      }, 300);
-    } else {
-      stateToChange.message = this.props.message;
-    }
-    this.setState(stateToChange);
-  };
-
-  componentDidUpdate(prevProps) {
-    if (prevProps.message != this.props.message) {
-      this.update();
-    }
-  }
-
+class StatusBody extends Notification {
   render() {
     return (
-      <div className={"statusBody " + this.state.class}>
+      <div id="statusBody" className={this.state.class}>
         {this.state.message}
       </div>
     );
@@ -59,19 +22,20 @@ class StatusBody extends Component {
 
 function StatusBodyQuick(props) {
   if (props.message.length > 1) {
-    return <div className="statusBody">{props.message}</div>;
+    return <div id="statusBody">{props.message}</div>;
   }
   return <div className="invisible"></div>;
 }
 
 export function TopBar(props) {
-  const prefix = "v" + version + " / " + props.radar;
+  const prefix = "v" + version + " / " + props.ingest.radar;
   return (
     <div>
-      <div className="topbar">
+      <div id="topbar">
         <h1>RadarHub</h1>
-        <div className="statusPrefix">{prefix}</div>
-        <StatusBody message={props.message} />
+        <div id="statusPrefix">{prefix}</div>
+        <StatusBody message={props.ingest.message} />
+        <Notification message={props.ingest.response} />
       </div>
     </div>
   );
@@ -79,7 +43,7 @@ export function TopBar(props) {
 
 export function Console(props) {
   return (
-    <div id="upperRight">
+    <div id="console">
       <ThemeProvider theme={theme}>
         <IconButton
           aria-label="Refresh"
@@ -90,11 +54,14 @@ export function Console(props) {
           <Refresh style={{ color: "var(--system-background)" }} />
         </IconButton>
         <IconButton
-          aria-label="Account"
+          aria-label="Refresh"
           onClick={() => {
             props.callback();
           }}
         >
+          <Fullscreen style={{ color: "var(--system-background)" }} />
+        </IconButton>
+        <IconButton aria-label="Account">
           <AccountCircle style={{ color: "var(--system-background)" }} />
         </IconButton>
       </ThemeProvider>

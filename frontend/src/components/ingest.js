@@ -38,6 +38,7 @@ class Ingest {
     this.tic = 0;
     this.wait = 0;
     this.message = "Loading ...";
+    this.response = "";
     this.onupdate = (_data) => {};
 
     this.connect = this.connect.bind(this);
@@ -120,10 +121,10 @@ class Ingest {
         // Response of a command
         let text = new TextDecoder().decode(e.data.slice(1));
         text = " 👍🏼 " + text + " 😎 ";
-        this.message = text;
+        this.response = text;
         setTimeout(() => {
-          if (this.message == text) {
-            this.message = "";
+          if (this.response == text) {
+            this.response = "";
             this.onupdate(this.tic++);
           }
         }, 2000);

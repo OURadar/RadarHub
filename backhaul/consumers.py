@@ -18,7 +18,7 @@ async def _runloop(radar):
     h1 = 0
     freq = 20
 
-    print(f'\033[38;5;203m{__name__}._runloop  radar={radar}\033[m')
+    print(f'\033[38;5;210m{__name__}._runloop  radar={radar}\033[m')
 
     # Request data from the radar only if there are clients (from frontend) for the data stream
     while data.count(radar) > 0:

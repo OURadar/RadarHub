@@ -14,6 +14,7 @@ import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
 import { TopBar, Console, SectionHeader } from "./simple";
+import { Notification } from "./notification";
 import { theme } from "./theme";
 
 class App extends Component {
@@ -68,7 +69,7 @@ class App extends Component {
     let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
     return (
       <ThemeProvider theme={theme}>
-        <TopBar radar={this.props.radar} message={this.ingest.message} />
+        <TopBar ingest={this.ingest} />
         <Console callback={this.awesome} />
         <Control ingest={this.ingest} />
         <Health dict={this.ingest.data.health} />
