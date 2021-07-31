@@ -178,6 +178,14 @@ h3 {
   text-align: middle;
   border-radius: 5px;
 }
+.fadeIn {
+  opacity: 1;
+  transition: opacity linear 0.12s;
+}
+.fadeOut {
+  opacity: 0;
+  transition: opacity linear 0.3s;
+}
 
 .sampleContainer {
   margin: -5px;
