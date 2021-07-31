@@ -13,7 +13,7 @@ import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
-import { Console, SectionHeader } from "./simple";
+import { TopBar, Console, SectionHeader } from "./simple";
 import { theme } from "./theme";
 
 class App extends Component {
@@ -68,13 +68,7 @@ class App extends Component {
     let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
     return (
       <ThemeProvider theme={theme}>
-        <div className="topbar">
-          <h1>RadarHub</h1>
-          <div className="leftPadded">
-            v0.3.1 / {this.props.radar}{" "}
-            {this.ingest.message.length ? " / " + this.ingest.message : ""}
-          </div>
-        </div>
+        <TopBar radar={this.props.radar} message={this.ingest.message} />
         <Console callback={this.awesome} />
         <Control ingest={this.ingest} />
         <Health dict={this.ingest.data.health} />

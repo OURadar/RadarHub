@@ -5,10 +5,24 @@ import { Keyboard, Favorite, BrokenImage } from "@material-ui/icons";
 import { ThemeProvider } from "@material-ui/core/styles";
 import { theme } from "./theme";
 
-export function StatusBar(props) {
+const version = require("/package.json").version;
+
+function StatusBody(props) {
+  if (props.message.length > 1) {
+    return <div className="statusBody">{props.message}</div>;
+  }
+  return <div className="invisible"></div>;
+}
+
+export function TopBar(props) {
+  const prefix = "v" + version + " / " + props.radar;
   return (
-    <div className="statusBar">
-      <div className="leftPadded">{props.message}</div>
+    <div>
+      <div className="topbar">
+        <h1>RadarHub</h1>
+        <div className="statusPrefix">{prefix}</div>
+        <StatusBody message={props.message} />
+      </div>
     </div>
   );
 }
