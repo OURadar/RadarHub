@@ -70,6 +70,6 @@ Copyright Boonleng Cheong
 
 #notification {
   display: inline-block;
-  width: 85%;
-  max-width: 90vw;
+  width: 88vw;
+  padding: 8px;
 }

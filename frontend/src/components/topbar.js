@@ -44,7 +44,7 @@ export function TopBar(props) {
             );
             setTimeout(() => {
               setMessage("");
-            }, 2000);
+            }, 3500);
           }}
         />
       </div>
@@ -53,6 +53,7 @@ export function TopBar(props) {
 }
 
 export function Console(props) {
+  const fullscreen = window.innerHeight == screen.height;
   return (
     <div id="console">
       <ThemeProvider theme={theme}>
@@ -62,16 +63,16 @@ export function Console(props) {
             window.location.reload();
           }}
         >
-          <Refresh style={{ color: "var(--system-background)" }} />
+          <Refresh style={{ color: "white" }} />
         </IconButton>
-        {!props.isMobile && (
+        {!props.isMobile && !fullscreen && (
           <IconButton
             aria-label="Fullscreen"
             onClick={() => {
               document.documentElement.webkitRequestFullScreen();
             }}
           >
-            <Fullscreen style={{ color: "var(--system-background)" }} />
+            <Fullscreen style={{ color: "white" }} />
           </IconButton>
         )}
         <IconButton
@@ -80,7 +81,7 @@ export function Console(props) {
             props.handleAccount();
           }}
         >
-          <AccountCircle style={{ color: "var(--system-background)" }} />
+          <AccountCircle style={{ color: "white" }} />
         </IconButton>
       </ThemeProvider>
     </div>

@@ -79,6 +79,9 @@ Copyright Boonleng Cheong
   padding-right: var(--padding);
 }
 #notification {
-  min-width: 300px;
   max-width: calc(100vw - 200px);
+  padding: 8px 80px;
+}
+.MuiButton-root:hover {
+  background-color: var(--button-hover) !important;
 }
