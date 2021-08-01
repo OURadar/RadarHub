@@ -78,3 +78,7 @@ Copyright Boonleng Cheong
   padding-left: var(--padding);
   padding-right: var(--padding);
 }
+#notification {
+  min-width: 300px;
+  max-width: calc(100vw - 200px);
+}

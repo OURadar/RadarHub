@@ -60,17 +60,11 @@ class App extends Component {
     this.ingest.disconnect();
   }
 
-  awesome() {
-    console.log("some awesome action");
-    document.documentElement.webkitRequestFullScreen();
-  }
-
   render() {
     let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
     return (
       <ThemeProvider theme={theme}>
         <TopBar ingest={this.ingest} />
-        <Console callback={this.awesome} />
         <Control ingest={this.ingest} />
         <Health dict={this.ingest.data.health} />
         <SectionHeader name="scope" />

@@ -7,7 +7,7 @@ Copyright Boonleng Cheong
   --font-size: 18px;
   --button-border-top: none;
   --button-border-right: none;
-  --button-border-bottom: solid 1px var(--border-accent);
+  --button-border-bottom: solid 0.5px var(--border-accent);
   --button-border-left: none;
   --button-margin-bottom: 0;
   --button-border-radius: 0;
@@ -66,4 +66,10 @@ Copyright Boonleng Cheong
 .MuiButton-text:last-child,
 .labelIndicator:last-child {
   border-bottom: none;
+}
+
+#notification {
+  display: inline-block;
+  width: 85%;
+  max-width: 90vw;
 }

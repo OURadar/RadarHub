@@ -29,13 +29,24 @@ function StatusBodyQuick(props) {
 
 export function TopBar(props) {
   const prefix = "v" + version + " / " + props.ingest.radar;
+  const [message, setMessage] = React.useState("");
   return (
     <div>
       <div id="topbar">
         <h1>RadarHub</h1>
         <div id="statusPrefix">{prefix}</div>
         <StatusBody message={props.ingest.message} />
-        <Notification message={props.ingest.response} />
+        <Notification message={props.ingest.response || message} />
+        <Console
+          handleAccount={() => {
+            setMessage(
+              "<h3>Nothing 🍔</h3>Coming soon to v0.8<div class='emotion'>🤷🏻‍♀️</div>"
+            );
+            setTimeout(() => {
+              setMessage("");
+            }, 2000);
+          }}
+        />
       </div>
     </div>
   );
@@ -54,14 +65,19 @@ export function Console(props) {
           <Refresh style={{ color: "var(--system-background)" }} />
         </IconButton>
         <IconButton
-          aria-label="Refresh"
+          aria-label="Fullscreen"
           onClick={() => {
-            props.callback();
+            document.documentElement.webkitRequestFullScreen();
           }}
         >
           <Fullscreen style={{ color: "var(--system-background)" }} />
         </IconButton>
-        <IconButton aria-label="Account">
+        <IconButton
+          aria-label="Account"
+          onClick={() => {
+            props.handleAccount();
+          }}
+        >
           <AccountCircle style={{ color: "var(--system-background)" }} />
         </IconButton>
       </ThemeProvider>

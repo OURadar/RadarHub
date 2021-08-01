@@ -6,7 +6,7 @@ class Notification extends React.Component {
     this.timer = null;
     this.state = {
       message: props.message,
-      class: props.message.length > 0 ? "fadeIn" : "fadeOut",
+      class: props.message.length > 0 ? "fadeIn" : "invisible",
     };
   }
 
@@ -23,12 +23,13 @@ class Notification extends React.Component {
       this.timer = null;
     }
     let stateToChange = {
-      class: this.props.message.length > 1 ? "fadeIn" : "fadeOut",
+      class: this.props.message == "" ? "fadeOut" : "fadeIn",
     };
-    if (this.props.message.length == 0) {
+    if (this.props.message == "") {
       this.timer = setTimeout(() => {
         this.setState({
           message: this.props.message,
+          class: "fadeOut invisible",
         });
         this.timer = null;
       }, 300);
@@ -40,15 +41,24 @@ class Notification extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (prevProps.message != this.props.message) {
-      this.update();
+      this.setState({
+        class: "fadeOut",
+      });
+      setTimeout(() => {
+        this.update();
+      }, 25);
     }
   }
 
   render() {
     return (
-      <div id="notification" className={this.state.class}>
-        {this.state.message}
-      </div>
+      <div
+        id="notification"
+        className={this.state.class}
+        dangerouslySetInnerHTML={{
+          __html: "<p>" + this.state.message + "</p>",
+        }}
+      ></div>
     );
   }
 }
