@@ -28,10 +28,10 @@ Copyright Boonleng Cheong
 }
 .ledIndicator,
 .labelIndicator {
+  border-bottom: var(--button-border-bottom);
+  box-sizing: border-box;
   height: var(--button-height);
   vertical-align: middle;
-  border-bottom: solid 1px var(--border-accent);
-  box-sizing: border-box;
 }
 .ledTitle,
 .ledValue,
@@ -45,11 +45,11 @@ Copyright Boonleng Cheong
   width: 90%;
 }
 .ledValue {
+  border-radius: 50%;
   display: block;
+  height: var(--font-size);
   right: var(--padding);
   width: var(--font-size);
-  height: var(--font-size);
-  border-radius: 50%;
   z-index: 102;
 }
 .labelTitle {

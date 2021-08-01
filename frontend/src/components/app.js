@@ -7,14 +7,14 @@
 
 import React, { Component } from "react";
 import { ThemeProvider } from "@material-ui/core/styles";
-import { colorDict } from "./common";
+import { colorDict, detectMob } from "./common";
 import { Ingest } from "./ingest";
 import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
-import { TopBar, Console, SectionHeader } from "./simple";
-import { Notification } from "./notification";
+import { SectionHeader } from "./simple";
+import { TopBar } from "./topbar";
 import { theme } from "./theme";
 
 class App extends Component {
@@ -28,6 +28,8 @@ class App extends Component {
     this.ingest.onupdate = () => {
       this.forceUpdate();
     };
+    this.isMobile = detectMob();
+    console.log("isMobile = " + this.isMobile);
   }
 
   static defaultProps = {
@@ -64,7 +66,7 @@ class App extends Component {
     let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
     return (
       <ThemeProvider theme={theme}>
-        <TopBar ingest={this.ingest} />
+        <TopBar ingest={this.ingest} isMobile={this.isMobile} />
         <Control ingest={this.ingest} />
         <Health dict={this.ingest.data.health} />
         <SectionHeader name="scope" />

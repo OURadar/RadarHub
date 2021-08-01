@@ -120,7 +120,7 @@ class Ingest {
       } else if (type == 4) {
         // Response of a command
         let text = new TextDecoder().decode(e.data.slice(1));
-        text = " 👍🏼 " + text + "<div class='emotion'>😎</div>";
+        text = " 👍🏼 " + text + "<div class='emotion'>👻</div>";
         this.response = text;
         setTimeout(() => {
           if (this.response == text) {
