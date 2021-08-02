@@ -1,12 +1,10 @@
 # frontend/consumers.py
 
 import json
-import numpy as np
 
-from django.core.signals import request_finished
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-class AsyncConsumer(AsyncWebsocketConsumer):
+class FrontendConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.radar = 'unknown'
         if 'radar' in self.scope['url_route']['kwargs']:
@@ -14,7 +12,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
         self.isUser = False
         await self.accept()
 
-    async def disconnect(self, close_code):
+    async def disconnect(self, code):
         if self.isUser:
             await self.channel_layer.send(
                 'backhaul',
@@ -25,7 +23,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
                 }
             )
             # Leave the group
-            print(f'Leaving group \033[38;5;87m{self.radar}\033[m')
+            print(f'Leaving group \033[38;5;87m{self.radar}\033[m with code {code}')
             await self.channel_layer.group_discard(
                 self.radar,
                 self.channel_name
@@ -33,7 +31,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
 
     # Receive message from frontend, which relays commands from the web app
     async def receive(self, text_data=None):
-        print(f'frontend.consumer.receive() - "\033[38;5;154m{text_data}\033[m"')
+        print(f'FrontendConsumer.receive() - "\033[38;5;154m{text_data}\033[m"')
         request = json.loads(text_data)
         if 'radar' not in request:
             print('Message has no radar')
@@ -56,7 +54,7 @@ class AsyncConsumer(AsyncWebsocketConsumer):
                 'type': request['command'],
                 'radar': self.radar,
                 'channel': self.channel_name,
-                'payload': request['payload'] if 'payload' in request else None
+                'command': request['payload'] if 'payload' in request else None
             }
         )
 
@@ -87,9 +85,3 @@ class AsyncConsumer(AsyncWebsocketConsumer):
         await self.send(bytes_data=bytes)
 
     # Rays, etc.
-
-
-# def hook(sender, **kwargs):
-#     print('handleRequestFinished() from {} --> {}'.format(sender, kwargs['signal']))
-#
-# request_finished.connect(hook)

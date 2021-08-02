@@ -13,5 +13,5 @@ def radar(request, radar):
 def radar_receiver(request, radar, receiver):
     if radar not in ['horus', 'px1000', 'px10k', 'pair', 'raxpol']:
         radar = 'px1000'
-    print('radar = {}   receiver = {}'.format(radar, receiver))
+    print(f'radar = {radar}   receiver = {receiver}')
     return render(request, 'frontend/index.html', {'radar': radar, 'receiver': receiver})

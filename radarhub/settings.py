@@ -29,8 +29,8 @@ if os.path.exists(BASE_DIR / 'secret-key'):
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
-# print('\033[38;5;220mSECRET_KEY = {}\033[m'.format(SECRET_KEY))
-print('\033[38;5;15mDEBUG = {}\033[m'.format(DEBUG))
+# print(f'\033[38;5;15mSECRET_KEY = {SECRET_KEY}\033[m')
+print(f'\033[38;5;15mDEBUG = {DEBUG}\033[m')
 
 ALLOWED_HOSTS = ['*']
 

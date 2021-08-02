@@ -56,8 +56,8 @@ def runloop(radar):
 
 class BackhaulConsumer(AsyncConsumer):
     async def hello(self, message):
-        if 'radar' not in message:
-            print('The "radar" key is expected in the message.');
+        if message.keys() < {'radar', 'channel'}:
+            print(f'BackhaulConsumer.hello() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
@@ -81,8 +81,8 @@ class BackhaulConsumer(AsyncConsumer):
         )
 
     async def report(self, message):
-        if 'radar' not in message:
-            print('The "radar" key is expected in the message.');
+        if message.keys() < {'radar', 'channel'}:
+            print(f'BackhaulConsumer.report() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
@@ -100,7 +100,8 @@ class BackhaulConsumer(AsyncConsumer):
         )
 
     async def bye(self, message):
-        if 'radar' not in message:
+        if message.keys() < {'radar', 'channel'}:
+            print(f'BackhaulConsumer.bye() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
@@ -112,16 +113,23 @@ class BackhaulConsumer(AsyncConsumer):
             userChannels.remove(channel)
 
     async def relay(self, message):
-        print('backhaul.consumers.relay()')
-        if 'radar' not in message or 'command' not in message:
+        if message.keys() < {'radar', 'channel', 'command'}:
+            print(f'BackhaulConsumer.relay() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
-        command = message['payload']
+        command = message['command']
+
+        print(f'BackhaulConsumer.relay() - \033[38;5;154m{command}\033[m')
 
         # Will be replaced with actual radar communication here
         response = data.relayCommand(radar, command);
 
+        # Target milestone:
+        # Lookup radar to see if it is connected to the hub
+        # If radar is connected, relay the command. Otherwise, response no radar
+
+        # Relay the response to the user
         await channel_layer.send(
             channel,
             {

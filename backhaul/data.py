@@ -88,7 +88,7 @@ def attach():
         _shm.buf[:2] = b'{}\x00'
 
     b = _shm.buf.tobytes().decode('utf-8')
-    s = '{}'.format(b[:b.index('\x00')])
+    s = str(b[:b.index('\x00')])
     try:
         _radar_set = json.loads(s)
     except:
