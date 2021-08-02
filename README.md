@@ -13,25 +13,32 @@ Three main parts:
 Some design constraints:
 
 - Keep backend-frontend responsive, mostly async functions
-- Input from clients gets routed to a specific group (radar)
 - Output from a radar gets broadcast to all users in a specific group (radar)
 - All input gets picked up by backhaul, routed to a the specific radar based on group source
 - Radar reporter does not receive anything from the radar itself (different behavior than a chat room)
+
+# (Evolving) Concept of Operations
+
+Currently, the RadarHub is almost like chat program. The main exception is that the messages are not echoed back. The radars do not recieve what they send home and the users do not see the command they issue. Everyone connects through the frontend websocket, either join as a radar or join as a user. When a radar joins, it simply gets a welcome message from the hub. When a user joins, it is assigned to a group, named after the radar name.
+
+When a user issues a request, it is first received by the frontend, which checks for the required fields. If failed, nothing happens. Otherwise, it is routed to the backhaul asynchronously. Frontend immediately regain control, GUI is responsive this way. After the request is processed, backhaul sends the response to the user.
+
+When a radar joins the RadarHub, it reports its name. Backhaul launches a runloop to collect data streams from the radar. This runloop also sends whatever data stream available from the radar to the group. All users in that group receive the same data stream. This will change in the future for a more controlled fashion but kept simple at the moment for moving towards the subsequent milestones.
 
 ## Milestones
 
 - [x] 0.1 Can run
 - [x] 0.2 Scope + Health working (7/21/2021)
 - [x] 0.3 Some button actions to backhaul (7/29/2021)
-- [ ] 0.4 Get an external websocket client
-- [ ] 0.5 PPI / 3D view
+- [ ] 0.4 Migrate data module to an external websocket client
+- [ ] 0.5 PPI / 3D view for radar products
 - [ ] 0.6 SQLite / product browser
 - [ ] 0.7 General page template + stylesheets
-- [ ] 0.8 Authentication
-- [ ] 0.9 Landing page
+- [ ] 0.8 Authentication + user priviledges
+- [ ] 0.9 Landing page, radar selection, etc.
 - [ ] 1.0 RadarKit communicates with RadarHub
 
-# Development
+# Developing
 
 Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. The very first thing to do right after cloning the repository is to install the Python requirements and node dependencies, which can be accomplished as:
 
@@ -188,17 +195,7 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-# (Evolving) Concept of Operations
-
-Currently, the RadarHub is almost like chat program. The main exception is that the chat messages do not get echoed back because radars should not recieve what it sends home and the users do not need to see the exact command they issued. Everyone connects through the frontend websocket, either join as a radar or join as a user. When a radar joins, it simply gets a welcome message from the hub. When a user joins, it is assigned to a group, named after the radar name.
-
-When a user issues a request, it is first received by the frontend, which checks if the request contains the required fields. If it doesn't, nothing happens. Otherwise, it is routed to the backhaul asynchronously. Frontend immediately regain control, GUI is responsive. After the request is processed, backhaul sends the response to the user.
-
-The backhaul sends whatever data stream available from each radar to the radar group so that all users in that group receive the same data stream. This will change in the future but kept simple for moving towards the subsequent milestones.
-
-When a radar joins the RadarHub, it reports its name. Backhaul launches a runloop to broadcast data streams from the radar to all users that joined the group.
-
-# Pending Decisions
+# Pending Technical Decisions
 
 | One Channel Per Radar                           | Multiple Channels Per Radar                      |
 | ----------------------------------------------- | ------------------------------------------------ |
