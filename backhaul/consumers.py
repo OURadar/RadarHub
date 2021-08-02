@@ -9,7 +9,8 @@ from . import data
 from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
-channels = []
+userChannels = []
+radarChannels = []
 channel_layer = get_channel_layer()
 
 async def _runloop(radar):
@@ -66,9 +67,9 @@ class BackhaulConsumer(AsyncConsumer):
             tid = threading.Thread(target=runloop, args=(radar,))
             tid.start()
 
-        global channels
-        if channel not in channels:
-            channels.append(channel)
+        global userChannels
+        if channel not in userChannels:
+            userChannels.append(channel)
 
         payload, _ = data.getControl()
         await channel_layer.send(
@@ -76,6 +77,25 @@ class BackhaulConsumer(AsyncConsumer):
             {
                 'type': 'sendControl',
                 'control': bytearray(payload, 'utf-8'),
+            }
+        )
+
+    async def report(self, message):
+        if 'radar' not in message:
+            print('The "radar" key is expected in the message.');
+            return
+        radar = message['radar']
+        channel = message['channel']
+
+        global radarChannels
+        if channel not in radarChannels:
+            radarChannels.append(channel)
+
+        await channel_layer.send(
+            channel,
+            {
+                'type': 'welcomeRadar',
+                'message': f'Hello \033[38;5;87m{radar}\033[m. Welcome to the ARRC RadarHub'
             }
         )
 
@@ -87,9 +107,9 @@ class BackhaulConsumer(AsyncConsumer):
 
         data.unregister(radar)
 
-        global channels
-        if channel in channels:
-            channels.remove(channel)
+        global userChannels
+        if channel in userChannels:
+            userChannels.remove(channel)
 
     async def relay(self, message):
         print('backhaul.consumers.relay()')
