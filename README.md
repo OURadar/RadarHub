@@ -85,7 +85,7 @@ sudo docker run -d --restart unless-stopped -p 6379:6379 redis:5
 
 ## Nginx
 
-Configure through the file `/etc/nginx/sites-enabled/radarhub` as:
+Configure through the file `/etc/nginx/sites-available/radarhub` as:
 
 ```nginx
 upstream channels-backend {
@@ -94,14 +94,17 @@ upstream channels-backend {
 
 server {
     listen 443;
-    server_name radarhub.arrc.ou.edu;
-    rewrite ^(.*) http://$host$1 permanent;
+    if ($scheme = wss) {
+        rewrite ^(.*)? ws://$host$1 permanent;
+    }
+    if ($scheme = https) {
+        rewrite ^(.*)? http://$host$1 permanent;
+    }
 }
 
 server {
     listen 80;
     listen [::]:80;
-
     server_name radarhub.arrc.ou.edu;
 
     location /static/ {
@@ -120,15 +123,20 @@ server {
         proxy_pass http://channels-backend;
 
         proxy_http_version 1.1;
-        proxy_redirect off;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Host $server_name;
     }
 }
+```
+
+and enable it using shell command as:
+
+```shell
+ln -s /etc/nginx/sites-available/radarhub /etc/nginx/sites-enabled/
 ```
 
 ## Supervisor
@@ -180,9 +188,15 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-# Concept of Operations
+# (Evolving) Concept of Operations
 
-Currently, the RadarHub is almost like chat program. Each radar is considered a group (chat room), named after tha radar name. There is a special group named 'backhaul', which all radar commands will be routed to. The backhaul then routes the command to the designated radar, only if the radar has succesfully connected to the RadarHub. The backhaul sends whatever data stream available from each radar to the radar group so that all users in that group receive the same data stream. All users receive all data stream even it is not requested. This may change in the future but for simplicity to move towards subsequent milestones.
+Currently, the RadarHub is almost like chat program. The main exception is that the chat messages do not get echoed back because radars should not recieve what it sends home and the users do not need to see the exact command they issued. Everyone connects through the frontend websocket, either join as a radar or join as a user. When a radar joins, it simply gets a welcome message from the hub. When a user joins, it is assigned to a group, named after the radar name.
+
+When a user issues a request, it is first received by the frontend, which checks if the request contains the required fields. If it doesn't, nothing happens. Otherwise, it is routed to the backhaul asynchronously. Frontend immediately regain control, GUI is responsive. After the request is processed, backhaul sends the response to the user.
+
+The backhaul sends whatever data stream available from each radar to the radar group so that all users in that group receive the same data stream. This will change in the future but kept simple for moving towards the subsequent milestones.
+
+When a radar joins the RadarHub, it reports its name. Backhaul launches a runloop to broadcast data streams from the radar to all users that joined the group.
 
 # Pending Decisions
 
