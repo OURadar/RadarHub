@@ -5,12 +5,6 @@
 //  Created by Boonleng Cheong on 7/25/2021.
 //
 
-//
-// There are two routes to handling the message:
-// home - interpreted at home server
-// away - relayed to the radar away from home
-//
-
 class Ingest {
   constructor(radar) {
     this.radar = radar;
@@ -66,8 +60,7 @@ class Ingest {
       this.socket.send(
         JSON.stringify({
           radar: this.radar,
-          route: "home",
-          value: "hello",
+          command: "hello",
         })
       );
       this.onupdate(this.tic++);
@@ -168,8 +161,8 @@ class Ingest {
     this.socket.send(
       JSON.stringify({
         radar: this.radar,
-        route: "away",
-        value: command,
+        command: "relay",
+        payload: command,
       })
     );
   }

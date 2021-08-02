@@ -117,15 +117,15 @@ class BackhaulConsumer(AsyncConsumer):
             return
         radar = message['radar']
         channel = message['channel']
-        command = message['command']
+        command = message['payload']
 
         # Will be replaced with actual radar communication here
-        payload = data.relayCommand(radar, command);
+        response = data.relayCommand(radar, command);
 
         await channel_layer.send(
             channel,
             {
                 'type': 'sendResponse',
-                'response': bytearray(payload, 'utf-8'),
+                'response': bytearray(response, 'utf-8'),
             }
         )

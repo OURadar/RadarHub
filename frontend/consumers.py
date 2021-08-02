@@ -34,57 +34,35 @@ class AsyncConsumer(AsyncWebsocketConsumer):
     # Receive message from frontend, which relays commands from the web app
     async def receive(self, text_data=None):
         print(f'frontend.consumer.receive() - "\033[38;5;154m{text_data}\033[m"')
-        packet = json.loads(text_data)
-        if 'radar' not in packet:
+        request = json.loads(text_data)
+        if 'radar' not in request:
             print('Message has no radar')
             return
-        if 'route' not in packet:
-            print('Message has no route')
+        if 'command' not in request:
+            print('Message has no command')
             return
-        if packet['radar'] != self.radar:
-            print(f'\033[38;5;197mBUG: radar = {packet["radar"]} != self.radar = {self.radar}\033[m')
-        if packet['route'] == 'home':
-            if packet['value'] == 'hello':
-                print(f'Joining group \033[38;5;87m{self.radar}\033[m')
-                self.isUser = True
-                await self.channel_layer.group_add(
-                    self.radar,
-                    self.channel_name
-                )
-                await self.channel_layer.send(
-                    'backhaul',
-                    {
-                        'type': 'hello',
-                        'radar': self.radar,
-                        'channel': self.channel_name
-                    }
-                )
-            elif packet['value'] == 'report':
-                print(f'Radar {self.radar} is reporting')
-                await self.channel_layer.send(
-                    'backhaul',
-                    {
-                        'type': 'report',
-                        'radar': self.radar,
-                        'channel': self.channel_name
-                    }
-                )
-            else:
-                print(f'Expected value = {packet["value"]}')
-        elif packet['route'] == 'away':
-            await self.channel_layer.send(
-                'backhaul',
-                {
-                    'type': 'relay',
-                    'radar': self.radar,
-                    'channel': self.channel_name,
-                    'command': packet['value']
-                }
+        if request['radar'] != self.radar:
+            print(f'\033[38;5;197mBUG: radar = {request["radar"]} != self.radar = {self.radar}\033[m')
+        if request['command'] == 'hello':
+            self.isUser = True
+            print(f'Joining group \033[38;5;87m{self.radar}\033[m')
+            await self.channel_layer.group_add(
+                self.radar,
+                self.channel_name
             )
-        else:
-            print(f'Unexpected message = {text_data}')
+        await self.channel_layer.send(
+            'backhaul',
+            {
+                'type': request['command'],
+                'radar': self.radar,
+                'channel': self.channel_name,
+                'payload': request['payload'] if 'payload' in request else None
+            }
+        )
+
     # The following are methods called by backhaul
 
+    # Welcome a radar
     async def welcomeRadar(self, event):
         await self.send(event['message'])
 
