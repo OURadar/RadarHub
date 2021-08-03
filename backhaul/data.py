@@ -85,7 +85,7 @@ def attach():
         if verbose:
             print('Creating shared memory ...')
         _shm = shared_memory.SharedMemory(_key, create=True, size=4096)
-        _shm.buf[:2] = b'{}\x00'
+        _shm.buf[:3] = b'{}\x00'
 
     b = _shm.buf.tobytes().decode('utf-8')
     s = str(b[:b.index('\x00')])

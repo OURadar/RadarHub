@@ -101,12 +101,8 @@ upstream channels-backend {
 
 server {
     listen 443;
-    if ($scheme = wss) {
-        rewrite ^(.*)? ws://$host$1 permanent;
-    }
-    if ($scheme = https) {
-        rewrite ^(.*)? http://$host$1 permanent;
-    }
+    server_name radarhub.arrc.ou.edu;
+    rewrite ^(.*)? http://$host$1 permanent;
 }
 
 server {
@@ -194,14 +190,6 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 ```
-
-# Pending Technical Decisions
-
-| One Channel Per Radar                           | Multiple Channels Per Radar                      |
-| ----------------------------------------------- | ------------------------------------------------ |
-| Use less channels                               | Use more channels                                |
-| Need to track channels based on user priviledge | Simple broadcast, each stream per channel        |
-| A user joins one group only                     | A user joins multiple groups based on priviledge |
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com

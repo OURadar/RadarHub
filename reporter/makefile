@@ -3,11 +3,11 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
-CFLAGS = -std=gnu99 -O2
+CFLAGS = -std=gnu99 -O2 -I/usr/local/include -I/usr/local/Cellar/openssl@1.1/1.1.1k/include
 
 CFLAGS += -Wall -Wno-unknown-pragmas
 
-LDFLAGS = -L ./ -L /usr/local/lib
+LDFLAGS = -L./ -L/usr/local/lib -L/usr/local/Cellar/openssl@1.1/1.1.1k/lib
 
 PROGS = reporter
 
@@ -21,9 +21,10 @@ ifneq (, $(findstring Ubuntu, $(KERNEL_VER)))
 endif
 
 ifeq ($(KERNEL), Darwin)
-	# Mac OS X
+	# macOS
 	CC = clang
 	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations
+	LDFLAGS += -lssl
 else
 	# Old Debian
 	ifeq ($(MACHINE), i686)
