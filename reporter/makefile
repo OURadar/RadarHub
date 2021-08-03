@@ -3,13 +3,18 @@ MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
-CFLAGS = -std=gnu99 -O2 -I/usr/local/include -I/usr/local/Cellar/openssl@1.1/1.1.1k/include
+CFLAGS = -std=gnu99 -O2 -I./ -I/usr/local/include -I/usr/local/Cellar/openssl@1.1/1.1.1k/include
 
 CFLAGS += -Wall -Wno-unknown-pragmas
 
 LDFLAGS = -L./ -L/usr/local/lib -L/usr/local/Cellar/openssl@1.1/1.1.1k/lib
 
-PROGS = reporter
+OBJS = reporter.o
+
+OBJS_PATH = objects
+OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
+
+PROGS = main
 
 # The command echo from macOS and Ubuntu needs no -e
 ECHO_FLAG = -e
@@ -38,13 +43,21 @@ endif
 
 LDFLAGS += -lm
 
-$(PROGS): %: %.c
+all: $(PROGS)
+
+$(OBJS_PATH):
+	mkdir -p $@
+
+$(OBJS_PATH)/%.o: %.c | $(OBJS_PATH)
+	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
+
+$(PROGS): %: %.c $(OBJS_WITH_PATH)
 ifeq ($(KERNEL), Darwin)
 	@echo "\033[38;5;45m$@\033[m"
 else
 	@echo $(ECHO_FLAG) "\033[38;5;45m$@\033[m"
 endif
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $< $(OBJS_WITH_PATH) $(LDFLAGS)
 
 
 clean:

@@ -1,35 +1,22 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+#include <reporter.h>
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/crypto.h>
+static char *RKGetHandshakeArgument(const char *buf, const char *key) {
+    static char argument[80] = {0};
+    char *b, *e;
+    b = strstr(buf, key);
+    if (b == NULL) {
+        argument[0] = '\0';
+        return argument;
+    }
+    b += strlen(key) + 2;
+    e = strstr(b, "\r\n");
+    size_t l = (size_t)(e - b);
+    memcpy(argument, b, l);
+    argument[l] = '\0';
+    return argument;
+}
 
-typedef uint8_t RKSSLFlag;
-enum RKSSLFlag {
-    RKSSLFlagAuto,
-    RKSSLFlagOff,
-    RKSSLFlagOn
-};
-
-typedef struct rk_reporter {
-    char                            radar[16];
-    char                            host[80];
-    char                            ip[64];
-    int                             port;
-    bool                            useSSL;
-    struct sockaddr_in              address;
-    int                             sd;
-    SSL_CTX                         *sslContext;
-    SSL                             *ssl;
-} RKReporter;
+#pragma mark - Life Cycle
 
 RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag flag) {
     int r;
@@ -99,31 +86,35 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
     }
 
     char buf[1024] = {0};
+    strcpy(reporter->code, "RadarHub39EzLkh9GBhXDw");
     sprintf(buf,
         "GET /ws/%s/ HTTP/1.1\r\n"
         "Host: %s\r\n"
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
-        "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw==\r\n"
+        "Sec-WebSocket-Key: %s==\r\n"
         "Sec-WebSocket-Protocol: chat, superchat\r\n"
         "Sec-WebSocket-Version: 13\r\n"
         "\r\n",
         reporter->radar,
-        reporter->host);
+        reporter->host,
+        reporter->code);
 
     printf("%s", buf);
 
-    if (reporter->useSSL) {
-        SSL_write(reporter->ssl, buf, strlen(buf));
-        r = SSL_read(reporter->ssl, buf, sizeof(buf));
-    } else {
-        send(reporter->sd, buf, strlen(buf), 0);
-        r = recv(reporter->sd, buf, sizeof(buf), 0);
+    RKReporterWrite(reporter, buf, strlen(buf));
+    r = RKReporterRead(reporter, buf, sizeof(buf));
+    if (r < 0) {
+        fprintf(stderr, "Error during handshake.\n");
     }
-
-    buf[r] = '\0';
-
     printf("%s", buf);
+
+    strcpy(reporter->digest, RKGetHandshakeArgument(buf, "Sec-WebSocket-Accept"));
+    printf("reporter->digest = %s\n", reporter->digest);
+
+    // Should have codes to verify the return digest, websocket upgrade, connection upgrade, etc.
+
+    // Call onOpen here for client to handle additional tasks after the connection is established.
 
     return reporter;
 }
@@ -132,17 +123,35 @@ void RKReporterFree(RKReporter *reporter) {
     free(reporter);
 }
 
-int main(int argc, const char *argv[]) {
+#pragma mark - Methods
 
-    RKReporter *hope = NULL;
-
-    if (argc == 1) {
-        hope = RKReporterInit("px1000", "localhost:8000", false);
-    } else {
-        hope = RKReporterInit("px1000", argv[1], false);
-    }
-
-    RKReporterFree(hope);
-
-    exit(EXIT_SUCCESS);
+int RKReporterRead(RKReporter *reporter, void *buf, size_t size) {
+    int k, r = 0;
+    do {
+        if (reporter->useSSL) {
+            k = SSL_read(reporter->ssl, buf + r, size - r);
+            if (k) {
+                r += k;
+            } else {
+                return -1;
+            }
+        } else {
+            k = recv(reporter->sd, buf + r, size - r, 0);
+            if (k) {
+                r += k;
+            } else {
+                return -1;
+            }
+        }
+    } while (strstr((char *)buf, "\r\n\r\n") == NULL);
+    ((char *)buf)[r] = '\0';
+    return r;
 }
+
+int RKReporterWrite(RKReporter *reporter, void *buf, size_t size) {
+    if (reporter->useSSL) {
+        return SSL_write(reporter->ssl, buf, size);
+    }
+    return send(reporter->sd, buf, size, 0);
+}
+
