@@ -52,13 +52,16 @@ struct rk_reporter {
 };
 
 
-RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag flag);
-void RKReporterFree(RKReporter *R);
+RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag);
+void RKReporterFree(RKReporter *);
 
-int RKReporterRead(RKReporter *R, void *buf, size_t size);
-int RKReporterWrite(RKReporter *R, void *buf, size_t size);
+int RKReporterRead(RKReporter *, void *, size_t);
+int RKReporterWrite(RKReporter *, void *, size_t);
 
 void RKReporterSetOpenHandler(RKReporter *, int (*)(RKReporter *));
 void RKReporterSetCloseHandler(RKReporter *, int (*)(RKReporter *));
 void RKReporterSetMessageHandler(RKReporter *, int (*)(RKReporter *));
 void RKReporterSetErrorHandler(RKReporter *, int (*)(RKReporter *));
+
+void RKReporterRun(RKReporter *);
+void RKReporterStop(RKReporter *);

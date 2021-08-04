@@ -15,7 +15,12 @@ int main(int argc, const char *argv[]) {
         hope = RKReporterInit("px1000", argv[1], false);
     }
 
-    printf("Wait for a while ...");
+    RKReporterRun(hope);
+
+    printf("Wait for a while ...\n");
+    sleep(10);
+
+    RKReporterStop(hope);
 
     RKReporterFree(hope);
 

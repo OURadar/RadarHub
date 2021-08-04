@@ -25,6 +25,8 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
 
     RKReporter *R = (RKReporter *)malloc(sizeof(RKReporter));
     memset(R, 0, sizeof(RKReporter));
+    pthread_attr_init(&R->threadAttributes);
+    pthread_mutex_init(&R->lock, NULL);
 
     printf("Using %s ...\n", host);
 
@@ -60,7 +62,7 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
         return NULL;
     }
 
-    printf("Connecting %s:%d %s...\n", R->ip, R->port, R->useSSL ? "(ssl) " : "");
+    printf("Connecting %s:%d %s...\n", R->ip, R->port, R->useSSL ? "(\033[38;5;220mssl\033[m) " : "");
 
     R->sa.sin_family = AF_INET;
     R->sa.sin_port = htons(R->port);
@@ -103,7 +105,9 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
     printf("%s", buf);
 
     RKReporterWrite(R, buf, strlen(buf));
-    r = RKReporterRead(R, buf, sizeof(buf));
+    do {
+        r = RKReporterRead(R, buf + r, sizeof(buf) - r);
+    } while (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL);
     if (r < 0) {
         fprintf(stderr, "Error during handshake.\n");
     }
@@ -112,6 +116,9 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
     strcpy(R->digest, RKGetHandshakeArgument(buf, "Sec-WebSocket-Accept"));
     printf("R->digest = %s\n", R->digest);
 
+    if (strcmp(R->digest, "Irr1KGdq6r9dz93/ZSPSnh9ZJ68=")) {
+        fprintf(stderr, "Error during handshake.\n");
+    }
     // Should have secret to verify the return digest, websocket upgrade, connection upgrade, etc.
 
     // Call onOpen here for client to handle additional tasks after the connection is established.
@@ -120,6 +127,8 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
 }
 
 void RKReporterFree(RKReporter *R) {
+    pthread_attr_destroy(&R->threadAttributes);
+    pthread_mutex_destroy(&R->lock);
     free(R);
 }
 
@@ -145,21 +154,19 @@ void RKReporterSetErrorHandler(RKReporter *R, int (*routine)(RKReporter *)) {
 
 int RKReporterRead(RKReporter *R, void *buf, size_t size) {
     int k, r = 0;
-    do {
-        if (R->useSSL) {
-            if ((k = SSL_read(R->ssl, buf + r, size - r)) > 0) {
-                r += k;
-            } else {
-                return -1;
-            }
+    if (R->useSSL) {
+        if ((k = SSL_read(R->ssl, buf + r, size - r)) > 0) {
+            r += k;
         } else {
-            if ((k = recv(R->sd, buf + r, size - r, 0)) > 0) {
-                r += k;
-            } else {
-                return -1;
-            }
+            return -1;
         }
-    } while (strstr((char *)buf, "\r\n\r\n") == NULL);
+    } else {
+        if ((k = recv(R->sd, buf + r, size - r, 0)) > 0) {
+            r += k;
+        } else {
+            return -1;
+        }
+    }
     ((char *)buf)[r] = '\0';
     return r;
 }
@@ -173,17 +180,22 @@ int RKReporterWrite(RKReporter *R, void *buf, size_t size) {
 
 void *theReporter(void *in) {
     RKReporter *R = (RKReporter *)in;
-    int k = 0;
+
     while (R->wantActive) {
-        printf("k = %d\n", k);
-        usleep(1000000);
+        // select()
+        // check rfd, wfd, efd,
+        // read, or write
+
+
+        usleep(100000);
     }
     return NULL;
 }
 
 void RKReporterRun(RKReporter *R) {
-    pthread_mutex_init(&R->lock, NULL);
-    pthread_attr_init(&R->threadAttributes);
+    pthread_mutex_lock(&R->lock);
+    R->wantActive = true;
+    pthread_mutex_unlock(&R->lock);
     if (pthread_create(&R->threadId, &R->threadAttributes, theReporter, R)) {
         fprintf(stderr, "Unable to launch a run loop\n");
     }
@@ -195,6 +207,4 @@ void RKReporterStop(RKReporter *R) {
     R->wantActive = false;
     pthread_mutex_unlock(&R->lock);
     pthread_join(R->threadId, NULL);
-    pthread_attr_destroy(&R->threadAttributes);
-    pthread_mutex_destroy(&R->lock);
 }
