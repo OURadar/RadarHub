@@ -61,4 +61,4 @@ endif
 
 
 clean:
-	rm -f $(PROGS) *.log
+	rm -f $(PROGS) *.log $(OBJS_PATH)/*.o

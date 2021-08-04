@@ -79,6 +79,14 @@ class BackhaulConsumer(AsyncConsumer):
                 'control': bytearray(payload, 'utf-8'),
             }
         )
+        payload, _ = data.getHealth()
+        await channel_layer.send(
+            channel,
+            {
+                'type': 'sendHealth',
+                'health': bytearray(payload, 'utf-8')
+            }
+        )
 
     async def report(self, message):
         if message.keys() < {'radar', 'channel'}:

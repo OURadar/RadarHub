@@ -22,28 +22,43 @@ enum RKSSLFlag {
 typedef struct rk_reporter RKReporter;
 
 struct rk_reporter {
-    char                            radar[16];
-    char                            host[80];
-    char                            ip[64];
-    int                             port;
-    bool                            useSSL;
-    struct sockaddr_in              address;
-    int                             sd;
-    SSL_CTX                         *sslContext;
-    SSL                             *ssl;
-    char                            code[26];
-    char                            digest[30];
-    bool                            wantActive;
+    char                     radar[16];
+    char                     host[80];
+    int                      port;
+    bool                     useSSL;
+    int                      verbose;
 
-    int                             (*onOpen)(RKReporter *);
-    int                             (*onClose)(RKReporter *);
-    int                             (*onError)(RKReporter *);
-    int                             (*onMessage)(RKReporter *);
+    int                      (*onOpen)(RKReporter *);
+    int                      (*onClose)(RKReporter *);
+    int                      (*onError)(RKReporter *);
+    int                      (*onMessage)(RKReporter *);
+
+    char                     ip[16];
+    struct sockaddr_in       sa;                                 // Socket address
+    int                      sd;                                 // Socket descriptor
+    SSL_CTX                  *sslContext;
+    SSL                      *ssl;
+    char                     secret[26];
+    char                     digest[30];
+    bool                     wantActive;
+
+    pthread_t                threadId;                           // Own thread ID
+    pthread_attr_t           threadAttributes;                   // Thread attributes
+    pthread_mutex_t          lock;                               // Thread safety mutex of the server
+
+    fd_set                   rfd;                                // Read ready
+    fd_set                   wfd;                                // Write ready
+    fd_set                   efd;                                // Error occurred
 };
 
 
 RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag flag);
-void RKReporterFree(RKReporter *reporter);
+void RKReporterFree(RKReporter *R);
 
-int RKReporterRead(RKReporter *reporter, void *buf, size_t size);
-int RKReporterWrite(RKReporter *reporter, void *buf, size_t size);
+int RKReporterRead(RKReporter *R, void *buf, size_t size);
+int RKReporterWrite(RKReporter *R, void *buf, size_t size);
+
+void RKReporterSetOpenHandler(RKReporter *, int (*)(RKReporter *));
+void RKReporterSetCloseHandler(RKReporter *, int (*)(RKReporter *));
+void RKReporterSetMessageHandler(RKReporter *, int (*)(RKReporter *));
+void RKReporterSetErrorHandler(RKReporter *, int (*)(RKReporter *));

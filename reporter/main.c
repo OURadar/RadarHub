@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <unistd.h>
+
 #include "reporter.h"
 
 int main(int argc, const char *argv[]) {
@@ -9,6 +14,8 @@ int main(int argc, const char *argv[]) {
     } else {
         hope = RKReporterInit("px1000", argv[1], false);
     }
+
+    printf("Wait for a while ...");
 
     RKReporterFree(hope);
 
