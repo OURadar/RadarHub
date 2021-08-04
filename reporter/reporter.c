@@ -189,14 +189,60 @@ int RKReporterWrite(RKReporter *R, void *buf, size_t size) {
 void *theReporter(void *in) {
     RKReporter *R = (RKReporter *)in;
 
+    int r = 0;
+    void *buf = malloc(1024);
+    ws_frame_header *h = (ws_frame_header *)buf;
+
+    // Make a ping frame
+    memset(h, 0, sizeof(ws_frame_header));
+    h->fin = 1;
+    h->opcode = 9;
+    h->mask = 0;
+    h->len = 0;
+
+    printf("PING frame of size %zu\n", sizeof(ws_frame_header));
+
+    r = RKReporterWrite(R, buf, sizeof(ws_frame_header));
+    if (r < 0) {
+        fprintf(stderr, "Error. Unable to write.\n");
+        return NULL;
+    }
+    printf("r = %d\n", r);
+
+    int k = 0;
     while (R->wantActive) {
         // select()
         // check rfd, wfd, efd,
         // read, or write
 
+        // r = select(R->sd, )
+
+        if (k++ % 10 == 0) {
+            // Make a ping frame
+            h->fin = 1;
+            h->opcode = RFC6455_OPCODE_PING;
+            h->mask = 0;
+            h->len = 0;
+            RKReporterWrite(R, buf, sizeof(ws_frame_header));
+        }
+
+        r = RKReporterRead(R, buf, 1024);
+        if (r < 0) {
+            fprintf(stderr, "Read error.\n");
+            break;
+        }
+
+        printf("r = %d   opcode = %d\n", r, h->opcode);
+
+        if (h->opcode == 0x8) {
+            R->wantActive = false;
+        }
 
         usleep(100000);
     }
+
+    free(buf);
+
     return NULL;
 }
 
