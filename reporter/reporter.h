@@ -1,3 +1,14 @@
+//
+//  RKReporter.h
+//  RadarHub
+//
+//  Created by Boonleng Cheong on 8/3/2021.
+//  Copyright (c) 2021 Boonleng Cheong. All rights reserved.
+//
+
+#ifndef __RadarKit_Reporter__
+#define __RadarKit_Reporter__
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -11,6 +22,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+
+#include "ws.h"
 
 typedef uint8_t RKSSLFlag;
 enum RKSSLFlag {
@@ -65,3 +78,5 @@ void RKReporterSetErrorHandler(RKReporter *, int (*)(RKReporter *));
 
 void RKReporterRun(RKReporter *);
 void RKReporterStop(RKReporter *);
+
+#endif

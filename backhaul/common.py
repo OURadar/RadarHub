@@ -1,3 +1,9 @@
+#
+#   RadarHub
+# 
+#   Created by Boonleng Cheong
+#
+
 def hex2rgba(strs):
     for str in strs:
         r = int(str[:2], 16) / 255

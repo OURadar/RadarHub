@@ -1,4 +1,9 @@
 # frontend/consumers.py
+#
+#   RadarHub
+# 
+#   Created by Boonleng Cheong
+#
 
 import json
 

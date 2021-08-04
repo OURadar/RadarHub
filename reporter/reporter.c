@@ -1,3 +1,11 @@
+//
+//  RKReporter.c
+//  RadarHub
+//
+//  Created by Boonleng Cheong on 8/3/2021.
+//  Copyright (c) 2021 Boonleng Cheong. All rights reserved.
+//
+
 #include <reporter.h>
 
 static char *RKGetHandshakeArgument(const char *buf, const char *key) {
@@ -117,7 +125,7 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
     printf("R->digest = %s\n", R->digest);
 
     if (strcmp(R->digest, "Irr1KGdq6r9dz93/ZSPSnh9ZJ68=")) {
-        fprintf(stderr, "Error during handshake.\n");
+        fprintf(stderr, "Error. Unexpected digest.\n");
     }
     // Should have secret to verify the return digest, websocket upgrade, connection upgrade, etc.
 
