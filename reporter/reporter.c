@@ -99,6 +99,7 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
     strcpy(R->secret, "RadarHub39EzLkh9GBhXDw");
     sprintf(buf,
         "GET /ws/%s/ HTTP/1.1\r\n"
+        // "GET / HTTP/1.1\r\n"
         "Host: %s\r\n"
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
@@ -118,6 +119,10 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
     } while (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL);
     if (r < 0) {
         fprintf(stderr, "Error during handshake.\n");
+    }
+    if (c) {
+        printf("%s\n", c);
+        buf[r] = '\0';
     }
     printf("%s", buf);
 
@@ -161,53 +166,29 @@ void RKReporterSetErrorHandler(RKReporter *R, int (*routine)(RKReporter *)) {
 #pragma mark - Methods
 
 int RKReporterRead(RKReporter *R, void *buf, size_t size) {
-    int k, r = 0;
     if (R->useSSL) {
-        if ((k = SSL_read(R->ssl, buf + r, size - r)) > 0) {
-            r += k;
-        } else {
-            return -1;
-        }
-    } else {
-        if ((k = recv(R->sd, buf + r, size - r, 0)) > 0) {
-            r += k;
-        } else {
-            return -1;
-        }
+        return SSL_read(R->ssl, buf, size);
     }
-    ((char *)buf)[r] = '\0';
-    return r;
+    return read(R->sd, buf, size);
 }
 
 int RKReporterWrite(RKReporter *R, void *buf, size_t size) {
     if (R->useSSL) {
         return SSL_write(R->ssl, buf, size);
     }
-    return send(R->sd, buf, size, 0);
+    return write(R->sd, buf, size);
 }
 
 void *theReporter(void *in) {
     RKReporter *R = (RKReporter *)in;
 
-    int r = 0;
     void *buf = malloc(1024);
-    ws_frame_header *h = (ws_frame_header *)buf;
+    char *payload;
+    size_t r = 0;
+    uint8_t *c = buf;
+    ws_frame_header *h = buf;    
 
-    // Make a ping frame
-    memset(h, 0, sizeof(ws_frame_header));
-    h->fin = 1;
-    h->opcode = 9;
-    h->mask = 0;
-    h->len = 0;
-
-    printf("PING frame of size %zu\n", sizeof(ws_frame_header));
-
-    r = RKReporterWrite(R, buf, sizeof(ws_frame_header));
-    if (r < 0) {
-        fprintf(stderr, "Error. Unable to write.\n");
-        return NULL;
-    }
-    printf("r = %d\n", r);
+    sleep(1);
 
     int k = 0;
     while (R->wantActive) {
@@ -217,26 +198,69 @@ void *theReporter(void *in) {
 
         // r = select(R->sd, )
 
-        if (k++ % 10 == 0) {
+        if (k++ % 100 == 0) {
+
             // Make a ping frame
+            memset(h, 0, sizeof(ws_frame_header));
             h->fin = 1;
+            h->mask = 1;
             h->opcode = RFC6455_OPCODE_PING;
-            h->mask = 0;
-            h->len = 0;
-            RKReporterWrite(R, buf, sizeof(ws_frame_header));
-        }
+            // h->opcode = RFC6455_OPCODE_TEXT;
+            payload = buf + sizeof(ws_frame_header) + 4 * h->mask;
+            h->len = sprintf(payload, "Hello");
+            // h->len = sprintf(payload, "{\"radar\":\"px1000\",\"command\":\"hello\"}");
+            if (h->mask) {
+                c[2] = 0x37;
+                c[3] = 0xfa;
+                c[4] = 0x21;
+                c[5] = 0x3d;
+            }
+            printf("Payload: \033[38;5;82m%s\033[m\n", payload);
+            for (int i = 0; i < h->len; i++) {
+                int j = i % 4;
+                payload[i] ^= c[2 + j];
+            }
+            
+            printf("%02x %02x   %02x %02x %02x %02x    %02x %02x %02x %02x %02x"
+                "    fin=%d  opcode=%x  mask=%d  len=%d\n", 
+                c[0], c[1],
+                c[2], c[3], c[4], c[5],
+                c[6], c[7], c[8], c[9], c[10],
+                h->fin, h->opcode, h->mask, h->len);
+            size_t size = sizeof(ws_frame_header) + 4 * h->mask + h->len;
+            r = RKReporterWrite(R, buf, size);
+            if (r < 0) {
+                fprintf(stderr, "Error. Unable to write.\n");
+                return NULL;
+            }
+            printf("Frame of size %zu / %zu sent.\n", size, r);
+            
+            r = RKReporterRead(R, buf, 1024);
+            if (r < 0) {
+                fprintf(stderr, "Read error. r = %zu\n", r);
+                break;
+            }
+            printf("Frame of size %zu received.\n", r);
+            printf("%02x %02x   %02x %02x %02x %02x    %02x %02x %02x %02x %02x"
+                "    fin=%d  opcode=%x  mask=%d  len=%d\n", 
+                c[0], c[1],
+                c[2], c[3], c[4], c[5],
+                c[6], c[7], c[8], c[9], c[10],
+                h->fin, h->opcode, h->mask, h->len);
+            payload = buf + sizeof(ws_frame_header) + 4 * h->mask;
+            payload[h->len] = '\0';
+            if (h->mask) {
+                for (int i = 0; i < h->len; i++) {
+                    int j = i % 4;
+                    payload[i] ^= c[2 + j];
+                }
+            }
+            printf("Payload: \033[38;5;82m%s\033[m\n", payload);
 
-        r = RKReporterRead(R, buf, 1024);
-        if (r < 0) {
-            fprintf(stderr, "Read error.\n");
-            break;
-        }
-
-        printf("r = %d   opcode = %d\n", r, h->opcode);
-
-        if (h->opcode == 0x8) {
-            R->wantActive = false;
-        }
+            if (h->opcode == RFC6455_OPCODE_CLOSE) {
+                R->wantActive = false;
+            }
+        }        
 
         usleep(100000);
     }

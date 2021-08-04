@@ -15,6 +15,7 @@ class FrontendConsumer(AsyncWebsocketConsumer):
         if 'radar' in self.scope['url_route']['kwargs']:
             self.radar = self.scope['url_route']['kwargs']['radar']
         self.isUser = False
+        print(f'radar = {self.radar}')
         await self.accept()
 
     async def disconnect(self, code):
