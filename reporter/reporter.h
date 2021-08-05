@@ -46,6 +46,7 @@ struct rk_reporter {
     int                      (*onError)(RKReporter *);
     int                      (*onMessage)(RKReporter *);
 
+    uint8_t                  buf[8196];
     char                     ip[16];
     struct sockaddr_in       sa;                                 // Socket address
     int                      sd;                                 // Socket descriptor

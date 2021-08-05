@@ -18,7 +18,10 @@ int main(int argc, const char *argv[]) {
     RKReporterRun(hope);
 
     printf("Wait for a while ...\n");
-    sleep(30);
+    
+    sleep(3600);
+
+    printf("Stopping ...\n");
 
     RKReporterStop(hope);
 

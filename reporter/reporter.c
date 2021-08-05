@@ -8,6 +8,11 @@
 
 #include <reporter.h>
 
+typedef union {
+    uint32_t u32;
+    uint8_t code[4];
+} RKMaskKey;
+
 static char *RKGetHandshakeArgument(const char *buf, const char *key) {
     static char argument[80] = {0};
     char *b, *e;
@@ -22,6 +27,68 @@ static char *RKGetHandshakeArgument(const char *buf, const char *key) {
     memcpy(argument, b, l);
     argument[l] = '\0';
     return argument;
+}
+
+static size_t RKEncodeWebsocketFrame(void *buf, RFC6455_OPCODE code, const bool mask, const void *src, size_t size) {
+    size_t r;
+    ws_frame_header *h = buf;
+    memset(h, 0, sizeof(ws_frame_header));
+    h->fin = 1;
+    h->mask = mask;
+    h->opcode = code;
+    if (size == 0) {
+        if (src == NULL) {
+            r = 0;
+        } else {
+            r = strlen((char *)src);
+        } 
+    } else {
+        r = size;
+    }
+    if (r > 65535) {
+        h->len = 127;
+    } else if (r > 125) {
+        h->len = 126;
+    } else {
+        h->len = r;
+    }
+    if (src) {
+        printf("Payload: \033[38;5;82m%s\033[m\n", (char *)src);
+        char *payload = buf + sizeof(ws_frame_header) + 4 * h->mask;
+        memcpy(payload, src, h->len);
+        if (h->mask) {
+            RKMaskKey key = {.u32 = rand()};
+            *((uint32_t *)&h[1]) = key.u32;
+            for (int i = 0; i < h->len; i++) {
+                payload[i] ^= key.code[i % 4];
+            }
+        }
+    }
+    return sizeof(ws_frame_header) + 4 * h->mask + h->len;
+}
+
+static size_t RKDecodeWebsocketFrame(void **dst, void *buf) {
+    size_t r;
+    ws_frame_header *h = buf;
+    char *payload = buf + sizeof(ws_frame_header) + 4 * h->mask;
+    if (h->len == 127) {
+        r = *(uint64_t *)payload;
+        payload += 8;
+    } else if (h->len == 126) {
+        r = *(uint16_t *)payload;
+        payload += 2;
+    } else {
+        r = h->len;
+    }
+    payload[h->len] = '\0';
+    RKMaskKey key = {.u32 = *(uint32_t *)&h[1]};
+    if (h->mask) {
+        for (int i = 0; i < h->len; i++) {
+            payload[i] ^= key.code[i % 4];
+        }
+    }
+    *dst = payload;
+    return r;
 }
 
 #pragma mark - Life Cycle
@@ -99,7 +166,6 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
     strcpy(R->secret, "RadarHub39EzLkh9GBhXDw");
     sprintf(buf,
         "GET /ws/%s/ HTTP/1.1\r\n"
-        // "GET / HTTP/1.1\r\n"
         "Host: %s\r\n"
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
@@ -179,18 +245,58 @@ int RKReporterWrite(RKReporter *R, void *buf, size_t size) {
     return write(R->sd, buf, size);
 }
 
+static int RKReporterPingPong(RKReporter *R, const bool ping, const char *message, const int len) {
+    size_t size = RKEncodeWebsocketFrame(R->buf,
+        ping ? RFC6455_OPCODE_PING : RFC6455_OPCODE_PONG, true,
+        message, message == NULL ? 0 : (len == 0 ? strlen(message) : len));
+    int r = RKReporterWrite(R, R->buf, size);
+    if (r < 0) {
+        fprintf(stderr, "Error. Unable to write. r = %d\n", r);
+    } else if (R->verbose > 1) {
+        printf("Frame of size %zu / %d sent.\n", size, r);
+    }
+    return r;
+}
+
+static int RKReporterPing(RKReporter *R, const char *message, const int len) {
+    return RKReporterPingPong(R, true, message, len);
+}
+
+static int RKReporterPong(RKReporter *R, const char *message, const int len) {
+    return RKReporterPingPong(R, false, message, len);
+}
+
+static void RKReporterShowFrameHeader(RKReporter *R) {
+    uint8_t *c = (uint8_t *)R->buf;
+    ws_frame_header *h = (ws_frame_header *)c;
+    if (h->mask) {
+        printf("%02x %02x   %02x %02x %02x %02x    %02x %02x %02x %02x %02x %02x %02x %02x"
+            "    fin=%d  opcode=%x  mask=%d  len=%d\n", 
+            c[0], c[1],
+            c[2], c[3], c[4], c[5],
+            c[6], c[7], c[8], c[9], c[10], c[11], c[12], c[13],
+            h->fin, h->opcode, h->mask, h->len);
+    } else {
+        printf("%02x %02x   %02x %02x %02x %02x %02x %02x %02x %02x"
+            "    fin=%d  opcode=%x  mask=%d  len=%d\n", 
+            c[0], c[1],
+            c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9],
+            h->fin, h->opcode, h->mask, h->len);
+    }
+}
+
 void *theReporter(void *in) {
     RKReporter *R = (RKReporter *)in;
 
-    void *buf = malloc(1024);
     char *payload;
-    size_t r = 0;
-    uint8_t *c = buf;
-    ws_frame_header *h = buf;    
+    ws_frame_header *h = (ws_frame_header *)R->buf;
 
-    sleep(1);
-
+    int r = 0;
     int k = 0;
+    size_t size;    
+    const char words[][6] = {"love", "hope", "gift", "tale", "brag", "jail", "bull", "fade"};
+
+    R->verbose = 1;
     while (R->wantActive) {
         // select()
         // check rfd, wfd, efd,
@@ -198,74 +304,53 @@ void *theReporter(void *in) {
 
         // r = select(R->sd, )
 
-        if (k++ % 100 == 0) {
+        // h->len = sprintf(payload, "{\"radar\":\"px1000\",\"command\":\"hello\"}");
 
-            // Make a ping frame
-            memset(h, 0, sizeof(ws_frame_header));
-            h->fin = 1;
-            h->mask = 1;
-            h->opcode = RFC6455_OPCODE_PING;
-            // h->opcode = RFC6455_OPCODE_TEXT;
-            payload = buf + sizeof(ws_frame_header) + 4 * h->mask;
-            h->len = sprintf(payload, "Hello");
-            // h->len = sprintf(payload, "{\"radar\":\"px1000\",\"command\":\"hello\"}");
-            if (h->mask) {
-                c[2] = 0x37;
-                c[3] = 0xfa;
-                c[4] = 0x21;
-                c[5] = 0x3d;
+        if (k++ % 100 == 0) {
+            char *word = words[rand() % 8];
+            r = RKReporterPing(R, word, strlen(word));
+            if (R->verbose) {
+                printf("%2d sent  ", r); RKReporterShowFrameHeader(R);
             }
-            printf("Payload: \033[38;5;82m%s\033[m\n", payload);
-            for (int i = 0; i < h->len; i++) {
-                int j = i % 4;
-                payload[i] ^= c[2 + j];
-            }
-            
-            printf("%02x %02x   %02x %02x %02x %02x    %02x %02x %02x %02x %02x"
-                "    fin=%d  opcode=%x  mask=%d  len=%d\n", 
-                c[0], c[1],
-                c[2], c[3], c[4], c[5],
-                c[6], c[7], c[8], c[9], c[10],
-                h->fin, h->opcode, h->mask, h->len);
-            size_t size = sizeof(ws_frame_header) + 4 * h->mask + h->len;
-            r = RKReporterWrite(R, buf, size);
+
+            r = RKReporterRead(R, R->buf, sizeof(R->buf));
             if (r < 0) {
-                fprintf(stderr, "Error. Unable to write.\n");
-                return NULL;
-            }
-            printf("Frame of size %zu / %zu sent.\n", size, r);
-            
-            r = RKReporterRead(R, buf, 1024);
-            if (r < 0) {
-                fprintf(stderr, "Read error. r = %zu\n", r);
+                fprintf(stderr, "Read error. r = %d\n", r);
+                R->wantActive = false;
                 break;
             }
-            printf("Frame of size %zu received.\n", r);
-            printf("%02x %02x   %02x %02x %02x %02x    %02x %02x %02x %02x %02x"
-                "    fin=%d  opcode=%x  mask=%d  len=%d\n", 
-                c[0], c[1],
-                c[2], c[3], c[4], c[5],
-                c[6], c[7], c[8], c[9], c[10],
-                h->fin, h->opcode, h->mask, h->len);
-            payload = buf + sizeof(ws_frame_header) + 4 * h->mask;
-            payload[h->len] = '\0';
-            if (h->mask) {
-                for (int i = 0; i < h->len; i++) {
-                    int j = i % 4;
-                    payload[i] ^= c[2 + j];
-                }
+            if (R->verbose) {
+                memset(R->buf + r, 0, 4);
+                printf("%2d read  ", r); RKReporterShowFrameHeader(R);
             }
-            printf("Payload: \033[38;5;82m%s\033[m\n", payload);
+            
+            size = RKDecodeWebsocketFrame((void **)&payload, R->buf);
+            printf("Payload: \033[38;5;220m%s\033[m\n", payload);
 
-            if (h->opcode == RFC6455_OPCODE_CLOSE) {
+            if (h->opcode == RFC6455_OPCODE_PING) {
+                RKReporterPong(R, payload, h->len);
+
+                // Resume the previous expected reply
+                r = RKReporterRead(R, R->buf, sizeof(R->buf));
+                if (r < 0) {
+                    fprintf(stderr, "Read error. r = %d\n", r);
+                    R->wantActive = false;
+                    break;
+                }
+                if (R->verbose) {
+                    memset(R->buf + r, 0, 4);
+                    printf("%2d read  ", r); RKReporterShowFrameHeader(R);
+                }
+
+                size = RKDecodeWebsocketFrame((void **)&payload, R->buf);
+                printf("Payload: \033[38;5;220m%s\033[m\n", payload);
+            } else if (h->opcode == RFC6455_OPCODE_CLOSE) {
                 R->wantActive = false;
             }
         }        
 
         usleep(100000);
     }
-
-    free(buf);
 
     return NULL;
 }
