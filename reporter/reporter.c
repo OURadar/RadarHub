@@ -32,12 +32,12 @@ static char *RKGetHandshakeArgument(const char *buf, const char *key) {
     return argument;
 }
 
-static size_t RKEncodeWebsocketFrame(void *buf, RFC6455_OPCODE code, const bool mask, const void *src, size_t size) {
+static size_t RKEncodeWebsocketFrame(void *buf, RFC6455_OPCODE code, const void *src, size_t size) {
     size_t r;
     ws_frame_header *h = buf;
     memset(h, 0, sizeof(ws_frame_header));
     h->fin = 1;
-    h->mask = mask;
+    h->mask = true;
     h->opcode = code;
     if (size == 0) {
         if (src == NULL) {
@@ -263,7 +263,7 @@ int RKReporterWrite(RKReporter *R, void *buf, size_t size) {
 
 static int RKReporterPingPong(RKReporter *R, const bool ping, const char *message, const int len) {
     size_t size = RKEncodeWebsocketFrame(R->buf,
-        ping ? RFC6455_OPCODE_PING : RFC6455_OPCODE_PONG, true,
+        ping ? RFC6455_OPCODE_PING : RFC6455_OPCODE_PONG,
         message, message == NULL ? 0 : (len == 0 ? strlen(message) : len));
     int r = RKReporterWrite(R, R->buf, size);
     if (r < 0) {
