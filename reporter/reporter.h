@@ -46,14 +46,16 @@ struct rk_reporter {
     int                      (*onError)(RKReporter *);
     int                      (*onMessage)(RKReporter *);
 
-    uint8_t                  buf[8196];
-    char                     ip[16];
+    uint8_t                  buf[1024 * 1024];                   // A local buffer to store a frame
+    char                     ip[INET6_ADDRSTRLEN];               // IP in string
     struct sockaddr_in       sa;                                 // Socket address
     int                      sd;                                 // Socket descriptor
     SSL_CTX                  *sslContext;
     SSL                      *ssl;
     char                     secret[26];
-    char                     digest[30];
+    char                     digest[30];                         // Handshake Sec-WebSocket-Accept
+    char                     upgrade[30];                        // Handshake Upgrade
+    char                     connection[30];                     // Handshake Connection
     bool                     wantActive;
 
     pthread_t                threadId;                           // Own thread ID

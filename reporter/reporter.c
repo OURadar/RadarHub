@@ -21,7 +21,10 @@ static char *RKGetHandshakeArgument(const char *buf, const char *key) {
         argument[0] = '\0';
         return argument;
     }
-    b += strlen(key) + 2;
+    b += strlen(key);
+    while (*b == ':' || *b == ' ') {
+        b++;
+    }
     e = strstr(b, "\r\n");
     size_t l = (size_t)(e - b);
     memcpy(argument, b, l);
@@ -192,15 +195,28 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
     }
     printf("%s", buf);
 
+    // Verify the return digest, websocket upgrade, connection upgrade, etc.
     strcpy(R->digest, RKGetHandshakeArgument(buf, "Sec-WebSocket-Accept"));
-    printf("R->digest = %s\n", R->digest);
+    strcpy(R->upgrade, RKGetHandshakeArgument(buf, "Upgrade"));
+    strcpy(R->connection, RKGetHandshakeArgument(buf, "Connection"));
 
     if (strcmp(R->digest, "Irr1KGdq6r9dz93/ZSPSnh9ZJ68=")) {
+        fprintf(stderr, "Error. R->digest = %s\n", R->digest);
         fprintf(stderr, "Error. Unexpected digest.\n");
     }
-    // Should have secret to verify the return digest, websocket upgrade, connection upgrade, etc.
+    if (strcasecmp(R->upgrade, "WebSocket")) {
+        fprintf(stderr, "Error. R->upgrade = %s\n", R->upgrade);
+        fprintf(stderr, "Error. Connection is not websocket.\n");
+    }
+    if (strcasecmp(R->connection, "upgrade")) {
+        fprintf(stderr, "Error. R->connection = %s\n", R->connection);
+        fprintf(stderr, "Error. Connection did not get upgraded.\n");
+    }
 
     // Call onOpen here for client to handle additional tasks after the connection is established.
+    if (R->onOpen) {
+        R->onOpen(R);
+    }
 
     return R;
 }
@@ -294,7 +310,7 @@ void *theReporter(void *in) {
     int r = 0;
     int k = 0;
     size_t size;    
-    const char words[][6] = {"love", "hope", "gift", "tale", "brag", "jail", "bull", "fade"};
+    char words[][6] = {"love", "hope", "gift", "tale", "brag", "jail", "bull", "fade"};
 
     R->verbose = 1;
     while (R->wantActive) {
