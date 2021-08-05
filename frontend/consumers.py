@@ -8,6 +8,11 @@
 import json
 
 from channels.generic.websocket import AsyncWebsocketConsumer
+from django.http.response import Http404
+
+class NullConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        await self.close()
 
 class FrontendConsumer(AsyncWebsocketConsumer):
     async def connect(self):

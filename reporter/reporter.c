@@ -198,7 +198,7 @@ static int RKWebsocketConnect(RKReporter *R) {
     char *buf = (char *)R->buf;
     strcpy(R->secret, "RadarHub39EzLkh9GBhXDw");
     sprintf(buf,
-        "GET /ws/%s/ HTTP/1.1\r\n"
+        "GET / HTTP/1.1\r\n"
         "Host: %s\r\n"
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
@@ -206,7 +206,7 @@ static int RKWebsocketConnect(RKReporter *R) {
         "Sec-WebSocket-Protocol: chat, superchat\r\n"
         "Sec-WebSocket-Version: 13\r\n"
         "\r\n",
-        R->radar,
+        // R->radar,
         R->host,
         R->secret);
     if (R->verbose) {
@@ -236,16 +236,19 @@ static int RKWebsocketConnect(RKReporter *R) {
     if (strcmp(R->digest, "Irr1KGdq6r9dz93/ZSPSnh9ZJ68=")) {
         fprintf(stderr, "Error. R->digest = %s\n", R->digest);
         fprintf(stderr, "Error. Unexpected digest.\n");
+        return -1;
     }
 
     if (strcasecmp(R->upgrade, "WebSocket")) {
         fprintf(stderr, "Error. R->upgrade = %s\n", R->upgrade);
         fprintf(stderr, "Error. Connection is not websocket.\n");
+        return -1;
     }
 
     if (strcasecmp(R->connection, "upgrade")) {
         fprintf(stderr, "Error. R->connection = %s\n", R->connection);
         fprintf(stderr, "Error. Connection did not get upgraded.\n");
+        return -1;
     }
 
     // Call onOpen here for client to handle additional tasks after the connection is established.
