@@ -25,6 +25,8 @@
 
 #include "ws.h"
 
+#define RKReporterBufferSize   (1024 * 1024)
+
 typedef uint8_t RKSSLFlag;
 enum RKSSLFlag {
     RKSSLFlagAuto,
@@ -44,9 +46,9 @@ struct rk_reporter {
     int                      (*onOpen)(RKReporter *);
     int                      (*onClose)(RKReporter *);
     int                      (*onError)(RKReporter *);
-    int                      (*onMessage)(RKReporter *);
+    int                      (*onMessage)(RKReporter *, void*, size_t);
 
-    uint8_t                  buf[1024 * 1024];                   // A local buffer to store a frame
+    uint8_t                  buf[RKReporterBufferSize];          // A local buffer to store a frame
     char                     ip[INET6_ADDRSTRLEN];               // IP in string
     struct sockaddr_in       sa;                                 // Socket address
     int                      sd;                                 // Socket descriptor
@@ -71,15 +73,14 @@ struct rk_reporter {
 RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag);
 void RKReporterFree(RKReporter *);
 
-int RKReporterRead(RKReporter *, void *, size_t);
-int RKReporterWrite(RKReporter *, void *, size_t);
-
 void RKReporterSetOpenHandler(RKReporter *, int (*)(RKReporter *));
 void RKReporterSetCloseHandler(RKReporter *, int (*)(RKReporter *));
-void RKReporterSetMessageHandler(RKReporter *, int (*)(RKReporter *));
+void RKReporterSetMessageHandler(RKReporter *, int (*)(RKReporter *, void *, size_t));
 void RKReporterSetErrorHandler(RKReporter *, int (*)(RKReporter *));
 
 void RKReporterRun(RKReporter *);
 void RKReporterStop(RKReporter *);
+
+int RKReporterSend(RKReporter *, void *, size_t);
 
 #endif

@@ -49,12 +49,6 @@ typedef union {
     uint8_t bytes[2];
 } ws_frame_header;
 
-typedef union {
-    struct { uint16_t s16; };                 // Word 0 bit 16-31
-    struct { uint64_t s64; };                 // Word 0 bit 16-31 + word 1 bits 0-31 + word 2 bits 0-15
-    uint8_t bytes[4];                         // Raw bytes of the extended payload length
-} ws_frame_xlen;
-
 #pragma pack(pop)
 
 #endif // defined(__rfc_6455__)
