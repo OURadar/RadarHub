@@ -177,7 +177,8 @@ static int RKWebsocketConnect(RKReporter *R) {
         return -1;
     }
 
-    printf("Connecting %s:%d %s...\n", R->ip, R->port, R->useSSL ? "(\033[38;5;220mssl\033[m) " : "");
+    printf("Connecting %s:%d %s...\n", R->ip, R->port,
+       R->useSSL ? "(\033[38;5;220mssl\033[m) " : "");
 
     R->sa.sin_family = AF_INET;
     R->sa.sin_port = htons(R->port);
@@ -190,12 +191,6 @@ static int RKWebsocketConnect(RKReporter *R) {
         return -1;
     }
     if (R->useSSL) {
-        if (R->sslContext == NULL) {
-            SSL_library_init();
-            SSL_load_error_strings();
-            R->sslContext = SSL_CTX_new(SSLv23_method());
-            R->ssl = SSL_new(R->sslContext);
-        }
         SSL_set_fd(R->ssl, R->sd);
         SSL_connect(R->ssl);
     }
@@ -214,7 +209,9 @@ static int RKWebsocketConnect(RKReporter *R) {
         R->radar,
         R->host,
         R->secret);
-    printf("%s", buf);
+    if (R->verbose) {
+        printf("%s", buf);
+    }
 
     RKSocketWrite(R, buf, strlen(buf));
     do {
@@ -227,7 +224,9 @@ static int RKWebsocketConnect(RKReporter *R) {
         printf("%s\n", c);
         buf[r] = '\0';
     }
-    printf("%s", buf);
+    if (R->verbose) {
+        printf("%s", buf);
+    }
 
     // Verify the return digest, websocket upgrade, connection upgrade, etc.
     strcpy(R->digest, RKGetHandshakeArgument(buf, "Sec-WebSocket-Accept"));
@@ -253,6 +252,8 @@ static int RKWebsocketConnect(RKReporter *R) {
     if (R->onOpen) {
         R->onOpen(R);
     }
+
+    R->connected = true;
 
     return 0;
 }
@@ -286,6 +287,12 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
     } else {
         R->useSSL = flag == RKSSLFlagOn;
     }
+    if (R->useSSL) {
+        SSL_library_init();
+        SSL_load_error_strings();
+        R->sslContext = SSL_CTX_new(SSLv23_method());
+        R->ssl = SSL_new(R->sslContext);
+    }
     return R;
 }
 
@@ -317,8 +324,9 @@ void RKReporterSetErrorHandler(RKReporter *R, int (*routine)(RKReporter *)) {
 
 void *theReporter(void *in) {
     RKReporter *R = (RKReporter *)in;
+    R->verbose = 1;
 
-    char *payload;
+    void *payload;
     ws_frame_header *h = (ws_frame_header *)R->buf;
 
     int r = 0;
@@ -327,47 +335,23 @@ void *theReporter(void *in) {
     char words[][5] = {"love", "hope", "cool", "cute", "idea", "nice", "work", "wish"};
     char uword[5] = "xxxx";
 
-    RKWebsocketConnect(R);
-
-    R->verbose = 1;
     while (R->wantActive) {
-        // select()
-        // check rfd, wfd, efd,
-        // read, or write
 
-        // r = select(R->sd, )
+        RKWebsocketConnect(R);
+        
+        while (R->wantActive && R->connected) {
+            // select()
+            // check rfd, wfd, efd,
+            // read, or write
 
-        // h->len = sprintf(payload, "{\"radar\":\"px1000\",\"command\":\"hello\"}");
+            // r = select(R->sd, )
 
-        if (k++ % 100 == 0) {
-            pthread_mutex_lock(&R->lock);
-            char *word = words[rand() % 8];
-            r = RKWebsocketPing(R, word, strlen(word));
-            if (R->verbose) {
-                RKMaskKey key = {.u32 = *((uint32_t *)&R->buf[2])};
-                for (int i = 0; i < 4; i++) {
-                    uword[i] = R->buf[6 + i] ^ key.code[i % 4];
-                }
-                printf("Payload: \033[38;5;82m%s\033[m\n", uword);
-                printf("%2d sent  ", r); RKShowWebsocketFrameHeader(R);
-            }
+            // h->len = sprintf(payload, "{\"radar\":\"px1000\",\"command\":\"hello\"}");
 
-            r = RKSocketRead(R, R->buf, RKReporterBufferSize);
-            if (r < 0) {
-                fprintf(stderr, "Read error. r = %d\n", r);
-                pthread_mutex_unlock(&R->lock);
-                R->wantActive = false;
-                break;
-            }
-            size = RKWebsocketFrameDecode((void **)&payload, R->buf);
-
-            if (R->verbose) {
-                printf("%2d read  ", r); RKShowWebsocketFrameHeader(R);
-                printf("Payload: \033[38;5;220m%s\033[m\n", payload);
-            }
-
-            if (h->opcode == RFC6455_OPCODE_PING) {
-                RKWebsocketPong(R, payload, h->len);
+            if (k++ % 100 == 0) {
+                pthread_mutex_lock(&R->lock);
+                char *word = words[rand() % 8];
+                r = RKWebsocketPing(R, word, strlen(word));
                 if (R->verbose) {
                     RKMaskKey key = {.u32 = *((uint32_t *)&R->buf[2])};
                     for (int i = 0; i < 4; i++) {
@@ -377,42 +361,73 @@ void *theReporter(void *in) {
                     printf("%2d sent  ", r); RKShowWebsocketFrameHeader(R);
                 }
 
-                // Resume the previous expected reply
                 r = RKSocketRead(R, R->buf, RKReporterBufferSize);
                 if (r < 0) {
                     fprintf(stderr, "Read error. r = %d\n", r);
                     pthread_mutex_unlock(&R->lock);
-                    R->wantActive = false;
                     break;
                 }
                 size = RKWebsocketFrameDecode((void **)&payload, R->buf);
 
                 if (R->verbose) {
                     printf("%2d read  ", r); RKShowWebsocketFrameHeader(R);
-                    printf("Payload: \033[38;5;220m%s\033[m\n", payload);
+                    printf("Payload: \033[38;5;220m%s\033[m\n", (char *)payload);
                 }
-            }
 
-            if (h->opcode == RFC6455_OPCODE_CLOSE) {
-                R->wantActive = false;
-                if (R->onClose) {
-                    R->onClose(R);
-                }
-            } else {
-                if (R->onMessage) {
-                    R->onMessage(R, payload, size);
-                }
-            }
-            pthread_mutex_unlock(&R->lock);
-        } // if (k++ % 100 == 0) ...
+                if (h->opcode == RFC6455_OPCODE_PING) {
+                    RKWebsocketPong(R, (char *)payload, h->len);
+                    if (R->verbose) {
+                        RKMaskKey key = {.u32 = *((uint32_t *)&R->buf[2])};
+                        for (int i = 0; i < 4; i++) {
+                            uword[i] = R->buf[6 + i] ^ key.code[i % 4];
+                        }
+                        printf("Payload: \033[38;5;82m%s\033[m\n", uword);
+                        printf("%2d sent  ", r); RKShowWebsocketFrameHeader(R);
+                    }
 
-        usleep(100000);
+                    // Resume the previous expected reply
+                    r = RKSocketRead(R, R->buf, RKReporterBufferSize);
+                    if (r < 0) {
+                        fprintf(stderr, "Read error. r = %d\n", r);
+                        pthread_mutex_unlock(&R->lock);
+                        break;
+                    }
+                    size = RKWebsocketFrameDecode((void **)&payload, R->buf);
+
+                    if (R->verbose) {
+                        printf("%2d read  ", r); RKShowWebsocketFrameHeader(R);
+                        printf("Payload: \033[38;5;220m%s\033[m\n", payload);
+                    }
+                }
+
+                if (h->opcode == RFC6455_OPCODE_CLOSE) {
+                    R->connected = false;
+                    if (R->onClose) {
+                        R->onClose(R);
+                    }
+                } else {
+                    if (R->onMessage) {
+                        R->onMessage(R, payload, size);
+                    }
+                }
+                pthread_mutex_unlock(&R->lock);
+            } // if (k++ % 100 == 0) ...
+
+            usleep(100000);
+        }
+        k = 0;
+        do {
+            if (k % 10 == 0) {
+                printf("No connection. Reconnect in %d seconds ...\n", 5 - k / 10);
+            }
+            usleep(100000);
+        } while (R->wantActive && k++ < 50);
     }
 
     return NULL;
 }
 
-void RKReporterRun(RKReporter *R) {
+void RKReporterStart(RKReporter *R) {
     pthread_mutex_lock(&R->lock);
     R->wantActive = true;
     pthread_mutex_unlock(&R->lock);

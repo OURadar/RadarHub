@@ -59,6 +59,7 @@ struct rk_reporter {
     char                     upgrade[30];                        // Handshake Upgrade
     char                     connection[30];                     // Handshake Connection
     bool                     wantActive;
+    bool                     connected;
 
     pthread_t                threadId;                           // Own thread ID
     pthread_attr_t           threadAttributes;                   // Thread attributes
@@ -78,7 +79,7 @@ void RKReporterSetCloseHandler(RKReporter *, int (*)(RKReporter *));
 void RKReporterSetMessageHandler(RKReporter *, int (*)(RKReporter *, void *, size_t));
 void RKReporterSetErrorHandler(RKReporter *, int (*)(RKReporter *));
 
-void RKReporterRun(RKReporter *);
+void RKReporterStart(RKReporter *);
 void RKReporterStop(RKReporter *);
 
 int RKReporterSend(RKReporter *, void *, size_t);

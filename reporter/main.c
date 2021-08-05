@@ -15,7 +15,7 @@ int main(int argc, const char *argv[]) {
         hope = RKReporterInit("px1000", argv[1], false);
     }
 
-    RKReporterRun(hope);
+    RKReporterStart(hope);
 
     printf("Wait for a while ...\n");
     
