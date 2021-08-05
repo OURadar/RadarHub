@@ -108,7 +108,7 @@ class BackhaulConsumer(AsyncConsumer):
             channel,
             {
                 'type': 'welcomeRadar',
-                'message': f'Hello \033[38;5;87m{radar}\033[m. Welcome to the ARRC RadarHub'
+                'message': f'Hello {radar}. Welcome to the ARRC RadarHub'
             }
         )
 

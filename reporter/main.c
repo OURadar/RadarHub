@@ -17,8 +17,14 @@ int main(int argc, const char *argv[]) {
 
     RKReporterStart(hope);
 
-    printf("Wait for a while ...\n");
-    
+    usleep(100000);
+    const int len = 150;
+    uint8_t *ray = (uint8_t *)malloc(len);
+    for (int k = 0; k < len; k++) {
+        ray[k] = k + 2;
+    }
+    RKReporterSend(hope, ray, len);
+
     sleep(3600);
 
     printf("Stopping ...\n");

@@ -198,7 +198,7 @@ static int RKWebsocketConnect(RKReporter *R) {
     char *buf = (char *)R->buf;
     strcpy(R->secret, "RadarHub39EzLkh9GBhXDw");
     sprintf(buf,
-        "GET / HTTP/1.1\r\n"
+        "GET /ws/radar/%s/ HTTP/1.1\r\n"
         "Host: %s\r\n"
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
@@ -206,7 +206,7 @@ static int RKWebsocketConnect(RKReporter *R) {
         "Sec-WebSocket-Protocol: chat, superchat\r\n"
         "Sec-WebSocket-Version: 13\r\n"
         "\r\n",
-        // R->radar,
+        R->radar,
         R->host,
         R->secret);
     if (R->verbose) {
@@ -296,7 +296,17 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
         R->sslContext = SSL_CTX_new(SSLv23_method());
         R->ssl = SSL_new(R->sslContext);
     }
+    R->timeoutDeltaMicroseconds = RKReporterTimeoutDeltaMicroseconds;
+    RKReporterSetPingInterval(R, 10.0f);
+    printf("R->timeoutThreshold = %u\n", R->timeoutThreshold);
+
+    R->verbose = 2;
+
     return R;
+}
+
+void RKReporterSetPingInterval(RKReporter *R, const float period) {
+    R->timeoutThreshold = (useconds_t)(period * 1.0e6f) / R->timeoutDeltaMicroseconds;
 }
 
 void RKReporterFree(RKReporter *R) {
@@ -327,59 +337,125 @@ void RKReporterSetErrorHandler(RKReporter *R, int (*routine)(RKReporter *)) {
 
 void *theReporter(void *in) {
     RKReporter *R = (RKReporter *)in;
-    R->verbose = 1;
 
+    int r;
     void *payload;
+    size_t size;
     ws_frame_header *h = (ws_frame_header *)R->buf;
-
-    int r = 0;
-    int k = 0;
-    size_t size;    
     char words[][5] = {"love", "hope", "cool", "cute", "idea", "nice", "work", "wish"};
     char uword[5] = "xxxx";
+    char message[64];
+
+    fd_set rfd;
+    fd_set wfd;
+    fd_set efd;
+    struct timeval timeout;
 
     while (R->wantActive) {
 
         RKWebsocketConnect(R);
-        
+
+        // Greetings
+        message[0] = 1;
+        r = sprintf(message + 1, "{\"radar\":\"%s\",\"command\":\"report\"}", R->radar);
+        RKReporterSend(R, message, r + 1);
+
+        // Run loop for read and write
         while (R->wantActive && R->connected) {
-            // select()
-            // check rfd, wfd, efd,
-            // read, or write
-
-            // r = select(R->sd, )
-
-            // h->len = sprintf(payload, "{\"radar\":\"px1000\",\"command\":\"hello\"}");
-
-            if (k++ % 100 == 0) {
-                pthread_mutex_lock(&R->lock);
-                char *word = words[rand() % 8];
-                r = RKWebsocketPing(R, word, strlen(word));
-                if (R->verbose) {
-                    RKMaskKey key = {.u32 = *((uint32_t *)&R->buf[2])};
-                    for (int i = 0; i < 4; i++) {
-                        uword[i] = R->buf[6 + i] ^ key.code[i % 4];
+            //
+            //  Write
+            //
+            //  should always just pass right through
+            //
+            FD_ZERO(&wfd);
+            FD_ZERO(&efd);
+            FD_SET(R->sd, &wfd);
+            FD_SET(R->sd, &efd);
+            timeout.tv_sec = 0;
+            timeout.tv_usec = R->timeoutDeltaMicroseconds;
+            r = select(R->sd + 1, NULL, &wfd, &efd, &timeout);
+            if (r > 0) {
+                if (FD_ISSET(R->sd, &wfd)) {
+                    // Ready to write
+                    while (R->payloadTail != R->payloadHead) {
+                        // Keep sending the payloads until the tail catches up
+                        R->payloadTail = R->payloadTail == RKReporterPayloadDepth - 1 ? 0 : R->payloadTail + 1;
+                        RKReporterPayload *payload = &R->payloads[R->payloadTail];
+                        if (R->verbose > 1) {
+                            char *c = (char *)payload->source;
+                            if (c[0] == 1) {
+                                printf("payload = %02x + %s (%zu)\n", c[0], c + 1, payload->size);
+                            } else {
+                                printf("payload = %02x %02x %02x %02x  %02x %02x %02x %02x ... (%zu)\n", 
+                                    c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], payload->size);
+                            }
+                        }
+                        size = RKWebsocketFrameEncode(R->buf, RFC6455_OPCODE_BINARY, payload->source, payload->size);
+                        r = RKSocketWrite(R, R->buf, size);
                     }
-                    printf("Payload: \033[38;5;82m%s\033[m\n", uword);
-                    printf("%2d sent  ", r); RKShowWebsocketFrameHeader(R);
-                }
-
-                r = RKSocketRead(R, R->buf, RKReporterBufferSize);
-                if (r < 0) {
-                    fprintf(stderr, "Read error. r = %d\n", r);
-                    pthread_mutex_unlock(&R->lock);
+                } else if (FD_ISSET(R->sd, &efd)) {
+                    // Exceptions
+                    fprintf(stderr, "Error. Exceptions during write cycle.\n");
                     break;
+                } else {
+                    printf("... w\n");
                 }
-                size = RKWebsocketFrameDecode((void **)&payload, R->buf);
-
-                if (R->verbose) {
-                    printf("%2d read  ", r); RKShowWebsocketFrameHeader(R);
-                    printf("Payload: \033[38;5;220m%s\033[m\n", (char *)payload);
+            } else if (r < 0) {
+                // Errors
+                fprintf(stderr, "Error. select() = %d during write cycle.\n", r);
+                break;
+            }
+            //
+            //  Read
+            //
+            //  wait up to tv_usec if there is nothing left to send
+            //
+            size = 0;
+            FD_ZERO(&rfd);
+            FD_ZERO(&efd);
+            FD_SET(R->sd, &rfd);
+            FD_SET(R->sd, &efd);
+            timeout.tv_sec = 0;
+            timeout.tv_usec = R->timeoutDeltaMicroseconds;
+            r = select(R->sd + 1, &rfd, NULL, &efd, &timeout);
+            if (r > 0) {
+                if (FD_ISSET(R->sd, &rfd)) {
+                    // There is something to read
+                    r = RKSocketRead(R, R->buf, RKReporterBufferSize);
+                    if (r < 0) {
+                        fprintf(stderr, "Read error. r = %d\n", r);
+                        R->connected = false;
+                        break;
+                    } else if (r == 0) {
+                        R->connected = false;
+                        break;
+                    }
+                    size = RKWebsocketFrameDecode((void **)&payload, R->buf);
+                    if (R->verbose > 1) {
+                        printf("%2d read  ", r); RKShowWebsocketFrameHeader(R);
+                        printf("Payload: \033[38;5;220m%s\033[m\n", (char *)payload);
+                    }
+                    R->timeoutCount = 0;
+                } else if (FD_ISSET(R->sd, &efd)) {
+                    // Exceptions
+                    fprintf(stderr, "Error. Exceptions during read cycle.\n");
+                    R->connected = false;
+                    break;
+                } else {
+                    printf("... r\n");
                 }
-
-                if (h->opcode == RFC6455_OPCODE_PING) {
-                    RKWebsocketPong(R, (char *)payload, h->len);
-                    if (R->verbose) {
+            } else if (r < 0) {
+                // Errors
+                fprintf(stderr, "Error. select() = %d during read cycle.\n", r);
+                R->connected = false;
+                break;
+            } else {
+                // Timeout
+                if (R->timeoutCount++ >= R->timeoutThreshold) {
+                    R->timeoutCount = 0;
+                    char *word = words[rand() % 8];
+                    r = RKWebsocketPing(R, word, strlen(word));
+                    if (R->verbose > 1) {
                         RKMaskKey key = {.u32 = *((uint32_t *)&R->buf[2])};
                         for (int i = 0; i < 4; i++) {
                             uword[i] = R->buf[6 + i] ^ key.code[i % 4];
@@ -387,44 +463,41 @@ void *theReporter(void *in) {
                         printf("Payload: \033[38;5;82m%s\033[m\n", uword);
                         printf("%2d sent  ", r); RKShowWebsocketFrameHeader(R);
                     }
-
-                    // Resume the previous expected reply
-                    r = RKSocketRead(R, R->buf, RKReporterBufferSize);
-                    if (r < 0) {
-                        fprintf(stderr, "Read error. r = %d\n", r);
-                        pthread_mutex_unlock(&R->lock);
-                        break;
-                    }
-                    size = RKWebsocketFrameDecode((void **)&payload, R->buf);
-
-                    if (R->verbose) {
-                        printf("%2d read  ", r); RKShowWebsocketFrameHeader(R);
-                        printf("Payload: \033[38;5;220m%s\033[m\n", payload);
-                    }
                 }
-
-                if (h->opcode == RFC6455_OPCODE_CLOSE) {
+            }
+            // Interpret the payload if something was read
+            if (size > 0) {
+                if (h->opcode == RFC6455_OPCODE_PING) {
+                    RKWebsocketPong(R, (char *)payload, h->len);
+                    if (R->verbose > 1) {
+                        RKMaskKey key = {.u32 = *((uint32_t *)&R->buf[2])};
+                        for (int i = 0; i < 4; i++) {
+                            uword[i] = R->buf[6 + i] ^ key.code[i % 4];
+                        }
+                        printf("Payload: \033[38;5;82m%s\033[m\n", uword);
+                        printf("%2d sent  ", r); RKShowWebsocketFrameHeader(R);
+                    }
+                } else if (h->opcode == RFC6455_OPCODE_CLOSE) {
                     R->connected = false;
                     if (R->onClose) {
                         R->onClose(R);
                     }
+                    close(R->sd);
                 } else {
                     if (R->onMessage) {
                         R->onMessage(R, payload, size);
                     }
                 }
-                pthread_mutex_unlock(&R->lock);
-            } // if (k++ % 100 == 0) ...
-
-            usleep(100000);
+            }
         }
-        k = 0;
+        r = 0;
         do {
-            if (k % 10 == 0) {
-                printf("No connection. Reconnect in %d seconds ...\n", 5 - k / 10);
+            if (r++ % 10 == 0) {
+                fprintf(stderr, "\rNo connection. Retry in %d second%s ... ", 5 - r / 10, 5 - r / 10 > 1 ? "s" : "");
             }
             usleep(100000);
-        } while (R->wantActive && k++ < 50);
+        } while (R->wantActive && r++ < 50);
+        printf("\033[1K\r");
     }
 
     return NULL;
@@ -445,4 +518,14 @@ void RKReporterStop(RKReporter *R) {
     R->wantActive = false;
     pthread_mutex_unlock(&R->lock);
     pthread_join(R->threadId, NULL);
+}
+
+int RKReporterSend(RKReporter *R, void *source, size_t size) {
+    pthread_mutex_lock(&R->lock);
+    uint16_t k = R->payloadHead == RKReporterPayloadDepth - 1 ? 0 : R->payloadHead + 1;
+    R->payloads[k].source = source;
+    R->payloads[k].size = size;
+    R->payloadHead = k;
+    pthread_mutex_unlock(&R->lock);
+    return 0;
 }
