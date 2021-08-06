@@ -325,7 +325,7 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
 
     printf("Using %s ...\n", host);
 
-    strncpy(R->radar, radar, 16);
+    strncpy(R->radar, radar, 15);
     c = strstr(host, ":");
     if (c == NULL) {
         R->port = 80;
@@ -394,7 +394,7 @@ void *theReporter(void *in) {
 
     int r;
     void *payload;
-    size_t size, targetFrameSize;
+    size_t size, targetFrameSize = 0;
     ws_frame_header *h = (ws_frame_header *)R->frame;
     char words[][5] = {"love", "hope", "cool", "cute", "sexy", "nice", "calm", "wish"};
     char uword[5] = "xxxx";
@@ -480,11 +480,8 @@ void *theReporter(void *in) {
                 if (FD_ISSET(R->sd, &rfd)) {
                     // There is something to read
                     r = RKSocketRead(R, R->frame + origin, RKReporterFrameSize);
-                    if (r < 0) {
+                    if (r <= 0) {
                         fprintf(stderr, "Error. RKSocketRead() = %d\n", r);
-                        R->connected = false;
-                        break;
-                    } else if (r == 0) {
                         R->connected = false;
                         break;
                     }
