@@ -63,7 +63,8 @@ struct rk_reporter {
     int                      (*onError)(RKReporter *);
     int                      (*onMessage)(RKReporter *, void*, size_t);
 
-    uint8_t                  buf[RKReporterBufferSize];                        // A local buffer to store a frame
+    uint8_t                  frame[RKReporterFrameSize];                       // A local buffer to store a frame
+    uint8_t                  buffer[RKReporterBufferSize];                     // A local buffer to store a complete payload
     char                     ip[INET6_ADDRSTRLEN];                             // IP in string
     struct sockaddr_in       sa;                                               // Socket address
     int                      sd;                                               // Socket descriptor

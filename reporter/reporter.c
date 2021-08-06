@@ -125,10 +125,10 @@ static size_t RKWebsocketFrameDecode(void **dst, void *buf) {
 }
 
 static int RKWebsocketPingPong(RKReporter *R, const bool ping, const char *message, const int len) {
-    size_t size = RKWebsocketFrameEncode(R->buf,
+    size_t size = RKWebsocketFrameEncode(R->frame,
         ping ? RFC6455_OPCODE_PING : RFC6455_OPCODE_PONG,
         message, message == NULL ? 0 : (len == 0 ? strlen(message) : len));
-    int r = RKSocketWrite(R, R->buf, size);
+    int r = RKSocketWrite(R, R->frame, size);
     if (r < 0) {
         fprintf(stderr, "Error. Unable to write. r = %d\n", r);
     } else if (R->verbose > 1) {
@@ -146,7 +146,7 @@ static int RKWebsocketPong(RKReporter *R, const char *message, const int len) {
 }
 
 static void RKShowWebsocketFrameHeader(RKReporter *R) {
-    uint8_t *c = (uint8_t *)R->buf;
+    uint8_t *c = (uint8_t *)R->frame;
     ws_frame_header *h = (ws_frame_header *)c;
     if (h->mask) {
         printf("%02x %02x   %02x %02x %02x %02x    %02x %02x %02x %02x %02x %02x %02x %02x ..."
@@ -199,7 +199,7 @@ static int RKWebsocketConnect(RKReporter *R) {
         SSL_connect(R->ssl);
     }
 
-    char *buf = (char *)R->buf;
+    char *buf = (char *)R->frame;
     strcpy(R->secret, "RadarHub39EzLkh9GBhXDw");
     sprintf(buf,
         "GET /ws/radar/%s/ HTTP/1.1\r\n"
@@ -341,7 +341,7 @@ void *theReporter(void *in) {
     int r;
     void *payload;
     size_t size;
-    ws_frame_header *h = (ws_frame_header *)R->buf;
+    ws_frame_header *h = (ws_frame_header *)R->frame;
     char words[][5] = {"love", "hope", "cool", "cute", "idea", "nice", "work", "wish"};
     char uword[5] = "xxxx";
     char message[64];
@@ -350,6 +350,9 @@ void *theReporter(void *in) {
     fd_set wfd;
     fd_set efd;
     struct timeval timeout;
+    
+    int origin = 0;
+    size_t totalSize = 0;
 
     while (R->wantActive) {
 
@@ -390,8 +393,8 @@ void *theReporter(void *in) {
                                     c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], payload->size);
                             }
                         }
-                        size = RKWebsocketFrameEncode(R->buf, RFC6455_OPCODE_BINARY, payload->source, payload->size);
-                        r = RKSocketWrite(R, R->buf, size);
+                        size = RKWebsocketFrameEncode(R->frame, RFC6455_OPCODE_BINARY, payload->source, payload->size);
+                        r = RKSocketWrite(R, R->frame, size);
                     }
                 } else if (FD_ISSET(R->sd, &efd)) {
                     // Exceptions
@@ -421,7 +424,7 @@ void *theReporter(void *in) {
             if (r > 0) {
                 if (FD_ISSET(R->sd, &rfd)) {
                     // There is something to read
-                    r = RKSocketRead(R, R->buf, RKReporterBufferSize);
+                    r = RKSocketRead(R, R->frame, RKReporterFrameSize);
                     if (r < 0) {
                         fprintf(stderr, "Read error. r = %d\n", r);
                         R->connected = false;
@@ -430,7 +433,15 @@ void *theReporter(void *in) {
                         R->connected = false;
                         break;
                     }
-                    size = RKWebsocketFrameDecode((void **)&payload, R->buf);
+                    size = RKWebsocketFrameDecode((void **)&payload, R->frame);
+                    if (!h->fin) {
+                        fprintf(stderr, "I need upgrade.\n");
+                        fprintf(stderr, "I need upgrade.\n");
+                        fprintf(stderr, "I need upgrade.\n");
+                    }
+                    //memcpy(R->buffer + origin, *payload, size);
+                    // origin += size;
+                    //if origin == 
                     if (R->verbose > 1) {
                         printf("%2d read  ", r); RKShowWebsocketFrameHeader(R);
                         if (size <= 4096) {
@@ -462,9 +473,9 @@ void *theReporter(void *in) {
                     char *word = words[rand() % 8];
                     r = RKWebsocketPing(R, word, strlen(word));
                     if (R->verbose > 1) {
-                        RKMaskKey key = {.u32 = *((uint32_t *)&R->buf[2])};
+                        RKMaskKey key = {.u32 = *((uint32_t *)&R->frame[2])};
                         for (int i = 0; i < 4; i++) {
-                            uword[i] = R->buf[6 + i] ^ key.code[i % 4];
+                            uword[i] = R->frame[6 + i] ^ key.code[i % 4];
                         }
                         printf("Payload: \033[38;5;82m%s\033[m\n", uword);
                         printf("%2d sent  ", r); RKShowWebsocketFrameHeader(R);
@@ -478,9 +489,9 @@ void *theReporter(void *in) {
                     memcpy(message, payload, h->len); message[h->len] = '\0';
                     RKWebsocketPong(R, message, h->len);
                     if (R->verbose > 1) {
-                        RKMaskKey key = {.u32 = *((uint32_t *)&R->buf[2])};
+                        RKMaskKey key = {.u32 = *((uint32_t *)&R->frame[2])};
                         for (int i = 0; i < 4; i++) {
-                            uword[i] = R->buf[6 + i] ^ key.code[i % 4];
+                            uword[i] = R->frame[6 + i] ^ key.code[i % 4];
                         }
                         printf("Payload: \033[38;5;82m%s\033[m\n", uword);
                         printf("%2d sent  ", r); RKShowWebsocketFrameHeader(R);
