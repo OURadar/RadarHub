@@ -18,7 +18,7 @@ int main(int argc, const char *argv[]) {
     RKReporterStart(hope);
 
     usleep(100000);
-    const int len = 150;
+    const int len = 256;
     uint8_t *ray = (uint8_t *)malloc(len);
     for (int k = 0; k < len; k++) {
         ray[k] = k + 2;

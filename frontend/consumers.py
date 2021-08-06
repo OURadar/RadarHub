@@ -27,7 +27,10 @@ class RadarConsumer(AsyncWebsocketConsumer):
 
     # Receive message from frontend, which relays the payload to buffer
     async def receive(self, bytes_data=None):
-        print(f'RadarConsumer.receive() - bytes_data = "\033[38;5;154m{bytes_data}\033[m"')
+        if len(bytes_data) < 60:
+            print(f'RadarConsumer.receive() - bytes_data = \033[38;5;154m{bytes_data}\033[m')
+        else:
+            print(f'RadarConsumer.receive() - bytes_data = \033[38;5;154m{bytes_data[:100]} ...\033[m')
         type = bytes_data[0];
         print(f'type = {type}')
         if type == 1:
@@ -53,7 +56,10 @@ class RadarConsumer(AsyncWebsocketConsumer):
 
     # Welcome a radar
     async def welcomeRadar(self, event):
-        await self.send(event['message'])
+        # await self.send(event['message'])
+        s = 1024 * 128
+        print(f'size {s}')
+        await self.send('x' * s);
 
 
 class FrontendConsumer(AsyncWebsocketConsumer):

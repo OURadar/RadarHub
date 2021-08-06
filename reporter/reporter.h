@@ -25,10 +25,16 @@
 
 #include "ws.h"
 
+#define RKReporterFrameSize                     (256 * 1024)
 #define RKReporterBufferSize                    (1024 * 1024)
 #define RKReporterPayloadDepth                  1000
 #define RKReporterTimeoutDeltaMicroseconds      100000
 #define RKReporterTimeoutThresholdSeconds       20
+
+#ifndef htonll
+#define htonll(x) ((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
+#define ntohll(x) ((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
+#endif
 
 typedef uint8_t RKSSLFlag;
 enum RKSSLFlag {

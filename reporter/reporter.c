@@ -55,7 +55,7 @@ static size_t RKWebsocketFrameEncode(void *buf, RFC6455_OPCODE code, const void 
     h->fin = 1;
     h->mask = true;
     h->opcode = code;
-    char *payload = buf + sizeof(ws_frame_header) + 4 * h->mask;
+    char *payload = buf + sizeof(ws_frame_header);
     if (size == 0) {
         if (src == NULL) {
             r = 0;
@@ -67,51 +67,55 @@ static size_t RKWebsocketFrameEncode(void *buf, RFC6455_OPCODE code, const void 
     }
     if (r > 65535) {
         h->len = 127;
-        *((uint64_t *)payload) = (uint64_t)r;
-        if (payload[0] & 80) {
-            fprintf(stderr, "The MSB of uint64_t size must be 0.\n");
+        if (r > RKReporterPayloadDepth - 20) {
+            r = RKReporterPayloadDepth - 20;
+            fprintf(stderr, "I am limited to %d bytes\n", RKReporterPayloadDepth - 20);
         }
+        *((uint64_t *)payload) = htonll((uint64_t)r);
         payload += 8;
-        r += sizeof(ws_frame_header) + 4 * h->mask + 8;
     } else if (r > 125) {
+        printf("Using 16-bit extended length.  %u\n", (uint16_t)r);
         h->len = 126;
-        *((uint16_t *)payload) = (uint16_t)r;
+        *((uint16_t *)payload) = htons((uint16_t)r);
         payload += 2;
-        r += sizeof(ws_frame_header) + 4 * h->mask + 2;
     } else {
         h->len = r;
-        r += sizeof(ws_frame_header) + 4 * h->mask;
     }
     if (src) {
-        memcpy(payload, src, h->len);
-        payload[h->len] = '\0';
         if (h->mask) {
             RKMaskKey key = {.u32 = rand()};
-            *((uint32_t *)&h[1]) = key.u32;
-            for (int i = 0; i < h->len; i++) {
+            *((uint32_t *)payload) = key.u32;
+            payload += 4;
+            memcpy(payload, src, r);
+            for (int i = 0; i < r; i++) {
                 payload[i] ^= key.code[i % 4];
             }
+        } else {
+            // Should not happen in this module
+            memcpy(payload, src, r);
         }
+        payload[r] = '\0';
     }
+    r = (size_t)((void *)payload - buf) + r;
     return r;
 }
 
 static size_t RKWebsocketFrameDecode(void **dst, void *buf) {
     size_t r;
     ws_frame_header *h = buf;
-    char *payload = buf + sizeof(ws_frame_header) + 4 * h->mask;
+    char *payload = buf + sizeof(ws_frame_header);
     if (h->len == 127) {
-        r = *(uint64_t *)payload;
+        r = ntohll(*(uint64_t *)payload);
         payload += 8;
     } else if (h->len == 126) {
-        r = *(uint16_t *)payload;
+        r = ntohs(*(uint16_t *)payload);
         payload += 2;
     } else {
         r = h->len;
     }
-    payload[h->len] = '\0';
+    payload[r + 4 * h->mask] = '\0';
     if (h->mask) {
-        RKMaskKey key = {.u32 = *(uint32_t *)&h[1]};
+        RKMaskKey key = {.u32 = *(uint32_t *)payload};
         for (int i = 0; i < h->len; i++) {
             payload[i] ^= key.code[i % 4];
         }
@@ -219,10 +223,6 @@ static int RKWebsocketConnect(RKReporter *R) {
     } while (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL);
     if (r < 0) {
         fprintf(stderr, "Error during handshake.\n");
-    }
-    if (c) {
-        printf("%s\n", c);
-        buf[r] = '\0';
     }
     if (R->verbose) {
         printf("%s", buf);
@@ -433,7 +433,13 @@ void *theReporter(void *in) {
                     size = RKWebsocketFrameDecode((void **)&payload, R->buf);
                     if (R->verbose > 1) {
                         printf("%2d read  ", r); RKShowWebsocketFrameHeader(R);
-                        printf("Payload: \033[38;5;220m%s\033[m\n", (char *)payload);
+                        if (size <= 4096) {
+                            printf("Payload: \033[38;5;220m%s\033[m (%zu)\n", (char *)payload, size);
+                        } else {
+                            uint8_t *c = (uint8_t *)payload;
+                            printf("Payload: \033[38;5;220m%02x %02x %02x %02x  %02x %02x %02x %02x ...\033[m (%zu)\n",
+                                c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], size);
+                        }
                     }
                     R->timeoutCount = 0;
                 } else if (FD_ISSET(R->sd, &efd)) {
@@ -468,7 +474,9 @@ void *theReporter(void *in) {
             // Interpret the payload if something was read
             if (size > 0) {
                 if (h->opcode == RFC6455_OPCODE_PING) {
-                    RKWebsocketPong(R, (char *)payload, h->len);
+                    // Make a copy since payload --> R->buf or the behavior is unpredictable
+                    memcpy(message, payload, h->len); message[h->len] = '\0';
+                    RKWebsocketPong(R, message, h->len);
                     if (R->verbose > 1) {
                         RKMaskKey key = {.u32 = *((uint32_t *)&R->buf[2])};
                         for (int i = 0; i < 4; i++) {
