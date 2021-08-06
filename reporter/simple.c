@@ -21,7 +21,7 @@ void *run(void *in) {
     // const int len = 32 * 1024;
     // const useconds_t s = 1000000 * 2;
     const int len = 100;
-    const useconds_t s = 1000000 / 3;
+    const useconds_t s = 1000000 / 2;
     uint8_t *blob = (uint8_t *)malloc(10 * len);
 
     while (!R->connected) {

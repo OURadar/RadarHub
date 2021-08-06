@@ -30,7 +30,7 @@ class RadarConsumer(AsyncWebsocketConsumer):
         if len(bytes_data) < 64:
             print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data}\033[m ({len(bytes_data)})')
         else:
-            print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data[:30]} ... {bytes_data[-5:]}\033[m ({len(bytes_data)})')
+            print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data[:25]} ... {bytes_data[-5:]}\033[m ({len(bytes_data)})')
         type = bytes_data[0];
 
         if type == 1:

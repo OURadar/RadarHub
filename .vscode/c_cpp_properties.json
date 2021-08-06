@@ -5,6 +5,7 @@
       "includePath": [
         "${workspaceFolder}/**",
         "/usr/local/include",
+        "/usr/local/opt/openssl@1.1/",
         "/usr/local/Cellar/openssl@1.1/1.1.1k/include"
       ],
       "defines": [],

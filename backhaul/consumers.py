@@ -5,7 +5,7 @@
 #   Created by Boonleng Cheong
 #
 
-import sys
+import json
 import asyncio
 import threading
 
@@ -17,6 +17,10 @@ from channels.consumer import AsyncConsumer
 userChannels = []
 radarChannels = []
 channel_layer = get_channel_layer()
+
+with open('frontend/package.json') as fid:
+    tmp = json.load(fid)
+    __version__ = tmp['version']
 
 async def _runloop(radar):
     data.start()
@@ -60,6 +64,7 @@ def runloop(radar):
     loop.close()
 
 class BackhaulConsumer(AsyncConsumer):
+    # When a user connects from the GUI
     async def hello(self, message):
         if message.keys() < {'radar', 'channel'}:
             print(f'BackhaulConsumer.hello() incomplete message {message}')
@@ -93,25 +98,7 @@ class BackhaulConsumer(AsyncConsumer):
             }
         )
 
-    async def report(self, message):
-        if message.keys() < {'radar', 'channel'}:
-            print(f'BackhaulConsumer.report() incomplete message {message}')
-            return
-        radar = message['radar']
-        channel = message['channel']
-
-        global radarChannels
-        if channel not in radarChannels:
-            radarChannels.append(channel)
-
-        await channel_layer.send(
-            channel,
-            {
-                'type': 'welcomeRadar',
-                'message': f'Hello {radar}. Welcome to the ARRC RadarHub'
-            }
-        )
-
+    # When a user disconnects from the GUI
     async def bye(self, message):
         if message.keys() < {'radar', 'channel'}:
             print(f'BackhaulConsumer.bye() incomplete message {message}')
@@ -125,6 +112,7 @@ class BackhaulConsumer(AsyncConsumer):
         if channel in userChannels:
             userChannels.remove(channel)
 
+    # When user clicks a button on the GUI
     async def relay(self, message):
         if message.keys() < {'radar', 'channel', 'command'}:
             print(f'BackhaulConsumer.relay() incomplete message {message}')
@@ -151,6 +139,27 @@ class BackhaulConsumer(AsyncConsumer):
             }
         )
 
+    # When a radar reports home
+    async def report(self, message):
+        if message.keys() < {'radar', 'channel'}:
+            print(f'BackhaulConsumer.report() incomplete message {message}')
+            return
+        radar = message['radar']
+        channel = message['channel']
+
+        global radarChannels
+        if channel not in radarChannels:
+            radarChannels.append(channel)
+
+        await channel_layer.send(
+            channel,
+            {
+                'type': 'welcomeRadar',
+                'message': f'Hello {radar}. Welcome to the RadarHub v{__version__}'
+            }
+        )
+
+    # When a radar sends home a payload
     async def collect(self, message):
         bytes_data = message['data']
-        print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data[:30]} ... {bytes_data[-5:]}\033[m ({len(bytes_data)})')
+        print(f'BackhaulConsumer.collect() \033[38;5;154m{bytes_data[:25]} ... {bytes_data[-5:]}\033[m ({len(bytes_data)})')

@@ -39,7 +39,7 @@ static char *binaryString(char *dst, void *src, size_t count) {
 }
 
 static void headTailBinaryString(char *dst, void *src, size_t count) {
-    char *tail = binaryString(dst, src, 30);
+    char *tail = binaryString(dst, src, 25);
     binaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
 }
 
@@ -95,9 +95,10 @@ static size_t RKWebsocketFrameEncode(void *buf, RFC6455_OPCODE code, const void 
     }
     if (r > 65535) {
         h->len = 127;
-        if (r > RKReporterFrameSize - 20) {
-            r = RKReporterFrameSize - 20;
-            fprintf(stderr, "I am limited to %d bytes\n", RKReporterFrameSize - 20);
+        // Frame header can be up to 10 bytes
+        if (r > RKReporterFrameSize - 10) {
+            r = RKReporterFrameSize - 10;
+            fprintf(stderr, "I am limited to %d bytes\n", RKReporterFrameSize - 10);
         }
         *((uint64_t *)payload) = htonll((uint64_t)r);
         payload += 8;
