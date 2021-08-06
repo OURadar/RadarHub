@@ -578,10 +578,10 @@ void *theReporter(void *in) {
         do {
             if (r++ % 10 == 0) {
                 fprintf(stderr, "\rNo connection. Retry in %d second%s ... ",
-                    5 - r / 10, 5 - r / 10 > 1 ? "s" : "");
+                    10 - r / 10, 10 - r / 10 > 1 ? "s" : "");
             }
             usleep(100000);
-        } while (R->wantActive && r++ < 50);
+        } while (R->wantActive && r++ < 100);
         printf("\033[1K\r");
     }
 

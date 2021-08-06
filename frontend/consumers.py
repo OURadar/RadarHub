@@ -23,6 +23,14 @@ class RadarConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, code):
+        await self.channel_layer.send(
+            'backhaul',
+            {
+                'type': 'retire',
+                'radar': self.radar,
+                'channel': self.channel_name
+            }
+        )
         print(f'radar = {self.radar} disconnected {code}.')
 
     # Receive message from frontend, which relays the payload to buffer
@@ -69,32 +77,33 @@ class RadarConsumer(AsyncWebsocketConsumer):
         # print(f'size {s}')
         # await self.send('x' * s);
 
+    async def rejectRadar(self, event):
+        await self.send(event['message'])
+        await self.close()
+
 
 class FrontendConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.radar = 'unknown'
         if 'radar' in self.scope['url_route']['kwargs']:
             self.radar = self.scope['url_route']['kwargs']['radar']
-        self.isUser = False
         print(f'radar = {self.radar}')
         await self.accept()
 
     async def disconnect(self, code):
-        if self.isUser:
-            await self.channel_layer.send(
-                'backhaul',
-                {
-                    'type': 'bye',
-                    'radar': self.radar,
-                    'channel': self.channel_name
-                }
-            )
-            # Leave the group
-            print(f'Leaving group \033[38;5;87m{self.radar}\033[m with code {code}')
-            await self.channel_layer.group_discard(
-                self.radar,
-                self.channel_name
-            )
+        await self.channel_layer.send(
+            'backhaul',
+            {
+                'type': 'bye',
+                'radar': self.radar,
+                'channel': self.channel_name
+            }
+        )
+        print(f'Leaving group \033[38;5;87m{self.radar}\033[m with code {code}')
+        await self.channel_layer.group_discard(
+            self.radar,
+            self.channel_name
+        )
 
     # Receive message from frontend, which relays commands from the web app, text_data only
     async def receive(self, text_data=None):
@@ -110,7 +119,6 @@ class FrontendConsumer(AsyncWebsocketConsumer):
         if request['radar'] != self.radar:
             print(f'\033[38;5;197mBUG: radar = {request["radar"]} != self.radar = {self.radar}\033[m')
         if request['command'] == 'hello':
-            self.isUser = True
             print(f'Joining group \033[38;5;87m{self.radar}\033[m')
             await self.channel_layer.group_add(
                 self.radar,

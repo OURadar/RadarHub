@@ -49,7 +49,6 @@ void *run(void *in) {
 }
 
 int main(int argc, const char *argv[]) {
-
     if (argc == 1) {
         R = RKReporterInit("px1000", "localhost:8000", false);
     } else {
@@ -59,8 +58,6 @@ int main(int argc, const char *argv[]) {
 
     // Catch Ctrl-C and some signals alternative handling
     signal(SIGINT, handleSignals);
-    signal(SIGQUIT, handleSignals);
-    signal(SIGKILL, handleSignals);
 
     RKReporterStart(R);
 
