@@ -15,6 +15,21 @@ typedef union {
 
 #pragma mark - Static Methods
 
+static void binaryString(char *dst, void *src, size_t count) {
+    uint8_t *c = (uint8_t *)src;
+    for (int i = 0; i < count; i++) {
+        if (*c >= 32 && *c < 127) {
+            if (*c == '\\') {
+                *dst++ = '\\';
+            }
+            *dst++ = *c++;
+        } else {
+            dst += sprintf(dst, "\\x%02x", *c++);
+        }
+    }
+    *dst = '\0';
+}
+
 static char *RKGetHandshakeArgument(const char *buf, const char *key) {
     static char argument[80] = {0};
     char *b, *e;
@@ -407,13 +422,9 @@ void *theReporter(void *in) {
                         R->payloadTail = R->payloadTail == RKReporterPayloadDepth - 1 ? 0 : R->payloadTail + 1;
                         const RKReporterPayload *payload = &R->payloads[R->payloadTail];
                         if (R->verbose > 1) {
-                            char *c = (char *)payload->source;
-                            if (*c == 1) {
-                                printf("WRITE \033[38;5;154m%02x + %s\033[m (%zu)\n", c[0], c + 1, payload->size);
-                            } else {
-                                printf("WRITE \033[38;5;154m%02x %02x %02x %02x  %02x %02x %02x %02x ...\033[m (%zu)\n", 
-                                    c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], payload->size);
-                            }
+                            binaryString(message, payload->source, payload->size < 64 ? payload->size : 40);
+                            printf("WRITE \033[38;5;154mb'%s'%s\033[m (%zu)\n", message,
+                                payload->size > 64 ? " ..." : "", payload->size);
                         }
                         size = RKWebsocketFrameEncode(R->frame, RFC6455_OPCODE_BINARY, payload->source, payload->size);
                         r = RKSocketWrite(R, R->frame, size);
@@ -471,23 +482,15 @@ void *theReporter(void *in) {
                     }
                     size = RKWebsocketFrameDecode((void **)&payload, R->frame);
                     if (!h->fin) {
-                        fprintf(stderr, "I need upgrade.\n");
-                        fprintf(stderr, "I need upgrade.\n");
-                        fprintf(stderr, "I need upgrade.\n");
+                        fprintf(stderr, "I need upgrade!\nI need upgrade!\nI need upgrade!\nI cannot handle non h->fin frames.");
                     }
                     if (R->verbose > 1) {
                         if (R->verbose > 2) {
                             printf("%2zu read  ", total); RKShowWebsocketFrameHeader(R);
                         }
-                        if (size <= 4096) {
-                            printf("S-%s: \033[38;5;220m%s\033[m (%zu)\n",
-                                OPCODE_STRING(h->opcode),
-                                (char *)payload, size);
-                        } else {
-                            uint8_t *c = (uint8_t *)payload;
-                            printf("Payload: \033[38;5;220m%02x %02x %02x %02x  %02x %02x %02x %02x ...\033[m (%zu)\n",
-                                c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], size);
-                        }
+                        binaryString(message, payload, size < 64 ? size : 64);
+                        printf("S-%s: \033[38;5;220m%s%s\033[m (%zu)\n",
+                            OPCODE_STRING(h->opcode), message, size > 64 ? " ..." : "", size);
                     }
                     R->timeoutCount = 0;
                 } else if (FD_ISSET(R->sd, &efd)) {

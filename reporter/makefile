@@ -14,7 +14,7 @@ OBJS = reporter.o
 OBJS_PATH = objects
 OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 
-PROGS = main
+PROGS = simple
 
 # The command echo from macOS and Ubuntu needs no -e
 ECHO_FLAG = -e

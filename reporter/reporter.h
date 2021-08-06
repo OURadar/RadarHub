@@ -27,7 +27,7 @@
 
 #define RKReporterFrameSize                     (1024 * 1024)
 #define RKReporterPayloadDepth                  1000
-#define RKReporterTimeoutDeltaMicroseconds      100000
+#define RKReporterTimeoutDeltaMicroseconds      50000
 #define RKReporterTimeoutThresholdSeconds       20.0
 
 #ifndef htonll

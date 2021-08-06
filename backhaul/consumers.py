@@ -153,4 +153,4 @@ class BackhaulConsumer(AsyncConsumer):
 
     async def collect(self, message):
         data = message['data']
-        print(f'BackhaulConsumer.collect() \033[38;5;154m{data[:8]} ...\033[m ({len(data)})')
+        print(f'BackhaulConsumer.collect() \033[38;5;154m{data[:40]} ...\033[m ({len(data)})')
