@@ -29,7 +29,6 @@ ifeq ($(KERNEL), Darwin)
 	# macOS
 	CC = clang
 	CFLAGS += -D_DARWIN_C_SOURCE -Wno-deprecated-declarations
-	LDFLAGS += -lssl
 else
 	# Old Debian
 	ifeq ($(MACHINE), i686)
@@ -41,7 +40,7 @@ else
 	endif
 endif
 
-LDFLAGS += -lm
+LDFLAGS += -lm -lssl -lpthread
 
 all: $(PROGS)
 
