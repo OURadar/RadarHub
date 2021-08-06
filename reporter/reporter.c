@@ -2,6 +2,10 @@
 //  RKReporter.c
 //  RadarHub
 //
+//  I named this RKReporter as I am just incubating this module
+//  here for quick start. Once sufficiently mature, it will be
+//  incorporated into RadarKit.
+//
 //  Created by Boonleng Cheong on 8/3/2021.
 //  Copyright (c) 2021 Boonleng Cheong. All rights reserved.
 //
@@ -15,11 +19,13 @@ typedef union {
 
 #pragma mark - Static Methods
 
-static void binaryString(char *dst, void *src, size_t count) {
+static char *binaryString(char *dst, void *src, size_t count) {
     uint8_t *c = (uint8_t *)src;
+    *dst++ = 'b';
+    *dst++ = '\'';
     for (int i = 0; i < count; i++) {
         if (*c >= 32 && *c < 127) {
-            if (*c == '\\') {
+            if (*c == '\\' || *c == '\'') {
                 *dst++ = '\\';
             }
             *dst++ = *c++;
@@ -27,7 +33,14 @@ static void binaryString(char *dst, void *src, size_t count) {
             dst += sprintf(dst, "\\x%02x", *c++);
         }
     }
+    *dst++ = '\'';
     *dst = '\0';
+    return dst;
+}
+
+static void headTailBinaryString(char *dst, void *src, size_t count) {
+    char *tail = binaryString(dst, src, 30);
+    binaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
 }
 
 static char *RKGetHandshakeArgument(const char *buf, const char *key) {
@@ -343,8 +356,6 @@ RKReporter *RKReporterInit(const char *radar, const char *host, const RKSSLFlag 
     R->registration[0] = 1;
     sprintf(R->registration + 1, "{\"radar\":\"%s\",\"command\":\"report\"}", R->radar);
 
-    R->verbose = 2;
-
     return R;
 }
 
@@ -383,7 +394,7 @@ void *theReporter(void *in) {
 
     int r;
     void *payload;
-    size_t size;
+    size_t size, targetFrameSize;
     ws_frame_header *h = (ws_frame_header *)R->frame;
     char words[][5] = {"love", "hope", "cool", "cute", "sexy", "nice", "calm", "wish"};
     char uword[5] = "xxxx";
@@ -422,12 +433,23 @@ void *theReporter(void *in) {
                         R->payloadTail = R->payloadTail == RKReporterPayloadDepth - 1 ? 0 : R->payloadTail + 1;
                         const RKReporterPayload *payload = &R->payloads[R->payloadTail];
                         if (R->verbose > 1) {
-                            binaryString(message, payload->source, payload->size < 64 ? payload->size : 40);
-                            printf("WRITE \033[38;5;154mb'%s'%s\033[m (%zu)\n", message,
-                                payload->size > 64 ? " ..." : "", payload->size);
+                            if (payload->size < 64) {
+                                binaryString(message, payload->source, payload->size);
+                            } else {
+                                headTailBinaryString(message, payload->source, payload->size);
+                            }
+                            printf("WRITE \033[38;5;154m%s\033[m (%zu)\n", message, payload->size);
                         }
                         size = RKWebsocketFrameEncode(R->frame, RFC6455_OPCODE_BINARY, payload->source, payload->size);
                         r = RKSocketWrite(R, R->frame, size);
+                        if (r < 0) {
+                            fprintf(stderr, "Error. RKSocketWrite() = %d\n", r);
+                            R->connected = false;
+                            break;
+                        } else if (r == 0) {
+                            R->connected = false;
+                            break;
+                        }
                     }
                 } else if (FD_ISSET(R->sd, &efd)) {
                     // Exceptions
@@ -459,7 +481,7 @@ void *theReporter(void *in) {
                     // There is something to read
                     r = RKSocketRead(R, R->frame + origin, RKReporterFrameSize);
                     if (r < 0) {
-                        fprintf(stderr, "Read error. r = %d\n", r);
+                        fprintf(stderr, "Error. RKSocketRead() = %d\n", r);
                         R->connected = false;
                         break;
                     } else if (r == 0) {
@@ -467,30 +489,30 @@ void *theReporter(void *in) {
                         break;
                     }
                     if (origin == 0) {
+                        targetFrameSize = RKWebsocketFrameGetTargetSize(R->frame);
                         total = r;
                     } else {
                         total += r;
                     }
-                    size = RKWebsocketFrameGetTargetSize(R->frame);
-                    //printf("r = %d / %zu  origin = %zu\n", r, size, origin);
-                    if (total < size) {
+                    if (total < targetFrameSize) {
                         origin += r;
                         continue;
                     } else {
                         origin = 0;
-                        //printf("complete  %zu\n", total);
                     }
                     size = RKWebsocketFrameDecode((void **)&payload, R->frame);
                     if (!h->fin) {
-                        fprintf(stderr, "I need upgrade!\nI need upgrade!\nI need upgrade!\nI cannot handle non h->fin frames.");
+                        fprintf(stderr, "I need upgrade!\n"
+                                        "I need upgrade!\n"
+                                        "I need upgrade!\n"
+                                        "I cannot handle frames with h->fin = 0.\n");
                     }
                     if (R->verbose > 1) {
                         if (R->verbose > 2) {
                             printf("%2zu read  ", total); RKShowWebsocketFrameHeader(R);
                         }
-                        binaryString(message, payload, size < 64 ? size : 64);
                         printf("S-%s: \033[38;5;220m%s%s\033[m (%zu)\n",
-                            OPCODE_STRING(h->opcode), message, size > 64 ? " ..." : "", size);
+                            OPCODE_STRING(h->opcode), (char *)payload, size > 64 ? " ..." : "", size);
                     }
                     R->timeoutCount = 0;
                 } else if (FD_ISSET(R->sd, &efd)) {
@@ -557,7 +579,8 @@ void *theReporter(void *in) {
         r = 0;
         do {
             if (r++ % 10 == 0) {
-                fprintf(stderr, "\rNo connection. Retry in %d second%s ... ", 5 - r / 10, 5 - r / 10 > 1 ? "s" : "");
+                fprintf(stderr, "\rNo connection. Retry in %d second%s ... ",
+                    5 - r / 10, 5 - r / 10 > 1 ? "s" : "");
             }
             usleep(100000);
         } while (R->wantActive && r++ < 50);

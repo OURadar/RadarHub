@@ -152,5 +152,5 @@ class BackhaulConsumer(AsyncConsumer):
         )
 
     async def collect(self, message):
-        data = message['data']
-        print(f'BackhaulConsumer.collect() \033[38;5;154m{data[:40]} ...\033[m ({len(data)})')
+        bytes_data = message['data']
+        print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data[:30]} ... {bytes_data[-5:]}\033[m ({len(bytes_data)})')
