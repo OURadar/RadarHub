@@ -25,11 +25,10 @@
 
 #include "ws.h"
 
-#define RKReporterFrameSize                     (256 * 1024)
-#define RKReporterBufferSize                    (1024 * 1024)
+#define RKReporterFrameSize                     (1024 * 1024)
 #define RKReporterPayloadDepth                  1000
 #define RKReporterTimeoutDeltaMicroseconds      100000
-#define RKReporterTimeoutThresholdSeconds       20
+#define RKReporterTimeoutThresholdSeconds       20.0
 
 #ifndef htonll
 #define htonll(x) ((uint64_t)htonl((x) & 0xFFFFFFFF) << 32) | htonl((x) >> 32))
@@ -56,24 +55,21 @@ struct rk_reporter {
     int                      port;
     bool                     useSSL;
     int                      verbose;
-    float                    pingInterval;                                     // Ping interval
 
     int                      (*onOpen)(RKReporter *);
     int                      (*onClose)(RKReporter *);
     int                      (*onError)(RKReporter *);
     int                      (*onMessage)(RKReporter *, void*, size_t);
 
-    uint8_t                  frame[RKReporterFrameSize];                       // A local buffer to store a frame
-    uint8_t                  buffer[RKReporterBufferSize];                     // A local buffer to store a complete payload
     char                     ip[INET6_ADDRSTRLEN];                             // IP in string
     struct sockaddr_in       sa;                                               // Socket address
     int                      sd;                                               // Socket descriptor
-    SSL_CTX                  *sslContext;
-    SSL                      *ssl;
-    char                     secret[26];
-    char                     digest[30];                                       // Handshake Sec-WebSocket-Accept
-    char                     upgrade[30];                                      // Handshake Upgrade
-    char                     connection[30];                                   // Handshake Connection
+    SSL_CTX                  *sslContext;                                      // SSL
+    SSL                      *ssl;                                             // SSL
+    char                     secret[26];                                       //
+    char                     digest[64];                                       // Handshake Sec-WebSocket-Accept
+    char                     upgrade[64];                                      // Handshake Upgrade
+    char                     connection[64];                                   // Handshake Connection
     bool                     wantActive;
     bool                     connected;
 
@@ -89,6 +85,9 @@ struct rk_reporter {
 
     uint32_t                 timeoutCount;
     uint32_t                 timeoutThreshold;
+
+    char                     registration[256];                                // A registration message to RadarHub
+    uint8_t                  frame[RKReporterFrameSize];                       // A local buffer to store a frame
 };
 
 

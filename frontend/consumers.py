@@ -28,11 +28,11 @@ class RadarConsumer(AsyncWebsocketConsumer):
     # Receive message from frontend, which relays the payload to buffer
     async def receive(self, bytes_data=None):
         if len(bytes_data) < 60:
-            print(f'RadarConsumer.receive() - bytes_data = \033[38;5;154m{bytes_data}\033[m')
+            print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data}\033[m ({len(bytes_data)})')
         else:
-            print(f'RadarConsumer.receive() - bytes_data = \033[38;5;154m{bytes_data[:100]} ...\033[m')
+            print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data[:8]} ...\033[m ({len(bytes_data)})')
         type = bytes_data[0];
-        print(f'type = {type}')
+
         if type == 1:
             text = bytes_data[1:].decode('utf-8')
             print(f'text = {text}')
@@ -53,13 +53,21 @@ class RadarConsumer(AsyncWebsocketConsumer):
                     'channel': self.channel_name,
                     'command': request['payload'] if 'payload' in request else None
                 })
+        else:
+            await self.channel_layer.send(
+                'backhaul',
+                {
+                    'type': 'collect',
+                    'data': bytes_data
+                }
+            )
 
     # Welcome a radar
     async def welcomeRadar(self, event):
-        # await self.send(event['message'])
-        s = 1024 * 128
-        print(f'size {s}')
-        await self.send('x' * s);
+        await self.send(event['message'])
+        # s = 1024 * 256
+        # print(f'size {s}')
+        # await self.send('x' * s);
 
 
 class FrontendConsumer(AsyncWebsocketConsumer):

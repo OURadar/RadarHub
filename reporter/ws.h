@@ -36,6 +36,10 @@ enum RFC6455_OPCODE {
     RFC6455_OPCODE_RESERVE_F
 };
 
+#define OPCODE_STRING(x) \
+(x == RFC6455_OPCODE_PING ? "PING" : \
+(x == RFC6455_OPCODE_PONG ? "PONG" : "Payload"))
+
 #pragma pack(push, 1)
 
 //
