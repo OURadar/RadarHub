@@ -66,14 +66,14 @@ static int RKSocketRead(RKReporter *R, void *buf, size_t size) {
     if (R->useSSL) {
         return SSL_read(R->ssl, buf, size);
     }
-    return read(R->sd, buf, size);
+    return (int)read(R->sd, buf, size);
 }
 
 static int RKSocketWrite(RKReporter *R, void *buf, size_t size) {
     if (R->useSSL) {
         return SSL_write(R->ssl, buf, size);
     }
-    return write(R->sd, buf, size);
+    return (int)write(R->sd, buf, size);
 }
 
 static size_t RKWebsocketFrameEncode(void *buf, RFC6455_OPCODE code, const void *src, size_t size) {
@@ -128,20 +128,6 @@ static size_t RKWebsocketFrameEncode(void *buf, RFC6455_OPCODE code, const void 
     return r;
 }
 
-static size_t RKWebsocketFrameGetTargetSize(void *buf) {
-    size_t r = sizeof(ws_frame_header);
-    void *xlen = buf + sizeof(ws_frame_header);
-    ws_frame_header *h = (ws_frame_header *)buf;
-    if (h->len == 127) {
-        r += 8 + ntohll(*(uint64_t *)xlen);
-    } else if (h->len == 126) {
-        r += 2 + ntohs(*(uint16_t *)xlen);
-    } else {
-        r += h->len;
-    }
-    return r;
-}
-
 static size_t RKWebsocketFrameDecode(void **dst, void *buf) {
     size_t r;
     ws_frame_header *h = (ws_frame_header *)buf;
@@ -163,6 +149,20 @@ static size_t RKWebsocketFrameDecode(void **dst, void *buf) {
         }
     }
     *dst = payload;
+    return r;
+}
+
+static size_t RKWebsocketFrameGetTargetSize(void *buf) {
+    size_t r = sizeof(ws_frame_header);
+    void *xlen = buf + sizeof(ws_frame_header);
+    ws_frame_header *h = (ws_frame_header *)buf;
+    if (h->len == 127) {
+        r += 8 + ntohll(*(uint64_t *)xlen);
+    } else if (h->len == 126) {
+        r += 2 + ntohs(*(uint16_t *)xlen);
+    } else {
+        r += h->len;
+    }
     return r;
 }
 
@@ -244,7 +244,18 @@ static int RKWebsocketConnect(RKReporter *R) {
     }
 
     char *buf = (char *)R->frame;
-    strcpy(R->secret, "RadarHub39EzLkh9GBhXDw");
+    strcpy(R->secret, "RadarHub123456789abcde");
+    FILE *fid = fopen("secret", "r");
+    if (fid) {
+        fscanf(fid, "%s", buf);
+        if (strlen(buf) == 22) {
+            printf("secret = '%s' (%zu)\n", buf, strlen(buf));
+            strcpy(R->secret, buf);
+        }
+        fclose(fid);
+    } else {
+        printf("Using default secret %s ...\n", R->secret);
+    }
     sprintf(buf,
         "GET /ws/radar/%s/ HTTP/1.1\r\n"
         "Host: %s\r\n"
@@ -277,7 +288,9 @@ static int RKWebsocketConnect(RKReporter *R) {
     strcpy(R->upgrade, RKGetHandshakeArgument(buf, "Upgrade"));
     strcpy(R->connection, RKGetHandshakeArgument(buf, "Connection"));
 
-    if (strcmp(R->digest, "Irr1KGdq6r9dz93/ZSPSnh9ZJ68=")) {
+    // This block is now hardcoded for default secret key, should replace ...
+    if (strcmp(R->secret, "RadarHub123456789abcde") == 0 &&
+        strcmp(R->digest, "O9QKgAZPEwFaLSqyFPYMHcGBp5g=")) {
         fprintf(stderr, "Error. R->digest = %s\n", R->digest);
         fprintf(stderr, "Error. Unexpected digest.\n");
         return -1;

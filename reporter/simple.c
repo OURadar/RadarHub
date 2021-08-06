@@ -18,10 +18,10 @@ static void handleSignals(int signal) {
 // The busy run loop
 void *run(void *in) {
     int j = 0;
-    // const int len = 32 * 1024;
+    const int len = 32 * 1024;
     // const useconds_t s = 1000000 * 2;
-    const int len = 100;
-    const useconds_t s = 1000000 / 2;
+    // const int len = 100;
+    const useconds_t s = 1000000 / 20;
     uint8_t *blob = (uint8_t *)malloc(10 * len);
 
     while (!R->connected) {

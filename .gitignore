@@ -6,9 +6,11 @@ frontend/static/frontend
 frontend/dist
 objects
 others
+*.xcodeproj
 
 # Programs, etc.
 .DS_Store
 package-lock.json
 db.sqlite3
 simple
+secret
