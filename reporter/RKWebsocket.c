@@ -15,30 +15,6 @@
 
 #pragma mark - Static Methods
 
-static char *binaryString(char *dst, void *src, size_t count) {
-    uint8_t *c = (uint8_t *)src;
-    *dst++ = 'b';
-    *dst++ = '\'';
-    for (int i = 0; i < count; i++) {
-        if (*c >= 32 && *c < 127) {
-            if (*c == '\\' || *c == '\'') {
-                *dst++ = '\\';
-            }
-            *dst++ = *c++;
-        } else {
-            dst += sprintf(dst, "\\x%02x", *c++);
-        }
-    }
-    *dst++ = '\'';
-    *dst = '\0';
-    return dst;
-}
-
-static void headTailBinaryString(char *dst, void *src, size_t count) {
-    char *tail = binaryString(dst, src, 25);
-    binaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
-}
-
 static char *RKGetHandshakeArgument(const char *buf, const char *key) {
     static char argument[80] = {0};
     char *b, *e;
@@ -253,7 +229,7 @@ static int RKWebsocketConnect(RKWebsocket *R) {
         printf("Using default secret %s ...\n", R->secret);
     }
     sprintf(buf,
-        "GET /ws/radar/%s/ HTTP/1.1\r\n"
+        "GET %s HTTP/1.1\r\n"
         "Host: %s\r\n"
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
@@ -261,7 +237,7 @@ static int RKWebsocketConnect(RKWebsocket *R) {
         "Sec-WebSocket-Protocol: chat, superchat\r\n"
         "Sec-WebSocket-Version: 13\r\n"
         "\r\n",
-        R->radar,
+        R->path,
         R->host,
         R->secret);
     if (R->verbose) {
@@ -304,14 +280,13 @@ static int RKWebsocketConnect(RKWebsocket *R) {
         return -1;
     }
 
+    // Discard all pending deliveries
+    R->payloadTail = R->payloadHead;
+
     // Call onOpen here for client to handle additional tasks after the connection is established.
     if (R->onOpen) {
         R->onOpen(R);
     }
-
-    // Discard all pending deliveries
-    R->payloadTail = R->payloadHead;
-    RKWebsocketSend(R, R->registration, strlen(R->registration));
 
     R->connected = true;
 
@@ -524,7 +499,7 @@ void *transporter(void *in) {
 
 #pragma mark - Life Cycle
 
-RKWebsocket *RKWebsocketInit(const char *radar, const char *host, const RKSSLFlag flag) {
+RKWebsocket *RKWebsocketInit(const char *host, const char *path, const RKWebsocketSSLFlag flag) {
     char *c;
     size_t len;
 
@@ -535,7 +510,6 @@ RKWebsocket *RKWebsocketInit(const char *radar, const char *host, const RKSSLFla
 
     printf("Using %s ...\n", host);
 
-    strncpy(R->radar, radar, 15);
     c = strstr(host, ":");
     if (c == NULL) {
         R->port = 80;
@@ -546,10 +520,15 @@ RKWebsocket *RKWebsocketInit(const char *radar, const char *host, const RKSSLFla
         strncpy(R->host, host, len);
         R->host[len] = '\0';
     }
-    if (flag == RKSSLFlagAuto) {
+    if (strlen(path) == 0) {
+        sprintf(R->path, "/");
+    } else {
+        strcpy(R->path, path);
+    }
+    if (flag == RKWebsocketSSLAuto) {
         R->useSSL = R->port == 443;
     } else {
-        R->useSSL = flag == RKSSLFlagOn;
+        R->useSSL = flag == RKWebsocketSSLOn;
     }
     if (R->useSSL) {
         SSL_library_init();
@@ -562,10 +541,6 @@ RKWebsocket *RKWebsocketInit(const char *radar, const char *host, const RKSSLFla
     printf("R->timeoutThreshold = %u (delta = %u us, %.2f seconds)\n",
         R->timeoutThreshold, R->timeoutDeltaMicroseconds, RKWebsocketTimeoutThresholdSeconds);
 
-    // Greetings
-    R->registration[0] = 1;
-    sprintf(R->registration + 1, "{\"radar\":\"%s\",\"command\":\"report\"}", R->radar);
-
     return R;
 }
 
@@ -576,6 +551,10 @@ void RKWebsocketFree(RKWebsocket *R) {
 }
 
 #pragma mark - Properties
+
+void RKWebsocketSetPath(RKWebsocket *R, const char *path) {
+    strcpy(R->path, path);
+}
 
 void RKWebsocketSetPingInterval(RKWebsocket *R, const float period) {
     R->timeoutThreshold = (useconds_t)(period * 1.0e6f) / R->timeoutDeltaMicroseconds;
@@ -616,6 +595,8 @@ void RKWebsocketStop(RKWebsocket *R) {
     pthread_join(R->threadId, NULL);
 }
 
+// RKWebsocketSend() does not make a copy of the source.
+// The input source must be allocated using malloc() or similar variants.
 int RKWebsocketSend(RKWebsocket *R, void *source, size_t size) {
     pthread_mutex_lock(&R->lock);
     uint16_t k = R->payloadHead == RKWebsocketPayloadDepth - 1 ? 0 : R->payloadHead + 1;

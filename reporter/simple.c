@@ -6,6 +6,8 @@
 
 #include <RKWebsocket.h>
 
+#include "common.h"
+
 // Global variable
 RKWebsocket *W = NULL;
 
@@ -21,7 +23,7 @@ void *run(void *in) {
     const int len = 32 * 1024;
     // const useconds_t s = 1000000 * 2;
     // const int len = 100;
-    const useconds_t s = 1000000 / 30;
+    const useconds_t s = 1000000 / 3;
     uint8_t *blob = (uint8_t *)malloc(10 * len);
 
     while (!W->connected) {
@@ -48,12 +50,26 @@ void *run(void *in) {
     return NULL;
 }
 
+int handleOpen(RKWebsocket *R) {
+    char *message = (char *)malloc(64);
+    int r = sprintf(message, "\01{\"radar\":\"px1000\",\"command\":\"report\"}");
+    r = RKWebsocketSend(R, message, r);
+    free(message);
+    return r;
+}
+
+int handleMessage(RKWebsocket *R, const char *message, size_t size) {
+    printf("message = %s\n", message);
+    return 0;
+}
+
 int main(int argc, const char *argv[]) {
     if (argc == 1) {
-        W = RKWebsocketInit("px1000", "localhost:8000", false);
+        W = RKWebsocketInit("localhost:8000", "/ws/radar/px1000/", RKWebsocketSSLOff);
     } else {
-        W = RKWebsocketInit("px1000", argv[1], false);
+        W = RKWebsocketInit(argv[1], "/ws/radar/px1000/", RKWebsocketSSLAuto);
     }
+    RKWebsocketSetOpenHandler(W, &handleOpen);
     W->verbose = 2;
 
     // Catch Ctrl-C and some signals alternative handling

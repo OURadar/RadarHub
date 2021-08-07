@@ -24,6 +24,7 @@
 #include <openssl/crypto.h>
 
 #include "ws.h"
+#include "common.h"
 
 #define RKWebsocketFrameSize                     (1024 * 1024)
 #define RKWebsocketPayloadDepth                  1000
@@ -35,11 +36,11 @@
 #define ntohll(x) (((uint64_t)ntohl((x) & 0xFFFFFFFF) << 32) | ntohl((x) >> 32))
 #endif
 
-typedef uint8_t RKSSLFlag;
-enum RKSSLFlag {
-    RKSSLFlagAuto,
-    RKSSLFlagOff,
-    RKSSLFlagOn
+typedef uint8_t RKWebsocketSSLFlag;
+enum RKWebsocketSSLFlag {
+    RKWebsocketSSLAuto,
+    RKWebsocketSSLOff,
+    RKWebsocketSSLOn
 };
 
 typedef struct rk_reporter_payload {
@@ -50,8 +51,8 @@ typedef struct rk_reporter_payload {
 typedef struct rk_reporter RKWebsocket;
 
 struct rk_reporter {
-    char                     radar[16];
     char                     host[80];
+    char                     path[80];
     int                      port;
     bool                     useSSL;
     int                      verbose;
@@ -82,24 +83,25 @@ struct rk_reporter {
     uint16_t                 payloadTail;                                      // The one following
 
     useconds_t               timeoutDeltaMicroseconds;                         // Timeout of select()
-    uint32_t                 timeoutThreshold;
-    uint32_t                 timeoutCount;
+    uint32_t                 timeoutThreshold;                                 // Internal variable
+    uint32_t                 timeoutCount;                                     // Internal variable
 
-    char                     registration[256];                                // A registration message to RadarHub
     uint8_t                  frame[RKWebsocketFrameSize];                      // A local buffer to store a frame
 };
 
 
-RKWebsocket *RKWebsocketInit(const char *radar, const char *host, const RKSSLFlag);
+RKWebsocket *RKWebsocketInit(const char *, const char *, const RKWebsocketSSLFlag);
 void RKWebsocketFree(RKWebsocket *);
 
+void RKWebsocketSetPath(RKWebsocket *, const char *);
 void RKWebsocketSetPingInterval(RKWebsocket *, const float);
-
 void RKWebsocketSetOpenHandler(RKWebsocket *, int (*)(RKWebsocket *));
 void RKWebsocketSetCloseHandler(RKWebsocket *, int (*)(RKWebsocket *));
 void RKWebsocketSetMessageHandler(RKWebsocket *, int (*)(RKWebsocket *, void *, size_t));
 void RKWebsocketSetErrorHandler(RKWebsocket *, int (*)(RKWebsocket *));
 
+// This is technically RKWebsocketStartAsClient()
+// No plans to make RKWebsocketStartAsServer()
 void RKWebsocketStart(RKWebsocket *);
 void RKWebsocketStop(RKWebsocket *);
 

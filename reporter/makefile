@@ -6,7 +6,7 @@ GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I./ -I/usr/local/include
 LDFLAGS = -L./ -L/usr/local/lib
 
-OBJS = RKWebsocket.o
+OBJS = common.o RKWebsocket.o
 OBJS_PATH = objects
 OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 
