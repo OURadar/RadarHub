@@ -57,10 +57,10 @@ struct rk_reporter {
     bool                     useSSL;
     int                      verbose;
 
-    int                      (*onOpen)(RKWebsocket *);
-    int                      (*onClose)(RKWebsocket *);
-    int                      (*onError)(RKWebsocket *);
-    int                      (*onMessage)(RKWebsocket *, void*, size_t);
+    void                     (*onOpen)(RKWebsocket *);
+    void                     (*onClose)(RKWebsocket *);
+    void                     (*onError)(RKWebsocket *);
+    void                     (*onMessage)(RKWebsocket *, void*, size_t);
 
     char                     ip[INET6_ADDRSTRLEN];                             // IP in string
     struct sockaddr_in       sa;                                               // Socket address
@@ -95,10 +95,10 @@ void RKWebsocketFree(RKWebsocket *);
 
 void RKWebsocketSetPath(RKWebsocket *, const char *);
 void RKWebsocketSetPingInterval(RKWebsocket *, const float);
-void RKWebsocketSetOpenHandler(RKWebsocket *, int (*)(RKWebsocket *));
-void RKWebsocketSetCloseHandler(RKWebsocket *, int (*)(RKWebsocket *));
-void RKWebsocketSetMessageHandler(RKWebsocket *, int (*)(RKWebsocket *, void *, size_t));
-void RKWebsocketSetErrorHandler(RKWebsocket *, int (*)(RKWebsocket *));
+void RKWebsocketSetOpenHandler(RKWebsocket *, void (*)(RKWebsocket *));
+void RKWebsocketSetCloseHandler(RKWebsocket *, void (*)(RKWebsocket *));
+void RKWebsocketSetMessageHandler(RKWebsocket *, void (*)(RKWebsocket *, void *, size_t));
+void RKWebsocketSetErrorHandler(RKWebsocket *, void (*)(RKWebsocket *));
 
 // This is technically RKWebsocketStartAsClient()
 // No plans to make RKWebsocketStartAsServer()

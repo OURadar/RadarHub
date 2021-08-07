@@ -136,6 +136,10 @@ class FrontendConsumer(AsyncWebsocketConsumer):
 
     # The following are methods called by backhaul
 
+    # Generic payload
+    async def sendBytes(self, event):
+        await self.send(bytes=event['payload'])
+
     # Pulse samples
     async def sendSamples(self, event):
         bytes = b'\x01' + event['samples']

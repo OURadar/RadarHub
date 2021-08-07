@@ -560,19 +560,19 @@ void RKWebsocketSetPingInterval(RKWebsocket *R, const float period) {
     R->timeoutThreshold = (useconds_t)(period * 1.0e6f) / R->timeoutDeltaMicroseconds;
 }
 
-void RKWebsocketSetOpenHandler(RKWebsocket *R, int (*routine)(RKWebsocket *)) {
+void RKWebsocketSetOpenHandler(RKWebsocket *R, void (*routine)(RKWebsocket *)) {
     R->onOpen = routine;
 }
 
-void RKWebsocketSetCloseHandler(RKWebsocket *R, int (*routine)(RKWebsocket *)) {
+void RKWebsocketSetCloseHandler(RKWebsocket *R, void (*routine)(RKWebsocket *)) {
     R->onClose = routine;
 }
 
-void RKWebsocketSetMessageHandler(RKWebsocket *R, int (*routine)(RKWebsocket *, void *, size_t)) {
+void RKWebsocketSetMessageHandler(RKWebsocket *R, void (*routine)(RKWebsocket *, void *, size_t)) {
     R->onMessage = routine;
 }
 
-void RKWebsocketSetErrorHandler(RKWebsocket *R, int (*routine)(RKWebsocket *)) {
+void RKWebsocketSetErrorHandler(RKWebsocket *R, void (*routine)(RKWebsocket *)) {
     R->onError = routine;
 }
 

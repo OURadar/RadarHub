@@ -4,12 +4,14 @@ import websockets
 active = True
 
 async def hello():
-    # uri = "ws://localhost:8000/ws/px1000/"
-    uri = "wss://radarhub.arrc.ou.edu/ws/px1000/"
+    # The URI for a RadarConsumer frontend
+    uri = "ws://localhost:8000/ws/radar/px1000/"
+    # uri = "wss://radarhub.arrc.ou.edu/ws/radar/px1000/"
     async with websockets.connect(uri) as socket:
-        await socket.send('{"radar":"px1000", "command":"report"}')
+        await socket.send(b'\1{"radar":"px1000", "command":"report"}')
 
-        greeting = await socket.recv()
-        print(f'{greeting}')
+        while True:
+            greeting = await socket.recv()
+            print(f'{greeting}')
 
 asyncio.get_event_loop().run_until_complete(hello())

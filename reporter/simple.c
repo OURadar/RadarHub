@@ -50,17 +50,20 @@ void *run(void *in) {
     return NULL;
 }
 
-int handleOpen(RKWebsocket *R) {
+void handleOpen(RKWebsocket *R) {
     char *message = (char *)malloc(64);
-    int r = sprintf(message, "\01{\"radar\":\"px1000\",\"command\":\"report\"}");
+    int r = sprintf(message, "\1{\"radar\":\"px1000\",\"command\":\"report\"}");
     r = RKWebsocketSend(R, message, r);
     free(message);
-    return r;
 }
 
-int handleMessage(RKWebsocket *R, const char *message, size_t size) {
+void handleMessage(RKWebsocket *R, const char *message, size_t size) {
+    char *copy = (char *)malloc(size + 1);
+    memcpy(copy, message, size);
+    copy[size] = '\0';
     printf("message = %s\n", message);
-    return 0;
+    RKWebsocketSend(R, copy, size);
+    free(copy);
 }
 
 int main(int argc, const char *argv[]) {
