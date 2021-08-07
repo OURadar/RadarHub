@@ -66,7 +66,9 @@ class RadarConsumer(AsyncWebsocketConsumer):
                 'backhaul',
                 {
                     'type': 'collect',
-                    'data': bytes_data
+                    'radar': self.radar,
+                    'channel': self.channel_name,
+                    'payload': bytes_data
                 }
             )
 
@@ -99,11 +101,6 @@ class FrontendConsumer(AsyncWebsocketConsumer):
                 'channel': self.channel_name
             }
         )
-        print(f'Leaving group \033[38;5;87m{self.radar}\033[m with code {code}')
-        await self.channel_layer.group_discard(
-            self.radar,
-            self.channel_name
-        )
 
     # Receive message from frontend, which relays commands from the web app, text_data only
     async def receive(self, text_data=None):
@@ -118,12 +115,6 @@ class FrontendConsumer(AsyncWebsocketConsumer):
             return
         if request['radar'] != self.radar:
             print(f'\033[38;5;197mBUG: radar = {request["radar"]} != self.radar = {self.radar}\033[m')
-        if request['command'] == 'hello':
-            print(f'Joining group \033[38;5;87m{self.radar}\033[m')
-            await self.channel_layer.group_add(
-                self.radar,
-                self.channel_name
-            )
         await self.channel_layer.send(
             'backhaul',
             {
@@ -134,11 +125,11 @@ class FrontendConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    # The following are methods called by backhaul
+    # The following are methods are called by backhaul
 
     # Generic payload
     async def sendBytes(self, event):
-        await self.send(bytes=event['payload'])
+        await self.send(bytes_data=event['payload'])
 
     # Pulse samples
     async def sendSamples(self, event):

@@ -57,14 +57,6 @@ void handleOpen(RKWebsocket *R) {
     free(message);
 }
 
-void handleMessage(RKWebsocket *R, const char *message, size_t size) {
-    char *copy = (char *)malloc(size + 1);
-    memcpy(copy, message, size);
-    copy[size] = '\0';
-    printf("message = %s\n", message);
-    RKWebsocketSend(R, copy, size);
-    free(copy);
-}
 
 int main(int argc, const char *argv[]) {
     if (argc == 1) {

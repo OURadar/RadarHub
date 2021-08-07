@@ -10,7 +10,7 @@ OBJS = common.o RKWebsocket.o
 OBJS_PATH = objects
 OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 
-PROGS = simple
+PROGS = simple data
 
 # The command echo from macOS and Ubuntu needs no -e
 ECHO_FLAG = -e
