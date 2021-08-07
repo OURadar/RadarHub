@@ -4,32 +4,32 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include "reporter.h"
+#include <RKWebsocket.h>
 
 // Global variable
-RKReporter *R = NULL;
+RKWebsocket *W = NULL;
 
 // Local functions
 static void handleSignals(int signal) {
     fprintf(stderr, "\nCaught %d\n", signal);
-    RKReporterStop(R);
+    RKWebsocketStop(W);
 }
 
-// The busy run loop
+// The busy run loop - the reporter
 void *run(void *in) {
     int j = 0;
     const int len = 32 * 1024;
     // const useconds_t s = 1000000 * 2;
     // const int len = 100;
-    const useconds_t s = 1000000 / 20;
+    const useconds_t s = 1000000 / 30;
     uint8_t *blob = (uint8_t *)malloc(10 * len);
 
-    while (!R->connected) {
+    while (!W->connected) {
         usleep(100000);
     }
     printf("\033[38;5;203mbusy loop\033[m\n");
 
-    while (R->wantActive) {
+    while (W->wantActive) {
         uint8_t *ray = &blob[j * len];
         ray[0] = 2;
         ray[1] = '-';
@@ -40,7 +40,7 @@ void *run(void *in) {
         }
         j = (j + 1) % 10;
 
-        RKReporterSend(R, ray, len);
+        RKWebsocketSend(W, ray, len);
         usleep(s);
     }
 
@@ -50,25 +50,25 @@ void *run(void *in) {
 
 int main(int argc, const char *argv[]) {
     if (argc == 1) {
-        R = RKReporterInit("px1000", "localhost:8000", false);
+        W = RKWebsocketInit("px1000", "localhost:8000", false);
     } else {
-        R = RKReporterInit("px1000", argv[1], false);
+        W = RKWebsocketInit("px1000", argv[1], false);
     }
-    R->verbose = 2;
+    W->verbose = 2;
 
     // Catch Ctrl-C and some signals alternative handling
     signal(SIGINT, handleSignals);
 
-    RKReporterStart(R);
+    RKWebsocketStart(W);
 
     pthread_t tid;
     pthread_create(&tid, NULL, run, NULL);
 
-    while (R->wantActive) {
+    while (W->wantActive) {
         usleep(100000);
     }
 
-    RKReporterFree(R);
+    RKWebsocketFree(W);
 
     exit(EXIT_SUCCESS);
 }

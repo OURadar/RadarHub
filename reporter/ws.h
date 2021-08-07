@@ -40,6 +40,11 @@ enum RFC6455_OPCODE {
 (x == RFC6455_OPCODE_PING ? "PING" : \
 (x == RFC6455_OPCODE_PONG ? "PONG" : "Payload"))
 
+typedef union {
+    uint32_t u32;
+    uint8_t code[4];
+} ws_mask_key;
+
 #pragma pack(push, 1)
 
 //

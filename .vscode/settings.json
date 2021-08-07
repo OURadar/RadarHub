@@ -21,6 +21,10 @@
     "unordered_map": "c",
     "utility": "c",
     "vector": "c",
-    "cstdio": "c"
+    "cstdio": "c",
+    "concepts": "c",
+    "functional": "c",
+    "type_traits": "c",
+    "*.tcc": "c"
   }
 }

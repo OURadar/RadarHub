@@ -16,7 +16,7 @@ from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
 userChannels = []
-radarChannels = {}
+radarChannels = {'backhaul': 'backhaul'}
 channel_layer = get_channel_layer()
 
 with open('frontend/package.json') as fid:
