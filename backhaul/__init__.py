@@ -10,3 +10,6 @@
 
 # print(dir())
 # print(__loader__)
+from . import consumers
+
+consumers.reset()

@@ -20,6 +20,7 @@ class RadarConsumer(AsyncWebsocketConsumer):
         if 'radar' in self.scope['url_route']['kwargs']:
             self.radar = self.scope['url_route']['kwargs']['radar']
         print(f'radar = {self.radar}')
+        self.verbose = 0
         await self.accept()
 
     async def disconnect(self, code):
@@ -35,10 +36,11 @@ class RadarConsumer(AsyncWebsocketConsumer):
 
     # Receive message from frontend, which relays the payload to buffer
     async def receive(self, bytes_data=None):
-        if len(bytes_data) < 64:
-            print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data}\033[m ({len(bytes_data)})')
-        else:
-            print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data[:25]} ... {bytes_data[-5:]}\033[m ({len(bytes_data)})')
+        if self.verbose:
+            if len(bytes_data) < 64:
+                print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data}\033[m ({len(bytes_data)})')
+            else:
+                print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data[:25]} ... {bytes_data[-5:]}\033[m ({len(bytes_data)})')
         type = bytes_data[0];
 
         if type == 1:
@@ -83,6 +85,9 @@ class RadarConsumer(AsyncWebsocketConsumer):
         await self.send(event['message'])
         await self.close()
 
+    async def relayToRadar(self, event):
+        await self.send(event['command'])
+
 
 class FrontendConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -104,7 +109,7 @@ class FrontendConsumer(AsyncWebsocketConsumer):
 
     # Receive message from frontend, which relays commands from the web app, text_data only
     async def receive(self, text_data=None):
-        print(f'FrontendConsumer.receive() - text_data = "\033[38;5;154m{text_data}\033[m"')
+        print(f'FrontendConsumer.receive() \033[38;5;154m{text_data}\033[m')
         request = json.loads(text_data)
 
         if 'radar' not in request:
@@ -127,28 +132,28 @@ class FrontendConsumer(AsyncWebsocketConsumer):
 
     # The following are methods are called by backhaul
 
-    # Generic payload
-    async def sendBytes(self, event):
+    # Forward to GUI
+    async def relayToUser(self, event):
         await self.send(bytes_data=event['payload'])
 
-    # Pulse samples
-    async def sendSamples(self, event):
-        bytes = b'\x01' + event['samples']
-        await self.send(bytes_data=bytes)
+    # # Pulse samples
+    # async def sendSamples(self, event):
+    #     bytes = b'\x01' + event['samples']
+    #     await self.send(bytes_data=bytes)
 
-    # Health status
-    async def sendHealth(self, event):
-        bytes = b'\x02' + event['health']
-        await self.send(bytes_data=bytes)
+    # # Health status
+    # async def sendHealth(self, event):
+    #     bytes = b'\x02' + event['health']
+    #     await self.send(bytes_data=bytes)
 
-    # Control buttons
-    async def sendControl(self, event):
-        bytes = b'\x03' + event['control']
-        await self.send(bytes_data=bytes)
+    # # Control buttons
+    # async def sendControl(self, event):
+    #     bytes = b'\x03' + event['control']
+    #     await self.send(bytes_data=bytes)
 
-    # Send response
-    async def sendResponse(self, event):
-        bytes = b'\x04' + event['response']
-        await self.send(bytes_data=bytes)
+    # # Send response
+    # async def sendResponse(self, event):
+    #     bytes = b'\x04' + event['response']
+    #     await self.send(bytes_data=bytes)
 
     # Rays, etc.

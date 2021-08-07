@@ -308,7 +308,7 @@ void *transporter(void *in) {
     ws_frame_header *h = (ws_frame_header *)R->frame;
     char words[][5] = {"love", "hope", "cool", "cute", "sexy", "nice", "calm", "wish"};
     char uword[5] = "xxxx";
-    char message[128];
+    char message[1024];
 
     fd_set rfd;
     fd_set wfd;
@@ -469,13 +469,15 @@ void *transporter(void *in) {
                             printf("%2d sent  ", r); RKShowWebsocketFrameHeader(R);
                         }
                     }
+                } else if (h->opcode == RFC6455_OPCODE_PONG) {
+                    R->timeoutCount = 0;
                 } else if (h->opcode == RFC6455_OPCODE_CLOSE) {
                     R->connected = false;
                     if (R->onClose) {
                         R->onClose(R);
                     }
                     close(R->sd);
-                } else {
+                } else if (h->opcode == RFC6455_OPCODE_TEXT || h->opcode == RFC6455_OPCODE_BINARY) {
                     if (R->onMessage) {
                         R->onMessage(R, payload, size);
                     }
@@ -593,6 +595,13 @@ void RKWebsocketStop(RKWebsocket *R) {
     R->wantActive = false;
     pthread_mutex_unlock(&R->lock);
     pthread_join(R->threadId, NULL);
+}
+
+void RKWebsocketWait(RKWebsocket *R) {
+    int k = 0;
+    while (R->payloadTail != R->payloadHead && k++ < 10) {
+        usleep(10000);
+    }
 }
 
 // RKWebsocketSend() does not make a copy of the source.

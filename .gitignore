@@ -13,4 +13,5 @@ others
 package-lock.json
 db.sqlite3
 simple
-secret
+reporter/secret
+reporter/data

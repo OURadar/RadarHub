@@ -104,6 +104,7 @@ void RKWebsocketSetErrorHandler(RKWebsocket *, void (*)(RKWebsocket *));
 // No plans to make RKWebsocketStartAsServer()
 void RKWebsocketStart(RKWebsocket *);
 void RKWebsocketStop(RKWebsocket *);
+void RKWebsocketWait(RKWebsocket *);
 
 int RKWebsocketSend(RKWebsocket *, void *, size_t);
 
