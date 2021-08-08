@@ -6,9 +6,11 @@
 #   Radar - Interface between a radar and channels
 #
 #   User - message from radar is always in binary form
+#        - message to web UI is always binary form
 #        - message to radar is always in text form
 #
 #   Radar - message from user is always in text form
+#         - message to radar is always in text form
 #         - message to user is always in binary form
 #
 #   Created by Boonleng Cheong

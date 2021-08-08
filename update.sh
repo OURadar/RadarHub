@@ -6,8 +6,10 @@ cd frontend
 npm run build
 cd -
 
+sudo supervisorctl stop asgi:*
+sudo systemctl stop backhaul
+
 sudo systemctl daemon-reload
-sudo systemctl restart backhaul
 
-sudo supervisorctl restart asgi:*
-
+sudo systemctl start backhaul
+sudo supervisorctl start asgi:*

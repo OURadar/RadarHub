@@ -496,6 +496,8 @@ void *transporter(void *in) {
         printf("\033[1K\r");
     }
 
+    printf("R->wantActive = %s\n", R->wantActive ? "true" : "false");
+
     return NULL;
 }
 

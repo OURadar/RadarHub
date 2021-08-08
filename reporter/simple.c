@@ -52,7 +52,7 @@ void *run(void *in) {
 
 void handleOpen(RKWebsocket *R) {
     char *message = (char *)malloc(64);
-    int r = sprintf(message, "\1{\"radar\":\"px1000\",\"command\":\"radarConnect\"}");
+    int r = sprintf(message, "\1{\"radar\":\"demo\",\"command\":\"radarConnect\"}");
     r = RKWebsocketSend(R, message, r);
     free(message);
 }
@@ -60,9 +60,9 @@ void handleOpen(RKWebsocket *R) {
 
 int main(int argc, const char *argv[]) {
     if (argc == 1) {
-        W = RKWebsocketInit("localhost:8000", "/ws/radar/px1000/", RKWebsocketSSLOff);
+        W = RKWebsocketInit("localhost:8000", "/ws/radar/demo/", RKWebsocketSSLOff);
     } else {
-        W = RKWebsocketInit(argv[1], "/ws/radar/px1000/", RKWebsocketSSLAuto);
+        W = RKWebsocketInit(argv[1], "/ws/radar/demo/", RKWebsocketSSLAuto);
     }
     RKWebsocketSetOpenHandler(W, &handleOpen);
     W->verbose = 2;

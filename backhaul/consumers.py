@@ -40,6 +40,8 @@ async def _reset():
     )
 
 def reset():
+    if len(radarChannels) == 0 and len(userChannels) == 0:
+        return
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_reset())
