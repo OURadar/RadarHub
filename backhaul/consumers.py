@@ -23,7 +23,7 @@ with open('frontend/package.json') as fid:
     tmp = json.load(fid)
     __version__ = tmp['version']
 
-pp = pprint.PrettyPrinter(indent=4, depth=2)
+pp = pprint.PrettyPrinter(indent=4, depth=2, width=60)
 
 async def _reset():
     await channel_layer.send(
@@ -41,7 +41,9 @@ def reset():
     # loop.close()
 
 async def _runloop(radar):
-    print(f'_runloop \033[38;5;214m{radar}\033[m started')
+    name = f'\033[38;5;214m{radar}\033[m'
+    if verbose:
+        print(f'_runloop {name} started')
     payloadQueue = radarChannels[radar]['payloads']
     while radarChannels[radar]['channel']:
         try:
@@ -50,9 +52,9 @@ async def _runloop(radar):
             continue
         if verbose > 1:
             if len(payload) > 35:
-                print(f'_runloop \033[38;5;87m{radar}\033[m \033[38;5;154m{payload[:25]} ... {payload[-5:]}\033[m ({len(payload)})')
+                print(f'_runloop {name} \033[38;5;154m{payload[:25]} ... {payload[-5:]}\033[m ({len(payload)})')
             else:
-                print(f'_runloop \033[38;5;87m{radar}\033[m \033[38;5;154m{payload}\033[m ({len(payload)})')
+                print(f'_runloop {name} \033[38;5;154m{payload}\033[m ({len(payload)})')
         await channel_layer.group_send(
             radar,
             {
@@ -61,7 +63,8 @@ async def _runloop(radar):
             }
         )
         payloadQueue.task_done()
-    print(f'_runloop \033[38;5;214m{radar}\033[m retired')
+    if verbose:
+        print(f'_runloop {name} retired')
 
 def runloop(radar):
     loop = asyncio.new_event_loop()
@@ -87,9 +90,9 @@ class BackhaulConsumer(AsyncConsumer):
             print(f'\033[38;5;87m{radar}\033[m + {channel}')
             await channel_layer.group_add(radar, channel)
 
-            # Send the last seen payloads of all types
+            # Send the last seen payloads of all types as a welcome message
             if radar in radarChannels:
-                for _, payload in radarChannels[radar]['last'].items():
+                for _, payload in radarChannels[radar]['welcome'].items():
                     await channel_layer.send(
                         channel,
                         {
@@ -169,9 +172,9 @@ class BackhaulConsumer(AsyncConsumer):
 
         radarChannels[radar] = {
             'channel': channel,
-            'payloads': queue.Queue(),
             'commands': queue.Queue(),
-            'last': {}
+            'payloads': queue.Queue(),
+            'welcome': {}
         }
         print(f'Added \033[38;5;170m{radar}\033[m, radarChannels =')
         pp.pprint(radarChannels)
@@ -233,8 +236,9 @@ class BackhaulConsumer(AsyncConsumer):
                 )
                 commandQueue.task_done()
             else:
+                # Queue up the payload, keep this latest copy as welcome message for others
                 radarChannels[radar]['payloads'].put(payload)
-                radarChannels[radar]['last'][type] = payload
+                radarChannels[radar]['welcome'][type] = payload
 
     async def reset(self, message):
         global userChannels, radarChannels

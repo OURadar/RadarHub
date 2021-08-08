@@ -94,12 +94,17 @@ void *run(void *in) {
     float w;
     float o;
     float t;
-    int16_t n;
+    int16_t *n;
     int16_t *x;
     char *payload;
+    int nm = 1000;
 
     for (k = 0; k < 2 * count; k++) {
-        noise[k] = rand() % 1500 - 750;
+        if (rand() % 100 == 0) {
+            noise[k] = rand() % 64000 - 32000;
+        } else {
+            noise[k] = rand() % (2 * nm) - nm;
+        }
     }
 
     // Wait until handshake is confirmed
@@ -115,13 +120,13 @@ void *run(void *in) {
         payload[0] = '\5';
         x = (int16_t *)(payload + 1);
         g = rand() % count;
+        n = &noise[g];
         for (k = 0; k < count; k++) {
             t = (float)k / count;
             o = 0.1f * (t + 777.0f * t * t - (float)j);
-            n = noise[g++];
             w = window[k];
-            *(x        ) = (int16_t)(w * cosf(o)) + n;
-            *(x + count) = (int16_t)(w * sinf(o)) + n;
+            *(x        ) = (int16_t)(w * cosf(o)) + *n;
+            *(x + count) = (int16_t)(w * sinf(o)) + *(n++ + count);
             x++;
         }
         RKWebsocketSend(W, payload, depth);
