@@ -41,11 +41,11 @@ def reset():
     # loop.close()
 
 async def _runloop(radar):
-    print(f'_runloop \033[38;5;170m{radar}\033[m started')
+    print(f'_runloop \033[38;5;214m{radar}\033[m started')
     payloadQueue = radarChannels[radar]['payloads']
     while radarChannels[radar]['channel']:
         try:
-            payload = payloadQueue.get(False, 0.05)
+            payload = payloadQueue.get(False, 0.01)
         except:
             continue
         if verbose > 1:
@@ -61,7 +61,7 @@ async def _runloop(radar):
             }
         )
         payloadQueue.task_done()
-    print(f'_runloop \033[38;5;170m{radar}\033[m retired')
+    print(f'_runloop \033[38;5;214m{radar}\033[m retired')
 
 def runloop(radar):
     loop = asyncio.new_event_loop()

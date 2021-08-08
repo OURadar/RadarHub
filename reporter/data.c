@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <signal.h>
+#include <math.h>
 
 #include <RKWebsocket.h>
 
@@ -56,24 +57,87 @@ static void handleSignals(int signal) {
     RKWebsocketStop(W);
 }
 
+static void tukeywin(float *window, const int count, const float alpha) {
+    int i;
+    int a = count * alpha;
+    for (i = a; i < count - a; i++) {
+        window[i] = 25000.0f;
+    }
+    for (i = 0; i < a; i++) {
+        float w = 25000.0f * (0.5f - 0.5f * cosf(-(float)i / (float)a * M_PI));
+        window[i] = w;
+        window[count - 1 - i] = w;
+    }
+}
+
 // The busy run loop - the reporter
 void *run(void *in) {
+    int k;
     int j = 0;
-    // const useconds_t s = 1000000 * 2;
-    const useconds_t s = 1000000 / 3;
-    const int depth = sizeof(healthString) / sizeof(healthString[0]);
 
+    // Let's do 20 FPS
+    const useconds_t s = 1000000 / 20;
+
+    // Post health status every 0.5s
+    const int ht = 500000 / s;
+
+    // Health depth is just the number of samples we have up there
+    const int hdepth = sizeof(healthString) / sizeof(healthString[0]);
+
+    const int count = 1000;
+    const int depth = 1 + 2 * count * sizeof(int16_t);
+    int16_t *buf = (int16_t *)malloc(30 * depth);
+    float *window = (float *)malloc(count * sizeof(float));
+    int16_t *noise = (int16_t *)malloc(2 * count * sizeof(int16_t));
+    tukeywin(window, count, 0.1);
+    int g;
+    float w;
+    float o;
+    float t;
+    int16_t n;
+    int16_t *x;
+    char *payload;
+
+    for (k = 0; k < 2 * count; k++) {
+        noise[k] = rand() % 1500 - 750;
+    }
+
+    // Wait until handshake is confirmed
     while (!W->connected) {
         usleep(100000);
     }
-    printf("\033[38;5;203mbusy loop\033[m\n");
+    printf("\033[38;5;203mBusy run loop\033[m\n");
 
+    // Stay busy as long as the websocket is active
     while (W->wantActive) {
-        char *payload = (char *)healthString[j % depth];
-        RKWebsocketSend(W, payload, strlen(payload));
+        // AScope samples
+        payload = (char *)&buf[(j % 30) * depth];
+        payload[0] = '\5';
+        x = (int16_t *)(payload + 1);
+        g = rand() % count;
+        for (k = 0; k < count; k++) {
+            t = (float)k / count;
+            o = 0.1f * (t + 777.0f * t * t - (float)j);
+            n = noise[g++];
+            w = window[k];
+            *(x        ) = (int16_t)(w * cosf(o)) + n;
+            *(x + count) = (int16_t)(w * sinf(o)) + n;
+            x++;
+        }
+        RKWebsocketSend(W, payload, depth);
+
+        if (j % ht == 0) {
+            payload = (char *)healthString[(j / ht) % hdepth];
+            RKWebsocketSend(W, payload, strlen(payload));
+        }
+
         usleep(s);
         j++;
     }
+
+    free(window);
+    free(noise);
+    free(buf);
 
     return NULL;
 }

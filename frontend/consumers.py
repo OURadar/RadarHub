@@ -43,7 +43,7 @@ class RadarConsumer(AsyncWebsocketConsumer):
     # Type 6 - Command response in text
     #
     async def receive(self, bytes_data=None):
-        if self.verbose:
+        if self.verbose > 1:
             if len(bytes_data) < 64:
                 print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data}\033[m ({len(bytes_data)})')
             else:
