@@ -69,7 +69,24 @@ class Ingest {
       const type = new Int8Array(e.data.slice(0, 1));
       let newData = {};
       // Interpret the data based on header.type
-      if (type == 1) {
+      if (type == 2) {
+        // Control data in JSON
+        const text = new TextDecoder().decode(e.data.slice(1));
+        const dict = JSON.parse(text);
+        if (dict.name) {
+          newData.control = dict["Controls"];
+        } else {
+          console.log("dict.name = " + dict.name + " /= " + this.radar);
+        }
+      } else if (type == 3) {
+        // Health data in JSON
+        const text = new TextDecoder().decode(e.data.slice(1));
+        const health = JSON.parse(text);
+        newData.health = health;
+        this.tic += 1;
+      } else if (type == 4) {
+        // Ray data
+      } else if (type == 5) {
         // AScope data - convert arraybuffer to int16 typed array
         const samples = new Int16Array(e.data.slice(1));
         // Parse out the array into I/Q/A arrays for Scope
@@ -95,22 +112,8 @@ class Ingest {
           newData.t = new Float32Array(Array(len).keys());
         }
         this.tic += 1;
-      } else if (type == 2) {
-        // Health data in JSON
-        const text = new TextDecoder().decode(e.data.slice(1));
-        const health = JSON.parse(text);
-        newData.health = health;
-        this.tic += 1;
-      } else if (type == 3) {
-        // Control data in JSON
-        const text = new TextDecoder().decode(e.data.slice(1));
-        const dict = JSON.parse(text);
-        if (dict.name) {
-          newData.control = dict["Controls"];
-        } else {
-          console.log("dict.name = " + dict.name + " /= " + this.radar);
-        }
-      } else if (type == 4) {
+      } else if (type == 6) {
+        console.log("type 6");
         // Response of a command
         let text = new TextDecoder().decode(e.data.slice(1));
         text = " 👍🏼 " + text + "<div class='emotion'>👻</div>";

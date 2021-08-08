@@ -14,6 +14,7 @@ import queue
 from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
+verbose = 1
 userChannels = {}
 radarChannels = {}
 channel_layer = get_channel_layer()
@@ -40,11 +41,18 @@ def reset():
     # loop.close()
 
 async def _runloop(radar):
+    print(f'_runloop \033[38;5;170m{radar}\033[m started')
     payloadQueue = radarChannels[radar]['payloads']
-    while radar in radarChannels:
-        payload = payloadQueue.get()
-        # print(f'_runloop \033[38;5;87m{radar}\033[m \033[38;5;154m{payload[:25]} ... {payload[-5:]}\033[m ({len(payload)})')
-        payloadQueue.task_done()
+    while radarChannels[radar]['channel']:
+        try:
+            payload = payloadQueue.get(False, 0.05)
+        except:
+            continue
+        if verbose > 1:
+            if len(payload) > 35:
+                print(f'_runloop \033[38;5;87m{radar}\033[m \033[38;5;154m{payload[:25]} ... {payload[-5:]}\033[m ({len(payload)})')
+            else:
+                print(f'_runloop \033[38;5;87m{radar}\033[m \033[38;5;154m{payload}\033[m ({len(payload)})')
         await channel_layer.group_send(
             radar,
             {
@@ -52,6 +60,8 @@ async def _runloop(radar):
                 'payload': payload
             }
         )
+        payloadQueue.task_done()
+    print(f'_runloop \033[38;5;170m{radar}\033[m retired')
 
 def runloop(radar):
     loop = asyncio.new_event_loop()
@@ -99,7 +109,6 @@ class BackhaulConsumer(AsyncConsumer):
         radar = message['radar']
         channel = message['channel']
 
-        # data.unregister(radar)
         print(f'\033[38;5;87m{radar}\033[m - {channel}')
         await channel_layer.group_discard(radar, channel)
 
@@ -109,6 +118,10 @@ class BackhaulConsumer(AsyncConsumer):
 
         print('userChannels =')
         pp.pprint(userChannels)
+
+        # If there are no users for this radar, request nothing
+        # ...
+
 
     # When a user interacts on the GUI through FrontendConsumer.receive()
     async def relay(self, message):
@@ -125,7 +138,7 @@ class BackhaulConsumer(AsyncConsumer):
         # request from the radar. Everything else gets relayed to the radar and
         # the response is relayed to the user that triggered the Nexus event
         
-        radarChannels[radar]['relays'].put(channel)
+        radarChannels[radar]['commands'].put(channel)
         await channel_layer.send(
             radarChannels[radar]['channel'],
             {
@@ -143,7 +156,7 @@ class BackhaulConsumer(AsyncConsumer):
         channel = message['channel']
 
         global radarChannels
-        if radar in radarChannels:
+        if radar in radarChannels and radarChannels[radar]['channel'] is not None:
             print(f'Radar {radar} already exists')
             await channel_layer.send(
                 channel,
@@ -157,11 +170,10 @@ class BackhaulConsumer(AsyncConsumer):
         radarChannels[radar] = {
             'channel': channel,
             'payloads': queue.Queue(),
-            'relays': queue.Queue(),
+            'commands': queue.Queue(),
             'last': {}
         }
-        print(f'Added {radar}')
-        print('radarChannels =')
+        print(f'Added \033[38;5;170m{radar}\033[m, radarChannels =')
         pp.pprint(radarChannels)
 
         threading.Thread(target=runloop, args=(radar,)).start()
@@ -184,15 +196,15 @@ class BackhaulConsumer(AsyncConsumer):
 
         global radarChannels
         if radar in radarChannels and channel == radarChannels[radar]['channel']:
+            radarChannels[radar]['channel'] = None
+            radarChannels[radar]['commands'].join()
             radarChannels[radar]['payloads'].join()
-            radarChannels.pop(radar)
-            print(f'Popped {radar}:{channel}')
         elif radar not in radar:
             print(f'Radar {radar} not found')
         else:
             print(f'Channel {channel} no match')
 
-        print('radarChannels =')
+        print(f'Removed \033[38;5;170m{radar}\033[m radarChannels =')
         pp.pprint(radarChannels)
 
     # When a radar sends home a payload through RadarConsumer.receive()
@@ -200,17 +212,18 @@ class BackhaulConsumer(AsyncConsumer):
         radar = message['radar']
         channel = message['channel']
         payload = message['payload']
-        # print(f'channel {channel}')
-        # print(f'BackhaulConsumer.collect() \033[38;5;154m{payload[:25]} ... {payload[-5:]}\033[m ({len(payload)})')
-
+        if verbose > 1:
+            if len(payload) > 35:
+                print(f'BackhaulConsumer.collect() \033[38;5;154m{payload[:25]} ... {payload[-5:]}\033[m ({len(payload)})')
+            else:
+                print(f'BackhaulConsumer.collect() \033[38;5;154m{payload}\033[m ({len(payload)})')
         # Look up the queue of this radar
         if radar in radarChannels and channel == radarChannels[radar]['channel']:
             type = payload[0]
-            if type == 4:
+            if type == 6:
                 # Relay the response to the user
-                relayQueue = radarChannels[radar]['relays']
-                user = relayQueue.get()
-                relayQueue.task_done()
+                commandQueue = radarChannels[radar]['commands']
+                user = commandQueue.get()
                 await channel_layer.send(
                     user,
                     {
@@ -218,20 +231,38 @@ class BackhaulConsumer(AsyncConsumer):
                         'payload': payload,
                     }
                 )
+                commandQueue.task_done()
             else:
-                radarChannels[radar]['last'][type] = payload
                 radarChannels[radar]['payloads'].put(payload)
+                radarChannels[radar]['last'][type] = payload
 
     async def reset(self, message):
         global userChannels, radarChannels
-        if len(radarChannels.keys()):
-            print('resetting self ...')
-            # Say goodbye to all users and radars ...
-            #
-            #
+        print('Resetting radarChannels ...')
+        # Say goodbye to all radar run loops ...
+        for _, radar in radarChannels.items():
+            if radar['channel']:
+                await channel_layer.send(
+                    radar['channel'],
+                    {
+                        'type': 'rejectRadar',
+                        'message': 'Bye'
+                    }
+                )
+                radar['channel'] = None
+                radar['commands'].join()
+                radar['payloads'].join()
 
-            userChannels = {}
-            radarChannels = {}
+        print('radarChannels =')
+        pp.pprint(radarChannels)
 
-            print('radarChannels =')
-            pp.pprint(radarChannels)
+        # userChannels = {}
+        for user in userChannels.keys():
+            await channel_layer.send(
+                user,
+                {
+                    'type': 'disconnectUser',
+                    'message': 'Bye'
+                }
+            )
+

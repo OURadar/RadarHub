@@ -20,7 +20,7 @@ class RadarConsumer(AsyncWebsocketConsumer):
         if 'radar' in self.scope['url_route']['kwargs']:
             self.radar = self.scope['url_route']['kwargs']['radar']
         print(f'radar = {self.radar}')
-        self.verbose = 0
+        self.verbose = 1
         await self.accept()
 
     async def disconnect(self, code):
@@ -34,7 +34,14 @@ class RadarConsumer(AsyncWebsocketConsumer):
         )
         print(f'radar = {self.radar} disconnected {code}.')
 
-    # Receive message from frontend, which relays the payload to buffer
+    # Receive message from a radar through frontend
+    # Type 1 - JSON {"radar":"px1000","command":"report"}
+    # Type 2 - Controls in JSON {"Go":{...},"Stop":{...},...}
+    # Type 3 - Health in JSON {"Transceiver":{...},"Pedestal":{...},...}
+    # Type 4 - Ray binary
+    # Type 5 - Scope binary
+    # Type 6 - Command response in text
+    #
     async def receive(self, bytes_data=None):
         if self.verbose:
             if len(bytes_data) < 64:
@@ -45,7 +52,7 @@ class RadarConsumer(AsyncWebsocketConsumer):
 
         if type == 1:
             text = bytes_data[1:].decode('utf-8')
-            print(f'text = {text}')
+            print(f'Type 1 {text}')
             request = json.loads(text)
             if 'radar' not in request:
                 print('Message has no radar')
@@ -136,24 +143,5 @@ class FrontendConsumer(AsyncWebsocketConsumer):
     async def relayToUser(self, event):
         await self.send(bytes_data=event['payload'])
 
-    # # Pulse samples
-    # async def sendSamples(self, event):
-    #     bytes = b'\x01' + event['samples']
-    #     await self.send(bytes_data=bytes)
-
-    # # Health status
-    # async def sendHealth(self, event):
-    #     bytes = b'\x02' + event['health']
-    #     await self.send(bytes_data=bytes)
-
-    # # Control buttons
-    # async def sendControl(self, event):
-    #     bytes = b'\x03' + event['control']
-    #     await self.send(bytes_data=bytes)
-
-    # # Send response
-    # async def sendResponse(self, event):
-    #     bytes = b'\x04' + event['response']
-    #     await self.send(bytes_data=bytes)
-
-    # Rays, etc.
+    async def disconnectUser(self, event):
+        await self.close()
