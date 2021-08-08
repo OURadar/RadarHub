@@ -1,6 +1,9 @@
 # backhaul/consumers.py
 #
 #   RadarHub
+#   Backend consumers of the channels
+#   Consumers that interact with frontend.User and frontend.Radar
+#   through redis channels
 # 
 #   Created by Boonleng Cheong
 #
@@ -19,11 +22,13 @@ userChannels = {}
 radarChannels = {}
 channel_layer = get_channel_layer()
 
+_lock = threading.Lock()
+
 with open('frontend/package.json') as fid:
     tmp = json.load(fid)
     __version__ = tmp['version']
 
-pp = pprint.PrettyPrinter(indent=4, depth=2, width=60)
+pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
 async def _reset():
     await channel_layer.send(
@@ -42,7 +47,8 @@ def reset():
 async def _runloop(radar):
     name = f'\033[38;5;214m{radar}\033[m'
     if verbose:
-        print(f'_runloop {name} started')
+        with _lock:
+            print(f'_runloop {name} started')
     payloadQueue = radarChannels[radar]['payloads']
     while radarChannels[radar]['channel']:
         try:
@@ -58,18 +64,27 @@ async def _runloop(radar):
             radar,
             {
                 'type': 'relayToUser',
-                'payload': payload
+                'message': payload
             }
         )
         payloadQueue.task_done()
     if verbose:
-        print(f'_runloop {name} retired')
+        with _lock:
+            print(f'_runloop {name} retired')
 
 def runloop(radar):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_runloop(radar))
     loop.close()
+
+def consolidateStreams():
+    allStream = ''
+    for user in userChannels:
+        stream = user['stream']
+        allStream += stream
+    print(f'allStream = {allStream}')
+    return allStream
 
 class Backhaul(AsyncConsumer):
     # When a user connects from the GUI through User.connect()
@@ -96,12 +111,14 @@ class Backhaul(AsyncConsumer):
                         channel,
                         {
                             'type': 'relayToUser',
-                            'payload': payload
+                            'message': payload
                         }
                     )
 
-        print('userChannels =')
-        pp.pprint(userChannels)
+        if verbose:
+            with _lock:
+                print('userChannels =')
+                pp.pprint(userChannels)
 
     # When a user disconnects from the GUI through User.disconnect()
     async def userDisconnect(self, message):
@@ -118,36 +135,14 @@ class Backhaul(AsyncConsumer):
         if channel in userChannels:
             userChannels.pop(channel)
 
-        print('userChannels =')
-        pp.pprint(userChannels)
+        if verbose:
+            with _lock:
+                print('userChannels =')
+                pp.pprint(userChannels)
 
         # If there are no users for this radar, request nothing
         # ...
 
-
-    # When a user interacts on the GUI through User.receive()
-    async def userMessage(self, message):
-        if message.keys() < {'radar', 'channel', 'command'}:
-            print(f'Backhaul.userMessage() incomplete message {message}')
-            return
-        radar = message['radar']
-        channel = message['channel']
-        command = message['command']
-
-        print(f'Backhaul.userMessage() - \033[38;5;154m{command}\033[m')
-
-        # Intercept the 's' commands, consolidate the data stream the update the
-        # request from the radar. Everything else gets relayed to the radar and
-        # the response is relayed to the user that triggered the Nexus event
-        
-        radarChannels[radar]['commands'].put(channel)
-        await channel_layer.send(
-            radarChannels[radar]['channel'],
-            {
-                'type': 'relayToRadar',
-                'command': command
-            }
-        )
 
     # When a radar connects through Radar.connect()
     async def radarConnect(self, message):
@@ -163,7 +158,7 @@ class Backhaul(AsyncConsumer):
             await channel_layer.send(
                 channel,
                 {
-                    'type': 'rejectRadar',
+                    'type': 'disconnectRadar',
                     'message': f'Someone is connected as {radar}. Bye.'
                 }
             )
@@ -175,15 +170,17 @@ class Backhaul(AsyncConsumer):
             'payloads': queue.Queue(),
             'welcome': {}
         }
-        print(f'Added \033[38;5;170m{radar}\033[m, radarChannels =')
-        pp.pprint(radarChannels)
+        if verbose:
+            with _lock:
+                print(f'Added \033[38;5;170m{radar}\033[m, radarChannels =')
+                pp.pprint(radarChannels)
 
         threading.Thread(target=runloop, args=(radar,)).start()
 
         await channel_layer.send(
             channel,
             {
-                'type': 'welcomeRadar',
+                'type': 'relayToRadar',
                 'message': f'Hello {radar}. Welcome to the RadarHub v{__version__}'
             }
         )
@@ -191,7 +188,7 @@ class Backhaul(AsyncConsumer):
     # When a radar diconnects through Radar.disconnect()
     async def radardisconnect(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'BackhaulConsumer.radardisconnect() incomplete message {message}')
+            print(f'Backhaul.radardisconnect() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
@@ -206,8 +203,48 @@ class Backhaul(AsyncConsumer):
         else:
             print(f'Channel {channel} no match')
 
-        print(f'Removed \033[38;5;170m{radar}\033[m radarChannels =')
-        pp.pprint(radarChannels)
+        if verbose:
+            with _lock:
+                print(f'Removed \033[38;5;170m{radar}\033[m radarChannels =')
+                pp.pprint(radarChannels)
+
+    # When a user interacts on the GUI through User.receive()
+    async def userMessage(self, message):
+        if message.keys() < {'radar', 'channel', 'command'}:
+            print(f'Backhaul.userMessage() incomplete message {message}')
+            return
+        radar = message['radar']
+        channel = message['channel']
+        command = message['command']
+
+        if verbose:
+            with _lock:
+                print(f'Backhaul.userMessage() - \033[38;5;154m{command}\033[m')
+
+        # Intercept the 's' commands, consolidate the data stream the update the
+        # request from the radar. Everything else gets relayed to the radar and
+        # the response is relayed to the user that triggered the Nexus event
+
+        if radar not in radarChannels or radarChannels[radar]['channel'] is None:
+            print(f'Backhaul.userMessage() - radar has signed off')
+            await channel_layer.send(
+                channel,
+                {
+                    'type': 'relayToUser',
+                    'message': b'\x06Radar not connected'
+                }
+            )
+            return
+
+        # Push the user message into a FIFO queue
+        radarChannels[radar]['commands'].put(channel)
+        await channel_layer.send(
+            radarChannels[radar]['channel'],
+            {
+                'type': 'relayToRadar',
+                'message': command
+            }
+        )
 
     # When a radar sends home a payload through Radar.receive()
     async def radarMessage(self, message):
@@ -221,24 +258,39 @@ class Backhaul(AsyncConsumer):
             print(f'Backhaul.radarMessage() \033[38;5;154m{tmp}\033[m ({len(payload)})')
 
         # Look up the queue of this radar
-        if radar in radarChannels and channel == radarChannels[radar]['channel']:
-            type = payload[0]
-            if type == 6:
-                # Relay the response to the user
-                commandQueue = radarChannels[radar]['commands']
-                user = commandQueue.get()
-                await channel_layer.send(
-                    user,
-                    {
-                        'type': 'relayToUser',
-                        'payload': payload,
-                    }
-                )
-                commandQueue.task_done()
-            else:
-                # Queue up the payload, keep this latest copy as welcome message for others
-                radarChannels[radar]['payloads'].put(payload)
-                radarChannels[radar]['welcome'][type] = payload
+        if radar not in radarChannels or channel != radarChannels[radar]['channel']:
+            print(f'Backhaul.radarMessage() inconsistency detected')
+            await channel_layer.send(
+                channel,
+                {
+                    'type': 'disconnectRadar',
+                    'message': 'Bakhaul reset. Please reconnect.'
+                }
+            )
+            return
+
+        type = payload[0]
+        if type == 6:
+            if verbose:
+                with _lock:
+                    text = str(payload[1:], 'utf-8')
+                    print(f'Backhaul.radarMessage() - \033[38;5;154m{text}\033[m')
+            # Relay the response to the user, FIFO
+            commandQueue = radarChannels[radar]['commands']
+            user = commandQueue.get()
+            await channel_layer.send(
+                user,
+                {
+                    'type': 'relayToUser',
+                    'message': payload,
+                }
+            )
+            commandQueue.task_done()
+            return
+
+        # Queue up the payload, keep this latest copy as welcome message for others
+        radarChannels[radar]['payloads'].put(payload)
+        radarChannels[radar]['welcome'][type] = payload
 
     async def reset(self, message):
         global userChannels, radarChannels
@@ -249,16 +301,18 @@ class Backhaul(AsyncConsumer):
                 await channel_layer.send(
                     radar['channel'],
                     {
-                        'type': 'rejectRadar',
+                        'type': 'disconnectRadar',
                         'message': 'Bye'
                     }
                 )
                 radar['channel'] = None
-                radar['commands'].join()
-                radar['payloads'].join()
+                radar['commands'] = None
+                radar['payloads'] = None
 
-        print('radarChannels =')
-        pp.pprint(radarChannels)
+        if verbose:
+            with _lock:
+                print('radarChannels =')
+                pp.pprint(radarChannels)
 
         # userChannels = {}
         for user in userChannels.keys():

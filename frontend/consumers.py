@@ -1,7 +1,16 @@
 # frontend/consumers.py
 #
 #   RadarHub
-# 
+#   Frontend consumers of the websocket
+#   User - Interface between a user and channels, and
+#   Radar - Interface between a radar and channels
+#
+#   User - message from radar is always in binary form
+#        - message to radar is always in text form
+#
+#   Radar - message from user is always in text form
+#         - message to user is always in binary form
+#
 #   Created by Boonleng Cheong
 #
 
@@ -9,6 +18,8 @@ import json
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.http.response import Http404
+
+verbose = 0
 
 class Null(AsyncWebsocketConsumer):
     async def connect(self):
@@ -19,8 +30,6 @@ class Radar(AsyncWebsocketConsumer):
     async def connect(self):
         if 'radar' in self.scope['url_route']['kwargs']:
             self.radar = self.scope['url_route']['kwargs']['radar']
-        print(f'radar = {self.radar}')
-        self.verbose = 1
         await self.accept()
 
     async def disconnect(self, code):
@@ -32,7 +41,8 @@ class Radar(AsyncWebsocketConsumer):
                 'channel': self.channel_name
             }
         )
-        print(f'radar = {self.radar} disconnected {code}.')
+        if verbose:
+            print(f'radar {self.radar} disconnected {code}.')
 
     # Receive message from a radar through frontend
     # Type 1 - JSON {"radar":"px1000","command":"radarConnect"}
@@ -43,11 +53,11 @@ class Radar(AsyncWebsocketConsumer):
     # Type 6 - Command response
     #
     async def receive(self, bytes_data=None):
-        if self.verbose > 1:
-            if len(bytes_data) < 64:
-                print(f'Radar.receive() \033[38;5;154m{bytes_data}\033[m ({len(bytes_data)})')
-            else:
-                print(f'Radar.receive() \033[38;5;154m{bytes_data[:25]} ... {bytes_data[-5:]}\033[m ({len(bytes_data)})')
+        if verbose > 1:
+            tmp = bytes_data
+            if len(tmp) > 30:
+                tmp = f'{bytes_data[:25]} ... {bytes_data[-5:]}'
+            print(f'Radar.receive() \033[38;5;154m{tmp}\033[m ({len(bytes_data)})')
         type = bytes_data[0];
 
         if type == 1:
@@ -85,19 +95,12 @@ class Radar(AsyncWebsocketConsumer):
                 }
             )
 
-    # Welcome a radar
-    async def welcomeRadar(self, event):
+    async def relayToRadar(self, event):
         await self.send(event['message'])
-        # s = 1024 * 256
-        # print(f'size {s}')
-        # await self.send('x' * s);
 
-    async def rejectRadar(self, event):
+    async def disconnectRadar(self, event):
         await self.send(event['message'])
         await self.close()
-
-    async def relayToRadar(self, event):
-        await self.send(event['command'])
 
 
 class User(AsyncWebsocketConsumer):
@@ -105,7 +108,6 @@ class User(AsyncWebsocketConsumer):
         self.radar = 'unknown'
         if 'radar' in self.scope['url_route']['kwargs']:
             self.radar = self.scope['url_route']['kwargs']['radar']
-        print(f'radar = {self.radar}')
         await self.accept()
 
     async def disconnect(self, code):
@@ -117,6 +119,8 @@ class User(AsyncWebsocketConsumer):
                 'channel': self.channel_name
             }
         )
+        if verbose:
+            print(f'user for {self.radar} disconnected {code}.')
 
     # Receive message from frontend, which relays commands from the web app, text_data only
     async def receive(self, text_data=None):
@@ -145,7 +149,7 @@ class User(AsyncWebsocketConsumer):
 
     # Forward to GUI
     async def relayToUser(self, event):
-        await self.send(bytes_data=event['payload'])
+        await self.send(bytes_data=event['message'])
 
     async def disconnectUser(self, event):
         await self.close()

@@ -88,7 +88,7 @@ void *run(void *in) {
     const int depth = 1 + 2 * count * sizeof(int16_t);
     int16_t *buf = (int16_t *)malloc(30 * depth);
     float *window = (float *)malloc(count * sizeof(float));
-    int16_t *noise = (int16_t *)malloc(2 * count * sizeof(int16_t));
+    int16_t *noise = (int16_t *)malloc(3 * count * sizeof(int16_t));
     tukeywin(window, count, 0.1);
     int g;
     float w;
@@ -99,9 +99,11 @@ void *run(void *in) {
     char *payload;
     int nm = 1000;
 
-    for (k = 0; k < 2 * count; k++) {
-        if (rand() % 123456 == 0) {
-            noise[k] = rand() % 64000 - 32000;
+    // Some kind of pseudo-noise sequence
+    for (k = 0; k < 3 * count; k++) {
+        if (rand() % 69 == 0) {
+            g = rand() % 32000;
+            noise[k] = rand() % g - g / 2;
         } else {
             noise[k] = rand() % (2 * nm) - nm;
         }
