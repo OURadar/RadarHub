@@ -39,6 +39,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'channels',
     'frontend',
+    'backhaul',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

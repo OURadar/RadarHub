@@ -1,5 +1,5 @@
-from .consumers import BackhaulConsumer
+from . import consumers
 
 channel_urlpatterns = {
-    'backhaul': BackhaulConsumer.as_asgi(),
+    'backhaul': consumers.Backhaul.as_asgi(),
 }

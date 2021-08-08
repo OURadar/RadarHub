@@ -38,7 +38,6 @@ def reset():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(_reset())
-    # loop.close()
 
 async def _runloop(radar):
     name = f'\033[38;5;214m{radar}\033[m'
@@ -51,10 +50,10 @@ async def _runloop(radar):
         except:
             continue
         if verbose > 1:
+            tmp = payload
             if len(payload) > 35:
-                print(f'_runloop {name} \033[38;5;154m{payload[:25]} ... {payload[-5:]}\033[m ({len(payload)})')
-            else:
-                print(f'_runloop {name} \033[38;5;154m{payload}\033[m ({len(payload)})')
+                tmp = f'{payload[:25]} ... {payload[-5:]}'
+            print(f'_runloop {name} \033[38;5;154m{tmp}\033[m ({len(payload)})')
         await channel_layer.group_send(
             radar,
             {
@@ -72,11 +71,11 @@ def runloop(radar):
     loop.run_until_complete(_runloop(radar))
     loop.close()
 
-class BackhaulConsumer(AsyncConsumer):
-    # When a user connects from the GUI through FrontendConsumer.connect()
-    async def hello(self, message):
+class Backhaul(AsyncConsumer):
+    # When a user connects from the GUI through User.connect()
+    async def userConnect(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'BackhaulConsumer.hello() incomplete message {message}')
+            print(f'Backhaul.userConnect() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
@@ -104,10 +103,10 @@ class BackhaulConsumer(AsyncConsumer):
         print('userChannels =')
         pp.pprint(userChannels)
 
-    # When a user disconnects from the GUI through FrontendConsumer.disconnect()
-    async def bye(self, message):
+    # When a user disconnects from the GUI through User.disconnect()
+    async def userDisconnect(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'BackhaulConsumer.bye() incomplete message {message}')
+            print(f'Backhaul.userDisconnect() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
@@ -126,16 +125,16 @@ class BackhaulConsumer(AsyncConsumer):
         # ...
 
 
-    # When a user interacts on the GUI through FrontendConsumer.receive()
-    async def relay(self, message):
+    # When a user interacts on the GUI through User.receive()
+    async def userMessage(self, message):
         if message.keys() < {'radar', 'channel', 'command'}:
-            print(f'BackhaulConsumer.relay() incomplete message {message}')
+            print(f'Backhaul.userMessage() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
         command = message['command']
 
-        print(f'BackhaulConsumer.relay() - \033[38;5;154m{command}\033[m')
+        print(f'Backhaul.userMessage() - \033[38;5;154m{command}\033[m')
 
         # Intercept the 's' commands, consolidate the data stream the update the
         # request from the radar. Everything else gets relayed to the radar and
@@ -150,10 +149,10 @@ class BackhaulConsumer(AsyncConsumer):
             }
         )
 
-    # When a radar connects through RadarConsumer.connect()
-    async def report(self, message):
+    # When a radar connects through Radar.connect()
+    async def radarConnect(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'BackhaulConsumer.report() incomplete message {message}')
+            print(f'Backhaul.radarConnect() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
@@ -165,7 +164,7 @@ class BackhaulConsumer(AsyncConsumer):
                 channel,
                 {
                     'type': 'rejectRadar',
-                    'message': f'Someone is reporting as {radar}. Bye.'
+                    'message': f'Someone is connected as {radar}. Bye.'
                 }
             )
             return
@@ -189,10 +188,10 @@ class BackhaulConsumer(AsyncConsumer):
             }
         )
 
-    # When a radar diconnects through RadarConsumer.disconnect()
-    async def retire(self, message):
+    # When a radar diconnects through Radar.disconnect()
+    async def radardisconnect(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'BackhaulConsumer.retire() incomplete message {message}')
+            print(f'BackhaulConsumer.radardisconnect() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
@@ -210,16 +209,17 @@ class BackhaulConsumer(AsyncConsumer):
         print(f'Removed \033[38;5;170m{radar}\033[m radarChannels =')
         pp.pprint(radarChannels)
 
-    # When a radar sends home a payload through RadarConsumer.receive()
-    async def collect(self, message):
+    # When a radar sends home a payload through Radar.receive()
+    async def radarMessage(self, message):
         radar = message['radar']
         channel = message['channel']
         payload = message['payload']
         if verbose > 1:
+            tmp = payload
             if len(payload) > 35:
-                print(f'BackhaulConsumer.collect() \033[38;5;154m{payload[:25]} ... {payload[-5:]}\033[m ({len(payload)})')
-            else:
-                print(f'BackhaulConsumer.collect() \033[38;5;154m{payload}\033[m ({len(payload)})')
+                tmp = f'{payload[:25]} ... {payload[-5:]}'
+            print(f'Backhaul.radarMessage() \033[38;5;154m{tmp}\033[m ({len(payload)})')
+
         # Look up the queue of this radar
         if radar in radarChannels and channel == radarChannels[radar]['channel']:
             type = payload[0]

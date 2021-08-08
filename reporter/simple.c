@@ -52,7 +52,7 @@ void *run(void *in) {
 
 void handleOpen(RKWebsocket *R) {
     char *message = (char *)malloc(64);
-    int r = sprintf(message, "\1{\"radar\":\"px1000\",\"command\":\"report\"}");
+    int r = sprintf(message, "\1{\"radar\":\"px1000\",\"command\":\"radarConnect\"}");
     r = RKWebsocketSend(R, message, r);
     free(message);
 }

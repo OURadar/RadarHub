@@ -10,12 +10,12 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.http.response import Http404
 
-class NullConsumer(AsyncWebsocketConsumer):
+class Null(AsyncWebsocketConsumer):
     async def connect(self):
         await self.close()
 
 
-class RadarConsumer(AsyncWebsocketConsumer):
+class Radar(AsyncWebsocketConsumer):
     async def connect(self):
         if 'radar' in self.scope['url_route']['kwargs']:
             self.radar = self.scope['url_route']['kwargs']['radar']
@@ -27,7 +27,7 @@ class RadarConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.send(
             'backhaul',
             {
-                'type': 'retire',
+                'type': 'radardisconnect',
                 'radar': self.radar,
                 'channel': self.channel_name
             }
@@ -35,25 +35,29 @@ class RadarConsumer(AsyncWebsocketConsumer):
         print(f'radar = {self.radar} disconnected {code}.')
 
     # Receive message from a radar through frontend
-    # Type 1 - JSON {"radar":"px1000","command":"report"}
+    # Type 1 - JSON {"radar":"px1000","command":"radarConnect"}
     # Type 2 - Controls in JSON {"Go":{...},"Stop":{...},...}
     # Type 3 - Health in JSON {"Transceiver":{...},"Pedestal":{...},...}
     # Type 4 - Ray binary
     # Type 5 - Scope binary
-    # Type 6 - Command response in text
+    # Type 6 - Command response
     #
     async def receive(self, bytes_data=None):
         if self.verbose > 1:
             if len(bytes_data) < 64:
-                print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data}\033[m ({len(bytes_data)})')
+                print(f'Radar.receive() \033[38;5;154m{bytes_data}\033[m ({len(bytes_data)})')
             else:
-                print(f'RadarConsumer.receive() \033[38;5;154m{bytes_data[:25]} ... {bytes_data[-5:]}\033[m ({len(bytes_data)})')
+                print(f'Radar.receive() \033[38;5;154m{bytes_data[:25]} ... {bytes_data[-5:]}\033[m ({len(bytes_data)})')
         type = bytes_data[0];
 
         if type == 1:
             text = bytes_data[1:].decode('utf-8')
             print(f'Type 1 {text}')
-            request = json.loads(text)
+            try:
+                request = json.loads(text)
+            except:
+                print(f'Not a valid JSON text = {text}')
+                return
             if 'radar' not in request:
                 print('Message has no radar')
                 return
@@ -74,7 +78,7 @@ class RadarConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.send(
                 'backhaul',
                 {
-                    'type': 'collect',
+                    'type': 'radarMessage',
                     'radar': self.radar,
                     'channel': self.channel_name,
                     'payload': bytes_data
@@ -96,7 +100,7 @@ class RadarConsumer(AsyncWebsocketConsumer):
         await self.send(event['command'])
 
 
-class FrontendConsumer(AsyncWebsocketConsumer):
+class User(AsyncWebsocketConsumer):
     async def connect(self):
         self.radar = 'unknown'
         if 'radar' in self.scope['url_route']['kwargs']:
@@ -108,7 +112,7 @@ class FrontendConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.send(
             'backhaul',
             {
-                'type': 'bye',
+                'type': 'userDisconnect',
                 'radar': self.radar,
                 'channel': self.channel_name
             }
@@ -116,7 +120,7 @@ class FrontendConsumer(AsyncWebsocketConsumer):
 
     # Receive message from frontend, which relays commands from the web app, text_data only
     async def receive(self, text_data=None):
-        print(f'FrontendConsumer.receive() \033[38;5;154m{text_data}\033[m')
+        print(f'User.receive() \033[38;5;154m{text_data}\033[m')
         request = json.loads(text_data)
 
         if 'radar' not in request:

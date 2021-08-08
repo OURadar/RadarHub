@@ -60,7 +60,7 @@ class Ingest {
       this.socket.send(
         JSON.stringify({
           radar: this.radar,
-          command: "hello",
+          command: "userConnect",
         })
       );
       this.onupdate(this.tic++);
@@ -164,7 +164,7 @@ class Ingest {
     this.socket.send(
       JSON.stringify({
         radar: this.radar,
-        command: "relay",
+        command: "userMessage",
         payload: command,
       })
     );

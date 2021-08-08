@@ -17,7 +17,7 @@ controlString = '{"name": "px1000", "Controls": [{"Label": "Go", "Command": "t y
 
 async def run():
     print('\033[38;5;15;48;5;63mData interface\033[m started.')
-    # The URI for a RadarConsumer frontend
+    # The URI for a Radar frontend
     uri = "ws://localhost:8000/ws/radar/px1000/"
     # uri = "wss://radarhub.arrc.ou.edu/ws/radar/px1000/"
 
@@ -47,7 +47,7 @@ async def run():
                 continue
 
             print('Sending greeting ...')
-            await socket.send(b'\1{"radar":"px1000", "command":"report"}')
+            await socket.send(b'\1{"radar":"px1000", "command":"radarConnect"}')
 
             greeting = await socket.recv()
             if verbose:

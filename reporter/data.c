@@ -100,7 +100,7 @@ void *run(void *in) {
     int nm = 1000;
 
     for (k = 0; k < 2 * count; k++) {
-        if (rand() % 100 == 0) {
+        if (rand() % 123456 == 0) {
             noise[k] = rand() % 64000 - 32000;
         } else {
             noise[k] = rand() % (2 * nm) - nm;
@@ -149,7 +149,7 @@ void *run(void *in) {
 
 void handleOpen(RKWebsocket *R) {
     char *message = (char *)malloc(64);
-    int r = sprintf(message, "\1{\"radar\":\"px1000\",\"command\":\"report\"}");
+    int r = sprintf(message, "\1{\"radar\":\"px1000\",\"command\":\"radarConnect\"}");
     r = RKWebsocketSend(R, message, r);
     RKWebsocketWait(R);
     RKWebsocketSend(R, (char *)controlString, strlen(controlString));

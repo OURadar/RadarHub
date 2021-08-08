@@ -38,7 +38,7 @@ class Texture {
     this.busy = false;
     this.fontLoaded = false;
     this.context.font = "14px LabelFont";
-    let meas = this.context.measureText("hello");
+    let meas = this.context.measureText("money");
     this.initWidth = meas.width;
     this.hasDetails =
       undefined !== meas.actualBoundingBoxAscent &&
@@ -57,7 +57,7 @@ class Texture {
   }
 
   checkFontLoaded() {
-    let meas = this.context.measureText("hello");
+    let meas = this.context.measureText("tesla");
     console.log(
       meas.width,
       this.initWidth,
