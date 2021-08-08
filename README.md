@@ -13,8 +13,9 @@ Three main parts:
 Some design constraints:
 
 - Keep backend-frontend responsive, _only_ async functions
-- Output from a radar gets broadcast to all users in a specific group (radar) by worker _backhaul_
-- All input gets picked up by backhaul, routed to a the specific radar based on source uri, which contains the radar name
+- All input/output gets picked up by backhaul
+- Backhaul serves as the middle party to facilitate one-to-one or one-to-many messaging
+- Payloads from a radar get broadcast to all users in a specific group by worker _backhaul_
 - Radar reporter does not receive anything from the radar itself (different behavior than a chat room)
 
 # (Evolving) Concept of Operations
