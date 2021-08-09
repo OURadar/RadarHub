@@ -66,7 +66,6 @@ class Radar(AsyncWebsocketConsumer):
 
         if type == 1:
             text = bytes_data[1:].decode('utf-8')
-            print(f'Type 1 {text}')
             try:
                 request = json.loads(text)
             except:

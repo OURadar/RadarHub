@@ -13,6 +13,8 @@ typedef struct _reporter {
     RKWebsocket      *ws;
     char             welcome[256];
     char             message[256];
+    bool             wantActive;
+    bool             connected;
     float            rate;
     bool             go;
 } RKReporter;
@@ -64,7 +66,7 @@ const char controlString[8192] = "\2{"
 // Local functions
 static void handleSignals(int signal) {
     fprintf(stderr, "\nCaught %d\n", signal);
-    RKWebsocketStop(R->ws);
+    R->wantActive = false;
 }
 
 static void tukeywin(float *window, const int count, const float alpha) {
@@ -85,8 +87,8 @@ void *run(void *in) {
     int k;
     int j = 0;
 
-    // Let's do 20 FPS
-    const useconds_t s = 1000000 / 20;
+    // Let's do 15 FPS
+    const useconds_t s = 1000000 / 15;
 
     // Post health status every 0.5s
     const int ht = 500000 / s;
@@ -111,7 +113,7 @@ void *run(void *in) {
 
     // Some kind of pseudo-noise sequence
     for (k = 0; k < 3 * count; k++) {
-        if (rand() % 21 == 0) {
+        if (rand() % (int)(1.0 / 0.4) == 0) {
             g = rand() % 32000;
             noise[k] = rand() % g - g / 2;
         } else {
@@ -119,14 +121,13 @@ void *run(void *in) {
         }
     }
 
-    // Wait until handshake is confirmed
-    while (!R->ws->connected) {
+    // Wait until the welcome message is received
+    while (!R->connected) {
         usleep(100000);
     }
     printf("\033[38;5;203mBusy run loop\033[m\n");
 
-    // Stay busy as long as the websocket is active
-    while (R->ws->wantActive) {
+    while (R->wantActive) {
         // AScope samples
         payload = (char *)(buf + (j % 30) * depth);
         payload[0] = '\5';
@@ -172,7 +173,8 @@ void handleOpen(RKWebsocket *w) {
 
 void handleMessage(RKWebsocket *W, void *payload, size_t size) {
     printf("ONMESSAGE \033[38;5;220m%s\033[m\n", (char *)payload);
-    if (strstr((char *)payload, "ello") != NULL) {
+    if (strstr((char *)payload, "Welcome")) {
+        R->connected = true;
         return;
     }
     int r = sprintf(R->message, "\6%s", (char *)payload);
@@ -195,6 +197,7 @@ void handleMessage(RKWebsocket *W, void *payload, size_t size) {
 int main(int argc, const char *argv[]) {
     R = (RKReporter *)malloc(sizeof(RKReporter));
     memset(R, 0, sizeof(RKReporter));
+    R->wantActive = true;
 
     if (argc == 1) {
         R->ws = RKWebsocketInit("localhost:8000", "/ws/radar/demo/", RKWebsocketSSLOff);
@@ -203,22 +206,20 @@ int main(int argc, const char *argv[]) {
     }
     RKWebsocketSetOpenHandler(R->ws, &handleOpen);
     RKWebsocketSetMessageHandler(R->ws, &handleMessage);
-    R->ws->verbose = 1;
 
     // Catch Ctrl-C and some signals alternative handling
     signal(SIGINT, handleSignals);
 
     RKWebsocketStart(R->ws);
 
-    RKWebsocketWait(R->ws);
-
     pthread_t tid;
     pthread_create(&tid, NULL, run, NULL);
 
-    while (R->ws->wantActive) {
+    while (R->wantActive) {
         usleep(100000);
     }
 
+    RKWebsocketStop(R->ws);
     RKWebsocketFree(R->ws);
 
     free(R);

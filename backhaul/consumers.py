@@ -173,7 +173,7 @@ class Backhaul(AsyncConsumer):
 
         global radarChannels
         if radar in radarChannels and radarChannels[radar]['channel'] is not None:
-            print(f'Radar {radar} already exists')
+            print(f'Radar {radar} already exists, disconnecting ...')
             await channel_layer.send(
                 channel,
                 {
@@ -281,22 +281,11 @@ class Backhaul(AsyncConsumer):
         # Look up the queue of this radar
         global radarChannels
         if radar not in radarChannels or channel != radarChannels[radar]['channel']:
-            print(f'Backhaul.radarMessage() inconsistency detected')
-            pp.pprint(radarChannels)
-            try:
-                await channel_layer.send(
-                    channel,
-                    {
-                        'type': 'disconnectRadar',
-                        'message': 'Bakhaul reset. Please reconnect.'
-                    }
-                )
-            except:
-                pass
-            if radar in radarChannels:
-                radarChannels[radar]['channal'] = None
+            # This is when a radar connects as someone that is already connected,
+            # did not wait for a welcome message and starts sending in payloads
             return
 
+        # Payload type 6 is a response, direct to the earliest request, FIFO
         type = payload[0]
         if type == 6:
             if verbose:
