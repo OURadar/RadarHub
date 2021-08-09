@@ -86,7 +86,7 @@ void *run(void *in) {
     int j = 0;
 
     // Let's do 20 FPS
-    const useconds_t s = 1000000 / 10;
+    const useconds_t s = 1000000 / 20;
 
     // Post health status every 0.5s
     const int ht = 500000 / s;
@@ -171,7 +171,7 @@ void handleOpen(RKWebsocket *w) {
 }
 
 void handleMessage(RKWebsocket *W, void *payload, size_t size) {
-    printf("ONMESSAGE %s\n", (char *)payload);
+    printf("ONMESSAGE \033[38;5;220m%s\033[m\n", (char *)payload);
     if (strstr((char *)payload, "ello") != NULL) {
         return;
     }

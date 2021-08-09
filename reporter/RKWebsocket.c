@@ -34,18 +34,18 @@ static char *RKGetHandshakeArgument(const char *buf, const char *key) {
     return argument;
 }
 
-static int RKSocketRead(RKWebsocket *R, void *buf, size_t size) {
+static int RKSocketRead(RKWebsocket *R, uint32_t origin, size_t size) {
     if (R->useSSL) {
-        return SSL_read(R->ssl, buf, size);
+        return SSL_read(R->ssl, R->frame + origin, size);
     }
-    return (int)read(R->sd, buf, size);
+    return (int)read(R->sd,R->frame + origin, size);
 }
 
-static int RKSocketWrite(RKWebsocket *R, void *buf, size_t size) {
+static int RKSocketWrite(RKWebsocket *R, size_t size) {
     if (R->useSSL) {
-        return SSL_write(R->ssl, buf, size);
+        return SSL_write(R->ssl, R->frame, size);
     }
-    return (int)write(R->sd, buf, size);
+    return (int)write(R->sd, R->frame, size);
 }
 
 static size_t RKWebsocketFrameEncode(void *buf, RFC6455_OPCODE code, const void *src, size_t size) {
@@ -142,7 +142,7 @@ static int RKWebsocketPingPong(RKWebsocket *R, const bool ping, const char *mess
     size_t size = RKWebsocketFrameEncode(R->frame,
         ping ? RFC6455_OPCODE_PING : RFC6455_OPCODE_PONG,
         message, message == NULL ? 0 : (len == 0 ? strlen(message) : len));
-    int r = RKSocketWrite(R, R->frame, size);
+    int r = RKSocketWrite(R, size);
     if (r < 0) {
         fprintf(stderr, "Error. Unable to write. r = %d\n", r);
     } else if (R->verbose > 2) {
@@ -244,9 +244,9 @@ static int RKWebsocketConnect(RKWebsocket *R) {
         printf("%s", buf);
     }
 
-    RKSocketWrite(R, buf, strlen(buf));
+    RKSocketWrite(R, strlen(buf));
     do {
-        r = RKSocketRead(R, buf + r, RKWebsocketFrameSize - r);
+        r = RKSocketRead(R, r, RKWebsocketFrameSize - r);
     } while (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL);
     if (r < 0) {
         fprintf(stderr, "Error during handshake.\n");
@@ -303,7 +303,7 @@ void *transporter(void *in) {
     RKWebsocket *R = (RKWebsocket *)in;
 
     int r;
-    void *payload;
+    void *anchor;
     size_t size, targetFrameSize = 0;
     ws_frame_header *h = (ws_frame_header *)R->frame;
     char words[][5] = {"love", "hope", "cool", "cute", "sexy", "nice", "calm", "wish"};
@@ -315,8 +315,8 @@ void *transporter(void *in) {
     fd_set efd;
     struct timeval timeout;
     
-    size_t origin = 0;
-    size_t total = 0;
+    uint32_t origin = 0;
+    uint32_t total = 0;
 
     while (R->wantActive) {
 
@@ -340,8 +340,8 @@ void *transporter(void *in) {
                 if (FD_ISSET(R->sd, &wfd)) {
                     // Ready to write. Keep sending the payloads until the tail catches up
                     while (R->payloadTail != R->payloadHead) {
-                        R->payloadTail = R->payloadTail == RKWebsocketPayloadDepth - 1 ? 0 : R->payloadTail + 1;
-                        const RKWebsocketPayload *payload = &R->payloads[R->payloadTail];
+                        uint16_t tail = R->payloadTail == RKWebsocketPayloadDepth - 1 ? 0 : R->payloadTail + 1;
+                        const RKWebsocketPayload *payload = &R->payloads[tail];
                         if (R->verbose > 1) {
                             if (payload->size < 64) {
                                 binaryString(message, payload->source, payload->size);
@@ -351,7 +351,7 @@ void *transporter(void *in) {
                             printf("WRITE \033[38;5;154m%s\033[m (%zu)\n", message, payload->size);
                         }
                         size = RKWebsocketFrameEncode(R->frame, RFC6455_OPCODE_BINARY, payload->source, payload->size);
-                        r = RKSocketWrite(R, R->frame, size);
+                        r = RKSocketWrite(R, size);
                         if (r < 0) {
                             fprintf(stderr, "Error. RKSocketWrite() = %d\n", r);
                             R->connected = false;
@@ -360,6 +360,7 @@ void *transporter(void *in) {
                             R->connected = false;
                             break;
                         }
+                        R->payloadTail = tail;
                     }
                 } else if (FD_ISSET(R->sd, &efd)) {
                     // Exceptions
@@ -389,9 +390,9 @@ void *transporter(void *in) {
             if (r > 0) {
                 if (FD_ISSET(R->sd, &rfd)) {
                     // There is something to read
-                    r = RKSocketRead(R, R->frame + origin, RKWebsocketFrameSize);
+                    r = RKSocketRead(R, origin, RKWebsocketFrameSize);
                     if (r <= 0) {
-                        fprintf(stderr, "Error. RKSocketRead() = %d   origin = %zu\n", r, origin);
+                        fprintf(stderr, "Error. RKSocketRead() = %d   origin = %u\n", r, origin);
                         R->connected = false;
                         break;
                     }
@@ -407,7 +408,7 @@ void *transporter(void *in) {
                     } else {
                         origin = 0;
                     }
-                    size = RKWebsocketFrameDecode((void **)&payload, R->frame);
+                    size = RKWebsocketFrameDecode((void **)&anchor, R->frame);
                     if (!h->fin) {
                         fprintf(stderr, "I need upgrade!\n"
                                         "I need upgrade!\n"
@@ -416,10 +417,10 @@ void *transporter(void *in) {
                     }
                     if (R->verbose > 1) {
                         if (R->verbose > 2) {
-                            printf("%2zu read  ", total); RKShowWebsocketFrameHeader(R);
+                            printf("%2u read  ", total); RKShowWebsocketFrameHeader(R);
                         }
                         printf("S-%s: \033[38;5;220m%s%s\033[m (%zu)\n",
-                            OPCODE_STRING(h->opcode), (char *)payload, size > 64 ? " ..." : "", size);
+                            OPCODE_STRING(h->opcode), (char *)anchor, size > 64 ? " ..." : "", size);
                     }
                     R->timeoutCount = 0;
                 } else if (FD_ISSET(R->sd, &efd)) {
@@ -457,7 +458,7 @@ void *transporter(void *in) {
             if (size > 0) {
                 if (h->opcode == RFC6455_OPCODE_PING) {
                     // Make a copy since payload --> R->buf or the behavior is unpredictable
-                    memcpy(message, payload, h->len); message[h->len] = '\0';
+                    memcpy(message, anchor, h->len); message[h->len] = '\0';
                     RKWebsocketPong(R, message, h->len);
                     if (R->verbose > 1) {
                         ws_mask_key key = {.u32 = *((uint32_t *)&R->frame[2])};
@@ -479,7 +480,7 @@ void *transporter(void *in) {
                     close(R->sd);
                 } else if (h->opcode == RFC6455_OPCODE_TEXT || h->opcode == RFC6455_OPCODE_BINARY) {
                     if (R->onMessage) {
-                        R->onMessage(R, payload, size);
+                        R->onMessage(R, anchor, size);
                     }
                 }
                 R->timeoutCount = 0;

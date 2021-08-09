@@ -8,6 +8,8 @@
 
 #include "common.h"
 
+#define RADAR "rose"
+
 typedef struct _reporter {
     RKWebsocket      *ws;
     char             welcome[256];
@@ -25,10 +27,8 @@ static void handleSignals(int signal) {
 // The busy run loop - the reporter
 void *run(void *in) {
     int j = 0;
-    const int len = 32 * 1024;
-    // const useconds_t s = 1000000 * 2;
-    // const int len = 100;
-    const useconds_t s = 1000000 / 3;
+    const int len = 32 * 1024 + 1;
+    const useconds_t s = 1000000 / 10;
     uint8_t *blob = (uint8_t *)malloc(10 * len);
 
     while (!R->ws->connected) {
@@ -36,18 +36,21 @@ void *run(void *in) {
     }
     printf("\033[38;5;203mbusy loop\033[m\n");
 
+    uint8_t *payload = blob;
+    for (int k = 0; k < 10 * len; k++) {
+        payload[k] = rand();
+        // payload[k] = rand();
+    }
+
     while (R->ws->wantActive) {
-        uint8_t *ray = &blob[j * len];
-        ray[0] = 4;
-        ray[1] = '-';
-        ray[2] = '0' + j;
-        ray[3] = '-';
-        for (int k = 4; k < len; k++) {
-            ray[k] = 32 + rand() % 60;
-        }
+        uint8_t *payload = &blob[j * len];
+        payload[0] = '\5';
+        payload[1] = '-';
+        payload[2] = '0' + j;
+        payload[3] = '-';
         j = (j + 1) % 10;
 
-        RKWebsocketSend(R->ws, ray, len);
+        RKWebsocketSend(R->ws, payload, len);
         usleep(s);
     }
 
@@ -56,7 +59,7 @@ void *run(void *in) {
 }
 
 void handleOpen(RKWebsocket *W) {
-    int r = sprintf(R->welcome, "\1{\"radar\":\"demo\",\"command\":\"radarConnect\"}");
+    int r = sprintf(R->welcome, "\1{\"radar\":\"" RADAR "\",\"command\":\"radarConnect\"}");
     RKWebsocketSend(W, R->welcome, r);
 }
 
@@ -66,9 +69,9 @@ int main(int argc, const char *argv[]) {
     memset(R, 0, sizeof(RKReporter));
 
     if (argc == 1) {
-        R->ws = RKWebsocketInit("localhost:8000", "/ws/radar/demo/", RKWebsocketSSLOff);
+        R->ws = RKWebsocketInit("localhost:8000", "/ws/radar/" RADAR "/", RKWebsocketSSLOff);
     } else {
-        R->ws = RKWebsocketInit(argv[1], "/ws/radar/demo/", RKWebsocketSSLAuto);
+        R->ws = RKWebsocketInit(argv[1], "/ws/radar/" RADAR "/", RKWebsocketSSLAuto);
     }
 
     RKWebsocketSetOpenHandler(R->ws, &handleOpen);

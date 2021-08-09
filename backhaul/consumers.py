@@ -50,23 +50,26 @@ async def _runloop(radar):
             print(f'_runloop {name} started')
     payloadQueue = radarChannels[radar]['payloads']
     while radarChannels[radar]['channel']:
-        try:
-            payload = payloadQueue.get(False, 0.01)
-        except:
-            continue
-        if verbose > 1:
-            tmp = payload
-            if len(payload) > 35:
-                tmp = f'{payload[:25]} ... {payload[-5:]}'
-            print(f'_runloop {name} \033[38;5;154m{tmp}\033[m ({len(payload)})')
-        await channel_layer.group_send(
-            radar,
-            {
-                'type': 'relayToUser',
-                'message': payload
-            }
-        )
-        payloadQueue.task_done()
+        if not payloadQueue.empty():
+            payload = payloadQueue.get()
+            qsize = payloadQueue.qsize()
+            if verbose > 1:
+                tmp = payload
+                if len(payload) > 35:
+                    tmp = f'{payload[:25]} ... {payload[-5:]}'
+                print(f'_runloop {qsize} {name} \033[38;5;154m{tmp}\033[m ({len(payload)})')
+            if qsize > 50:
+                print(f'{name} qsize = {qsize}')
+            await channel_layer.group_send(
+                radar,
+                {
+                    'type': 'relayToUser',
+                    'message': payload
+                }
+            )
+            payloadQueue.task_done()
+        else:
+            await asyncio.sleep(0.01)
     if verbose:
         with lock:
             print(f'_runloop {name} retired')
@@ -183,8 +186,8 @@ class Backhaul(AsyncConsumer):
         with lock:
             radarChannels[radar] = {
                 'channel': channel,
-                'commands': queue.Queue(),
-                'payloads': queue.Queue(),
+                'commands': queue.Queue(maxsize=10),
+                'payloads': queue.Queue(maxsize=100),
                 'welcome': {}
             }
             if verbose:
@@ -314,8 +317,9 @@ class Backhaul(AsyncConsumer):
             return
 
         # Queue up the payload, keep this latest copy as welcome message for others
-        radarChannels[radar]['payloads'].put(payload)
-        radarChannels[radar]['welcome'][type] = payload
+        if not radarChannels[radar]['payloads'].full():
+            radarChannels[radar]['payloads'].put(payload)
+            radarChannels[radar]['welcome'][type] = payload
 
     async def reset(self, message):
         global userChannels, radarChannels

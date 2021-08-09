@@ -61,7 +61,7 @@ class Radar(AsyncWebsocketConsumer):
             tmp = bytes_data
             if len(tmp) > 30:
                 tmp = f'{bytes_data[:25]} ... {bytes_data[-5:]}'
-            print(f'Radar.receive() \033[38;5;154m{tmp}\033[m ({len(bytes_data)})')
+            print(f'Radar.receive() {self.radar} \033[38;5;154m{tmp}\033[m ({len(bytes_data)})')
         type = bytes_data[0];
 
         if type == 1:
@@ -87,7 +87,8 @@ class Radar(AsyncWebsocketConsumer):
                     'radar': self.radar,
                     'channel': self.channel_name,
                     'command': request['payload'] if 'payload' in request else None
-                })
+                }
+            )
         else:
             await self.channel_layer.send(
                 'backhaul',
@@ -148,6 +149,7 @@ class User(AsyncWebsocketConsumer):
                 'command': request['payload'] if 'payload' in request else None
             }
         )
+        return
 
     # The following are methods are called by backhaul
 
