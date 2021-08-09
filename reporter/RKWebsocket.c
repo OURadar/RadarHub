@@ -219,8 +219,8 @@ static int RKWebsocketConnect(RKWebsocket *R) {
     strcpy(R->secret, "RadarHub123456789abcde");
     FILE *fid = fopen("secret", "r");
     if (fid) {
-        fscanf(fid, "%s", buf);
-        if (strlen(buf) == 22) {
+        r = fscanf(fid, "%s", buf);
+        if (r == 1 && strlen(buf) == 22) {
             printf("secret = '%s' (%zu)\n", buf, strlen(buf));
             strcpy(R->secret, buf);
         }
@@ -391,7 +391,7 @@ void *transporter(void *in) {
                     // There is something to read
                     r = RKSocketRead(R, R->frame + origin, RKWebsocketFrameSize);
                     if (r <= 0) {
-                        fprintf(stderr, "Error. RKSocketRead() = %d\n", r);
+                        fprintf(stderr, "Error. RKSocketRead() = %d   origin = %d\n", r, origin);
                         R->connected = false;
                         break;
                     }
