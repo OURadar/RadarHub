@@ -8,13 +8,18 @@
 
 #include "common.h"
 
+typedef struct _reporter {
+    RKWebsocket      *ws;
+    char             welcome[256];
+} RKReporter;
+
 // Global variable
-RKWebsocket *W = NULL;
+RKReporter *R;
 
 // Local functions
 static void handleSignals(int signal) {
     fprintf(stderr, "\nCaught %d\n", signal);
-    RKWebsocketStop(W);
+    RKWebsocketStop(R->ws);
 }
 
 // The busy run loop - the reporter
@@ -26,14 +31,14 @@ void *run(void *in) {
     const useconds_t s = 1000000 / 3;
     uint8_t *blob = (uint8_t *)malloc(10 * len);
 
-    while (!W->connected) {
+    while (!R->ws->connected) {
         usleep(100000);
     }
     printf("\033[38;5;203mbusy loop\033[m\n");
 
-    while (W->wantActive) {
+    while (R->ws->wantActive) {
         uint8_t *ray = &blob[j * len];
-        ray[0] = 2;
+        ray[0] = 4;
         ray[1] = '-';
         ray[2] = '0' + j;
         ray[3] = '-';
@@ -42,7 +47,7 @@ void *run(void *in) {
         }
         j = (j + 1) % 10;
 
-        RKWebsocketSend(W, ray, len);
+        RKWebsocketSend(R->ws, ray, len);
         usleep(s);
     }
 
@@ -50,36 +55,42 @@ void *run(void *in) {
     return NULL;
 }
 
-void handleOpen(RKWebsocket *R) {
-    char *message = (char *)malloc(64);
-    int r = sprintf(message, "\1{\"radar\":\"demo\",\"command\":\"radarConnect\"}");
-    r = RKWebsocketSend(R, message, r);
-    free(message);
+void handleOpen(RKWebsocket *W) {
+    int r = sprintf(R->welcome, "\1{\"radar\":\"demo\",\"command\":\"radarConnect\"}");
+    RKWebsocketSend(W, R->welcome, r);
 }
 
 
 int main(int argc, const char *argv[]) {
+    R = (RKReporter *)malloc(sizeof(RKReporter));
+    memset(R, 0, sizeof(RKReporter));
+
     if (argc == 1) {
-        W = RKWebsocketInit("localhost:8000", "/ws/radar/demo/", RKWebsocketSSLOff);
+        R->ws = RKWebsocketInit("localhost:8000", "/ws/radar/demo/", RKWebsocketSSLOff);
     } else {
-        W = RKWebsocketInit(argv[1], "/ws/radar/demo/", RKWebsocketSSLAuto);
+        R->ws = RKWebsocketInit(argv[1], "/ws/radar/demo/", RKWebsocketSSLAuto);
     }
-    RKWebsocketSetOpenHandler(W, &handleOpen);
-    W->verbose = 2;
+
+    RKWebsocketSetOpenHandler(R->ws, &handleOpen);
+    R->ws->verbose = 2;
 
     // Catch Ctrl-C and some signals alternative handling
     signal(SIGINT, handleSignals);
 
-    RKWebsocketStart(W);
+    RKWebsocketStart(R->ws);
+
+    RKWebsocketWait(R->ws);
 
     pthread_t tid;
     pthread_create(&tid, NULL, run, NULL);
 
-    while (W->wantActive) {
+    while (R->ws->wantActive) {
         usleep(100000);
     }
 
-    RKWebsocketFree(W);
+    RKWebsocketFree(R->ws);
+
+    free(R);
 
     exit(EXIT_SUCCESS);
 }

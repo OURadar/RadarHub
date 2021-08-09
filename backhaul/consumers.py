@@ -191,20 +191,20 @@ class Backhaul(AsyncConsumer):
                 print(f'Added \033[38;5;170m{radar}\033[m, radarChannels =')
                 pp.pprint(radarChannels)
 
-        threading.Thread(target=runloop, args=(radar,)).start()
+            threading.Thread(target=runloop, args=(radar,)).start()
 
-        await channel_layer.send(
-            channel,
-            {
-                'type': 'relayToRadar',
-                'message': f'Hello {radar}. Welcome to the RadarHub v{__version__}'
-            }
-        )
+            await channel_layer.send(
+                channel,
+                {
+                    'type': 'relayToRadar',
+                    'message': f'Hello {radar}. Welcome to the RadarHub v{__version__}'
+                }
+            )
 
     # When a radar diconnects through Radar.disconnect()
-    async def radardisconnect(self, message):
+    async def radarDisconnect(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'Backhaul.radardisconnect() incomplete message {message}')
+            print(f'Backhaul.radarDisconnect() incomplete message {message}')
             return
         radar = message['radar']
         channel = message['channel']
@@ -222,6 +222,7 @@ class Backhaul(AsyncConsumer):
             print(f'Radar {radar} not found')
         else:
             print(f'Channel {channel} no match')
+            pp.pprint(radarChannels)
 
 
     # When a user interacts on the GUI through User.receive()
@@ -289,7 +290,8 @@ class Backhaul(AsyncConsumer):
                 )
             except:
                 pass
-            radarChannels[radar]['channal'] = None
+            if radar in radarChannels:
+                radarChannels[radar]['channal'] = None
             return
 
         type = payload[0]

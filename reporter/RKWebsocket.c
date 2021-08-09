@@ -391,7 +391,7 @@ void *transporter(void *in) {
                     // There is something to read
                     r = RKSocketRead(R, R->frame + origin, RKWebsocketFrameSize);
                     if (r <= 0) {
-                        fprintf(stderr, "Error. RKSocketRead() = %d   origin = %d\n", r, origin);
+                        fprintf(stderr, "Error. RKSocketRead() = %d   origin = %zu\n", r, origin);
                         R->connected = false;
                         break;
                     }

@@ -30,15 +30,17 @@ class Null(AsyncWebsocketConsumer):
 
 class Radar(AsyncWebsocketConsumer):
     async def connect(self):
-        if 'radar' in self.scope['url_route']['kwargs']:
-            self.radar = self.scope['url_route']['kwargs']['radar']
+        if 'radar' not in self.scope['url_route']['kwargs']:
+            print('Keyword "radar" is expected.')
+            await self.close()
+        self.radar = self.scope['url_route']['kwargs']['radar']
         await self.accept()
 
     async def disconnect(self, code):
         await self.channel_layer.send(
             'backhaul',
             {
-                'type': 'radardisconnect',
+                'type': 'radarDisconnect',
                 'radar': self.radar,
                 'channel': self.channel_name
             }

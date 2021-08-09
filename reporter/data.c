@@ -9,10 +9,16 @@
 
 #include "common.h"
 
+typedef struct _reporter {
+    RKWebsocket      *ws;
+    char             welcome[256];
+    char             message[256];
+    float            rate;
+    bool             go;
+} RKReporter;
+
 // Global variable
-RKWebsocket *W = NULL;
-float rate = 1.0f;
-bool go = true;
+RKReporter *R;
 
 const char healthString[][8192] = {
     "\3{\"Transceiver\":{\"Value\":true,\"Enum\":0}, \"Pedestal\":{\"Value\":true,\"Enum\":0}, \"Health Relay\":{\"Value\":false,\"Enum\":2}, \"Internet\":{\"Value\":true,\"Enum\":0}, \"Recorder\":{\"Value\":false,\"Enum\":1}, \"Ring Filter\":{\"Value\":false,\"Enum\":1}, \"Processors\":{\"Value\":true,\"Enum\":0}, \"Measured PRF\":{\"Value\":\"1,475 Hz\",\"Enum\":0}, \"Noise\":[50.274,33.654], \"Position Rate\":{\"Value\":\"249 Hz\",\"Enum\":0}, \"rayRate\":6.010, \"10-MHz Clock\":{\"Value\":true,\"Enum\":0}, \"DAC PLL\":{\"Value\":true,\"Enum\":0}, \"FPGA Temp\":{\"Value\":\"61.5degC\",\"Enum\":0}, \"Core Volt\":{\"Value\":\"1.00 V\",\"Enum\":0}, \"Aux. Volt\":{\"Value\":\"2.466 V\",\"Enum\":0}, \"XMC Volt\":{\"Value\":\"12.223 V\",\"Enum\":0}, \"XMC 3p3\":{\"Value\":\"3.222 V\",\"Enum\":0}, \"Transmit H\":{\"Value\":\"57.625 dBm\",\"Enum\":0,\"MaxIndex\":0,\"Max\":\"4.282 dBm\",\"Min\":\"3.827 dBm\"}, \"Transmit V\":{\"Value\":\"53.309 dBm\",\"Enum\":0,\"MaxIndex\":1,\"Max\":\"-0.042 dBm\",\"Min\":\"-0.485 dBm\"}, \"DAC QI\":{\"Value\":\"0.237\",\"Enum\":1}, \"Waveform\":{\"Value\":\"x706\",\"Enum\":0}, \"UnderOver\":[0,233116], \"Lags\":[-1167035501,-1167035501,-1185559874], \"NULL\":[1602822], \"Pedestal AZ Interlock\":{\"Value\":true,\"Enum\":0}, \"Pedestal EL Interlock\":{\"Value\":true,\"Enum\":0}, \"VCP Active\":{\"Value\":true,\"Enum\":0}, \"Pedestal AZ\":{\"Value\":\"337.89 deg\",\"Enum\":0}, \"Pedestal EL\":{\"Value\":\"3.18 deg\",\"Enum\":0}, \"Pedestal Update\":\"251.021 Hz\", \"PedestalHealthEnd\":0, \"GPS Valid\":{\"Value\":true,\"Enum\":3}, \"GPS Latitude\":{\"Value\":\"35.2369167\",\"Enum\":3}, \"GPS Longitude\":{\"Value\":\"-97.4638233\",\"Enum\":3}, \"T-Box Bearing\":{\"Value\":\"-448.9 deg\", \"Enum\":0}, \"T-Box Temp\":{\"Value\":\"19.6 degC\", \"Enum\":0}, \"T-Box Pressure\":{\"Value\":\"985.7 hPa\", \"Enum\":0}, \"RF TRX Health\":{\"Value\":\"0x70\", \"Enum\":2}, \"RF Over Temp H\":{\"Value\":true, \"Enum\":0}, \"RF Over Temp V\":{\"Value\":false, \"Enum\":2}, \"RF VSWR H\":{\"Value\":true, \"Enum\":0}, \"RF VSWR V\":{\"Value\":true, \"Enum\":0}, \"STALO\":{\"Value\":true, \"Enum\":0}, \"tic\":\"31008358\", \"Heading Override\":{\"Value\":true,\"Enum\":0}, \"Sys Heading\":{\"Value\":\"181.00 deg\",\"Enum\":0}, \"GPS Override\":{\"Value\":true,\"Enum\":1}, \"Sys Latitude\":{\"Value\":\"35.2369467\",\"Enum\":0}, \"Sys Longitude\":{\"Value\":\"-97.4638167\",\"Enum\":0}, \"LocationFromDescriptor\":true, \"Log Time\":1570804516}",
@@ -58,7 +64,7 @@ const char controlString[8192] = "\2{"
 // Local functions
 static void handleSignals(int signal) {
     fprintf(stderr, "\nCaught %d\n", signal);
-    RKWebsocketStop(W);
+    RKWebsocketStop(R->ws);
 }
 
 static void tukeywin(float *window, const int count, const float alpha) {
@@ -80,7 +86,7 @@ void *run(void *in) {
     int j = 0;
 
     // Let's do 20 FPS
-    const useconds_t s = 1000000 / 20;
+    const useconds_t s = 1000000 / 10;
 
     // Post health status every 0.5s
     const int ht = 500000 / s;
@@ -90,9 +96,9 @@ void *run(void *in) {
 
     const int count = 1000;
     const int depth = 1 + 2 * count * sizeof(int16_t);
-    int16_t *buf = (int16_t *)malloc(30 * depth);
-    float *window = (float *)malloc(count * sizeof(float));
+    void *buf = (int16_t *)malloc(30 * depth);
     int16_t *noise = (int16_t *)malloc(3 * count * sizeof(int16_t));
+    float *window = (float *)malloc(count * sizeof(float));
     tukeywin(window, count, 0.1);
     int g;
     float w;
@@ -114,23 +120,23 @@ void *run(void *in) {
     }
 
     // Wait until handshake is confirmed
-    while (!W->connected) {
+    while (!R->ws->connected) {
         usleep(100000);
     }
     printf("\033[38;5;203mBusy run loop\033[m\n");
 
     // Stay busy as long as the websocket is active
-    while (W->wantActive) {
+    while (R->ws->wantActive) {
         // AScope samples
-        payload = (char *)&buf[(j % 30) * depth];
+        payload = (char *)(buf + (j % 30) * depth);
         payload[0] = '\5';
         x = (int16_t *)(payload + 1);
         g = rand() % count;
         n = &noise[g];
         for (k = 0; k < count; k++) {
-            if (go) {
+            if (R->go) {
                 t = (float)k / count;
-                o = 0.1f * (t + rate * 777.0f * t * t - (float)j);
+                o = 0.1f * (t + R->rate * 777.0f * t * t - (float)j);
                 w = window[k];
                 *(x        ) = (int16_t)(w * cosf(o)) + *n;
                 *(x + count) = (int16_t)(w * sinf(o)) + *(n++ + count);
@@ -140,11 +146,11 @@ void *run(void *in) {
             }
             x++;
         }
-        RKWebsocketSend(W, payload, depth);
+        RKWebsocketSend(R->ws, payload, depth);
 
         if (j % ht == 0) {
             payload = (char *)healthString[(j / ht) % hdepth];
-            RKWebsocketSend(W, payload, strlen(payload));
+            RKWebsocketSend(R->ws, payload, strlen(payload));
         }
 
         usleep(s);
@@ -158,63 +164,64 @@ void *run(void *in) {
     return NULL;
 }
 
-void handleOpen(RKWebsocket *R) {
-    char *message = (char *)malloc(64);
-    int r = sprintf(message, "\1{\"radar\":\"demo\",\"command\":\"radarConnect\"}");
-    r = RKWebsocketSend(R, message, r);
-    RKWebsocketWait(R);
-    RKWebsocketSend(R, (char *)controlString, strlen(controlString));
-    RKWebsocketWait(R);
-    free(message);
+void handleOpen(RKWebsocket *w) {
+    int r = sprintf(R->welcome, "\1{\"radar\":\"demo\",\"command\":\"radarConnect\"}");
+    RKWebsocketSend(R->ws, R->welcome, r);
+    RKWebsocketSend(R->ws, (char *)controlString, strlen(controlString));
 }
 
-void handleMessage(RKWebsocket *R, void *payload, size_t size) {
+void handleMessage(RKWebsocket *W, void *payload, size_t size) {
     printf("ONMESSAGE %s\n", (char *)payload);
     if (strstr((char *)payload, "ello") != NULL) {
         return;
     }
-    char *message = (char *)malloc(size + 2);
-    int r = sprintf(message, "\6%s", (char *)payload);
+    int r = sprintf(R->message, "\6%s", (char *)payload);
     if (!strcmp(payload, "t y")) {
-        go = true;
-        rate = 1.0f;
+        R->go = true;
+        R->rate = 1.0f;
     } else if (!strcmp(payload, "t z")) {
-        go = false;
+        R->go = false;
     } else if (!strcmp(payload, "t w 1")) {
-        printf("rate -> %.1f\n", rate);
-        rate = -2.5f;
+        R->rate = -2.5f;
+        R->go = true;
     } else if (!strcmp(payload, "t w 2")) {
-        rate = 5.0f;
+        R->rate = 5.0f;
+        R->go = true;
     }
-    printf("REPLY %s (%d)\n", message, r);
-    RKWebsocketSend(R, message, r);
-    RKWebsocketWait(R);
-    free(message);
+    printf("REPLY %s (%d)\n", R->message, r);
+    RKWebsocketSend(R->ws, R->message, r);
 }
 
 int main(int argc, const char *argv[]) {
+    R = (RKReporter *)malloc(sizeof(RKReporter));
+    memset(R, 0, sizeof(RKReporter));
+
     if (argc == 1) {
-        W = RKWebsocketInit("localhost:8000", "/ws/radar/demo/", RKWebsocketSSLOff);
+        R->ws = RKWebsocketInit("localhost:8000", "/ws/radar/demo/", RKWebsocketSSLOff);
     } else {
-        W = RKWebsocketInit(argv[1], "/ws/radar/demo/", RKWebsocketSSLAuto);
+        R->ws = RKWebsocketInit(argv[1], "/ws/radar/demo/", RKWebsocketSSLAuto);
     }
-    RKWebsocketSetOpenHandler(W, &handleOpen);
-    RKWebsocketSetMessageHandler(W, &handleMessage);
-    W->verbose = 1;
+    RKWebsocketSetOpenHandler(R->ws, &handleOpen);
+    RKWebsocketSetMessageHandler(R->ws, &handleMessage);
+    R->ws->verbose = 1;
 
     // Catch Ctrl-C and some signals alternative handling
     signal(SIGINT, handleSignals);
 
-    RKWebsocketStart(W);
+    RKWebsocketStart(R->ws);
+
+    RKWebsocketWait(R->ws);
 
     pthread_t tid;
     pthread_create(&tid, NULL, run, NULL);
 
-    while (W->wantActive) {
+    while (R->ws->wantActive) {
         usleep(100000);
     }
 
-    RKWebsocketFree(W);
+    RKWebsocketFree(R->ws);
+
+    free(R);
 
     exit(EXIT_SUCCESS);
 }
