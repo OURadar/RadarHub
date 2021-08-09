@@ -29,7 +29,7 @@ class Notification extends React.Component {
       this.timer = setTimeout(() => {
         this.setState({
           message: this.props.message,
-          class: "fadeOut invisible",
+          class: "invisible",
         });
         this.timer = null;
       }, 300);
@@ -41,9 +41,11 @@ class Notification extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (prevProps.message != this.props.message) {
-      this.setState({
-        class: "fadeOut",
-      });
+      if (this.state.class == "invisible") {
+        this.setState({
+          class: "fadeOut",
+        });
+      }
       setTimeout(() => {
         this.update();
       }, 25);

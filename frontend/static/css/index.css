@@ -48,7 +48,7 @@ html {
     --system-background: #ffffff;
     --secondary-system-background: #f2f2f7ff;
     --tertiary-system-background: #ffffffff;
-    --gradient-aqua: linear-gradient(45deg, #02aab0 30%, #00cdac 90%);
+    --gradient-topbar: linear-gradient(45deg, #c31432 30%, #240b36 90%);
     --overlay-background: #ffffffe8;
     --button-hover: rgba(0, 0, 16, 0.06);
   }
@@ -79,10 +79,10 @@ html {
     --gray6: rgb(28, 28, 30);
     --gray7: rgb(16, 16, 18);
     --system-foreground: #ffffff;
-    --system-background: #000000;
+    --system-background: #222328;
     --secondary-system-background: #1c1c1eff;
     --tertiary-system-background: #2c2c2eff;
-    --gradient-aqua: linear-gradient(45deg, #0f4a6c 30%, #43919d 90%);
+    --gradient-topbar: linear-gradient(45deg, #3c3b3f 30%, #605c3c 90%);
     --overlay-background: #1e1e1ee8;
     --button-hover: rgba(248, 248, 255, 0.15);
   }
@@ -267,7 +267,7 @@ h3 {
   color: white;
   padding-bottom: 5px;
   overflow-y: auto;
-  background: var(--gradient-aqua);
+  background: var(--gradient-topbar);
 }
 #statusPrefix,
 #statusBody {

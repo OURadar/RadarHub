@@ -20,18 +20,18 @@ Some design constraints:
 
 # (Evolving) Concept of Operations
 
-Currently, the RadarHub is almost like chat program. The main exception is that the messages are not echoed back. The radars do not recieve what they send home and the users do not see the command they issue. Everyone connects through the frontend websocket, either join as a radar or join as a user. When a radar joins, it simply gets a welcome message from the hub. When a user joins, it is assigned to a group, named after the radar name.
+Currently, the RadarHub is almost like a chat program. The main exception is that messages are not echoed back. The radars do not recieve what they send home and the users do not see the command they issue. Everyone connects through the frontend websocket, either join as a radar (`frontend.consumers.Radar`) or join as a user (`frontend.consumers.User`). When a radar joins sends in proper greeting, it receives a welcome message from the hub. When a user joins through a web browser, the frontend javescript `main.js` ensures the connection is properly made, the user is assigned to a group, named after the radar name.
 
-When a user issues a request, it is first received by the frontend, which checks for the required fields. If failed, nothing happens. Otherwise, it is routed to the backhaul asynchronously. Frontend immediately regain control, GUI is responsive this way. After the request is processed, backhaul sends the response to the user.
+When a user request is issued, it is first received by the frontend, which checks for the required fields. If failed, nothing happens. Otherwise, it is routed to the backhaul asynchronously. Frontend immediately regain control, GUI should always be responsive. Backhaul decies which radar to send the request to, and awaits the response, then route it to the user.
 
-When a radar joins the RadarHub, it reports its name. Backhaul launches a runloop to collect data streams from the radar. This runloop also sends whatever data stream available from the radar to the group. All users in that group receive the same data stream. This will change in the future for a more controlled fashion but kept simple at the moment for moving towards the subsequent milestones.
+When a radar joins the RadarHub, it reports its name. Backhaul launches a runloop to collect data streams from the radar. This runloop also sends whatever data stream available from the radar to the group. All users in that group receive the same data stream. This will change in the future for a more controlled fashion but kept simple at the moment for progressing towards the subsequent milestones.
 
 ## Milestones
 
 - [x] 0.1 Can run
 - [x] 0.2 Scope + Health working (7/21/2021)
 - [x] 0.3 Some button actions to backhaul (7/29/2021)
-- [ ] 0.4 Migrate data module to an external websocket client
+- [x] 0.4 Migrate data module to an external websocket client (8/9/2021)
 - [ ] 0.5 PPI / 3D view for radar products
 - [ ] 0.6 SQLite / product browser
 - [ ] 0.7 General page template + stylesheets
@@ -88,7 +88,7 @@ On a production server, the Ubuntu nginx-supervisor was recommended in [channels
 The websocket component depends on [redis] through docker:
 
 ```shell
-sudo docker run -d --restart unless-stopped -p 6379:6379 redis:5
+sudo docker run -d --restart unless-stopped -p 6379:6379 redis
 ```
 
 ## Nginx

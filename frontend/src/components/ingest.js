@@ -46,13 +46,12 @@ class Ingest {
     this.onupdate(this.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
     const url = p + "://" + window.location.host + "/ws/" + this.radar + "/";
-    console.log("url = " + url);
     this.socket = new WebSocket(url);
     this.socket.binaryType = "arraybuffer";
     this.socket.onopen = (_e) => {
-      this.message = "Connected";
+      this.message = "Hub connected";
       setTimeout(() => {
-        if (this.message == "Connected") {
+        if (this.message == "Hub connected") {
           this.message = "";
           this.onupdate(this.tic++);
         }
