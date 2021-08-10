@@ -2,12 +2,19 @@
 //  RKWebsocket.h
 //  RadarHub
 //
+//  Websocket backend for calling home server
+//
+//  I named this RKWebsocket as I am just incubating this module
+//  here for a quick start. Once sufficiently mature, it will be
+//  incorporated into RadarKit. This may still be left here as a
+//  simple demo module for RadarHub communication.
+//
 //  Created by Boonleng Cheong on 8/3/2021.
 //  Copyright (c) 2021 Boonleng Cheong. All rights reserved.
 //
 
-#ifndef __RadarKit_Reporter__
-#define __RadarKit_Reporter__
+#ifndef __RadarKit_Websocket__
+#define __RadarKit_Websocket__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,9 +110,15 @@ void RKWebsocketSetErrorHandler(RKWebsocket *, void (*)(RKWebsocket *));
 // This is technically RKWebsocketStartAsClient()
 // No plans to make RKWebsocketStartAsServer()
 void RKWebsocketStart(RKWebsocket *);
+
+// Stop the server
 void RKWebsocketStop(RKWebsocket *);
+
+// Wait until all payloads are sent
+// NOTE: Do no use this within handler functions (OpenHandler, MessageHandler, etc.)
 void RKWebsocketWait(RKWebsocket *);
 
+// Send a packet
 int RKWebsocketSend(RKWebsocket *, void *, size_t);
 
 #endif

@@ -5,13 +5,11 @@
 #   User - Interface between a user and channels, and
 #   Radar - Interface between a radar and channels
 #
-#   User - message from radar is always in binary form
-#        - message to web UI is always binary form
-#        - message to radar is always in text form
+#   User - message from web UI is always in text form (JSON)
+#        - message to web UI is always in binary form (bytearray)
 #
-#   Radar - message from user is always in text form
-#         - message to radar is always in text form
-#         - message to user is always in binary form
+#   Radar - message from radar is always in binary form ([type][payload])
+#         - message to radar is always in text form (plain text)
 #
 #   Created by Boonleng Cheong
 #
@@ -32,7 +30,7 @@ class Radar(AsyncWebsocketConsumer):
     async def connect(self):
         if 'radar' not in self.scope['url_route']['kwargs']:
             print('Keyword "radar" is expected.')
-            await self.close()
+            return await self.close()
         self.radar = self.scope['url_route']['kwargs']['radar']
         await self.accept()
 
@@ -65,20 +63,19 @@ class Radar(AsyncWebsocketConsumer):
         type = bytes_data[0];
 
         if type == 1:
+            # Should come in as {"radar":"demo", "command":"radarConnect"}
             text = bytes_data[1:].decode('utf-8')
             try:
                 request = json.loads(text)
             except:
                 print(f'Not a valid JSON text = {text}')
                 return
-            if 'radar' not in request:
-                print('Message has no radar')
-                return
-            if 'command' not in request:
-                print('Message has no command')
+            if request.keys() < {'radar', 'command'}:
+                print('Radar.receive() incomplete message {text}')
                 return
             if request['radar'] != self.radar:
                 print(f'\033[38;5;197mBUG: radar = {request["radar"]} != self.radar = {self.radar}\033[m')
+                return
             await self.channel_layer.send(
                 'backhaul',
                 {
@@ -99,8 +96,10 @@ class Radar(AsyncWebsocketConsumer):
                 }
             )
 
+    # The following methods are for backhaul
+
     async def relayToRadar(self, event):
-        await self.send(event['message'])
+        await self.send(text_data=event['message'])
 
     async def disconnectRadar(self, event):
         await self.send(event['message'])
@@ -109,9 +108,10 @@ class Radar(AsyncWebsocketConsumer):
 
 class User(AsyncWebsocketConsumer):
     async def connect(self):
-        self.radar = 'unknown'
-        if 'radar' in self.scope['url_route']['kwargs']:
-            self.radar = self.scope['url_route']['kwargs']['radar']
+        if 'radar' not in self.scope['url_route']['kwargs']:
+            print('Keyword "radar" is expected.')
+            return await self.close()
+        self.radar = self.scope['url_route']['kwargs']['radar']
         await self.accept()
 
     async def disconnect(self, code):
@@ -126,16 +126,14 @@ class User(AsyncWebsocketConsumer):
         if verbose:
             print(f'user for {self.radar} disconnected {code}.')
 
-    # Receive message from frontend, which relays commands from the web app, text_data only
+    # Receive message from frontend, which relays commands from the web app, serialized JSON data.
     async def receive(self, text_data=None):
-        print(f'User.receive() \033[38;5;154m{text_data}\033[m')
+        if verbose:
+            print(f'User.receive() \033[38;5;154m{text_data}\033[m')
         request = json.loads(text_data)
 
-        if 'radar' not in request:
-            print('Message has no radar')
-            return
-        if 'command' not in request:
-            print('Message has no command')
+        if request.keys() < {'radar', 'command'}:
+            print('User.receive() incomplete message {request}')
             return
         if request['radar'] != self.radar:
             print(f'\033[38;5;197mBUG: radar = {request["radar"]} != self.radar = {self.radar}\033[m')
@@ -150,9 +148,8 @@ class User(AsyncWebsocketConsumer):
         )
         return
 
-    # The following are methods are called by backhaul
+    # The following methods are for backhaul
 
-    # Forward to GUI
     async def relayToUser(self, event):
         await self.send(bytes_data=event['message'])
 

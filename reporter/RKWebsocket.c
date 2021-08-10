@@ -2,11 +2,6 @@
 //  RKWebsocket.c
 //  RadarHub
 //
-//  I named this RKWebsocket as I am just incubating this module
-//  here for a quick start. Once sufficiently mature, it will be
-//  incorporated into RadarKit. This may still be left here as a
-//  simple demo module for RadarHub communication.
-//
 //  Created by Boonleng Cheong on 8/3/2021.
 //  Copyright (c) 2021 Boonleng Cheong. All rights reserved.
 //

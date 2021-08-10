@@ -1,7 +1,8 @@
 # backhaul/consumers.py
 #
 #   RadarHub
-#   Backend consumers of the channels
+#   Backhaul worker
+#
 #   Consumers that interact with frontend.User and frontend.Radar
 #   through redis channels
 # 
@@ -50,16 +51,16 @@ async def _runloop(radar):
             print(f'_runloop {name} started')
     payloadQueue = radarChannels[radar]['payloads']
     while radarChannels[radar]['channel']:
+        qsize = payloadQueue.qsize()
+        if qsize > 50:
+            print(f'{name} qsize = {qsize}')
         if not payloadQueue.empty():
             payload = payloadQueue.get()
-            qsize = payloadQueue.qsize()
             if verbose > 1:
                 tmp = payload
-                if len(payload) > 35:
-                    tmp = f'{payload[:25]} ... {payload[-5:]}'
+                if len(payload) > 30:
+                    tmp = f'{payload[:20]} ... {payload[-5:]}'
                 print(f'_runloop {qsize} {name} \033[38;5;154m{tmp}\033[m ({len(payload)})')
-            if qsize > 50:
-                print(f'{name} qsize = {qsize}')
             await channel_layer.group_send(
                 radar,
                 {
@@ -146,15 +147,14 @@ class Backhaul(AsyncConsumer):
         radar = message['radar']
         channel = message['channel']
 
-        print(f'\033[38;5;87m{radar}\033[m - {channel}')
         await channel_layer.group_discard(radar, channel)
 
         global userChannels
         if channel in userChannels:
             with lock:
                 userChannels.pop(channel)
-
                 if verbose:
+                    print(f'\033[38;5;87m{radar}\033[m - {channel}')
                     print('userChannels =')
                     pp.pprint(userChannels)
 
@@ -194,15 +194,15 @@ class Backhaul(AsyncConsumer):
                 print(f'Added \033[38;5;170m{radar}\033[m, radarChannels =')
                 pp.pprint(radarChannels)
 
-            threading.Thread(target=runloop, args=(radar,)).start()
+        threading.Thread(target=runloop, args=(radar,)).start()
 
-            await channel_layer.send(
-                channel,
-                {
-                    'type': 'relayToRadar',
-                    'message': f'Hello {radar}. Welcome to the RadarHub v{__version__}'
-                }
-            )
+        await channel_layer.send(
+            channel,
+            {
+                'type': 'relayToRadar',
+                'message': f'Hello {radar}. Welcome to the RadarHub v{__version__}'
+            }
+        )
 
     # When a radar diconnects through Radar.disconnect()
     async def radarDisconnect(self, message):
@@ -221,11 +221,12 @@ class Backhaul(AsyncConsumer):
                 if verbose:
                     print(f'Demoted \033[38;5;170m{radar}\033[m radarChannels =')
                     pp.pprint(radarChannels)
-        elif radar not in radar:
+        elif radar not in radarChannels:
             print(f'Radar {radar} not found')
         else:
-            print(f'Channel {channel} no match')
-            pp.pprint(radarChannels)
+            with lock:
+                print(f'Channel {channel} no match')
+                pp.pprint(radarChannels)
 
 
     # When a user interacts on the GUI through User.receive()
@@ -244,7 +245,6 @@ class Backhaul(AsyncConsumer):
         # Intercept the 's' commands, consolidate the data stream the update the
         # request from the radar. Everything else gets relayed to the radar and
         # the response is relayed to the user that triggered the Nexus event
-
         global radarChannels
         if radar not in radarChannels or radarChannels[radar]['channel'] is None:
             print(f'Backhaul.userMessage() - {radar} not connected')
@@ -272,11 +272,13 @@ class Backhaul(AsyncConsumer):
         radar = message['radar']
         channel = message['channel']
         payload = message['payload']
+
         if verbose > 1:
             tmp = payload
-            if len(payload) > 35:
-                tmp = f'{payload[:25]} ... {payload[-5:]}'
-            print(f'Backhaul.radarMessage() \033[38;5;154m{tmp}\033[m ({len(payload)})')
+            if len(payload) > 30:
+                tmp = f'{payload[:20]} ... {payload[-5:]}'
+            with lock:
+                print(f'Backhaul.radarMessage() \033[38;5;154m{tmp}\033[m ({len(payload)})')
 
         # Look up the queue of this radar
         global radarChannels

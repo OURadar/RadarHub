@@ -12,6 +12,7 @@ others
 .DS_Store
 package-lock.json
 db.sqlite3
-simple
+reporter/simple
 reporter/secret
 reporter/data
+reporter/dgen

@@ -1,3 +1,13 @@
+//
+//  dgen.c
+//  Data Generator
+//
+//  RadarHub
+//
+//  Created by Boonleng Cheong on 8/3/2021.
+//  Copyright (c) 2021 Boonleng Cheong. All rights reserved.
+//
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -95,6 +105,8 @@ void *run(void *in) {
 
     // Health depth is just the number of samples we have up there
     const int hdepth = sizeof(healthString) / sizeof(healthString[0]);
+
+    printf("s = %d   ht = %d\n", s, ht);
 
     const int count = 1000;
     const int depth = 1 + 2 * count * sizeof(int16_t);
