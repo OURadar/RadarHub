@@ -15,11 +15,13 @@
 #
 
 import json
+import pprint
 
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.http.response import Http404
 
 verbose = 0
+
+pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
 class Null(AsyncWebsocketConsumer):
     async def connect(self):
@@ -50,7 +52,7 @@ class Radar(AsyncWebsocketConsumer):
     # Type 1 - JSON {"radar":"px1000","command":"radarConnect"}
     # Type 2 - Controls in JSON {"Go":{...},"Stop":{...},...}
     # Type 3 - Health in JSON {"Transceiver":{...},"Pedestal":{...},...}
-    # Type 4 - Ray binary
+    # Type 4 -
     # Type 5 - Scope binary
     # Type 6 - Command response
     #
@@ -112,6 +114,8 @@ class User(AsyncWebsocketConsumer):
             print('Keyword "radar" is expected.')
             return await self.close()
         self.radar = self.scope['url_route']['kwargs']['radar']
+        self.client_ip = self.scope['client'][0]
+        print(f'User.connect() {self.client_ip}')
         await self.accept()
 
     async def disconnect(self, code):

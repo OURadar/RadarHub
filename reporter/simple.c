@@ -4,9 +4,9 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include <RKWebsocket.h>
-
+#include "types.h"
 #include "common.h"
+#include "RKWebsocket.h"
 
 #define RADAR "rose"
 
@@ -40,7 +40,7 @@ void *run(void *in) {
     }
     for (int j = 0; j < 10; j++) {
         uint8_t *payload = &blob[j * len];
-        payload[0] = '\5';
+        payload[0] = RadarHubTypeScope;
         payload[1] = '-';
         payload[2] = '0' + j;
         payload[3] = '-';

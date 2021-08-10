@@ -11,13 +11,13 @@
 #
 
 #
-#            binary            binary
-#   +--------+    +------------+    +---------+
-#   |        |<---|            |<---|         |
-#   |  User  |    |  Backhaul  |    |  Radar  |
-#   |        |--->|            |--->|         |
-#   +--------+    +------------+    +---------+
-#             text              text
+#             binary              binary
+#   +--------+      +------------+      +---------+
+#   |        | <--- |            | <--- |         |
+#   |  User  |      |  Backhaul  |      |  Radar  |
+#   |        | ---> |            | ---> |         |
+#   +--------+      +------------+      +---------+
+#              text                text 
 #   
 
 import json
@@ -30,8 +30,8 @@ from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
 verbose = 1
-userChannels = {}
-radarChannels = {}
+user_channels = {}
+radar_channels = {}
 channel_layer = get_channel_layer()
 lock = threading.Lock()
 
@@ -46,7 +46,7 @@ async def _reset():
         'backhaul',
         {
             'type': 'reset',
-            'message': 'forget everything'
+            'message': 'Bye'
         }
     )
 
@@ -59,14 +59,14 @@ async def _runloop(radar):
     name = f'\033[38;5;214m{radar}\033[m'
     if verbose:
         with lock:
-            print(f'_runloop {name} started')
-    payloadQueue = radarChannels[radar]['payloads']
-    while radarChannels[radar]['channel']:
-        qsize = payloadQueue.qsize()
+            print(f'runloop {name} started')
+    payload_queue = radar_channels[radar]['payloads']
+    while radar_channels[radar]['channel']:
+        qsize = payload_queue.qsize()
         if qsize > 50:
             print(f'{name} qsize = {qsize}')
-        if not payloadQueue.empty():
-            payload = payloadQueue.get()
+        if not payload_queue.empty():
+            payload = payload_queue.get()
             if verbose > 1:
                 tmp = payload
                 if len(payload) > 30:
@@ -79,12 +79,12 @@ async def _runloop(radar):
                     'message': payload
                 }
             )
-            payloadQueue.task_done()
+            payload_queue.task_done()
         else:
             await asyncio.sleep(0.01)
     if verbose:
         with lock:
-            print(f'_runloop {name} retired')
+            print(f'runloop {name} retired')
 
 def runloop(radar):
     loop = asyncio.new_event_loop()
@@ -94,7 +94,7 @@ def runloop(radar):
 
 def consolidateStreams():
     allStreams = ''
-    for user in userChannels:
+    for user in user_channels:
         streams = user['streams']
         allStreams += streams
     allStreams = ''.join(set(allStreams))
@@ -110,8 +110,8 @@ class Backhaul(AsyncConsumer):
         radar = message['radar']
         channel = message['channel']
 
-        global userChannels
-        if channel in userChannels:
+        global user_channels
+        if channel in user_channels:
             print(f'User {channel} already exists, channel_name collision')
             await channel_layer.send(
                 channel,
@@ -123,7 +123,7 @@ class Backhaul(AsyncConsumer):
             return
 
         with lock:
-            userChannels[channel] = {
+            user_channels[channel] = {
                 'radar': radar,
                 'streams': 'h'
             }
@@ -135,14 +135,14 @@ class Backhaul(AsyncConsumer):
             # - ...
             if verbose:
                 print(f'\033[38;5;87m{radar}\033[m + {channel}')
-                print('userChannels =')
-                pp.pprint(userChannels)
+                print('user_channels =')
+                pp.pprint(user_channels)
 
             await channel_layer.group_add(radar, channel)
 
         # Send the last seen payloads of all types as a welcome message
-        if radar in radarChannels:
-            for _, payload in radarChannels[radar]['welcome'].items():
+        if radar in radar_channels:
+            for _, payload in radar_channels[radar]['welcome'].items():
                 await channel_layer.send(
                     channel,
                     {
@@ -161,14 +161,14 @@ class Backhaul(AsyncConsumer):
 
         await channel_layer.group_discard(radar, channel)
 
-        global userChannels
-        if channel in userChannels:
+        global user_channels
+        if channel in user_channels:
             with lock:
-                userChannels.pop(channel)
+                user_channels.pop(channel)
                 if verbose:
                     print(f'\033[38;5;87m{radar}\033[m - {channel}')
-                    print('userChannels =')
-                    pp.pprint(userChannels)
+                    print('user_channels =')
+                    pp.pprint(user_channels)
 
                 # If there are no users for this radar, request nothing
                 # ...
@@ -183,8 +183,8 @@ class Backhaul(AsyncConsumer):
         radar = message['radar']
         channel = message['channel']
 
-        global radarChannels
-        if radar in radarChannels and radarChannels[radar]['channel'] is not None:
+        global radar_channels
+        if radar in radar_channels and radar_channels[radar]['channel'] is not None:
             print(f'Radar {radar} already exists, disconnecting ...')
             await channel_layer.send(
                 channel,
@@ -196,15 +196,16 @@ class Backhaul(AsyncConsumer):
             return
 
         with lock:
-            radarChannels[radar] = {
+            radar_channels[radar] = {
                 'channel': channel,
                 'commands': queue.Queue(maxsize=10),
                 'payloads': queue.Queue(maxsize=100),
                 'welcome': {}
             }
             if verbose:
-                print(f'Added \033[38;5;170m{radar}\033[m, radarChannels =')
-                pp.pprint(radarChannels)
+                self.name = f'\033[38;5;170m{radar}\033[m'
+                print(f'Added {self.name}, radar_channels =')
+                pp.pprint(radar_channels)
 
         threading.Thread(target=runloop, args=(radar,)).start()
 
@@ -224,21 +225,21 @@ class Backhaul(AsyncConsumer):
         radar = message['radar']
         channel = message['channel']
 
-        global radarChannels
-        if radar in radarChannels and channel == radarChannels[radar]['channel']:
+        global radar_channels
+        if radar in radar_channels and channel == radar_channels[radar]['channel']:
             with lock:
-                radarChannels[radar]['channel'] = None
-                radarChannels[radar]['commands'].join()
-                radarChannels[radar]['payloads'].join()
+                radar_channels[radar]['channel'] = None
+                radar_channels[radar]['commands'].join()
+                radar_channels[radar]['payloads'].join()
                 if verbose:
-                    print(f'Demoted \033[38;5;170m{radar}\033[m radarChannels =')
-                    pp.pprint(radarChannels)
-        elif radar not in radarChannels:
+                    print(f'Removed {self.name}, radar_channels =')
+                    pp.pprint(radar_channels)
+        elif radar not in radar_channels:
             print(f'Radar {radar} not found')
         else:
             with lock:
                 print(f'Channel {channel} no match')
-                pp.pprint(radarChannels)
+                pp.pprint(radar_channels)
 
 
     # When a user interacts on the GUI through User.receive()
@@ -257,8 +258,8 @@ class Backhaul(AsyncConsumer):
         # Intercept the 's' commands, consolidate the data stream the update the
         # request from the radar. Everything else gets relayed to the radar and
         # the response is relayed to the user that triggered the Nexus event
-        global radarChannels
-        if radar not in radarChannels or radarChannels[radar]['channel'] is None:
+        global radar_channels
+        if radar not in radar_channels or radar_channels[radar]['channel'] is None:
             print(f'Backhaul.userMessage() - {radar} not connected')
             await channel_layer.send(
                 channel,
@@ -270,9 +271,9 @@ class Backhaul(AsyncConsumer):
             return
 
         # Push the user message into a FIFO queue
-        radarChannels[radar]['commands'].put(channel)
+        radar_channels[radar]['commands'].put(channel)
         await channel_layer.send(
-            radarChannels[radar]['channel'],
+            radar_channels[radar]['channel'],
             {
                 'type': 'relayToRadar',
                 'message': command
@@ -293,8 +294,8 @@ class Backhaul(AsyncConsumer):
                 print(f'Backhaul.radarMessage() \033[38;5;154m{tmp}\033[m ({len(payload)})')
 
         # Look up the queue of this radar
-        global radarChannels
-        if radar not in radarChannels or channel != radarChannels[radar]['channel']:
+        global radar_channels
+        if radar not in radar_channels or channel != radar_channels[radar]['channel']:
             # This is when a radar connects as someone that is already connected,
             # did not wait for a welcome message and starts sending in payloads
             return
@@ -307,8 +308,8 @@ class Backhaul(AsyncConsumer):
                     text = str(payload[1:], 'utf-8')
                     print(f'Backhaul.radarMessage() - \033[38;5;154m{text}\033[m')
             # Relay the response to the user, FIFO
-            commandQueue = radarChannels[radar]['commands']
-            user = commandQueue.get()
+            command_queue = radar_channels[radar]['commands']
+            user = command_queue.get()
             await channel_layer.send(
                 user,
                 {
@@ -316,28 +317,28 @@ class Backhaul(AsyncConsumer):
                     'message': payload,
                 }
             )
-            commandQueue.task_done()
+            command_queue.task_done()
             return
 
         # Queue up the payload, keep this latest copy as welcome message for others
-        if not radarChannels[radar]['payloads'].full():
-            radarChannels[radar]['payloads'].put(payload)
-            radarChannels[radar]['welcome'][type] = payload
+        if not radar_channels[radar]['payloads'].full():
+            radar_channels[radar]['payloads'].put(payload)
+            radar_channels[radar]['welcome'][type] = payload
 
     async def reset(self, message):
-        global userChannels, radarChannels
+        global user_channels, radar_channels
         with lock:
-            if len(radarChannels):
-                print('Resetting radarChannels ...')
+            if len(radar_channels):
+                print('Resetting radar_channels ...')
 
                 # Say goodbye to all radar run loops ...
-                for _, radar in radarChannels.items():
+                for _, radar in radar_channels.items():
                     if radar['channel']:
                         await channel_layer.send(
                             radar['channel'],
                             {
                                 'type': 'disconnectRadar',
-                                'message': 'Bye'
+                                'message': message
                             }
                         )
                         radar['channel'] = None
@@ -345,20 +346,20 @@ class Backhaul(AsyncConsumer):
                         radar['payloads'] = None
 
                 if verbose:
-                    print('radarChannels =')
-                    pp.pprint(radarChannels)
+                    print('radar_channels =')
+                    pp.pprint(radar_channels)
 
 
-            if len(userChannels):
-                print('Resetting userChannels ...')
+            if len(user_channels):
+                print('Resetting user_channels ...')
 
-                for user in userChannels.keys():
+                for user in user_channels.keys():
                     await channel_layer.send(
                         user,
                         {
                             'type': 'disconnectUser',
-                            'message': 'Bye'
+                            'message': message
                         }
                     )
 
-                userChannels = {}
+                user_channels = {}
