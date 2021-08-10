@@ -21,6 +21,7 @@
 
 typedef struct _reporter {
     RKWebsocket      *ws;
+    char             name[8];
     char             welcome[256];
     char             message[256];
     bool             wantActive;
@@ -42,34 +43,34 @@ const char healthString[][8192] = {
 const char controlString[8192] = "\2{"
     "\"name\": \"demo\", "
     "\"Controls\": ["
-	    "{\"Label\": \"Go\", \"Command\": \"t y\"}, "
-	    "{\"Label\": \"Stop\", \"Command\": \"t z\"}, "
+        "{\"Label\": \"Go\", \"Command\": \"t y\"}, "
+        "{\"Label\": \"Stop\", \"Command\": \"t z\"}, "
         "{\"Label\": \"Try Me 1\", \"Command\": \"t w 1\"}, "
         "{\"Label\": \"Try Me 2\", \"Command\": \"t w 2\"}, "
-	    "{\"Label\": \"PRF 1,000 Hz (84 km)\", \"Command\": \"t prf 1000\"}, "
-	    "{\"Label\": \"PRF 1,475 Hz (75 km)\", \"Command\": \"t prf 1475\"}, "
-	    "{\"Label\": \"PRF 2,000 Hz (65 km)\", \"Command\": \"t prf 2000\"}, "
-	    "{\"Label\": \"PRF 3,000 Hz (40 km)\", \"Command\": \"t prf 3003\"}, "
-	    "{\"Label\": \"PRF 4,000 Hz (28 km)\", \"Command\": \"t prf 4000\"}, "
-	    "{\"Label\": \"PRF 5,000 Hz (17.6 km)\", \"Command\": \"t prf 5000\"}, "
-	    "{\"Label\": \"Stop Pedestal\", \"Command\": \"p stop\"}, "
-	    "{\"Label\": \"Park\", \"Command\": \"p point 0 90\"}, "
-	    "{\"Label\": \"DC PSU On\", \"Command\": \"h pow on\"}, "
-	    "{\"Label\": \"DC PSU Off\", \"Command\": \"h pow off\"}, "
-	    "{\"Label\": \"Measure Noise\", \"Command\": \"t n\"}, "
-	    "{\"Label\": \"Transmit Toggle\", \"Command\": \"t tx\"}, "
-	    "{\"Label\": \"10us pulse\", \"Command\": \"t w s10\"}, "
-	    "{\"Label\": \"12us LFM\", \"Command\": \"t w q0412\"}, "
-	    "{\"Label\": \"20us pulse\", \"Command\": \"t w s20\"}, "
-	    "{\"Label\": \"50us pulse\", \"Command\": \"t w s50\"}, "
-	    "{\"Label\": \"TFM + OFM\", \"Command\": \"t w ofm\"}, "
-	    "{\"Label\": \"OFM\", \"Command\": \"t w ofmd\"}, "
-	    "{\"Label\": \"1-tilt EL 2.4 deg @ 18 deg/s\", \"Command\": \"p vol p 2.4 300 18\"}, "
-	    "{\"Label\": \"5-tilt VCP @ 45 deg/s\", \"Command\": \"p vol p 2 300 45/p 4 300 45/p 6 300 45/p 8 300 45/p 10 300 45\"}, "
-	    "{\"Label\": \"5-tilt VCP @ 25 deg/s\", \"Command\": \"p vol p 2 300 25/p 4 300 25/p 6 300 25/p 8 300 25/p 10 300 25\"}, "
-	    "{\"Label\": \"5-tilt VCP @ 18 deg/s\", \"Command\": \"p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18\"}, "
-	    "{\"Label\": \"5-tilt VCP @ 12 deg/s\", \"Command\": \"p vol p 2 300 12/p 4 300 12/p 6 300 12/p 8 300 12/p 10 300 12\"}, "
-	    "{\"Label\": \"6-tilt VCP @ 18 deg/s\", \"Command\": \"p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18/p 12 300 18\"}"
+        "{\"Label\": \"PRF 1,000 Hz (84 km)\", \"Command\": \"t prf 1000\"}, "
+        "{\"Label\": \"PRF 1,475 Hz (75 km)\", \"Command\": \"t prf 1475\"}, "
+        "{\"Label\": \"PRF 2,000 Hz (65 km)\", \"Command\": \"t prf 2000\"}, "
+        "{\"Label\": \"PRF 3,000 Hz (40 km)\", \"Command\": \"t prf 3003\"}, "
+        "{\"Label\": \"PRF 4,000 Hz (28 km)\", \"Command\": \"t prf 4000\"}, "
+        "{\"Label\": \"PRF 5,000 Hz (17.6 km)\", \"Command\": \"t prf 5000\"}, "
+        "{\"Label\": \"Stop Pedestal\", \"Command\": \"p stop\"}, "
+        "{\"Label\": \"Park\", \"Command\": \"p point 0 90\"}, "
+        "{\"Label\": \"DC PSU On\", \"Command\": \"h pow on\"}, "
+        "{\"Label\": \"DC PSU Off\", \"Command\": \"h pow off\"}, "
+        "{\"Label\": \"Measure Noise\", \"Command\": \"t n\"}, "
+        "{\"Label\": \"Transmit Toggle\", \"Command\": \"t tx\"}, "
+        "{\"Label\": \"10us pulse\", \"Command\": \"t w s10\"}, "
+        "{\"Label\": \"12us LFM\", \"Command\": \"t w q0412\"}, "
+        "{\"Label\": \"20us pulse\", \"Command\": \"t w s20\"}, "
+        "{\"Label\": \"50us pulse\", \"Command\": \"t w s50\"}, "
+        "{\"Label\": \"TFM + OFM\", \"Command\": \"t w ofm\"}, "
+        "{\"Label\": \"OFM\", \"Command\": \"t w ofmd\"}, "
+        "{\"Label\": \"1-tilt EL 2.4 deg @ 18 deg/s\", \"Command\": \"p vol p 2.4 300 18\"}, "
+        "{\"Label\": \"5-tilt VCP @ 45 deg/s\", \"Command\": \"p vol p 2 300 45/p 4 300 45/p 6 300 45/p 8 300 45/p 10 300 45\"}, "
+        "{\"Label\": \"5-tilt VCP @ 25 deg/s\", \"Command\": \"p vol p 2 300 25/p 4 300 25/p 6 300 25/p 8 300 25/p 10 300 25\"}, "
+        "{\"Label\": \"5-tilt VCP @ 18 deg/s\", \"Command\": \"p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18\"}, "
+        "{\"Label\": \"5-tilt VCP @ 12 deg/s\", \"Command\": \"p vol p 2 300 12/p 4 300 12/p 6 300 12/p 8 300 12/p 10 300 12\"}, "
+        "{\"Label\": \"6-tilt VCP @ 18 deg/s\", \"Command\": \"p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18/p 12 300 18\"}"
     "]"
 "}";
 
@@ -178,7 +179,7 @@ void *run(void *in) {
 }
 
 void handleOpen(RKWebsocket *w) {
-    int r = sprintf(R->welcome, "\1{\"radar\":\"demo\",\"command\":\"radarConnect\"}");
+    int r = sprintf(R->welcome, "\1{\"radar\":\"%s\",\"command\":\"radarConnect\"}", R->name);
     RKWebsocketSend(R->ws, R->welcome, r);
     RKWebsocketSend(R->ws, (char *)controlString, strlen(controlString));
 }
@@ -189,7 +190,7 @@ void handleMessage(RKWebsocket *W, void *payload, size_t size) {
         R->connected = true;
         return;
     }
-    int r = sprintf(R->message, "\6%s", (char *)payload);
+    int r = sprintf(R->message, "\6ACK %s", (char *)payload);
     if (!strcmp(payload, "t y")) {
         R->go = true;
         R->rate = 1.0f;
@@ -209,12 +210,16 @@ void handleMessage(RKWebsocket *W, void *payload, size_t size) {
 int main(int argc, const char *argv[]) {
     R = (RKReporter *)malloc(sizeof(RKReporter));
     memset(R, 0, sizeof(RKReporter));
+    sprintf(R->name, "demo");
     R->wantActive = true;
 
+    char uri[80];
+    sprintf(uri, "/ws/radar/%s/", R->name);
+
     if (argc == 1) {
-        R->ws = RKWebsocketInit("localhost:8000", "/ws/radar/demo/", RKWebsocketSSLOff);
+        R->ws = RKWebsocketInit("localhost:8000", uri, RKWebsocketSSLOff);
     } else {
-        R->ws = RKWebsocketInit(argv[1], "/ws/radar/demo/", RKWebsocketSSLAuto);
+        R->ws = RKWebsocketInit(argv[1], uri, RKWebsocketSSLAuto);
     }
     RKWebsocketSetOpenHandler(R->ws, &handleOpen);
     RKWebsocketSetMessageHandler(R->ws, &handleMessage);

@@ -20,11 +20,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/socket.h>
-#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
+#include <netdb.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>

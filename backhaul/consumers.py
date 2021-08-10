@@ -4,10 +4,21 @@
 #   Backhaul worker
 #
 #   Consumers that interact with frontend.User and frontend.Radar
-#   through redis channels
+#   through redis channels. There is a run loop for each radar to
+#   monitor the overall data streams.
 # 
 #   Created by Boonleng Cheong
 #
+
+#
+#            binary            binary
+#   +--------+    +------------+    +---------+
+#   |        |<---|            |<---|         |
+#   |  User  |    |  Backhaul  |    |  Radar  |
+#   |        |--->|            |--->|         |
+#   +--------+    +------------+    +---------+
+#             text              text
+#   
 
 import json
 import pprint
@@ -86,6 +97,7 @@ def consolidateStreams():
     for user in userChannels:
         streams = user['streams']
         allStreams += streams
+    allStreams = ''.join(set(allStreams))
     print(f'allStreams = {allStreams}')
     return allStreams
 
