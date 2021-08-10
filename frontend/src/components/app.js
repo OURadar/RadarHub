@@ -67,8 +67,8 @@ class App extends Component {
     return (
       <ThemeProvider theme={theme}>
         <TopBar ingest={this.ingest} isMobile={this.isMobile} />
-        <Control ingest={this.ingest} />
         <Health dict={this.ingest.data.health} />
+        <Control ingest={this.ingest} />
         <SectionHeader name="scope" />
         <h3>Single-Channel</h3>
         <div className="scopeSingle">
