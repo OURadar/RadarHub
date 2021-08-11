@@ -96,23 +96,21 @@ void *run(void *in) {
 
     // Memory allocation
     const int depth = sizeof(uint8_t) + 2 * count * sizeof(int16_t);
-    void *buf = (int16_t *)malloc(30 * depth);
-    void *hbuf = (char *)malloc(8192 * hdepth);
+    void *buf = malloc(30 * depth);
+    void *hbuf = malloc(4096 * hdepth);
     float *window = (float *)malloc(count * sizeof(float));
     int16_t *noise = (int16_t *)malloc(3 * count * sizeof(int16_t));
     
     tukeywin(window, count, 0.1);
 
     // Convert healthStrings to type + healthStrings
+    char message[60];
     for (k = 0; k < hdepth; k++) {
-        payload = &hbuf[k * 8192];
+        payload = (char *)(hbuf + k * 4096);
         sprintf(payload, "%c%s", RadarHubTypeHealth, healthString[k]);
+        binaryString(message, payload, 10);
+        printf("%s (%zu)\n", message, strlen(healthString[k]));
     }    
-
-    // char message[60];
-    // payload = &hbuf[1 * 8192];
-    // binaryString(message, payload, 10);
-    // printf("%s\n", message);
 
     // Some kind of pseudo-noise sequence
     for (k = 0; k < 3 * count; k++) {
@@ -159,8 +157,8 @@ void *run(void *in) {
         RKWebsocketSend(R->ws, payload, depth);
 
         if (j % ht == 0) {
-            payload = &hbuf[((j / ht) % hdepth) * 8192];
-            RKWebsocketSend(R->ws, payload, strlen(payload));
+            payload = (char *)(hbuf + (j / ht) % hdepth * 4096);
+            RKWebsocketSend(R->ws, payload, 1 + strlen(payload + 1));
         }
 
         if (j % f == 0) {

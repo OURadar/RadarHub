@@ -57,12 +57,16 @@ class Radar(AsyncWebsocketConsumer):
     # Type 6 - Command response
     #
     async def receive(self, bytes_data=None):
+        if bytes_data is None or len(bytes_data) == 0:
+            return
+
         if verbose > 1:
             tmp = bytes_data
             if len(tmp) > 30:
                 tmp = f'{bytes_data[:25]} ... {bytes_data[-5:]}'
             print(f'Radar.receive() {self.radar} \033[38;5;154m{tmp}\033[m ({len(bytes_data)})')
-        type = bytes_data[0];
+
+        type = bytes_data[0]
 
         if type == 1:
             # Should come in as {"radar":"demo", "command":"radarConnect"}
@@ -127,20 +131,27 @@ class User(AsyncWebsocketConsumer):
                 'channel': self.channel_name
             }
         )
+
         if verbose:
             print(f'user for {self.radar} disconnected {code}.')
 
     # Receive message from frontend, which relays commands from the web app, serialized JSON data.
     async def receive(self, text_data=None):
+        if text_data is None:
+            return
+
         if verbose:
             print(f'User.receive() \033[38;5;154m{text_data}\033[m')
+
         request = json.loads(text_data)
 
         if request.keys() < {'radar', 'command'}:
             print('User.receive() incomplete message {request}')
             return
+
         if request['radar'] != self.radar:
             print(f'\033[38;5;197mBUG: radar = {request["radar"]} != self.radar = {self.radar}\033[m')
+
         await self.channel_layer.send(
             'backhaul',
             {

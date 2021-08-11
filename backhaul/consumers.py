@@ -249,6 +249,7 @@ class Backhaul(AsyncConsumer):
         if message.keys() < {'radar', 'channel', 'command'}:
             print(f'Backhaul.userMessage() incomplete message {message}')
             return
+
         radar = message['radar']
         channel = message['channel']
         command = message['command']
@@ -284,6 +285,10 @@ class Backhaul(AsyncConsumer):
 
     # When a radar sends home a payload through Radar.receive()
     async def radarMessage(self, message):
+        if message.keys() < {'radar', 'channel', 'payload'}:
+            print(f'Backhaul.radarMessage() incomplete message {message}')
+            return
+
         radar = message['radar']
         channel = message['channel']
         payload = message['payload']
