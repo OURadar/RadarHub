@@ -19,7 +19,8 @@ import pprint
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-from reporter.cenums import RadarHubType
+from reporter.enums import RadarHubType
+from common import colorize
 
 verbose = 0
 
@@ -63,27 +64,34 @@ class Radar(AsyncWebsocketConsumer):
             return
 
         if verbose > 1:
-            tmp = bytes_data
-            if len(tmp) > 30:
-                tmp = f'{bytes_data[:25]} ... {bytes_data[-5:]}'
-            print(f'Radar.receive() {self.radar} \033[38;5;154m{tmp}\033[m ({len(bytes_data)})')
+            show = bytes_data
+            if len(show) > 30:
+                show = f'{bytes_data[:25]} ... {bytes_data[-5:]}'
+            show = colorize(show, 'green')
+            print(f'Radar.receive() {self.radar} {show} ({len(bytes_data)})')
 
         type = bytes_data[0]
 
         if type == RadarHubType.Handshake:
             # Type RadarHubType.Handshake (1) should come in as {"radar":"demo", "command":"radarConnect"}
             text = bytes_data[1:].decode('utf-8')
+
             try:
                 request = json.loads(text)
             except:
                 print(f'Radar.receive() invalid JSON = {text}')
                 return
+
             if request.keys() < {'radar', 'command'}:
                 print('Radar.receive() incomplete message {text}')
                 return
-            if request['radar'] != self.radar:
-                print(f'\033[38;5;197mBUG: radar = {request["radar"]} != self.radar = {self.radar}\033[m')
+
+            radar = request['radar']
+            if radar != self.radar:
+                text = colorize('BUG', 'red')
+                print(f'{text} radar = {radar} != self.radar = {self.radar}')
                 return
+
             await self.channel_layer.send(
                 'backhaul',
                 {
@@ -143,7 +151,8 @@ class User(AsyncWebsocketConsumer):
             return
 
         if verbose:
-            print(f'User.receive() \033[38;5;154m{text_data}\033[m')
+            text = colorize(text_data, 'green')
+            print(f'User.receive() {text}')
 
         try:
             request = json.loads(text_data)
@@ -155,8 +164,10 @@ class User(AsyncWebsocketConsumer):
             print('User.receive() incomplete message {request}')
             return
 
-        if request['radar'] != self.radar:
-            print(f'\033[38;5;197mBUG: radar = {request["radar"]} != self.radar = {self.radar}\033[m')
+        radar = request['radar']
+        if radar != self.radar:
+            text = colorize('BUG', 'red')
+            print(f'{text}: radar = {radar} != self.radar = {self.radar}')
 
         await self.channel_layer.send(
             'backhaul',

@@ -3,7 +3,7 @@ import websockets
 
 import numpy as np
 
-from cenums import RadarHubType
+from enums import RadarHubType
 
 wantActive = True
 verbose = 1

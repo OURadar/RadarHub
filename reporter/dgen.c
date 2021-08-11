@@ -131,7 +131,7 @@ void *run(void *in) {
         usleep(100000);
     }
 
-    printf("\033[38;5;203mBusy run loop\033[m\n");
+    printf("\033[38;5;9mBusy run loop\033[m\n");
 
     double delta;
     struct timeval s0, s1;
@@ -233,11 +233,11 @@ void handleOpen(RKWebsocket *w) {
 }
 
 void handleClose(RKWebsocket *W) {
-    printf("I have nothing to do here.\n");
+    printf("ONCLOSE\n");
 }
 
 void handleMessage(RKWebsocket *W, void *payload, size_t size) {
-    printf("ONMESSAGE \033[38;5;220m%s\033[m\n", (char *)payload);
+    printf("ONMESSAGE \033[38;5;228m%s\033[m\n", (char *)payload);
     if (strstr((char *)payload, "Welcome")) {
         R->connected = true;
         return;
