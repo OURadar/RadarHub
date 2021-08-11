@@ -235,7 +235,7 @@ static int RKWebsocketConnect(RKWebsocket *R) {
         R->path,
         R->host,
         R->secret);
-    if (R->verbose) {
+    if (R->verbose > 1) {
         printf("%s", buf);
     }
 
@@ -246,7 +246,7 @@ static int RKWebsocketConnect(RKWebsocket *R) {
     if (r < 0) {
         fprintf(stderr, "Error during handshake.\n");
     }
-    if (R->verbose) {
+    if (R->verbose > 1) {
         printf("%s", buf);
     }
 
@@ -338,7 +338,7 @@ void *transporter(void *in) {
                     while (R->payloadTail != R->payloadHead) {
                         uint16_t tail = R->payloadTail == RKWebsocketPayloadDepth - 1 ? 0 : R->payloadTail + 1;
                         const RKWebsocketPayload *payload = &R->payloads[tail];
-                        if (R->verbose > 1) {
+                        if (R->verbose > 2) {
                             if (payload->size < 64) {
                                 binaryString(message, payload->source, payload->size);
                             } else {
