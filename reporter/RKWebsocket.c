@@ -297,7 +297,7 @@ static int RKWebsocketConnect(RKWebsocket *R) {
 void *transporter(void *in) {
     RKWebsocket *R = (RKWebsocket *)in;
 
-    int r;
+    int i, r;
     void *anchor;
     size_t size, targetFrameSize = 0;
     ws_frame_header *h = (ws_frame_header *)R->frame;
@@ -440,7 +440,7 @@ void *transporter(void *in) {
                     r = RKWebsocketPing(R, word, strlen(word));
                     if (R->verbose > 1) {
                         ws_mask_key key = {.u32 = *((uint32_t *)&R->frame[2])};
-                        for (int i = 0; i < 4; i++) {
+                        for (i = 0; i < 4; i++) {
                             uword[i] = R->frame[6 + i] ^ key.code[i % 4];
                         }
                         printf("C-PING: \033[38;5;82m%s\033[m\n", uword);
@@ -458,7 +458,7 @@ void *transporter(void *in) {
                     RKWebsocketPong(R, message, h->len);
                     if (R->verbose > 1) {
                         ws_mask_key key = {.u32 = *((uint32_t *)&R->frame[2])};
-                        for (int i = 0; i < 4; i++) {
+                        for (i = 0; i < 4; i++) {
                             uword[i] = R->frame[6 + i] ^ key.code[i % 4];
                         }
                         printf("C-PONG: \033[38;5;82m%s\033[m\n", uword);
@@ -488,16 +488,22 @@ void *transporter(void *in) {
             R->sd = 0;
         }
         s1 = time(NULL);
+        i = 0;
         do {
             s0 = time(NULL);
             r = (int)difftime(s0, s1);
-            if (r > 2) {
-                fprintf(stderr, "\rNo connection. Retry in %d second%s ... ",
+            if (i != r) {
+                i = r;
+                if (r > 2) {
+                    fprintf(stdout, "\rNo connection. Retry in %d second%s ... ",
                         10 - r, 10 - r > 1 ? "s" : "");
-            } else {
-                fprintf(stderr, "\rNo connection.");
+                    fflush(stdout);
+                } else {
+                    fprintf(stdout, "\rNo connection.");
+                    fflush(stdout);
+                }
             }
-            usleep(100000);
+            usleep(200000);
         } while (R->wantActive && r < 10);
         printf("\033[1K\r");
     }

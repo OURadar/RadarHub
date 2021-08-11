@@ -34,6 +34,12 @@ class Ingest {
     this.message = "Loading ...";
     this.response = "";
     this.onupdate = (_data) => {};
+    this.enums = {
+      Definition: 1,
+      Control: 2,
+      Health: 3,
+      Scope: 5,
+    };
 
     this.connect = this.connect.bind(this);
     this.disconnect = this.disconnect.bind(this);
@@ -67,8 +73,14 @@ class Ingest {
     this.socket.onmessage = (e) => {
       const type = new Int8Array(e.data.slice(0, 1));
       let newData = {};
-      // Interpret the data based on header.type
-      if (type == 2) {
+      // Interpret the data
+      if (type == this.enums.Definition) {
+        // Update payload definition
+        const text = new TextDecoder().decode(e.data.slice(1));
+        const enums = JSON.parse(text);
+        this.enums = { ...this.enums, ...enums };
+        console.log(this.enums);
+      } else if (type == this.enums.Control) {
         // Control data in JSON
         const text = new TextDecoder().decode(e.data.slice(1));
         const dict = JSON.parse(text);
@@ -77,15 +89,13 @@ class Ingest {
         } else {
           console.log("dict.name = " + dict.name + " /= " + this.radar);
         }
-      } else if (type == 3) {
+      } else if (type == this.enums.Health) {
         // Health data in JSON
         const text = new TextDecoder().decode(e.data.slice(1));
         const health = JSON.parse(text);
         newData.health = health;
         this.tic += 1;
-      } else if (type == 4) {
-        // Ray data
-      } else if (type == 5) {
+      } else if (type == this.enums.Scope) {
         // AScope data - convert arraybuffer to int16 typed array
         const samples = new Int16Array(e.data.slice(1));
         // Parse out the array into I/Q/A arrays for Scope
@@ -111,7 +121,7 @@ class Ingest {
           newData.t = new Float32Array(Array(len).keys());
         }
         this.tic += 1;
-      } else if (type == 6) {
+      } else if (type == this.enums.Response) {
         // Response of a command
         let text = new TextDecoder().decode(e.data.slice(1));
         if (text.includes("not")) {

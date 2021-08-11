@@ -20,6 +20,7 @@
 #              text                text 
 #   
 
+from frontend.consumers import Radar
 import json
 import pprint
 import asyncio
@@ -35,6 +36,7 @@ verbose = 1
 user_channels = {}
 radar_channels = {}
 channel_layer = get_channel_layer()
+payload_types = json.dumps({e.name: e.value for e in RadarHubType})
 lock = threading.Lock()
 
 with open('frontend/package.json') as fid:
@@ -58,11 +60,18 @@ def reset():
     loop.run_until_complete(_reset())
 
 async def _runloop(radar):
+    global radar_channels
     name = f'\033[38;5;214m{radar}\033[m'
     if verbose:
         with lock:
             print(f'runloop {name} started')
+
+    # Make payload definition as one of the welcome messages
+    radar_channels[radar]['welcome'][1] = b'\1' + bytearray(payload_types, 'utf-8')
     payload_queue = radar_channels[radar]['payloads']
+    pp.pprint(radar_channels[radar]['welcome'])
+
+    # Now we just keep sending the group everything from the radar
     while radar_channels[radar]['channel']:
         qsize = payload_queue.qsize()
         if qsize > 50:
@@ -307,9 +316,9 @@ class Backhaul(AsyncConsumer):
             # did not wait for a welcome message and starts sending in payloads
             return
 
-        # Payload type 6 is a response, direct to the earliest request, FIFO
+        # Payload type Response, direct to the earliest request, FIFO
         type = payload[0]
-        if type == 6:
+        if type == RadarHubType.Response:
             if verbose:
                 with lock:
                     text = str(payload[1:], 'utf-8')

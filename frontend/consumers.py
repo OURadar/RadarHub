@@ -19,6 +19,8 @@ import pprint
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from reporter.cenums import RadarHubType
+
 verbose = 0
 
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
@@ -68,13 +70,13 @@ class Radar(AsyncWebsocketConsumer):
 
         type = bytes_data[0]
 
-        if type == 1:
-            # Should come in as {"radar":"demo", "command":"radarConnect"}
+        if type == RadarHubType.Handshake:
+            # Type RadarHubType.Handshake (1) should come in as {"radar":"demo", "command":"radarConnect"}
             text = bytes_data[1:].decode('utf-8')
             try:
                 request = json.loads(text)
             except:
-                print(f'Not a valid JSON text = {text}')
+                print(f'Radar.receive() invalid JSON = {text}')
                 return
             if request.keys() < {'radar', 'command'}:
                 print('Radar.receive() incomplete message {text}')
@@ -137,13 +139,17 @@ class User(AsyncWebsocketConsumer):
 
     # Receive message from frontend, which relays commands from the web app, serialized JSON data.
     async def receive(self, text_data=None):
-        if text_data is None:
+        if text_data is None or len(text_data) == 0:
             return
 
         if verbose:
             print(f'User.receive() \033[38;5;154m{text_data}\033[m')
 
-        request = json.loads(text_data)
+        try:
+            request = json.loads(text_data)
+        except:
+            print(f'User.receive() json.loads() failed.')
+            return
 
         if request.keys() < {'radar', 'command'}:
             print('User.receive() incomplete message {request}')
