@@ -7,7 +7,7 @@ enum RadarHubType {
     RadarHubTypeHealth          = 3,             // JSON health {"Transceiver":{...},"Pedestal":{...},...}
     RadarHubTypeReserve4        = 4,             //
     RadarHubTypeScope           = 5,             // Scope data in binary
-    RadarHubTypeCommandResponse = 6,             // Plain text response
+    RadarHubTypeResponse        = 6,             // Plain text response
     RadarHubTypeReserve7        = 7,             //
     RadarHubTypeReserve8        = 8,             //
     RadarHubTypeReserve9        = 9,             //
@@ -22,7 +22,13 @@ enum RadarHubType {
     RadarHubTypeRadialW         = 18,            //
     RadarHubTypeRadialD         = 19,            //
     RadarHubTypeRadialP         = 20,            //
-    RadarHubTypeRadialR         = 21,            //
+    RadarHubTypeRadialR         = 21             //
+};
+
+enum Blah {
+    BlahOne,
+    BlahTwo,
+    BlahThree
 };
 
 #endif

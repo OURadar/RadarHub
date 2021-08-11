@@ -3,6 +3,8 @@ import websockets
 
 import numpy as np
 
+from cenums import RadarHubType
+
 wantActive = True
 verbose = 1
 
@@ -47,13 +49,16 @@ async def run():
                 continue
 
             print('Sending greeting ...')
-            await socket.send(b'\1{"radar":"px1000", "command":"radarConnect"}')
+            payload = '{"radar":"demo", "command":"radarConnect"}'
+            payload = RadarHubType.Handshake.to_bytes(1, 'little') + bytes(payload, 'utf-8')
+            await socket.send(payload)
 
             greeting = await socket.recv()
             if verbose:
                 print(f'{greeting}')
 
-            await socket.send(b'\2' + bytearray(controlString, 'utf-8'))
+            payload = RadarHubType.Control.to_bytes(1, 'little') + bytes(controlString, 'utf-8')
+            await socket.send(payload)
 
             while wantActive:
                 #
@@ -66,13 +71,13 @@ async def run():
                         np.array(w * np.sin(omega), dtype=np.int16)
                     )
                 )
-                pulse += np.random.randint(-n, n, size=len(pulse), dtype=np.int16)
-                payload = b'\5' + bytearray(pulse)
+                pulse += np.random.randint(-n, n, size=len(pulse), dtype=np.int16)                
+                payload = RadarHubType.Scope.to_bytes(1, 'little') + bytearray(pulse)
                 await socket.send(payload)
 
                 if tic % 15 == 0:
                     k = int(tic / 15) % len(healthString)
-                    payload = b'\3' + bytearray(healthString[k], 'utf-8')
+                    payload = RadarHubType.Health.to_bytes(1, 'little') + bytes(healthString[k], 'utf-8')
                     await socket.send(payload)
                 #
                 # Read

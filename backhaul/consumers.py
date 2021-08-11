@@ -29,6 +29,8 @@ import queue
 from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
+from reporter.cenums import RadarHubType
+
 verbose = 1
 user_channels = {}
 radar_channels = {}
@@ -265,7 +267,7 @@ class Backhaul(AsyncConsumer):
                 channel,
                 {
                     'type': 'relayToUser',
-                    'message': b'\x06Radar not connected'
+                    'message': f'{RadarHubType.Response}Radar not connected'
                 }
             )
             return

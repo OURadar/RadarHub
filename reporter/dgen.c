@@ -83,8 +83,6 @@ void *run(void *in) {
 
     // Noise magnitude of 1000
     const int nm = 1000;
-
-    printf("s = %d   ht = %d\n", s, ht);
     
     const int count = 1000;
     const int depth = sizeof(uint8_t) + 2 * count * sizeof(int16_t);
@@ -102,10 +100,10 @@ void *run(void *in) {
         sprintf(payload, "%c%s", RadarHubTypeHealth, healthString[k]);
     }    
 
-    char message[60];
-    payload = &hbuf[1 * 8192];
-    binaryString(message, payload, 10);
-    printf("%s\n", message);
+    // char message[60];
+    // payload = &hbuf[1 * 8192];
+    // binaryString(message, payload, 10);
+    // printf("%s\n", message);
 
     // Some kind of pseudo-noise sequence
     for (k = 0; k < 3 * count; k++) {
@@ -118,9 +116,12 @@ void *run(void *in) {
     }
 
     // Wait until the welcome message is received
-    while (!R->connected) {
+    while (!R->ws->connected) {
         usleep(100000);
     }
+
+    printf("s = %d   ht = %d\n", s, ht);
+
     printf("\033[38;5;203mBusy run loop\033[m\n");
 
     int j = 0;
@@ -250,6 +251,7 @@ int main(int argc, const char *argv[]) {
     }
     RKWebsocketSetOpenHandler(R->ws, &handleOpen);
     RKWebsocketSetMessageHandler(R->ws, &handleMessage);
+    R->ws->verbose = 1;
 
     // Catch Ctrl-C and some signals alternative handling
     signal(SIGINT, handleSignals);

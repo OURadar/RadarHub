@@ -50,7 +50,7 @@ Copyright Boonleng Cheong
   height: var(--font-size);
   right: var(--padding);
   width: var(--font-size);
-  z-index: 102;
+  z-index: 2;
 }
 .labelTitle {
   left: var(--padding);
