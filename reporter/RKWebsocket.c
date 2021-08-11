@@ -309,6 +309,7 @@ void *transporter(void *in) {
     fd_set wfd;
     fd_set efd;
     struct timeval timeout;
+    time_t s1, s0;
     
     uint32_t origin = 0;
     uint32_t total = 0;
@@ -469,10 +470,7 @@ void *transporter(void *in) {
                     R->timeoutCount = 0;
                 } else if (h->opcode == RFC6455_OPCODE_CLOSE) {
                     R->connected = false;
-                    if (R->onClose) {
-                        R->onClose(R);
-                    }
-                    close(R->sd);
+                    break;
                 } else if (h->opcode == RFC6455_OPCODE_TEXT || h->opcode == RFC6455_OPCODE_BINARY) {
                     if (R->onMessage) {
                         R->onMessage(R, anchor, size);
@@ -480,15 +478,27 @@ void *transporter(void *in) {
                 }
                 R->timeoutCount = 0;
             }
+        } // while (R->wantActive && R->connected) ...
+        if (R->sd) {
+            printf("Closing socket sd = %d ...\n", R->sd);
+            if (R->onClose) {
+                R->onClose(R);
+            }
+            close(R->sd);
+            R->sd = 0;
         }
-        r = 0;
+        s1 = time(NULL);
         do {
-            if (r++ % 10 == 0) {
+            s0 = time(NULL);
+            r = (int)difftime(s0, s1);
+            if (r > 2) {
                 fprintf(stderr, "\rNo connection. Retry in %d second%s ... ",
-                    10 - r / 10, 10 - r / 10 > 1 ? "s" : "");
+                        10 - r, 10 - r > 1 ? "s" : "");
+            } else {
+                fprintf(stderr, "\rNo connection.");
             }
             usleep(100000);
-        } while (R->wantActive && r++ < 100);
+        } while (R->wantActive && r < 10);
         printf("\033[1K\r");
     }
 
@@ -598,7 +608,7 @@ void RKWebsocketStop(RKWebsocket *R) {
 void RKWebsocketWait(RKWebsocket *R) {
     int k = 0;
     while (R->payloadTail != R->payloadHead && k++ < 10) {
-        usleep(10000);
+        usleep(50000);
     }
 }
 

@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <math.h>
+#include <sys/time.h>
 
 #include <RKWebsocket.h>
 
@@ -61,6 +62,10 @@ static void tukeywin(float *window, const int count, const float alpha) {
     }
 }
 
+static double timevalDiff(const struct timeval m, const struct timeval s) {
+    return (double)m.tv_sec - (double)s.tv_sec + 1.0e-6 * ((double)m.tv_usec - (double)s.tv_usec);
+}
+
 // The busy run loop - the reporter
 void *run(void *in) {
     int k;
@@ -73,20 +78,24 @@ void *run(void *in) {
     char *payload;
 
     // Let's do 15 FPS
-    const useconds_t s = 1000000 / 15;
+    const int f = 15;
 
-    // Post health status every 0.5s
+    useconds_t s = 1000000 / f;
+
+    // Post health status about every 0.5s
     const int ht = 500000 / s;
-
-    // Health depth is just the number of samples we have up there
-    const int hdepth = sizeof(healthString) / sizeof(healthString[0]);
 
     // Noise magnitude of 1000
     const int nm = 1000;
     
+    // Gate count
     const int count = 1000;
-    const int depth = sizeof(uint8_t) + 2 * count * sizeof(int16_t);
 
+    // Health depth is just the number of samples we have up there
+    const int hdepth = sizeof(healthString) / sizeof(healthString[0]);
+
+    // Memory allocation
+    const int depth = sizeof(uint8_t) + 2 * count * sizeof(int16_t);
     void *buf = (int16_t *)malloc(30 * depth);
     void *hbuf = (char *)malloc(8192 * hdepth);
     float *window = (float *)malloc(count * sizeof(float));
@@ -120,11 +129,13 @@ void *run(void *in) {
         usleep(100000);
     }
 
-    printf("s = %d   ht = %d\n", s, ht);
-
     printf("\033[38;5;203mBusy run loop\033[m\n");
 
-    int j = 0;
+    double delta;
+    struct timeval s0, s1;
+    gettimeofday(&s1, NULL);
+    usleep(s);
+    int j = 1;
     while (R->wantActive) {
         // AScope samples
         payload = (char *)(buf + (j % 30) * depth);
@@ -148,11 +159,18 @@ void *run(void *in) {
         RKWebsocketSend(R->ws, payload, depth);
 
         if (j % ht == 0) {
-            //payload = (char *)healthString[(j / ht) % hdepth];
             payload = &hbuf[((j / ht) % hdepth) * 8192];
             RKWebsocketSend(R->ws, payload, strlen(payload));
         }
 
+        if (j % f == 0) {
+            gettimeofday(&s0, NULL);
+            delta = timevalDiff(s0, s1);
+            int e = (1000000 - (int)(1000000 * delta)) / 50;
+            //printf("delta = %.2f ms  -> e = %d\n", 1.0e3 * delta, e);
+            s1 = s0;
+            s += e;
+        }
         usleep(s);
         j++;
     }
@@ -212,6 +230,10 @@ void handleOpen(RKWebsocket *w) {
     RKWebsocketSend(R->ws, R->control, strlen(R->control));
 }
 
+void handleClose(RKWebsocket *W) {
+    printf("I have nothing to do here.\n");
+}
+
 void handleMessage(RKWebsocket *W, void *payload, size_t size) {
     printf("ONMESSAGE \033[38;5;220m%s\033[m\n", (char *)payload);
     if (strstr((char *)payload, "Welcome")) {
@@ -250,6 +272,7 @@ int main(int argc, const char *argv[]) {
         R->ws = RKWebsocketInit(argv[1], uri, RKWebsocketSSLAuto);
     }
     RKWebsocketSetOpenHandler(R->ws, &handleOpen);
+    RKWebsocketSetCloseHandler(R->ws, &handleClose);
     RKWebsocketSetMessageHandler(R->ws, &handleMessage);
     R->ws->verbose = 1;
 
