@@ -21,6 +21,8 @@
 #include "common.h"
 #include "RKWebsocket.h"
 
+#define HEALH_CAPACITY  4096
+
 typedef struct _reporter {
     RKWebsocket        *ws;
     RKWebsocketSSLFlag flag;
@@ -99,22 +101,27 @@ void *run(void *in) {
     const int hdepth = sizeof(healthString) / sizeof(healthString[0]);
 
     // Memory allocation
-    const int depth = sizeof(uint8_t) + 2 * count * sizeof(int16_t);
-    void *buf = malloc(30 * depth);
-    void *hbuf = malloc(4096 * hdepth);
+    const int pulseCapacity = sizeof(uint8_t) + 2 * count * sizeof(int16_t);
+    void *buf = malloc(30 * pulseCapacity);
+    void *hbuf = malloc(hdepth * HEALH_CAPACITY);
     float *window = (float *)malloc(count * sizeof(float));
     int16_t *noise = (int16_t *)malloc(3 * count * sizeof(int16_t));
     
     tukeywin(window, count, 0.1);
 
     // Convert healthStrings to type + healthStrings
-    //char message[60];
     for (k = 0; k < hdepth; k++) {
-        payload = (char *)(hbuf + k * 4096);
+        payload = (char *)(hbuf + k * HEALH_CAPACITY);
         sprintf(payload, "%c%s", RadarHubTypeHealth, healthString[k]);
-        //binaryString(message, payload, 30);
-        //printf("%s (%zu)\n", message, strlen(healthString[k]));
-    }    
+    }
+    if (R->verbose > 1) {
+        char message[60];
+        for (k = 0; k < hdepth; k++) {
+            payload = (char *)(hbuf + k * HEALH_CAPACITY);
+            binaryString(message, payload, 30);
+            printf("%s (%zu)\n", message, strlen(healthString[k]));
+        }
+    }
 
     // Some kind of pseudo-noise sequence
     for (k = 0; k < 3 * count; k++) {
@@ -131,7 +138,9 @@ void *run(void *in) {
         usleep(100000);
     }
 
-    printf("\033[38;5;9mBusy run loop\033[m\n");
+    if (R->verbose) {
+        printf("\033[38;5;9mBusy run loop\033[m\n");
+    }
 
     double delta;
     struct timeval s0, s1;
@@ -140,7 +149,7 @@ void *run(void *in) {
     int j = 1;
     while (R->wantActive) {
         // AScope samples
-        payload = (char *)(buf + (j % 30) * depth);
+        payload = (char *)(buf + (j % 30) * pulseCapacity);
         payload[0] = '\5';
         x = (int16_t *)(payload + 1);
         g = rand() % count;
@@ -158,7 +167,7 @@ void *run(void *in) {
             }
             x++;
         }
-        RKWebsocketSend(R->ws, payload, depth);
+        RKWebsocketSend(R->ws, payload, pulseCapacity);
 
         if (j % ht == 0) {
             payload = (char *)(hbuf + (j / ht) % hdepth * 4096);
@@ -233,11 +242,15 @@ void handleOpen(RKWebsocket *w) {
 }
 
 void handleClose(RKWebsocket *W) {
-    printf("ONCLOSE\n");
+    if (R->verbose) {
+        printf("ONCLOSE\n");
+    }
 }
 
 void handleMessage(RKWebsocket *W, void *payload, size_t size) {
-    printf("ONMESSAGE \033[38;5;228m%s\033[m\n", (char *)payload);
+    if (R->verbose) {
+        printf("ONMESSAGE \033[38;5;228m%s\033[m\n", (char *)payload);
+    }
     if (strstr((char *)payload, "Welcome")) {
         R->connected = true;
         return;
@@ -255,14 +268,22 @@ void handleMessage(RKWebsocket *W, void *payload, size_t size) {
         R->rate = 5.0f;
         R->go = true;
     }
-    printf("REPLY %s (%d)\n", R->message, r);
+    if (R->verbose) {
+        printf("REPLY %s (%d)\n", R->message, r);
+    }
     RKWebsocketSend(R->ws, R->message, r);
 }
 
 static void showHelp() {
     char name[] = __FILE__;
     *strrchr(name, '.') = '\0';
-    printf("Data Generator\n\n");
+    printf("Data Generator\n\n"
+           "Options:\n\n"
+           "  -n, --name   sets the radar name\n"
+           "  -s, --ssl    enables SSL\n"
+           "  -v           increases verbosity level\n"
+           ""
+           );
 }
 
 int main(int argc, const char *argv[]) {

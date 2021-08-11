@@ -192,7 +192,7 @@ static int RKWebsocketConnect(RKWebsocket *R) {
 
     if (R->verbose) {
         printf("\nConnecting %s:%d %s...\n", R->ip, R->port,
-        R->useSSL ? "(\033[38;5;220mssl\033[m) " : "");
+            R->useSSL ? "(\033[38;5;220mssl\033[m) " : "");
     }
 
     R->sa.sin_family = AF_INET;
@@ -216,11 +216,13 @@ static int RKWebsocketConnect(RKWebsocket *R) {
     if (fid) {
         r = fscanf(fid, "%s", buf);
         if (r == 1 && strlen(buf) == 22) {
-            printf("secret = '%s' (%zu)\n", buf, strlen(buf));
+            if (R->verbose > 1) {
+                printf("secret = '%s' (%zu)\n", buf, strlen(buf));
+            }
             strcpy(R->secret, buf);
         }
         fclose(fid);
-    } else {
+    } else if (R->verbose) {
         printf("Using default secret %s ...\n", R->secret);
     }
     sprintf(buf,
@@ -526,8 +528,6 @@ RKWebsocket *RKWebsocketInit(const char *host, const char *path, const RKWebsock
     pthread_attr_init(&R->threadAttributes);
     pthread_mutex_init(&R->lock, NULL);
 
-    printf("Using %s ...\n", host);
-
     c = strstr(host, ":");
     if (c == NULL) {
         R->port = 80;
@@ -556,8 +556,6 @@ RKWebsocket *RKWebsocketInit(const char *host, const char *path, const RKWebsock
     }
     R->timeoutDeltaMicroseconds = RKWebsocketTimeoutDeltaMicroseconds;
     RKWebsocketSetPingInterval(R, RKWebsocketTimeoutThresholdSeconds);
-    printf("R->timeoutThreshold = %u (delta = %u us, %.2f seconds)\n",
-        R->timeoutThreshold, R->timeoutDeltaMicroseconds, RKWebsocketTimeoutThresholdSeconds);
 
     return R;
 }

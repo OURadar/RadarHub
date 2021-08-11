@@ -74,7 +74,10 @@ async def _runloop(radar):
     while radar_channels[radar]['channel']:
         qsize = payload_queue.qsize()
         if qsize > 50:
-            print(f'{name} qsize = {qsize}')
+            print(f'{name} qsize = {qsize}, purging ...')
+            while payload_queue.qsize() > 5:
+                payload_queue.get()
+                payload_queue.task_done()
         if not payload_queue.empty():
             payload = payload_queue.get()
             if verbose > 1:

@@ -83,7 +83,7 @@ class Radar(AsyncWebsocketConsumer):
                 return
 
             if request.keys() < {'radar', 'command'}:
-                print('Radar.receive() incomplete message {text}')
+                print(f'Radar.receive() incomplete message {text}')
                 return
 
             radar = request['radar']

@@ -124,7 +124,7 @@ class Ingest {
       } else if (type == this.enums.Response) {
         // Response of a command
         let text = new TextDecoder().decode(e.data.slice(1));
-        if (text.includes("not")) {
+        if (text.includes("not") || text.includes("NAK")) {
           text = " 👎🏼 " + text + "<div class='emotion'>😿</div>";
         } else {
           text = " 👍🏼 " + text + "<div class='emotion'>👻</div>";
