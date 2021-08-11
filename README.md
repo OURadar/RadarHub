@@ -170,11 +170,18 @@ autostart=true
 autorestart=true
 
 # Choose where you want your log to go
-stdout_logfile=/home/radarhub/log/backhaul.log
+stdout_logfile=/home/radarhub/log/frontend.log
 redirect_stderr=true
 ```
+and start as:
 
-## Systemctl
+```shell
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start asgi:*
+```
+
+## Systemd
 
 Configure through the file `/etc/systemd/system/backhaul.service` as:
 
