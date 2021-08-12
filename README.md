@@ -201,6 +201,15 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
+and enable, check status, start, and stop it as:
+
+```shell
+sudo systemctl enable backhaul
+sudo systemctl status backhaul
+sudo systemctl start backhaul
+sudo systemctl stop backhaul
+```
+
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
 [node.js]: https://nodejs.org
