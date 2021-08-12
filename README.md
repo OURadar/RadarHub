@@ -174,21 +174,63 @@ sudo supervisorctl start asgi:*
 
 ## Systemd
 
-Configure through the file `/etc/systemd/system/backhaul.service` as:
+Configure `backhaul` as a service through the file `/etc/systemd/system/backhaul.service` as:
 
 ```conf
 [Unit]
-Description=backhaul
+Description=Channels worker backhaul
 After=network.target
 
 [Service]
 WorkingDirectory=/home/radarhub/app
+User=radarhub
+Group=radarhub
 ExecStart=/home/radarhub/.pyenv/shims/python /home/radarhub/app/manage.py runworker backhaul
+StandardOutput=append:/home/radarhub/log/backhaul.log
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 ```
+
+and enable, start, stop, and check status as:
+
+```shell
+sudo systemctl enable backhaul
+sudo systemctl start backhaul
+sudo systemctl stop backhaul
+sudo systemctl status backhaul
+```
+
+Configure `dgen` as a service through the file `/etc/systemd/system/dgen.service` as:
+
+```conf
+[Unit]
+Description=Data generator for RadarHub
+After=network.target
+
+[Service]
+WorkingDirectory=/home/radarhub/app
+User=radarhub
+Group=radarhub
+ExecStart=/home/radarhub/app/reporter/dgen
+StandardOutput=append:/home/radarhub/log/dgen.log
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+and enable, start, stop, and check status as:
+
+```shell
+sudo systemctl enable dgen
+sudo systemctl start dgen
+sudo systemctl stop dgen
+sudo systemctl status dgen
+```
+
+A convenient script `restart.sh` is included to restart all services in a proper sequence in order to prevent channels getting full.
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com

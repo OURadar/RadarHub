@@ -19,11 +19,10 @@ fi
 ##############
 
 clear
-check_user_process radarhub daphne backhaul dgen | textout "Processes" seagreen
+check_user_process radarhub dgen | textout "Processes" seagreen
 echo
-systemctl status backhaul
+systemctl status supervisor backhaul dgen --no-pager
 echo
-show_log_by_latest_line_count frontend 10 118
-#show_log_by_latest_line_count backhaul 9 118
-journalctl -n 10 -u backhaul.service | textout "Backhaul" 118
+show_log_by_latest_line_count frontend 10 228
+#journalctl -n 10 -u backhaul.service | textout "Backhaul" 118
 
