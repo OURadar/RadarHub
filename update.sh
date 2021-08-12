@@ -10,4 +10,4 @@ cd reporter
 make -B
 cd -
 
-./update.sh
+./restart.sh
