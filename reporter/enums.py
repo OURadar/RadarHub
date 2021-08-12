@@ -45,7 +45,7 @@ class CEnumType(EnumMeta):
         # cause problems in EnumMeta
         try:
             file = clsdict.pop('_file')
-            print(f'Using {file}')
+            # print(f'Using {file}')
         except KeyError:
             raise TypeError('_file not specified')
         c_enum_name = clsdict.pop('_name', clsname.lower())

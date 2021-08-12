@@ -192,7 +192,7 @@ static int RKWebsocketConnect(RKWebsocket *R) {
 
     if (R->verbose) {
         printf("\nConnecting %s:%d %s...\n", R->ip, R->port,
-        R->useSSL ? "(\033[38;5;220mssl\033[m) " : "");
+            R->useSSL ? "(\033[38;5;220mssl\033[m) " : "");
     }
 
     R->sa.sin_family = AF_INET;
@@ -216,11 +216,13 @@ static int RKWebsocketConnect(RKWebsocket *R) {
     if (fid) {
         r = fscanf(fid, "%s", buf);
         if (r == 1 && strlen(buf) == 22) {
-            printf("secret = '%s' (%zu)\n", buf, strlen(buf));
+            if (R->verbose > 1) {
+                printf("secret = '%s' (%zu)\n", buf, strlen(buf));
+            }
             strcpy(R->secret, buf);
         }
         fclose(fid);
-    } else {
+    } else if (R->verbose) {
         printf("Using default secret %s ...\n", R->secret);
     }
     sprintf(buf,
@@ -235,7 +237,7 @@ static int RKWebsocketConnect(RKWebsocket *R) {
         R->path,
         R->host,
         R->secret);
-    if (R->verbose) {
+    if (R->verbose > 1) {
         printf("%s", buf);
     }
 
@@ -245,8 +247,10 @@ static int RKWebsocketConnect(RKWebsocket *R) {
     } while (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL);
     if (r < 0) {
         fprintf(stderr, "Error during handshake.\n");
+        return -1;
     }
-    if (R->verbose) {
+    buf[r] = '\0';
+    if (R->verbose > 1) {
         printf("%s", buf);
     }
 
@@ -338,7 +342,7 @@ void *transporter(void *in) {
                     while (R->payloadTail != R->payloadHead) {
                         uint16_t tail = R->payloadTail == RKWebsocketPayloadDepth - 1 ? 0 : R->payloadTail + 1;
                         const RKWebsocketPayload *payload = &R->payloads[tail];
-                        if (R->verbose > 1) {
+                        if (R->verbose > 2) {
                             if (payload->size < 64) {
                                 binaryString(message, payload->source, payload->size);
                             } else {
@@ -349,7 +353,9 @@ void *transporter(void *in) {
                         size = RKWebsocketFrameEncode(R->frame, RFC6455_OPCODE_BINARY, payload->source, payload->size);
                         r = RKSocketWrite(R, size);
                         if (r < 0) {
-                            fprintf(stderr, "Error. RKSocketWrite() = %d\n", r);
+                            if (R->verbose) {
+                                fprintf(stderr, "Error. RKSocketWrite() = %d\n", r);
+                            }
                             R->connected = false;
                             break;
                         } else if (r == 0) {
@@ -360,14 +366,19 @@ void *transporter(void *in) {
                     }
                 } else if (FD_ISSET(R->sd, &efd)) {
                     // Exceptions
-                    fprintf(stderr, "Error. Exceptions during write cycle.\n");
+                    if (R->verbose) {
+                        fprintf(stderr, "Error. Exceptions during write cycle.\n");
+                    }
                     break;
                 } else {
+                    // This shall not reach
                     printf("... w\n");
                 }
             } else if (r < 0) {
                 // Errors
-                fprintf(stderr, "Error. select() = %d during write cycle.\n", r);
+                if (R->verbose) {
+                    fprintf(stderr, "Error. select() = %d during write cycle.\n", r);
+                }
                 break;
             }
             //
@@ -388,7 +399,9 @@ void *transporter(void *in) {
                     // There is something to read
                     r = RKSocketRead(R, origin, RKWebsocketFrameSize);
                     if (r <= 0) {
-                        fprintf(stderr, "Error. RKSocketRead() = %d   origin = %u\n", r, origin);
+                        if (R->verbose) {
+                            fprintf(stderr, "Error. RKSocketRead() = %d   origin = %u\n", r, origin);
+                        }
                         R->connected = false;
                         break;
                     }
@@ -421,15 +434,20 @@ void *transporter(void *in) {
                     R->timeoutCount = 0;
                 } else if (FD_ISSET(R->sd, &efd)) {
                     // Exceptions
-                    fprintf(stderr, "Error. Exceptions during read cycle.\n");
+                    if (R->verbose) {
+                        fprintf(stderr, "Error. Exceptions during read cycle.\n");
+                    }
                     R->connected = false;
                     break;
                 } else {
+                    // This shall not reach
                     printf("... r\n");
                 }
             } else if (r < 0) {
                 // Errors
-                fprintf(stderr, "Error. select() = %d during read cycle.\n", r);
+                if (R->verbose) {
+                    fprintf(stderr, "Error. select() = %d during read cycle.\n", r);
+                }
                 R->connected = false;
                 break;
             } else {
@@ -480,7 +498,9 @@ void *transporter(void *in) {
             }
         } // while (R->wantActive && R->connected) ...
         if (R->sd) {
-            printf("Closing socket sd = %d ...\n", R->sd);
+            if (R->verbose) {
+                printf("Closing socket sd = %d ...\n", R->sd);
+            }
             if (R->onClose) {
                 R->onClose(R);
             }
@@ -492,7 +512,7 @@ void *transporter(void *in) {
         do {
             s0 = time(NULL);
             r = (int)difftime(s0, s1);
-            if (i != r) {
+            if (i != r && R->verbose) {
                 i = r;
                 if (r > 2) {
                     fprintf(stdout, "\rNo connection. Retry in %d second%s ... ",
@@ -505,10 +525,14 @@ void *transporter(void *in) {
             }
             usleep(200000);
         } while (R->wantActive && r < 10);
-        printf("\033[1K\r");
+        if (R->verbose) {
+            printf("\033[1K\r");
+        }
     }
 
-    printf("R->wantActive = %s\n", R->wantActive ? "true" : "false");
+    if (R->verbose) {
+        printf("R->wantActive = %s\n", R->wantActive ? "true" : "false");
+    }
 
     return NULL;
 }
@@ -523,8 +547,6 @@ RKWebsocket *RKWebsocketInit(const char *host, const char *path, const RKWebsock
     memset(R, 0, sizeof(RKWebsocket));
     pthread_attr_init(&R->threadAttributes);
     pthread_mutex_init(&R->lock, NULL);
-
-    printf("Using %s ...\n", host);
 
     c = strstr(host, ":");
     if (c == NULL) {
@@ -554,8 +576,6 @@ RKWebsocket *RKWebsocketInit(const char *host, const char *path, const RKWebsock
     }
     R->timeoutDeltaMicroseconds = RKWebsocketTimeoutDeltaMicroseconds;
     RKWebsocketSetPingInterval(R, RKWebsocketTimeoutThresholdSeconds);
-    printf("R->timeoutThreshold = %u (delta = %u us, %.2f seconds)\n",
-        R->timeoutThreshold, R->timeoutDeltaMicroseconds, RKWebsocketTimeoutThresholdSeconds);
 
     return R;
 }

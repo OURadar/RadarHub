@@ -151,30 +151,21 @@ Configure through the file `/etc/supervisor/conf.d/radarhub.conf` as:
 
 ```conf
 [fcgi-program:asgi]
-# TCP socket used by Nginx backend upstream
 socket=tcp://localhost:8000
-
-# Directory where your site's project files are located
 directory=/home/radarhub/app
+user=radarhub
 
-# Each process needs to have a separate socket file, so we use process_num
-# Make sure to update "mysite.asgi" to match your project name
 command=/home/radarhub/.pyenv/shims/python -m daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers radarhub.asgi:application
-
-# Number of processes to startup, roughly the number of CPUs you have
 numprocs=2
+process_name=radarhub_%(process_num)d
 
-# Give each process a unique name so they can be told apart
-process_name=radarhub%(process_num)d
-
-# Automatically start and recover processes
 autostart=true
 autorestart=true
 
-# Choose where you want your log to go
 stdout_logfile=/home/radarhub/log/frontend.log
 redirect_stderr=true
 ```
+
 and start as:
 
 ```shell
@@ -185,30 +176,63 @@ sudo supervisorctl start asgi:*
 
 ## Systemd
 
-Configure through the file `/etc/systemd/system/backhaul.service` as:
+Configure `backhaul` as a service through the file `/etc/systemd/system/backhaul.service` as:
 
 ```conf
 [Unit]
-Description=backhaul
+Description=Channels worker backhaul
 After=network.target
 
 [Service]
 WorkingDirectory=/home/radarhub/app
+User=radarhub
+Group=radarhub
 ExecStart=/home/radarhub/.pyenv/shims/python /home/radarhub/app/manage.py runworker backhaul
+StandardOutput=append:/home/radarhub/log/backhaul.log
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-and enable, check status, start, and stop it as:
+and enable, start, stop, and check status as:
 
 ```shell
 sudo systemctl enable backhaul
-sudo systemctl status backhaul
 sudo systemctl start backhaul
 sudo systemctl stop backhaul
+sudo systemctl status backhaul
 ```
+
+Configure `dgen` as a service through the file `/etc/systemd/system/dgen.service` as:
+
+```conf
+[Unit]
+Description=Data generator for RadarHub
+After=network.target
+
+[Service]
+WorkingDirectory=/home/radarhub/app
+User=radarhub
+Group=radarhub
+ExecStart=/home/radarhub/app/reporter/dgen
+StandardOutput=append:/home/radarhub/log/dgen.log
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+and enable, start, stop, and check status as:
+
+```shell
+sudo systemctl enable dgen
+sudo systemctl start dgen
+sudo systemctl stop dgen
+sudo systemctl status dgen
+```
+
+A convenient script `restart.sh` is included to restart all services in a proper sequence in order to prevent channels getting full.
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com

@@ -20,7 +20,6 @@
 #              text                text 
 #   
 
-from frontend.consumers import Radar
 import json
 import pprint
 import asyncio
@@ -30,7 +29,8 @@ import queue
 from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
-from reporter.cenums import RadarHubType
+from reporter.enums import RadarHubType
+from common import colorize
 
 verbose = 1
 user_channels = {}
@@ -61,7 +61,7 @@ def reset():
 
 async def _runloop(radar):
     global radar_channels
-    name = f'\033[38;5;214m{radar}\033[m'
+    name = colorize(radar, 'orange')
     if verbose:
         with lock:
             print(f'runloop {name} started')
@@ -69,20 +69,23 @@ async def _runloop(radar):
     # Make payload definition as one of the welcome messages
     radar_channels[radar]['welcome'][1] = b'\1' + bytearray(payload_types, 'utf-8')
     payload_queue = radar_channels[radar]['payloads']
-    pp.pprint(radar_channels[radar]['welcome'])
 
     # Now we just keep sending the group everything from the radar
     while radar_channels[radar]['channel']:
         qsize = payload_queue.qsize()
-        if qsize > 50:
-            print(f'{name} qsize = {qsize}')
+        if qsize > 80:
+            print(f'{name} qsize = {qsize}, purging ...')
+            while payload_queue.qsize() > 5:
+                payload_queue.get()
+                payload_queue.task_done()
         if not payload_queue.empty():
             payload = payload_queue.get()
             if verbose > 1:
-                tmp = payload
+                show = payload
                 if len(payload) > 30:
-                    tmp = f'{payload[:20]} ... {payload[-5:]}'
-                print(f'_runloop {qsize} {name} \033[38;5;154m{tmp}\033[m ({len(payload)})')
+                    show = f'{payload[:20]} ... {payload[-5:]}'
+                show = colorize(show, 'green')
+                print(f'_runloop {qsize} {name} {show} ({len(payload)})')
             await channel_layer.group_send(
                 radar,
                 {
@@ -138,14 +141,16 @@ class Backhaul(AsyncConsumer):
                 'radar': radar,
                 'streams': 'h'
             }
-            # Should replace with depending on requested streams.
+            # Should replace with somethign that depends on requested streams.
             # Proposed group name: radar + product, e.g., 
-            # - f'radar.{h}' for health
-            # - f'radar.{iq}' for iq
-            # - f'radar.{z}' for z (reflectivity)
+            # - f'{radar}-h' for health
+            # - f'{radar}-i' for scope iq (latest pulse)
+            # - f'{radar}-z' for z (reflectivity)
+            # - f'{radar}-v' for v (velocity)
             # - ...
             if verbose:
-                print(f'\033[38;5;87m{radar}\033[m + {channel}')
+                name = colorize(radar, 'teal')
+                print(f'{name} + {channel}')
                 print('user_channels =')
                 pp.pprint(user_channels)
 
@@ -177,7 +182,8 @@ class Backhaul(AsyncConsumer):
             with lock:
                 user_channels.pop(channel)
                 if verbose:
-                    print(f'\033[38;5;87m{radar}\033[m - {channel}')
+                    name = colorize(radar, 'teal')
+                    print(f'{name} - {channel}')
                     print('user_channels =')
                     pp.pprint(user_channels)
 
@@ -214,8 +220,8 @@ class Backhaul(AsyncConsumer):
                 'welcome': {}
             }
             if verbose:
-                self.name = f'\033[38;5;170m{radar}\033[m'
-                print(f'Added {self.name}, radar_channels =')
+                name = colorize(radar, 'pink')
+                print(f'Added {name}, radar_channels =')
                 pp.pprint(radar_channels)
 
         threading.Thread(target=runloop, args=(radar,)).start()
@@ -243,7 +249,8 @@ class Backhaul(AsyncConsumer):
                 radar_channels[radar]['commands'].join()
                 radar_channels[radar]['payloads'].join()
                 if verbose:
-                    print(f'Removed {self.name}, radar_channels =')
+                    name = colorize(radar, 'pink')
+                    print(f'Removed {name}, radar_channels =')
                     pp.pprint(radar_channels)
         elif radar not in radar_channels:
             print(f'Radar {radar} not found')
@@ -265,19 +272,21 @@ class Backhaul(AsyncConsumer):
 
         if verbose:
             with lock:
-                print(f'Backhaul.userMessage() - \033[38;5;154m{command}\033[m')
+                name = colorize(radar, 'teal')
+                text = colorize(command, 'green')
+                print(f'Backhaul.userMessage() {name} {text}')
 
         # Intercept the 's' commands, consolidate the data stream the update the
         # request from the radar. Everything else gets relayed to the radar and
         # the response is relayed to the user that triggered the Nexus event
         global radar_channels
         if radar not in radar_channels or radar_channels[radar]['channel'] is None:
-            print(f'Backhaul.userMessage() - {radar} not connected')
+            print(f'Backhaul.userMessage() {radar} not connected')
             await channel_layer.send(
                 channel,
                 {
                     'type': 'relayToUser',
-                    'message': f'{RadarHubType.Response}Radar not connected'
+                    'message': f'{RadarHubType.Response:c}Radar not connected'
                 }
             )
             return
@@ -303,11 +312,12 @@ class Backhaul(AsyncConsumer):
         payload = message['payload']
 
         if verbose > 1:
-            tmp = payload
+            show = payload
             if len(payload) > 30:
-                tmp = f'{payload[:20]} ... {payload[-5:]}'
+                show = f'{payload[:20]} ... {payload[-5:]}'
+            show = colorize(show, 'green')
             with lock:
-                print(f'Backhaul.radarMessage() \033[38;5;154m{tmp}\033[m ({len(payload)})')
+                print(f'Backhaul.radarMessage() {show} ({len(payload)})')
 
         # Look up the queue of this radar
         global radar_channels
@@ -321,8 +331,9 @@ class Backhaul(AsyncConsumer):
         if type == RadarHubType.Response:
             if verbose:
                 with lock:
-                    text = str(payload[1:], 'utf-8')
-                    print(f'Backhaul.radarMessage() - \033[38;5;154m{text}\033[m')
+                    name = colorize(radar, 'teal')
+                    show = colorize(payload[1:].decode('utf-8'), 'green')
+                    print(f'Backhaul.radarMessage() {name} {show}')
             # Relay the response to the user, FIFO
             command_queue = radar_channels[radar]['commands']
             user = command_queue.get()
