@@ -73,7 +73,7 @@ async def _runloop(radar):
     # Now we just keep sending the group everything from the radar
     while radar_channels[radar]['channel']:
         qsize = payload_queue.qsize()
-        if qsize > 50:
+        if qsize > 80:
             print(f'{name} qsize = {qsize}, purging ...')
             while payload_queue.qsize() > 5:
                 payload_queue.get()

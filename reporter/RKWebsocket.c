@@ -353,7 +353,9 @@ void *transporter(void *in) {
                         size = RKWebsocketFrameEncode(R->frame, RFC6455_OPCODE_BINARY, payload->source, payload->size);
                         r = RKSocketWrite(R, size);
                         if (r < 0) {
-                            fprintf(stderr, "Error. RKSocketWrite() = %d\n", r);
+                            if (R->verbose) {
+                                fprintf(stderr, "Error. RKSocketWrite() = %d\n", r);
+                            }
                             R->connected = false;
                             break;
                         } else if (r == 0) {
@@ -364,14 +366,19 @@ void *transporter(void *in) {
                     }
                 } else if (FD_ISSET(R->sd, &efd)) {
                     // Exceptions
-                    fprintf(stderr, "Error. Exceptions during write cycle.\n");
+                    if (R->verbose) {
+                        fprintf(stderr, "Error. Exceptions during write cycle.\n");
+                    }
                     break;
                 } else {
+                    // This shall not reach
                     printf("... w\n");
                 }
             } else if (r < 0) {
                 // Errors
-                fprintf(stderr, "Error. select() = %d during write cycle.\n", r);
+                if (R->verbose) {
+                    fprintf(stderr, "Error. select() = %d during write cycle.\n", r);
+                }
                 break;
             }
             //
@@ -392,7 +399,9 @@ void *transporter(void *in) {
                     // There is something to read
                     r = RKSocketRead(R, origin, RKWebsocketFrameSize);
                     if (r <= 0) {
-                        fprintf(stderr, "Error. RKSocketRead() = %d   origin = %u\n", r, origin);
+                        if (R->verbose) {
+                            fprintf(stderr, "Error. RKSocketRead() = %d   origin = %u\n", r, origin);
+                        }
                         R->connected = false;
                         break;
                     }
@@ -425,15 +434,20 @@ void *transporter(void *in) {
                     R->timeoutCount = 0;
                 } else if (FD_ISSET(R->sd, &efd)) {
                     // Exceptions
-                    fprintf(stderr, "Error. Exceptions during read cycle.\n");
+                    if (R->verbose) {
+                        fprintf(stderr, "Error. Exceptions during read cycle.\n");
+                    }
                     R->connected = false;
                     break;
                 } else {
+                    // This shall not reach
                     printf("... r\n");
                 }
             } else if (r < 0) {
                 // Errors
-                fprintf(stderr, "Error. select() = %d during read cycle.\n", r);
+                if (R->verbose) {
+                    fprintf(stderr, "Error. select() = %d during read cycle.\n", r);
+                }
                 R->connected = false;
                 break;
             } else {
@@ -484,7 +498,9 @@ void *transporter(void *in) {
             }
         } // while (R->wantActive && R->connected) ...
         if (R->sd) {
-            printf("Closing socket sd = %d ...\n", R->sd);
+            if (R->verbose) {
+                printf("Closing socket sd = %d ...\n", R->sd);
+            }
             if (R->onClose) {
                 R->onClose(R);
             }
@@ -496,7 +512,7 @@ void *transporter(void *in) {
         do {
             s0 = time(NULL);
             r = (int)difftime(s0, s1);
-            if (i != r) {
+            if (i != r && R->verbose) {
                 i = r;
                 if (r > 2) {
                     fprintf(stdout, "\rNo connection. Retry in %d second%s ... ",
@@ -509,10 +525,14 @@ void *transporter(void *in) {
             }
             usleep(200000);
         } while (R->wantActive && r < 10);
-        printf("\033[1K\r");
+        if (R->verbose) {
+            printf("\033[1K\r");
+        }
     }
 
-    printf("R->wantActive = %s\n", R->wantActive ? "true" : "false");
+    if (R->verbose) {
+        printf("R->wantActive = %s\n", R->wantActive ? "true" : "false");
+    }
 
     return NULL;
 }
