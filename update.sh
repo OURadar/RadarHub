@@ -10,12 +10,4 @@ cd reporter
 make -B
 cd -
 
-sudo supervisorctl stop asgi:*
-sudo systemctl stop backhaul
-
-sudo supervisorctl reread
-sudo supervisorctl update
-sudo systemctl daemon-reload
-
-sudo systemctl start backhaul
-sudo supervisorctl start asgi:*
+./update.sh
