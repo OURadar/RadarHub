@@ -21,14 +21,15 @@
 #include "common.h"
 #include "RKWebsocket.h"
 
+#define VERSION "0.4.1"
 #define HEALH_CAPACITY  4096
 
 typedef struct _reporter {
     RKWebsocket        *ws;
     RKWebsocketSSLFlag flag;
-    char               name[8];
-    char               host[80];
-    char               address[80];
+    char               name[64];
+    char               host[128];
+    char               address[128];
     char               welcome[256];
     char               control[2048];
     char               message[256];
@@ -283,12 +284,28 @@ void handleMessage(RKWebsocket *W, void *payload, size_t size) {
 static void showHelp() {
     char name[] = __FILE__;
     *strrchr(name, '.') = '\0';
-    printf("Data Generator\n\n"
-           "Options:\n\n"
-           "  -n, --name   sets the radar name\n"
-           "  -s, --ssl    enables SSL\n"
-           "  -v           increases verbosity level\n"
-           ""
+    printf("Data Generator for RadarHub\n"
+           "\n"
+           "dgen [options] [<address>:<port>]\n"
+           "\n"
+           "Examples:\n"
+           "    dgen -n lucy radarhub.arrc.ou.edu:443\n"
+           "    dgen -v -n bee radarhub.arrc.ou.edu:443\n"
+           "\n"
+           "OPTIONS:\n"
+           "     Unless specifically stated, all options are interpreted in sequence. Some\n"
+           "     options can be specified multiples times for repetitions. For example, the\n"
+           "     verbosity is increased by repeating the option multiple times.\n"
+           "\n"
+           "  -n, --name NAME        sets the radar name reporting to NAME.\n"
+           "                         If not specified, the default name is 'demo'.\n"
+           "\n"
+           "  -s, --ssl              forces SSL to be on. Otherwise, it is inferred from\n"
+           "                         the port nummber, i.e., 443 is on, else is off.\n"
+           "\n"
+           "  -v                     increases verbosity level.\n"
+           "\n"
+           "dgen (RadarHub v" VERSION ")\n"
            );
 }
 
@@ -304,7 +321,6 @@ int main(int argc, const char *argv[]) {
 
     // Command line options
     struct option options[] = {
-        {"alarm"             , no_argument      , NULL, 'A'},    // ASCII 65 - 90 : A - Z
         {"help"              , no_argument      , NULL, 'h'},
         {"name"              , required_argument, NULL, 'n'},
         {"ssl"               , no_argument      , NULL, 's'},
@@ -320,8 +336,6 @@ int main(int argc, const char *argv[]) {
     int opt, ind = 0;
     while ((opt = getopt_long(argc, (char * const *)argv, str, options, &ind)) != -1) {
         switch (opt) {
-            case 'A':
-                break;
             case 'h':
                 showHelp();
                 exit(EXIT_SUCCESS);
