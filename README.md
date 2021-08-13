@@ -166,7 +166,19 @@ stdout_logfile=/home/radarhub/log/frontend.log
 redirect_stderr=true
 ```
 
-and start as:
+Create the run directory for socket
+
+```shell
+sudo mkdir /run/daphne
+sudo chown <user>.<group> /run/daphne/
+```
+
+Configure the file to be created at each boot through `/usr/lib/tmpfiles.d/daphne.conf` as:
+```conf
+d /run/daphne 0755 <user> <group>
+```
+
+Start the service as:
 
 ```shell
 sudo supervisorctl reread
@@ -184,15 +196,21 @@ Description=Channels worker backhaul
 After=network.target
 
 [Service]
-WorkingDirectory=/home/radarhub/app
 User=radarhub
 Group=radarhub
+WorkingDirectory=/home/radarhub/app
 ExecStart=/home/radarhub/.pyenv/shims/python /home/radarhub/app/manage.py runworker backhaul
 StandardOutput=append:/home/radarhub/log/backhaul.log
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
+```
+
+and reload systemd as:
+
+```shell
+sudo systemctl daemon-reload
 ```
 
 and enable, start, stop, and check status as:
@@ -212,9 +230,9 @@ Description=Data generator for RadarHub
 After=network.target
 
 [Service]
-WorkingDirectory=/home/radarhub/app
 User=radarhub
 Group=radarhub
+WorkingDirectory=/home/radarhub/app
 ExecStart=/home/radarhub/app/reporter/dgen
 StandardOutput=append:/home/radarhub/log/dgen.log
 Restart=always
