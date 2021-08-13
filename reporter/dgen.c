@@ -21,8 +21,11 @@
 #include "common.h"
 #include "RKWebsocket.h"
 
-#define VERSION "0.4.1"
 #define HEALH_CAPACITY  4096
+
+#ifndef VERSION
+#define VERSION "0.1"
+#endif
 
 typedef struct _reporter {
     RKWebsocket        *ws;

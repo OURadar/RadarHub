@@ -2,8 +2,9 @@ KERNEL := $(shell uname)
 MACHINE := $(shell uname -m)
 KERNEL_VER := $(shell uname -v)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+PROJECT_VER := $(shell python version.py)
 
-CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I./ -I/usr/local/include
+CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I./ -I/usr/local/include -DVERSION=\"$(PROJECT_VER)\"
 LDFLAGS = -L./ -L/usr/local/lib
 
 OBJS = common.o RKWebsocket.o
@@ -40,6 +41,7 @@ showinfo:
 	@echo $(ECHO_FLAG) "KERNEL = \033[38;5;15m$(KERNEL)\033[0m"
 	@echo $(ECHO_FLAG) "MACHINE = \033[38;5;220m$(MACHINE)\033[0m"
 	@echo $(ECHO_FLAG) "GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[0m"
+	@echo $(ECHO_FLAG) "PROJECT_VER = \033[38;5;214m$(PROJECT_VER)\033[0m"
 
 $(OBJS_PATH):
 	mkdir -p $@
