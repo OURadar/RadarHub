@@ -19,7 +19,7 @@
 
 #include "types.h"
 #include "common.h"
-#include "RKWebsocket.h"
+#include "RKWebSocket.h"
 
 #define HEALH_CAPACITY  4096
 
@@ -28,8 +28,8 @@
 #endif
 
 typedef struct _reporter {
-    RKWebsocket        *ws;
-    RKWebsocketSSLFlag flag;
+    RKWebSocket        *ws;
+    RKWebSocketSSLFlag flag;
     char               name[64];
     char               host[128];
     char               address[128];
@@ -171,11 +171,11 @@ void *run(void *in) {
             }
             x++;
         }
-        RKWebsocketSend(R->ws, payload, pulseCapacity);
+        RKWebSocketSend(R->ws, payload, pulseCapacity);
 
         if (j % ht == 0) {
             payload = (char *)(hbuf + (j / ht) % hdepth * HEALH_CAPACITY);
-            RKWebsocketSend(R->ws, payload, 1 + strlen(payload + 1));
+            RKWebSocketSend(R->ws, payload, 1 + strlen(payload + 1));
         }
 
         if (j % f == 0) {
@@ -198,7 +198,10 @@ void *run(void *in) {
     return NULL;
 }
 
-void handleOpen(RKWebsocket *w) {
+void handleOpen(RKWebSocket *w) {
+    if (R->verbose) {
+        printf("ONOPEN\n");
+    }
     int r;
     r = sprintf(R->welcome,
         "%c{"
@@ -206,7 +209,7 @@ void handleOpen(RKWebsocket *w) {
             "\"command\":\"radarConnect\""
         "}",
         RadarHubTypeHandshake, R->name);
-    RKWebsocketSend(R->ws, R->welcome, r);
+    RKWebSocketSend(R->ws, R->welcome, r);
     r = sprintf(R->control,
         "%c{"
             "\"name\": \"%s\", "
@@ -242,16 +245,16 @@ void handleOpen(RKWebsocket *w) {
             "]"
         "}",
         RadarHubTypeControl, R->name);
-    RKWebsocketSend(R->ws, R->control, strlen(R->control));
+    RKWebSocketSend(R->ws, R->control, strlen(R->control));
 }
 
-void handleClose(RKWebsocket *W) {
+void handleClose(RKWebSocket *W) {
     if (R->verbose) {
         printf("ONCLOSE\n");
     }
 }
 
-void handleMessage(RKWebsocket *W, void *payload, size_t size) {
+void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     if (R->verbose) {
         printf("ONMESSAGE \033[38;5;228m%s\033[m\n", (char *)payload);
     }
@@ -279,9 +282,9 @@ void handleMessage(RKWebsocket *W, void *payload, size_t size) {
         r = sprintf(R->message, "%cNAK %s", RadarHubTypeResponse, (char *)payload);
     }
     if (R->verbose) {
-        printf("REPLY %s (%d)\n", R->message, r);
+        printf("REPLY \033[38;5;154m%s\033[m (%d)\n", R->message, r);
     }
-    RKWebsocketSend(R->ws, R->message, r);
+    RKWebSocketSend(R->ws, R->message, r);
 }
 
 static void showHelp() {
@@ -308,7 +311,8 @@ static void showHelp() {
            "\n"
            "  -v                     increases verbosity level.\n"
            "\n"
-           "dgen (RadarHub v" VERSION ")\n"
+           "%s (RadarHub v" VERSION ")\n",
+           name
            );
 }
 
@@ -346,7 +350,7 @@ int main(int argc, const char *argv[]) {
                 strcpy(R->name, optarg);
                 break;
             case 's':
-                R->flag = RKWebsocketSSLOn;
+                R->flag = RKWebSocketSSLOn;
                 break;
             case 'v':
                 R->verbose++;
@@ -364,16 +368,16 @@ int main(int argc, const char *argv[]) {
 
     sprintf(R->address, "/ws/radar/%s/", R->name);
 
-    R->ws = RKWebsocketInit(R->host, R->address, R->flag);
-    RKWebsocketSetOpenHandler(R->ws, &handleOpen);
-    RKWebsocketSetCloseHandler(R->ws, &handleClose);
-    RKWebsocketSetMessageHandler(R->ws, &handleMessage);
+    R->ws = RKWebSocketInit(R->host, R->address, R->flag);
+    RKWebSocketSetOpenHandler(R->ws, &handleOpen);
+    RKWebSocketSetCloseHandler(R->ws, &handleClose);
+    RKWebSocketSetMessageHandler(R->ws, &handleMessage);
     R->ws->verbose = R->verbose;
 
     // Catch Ctrl-C and some signals alternative handling
     signal(SIGINT, handleSignals);
 
-    RKWebsocketStart(R->ws);
+    RKWebSocketStart(R->ws);
 
     pthread_t tid;
     pthread_create(&tid, NULL, run, NULL);
@@ -382,8 +386,8 @@ int main(int argc, const char *argv[]) {
         usleep(100000);
     }
 
-    RKWebsocketStop(R->ws);
-    RKWebsocketFree(R->ws);
+    RKWebSocketStop(R->ws);
+    RKWebSocketFree(R->ws);
 
     free(R);
 

@@ -7,7 +7,7 @@ PROJECT_VER := $(shell python version.py)
 CFLAGS = -std=gnu99 -O2 -Wall -Wno-unknown-pragmas -I./ -I/usr/local/include -DVERSION=\"$(PROJECT_VER)\"
 LDFLAGS = -L./ -L/usr/local/lib
 
-OBJS = common.o RKWebsocket.o
+OBJS = common.o RKWebSocket.o
 OBJS_PATH = objects
 OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 

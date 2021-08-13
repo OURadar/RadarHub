@@ -1,12 +1,12 @@
 //
-//  RKWebsocket.c
+//  RKWebSocket.c
 //  RadarHub
 //
 //  Created by Boonleng Cheong on 8/3/2021.
 //  Copyright (c) 2021 Boonleng Cheong. All rights reserved.
 //
 
-#include <RKWebsocket.h>
+#include "RKWebSocket.h"
 
 #pragma mark - Static Methods
 
@@ -29,21 +29,21 @@ static char *RKGetHandshakeArgument(const char *buf, const char *key) {
     return argument;
 }
 
-static int RKSocketRead(RKWebsocket *R, uint32_t origin, size_t size) {
+static int RKSocketRead(RKWebSocket *R, uint32_t origin, size_t size) {
     if (R->useSSL) {
         return SSL_read(R->ssl, R->frame + origin, size);
     }
     return (int)read(R->sd,R->frame + origin, size);
 }
 
-static int RKSocketWrite(RKWebsocket *R, size_t size) {
+static int RKSocketWrite(RKWebSocket *R, size_t size) {
     if (R->useSSL) {
         return SSL_write(R->ssl, R->frame, size);
     }
     return (int)write(R->sd, R->frame, size);
 }
 
-static size_t RKWebsocketFrameEncode(void *buf, RFC6455_OPCODE code, const void *src, size_t size) {
+static size_t RKWebSocketFrameEncode(void *buf, RFC6455_OPCODE code, const void *src, size_t size) {
     size_t r;
     ws_frame_header *h = buf;
     memset(h, 0, sizeof(ws_frame_header));
@@ -63,9 +63,9 @@ static size_t RKWebsocketFrameEncode(void *buf, RFC6455_OPCODE code, const void 
     if (r > 65535) {
         h->len = 127;
         // Frame header can be up to 10 bytes
-        if (r > RKWebsocketFrameSize - 10) {
-            r = RKWebsocketFrameSize - 10;
-            fprintf(stderr, "I am limited to %d bytes\n", RKWebsocketFrameSize - 10);
+        if (r > RKWebSocketFrameSize - 10) {
+            r = RKWebSocketFrameSize - 10;
+            fprintf(stderr, "I am limited to %d bytes\n", RKWebSocketFrameSize - 10);
         }
         *((uint64_t *)payload) = htonll((uint64_t)r);
         payload += 8;
@@ -95,7 +95,7 @@ static size_t RKWebsocketFrameEncode(void *buf, RFC6455_OPCODE code, const void 
     return r;
 }
 
-static size_t RKWebsocketFrameDecode(void **dst, void *buf) {
+static size_t RKWebSocketFrameDecode(void **dst, void *buf) {
     size_t r;
     ws_frame_header *h = (ws_frame_header *)buf;
     char *payload = buf + sizeof(ws_frame_header);
@@ -119,7 +119,7 @@ static size_t RKWebsocketFrameDecode(void **dst, void *buf) {
     return r;
 }
 
-static size_t RKWebsocketFrameGetTargetSize(void *buf) {
+static size_t RKWebSocketFrameGetTargetSize(void *buf) {
     size_t r = sizeof(ws_frame_header);
     void *xlen = buf + sizeof(ws_frame_header);
     ws_frame_header *h = (ws_frame_header *)buf;
@@ -133,8 +133,8 @@ static size_t RKWebsocketFrameGetTargetSize(void *buf) {
     return r;
 }
 
-static int RKWebsocketPingPong(RKWebsocket *R, const bool ping, const char *message, const int len) {
-    size_t size = RKWebsocketFrameEncode(R->frame,
+static int RKWebSocketPingPong(RKWebSocket *R, const bool ping, const char *message, const int len) {
+    size_t size = RKWebSocketFrameEncode(R->frame,
         ping ? RFC6455_OPCODE_PING : RFC6455_OPCODE_PONG,
         message, message == NULL ? 0 : (len == 0 ? strlen(message) : len));
     int r = RKSocketWrite(R, size);
@@ -146,15 +146,15 @@ static int RKWebsocketPingPong(RKWebsocket *R, const bool ping, const char *mess
     return r;
 }
 
-static int RKWebsocketPing(RKWebsocket *R, const char *message, const int len) {
-    return RKWebsocketPingPong(R, true, message, len);
+static int RKWebSocketPing(RKWebSocket *R, const char *message, const int len) {
+    return RKWebSocketPingPong(R, true, message, len);
 }
 
-static int RKWebsocketPong(RKWebsocket *R, const char *message, const int len) {
-    return RKWebsocketPingPong(R, false, message, len);
+static int RKWebSocketPong(RKWebSocket *R, const char *message, const int len) {
+    return RKWebSocketPingPong(R, false, message, len);
 }
 
-static void RKShowWebsocketFrameHeader(RKWebsocket *R) {
+static void RKShowWebsocketFrameHeader(RKWebSocket *R) {
     uint8_t *c = (uint8_t *)R->frame;
     ws_frame_header *h = (ws_frame_header *)c;
     if (h->mask) {
@@ -173,7 +173,7 @@ static void RKShowWebsocketFrameHeader(RKWebsocket *R) {
     }
 }
 
-static int RKWebsocketConnect(RKWebsocket *R) {
+static int RKWebSocketConnect(RKWebSocket *R) {
     int r;
     char *c;
     struct hostent *entry = gethostbyname(R->host);
@@ -243,7 +243,7 @@ static int RKWebsocketConnect(RKWebsocket *R) {
 
     RKSocketWrite(R, strlen(buf));
     do {
-        r = RKSocketRead(R, r, RKWebsocketFrameSize - r);
+        r = RKSocketRead(R, r, RKWebSocketFrameSize - r);
     } while (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL);
     if (r < 0) {
         fprintf(stderr, "Error during handshake.\n");
@@ -289,17 +289,13 @@ static int RKWebsocketConnect(RKWebsocket *R) {
 
     R->connected = true;
 
-    if (R->verbose) {
-        printf("CONNECTED\n");
-    }
-
     return 0;
 }
 
 #pragma mark - Internal run loops
 
 void *transporter(void *in) {
-    RKWebsocket *R = (RKWebsocket *)in;
+    RKWebSocket *R = (RKWebSocket *)in;
 
     int i, r;
     void *anchor;
@@ -320,7 +316,7 @@ void *transporter(void *in) {
 
     while (R->wantActive) {
 
-        RKWebsocketConnect(R);
+        RKWebSocketConnect(R);
 
         // Run loop for read and write
         while (R->wantActive && R->connected) {
@@ -340,8 +336,8 @@ void *transporter(void *in) {
                 if (FD_ISSET(R->sd, &wfd)) {
                     // Ready to write. Keep sending the payloads until the tail catches up
                     while (R->payloadTail != R->payloadHead) {
-                        uint16_t tail = R->payloadTail == RKWebsocketPayloadDepth - 1 ? 0 : R->payloadTail + 1;
-                        const RKWebsocketPayload *payload = &R->payloads[tail];
+                        uint16_t tail = R->payloadTail == RKWebSocketPayloadDepth - 1 ? 0 : R->payloadTail + 1;
+                        const RKWebSocketPayload *payload = &R->payloads[tail];
                         if (R->verbose > 2) {
                             if (payload->size < 64) {
                                 binaryString(message, payload->source, payload->size);
@@ -350,7 +346,7 @@ void *transporter(void *in) {
                             }
                             printf("WRITE \033[38;5;154m%s\033[m (%zu)\n", message, payload->size);
                         }
-                        size = RKWebsocketFrameEncode(R->frame, RFC6455_OPCODE_BINARY, payload->source, payload->size);
+                        size = RKWebSocketFrameEncode(R->frame, RFC6455_OPCODE_BINARY, payload->source, payload->size);
                         r = RKSocketWrite(R, size);
                         if (r < 0) {
                             if (R->verbose) {
@@ -397,7 +393,7 @@ void *transporter(void *in) {
             if (r > 0) {
                 if (FD_ISSET(R->sd, &rfd)) {
                     // There is something to read
-                    r = RKSocketRead(R, origin, RKWebsocketFrameSize);
+                    r = RKSocketRead(R, origin, RKWebSocketFrameSize);
                     if (r <= 0) {
                         if (R->verbose) {
                             fprintf(stderr, "Error. RKSocketRead() = %d   origin = %u\n", r, origin);
@@ -406,7 +402,7 @@ void *transporter(void *in) {
                         break;
                     }
                     if (origin == 0) {
-                        targetFrameSize = RKWebsocketFrameGetTargetSize(R->frame);
+                        targetFrameSize = RKWebSocketFrameGetTargetSize(R->frame);
                         total = r;
                     } else {
                         total += r;
@@ -417,7 +413,7 @@ void *transporter(void *in) {
                     } else {
                         origin = 0;
                     }
-                    size = RKWebsocketFrameDecode((void **)&anchor, R->frame);
+                    size = RKWebSocketFrameDecode((void **)&anchor, R->frame);
                     if (!h->fin) {
                         fprintf(stderr, "I need upgrade!\n"
                                         "I need upgrade!\n"
@@ -455,7 +451,7 @@ void *transporter(void *in) {
                 if (R->timeoutCount++ >= R->timeoutThreshold) {
                     R->timeoutCount = 0;
                     char *word = words[rand() % 8];
-                    r = RKWebsocketPing(R, word, strlen(word));
+                    r = RKWebSocketPing(R, word, strlen(word));
                     if (R->verbose > 1) {
                         ws_mask_key key = {.u32 = *((uint32_t *)&R->frame[2])};
                         for (i = 0; i < 4; i++) {
@@ -473,7 +469,7 @@ void *transporter(void *in) {
                 if (h->opcode == RFC6455_OPCODE_PING) {
                     // Make a copy since payload --> R->buf or the behavior is unpredictable
                     memcpy(message, anchor, h->len); message[h->len] = '\0';
-                    RKWebsocketPong(R, message, h->len);
+                    RKWebSocketPong(R, message, h->len);
                     if (R->verbose > 1) {
                         ws_mask_key key = {.u32 = *((uint32_t *)&R->frame[2])};
                         for (i = 0; i < 4; i++) {
@@ -515,13 +511,12 @@ void *transporter(void *in) {
             if (i != r && R->verbose) {
                 i = r;
                 if (r > 2) {
-                    fprintf(stdout, "\rNo connection. Retry in %d second%s ... ",
+                    printf("\rNo connection. Retry in %d second%s ... ",
                         10 - r, 10 - r > 1 ? "s" : "");
-                    fflush(stdout);
                 } else {
-                    fprintf(stdout, "\rNo connection.");
-                    fflush(stdout);
+                    printf("\rNo connection.");
                 }
+                fflush(stdout);
             }
             usleep(200000);
         } while (R->wantActive && r < 10);
@@ -539,12 +534,12 @@ void *transporter(void *in) {
 
 #pragma mark - Life Cycle
 
-RKWebsocket *RKWebsocketInit(const char *host, const char *path, const RKWebsocketSSLFlag flag) {
+RKWebSocket *RKWebSocketInit(const char *host, const char *path, const RKWebSocketSSLFlag flag) {
     char *c;
     size_t len;
 
-    RKWebsocket *R = (RKWebsocket *)malloc(sizeof(RKWebsocket));
-    memset(R, 0, sizeof(RKWebsocket));
+    RKWebSocket *R = (RKWebSocket *)malloc(sizeof(RKWebSocket));
+    memset(R, 0, sizeof(RKWebSocket));
     pthread_attr_init(&R->threadAttributes);
     pthread_mutex_init(&R->lock, NULL);
 
@@ -563,10 +558,10 @@ RKWebsocket *RKWebsocketInit(const char *host, const char *path, const RKWebsock
     } else {
         strcpy(R->path, path);
     }
-    if (flag == RKWebsocketSSLAuto) {
+    if (flag == RKWebSocketSSLAuto) {
         R->useSSL = R->port == 443;
     } else {
-        R->useSSL = flag == RKWebsocketSSLOn;
+        R->useSSL = flag == RKWebSocketSSLOn;
     }
     if (R->useSSL) {
         SSL_library_init();
@@ -574,13 +569,13 @@ RKWebsocket *RKWebsocketInit(const char *host, const char *path, const RKWebsock
         R->sslContext = SSL_CTX_new(SSLv23_method());
         R->ssl = SSL_new(R->sslContext);
     }
-    R->timeoutDeltaMicroseconds = RKWebsocketTimeoutDeltaMicroseconds;
-    RKWebsocketSetPingInterval(R, RKWebsocketTimeoutThresholdSeconds);
+    R->timeoutDeltaMicroseconds = RKWebSocketTimeoutDeltaMicroseconds;
+    RKWebSocketSetPingInterval(R, RKWebSocketTimeoutThresholdSeconds);
 
     return R;
 }
 
-void RKWebsocketFree(RKWebsocket *R) {
+void RKWebSocketFree(RKWebSocket *R) {
     pthread_attr_destroy(&R->threadAttributes);
     pthread_mutex_destroy(&R->lock);
     free(R);
@@ -588,33 +583,33 @@ void RKWebsocketFree(RKWebsocket *R) {
 
 #pragma mark - Properties
 
-void RKWebsocketSetPath(RKWebsocket *R, const char *path) {
+void RKWebSocketSetPath(RKWebSocket *R, const char *path) {
     strcpy(R->path, path);
 }
 
-void RKWebsocketSetPingInterval(RKWebsocket *R, const float period) {
+void RKWebSocketSetPingInterval(RKWebSocket *R, const float period) {
     R->timeoutThreshold = (useconds_t)(period * 1.0e6f) / R->timeoutDeltaMicroseconds;
 }
 
-void RKWebsocketSetOpenHandler(RKWebsocket *R, void (*routine)(RKWebsocket *)) {
+void RKWebSocketSetOpenHandler(RKWebSocket *R, void (*routine)(RKWebSocket *)) {
     R->onOpen = routine;
 }
 
-void RKWebsocketSetCloseHandler(RKWebsocket *R, void (*routine)(RKWebsocket *)) {
+void RKWebSocketSetCloseHandler(RKWebSocket *R, void (*routine)(RKWebSocket *)) {
     R->onClose = routine;
 }
 
-void RKWebsocketSetMessageHandler(RKWebsocket *R, void (*routine)(RKWebsocket *, void *, size_t)) {
+void RKWebSocketSetMessageHandler(RKWebSocket *R, void (*routine)(RKWebSocket *, void *, size_t)) {
     R->onMessage = routine;
 }
 
-void RKWebsocketSetErrorHandler(RKWebsocket *R, void (*routine)(RKWebsocket *)) {
+void RKWebSocketSetErrorHandler(RKWebSocket *R, void (*routine)(RKWebSocket *)) {
     R->onError = routine;
 }
 
 #pragma mark - Methods
 
-void RKWebsocketStart(RKWebsocket *R) {
+void RKWebSocketStart(RKWebSocket *R) {
     pthread_mutex_lock(&R->lock);
     R->wantActive = true;
     pthread_mutex_unlock(&R->lock);
@@ -624,25 +619,25 @@ void RKWebsocketStart(RKWebsocket *R) {
     return;
 }
 
-void RKWebsocketStop(RKWebsocket *R) {
+void RKWebSocketStop(RKWebSocket *R) {
     pthread_mutex_lock(&R->lock);
     R->wantActive = false;
     pthread_mutex_unlock(&R->lock);
     pthread_join(R->threadId, NULL);
 }
 
-void RKWebsocketWait(RKWebsocket *R) {
+void RKWebSocketWait(RKWebSocket *R) {
     int k = 0;
     while (R->payloadTail != R->payloadHead && k++ < 10) {
         usleep(50000);
     }
 }
 
-// RKWebsocketSend() does not make a copy of the source.
+// RKWebSocketSend() does not make a copy of the source.
 // The input source must be allocated using malloc() or similar variants.
-int RKWebsocketSend(RKWebsocket *R, void *source, size_t size) {
+int RKWebSocketSend(RKWebSocket *R, void *source, size_t size) {
     pthread_mutex_lock(&R->lock);
-    uint16_t k = R->payloadHead == RKWebsocketPayloadDepth - 1 ? 0 : R->payloadHead + 1;
+    uint16_t k = R->payloadHead == RKWebSocketPayloadDepth - 1 ? 0 : R->payloadHead + 1;
     R->payloads[k].source = source;
     R->payloads[k].size = size;
     R->payloadHead = k;

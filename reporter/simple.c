@@ -6,12 +6,12 @@
 
 #include "types.h"
 #include "common.h"
-#include "RKWebsocket.h"
+#include "RKWebSocket.h"
 
 #define RADAR "rose"
 
 typedef struct _reporter {
-    RKWebsocket      *ws;
+    RKWebSocket      *ws;
     char             welcome[256];
     bool             wantActive;
     bool             connected;
@@ -56,7 +56,7 @@ void *run(void *in) {
         uint8_t *payload = &blob[j * len];
         j = (j + 1) % 10;
 
-        RKWebsocketSend(R->ws, payload, len);
+        RKWebSocketSend(R->ws, payload, len);
         usleep(s);
     }
 
@@ -64,12 +64,12 @@ void *run(void *in) {
     return NULL;
 }
 
-void handleOpen(RKWebsocket *W) {
+void handleOpen(RKWebSocket *W) {
     int r = sprintf(R->welcome, "\1{\"radar\":\"" RADAR "\",\"command\":\"radarConnect\"}");
-    RKWebsocketSend(W, R->welcome, r);
+    RKWebSocketSend(W, R->welcome, r);
 }
 
-void handleMessage(RKWebsocket *W, void *payload, size_t size) {
+void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     // printf("message = %s\n", (char *)payload);
     if (strstr(payload, "Welcome")) {
         R->connected = true;
@@ -82,19 +82,19 @@ int main(int argc, const char *argv[]) {
     R->wantActive = true;
 
     if (argc == 1) {
-        R->ws = RKWebsocketInit("localhost:8000", "/ws/radar/" RADAR "/", RKWebsocketSSLOff);
+        R->ws = RKWebSocketInit("localhost:8000", "/ws/radar/" RADAR "/", RKWebSocketSSLOff);
     } else {
-        R->ws = RKWebsocketInit(argv[1], "/ws/radar/" RADAR "/", RKWebsocketSSLAuto);
+        R->ws = RKWebSocketInit(argv[1], "/ws/radar/" RADAR "/", RKWebSocketSSLAuto);
     }
 
-    RKWebsocketSetOpenHandler(R->ws, &handleOpen);
-    RKWebsocketSetMessageHandler(R->ws, &handleMessage);
+    RKWebSocketSetOpenHandler(R->ws, &handleOpen);
+    RKWebSocketSetMessageHandler(R->ws, &handleMessage);
     R->ws->verbose = 2;
 
     // Catch Ctrl-C and some signals alternative handling
     signal(SIGINT, handleSignals);
 
-    RKWebsocketStart(R->ws);
+    RKWebSocketStart(R->ws);
 
     pthread_t tid;
     pthread_create(&tid, NULL, run, NULL);
@@ -103,8 +103,8 @@ int main(int argc, const char *argv[]) {
         usleep(100000);
     }
 
-    RKWebsocketStop(R->ws);
-    RKWebsocketFree(R->ws);
+    RKWebSocketStop(R->ws);
+    RKWebSocketFree(R->ws);
 
     free(R);
 
