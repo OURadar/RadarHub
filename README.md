@@ -196,6 +196,11 @@ autostart=true
 stdout_logfile=/home/radarhub/log/backhaul.log
 redirect_stderr=true
 priority=100
+
+[program:radarhub.dgen]
+user=radarhub
+command=/home/radarhub/app/reporter/dgen
+autostart=true
 ```
 
 Create the run directory for socket
@@ -217,42 +222,6 @@ Start the service as:
 sudo supervisorctl reread
 sudo supervisorctl update
 sudo supervisorctl start all
-```
-
-## Systemd
-
-Configure `dgen` as a service through the file `/etc/systemd/system/dgen.service` as:
-
-```conf
-[Unit]
-Description=Data generator for RadarHub
-After=network.target
-
-[Service]
-User=radarhub
-Group=radarhub
-WorkingDirectory=/home/radarhub/app
-ExecStart=/home/radarhub/app/reporter/dgen
-StandardOutput=append:/home/radarhub/log/dgen.log
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-and reload systemd as:
-
-```shell
-sudo systemctl daemon-reload
-```
-
-and enable, start, stop, and check status as:
-
-```shell
-sudo systemctl enable dgen
-sudo systemctl start dgen
-sudo systemctl stop dgen
-sudo systemctl status dgen
 ```
 
 A convenient script `restart.sh` is included to restart all services in a proper sequence in order to prevent channels getting full.
