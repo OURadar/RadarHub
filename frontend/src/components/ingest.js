@@ -36,9 +36,15 @@ class Ingest {
     this.onupdate = (_data) => {};
     this.enums = {
       Definition: 1,
-      Control: 2,
-      Health: 3,
-      Scope: 5,
+      Control: 0,
+      Health: 0,
+      Scope: 0,
+      RadialZ: 0,
+      RadialV: 0,
+      RadialW: 0,
+      RadialD: 0,
+      RadialP: 0,
+      RadialR: 0,
     };
 
     this.connect = this.connect.bind(this);

@@ -39,6 +39,26 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [ ] 0.9 Landing page, radar selection, etc.
 - [ ] 1.0 RadarKit communicates with RadarHub
 
+# Important Topics
+
+Here are some assumptions that developers should be aware of.
+
+## Data Types
+
+Currently defined in `reporter/types.h`, which is arguably a less optimal location. Perhaps the project root folder is better. Will revisit.
+
+In the C space, obviously you just include the header and you are done.
+
+In the Python space, a parser is made to retrieve everythin in the C header to a Python enums through `reporter/enums.py`. All the types will be in the convention of
+
+- `RadarHubType.Handshake`
+- `RadarHubType.Control`
+- `RadarHubType.Health`
+- `RadarHubType.Scope`
+- ...
+
+In the Javascript space, the definition is passed to the frontend upon a successful connection, the data ingest `frontend/src/components/ingest.js` expects keys like `Control`, `Health`, `Scope`, etc., which nicely maps to the enum names in the Python space.
+
 # Developing
 
 Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. The very first thing to do right after cloning the repository is to install the Python requirements and node dependencies, which can be accomplished as:
@@ -174,6 +194,7 @@ sudo chown <user>.<group> /run/daphne/
 ```
 
 Configure the file to be created at each boot through `/usr/lib/tmpfiles.d/daphne.conf` as:
+
 ```conf
 d /run/daphne 0755 <user> <group>
 ```
