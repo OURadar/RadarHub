@@ -101,11 +101,16 @@ Off you go, you should be able to view the RadarHub interface through a web brow
 
 # Deploying
 
-On a production server, the Ubuntu [nginx]-[supervisor] setup was recommended in [channels].
+On a production server, the Ubuntu [nginx]-[supervisor] setup was recommended in [channels]. A special account `radarhub` has been created to house the production version. The instructions here is based on the assumption that everything is stored under `/home/radarhub/app`. To make an optimized `main.js`, compile the components as:
+
+```shell
+cd frontend
+npm run build
+```
 
 ## Docker
 
-The websocket component depends on [redis] through docker:
+The WebSocket component depends on [redis] through [docker]:
 
 ```shell
 sudo docker run -d --restart unless-stopped -p 6379:6379 redis
@@ -190,13 +195,13 @@ Create the run directory for socket
 
 ```shell
 sudo mkdir /run/daphne
-sudo chown <user>.<group> /run/daphne/
+sudo chown radarhub.radarhub /run/daphne/
 ```
 
 Configure the file to be created at each boot through `/usr/lib/tmpfiles.d/daphne.conf` as:
 
 ```conf
-d /run/daphne 0755 <user> <group>
+d /run/daphne 0755 radarhub radarhub
 ```
 
 Start the service as:
