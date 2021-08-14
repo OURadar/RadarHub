@@ -55,9 +55,7 @@ async def _reset():
     )
 
 def reset():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(_reset())
+    asyncio.get_event_loop().run_until_complete(_reset())
 
 async def _runloop(radar):
     global radar_channels
@@ -101,10 +99,7 @@ async def _runloop(radar):
             print(f'runloop {name} retired')
 
 def runloop(radar):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(_runloop(radar))
-    loop.close()
+    asyncio.new_event_loop().run_until_complete(_runloop(radar))
 
 def consolidateStreams():
     allStreams = ''
