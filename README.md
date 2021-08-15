@@ -16,7 +16,7 @@ Some design constraints:
 - All input/output gets picked up by backhaul
 - Backhaul serves as the middle party to facilitate one-to-one or one-to-many messaging
 - Payloads from a radar get broadcast to all users in a specific group by worker _backhaul_
-- Radar reporter does not receive anything from the radar itself (different behavior than a chat room)
+- A radar reporter does not receive anything from the radar itself (different behavior than a chat room)
 
 # (Evolving) Concept of Operations
 
@@ -57,7 +57,7 @@ In the Python space, a parser is made to retrieve everythin in the C header to a
 - `RadarHubType.Scope`
 - ...
 
-In the Javascript space, the definition is passed to the frontend upon a successful connection, the data ingest `frontend/src/components/ingest.js` expects keys like `Control`, `Health`, `Scope`, etc., which nicely maps to the enum names in the Python space.
+In the Javascript space, the definition is passed to the frontend upon a successful connection, the data ingest `frontend/src/components/ingest.js` expects keys like `Control`, `Health`, `Scope`, etc., which nicely maps to the enum names in the C and Python spaces.
 
 # Developing
 
@@ -70,7 +70,7 @@ cd frontend
 npm install
 ```
 
-Be sure to have [redis] going for the [channels] module every you rebooted the machine.
+Be sure to have [redis] going for the [channels] module every time you reboot the machine.
 
 ```shell
 docker run -p 6379:6379 -d redis:6
@@ -101,7 +101,7 @@ Off you go, you should be able to view the RadarHub interface through a web brow
 
 # Deploying
 
-On a production server, the Ubuntu [nginx]-[supervisor] setup was recommended in [channels]. A special account `radarhub` has been created to house the production version. The instructions here is based on the assumption that everything is stored under `/home/radarhub/app`. To make an optimized `main.js`, compile the components as:
+On a production server, the Ubuntu [nginx]-[supervisor] setup was recommended in the [channels] documentation. A special account `radarhub` has been created to house the production codes. The instructions here is based on the assumption that everything is stored under `/home/radarhub/app`. To make an optimized `main.js`, compile the components as:
 
 ```shell
 cd frontend
