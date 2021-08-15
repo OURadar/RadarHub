@@ -19,10 +19,9 @@ fi
 ##############
 
 clear
-check_user_process radarhub dgen | textout "Processes" seagreen
+check_user_process radarhub python dgen | textout "Processes" seagreen
 echo
-systemctl status supervisor backhaul dgen --no-pager
+systemctl status supervisor --no-pager
 echo
 show_log_by_latest_line_count frontend 10 228
-#journalctl -n 10 -u backhaul.service | textout "Backhaul" 118
-
+show_log_by_latest_line_count backhaul 10 214

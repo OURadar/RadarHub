@@ -87,7 +87,7 @@ async def _runloop(radar):
             await channel_layer.group_send(
                 radar,
                 {
-                    'type': 'relayToUser',
+                    'type': 'messageUser',
                     'message': payload
                 }
             )
@@ -111,7 +111,26 @@ def consolidateStreams():
     return allStreams
 
 class Backhaul(AsyncConsumer):
-    # When a user connects from the GUI through User.connect()
+    # When a new user connects from the GUI through User.connect()
+    async def userInit(self, message):
+        if message.keys() < {'radar', 'channel'}:
+            print(f'Backhaul.userInit() incomplete message {message}')
+            return
+        radar = message['radar']
+        channel = message['channel']
+        client_ip = message['client_ip']
+        if verbose:
+            name = colorize(radar, 'teal')
+            print(f'Backhaul.userInit() accepting {client_ip} for {name} ...')
+        await channel_layer.send(
+            channel,
+            {
+                'type': 'acceptUser',
+                'radar': radar
+            }
+        )
+
+    # When a user requests to connect through User.receive()
     async def userConnect(self, message):
         if message.keys() < {'radar', 'channel'}:
             print(f'Backhaul.userConnect() incomplete message {message}')
@@ -157,7 +176,7 @@ class Backhaul(AsyncConsumer):
                 await channel_layer.send(
                     channel,
                     {
-                        'type': 'relayToUser',
+                        'type': 'messageUser',
                         'message': payload
                     }
                 )
@@ -187,7 +206,26 @@ class Backhaul(AsyncConsumer):
         else:
             print(f'User {channel} no longer exists')
 
-    # When a radar connects through Radar.connect()
+    async def radarInit(self, message):
+        # When a new radar connects from the websocket through Radar.connect()
+        if message.keys() < {'radar', 'channel'}:
+            print(f'Backhaul.radarInit() incomplete message {message}')
+            return
+        radar = message['radar']
+        channel = message['channel']
+        client_ip = message['client_ip']
+        if verbose:
+            name = colorize(radar, 'teal')
+            print(f'Backhaul.radarInit() accepting {name} from {client_ip} ...')
+        await channel_layer.send(
+            channel,
+            {
+                'type': 'acceptRadar',
+                'radar': radar
+            }
+        )
+
+    # When a radar requests to connect through Radar.receive()
     async def radarConnect(self, message):
         if message.keys() < {'radar', 'channel'}:
             print(f'Backhaul.radarConnect() incomplete message {message}')
@@ -224,7 +262,7 @@ class Backhaul(AsyncConsumer):
         await channel_layer.send(
             channel,
             {
-                'type': 'relayToRadar',
+                'type': 'messageRadar',
                 'message': f'Hello {radar}. Welcome to the RadarHub v{__version__}'
             }
         )
@@ -254,13 +292,11 @@ class Backhaul(AsyncConsumer):
                 print(f'Channel {channel} no match')
                 pp.pprint(radar_channels)
 
-
     # When a user interacts on the GUI through User.receive()
     async def userMessage(self, message):
         if message.keys() < {'radar', 'channel', 'command'}:
             print(f'Backhaul.userMessage() incomplete message {message}')
             return
-
         radar = message['radar']
         channel = message['channel']
         command = message['command']
@@ -280,7 +316,7 @@ class Backhaul(AsyncConsumer):
             await channel_layer.send(
                 channel,
                 {
-                    'type': 'relayToUser',
+                    'type': 'messageUser',
                     'message': f'{RadarHubType.Response:c}Radar not connected'
                 }
             )
@@ -291,7 +327,7 @@ class Backhaul(AsyncConsumer):
         await channel_layer.send(
             radar_channels[radar]['channel'],
             {
-                'type': 'relayToRadar',
+                'type': 'messageRadar',
                 'message': command
             }
         )
@@ -335,7 +371,7 @@ class Backhaul(AsyncConsumer):
             await channel_layer.send(
                 user,
                 {
-                    'type': 'relayToUser',
+                    'type': 'messageUser',
                     'message': payload,
                 }
             )

@@ -37,7 +37,16 @@ class Radar(AsyncWebsocketConsumer):
             print('Keyword "radar" is expected.')
             return await self.close()
         self.radar = self.scope['url_route']['kwargs']['radar']
-        await self.accept()
+        self.client_ip = self.scope['client'][0]
+        await self.channel_layer.send(
+            'backhaul',
+            {
+                'type': 'radarInit',
+                'radar': self.radar,
+                'channel': self.channel_name,
+                'client_ip': self.client_ip
+            }
+        )
 
     async def disconnect(self, code):
         await self.channel_layer.send(
@@ -112,14 +121,17 @@ class Radar(AsyncWebsocketConsumer):
                 }
             )
 
-    # The following methods are for backhaul
+    # The following methods are for Backhaul consumer
 
-    async def relayToRadar(self, event):
-        await self.send(text_data=event['message'])
+    async def acceptRadar(self, event):
+        await self.accept()
 
     async def disconnectRadar(self, event):
         await self.send(event['message'])
         await self.close()
+
+    async def messageRadar(self, event):
+        await self.send(text_data=event['message'])
 
 
 class User(AsyncWebsocketConsumer):
@@ -129,8 +141,16 @@ class User(AsyncWebsocketConsumer):
             return await self.close()
         self.radar = self.scope['url_route']['kwargs']['radar']
         self.client_ip = self.scope['client'][0]
-        print(f'User.connect() {self.client_ip}')
-        await self.accept()
+        # await self.accept()
+        await self.channel_layer.send(
+            'backhaul',
+            {
+                'type': 'userInit',
+                'radar': self.radar,
+                'channel': self.channel_name,
+                'client_ip': self.client_ip
+            }
+        )
 
     async def disconnect(self, code):
         await self.channel_layer.send(
@@ -161,7 +181,7 @@ class User(AsyncWebsocketConsumer):
             return
 
         if request.keys() < {'radar', 'command'}:
-            print('User.receive() incomplete message {request}')
+            print(f'User.receive() incomplete message {request}')
             return
 
         radar = request['radar']
@@ -182,8 +202,13 @@ class User(AsyncWebsocketConsumer):
 
     # The following methods are for backhaul
 
-    async def relayToUser(self, event):
-        await self.send(bytes_data=event['message'])
+    async def acceptUser(self, event):
+        await self.accept()
 
     async def disconnectUser(self, event):
+        await self.send(event['message'])
         await self.close()
+
+    async def messageUser(self, event):
+        await self.send(bytes_data=event['message'])
+
