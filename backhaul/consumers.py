@@ -64,8 +64,6 @@ async def _runloop(radar):
         with lock:
             print(f'runloop {name} started')
 
-    # Make payload definition as one of the welcome messages
-    radar_channels[radar]['welcome'][1] = b'\1' + bytearray(payload_types, 'utf-8')
     payload_queue = radar_channels[radar]['payloads']
 
     # Now we just keep sending the group everything from the radar
@@ -170,8 +168,16 @@ class Backhaul(AsyncConsumer):
 
             await channel_layer.group_add(radar, channel)
 
-        # Send the last seen payloads of all types as a welcome message
         if radar in radar_channels:
+            # Always send the type definition first
+            await channel_layer.send(
+                channel,
+                {
+                    'type': 'messageUser',
+                    'message': b'\1' + bytearray(payload_types, 'utf-8')
+                }
+            )
+            # Send the last seen payloads of all types as a welcome message
             for _, payload in radar_channels[radar]['welcome'].items():
                 await channel_layer.send(
                     channel,
