@@ -176,31 +176,35 @@ Configure through the file `/etc/supervisor/conf.d/radarhub.conf` as:
 
 ```conf
 [fcgi-program:radarhub.frontend]
-user=radarhub
-directory=/home/radarhub/app
-socket=tcp://localhost:8000
-command=/home/radarhub/.pyenv/shims/python -m daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers radarhub.asgi:application
-numprocs=2
-process_name=radarhub_%(process_num)d
-autostart=true
-autorestart=true
-stdout_logfile=/home/radarhub/log/frontend.log
-redirect_stderr=true
-priority=200
+user = radarhub
+directory = /home/radarhub/app
+environment = PYTHONUNBUFFERED=1
+socket = tcp://localhost:8000
+command = /home/radarhub/.pyenv/shims/python -m daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers radarhub.asgi:application
+numprocs = 2
+process_name = radarhub_%(process_num)d
+autostart = true
+autorestart = true
+stdout_logfile = /home/radarhub/log/frontend.log
+redirect_stderr = true
+priority = 200
 
 [program:radarhub.backhaul]
-user=radarhub
-directory=/home/radarhub/app
-command=/home/radarhub/.pyenv/shims/python /home/radarhub/app/manage.py runworker backhaul
-autostart=true
-stdout_logfile=/home/radarhub/log/backhaul.log
-redirect_stderr=true
-priority=100
+user = radarhub
+directory = /home/radarhub/app
+environment = PYTHONUNBUFFERED=1
+command = /home/radarhub/.pyenv/shims/python /home/radarhub/app/manage.py runworker backhaul
+autostart = true
+autorestart = true
+stdout_logfile = /home/radarhub/log/backhaul.log
+redirect_stderr = true
+priority = 100
 
 [program:radarhub.dgen]
-user=radarhub
-command=/home/radarhub/app/reporter/dgen
-autostart=true
+user = radarhub
+command = /home/radarhub/app/reporter/dgen
+autostart = true
+autorestart = true
 ```
 
 Create the run directory for socket
