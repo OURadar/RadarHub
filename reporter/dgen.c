@@ -350,7 +350,7 @@ int main(int argc, const char *argv[]) {
                 strcpy(R->name, optarg);
                 break;
             case 's':
-                R->flag = RKWebSocketSSLOn;
+                R->flag = RKWebSocketFlagSSLOn;
                 break;
             case 'v':
                 R->verbose++;

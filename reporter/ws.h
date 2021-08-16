@@ -17,7 +17,7 @@
 #include <stdbool.h>
 
 typedef uint8_t RFC6455_OPCODE;
-enum RFC6455_OPCODE {
+enum {
     RFC6455_OPCODE_CONTINUATION,
     RFC6455_OPCODE_TEXT,
     RFC6455_OPCODE_BINARY,

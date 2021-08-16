@@ -558,10 +558,10 @@ RKWebSocket *RKWebSocketInit(const char *host, const char *path, const RKWebSock
     } else {
         strcpy(R->path, path);
     }
-    if (flag == RKWebSocketSSLAuto) {
+    if (flag == RKWebSocketFlagSSLAuto) {
         R->useSSL = R->port == 443;
     } else {
-        R->useSSL = flag == RKWebSocketSSLOn;
+        R->useSSL = flag == RKWebSocketFlagSSLOn;
     }
     if (R->useSSL) {
         SSL_library_init();

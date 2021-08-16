@@ -45,10 +45,10 @@
 #endif
 
 typedef uint8_t RKWebSocketSSLFlag;
-enum RKWebSocketSSLFlag {
-    RKWebSocketSSLAuto,
-    RKWebSocketSSLOff,
-    RKWebSocketSSLOn
+enum RKWebSocketFlag {
+    RKWebSocketFlagSSLAuto,
+    RKWebSocketFlagSSLOff,
+    RKWebSocketFlagSSLOn
 };
 
 typedef struct rk_websocket_payload {

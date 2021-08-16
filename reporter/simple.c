@@ -82,9 +82,9 @@ int main(int argc, const char *argv[]) {
     R->wantActive = true;
 
     if (argc == 1) {
-        R->ws = RKWebSocketInit("localhost:8000", "/ws/radar/" RADAR "/", RKWebSocketSSLOff);
+        R->ws = RKWebSocketInit("localhost:8000", "/ws/radar/" RADAR "/", RKWebSocketFlagSSLOff);
     } else {
-        R->ws = RKWebSocketInit(argv[1], "/ws/radar/" RADAR "/", RKWebSocketSSLAuto);
+        R->ws = RKWebSocketInit(argv[1], "/ws/radar/" RADAR "/", RKWebSocketFlagSSLAuto);
     }
 
     RKWebSocketSetOpenHandler(R->ws, &handleOpen);
