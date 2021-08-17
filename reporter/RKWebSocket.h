@@ -45,7 +45,7 @@
 #endif
 
 typedef uint8_t RKWebSocketSSLFlag;
-enum RKWebSocketFlag {
+enum {
     RKWebSocketFlagSSLAuto,
     RKWebSocketFlagSSLOff,
     RKWebSocketFlagSSLOn
