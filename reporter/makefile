@@ -34,7 +34,7 @@ endif
 
 LDFLAGS += -lm -lssl -lpthread
 
-all: showinfo $(PROGS)
+all: showinfo radarhub.a $(PROGS)
 
 showinfo:
 	@echo $(ECHO_FLAG) "KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[0m"
@@ -42,6 +42,9 @@ showinfo:
 	@echo $(ECHO_FLAG) "MACHINE = \033[38;5;220m$(MACHINE)\033[0m"
 	@echo $(ECHO_FLAG) "GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[0m"
 	@echo $(ECHO_FLAG) "PROJECT_VER = \033[38;5;214m$(PROJECT_VER)\033[0m"
+
+radarhub.a: $(OBJS_WITH_PATH)
+	ar rvcs $@ $(OBJS_WITH_PATH)
 
 $(OBJS_PATH):
 	mkdir -p $@
