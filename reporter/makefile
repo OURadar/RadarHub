@@ -13,15 +13,6 @@ OBJS_WITH_PATH = $(addprefix $(OBJS_PATH)/, $(OBJS))
 
 PROGS = simple dgen
 
-# The command echo from macOS and Ubuntu needs no -e
-ECHO_FLAG = -e
-ifneq (, $(findstring Darwin, $(KERNEL_VER)))
-	ECHO_FLAG =
-endif
-ifneq (, $(findstring Ubuntu, $(KERNEL_VER)))
-	ECHO_FLAG =
-endif
-
 ifeq ($(KERNEL), Darwin)
 	# macOS
 	CC = clang -o myTool-x86_64 -arch x86_64
@@ -37,13 +28,14 @@ LDFLAGS += -lm -lssl -lpthread
 all: showinfo radarhub.a $(PROGS)
 
 showinfo:
-	@echo $(ECHO_FLAG) "KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[0m"
-	@echo $(ECHO_FLAG) "KERNEL = \033[38;5;15m$(KERNEL)\033[0m"
-	@echo $(ECHO_FLAG) "MACHINE = \033[38;5;220m$(MACHINE)\033[0m"
-	@echo $(ECHO_FLAG) "GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[0m"
-	@echo $(ECHO_FLAG) "PROJECT_VER = \033[38;5;214m$(PROJECT_VER)\033[0m"
+	@echo "KERNEL_VER = \033[38;5;15m$(KERNEL_VER)\033[0m"
+	@echo "KERNEL = \033[38;5;15m$(KERNEL)\033[0m"
+	@echo "MACHINE = \033[38;5;220m$(MACHINE)\033[0m"
+	@echo "GIT_BRANCH = \033[38;5;46m$(GIT_BRANCH)\033[0m"
+	@echo "PROJECT_VER = \033[38;5;214m$(PROJECT_VER)\033[0m"
 
 radarhub.a: $(OBJS_WITH_PATH)
+	@echo "\033[38;5;141m$@\033[m"
 	ar rvcs $@ $(OBJS_WITH_PATH)
 
 $(OBJS_PATH):
@@ -53,11 +45,7 @@ $(OBJS_PATH)/%.o: %.c | $(OBJS_PATH)
 	$(CC) $(CFLAGS) -I headers/ -c $< -o $@
 
 $(PROGS): %: %.c $(OBJS_WITH_PATH)
-ifeq ($(KERNEL), Darwin)
 	@echo "\033[38;5;45m$@\033[m"
-else
-	@echo $(ECHO_FLAG) "\033[38;5;45m$@\033[m"
-endif
 	$(CC) $(CFLAGS) -o $@ $< $(OBJS_WITH_PATH) $(LDFLAGS)
 
 clean:
