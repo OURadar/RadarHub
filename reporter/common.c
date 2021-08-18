@@ -23,3 +23,19 @@ void headTailBinaryString(char *dst, void *src, size_t count) {
     char *tail = binaryString(dst, src, 25);
     binaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
 }
+
+double_float_t single2double(single_float_t s) {
+    double_float_t d;
+    d.s = s.s;
+    d.e = s.e == 0 ? 0 : (((int16_t)s.e - 127) & 0x7FF) + 1023;
+    d.m = (uint64_t)s.m << 29;
+    return d;
+}
+
+single_float_t half2single(half_float_t s) {
+    single_float_t d;
+    d.s = s.s;
+    d.e = s.e == 0 ? 0 : (((int8_t)s.e - 15) & 0xFF) + 127;
+    d.m = (uint16_t)s.m << 13;
+    return d;
+}
