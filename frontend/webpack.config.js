@@ -1,8 +1,15 @@
 const path = require("path");
 
 module.exports = {
-  entry: "./src/index.js",
+  entry: {
+    main: {
+      import: "./src/index.js",
+      dependOn: "shared",
+    },
+    shared: ["react", "react-dom", "regl", "gl-matrix", "stats-js"],
+  },
   output: {
+    filename: "[name].js",
     path: path.resolve(__dirname, "static/frontend"),
   },
   module: {
