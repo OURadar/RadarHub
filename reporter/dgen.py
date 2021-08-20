@@ -1,3 +1,4 @@
+import threading
 import time
 # from io import open_code
 import websocket
@@ -18,100 +19,12 @@ healthString = [
 
 controlString = '{"name": "demo", "Controls": [{"Label": "Go", "Command": "t y"}, {"Label": "Stop", "Command": "t z"}, {"Label": "PRF 1,000 Hz (84 km)", "Command": "t prf 1000"}, {"Label": "PRF 1,475 Hz (75 km)", "Command": "t prf 1475"}, {"Label": "PRF 2,000 Hz (65 km)", "Command": "t prf 2000"}, {"Label": "PRF 3,000 Hz (40 km)", "Command": "t prf 3003"}, {"Label": "PRF 4,000 Hz (28 km)", "Command": "t prf 4000"}, {"Label": "PRF 5,000 Hz (17.6 km)", "Command": "t prf 5000"}, {"Label": "Stop Pedestal", "Command": "p stop"}, {"Label": "Park", "Command": "p point 0 90"}, {"Label": "DC PSU On", "Command": "h pow on"}, {"Label": "DC PSU Off", "Command": "h pow off"}, {"Label": "Measure Noise", "Command": "t n"}, {"Label": "Transmit Toggle", "Command": "t tx"}, {"Label": "10us pulse", "Command": "t w s10"}, {"Label": "12us LFM", "Command": "t w q0412"}, {"Label": "20us pulse", "Command": "t w s20"}, {"Label": "50us pulse", "Command": "t w s50"}, {"Label": "TFM + OFM", "Command": "t w ofm"}, {"Label": "OFM", "Command": "t w ofmd"}, {"Label": "1-tilt EL 2.4 deg @ 18 deg/s", "Command": "p vol p 2.4 300 18"}, {"Label": "5-tilt VCP @ 45 deg/s", "Command": "p vol p 2 300 45/p 4 300 45/p 6 300 45/p 8 300 45/p 10 300 45"}, {"Label": "5-tilt VCP @ 25 deg/s", "Command": "p vol p 2 300 25/p 4 300 25/p 6 300 25/p 8 300 25/p 10 300 25"}, {"Label": "5-tilt VCP @ 18 deg/s", "Command": "p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18"}, {"Label": "5-tilt VCP @ 12 deg/s", "Command": "p vol p 2 300 12/p 4 300 12/p 6 300 12/p 8 300 12/p 10 300 12"}, {"Label": "6-tilt VCP @ 18 deg/s", "Command": "p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18/p 12 300 18"}]}'
 
-# def run():
-#     print('\033[38;5;15;48;5;63mData interface\033[m started.')
-#     # The URI for a Radar frontend
-#     uri = "ws://localhost:8000/ws/radar/demo/"
-#     # uri = "wss://radarhub.arrc.ou.edu/ws/radar/demo/"
-
-#     a = 25000     # Amplitude in 16-bit ADU
-#     N = 1000      # number of samples
-#     n = 1000      # noise magnitude
-#     t = np.arange(N, dtype=np.float32)
-#     pulse = np.zeros((2 * N,), dtype=np.int16)
-#     tic = 0
-    
-#     # Home-made Tukey window here, insteading importing scipy
-#     def tukeywin(n=100, alpha=0.1):
-#         w = np.ones(n)
-#         a = int(alpha * n)
-#         w[:a] = 0.5 - 0.5 * np.cos(-np.arange(a) / a * np.pi)
-#         w[-a:] = w[:a][::-1]
-#         return w
-#     w = tukeywin(N)
-#     w *= a
-
-#     while wantActive:
-#         try:
-#             if verbose:
-#                 print(f'Connecting {uri} ...')
-#             socket = await websockets.connect(uri)
-#             if socket is None:
-#                 continue
-
-#             print('Sending greeting ...')
-#             payload = '{"radar":"demo", "command":"radarConnect"}'
-#             payload = RadarHubType.Handshake.to_bytes(1, 'little') + bytes(payload, 'utf-8')
-#             await socket.send(payload)
-
-#             greeting = await socket.recv()
-#             if verbose:
-#                 print(f'{greeting}')
-
-#             payload = RadarHubType.Control.to_bytes(1, 'little') + bytes(controlString, 'utf-8')
-#             await socket.send(payload)
-
-#             while wantActive:
-#                 #
-#                 # Write
-#                 #
-#                 omega = 0.1 * (t / N + 777 * (t / N) ** 2 + tic)
-#                 pulse = np.concatenate(
-#                     (
-#                         np.array(w * np.cos(omega), dtype=np.int16),
-#                         np.array(w * np.sin(omega), dtype=np.int16)
-#                     )
-#                 )
-#                 pulse += np.random.randint(-n, n, size=len(pulse), dtype=np.int16)                
-#                 payload = RadarHubType.Scope.to_bytes(1, 'little') + bytearray(pulse)
-#                 await socket.send(payload)
-
-#                 if tic % 15 == 0:
-#                     k = int(tic / 15) % len(healthString)
-#                     payload = RadarHubType.Health.to_bytes(1, 'little') + bytes(healthString[k], 'utf-8')
-#                     await socket.send(payload)
-#                 #
-#                 # Read
-#                 #
-#                 # try:
-#                 #     payload = await asyncio.recv(timeout=0.01)
-#                 # except:
-#                 #     print('...')
-#                 #     pass
-#                 # print('---')
-#                 #
-#                 # There is no non-blocking recv() in websockets? Boo...
-#                 #
-#                 await asyncio.sleep(0.05)
-#                 tic += 1
-#         except:
-#             if verbose:
-#                 print('No Connection.')
-#             k = 5
-#             while k > 0 and wantActive:
-#                 await asyncio.sleep(1)
-#                 if verbose:
-#                     s = 's' if k > 1 else ''
-#                     print(f'\rConnect in {k} second{s} ... ', end='')
-#                 k -= 1
-#             if verbose:
-#                 print('')
-
+wantActive = True
 
 def onOpen(ws):
     print('ONOPEN')
-    ws.send(RadarHubType.Handshake.to_bytes(1, 'little') + 
-        bytes('{"radar":"demo","command":"radarConnect"}', 'utf-8'))
+    payload = RadarHubType.Handshake.to_bytes(1, 'little') + bytes('{"radar":"demo","command":"radarConnect"}', 'utf-8')
+    ws.send(payload)
 
 def onClose(ws, code, message):
     print(f'code = {code}   message = {message}')
@@ -119,11 +32,54 @@ def onClose(ws, code, message):
 
 def onMessage(ws, message):
     print(message)
+    if 'Welcome' in message:
+        threading.Thread(target=run, args=(ws,)).start()
+        return
 
 def run(ws):
-    while True:
-        print('...')
-        time.sleep(0.1)
+    k = 0
+    f = 15
+    s = 1 / f
+    ht = int(0.5 / s)
+    j = 0
+
+    a = 25000     # Amplitude in 16-bit ADU
+    N = 1000      # number of samples
+    n = 1000      # noise magnitude
+    t = np.arange(N, dtype=np.float32)
+    pulse = np.zeros((2 * N,), dtype=np.int16)
+    tic = 0
+
+    # Home-made Tukey window here, insteading importing scipy
+    def tukeywin(n=100, alpha=0.1):
+        w = np.ones(n)
+        a = int(alpha * n)
+        w[:a] = 0.5 - 0.5 * np.cos(-np.arange(a) / a * np.pi)
+        w[-a:] = w[:a][::-1]
+        return w
+    w = tukeywin(N)
+    w *= a
+
+    while wantActive and ws.sock.connected:
+        # Ascope
+        omega = 0.1 * (t / N + 777 * (t / N) ** 2 + tic)
+        pulse = np.concatenate(
+            (
+                np.array(w * np.cos(omega), dtype=np.int16),
+                np.array(w * np.sin(omega), dtype=np.int16)
+            )
+        )
+        pulse += np.random.randint(-n, n, size=len(pulse), dtype=np.int16)
+        payload = RadarHubType.Scope.to_bytes(1, 'little') + bytearray(pulse)
+        ws.send(payload)
+
+        # Health
+        if j % ht == 0:
+            k = int(j / ht) % 4
+            payload = RadarHubType.Health.to_bytes(1, 'little') + bytes(healthString[k], 'utf-8')
+            ws.send(payload)
+        time.sleep(s)
+        j += 1
 
 class client(websocket.WebSocketApp):
     def __init__(self, url):
