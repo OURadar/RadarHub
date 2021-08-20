@@ -24,6 +24,10 @@ void headTailBinaryString(char *dst, void *src, size_t count) {
     binaryString(tail + sprintf(tail, " ... "), src + count - 5, 5);
 }
 
+//
+// Inspired by https://github.com/ramenhut/half
+//
+
 double_float_t single2double(single_float_t s) {
     double_float_t d;
     d.s = s.s;

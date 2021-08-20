@@ -15,7 +15,7 @@ typedef union {
         uint8_t  s:1;         // sign bit
     };
     uint8_t bytes[2];         // raw bytes
-    uint16_t u16;             // 16-bit
+    uint16_t word;            // 16-bit word
 } half_float_t;
 
 typedef union {
@@ -25,8 +25,8 @@ typedef union {
         uint8_t  s:1;         // sign bit
     };
     uint8_t bytes[4];         // raw bytes
-    uint32_t u32;             // 32-bit
-    float f32;
+    uint32_t word;            // 32-bit word
+    float value;
 } single_float_t;
 
 typedef union {
@@ -36,8 +36,8 @@ typedef union {
         uint8_t  s:1;         // sign bit
     };
     uint8_t bytes[8];         // raw bytes
-    uint64_t u64;             // 64-bit
-    double f64;
+    uint64_t word;            // 64-bit word
+    double value;
 } double_float_t;
 
 #pragma pack(pop)
