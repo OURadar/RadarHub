@@ -232,6 +232,12 @@ h3 {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+.ledIndicator .purple {
+  background-color: var(--purple);
+}
+.ledIndicator .blue {
+  background-color: var(--blue);
+}
 .ledIndicator .normal {
   background-color: var(--green);
 }
@@ -243,6 +249,12 @@ h3 {
 }
 .ledIndicator .old {
   background-color: var(--gray2);
+}
+.labelIndicator .purple {
+  color: var(--purple);
+}
+.labelIndicator .blue {
+  color: var(--purple);
 }
 .labelIndicator .normal {
   color: var(--green);

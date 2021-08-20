@@ -190,6 +190,10 @@ void *run(void *in) {
         j++;
     }
 
+    if (R->verbose) {
+        printf("Run loop retired\n");
+    }
+
     free(window);
     free(noise);
     free(hbuf);
@@ -256,7 +260,7 @@ void handleClose(RKWebSocket *W) {
 
 void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     if (R->verbose) {
-        printf("ONMESSAGE \033[38;5;228m%s\033[m\n", (char *)payload);
+        printf("ONMESSAGE \033[38;5;227m%s\033[m\n", (char *)payload);
     }
     if (strstr((char *)payload, "Welcome")) {
         R->connected = true;
@@ -271,12 +275,12 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
         R->go = false;
         r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "t w 1")) {
-        R->rate = -2.5f;
         R->go = true;
+        R->rate = -2.5f;
         r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "t w 2")) {
-        R->rate = 5.0f;
         R->go = true;
+        R->rate = 5.0f;
         r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
     } else {
         r = sprintf(R->message, "%cNAK %s", RadarHubTypeResponse, (char *)payload);
@@ -295,8 +299,8 @@ static void showHelp() {
            "dgen [options] [<address>:<port>]\n"
            "\n"
            "Examples:\n"
-           "    dgen -n lucy radarhub.arrc.ou.edu:443\n"
-           "    dgen -v -n bee radarhub.arrc.ou.edu:443\n"
+           "    dgen -n nancy radarhub.arrc.ou.edu:443\n"
+           "    dgen -v -n bumblebee radarhub.arrc.ou.edu:443\n"
            "\n"
            "OPTIONS:\n"
            "     Unless specifically stated, all options are interpreted in sequence. Some\n"

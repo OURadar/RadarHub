@@ -10,7 +10,16 @@ import { SectionHeader } from "./simple";
 import { prettyString } from "./common";
 
 function styleFromEnum(x) {
-  const enumStyle = ["-3", "-2", "-1", "normal", "ready", "alert", "old", ""];
+  const enumStyle = [
+    "-3",
+    "purple",
+    "blue",
+    "normal",
+    "ready",
+    "alert",
+    "old",
+    "",
+  ];
   return enumStyle[x + 3];
 }
 

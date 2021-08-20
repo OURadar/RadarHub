@@ -4,7 +4,7 @@
 #   Created by Boonleng Cheong
 #
 
-def colorize(text, color):
+def colorize(text, color='white'):
     colors = {
         'red': 9,
         'orange': 214,
@@ -14,6 +14,7 @@ def colorize(text, color):
         'blue': 33,
         'pink': 170,
         'purple': 134,
+        'white': 15
     }
     num = colors[color] if color in colors else 15
     return f'\033[38;5;{num}m{text}\033[m'

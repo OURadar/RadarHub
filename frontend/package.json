@@ -28,6 +28,7 @@
     "@material-ui/icons": "^4.11.2",
     "@material-ui/styles": "^4.11.4",
     "gl-matrix": "^3.3.0",
+    "react-regl": "^4.3.2",
     "regl": "^2.1.0",
     "stats-js": "^1.0.1"
   }
