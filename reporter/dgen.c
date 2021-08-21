@@ -1,8 +1,11 @@
 //
 //  dgen.c
-//  Data Generator
+//  Data Generator in C
 //
 //  RadarHub
+//
+//  An example client that establishes a (secure) websocket connection to
+//  RadarHub, sends in control interface, scope and health data.
 //
 //  Created by Boonleng Cheong on 8/3/2021.
 //  Copyright (c) 2021 Boonleng Cheong. All rights reserved.
@@ -253,6 +256,7 @@ void handleOpen(RKWebSocket *w) {
 }
 
 void handleClose(RKWebSocket *W) {
+    R->connected = false;
     if (R->verbose) {
         printf("ONCLOSE\n");
     }
@@ -311,7 +315,7 @@ static void showHelp() {
            "                         If not specified, the default name is 'demo'.\n"
            "\n"
            "  -s, --ssl              forces SSL to be on. Otherwise, it is inferred from\n"
-           "                         the port nummber, i.e., 443 is on, else is off.\n"
+           "                         the port nummber, i.e., 443 on, else off.\n"
            "\n"
            "  -v                     increases verbosity level.\n"
            "\n"
