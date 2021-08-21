@@ -246,6 +246,7 @@ static int RKWebSocketConnect(RKWebSocket *R) {
     } while (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL);
     if (r < 0) {
         fprintf(stderr, "Error during handshake.\n");
+        fprintf(stderr, "%s", (char *)buf);
         return -1;
     }
     buf[r] = '\0';

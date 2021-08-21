@@ -36,6 +36,23 @@
     <link
       rel="stylesheet"
       type="text/css"
+      href="{% static 'css/index.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen and (max-device-width: 550px)"
+      href="{% static 'css/mobile.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen and (min-device-width: 550px)"
+      href="{% static 'css/desktop.css' %}"
+    />
+    {% comment %} <link
+      rel="stylesheet"
+      type="text/css"
       href="{% static 'css/index.css' %}?r={% now 'U' %}"
     />
     <link
@@ -49,7 +66,7 @@
       type="text/css"
       media="screen and (min-device-width: 550px)"
       href="{% static 'css/desktop.css' %}?r={% now 'U' %}"
-    />
+    /> {% endcomment %}
     {{ radar|json_script:"radar-name" }} {{ receiver|json_script:"receiver" }}
     <title>RadarHub</title>
   </head>
