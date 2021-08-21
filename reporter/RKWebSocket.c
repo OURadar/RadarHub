@@ -231,7 +231,6 @@ static int RKWebSocketConnect(RKWebSocket *R) {
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
         "Sec-WebSocket-Key: %s==\r\n"
-        "Sec-WebSocket-Protocol: chat, superchat\r\n"
         "Sec-WebSocket-Version: 13\r\n"
         "\r\n",
         R->path,

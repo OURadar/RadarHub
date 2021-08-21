@@ -14,6 +14,7 @@
 import sys
 import json
 import time
+import signal
 import argparse
 import textwrap
 import threading
@@ -30,14 +31,47 @@ with open('../frontend/package.json') as fid:
     __version__ = json.load(fid)['version']
 
 class client(websocket.WebSocketApp):
-    def __init__(self, url):
+    def __init__(self, url, verbose=0):
         super().__init__(url)
-        # 
-        self.on_open = onOpen
-        self.on_close = onClose
-        self.on_message = onMessage
+        self.on_open = handleOpen
+        self.on_close = handleClose
+        self.on_message = handleMessage
+        self.want_active = True
+        self.verbose = verbose
+        if self.verbose > 1:
+            websocket.enableTrace(True)
+
+    def start(self):
+        while self.want_active:
+            self.run_forever(suppress_origin=True)
+            s1 = time.time()
+            i = 0
+            r = 0
+            while self.want_active and r < 10:
+                s0 = time.time()
+                r = int(s0 - s1)
+                if i != r and self.verbose:
+                    i = r
+                    if r > 2:
+                        p = 's' if (10 - r) > 1 else ''
+                        print(f'\rNo connection. Retry in {10 - r} sec{p} ... ', end='')
+                    else:
+                        print('\rNo connection.', end='')
+                time.sleep(0.2)
+            if self.verbose:
+                print('\033[1K\r', end='')
+        if self.verbose > 1:
+            print('WebSocketApp stopped')
+
+    def stop(self):
+        if self.verbose:
+            print('WebSocketApp closing ...')
+        self.want_active = False
+        self.close()
 
     def send(self, payload):
+        if not self.sock.connected:
+            return
         return super().send(payload, opcode=websocket.ABNF.OPCODE_BINARY)
 
 class Reporter():
@@ -50,15 +84,21 @@ class Reporter():
         self.go = False
         self.rate = 1.0
 
-        if self.verbose > 1:
-            websocket.enableTrace(True)
-
-        url = f'ws://{self.host}/ws/radar/{self.name}/'
-        self.ws = client(url)
-        self.ws.run_forever(suppress_origin=True)
-
     def start(self):
-        threading.Thread(target=self.run).start()
+        self.rt = threading.Thread(target=self.run)
+        self.rt.start()
+        url = f'ws://{self.host}/ws/radar/{self.name}/'
+        self.ws = client(url, verbose=self.verbose)
+        self.ws.start()
+
+    def stop(self):
+        self.wantActive = False
+        self.ws.stop()
+        self.rt.join()
+        print(f'R.wantActive = {R.wantActive}')
+
+    def disconnect(self):
+        self.connected = False
 
     def run(self):
         k = 0
@@ -87,14 +127,14 @@ class Reporter():
         noise[mask] = np.random.randint(1, 32768, size=np.sum(mask), dtype=np.int16)
         noise[mask] = np.random.randint(0, 32768, size=np.sum(mask), dtype=np.int16) % noise[mask] - noise[mask] / 2
 
+        while not self.connected and self.wantActive:
+            time.sleep(0.1)
+
         if self.verbose:
             print(colorize('Busy run loop', 'red'))
 
-        while self.wantActive and not self.connected:
-            time.sleep(0.1)
-
         j = 1
-        while self.wantActive and self.connected:
+        while self.wantActive:
             # Ascope
             omega = 0.1 * (t + self.rate * 777.0 * t ** 2 - j)
             if self.go:
@@ -115,7 +155,7 @@ class Reporter():
             if j % ht == 0:
                 k = int(j / ht) % hdepth
                 payload = RadarHubType.Health.to_bytes(1, 'little') + bytes(healthStrings[k], 'utf-8')
-                ws.send(payload)
+                self.ws.send(payload)
             time.sleep(s)
             j += 1
 
@@ -134,10 +174,17 @@ healths = [
 healthStrings = [json.dumps(s) for s in healths]
 hdepth = len(healths)
 
+def handleSignals(sig, frame):
+    print(f'\nCaught {sig}')
+    R.stop()
 
-def onOpen(ws):
-    print('ONOPEN')
-    payload = RadarHubType.Handshake.to_bytes(1, 'little') + bytes('{"radar":"demo","command":"radarConnect"}', 'utf-8')
+def handleOpen(ws):
+    if R.verbose:
+        print(f'ONOPEN')
+    if R.verbose < 3:
+        websocket.enableTrace(False)
+    message = json.dumps({'radar':R.name, 'command':'radarConnect'})
+    payload = RadarHubType.Handshake.to_bytes(1, 'little') + bytes(message, 'utf-8')
     ws.send(payload)
     controls = {
         'name':R.name,
@@ -176,12 +223,12 @@ def onOpen(ws):
     payload = RadarHubType.Control.to_bytes(1, 'little') + bytes(controlString, 'utf-8')
     ws.send(payload)
 
-def onClose(ws, code, message):
-    R.connected = False
+def handleClose(ws, code, message):
+    R.disconnect()
     if R.verbose:
         print(f'ONCLOSE code={code}   message={message}')
 
-def onMessage(ws, message):
+def handleMessage(ws, message):
     global R
     if R.verbose:
         show = colorize(message, 'yellow')
@@ -206,10 +253,10 @@ def onMessage(ws, message):
         reply = f'ACK {message}'
     else:
         reply = f'NAK {message}'
+    payload = RadarHubType.Response.to_bytes(1, 'little') + bytes(reply, 'utf-8')
     if R.verbose:
         show = colorize(reply, 'green')
-        print(f'REPLY {show}')
-    payload = RadarHubType.Response.to_bytes(1, 'little') + bytes(reply, 'utf-8')
+        print(f'REPLY {show} ({len(payload)})')
     ws.send(payload)
 
 
@@ -233,6 +280,8 @@ def main():
     parser.add_argument('host', nargs='?', default='localhost:8000',
         help='host with or without port number')
     args = parser.parse_args()
+
+    signal.signal(signal.SIGINT, handleSignals)
 
     global R
     R = Reporter(args.name, args.host, verbose=args.verbose)
