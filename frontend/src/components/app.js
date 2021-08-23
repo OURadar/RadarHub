@@ -33,7 +33,7 @@ class App extends Component {
   }
 
   static defaultProps = {
-    radar: "horus",
+    radar: "demo",
     receiver: 0,
   };
 

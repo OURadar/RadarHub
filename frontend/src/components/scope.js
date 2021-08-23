@@ -69,6 +69,7 @@ class Scope extends Component {
       },
     };
     this.state = {
+      tic: 0,
       v2dx: 1,
       v2dy: 1,
       scaleX: 1 / 1000,

@@ -6,6 +6,10 @@ module.exports = {
       import: "./src/index.js",
       dependOn: "shared",
     },
+    archive: {
+      import: "./src/archive.js",
+      dependOn: "shared",
+    },
     shared: ["react", "react-dom", "regl", "gl-matrix", "stats-js"],
   },
   output: {

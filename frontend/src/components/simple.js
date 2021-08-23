@@ -1,6 +1,11 @@
 import React from "react";
 
-import { Keyboard, Favorite, BrokenImage } from "@material-ui/icons";
+import {
+  Keyboard,
+  Favorite,
+  BrokenImage,
+  TrackChanges,
+} from "@material-ui/icons";
 
 export function SectionHeader(props) {
   let icon;
@@ -10,6 +15,8 @@ export function SectionHeader(props) {
     icon = <Favorite style={{ color: "var(--red)" }} />;
   } else if (props.name == "scope") {
     icon = <BrokenImage style={{ color: "var(--blue)" }} />;
+  } else if (props.name == "product") {
+    icon = <TrackChanges style={{ color: "var(--green)" }} />;
   }
   return (
     <div className="sectionHeader">
