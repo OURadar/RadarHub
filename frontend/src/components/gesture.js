@@ -8,7 +8,14 @@
 class Gesture {
   constructor(element, bounds) {
     this.element = element;
-    this.bounds = bounds;
+    this.bounds = bounds
+      ? bounds
+      : {
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+        };
     this.pointX = 0;
     this.pointY = 0;
     this.pointD = 0;

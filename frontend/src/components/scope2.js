@@ -47,7 +47,7 @@ import * as common from "./common";
 class Scope2 extends Scope {
   static defaultProps = {
     ...super.defaultProps,
-    colors: common.colorDict(),
+    d: 10,
   };
 
   updateProjection() {
@@ -144,11 +144,6 @@ class Scope2 extends Scope {
       };
     });
   }
-
-  static defaultProps = {
-    ...super.defaultProps,
-    d: 10,
-  };
 
   draw() {
     if (

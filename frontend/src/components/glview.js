@@ -1,5 +1,5 @@
 //
-//  product.js
+//  glview.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong
@@ -11,17 +11,10 @@ import { mat4 } from "gl-matrix";
 
 import * as common from "./common";
 import * as artists from "./artists";
-import * as instanced from "./instanced";
+import { Gesture } from "./gesture";
 import { Texture } from "./texture";
-import { GLView } from "./glview";
 
-//
-// Use as <Product data={input} />
-//
-// More later ... I can't see pass here
-//
-
-class Product extends GLView {
+class GLView extends Component {
   constructor(props) {
     super(props);
     this.canvas = document.createElement("canvas");
@@ -42,41 +35,25 @@ class Product extends GLView {
     );
     this.state = {
       tic: 0,
-      scaleX: 1 / 1000,
-      scaleY: 1 / 60000,
+      scaleX: 1,
+      scaleY: 1,
       offsetX: 0,
       offsetY: 0,
       screen: mat4.create(),
       projection: mat4.create(),
       viewport: { x: 0, y: 0, width: 1, height: 1 },
       grid: [0, 0],
-      labelParameters: {
-        labels: [],
-        positions: [],
-        alignments: [],
-        foreground: props.colors.foreground,
-        colors: [],
-        sizes: [],
-        countX: 0,
-        countY: 0,
-      },
     };
     // Our artists
-    this.picaso = instanced.noninterleavedStripRoundCapJoin(this.regl, 8);
     this.monet = artists.basic(this.regl);
-    this.gogh = artists.sprite(this.regl);
     // Bind some methods
     this.updateProjection = this.updateProjection.bind(this);
     this.makeGrid = this.makeGrid.bind(this);
     this.draw = this.draw.bind(this);
-    // this.pan = this.pan.bind(this);
-    // this.magnify = this.magnify.bind(this);
-    // this.fitToData = this.fitToData.bind(this);
+    this.pan = this.pan.bind(this);
     // User interaction
-    // this.gesture = new Gesture(this.canvas, this.constants.bounds);
-    // this.gesture.handlePan = this.pan;
-    // this.gesture.handleMagnify = this.magnify;
-    // this.gesture.handleDoubleTap = this.fitToData;
+    this.gesture = new Gesture(this.canvas, null);
+    this.gesture.handlePan = this.pan;
   }
 
   static defaultProps = {
@@ -97,14 +74,9 @@ class Product extends GLView {
     this.regl.frame(this.draw);
   }
 
-  componentWillUnmount() {
-    console.log("Record something at home server or something ...");
-  }
-
   render() {
     if (this.props.debug === true) {
-      // const str = this.gesture.message;
-      const str = "";
+      const str = this.gesture.message;
       return (
         <div className="fill">
           <div className="fill" ref={(x) => (this.mount = x)} />
@@ -120,9 +92,50 @@ class Product extends GLView {
   updateProjection() {
     this.canvas.width = this.mount.offsetWidth;
     this.canvas.height = this.mount.offsetHeight;
+    this.setState((state, props) => {
+      const w = this.canvas.width;
+      const h = this.canvas.height;
+      const p = mat4.ortho(mat4.create(), 0, w, 0, h, 0, -1);
+      const mv = mat4.fromValues(
+        state.scaleX * w,
+        0,
+        0,
+        0,
+        0,
+        state.scaleY * h,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        state.offsetX,
+        state.offsetY,
+        0,
+        1
+      );
+      const mvp = mat4.multiply([], p, mv);
+      const grid = this.makeGrid();
+      return {
+        screen: p,
+        projection: mvp,
+        grid: grid,
+        viewport: { x: 0, y: 0, width: w, height: h },
+      };
+    });
   }
 
-  makeGrid() {}
+  makeGrid() {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const grid = [
+      [0, this.state.offsetY + h / 2 + 0.5],
+      [w, this.state.offsetY + h / 2 + 0.5],
+      [this.state.offsetX + w / 2 + 0.5, 0],
+      [this.state.offsetX + w / 2 + 0.5, h],
+    ];
+    return grid.flat();
+  }
 
   draw() {
     if (
@@ -136,12 +149,31 @@ class Product extends GLView {
         color: props.colors.canvas,
       });
 
+      this.monet([
+        {
+          primitive: "lines",
+          color: props.colors.grid,
+          projection: state.screen,
+          viewport: state.viewport,
+          points: state.grid,
+          count: state.grid.length / 2,
+        },
+      ]);
+
       return {
         tic: state.tic + 1,
       };
     });
     if (this.stats !== undefined) this.stats.update();
   }
+
+  pan(x, y) {
+    this.setState((state) => ({
+      offsetX: state.offsetX + x,
+      offsetY: state.offsetY + y,
+    }));
+    this.updateProjection();
+  }
 }
 
-export { Product };
+export { GLView };
