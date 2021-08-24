@@ -9,7 +9,6 @@ import React, { Component } from "react";
 import { ThemeProvider } from "@material-ui/core/styles";
 import { colorDict, detectMob } from "./common";
 import { SectionHeader } from "./simple";
-import { GLView } from "./glview";
 import { Product } from "./product";
 import { theme } from "./theme";
 
@@ -34,10 +33,6 @@ class Archive extends Component {
         <SectionHeader name="product" />
         <div className="ppi">
           <Product debug={true} />
-        </div>
-        <SectionHeader name="product" />
-        <div className="ppi">
-          <GLView debug={true} />
         </div>
       </ThemeProvider>
     );

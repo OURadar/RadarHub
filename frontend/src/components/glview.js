@@ -42,7 +42,7 @@ class GLView extends Component {
       screen: mat4.create(),
       projection: mat4.create(),
       viewport: { x: 0, y: 0, width: 1, height: 1 },
-      grid: [0, 0],
+      grid: [],
     };
     // Our artists
     this.monet = artists.basic(this.regl);

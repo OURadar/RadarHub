@@ -5,8 +5,6 @@
 //  Created by Boonleng Cheong
 //
 
-import React, { Component } from "react";
-import Stats from "stats-js";
 import { mat4 } from "gl-matrix";
 
 import * as common from "./common";
@@ -24,32 +22,20 @@ import { GLView } from "./glview";
 class Product extends GLView {
   constructor(props) {
     super(props);
-    this.canvas = document.createElement("canvas");
-    this.canvas.style.width = "100%";
-    this.canvas.style.height = "100%";
-    this.regl = require("regl")({
-      canvas: this.canvas,
-      extensions: ["ANGLE_instanced_arrays"],
-    });
-    if (props.showStats === true || props.debug === true) {
-      this.stats = new Stats();
-      this.stats.domElement.className = "canvasStats";
-    }
-    this.texture = new Texture(
-      this.regl,
-      this.props.textureScale,
-      props.debugGL
-    );
+    this.constants = {
+      rings: common.tickChoices(1, 150),
+      bounds: {
+        top: 10,
+        right: 0,
+        bottom: 0,
+        left: 0,
+      },
+    };
     this.state = {
-      tic: 0,
-      scaleX: 1 / 1000,
-      scaleY: 1 / 60000,
-      offsetX: 0,
-      offsetY: 0,
-      screen: mat4.create(),
-      projection: mat4.create(),
-      viewport: { x: 0, y: 0, width: 1, height: 1 },
-      grid: [0, 0],
+      ...this.state,
+      scaleX: 1 / 2,
+      scaleY: 1 / 2,
+      camera: mat4.create(),
       labelParameters: {
         labels: [],
         positions: [],
@@ -63,66 +49,77 @@ class Product extends GLView {
     };
     // Our artists
     this.picaso = instanced.noninterleavedStripRoundCapJoin(this.regl, 8);
-    this.monet = artists.basic(this.regl);
     this.gogh = artists.sprite(this.regl);
     // Bind some methods
-    this.updateProjection = this.updateProjection.bind(this);
-    this.makeGrid = this.makeGrid.bind(this);
-    this.draw = this.draw.bind(this);
-    // this.pan = this.pan.bind(this);
-    // this.magnify = this.magnify.bind(this);
-    // this.fitToData = this.fitToData.bind(this);
+    this.magnify = this.magnify.bind(this);
+    this.fitToData = this.fitToData.bind(this);
     // User interaction
-    // this.gesture = new Gesture(this.canvas, this.constants.bounds);
-    // this.gesture.handlePan = this.pan;
-    // this.gesture.handleMagnify = this.magnify;
-    // this.gesture.handleDoubleTap = this.fitToData;
-  }
+    this.gesture.bounds = this.constants.bounds;
+    this.gesture.handleMagnify = this.magnify;
+    this.gesture.handleDoubleTap = this.fitToData;
 
-  static defaultProps = {
-    debug: false,
-    debugGL: false,
-    showStats: false,
-    colors: common.colorDict(),
-    linewidth: 1.4,
-    textureScale: 1.0,
-  };
-
-  componentDidMount() {
-    this.mount.appendChild(this.canvas);
-    if (this.stats !== undefined) {
-      this.mount.appendChild(this.stats.domElement);
+    let points = [];
+    for (let k = 0; k < 360; k += 10) {
+      let theta = (k / 180) * Math.PI;
+      points.push([100.0 * Math.sin(theta), 100.0 * Math.cos(theta)]);
     }
-    this.updateProjection();
-    this.regl.frame(this.draw);
-  }
-
-  componentWillUnmount() {
-    console.log("Record something at home server or something ...");
-  }
-
-  render() {
-    if (this.props.debug === true) {
-      // const str = this.gesture.message;
-      const str = "";
-      return (
-        <div className="fill">
-          <div className="fill" ref={(x) => (this.mount = x)} />
-          <div className="debug">
-            <div className="leftPadded">{str}</div>
-          </div>
-        </div>
-      );
-    }
-    return <div className="fill" ref={(x) => (this.mount = x)} />;
+    this.ring = {
+      points: points.flat(),
+    };
+    console.log(this.ring.points);
   }
 
   updateProjection() {
     this.canvas.width = this.mount.offsetWidth;
     this.canvas.height = this.mount.offsetHeight;
+    this.setState((state, props) => {
+      const w = this.canvas.width;
+      const h = this.canvas.height;
+      const aspectRatio = w / h;
+      const range = 5;
+      const ww = w;
+      const hh = w / aspectRatio;
+      const p = mat4.ortho(mat4.create(), -ww, ww, -hh, hh, 0, -1);
+      const mv = mat4.fromValues(
+        state.scaleX * w,
+        0,
+        0,
+        0,
+        0,
+        state.scaleY * h,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        state.offsetX,
+        state.offsetY,
+        0,
+        1
+      );
+      const mvp = mat4.multiply([], p, mv);
+      const grid = this.makeGrid();
+      return {
+        screen: p,
+        projection: mvp,
+        grid: grid,
+        viewport: { x: 0, y: 0, width: w, height: h },
+      };
+    });
   }
 
-  makeGrid() {}
+  makeGrid() {
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const grid = [
+      [-w, this.state.offsetY + 0.5],
+      [+w, this.state.offsetY + 0.5],
+      [this.state.offsetX + 0.5, -h],
+      [this.state.offsetX + 0.5, +h],
+    ];
+    return grid.flat();
+  }
 
   draw() {
     if (
@@ -135,12 +132,42 @@ class Product extends GLView {
       this.regl.clear({
         color: props.colors.canvas,
       });
-
+      this.monet([
+        {
+          primitive: "line loop",
+          color: props.colors.lines[2],
+          projection: state.screen,
+          viewport: state.viewport,
+          points: this.ring.points,
+          count: this.ring.points.length / 2,
+        },
+      ]);
+      this.monet([
+        {
+          primitive: "lines",
+          color: props.colors.grid,
+          projection: state.screen,
+          viewport: state.viewport,
+          points: state.grid,
+          count: state.grid.length / 2,
+        },
+      ]);
       return {
         tic: state.tic + 1,
       };
     });
     if (this.stats !== undefined) this.stats.update();
+  }
+  //pan() {}
+
+  magnify() {
+    console.log("magnify()");
+    return;
+  }
+
+  fitToData() {
+    console.log("fitToData()");
+    return;
   }
 }
 
