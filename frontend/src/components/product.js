@@ -50,6 +50,7 @@ class Product extends GLView {
     // Our artists
     this.picaso = instanced.noninterleavedStripRoundCapJoin(this.regl, 8);
     this.gogh = artists.sprite(this.regl);
+    this.art = artists.basic3(this.regl);
     // Bind some methods
     this.magnify = this.magnify.bind(this);
     this.fitToData = this.fitToData.bind(this);
@@ -61,7 +62,7 @@ class Product extends GLView {
     let points = [];
     for (let k = 0; k < 360; k += 10) {
       let theta = (k / 180) * Math.PI;
-      points.push([100.0 * Math.sin(theta), 100.0 * Math.cos(theta)]);
+      points.push([10.0 * Math.sin(theta), 10.0 * Math.cos(theta), 1.0]);
     }
     this.ring = {
       points: points.flat(),
@@ -77,31 +78,12 @@ class Product extends GLView {
       const h = this.canvas.height;
       const aspectRatio = w / h;
       const range = 5;
-      const ww = w;
-      const hh = w / aspectRatio;
-      const p = mat4.ortho(mat4.create(), -ww, ww, -hh, hh, 0, -1);
-      const mv = mat4.fromValues(
-        state.scaleX * w,
-        0,
-        0,
-        0,
-        0,
-        state.scaleY * h,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        state.offsetX,
-        state.offsetY,
-        0,
-        1
-      );
+      // const p = mat4.ortho(mat4.create(), -ww, ww, -hh, hh, 0, -1);
+      const p = mat4.perspective([], Math.PI / 4, aspectRatio, 1.0, 6000.0);
+      const mv = mat4.lookAt([], [0, 0, 100.0], [0, 1, 0], [0, 1, 0]);
       const mvp = mat4.multiply([], p, mv);
       const grid = this.makeGrid();
       return {
-        screen: p,
         projection: mvp,
         grid: grid,
         viewport: { x: 0, y: 0, width: w, height: h },
@@ -132,26 +114,37 @@ class Product extends GLView {
       this.regl.clear({
         color: props.colors.canvas,
       });
-      this.monet([
+      this.art([
         {
           primitive: "line loop",
           color: props.colors.lines[2],
-          projection: state.screen,
+          projection: state.projection,
           viewport: state.viewport,
           points: this.ring.points,
-          count: this.ring.points.length / 2,
+          count: this.ring.points.length / 3,
         },
       ]);
-      this.monet([
-        {
-          primitive: "lines",
-          color: props.colors.grid,
-          projection: state.screen,
-          viewport: state.viewport,
-          points: state.grid,
-          count: state.grid.length / 2,
-        },
-      ]);
+      // this.monet([
+      //   {
+      //     primitive: "line loop",
+      //     color: props.colors.lines[2],
+      //     projection: state.screen,
+      //     viewport: state.viewport,
+      //     points: this.ring.points,
+      //     count: this.ring.points.length / 2,
+      //   },
+      // ]);
+      // this.monet([
+      //   {
+      //     primitive: "lines",
+      //     color: props.colors.grid,
+      //     projection: state.screen,
+      //     viewport: state.viewport,
+      //     points: state.grid,
+      //     count: state.grid.length / 2,
+      //   },
+      // ]);
+
       return {
         tic: state.tic + 1,
       };
@@ -161,12 +154,12 @@ class Product extends GLView {
   //pan() {}
 
   magnify() {
-    console.log("magnify()");
+    // console.log("magnify()");
     return;
   }
 
   fitToData() {
-    console.log("fitToData()");
+    // console.log("fitToData()");
     return;
   }
 }

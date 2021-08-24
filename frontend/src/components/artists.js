@@ -5,7 +5,7 @@
 //  Created by Boonleng Cheong
 //
 
-//  A simple artist with basic shaders
+//  A simple 2D artist with basic shaders
 export function basic(regl) {
   return regl({
     vert: `
@@ -121,5 +121,38 @@ export function sprite(regl) {
         dst: "one minus src alpha",
       },
     },
+  });
+}
+
+//  A simple 3D artist with basic shaders
+export function basic3(regl) {
+  return regl({
+    vert: `
+    precision mediump float;
+    attribute vec3 position;
+    uniform mat4 projection;
+    void main() {
+      gl_Position = projection * vec4(position, 1);
+    }`,
+
+    frag: `
+    precision mediump float;
+    uniform vec4 color;
+    void main() {
+      gl_FragColor = color;
+    }`,
+
+    uniforms: {
+      color: regl.prop("color"),
+      projection: regl.prop("projection"),
+    },
+
+    attributes: {
+      position: regl.prop("points"),
+    },
+
+    primitive: regl.prop("primitive"),
+    viewport: regl.prop("viewport"),
+    count: regl.prop("count"),
   });
 }
