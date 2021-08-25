@@ -189,7 +189,7 @@ class Product extends GLView {
     this.updateProjection();
   }
 
-  magnify() {
+  magnify(x, y) {
     return;
   }
 
