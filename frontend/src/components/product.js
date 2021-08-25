@@ -31,15 +31,16 @@ class Product extends GLView {
         bottom: 0,
         left: 0,
       },
+      origin: {
+        longitude: -20,
+        latitude: 30,
+      },
     };
     // satCoordinate = (lon, lat, alt) of satellite
     // satPosition = (x, y, z) of satellite
     // model = model matrix for product, rings, radar-relative drawings
     // view = view matrix derived from satPosition
-    const origin = {
-      longitude: -20,
-      latitude: 30,
-    };
+    const origin = this.constants.origin;
     let model = mat4.create();
     model = mat4.rotateY([], model, (origin.longitude / 180.0) * Math.PI);
     model = mat4.rotateX([], model, (-origin.latitude / 180.0) * Math.PI);
@@ -47,7 +48,11 @@ class Product extends GLView {
     this.state = {
       ...this.state,
       fov: Math.PI / 4,
-      satCoordinate: vec3.fromValues(0, 0, 3 * this.constants.radius),
+      satCoordinate: vec3.fromValues(
+        (origin.longitude / 180.0) * Math.PI,
+        (origin.latitude / 180.0) * Math.PI,
+        3 * this.constants.radius
+      ),
       satPosition: vec3.create(),
       model: model,
       view: mat4.create(),
@@ -190,8 +195,8 @@ class Product extends GLView {
   pan(x, y) {
     this.setState((state) => {
       let c = state.satCoordinate;
-      c[0] -= 0.004 * x;
-      c[1] -= 0.004 * y;
+      c[0] -= 0.003 * state.fov * x;
+      c[1] -= 0.003 * state.fov * y;
       return {
         satCoordinate: c,
       };
@@ -199,13 +204,26 @@ class Product extends GLView {
     this.updateProjection();
   }
 
-  magnify(x, y) {
-    return;
+  magnify(x, y, _x, _y) {
+    this.setState((state) => {
+      const m = 0.5 * (y - 1) + 1.0;
+      const fov = common.clamp(state.fov / m, Math.PI / 180, Math.PI);
+      return {
+        fov: fov,
+        lastMagnifyTime: new Date().getTime(),
+      };
+    });
+    this.updateProjection();
   }
 
   fitToData() {
     this.setState({
-      satCoordinate: vec3.fromValues(0, 0, 3 * this.constants.radius),
+      fov: Math.PI / 4,
+      satCoordinate: vec3.fromValues(
+        (this.constants.origin.longitude / 180.0) * Math.PI,
+        (this.constants.origin.latitude / 180.0) * Math.PI,
+        3 * this.constants.radius
+      ),
     });
     this.updateProjection();
   }
