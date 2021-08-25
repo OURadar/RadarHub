@@ -24,6 +24,7 @@ class Product extends GLView {
     super(props);
     this.constants = {
       rings: common.tickChoices(1, 150),
+      radius: 6357,
       bounds: {
         top: 10,
         right: 0,
@@ -31,13 +32,25 @@ class Product extends GLView {
         left: 0,
       },
     };
+    // satCoordinate = (lon, lat, alt) of satellite
+    // satPosition = (x, y, z) of satellite
+    // model = model matrix for product, rings, radar-relative drawings
+    // view = view matrix derived from satPosition
+    const origin = {
+      longitude: -20,
+      latitude: 30,
+    };
+    let model = mat4.create();
+    model = mat4.rotateY([], model, (origin.longitude / 180.0) * Math.PI);
+    model = mat4.rotateX([], model, (-origin.latitude / 180.0) * Math.PI);
+    model = mat4.translate([], model, [0, 0, this.constants.radius]);
     this.state = {
       ...this.state,
-      scale: 1 / 2,
       fov: Math.PI / 4,
-      satCoordinate: vec3.fromValues(0, 0, 35), // lon, lat, alt
+      satCoordinate: vec3.fromValues(0, 0, 3 * this.constants.radius),
       satPosition: vec3.create(),
-      modelview: mat4.create(),
+      model: model,
+      view: mat4.create(),
       labelParameters: {
         labels: [],
         positions: [],
@@ -45,8 +58,7 @@ class Product extends GLView {
         foreground: props.colors.foreground,
         colors: [],
         sizes: [],
-        countX: 0,
-        countY: 0,
+        count: 0,
       },
     };
     // Our artists
@@ -54,7 +66,6 @@ class Product extends GLView {
     this.gogh = artists.sprite(this.regl);
     this.art = artists.basic3(this.regl);
     this.water = artists.element3(this.regl);
-
     // Bind some methods
     this.magnify = this.magnify.bind(this);
     this.fitToData = this.fitToData.bind(this);
@@ -65,7 +76,7 @@ class Product extends GLView {
 
     let points = [];
     for (let k = 0; k < 2 * Math.PI; k += Math.PI / 18) {
-      points.push([5.0 * Math.sin(k), 5.0 * Math.cos(k), 1.0]);
+      points.push([1000 * Math.sin(k), 1000 * Math.cos(k), 1.0]);
     }
     this.ring = {
       points: points.flat(),
@@ -75,8 +86,7 @@ class Product extends GLView {
     let normals = [];
     const latCount = 17;
     const lonCount = 36;
-    var lat = (0.5 - 0.5 / latCount) * Math.PI;
-    const radius = 10.0;
+    var lat = (80.0 / 180.0) * Math.PI;
     for (let j = 0; j < latCount; j++) {
       for (let k = 0; k < lonCount; k++) {
         const lon = (k * 2 * Math.PI) / lonCount;
@@ -85,10 +95,11 @@ class Product extends GLView {
           Math.sin(lat),
           Math.cos(lat) * Math.cos(lon),
         ];
-        points.push([radius * xyz[0], radius * xyz[1], radius * xyz[2]]);
+        const r = this.constants.radius;
+        points.push([r * xyz[0], r * xyz[1], r * xyz[2]]);
         normals.push(xyz);
       }
-      lat -= Math.PI / latCount;
+      lat -= Math.PI / 18;
     }
     let elements = [];
     for (let k = 0; k < latCount; k++) {
@@ -126,11 +137,9 @@ class Product extends GLView {
       const y = c[2] * Math.sin(c[1]);
       const z = c[2] * Math.cos(c[1]) * Math.cos(c[0]);
       const satPosition = vec3.fromValues(x, y, z);
-      const p = mat4.perspective([], state.fov, w / h, 0.1, 1000.0);
-      const mv = mat4.lookAt([], satPosition, [0, 0, 0], [0, 1, 0]);
       return {
-        modelview: mv,
-        projection: p,
+        view: mat4.lookAt([], satPosition, [0, 0, 0], [0, 1, 0]),
+        projection: mat4.perspective([], state.fov, w / h, 100, 25000.0),
         satPosition: satPosition,
         viewport: { x: 0, y: 0, width: w, height: h },
       };
@@ -145,6 +154,7 @@ class Product extends GLView {
       this.updateProjection();
     }
     this.setState((state, props) => {
+      const modelview = mat4.multiply([], state.view, state.model);
       this.regl.clear({
         color: props.colors.canvas,
       });
@@ -152,7 +162,7 @@ class Product extends GLView {
         {
           primitive: "line loop",
           color: props.colors.lines[2],
-          projection: state.projection,
+          projection: mat4.multiply([], state.projection, modelview),
           viewport: state.viewport,
           points: this.ring.points,
           count: this.ring.points.length / 3,
@@ -162,7 +172,7 @@ class Product extends GLView {
         {
           primitive: "lines",
           color: props.colors.lines[3],
-          modelview: state.modelview,
+          modelview: state.view,
           projection: state.projection,
           viewport: state.viewport,
           points: this.grid.points,
@@ -195,7 +205,7 @@ class Product extends GLView {
 
   fitToData() {
     this.setState({
-      satCoordinate: vec3.fromValues(0, 0, 35),
+      satCoordinate: vec3.fromValues(0, 0, 3 * this.constants.radius),
     });
     this.updateProjection();
   }
