@@ -156,3 +156,35 @@ export function basic3(regl) {
     count: regl.prop("count"),
   });
 }
+
+export function element3(regl) {
+  return regl({
+    vert: `
+    precision mediump float;
+    attribute vec3 position;
+    uniform mat4 projection;
+    void main() {
+      gl_Position = projection * vec4(position, 1);
+    }`,
+
+    frag: `
+    precision mediump float;
+    uniform vec4 color;
+    void main() {
+      gl_FragColor = color;
+    }`,
+
+    uniforms: {
+      color: regl.prop("color"),
+      projection: regl.prop("projection"),
+    },
+
+    attributes: {
+      position: regl.prop("points"),
+    },
+
+    primitive: regl.prop("primitive"),
+    elements: regl.prop("elements"),
+    viewport: regl.prop("viewport"),
+  });
+}
