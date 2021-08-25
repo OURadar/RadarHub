@@ -5,7 +5,7 @@
 //  Created by Boonleng Cheong
 //
 
-import { mat4 } from "gl-matrix";
+import { mat4, mat3, vec3 } from "gl-matrix";
 
 import * as common from "./common";
 import * as artists from "./artists";
@@ -33,8 +33,10 @@ class Product extends GLView {
     };
     this.state = {
       ...this.state,
-      scaleX: 1 / 2,
-      scaleY: 1 / 2,
+      scale: 1 / 2,
+      fov: Math.PI / 4,
+      satCoordinate: vec3.fromValues(0, 0, 35), // lon, lat, alt
+      satPosition: vec3.create(),
       modelview: mat4.create(),
       labelParameters: {
         labels: [],
@@ -78,7 +80,6 @@ class Product extends GLView {
     for (let j = 0; j < latCount; j++) {
       for (let k = 0; k < lonCount; k++) {
         const lon = (k * 2 * Math.PI) / lonCount;
-        //console.log((lat / Math.PI) * 180, (lon / Math.PI) * 180);
         const xyz = [
           Math.cos(lat) * Math.sin(lon),
           Math.sin(lat),
@@ -117,17 +118,20 @@ class Product extends GLView {
   updateProjection() {
     this.canvas.width = this.mount.offsetWidth;
     this.canvas.height = this.mount.offsetHeight;
-    this.setState(() => {
+    this.setState((state) => {
       const w = this.canvas.width;
       const h = this.canvas.height;
-      const aspectRatio = w / h;
-      const p = mat4.perspective([], Math.PI / 4, aspectRatio, 0.1, 1000.0);
-      const mv = mat4.lookAt([], [5, 15, 25.0], [0, 0, 0], [0, 1, 0]);
-      // const mv = mat4.lookAt([], [0, 0, 35.0], [0, 0, 0], [0, 1, 0]);
-      // const mvp = mat4.multiply([], p, mv);
+      const c = state.satCoordinate;
+      const x = c[2] * Math.cos(c[1]) * Math.sin(c[0]);
+      const y = c[2] * Math.sin(c[1]);
+      const z = c[2] * Math.cos(c[1]) * Math.cos(c[0]);
+      const satPosition = vec3.fromValues(x, y, z);
+      const p = mat4.perspective([], state.fov, w / h, 0.1, 1000.0);
+      const mv = mat4.lookAt([], satPosition, [0, 0, 0], [0, 1, 0]);
       return {
-        projection: p,
         modelview: mv,
+        projection: p,
+        satPosition: satPosition,
         viewport: { x: 0, y: 0, width: w, height: h },
       };
     });
@@ -173,16 +177,27 @@ class Product extends GLView {
     if (this.stats !== undefined) this.stats.update();
   }
 
-  // pan() {}
+  pan(x, y) {
+    this.setState((state) => {
+      let c = state.satCoordinate;
+      c[0] -= 0.004 * x;
+      c[1] -= 0.004 * y;
+      return {
+        satCoordinate: c,
+      };
+    });
+    this.updateProjection();
+  }
 
   magnify() {
-    // console.log("magnify()");
     return;
   }
 
   fitToData() {
-    // console.log("fitToData()");
-    return;
+    this.setState({
+      satCoordinate: vec3.fromValues(0, 0, 35),
+    });
+    this.updateProjection();
   }
 }
 
