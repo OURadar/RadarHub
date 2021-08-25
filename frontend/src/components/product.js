@@ -35,7 +35,7 @@ class Product extends GLView {
       ...this.state,
       scaleX: 1 / 2,
       scaleY: 1 / 2,
-      camera: mat4.create(),
+      modelview: mat4.create(),
       labelParameters: {
         labels: [],
         positions: [],
@@ -70,6 +70,7 @@ class Product extends GLView {
     };
     // Just an incubation space for now, will eventually move all of these to seprate class
     points = [];
+    let normals = [];
     const latCount = 17;
     const lonCount = 36;
     var lat = (0.5 - 0.5 / latCount) * Math.PI;
@@ -78,27 +79,28 @@ class Product extends GLView {
       for (let k = 0; k < lonCount; k++) {
         const lon = (k * 2 * Math.PI) / lonCount;
         //console.log((lat / Math.PI) * 180, (lon / Math.PI) * 180);
-        points.push([
-          radius * Math.cos(lat) * Math.sin(lon),
-          radius * Math.sin(lat),
-          radius * Math.cos(lat) * Math.cos(lon),
-        ]);
+        const xyz = [
+          Math.cos(lat) * Math.sin(lon),
+          Math.sin(lat),
+          Math.cos(lat) * Math.cos(lon),
+        ];
+        points.push([radius * xyz[0], radius * xyz[1], radius * xyz[2]]);
+        normals.push(xyz);
       }
       lat -= Math.PI / latCount;
     }
-    let latElements = [];
+    let elements = [];
     for (let k = 0; k < latCount; k++) {
-      latElements.push(
+      elements.push(
         Array.from(Array(lonCount), (_, j) => [
           k * lonCount + j,
           k * lonCount + ((j + 1) % lonCount),
         ])
       );
     }
-    let lonElements = [];
     for (let k = 0; k < lonCount; k++) {
       //lonElements.push(Array.from(Array(latCount), (_, j) => k + j * lonCount));
-      lonElements.push(
+      elements.push(
         Array.from(Array(latCount - 1), (_, j) => [
           k + j * lonCount,
           k + (j + 1) * lonCount,
@@ -107,12 +109,9 @@ class Product extends GLView {
     }
     this.grid = {
       points: points,
-      latElements: latElements.flat(),
-      lonElements: lonElements.flat(),
+      normals: normals,
+      elements: elements.flat(),
     };
-    // console.log(this.grid.points);
-    console.log(this.grid.latElements);
-    console.log(this.grid.lonElements);
   }
 
   updateProjection() {
@@ -123,10 +122,12 @@ class Product extends GLView {
       const h = this.canvas.height;
       const aspectRatio = w / h;
       const p = mat4.perspective([], Math.PI / 4, aspectRatio, 0.1, 1000.0);
-      const mv = mat4.lookAt([], [0, 25, 25.0], [0, 0, 0], [0, 1, 0]);
-      const mvp = mat4.multiply([], p, mv);
+      const mv = mat4.lookAt([], [5, 15, 25.0], [0, 0, 0], [0, 1, 0]);
+      // const mv = mat4.lookAt([], [0, 0, 35.0], [0, 0, 0], [0, 1, 0]);
+      // const mvp = mat4.multiply([], p, mv);
       return {
-        projection: mvp,
+        projection: p,
+        modelview: mv,
         viewport: { x: 0, y: 0, width: w, height: h },
       };
     });
@@ -156,19 +157,13 @@ class Product extends GLView {
       this.water([
         {
           primitive: "lines",
-          color: props.colors.lines[1],
+          color: props.colors.lines[3],
+          modelview: state.modelview,
           projection: state.projection,
           viewport: state.viewport,
           points: this.grid.points,
-          elements: this.grid.latElements,
-        },
-        {
-          primitive: "lines",
-          color: props.colors.lines[1],
-          projection: state.projection,
-          viewport: state.viewport,
-          points: this.grid.points,
-          elements: this.grid.lonElements,
+          normals: this.grid.normals,
+          elements: this.grid.elements,
         },
       ]);
       return {

@@ -162,25 +162,35 @@ export function element3(regl) {
     vert: `
     precision mediump float;
     attribute vec3 position;
+    attribute vec3 normal;
+    uniform mat4 modelview;
     uniform mat4 projection;
+    varying float s;
+    varying vec3 n;
     void main() {
-      gl_Position = projection * vec4(position, 1);
+      gl_Position = projection * modelview * vec4(position, 1);
+      n = normal;
+      s = dot(vec3(0.0, 0.0, 1.0), n.xyz);
     }`,
 
     frag: `
     precision mediump float;
     uniform vec4 color;
+    varying float s;
+    varying vec3 n;
     void main() {
-      gl_FragColor = color;
+      gl_FragColor = vec4(n, 1.0);
     }`,
 
     uniforms: {
       color: regl.prop("color"),
+      modelview: regl.prop("modelview"),
       projection: regl.prop("projection"),
     },
 
     attributes: {
       position: regl.prop("points"),
+      normal: regl.prop("normals"),
     },
 
     primitive: regl.prop("primitive"),
