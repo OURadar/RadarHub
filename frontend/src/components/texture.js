@@ -9,7 +9,7 @@
 //  obj = Texture(regl)
 //
 //  Update as:
-//  obj.update(text, allback)
+//  obj.update(text, callback)
 //
 //  where
 //

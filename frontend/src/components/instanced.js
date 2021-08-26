@@ -428,7 +428,7 @@ function interleavedStripRoundCapJoin3D(regl, resolution) {
       varying vec3 n;
       varying float s;
       void main() {
-        gl_FragColor = vec4(color.xyz, s);
+        gl_FragColor = vec4(color.rgb, s);
       }`,
 
     attributes: {

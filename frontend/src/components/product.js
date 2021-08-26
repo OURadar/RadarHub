@@ -73,8 +73,7 @@ class Product extends GLView {
     this.picaso = instanced.interleavedStripRoundCapJoin3D(this.regl, 8);
     this.gogh = artists.sprite(this.regl);
     this.art = artists.basic3(this.regl);
-    this.water = artists.element3(this.regl);
-
+    this.earth = artists.element3(this.regl);
     // Bind some methods
     this.magnify = this.magnify.bind(this);
     this.fitToData = this.fitToData.bind(this);
@@ -130,7 +129,7 @@ class Product extends GLView {
       this.regl.clear({
         color: props.colors.canvas,
       });
-      this.water([
+      this.earth([
         {
           primitive: "lines",
           color: props.colors.lines[3],
@@ -155,10 +154,10 @@ class Product extends GLView {
         },
       ]);
       let c = state.satCoordinate;
-      // c[0] -= 0.003;
-      // if (c[0] < -Math.PI) {
-      //   c[0] += 2 * Math.PI;
-      // }
+      c[0] -= 0.003;
+      if (c[0] < -Math.PI) {
+        c[0] += 2 * Math.PI;
+      }
       return {
         tic: state.tic + 1,
         satCoordinate: c,

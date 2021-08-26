@@ -1,3 +1,10 @@
+//
+//  texture.js
+//  RadarHub
+//
+//  Created by Boonleng Cheong on 8/25/2021.
+//
+
 let points = [];
 let normals = [];
 let elements = [];
@@ -35,10 +42,8 @@ for (let k = 0; k < lonCount; k++) {
   );
 }
 
-const _points = points.flat();
-const _normals = normals.flat();
-const _elements = elements.flat();
+points = points.flat();
+normals = normals.flat();
+elements = elements.flat();
 
-export { _points as points };
-export { _normals as normals };
-export { _elements as elements };
+export { points, normals, elements };
