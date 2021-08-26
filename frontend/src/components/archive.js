@@ -32,7 +32,7 @@ class Archive extends Component {
       <ThemeProvider theme={theme}>
         <SectionHeader name="product" />
         <div className="ppi">
-          <Product debug={false} />
+          <Product debug={true} />
         </div>
       </ThemeProvider>
     );

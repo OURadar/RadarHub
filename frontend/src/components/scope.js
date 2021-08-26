@@ -195,7 +195,7 @@ class Scope extends Component {
         maxY
       );
 
-      const p = mat4.ortho(mat4.create(), 0, w, 0, h, 0, -1);
+      const p = mat4.ortho([], 0, w, 0, h, 0, -1);
       // The model-view matrix
       // m[0, 0] scale x
       // m[1, 1] scale y

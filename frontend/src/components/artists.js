@@ -128,7 +128,7 @@ export function sprite(regl) {
 export function basic3(regl) {
   return regl({
     vert: `
-    precision mediump float;
+    precision highp float;
     attribute vec3 position;
     uniform mat4 projection;
     void main() {
@@ -136,7 +136,7 @@ export function basic3(regl) {
     }`,
 
     frag: `
-    precision mediump float;
+    precision highp float;
     uniform vec4 color;
     void main() {
       gl_FragColor = color;
@@ -160,22 +160,21 @@ export function basic3(regl) {
 export function element3(regl) {
   return regl({
     vert: `
-    precision mediump float;
+    precision highp float;
     attribute vec3 position;
-    attribute vec3 normal;
     uniform mat4 modelview;
     uniform mat4 projection;
-    varying float s;
     varying vec3 n;
+    varying float s;
     void main() {
       gl_Position = projection * modelview * vec4(position, 1.0);
-      n = mat3(modelview) * normal;
+      n = mat3(modelview) * normalize(position);
       s = dot(vec3(0.0, 0.0, 1.0), n);
-      s = clamp(0.5 + 0.5 * s, 0.0, 1.0);
+      s = clamp(0.4 + 0.6 * s, 0.0, 1.0);
     }`,
 
     frag: `
-    precision mediump float;
+    precision highp float;
     uniform vec4 color;
     varying vec3 n;
     varying float s;
@@ -191,7 +190,6 @@ export function element3(regl) {
 
     attributes: {
       position: regl.prop("points"),
-      normal: regl.prop("normals"),
     },
 
     primitive: regl.prop("primitive"),

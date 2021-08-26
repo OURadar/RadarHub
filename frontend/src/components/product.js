@@ -56,6 +56,9 @@ class Product extends GLView {
       satPosition: vec3.create(),
       model: model,
       view: mat4.create(),
+      modelview: mat4.create(),
+      projectionNeedsUpdate: false,
+      alwaysUpdateProjection: true,
       labelParameters: {
         labels: [],
         positions: [],
@@ -67,10 +70,11 @@ class Product extends GLView {
       },
     };
     // Our artists
-    this.picaso = instanced.noninterleavedStripRoundCapJoin(this.regl, 8);
+    this.picaso = instanced.interleavedStripRoundCapJoin3D(this.regl, 8);
     this.gogh = artists.sprite(this.regl);
     this.art = artists.basic3(this.regl);
     this.water = artists.element3(this.regl);
+
     // Bind some methods
     this.magnify = this.magnify.bind(this);
     this.fitToData = this.fitToData.bind(this);
@@ -81,54 +85,13 @@ class Product extends GLView {
 
     let points = [];
     for (let k = 0; k < 2 * Math.PI; k += Math.PI / 18) {
-      points.push([1000 * Math.sin(k), 1000 * Math.cos(k), 1.0]);
+      points.push([250 * Math.sin(k), 250 * Math.cos(k), 0.012]);
     }
     this.ring = {
       points: points.flat(),
     };
-    // Just an incubation space for now, will eventually move all of these to seprate class
-    points = [];
-    let normals = [];
-    const latCount = 17;
-    const lonCount = 36;
-    var lat = (80.0 / 180.0) * Math.PI;
-    for (let j = 0; j < latCount; j++) {
-      for (let k = 0; k < lonCount; k++) {
-        const lon = (k * 2 * Math.PI) / lonCount;
-        const xyz = [
-          Math.cos(lat) * Math.sin(lon),
-          Math.sin(lat),
-          Math.cos(lat) * Math.cos(lon),
-        ];
-        const r = this.constants.radius;
-        points.push([r * xyz[0], r * xyz[1], r * xyz[2]]);
-        normals.push(xyz);
-      }
-      lat -= Math.PI / 18;
-    }
-    let elements = [];
-    for (let k = 0; k < latCount; k++) {
-      elements.push(
-        Array.from(Array(lonCount), (_, j) => [
-          k * lonCount + j,
-          k * lonCount + ((j + 1) % lonCount),
-        ])
-      );
-    }
-    for (let k = 0; k < lonCount; k++) {
-      //lonElements.push(Array.from(Array(latCount), (_, j) => k + j * lonCount));
-      elements.push(
-        Array.from(Array(latCount - 1), (_, j) => [
-          k + j * lonCount,
-          k + (j + 1) * lonCount,
-        ])
-      );
-    }
-    this.grid = {
-      points: points,
-      normals: normals,
-      elements: elements.flat(),
-    };
+    console.log(this.ring);
+    this.grid = require("./earth-grid");
   }
 
   updateProjection() {
@@ -142,37 +105,31 @@ class Product extends GLView {
       const y = c[2] * Math.sin(c[1]);
       const z = c[2] * Math.cos(c[1]) * Math.cos(c[0]);
       const satPosition = vec3.fromValues(x, y, z);
+      const view = mat4.lookAt([], satPosition, [0, 0, 0], [0, 1, 0]);
       return {
-        view: mat4.lookAt([], satPosition, [0, 0, 0], [0, 1, 0]),
+        view: view,
+        modelview: mat4.multiply([], view, state.model),
         projection: mat4.perspective([], state.fov, w / h, 100, 25000.0),
+        screen: mat4.ortho([], -w, w, -h, h, 0, -1),
         satPosition: satPosition,
         viewport: { x: 0, y: 0, width: w, height: h },
+        projectionNeedsUpdate: state.alwaysUpdateProjection ? true : false,
       };
     });
   }
 
   draw() {
     if (
+      this.state.projectionNeedsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
       this.canvas.height != this.mount.offsetHeight
     ) {
       this.updateProjection();
     }
     this.setState((state, props) => {
-      const modelview = mat4.multiply([], state.view, state.model);
       this.regl.clear({
         color: props.colors.canvas,
       });
-      this.art([
-        {
-          primitive: "line loop",
-          color: props.colors.lines[2],
-          projection: mat4.multiply([], state.projection, modelview),
-          viewport: state.viewport,
-          points: this.ring.points,
-          count: this.ring.points.length / 3,
-        },
-      ]);
       this.water([
         {
           primitive: "lines",
@@ -181,12 +138,30 @@ class Product extends GLView {
           projection: state.projection,
           viewport: state.viewport,
           points: this.grid.points,
-          normals: this.grid.normals,
           elements: this.grid.elements,
         },
       ]);
+      this.picaso([
+        {
+          points: this.ring.points,
+          width: 2.5,
+          color: props.colors.lines[2],
+          model: state.model,
+          view: state.view,
+          projection: state.projection,
+          resolution: [this.canvas.width, this.canvas.height],
+          segments: this.ring.points.length / 3 - 1,
+          viewport: state.viewport,
+        },
+      ]);
+      let c = state.satCoordinate;
+      // c[0] -= 0.003;
+      // if (c[0] < -Math.PI) {
+      //   c[0] += 2 * Math.PI;
+      // }
       return {
         tic: state.tic + 1,
+        satCoordinate: c,
       };
     });
     if (this.stats !== undefined) this.stats.update();
@@ -199,6 +174,7 @@ class Product extends GLView {
       c[1] -= 0.003 * state.fov * y;
       return {
         satCoordinate: c,
+        projectionNeedsUpdate: true,
       };
     });
     this.updateProjection();
@@ -206,26 +182,25 @@ class Product extends GLView {
 
   magnify(x, y, _x, _y) {
     this.setState((state) => {
-      const m = 0.5 * (y - 1) + 1.0;
-      const fov = common.clamp(state.fov / m, Math.PI / 180, Math.PI);
+      const fov = common.clamp(state.fov / y, Math.PI / 180, 0.5 * Math.PI);
       return {
         fov: fov,
+        projectionNeedsUpdate: true,
         lastMagnifyTime: new Date().getTime(),
       };
     });
-    this.updateProjection();
   }
 
   fitToData() {
     this.setState({
       fov: Math.PI / 4,
+      projectionNeedsUpdate: true,
       satCoordinate: vec3.fromValues(
         (this.constants.origin.longitude / 180.0) * Math.PI,
         (this.constants.origin.latitude / 180.0) * Math.PI,
         3 * this.constants.radius
       ),
     });
-    this.updateProjection();
   }
 }
 

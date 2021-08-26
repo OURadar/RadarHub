@@ -22,7 +22,7 @@ class GLView extends Component {
     this.canvas.style.height = "100%";
     this.regl = require("regl")({
       canvas: this.canvas,
-      extensions: ["angle_instanced_arrays"],
+      extensions: ["ANGLE_instanced_arrays"],
     });
     if (props.showStats === true || props.debug === true) {
       this.stats = new Stats();
