@@ -11,8 +11,9 @@ import { colorDict, detectMob } from "./common";
 import { SectionHeader } from "./simple";
 import { Product } from "./product";
 import { theme } from "./theme";
+import { TopBar } from "./topbar";
 
-class Archive extends Component {
+class App2 extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -30,13 +31,12 @@ class Archive extends Component {
   render() {
     return (
       <ThemeProvider theme={theme}>
+        <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
-        <div className="ppi">
-          <Product debug={true} />
-        </div>
+        <Product debug={true} />
       </ThemeProvider>
     );
   }
 }
 
-export default Archive;
+export default App2;

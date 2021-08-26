@@ -121,17 +121,21 @@ class GLView extends Component {
 
   render() {
     if (this.props.debug === true) {
-      const str = this.gesture.message;
+      const str =
+        this.gesture.message +
+        " " +
+        (this.mount ? this.mount.offsetHeight : "") +
+        " px";
       return (
-        <div className="fill">
-          <div className="fill" ref={(x) => (this.mount = x)} />
+        <div>
+          <div className="ppi" ref={(x) => (this.mount = x)} />
           <div className="debug">
             <div className="leftPadded">{str}</div>
           </div>
         </div>
       );
     }
-    return <div className="fill" ref={(x) => (this.mount = x)} />;
+    return <div className="fullHeight" ref={(x) => (this.mount = x)} />;
   }
 
   updateProjection() {

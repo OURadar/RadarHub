@@ -26,16 +26,29 @@ function StatusBodyQuick(props) {
   return <div className="invisible"></div>;
 }
 
+// Supply props with
+// - ingest - real-time data ingest
+// - xxx - archived data ingest
+
 export function TopBar(props) {
-  const prefix = "v" + version + " / " + props.ingest.radar;
+  const name = props.ingest ? " / " + props.ingest.radar : "";
+  const prefix = "v" + version + name;
   const [message, setMessage] = React.useState("");
+  let status, notify;
+  if (props.ingest) {
+    status = <StatusBody message={props.ingest.message} />;
+    notify = <Notification message={props.ingest.response || message} />;
+  } else {
+    status = <StatusBody message="Some filename" />;
+    notify = <Notification message={message} />;
+  }
   return (
     <div>
       <div id="topbar">
         <h1>RadarHub</h1>
         <div id="statusPrefix">{prefix}</div>
-        <StatusBody message={props.ingest.message} />
-        <Notification message={props.ingest.response || message} />
+        {status}
+        {notify}
         <Console
           isMobile={props.isMobile}
           handleAccount={() => {

@@ -328,6 +328,10 @@ h3 {
   right: 5px;
 }
 
+.fullHeight {
+  height: 100vh;
+}
 .ppi {
-  height: 800px;
+  height: calc(100vh - 84px - 44px);
+  position: relative;
 }
