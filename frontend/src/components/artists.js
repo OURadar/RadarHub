@@ -205,3 +205,52 @@ export function element3(regl) {
     },
   });
 }
+
+const earth = require("./earth-grid");
+
+export function sphere(regl) {
+  return regl({
+    vert: `
+    precision highp float;
+    attribute vec3 position;
+    uniform mat4 modelview;
+    uniform mat4 projection;
+    varying vec3 n;
+    varying float s;
+    void main() {
+      gl_Position = projection * modelview * vec4(position, 1.0);
+      n = mat3(modelview) * normalize(position);
+      s = dot(vec3(0.0, 0.0, 1.0), n);
+      s = clamp(0.4 + 0.6 * s, 0.0, 1.0);
+    }`,
+
+    frag: `
+    precision highp float;
+    varying vec3 n;
+    varying float s;
+    void main() {
+      gl_FragColor = vec4(n, s);
+    }`,
+
+    uniforms: {
+      modelview: regl.prop("modelview"),
+      projection: regl.prop("projection"),
+    },
+
+    attributes: {
+      position: earth.points,
+    },
+
+    primitive: "lines",
+    elements: earth.elements,
+    viewport: regl.prop("viewport"),
+
+    blend: {
+      enable: true,
+      func: {
+        src: "src alpha",
+        dst: "one minus src alpha",
+      },
+    },
+  });
+}
