@@ -82,7 +82,7 @@ class GLView extends Component {
     // Our artists
     this.picaso = instanced.interleavedStripRoundCapJoin3D(this.regl, 8);
     this.gogh = artists.sprite(this.regl);
-    this.art = artists.basic3(this.regl);
+    this.basic3 = artists.basic3(this.regl);
     this.sphere = artists.sphere(this.regl);
     // Bind some methods
     this.updateProjection = this.updateProjection.bind(this);

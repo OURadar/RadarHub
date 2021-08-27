@@ -34,7 +34,7 @@ class App2 extends Component {
       <ThemeProvider theme={theme}>
         <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
-        <GLView debug={true} />
+        <Product debug={true} />
       </ThemeProvider>
     );
   }
