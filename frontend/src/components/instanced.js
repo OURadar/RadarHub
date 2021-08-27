@@ -386,11 +386,8 @@ function noninterleavedStripRoundCapJoin(regl, resolution) {
   });
 }
 
-// Originally from instanced draw, tweaked for this application
-// Objects that are beyond the earth limb is slowly faded away
-//
 function interleavedStripRoundCapJoin3D(regl, resolution) {
-  const roundCapJoin = roundCapJoinGeometry(regl, resolution);
+  roundCapJoin = roundCapJoinGeometry(regl, resolution);
   return regl({
     vert: `
       precision highp float;
@@ -399,14 +396,10 @@ function interleavedStripRoundCapJoin3D(regl, resolution) {
       uniform float width;
       uniform vec2 resolution;
       uniform mat4 model, view, projection;
-      varying vec3 n;
-      varying float s;
 
       void main() {
-        vec4 modelPointA = model * vec4(pointA, 1.0);
-        vec4 modelPointB = model * vec4(pointB, 1.0);
-        vec4 clip0 = projection * view * modelPointA;
-        vec4 clip1 = projection * view * modelPointB;
+        vec4 clip0 = projection * view * model * vec4(pointA, 1.0);
+        vec4 clip1 = projection * view * model * vec4(pointB, 1.0);
         vec2 screen0 = resolution * (0.5 * clip0.xy/clip0.w + 0.5);
         vec2 screen1 = resolution * (0.5 * clip1.xy/clip1.w + 0.5);
         vec2 xBasis = normalize(screen1 - screen0);
@@ -416,19 +409,13 @@ function interleavedStripRoundCapJoin3D(regl, resolution) {
         vec2 pt = mix(pt0, pt1, position.z);
         vec4 clip = mix(clip0, clip1, position.z);
         gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
-        vec3 modelViewPoint = mat3(view) * modelPointA.xyz;
-        n = normalize(modelViewPoint.xyz);
-        s = dot(vec3(0.0, 0.0, 1.0), n);
-        s = clamp(s, 0.0, 1.0);
       }`,
 
     frag: `
       precision highp float;
       uniform vec4 color;
-      varying vec3 n;
-      varying float s;
       void main() {
-        gl_FragColor = vec4(color.rgb, s);
+        gl_FragColor = color;
       }`,
 
     attributes: {
@@ -461,12 +448,9 @@ function interleavedStripRoundCapJoin3D(regl, resolution) {
       enable: false,
     },
 
-    blend: {
+    cull: {
       enable: true,
-      func: {
-        src: "src alpha",
-        dst: "one minus src alpha",
-      },
+      face: "back",
     },
 
     count: roundCapJoin.count,
@@ -568,10 +552,106 @@ function instancedLines(regl, resolution) {
   });
 }
 
+//
+// modified from interleavedStripRoundCapJoin3D() for drawing castlines
+// Since model matrix is always identity, it's omitted
+//
+function simplifiedInstancedLines(regl) {
+  const roundCapJoin = roundCapJoinGeometry(regl, 6);
+  return regl({
+    vert: `
+      precision highp float;
+      attribute vec3 position;
+      attribute vec3 pointA, pointB;
+      uniform float width;
+      uniform vec2 resolution;
+      uniform mat4 view, projection;
+      uniform vec4 color;
+      varying vec3 n;
+      varying float s;
+
+      void main() {
+        vec4 modelPointA = vec4(pointA, 1.0);
+        vec4 modelPointB = vec4(pointB, 1.0);
+        mat4 mvp = projection * view;
+        vec4 clip0 = mvp * modelPointA;
+        vec4 clip1 = mvp * modelPointB;
+        vec2 screen0 = resolution * (0.5 * clip0.xy/clip0.w + 0.5);
+        vec2 screen1 = resolution * (0.5 * clip1.xy/clip1.w + 0.5);
+        vec2 xBasis = normalize(screen1 - screen0);
+        vec2 yBasis = vec2(-xBasis.y, xBasis.x);
+        vec2 pt0 = screen0 + width * (position.x * xBasis + position.y * yBasis);
+        vec2 pt1 = screen1 + width * (position.x * xBasis + position.y * yBasis);
+        vec2 pt = mix(pt0, pt1, position.z);
+        vec4 clip = mix(clip0, clip1, position.z);
+        gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
+        vec3 modelViewPoint = mat3(view) * pointA;
+        n = normalize(modelViewPoint);
+        s = dot(vec3(0.0, 0.0, 1.0), n);
+        s = clamp(s, 0.0, 1.0);
+        n = color.r * n;
+      }`,
+
+    frag: `
+      precision highp float;
+      uniform vec4 color;
+      varying vec3 n;
+      varying float s;
+      void main() {
+        gl_FragColor = vec4(n.xzy, s * color.a);
+      }`,
+
+    attributes: {
+      position: {
+        buffer: roundCapJoin.buffer,
+        divisor: 0,
+        stride: Float32Array.BYTES_PER_ELEMENT * 3,
+      },
+      pointA: {
+        buffer: regl.prop("points"),
+        divisor: 1,
+        offset: Float32Array.BYTES_PER_ELEMENT * 0,
+        stride: Float32Array.BYTES_PER_ELEMENT * 6,
+      },
+      pointB: {
+        buffer: regl.prop("points"),
+        divisor: 1,
+        offset: Float32Array.BYTES_PER_ELEMENT * 3,
+        stride: Float32Array.BYTES_PER_ELEMENT * 6,
+      },
+    },
+
+    uniforms: {
+      width: regl.prop("width"),
+      color: regl.prop("color"),
+      view: regl.prop("view"),
+      projection: regl.prop("projection"),
+      resolution: regl.prop("resolution"),
+    },
+
+    depth: {
+      enable: false,
+    },
+
+    blend: {
+      enable: true,
+      func: {
+        src: "src alpha",
+        dst: "one minus src alpha",
+      },
+    },
+
+    count: roundCapJoin.count,
+    instances: regl.prop("segments"),
+    viewport: regl.prop("viewport"),
+  });
+}
+
 export {
   interleavedStrip,
   interleavedStripRoundCapJoin,
   noninterleavedStripRoundCapJoin,
   interleavedStripRoundCapJoin3D,
   instancedLines,
+  simplifiedInstancedLines,
 };

@@ -28,10 +28,31 @@ class Product extends GLView {
       props.debugGL
     );
     this.overlay = new Overlay(this.regl);
-    this.andy = instanced.instancedLines(this.regl, 4);
+    this.graphics.satCoordinate[0] = this.getTimedLongitude();
+  }
+
+  getTimedLongitude() {
+    return 0.0003 * (1630077685393 - new Date().getTime());
+  }
+
+  componentDidMount() {
+    super.componentDidMount();
+    setTimeout(() => {
+      this.overlay.update();
+    }, 500);
+    // const createStatsWidget = require("regl-stats-widget");
+    // var drawCalls = [
+    //   [this.andy, "andy"],
+    //   [this.hope, "hope"],
+    //   [this.sphere, "sphere"],
+    // ];
+    // this.statsWidget = createStatsWidget(drawCalls);
   }
 
   draw() {
+    if (this.mount === null) {
+      return;
+    }
     if (
       this.graphics.projectionNeedsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
@@ -48,9 +69,7 @@ class Product extends GLView {
       projection: graph.projection,
       viewport: graph.viewport,
     });
-    //let projection = mat4.multiply([], state.projection, state.modelview);
-
-    this.andy({
+    this.monet({
       width: 5,
       color: [0.5, 0.5, 0.5, 0.7],
       model: graph.model,
@@ -58,14 +77,13 @@ class Product extends GLView {
       projection: graph.projection,
       resolution: [this.canvas.width, this.canvas.height],
       viewport: graph.viewport,
-      points: this.ring.points2,
-      segments: this.ring.points2.length / 6,
+      points: this.rings.points,
+      segments: this.rings.count,
     });
     if (this.overlay.ready) {
-      this.andy({
+      this.picaso({
         width: 1.8,
-        color: [0.5, 0.5, 0.5, 0.7],
-        model: graph.identityMatrix,
+        color: [0.7, 0.5, 0.5, this.overlay.opacity],
         view: graph.view,
         projection: graph.projection,
         resolution: [this.canvas.width, this.canvas.height],
@@ -73,10 +91,16 @@ class Product extends GLView {
         points: this.overlay.points,
         segments: this.overlay.count,
       });
+      this.overlay.opacity =
+        0.97 * this.overlay.opacity + 0.03 * this.overlay.targetOpacity;
     }
 
-    graph.satCoordinate[0] -= 0.003;
+    if (!this.gesture.panInProgress) {
+      graph.satCoordinate[0] =
+        0.97 * graph.satCoordinate[0] + 0.03 * this.getTimedLongitude();
+    }
     if (this.stats !== undefined) this.stats.update();
+    // this.statsWidget.update(0.017);
   }
 }
 

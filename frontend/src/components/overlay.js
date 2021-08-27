@@ -3,10 +3,15 @@ class Overlay {
     this.regl = regl;
     this.raw = [];
     this.points = [];
+    this.busy = false;
     this.ready = false;
+    this.opacity = 0.0;
+    this.targetOpacity = 1.0;
 
     this.addpolygon = this.addpolygon.bind(this);
+  }
 
+  read() {
     const handleShape = (shape) => {
       // console.log(shape);
       // console.log(shape.geometry.type);
@@ -34,12 +39,18 @@ class Overlay {
         }
         x.push(segment[segment.length - 1]);
       });
-      this.points = new Float32Array(x.flat());
-      this.count = this.points.length / 6;
+      x = x.flat();
+      this.points = this.regl.buffer({
+        usage: "static",
+        type: "float",
+        data: x,
+      });
+      this.count = x.length / 6;
       console.log(
         "overlay " + this.points.length + " floats -> " + this.count + " lines"
       );
       this.ready = true;
+      this.busy = false;
     };
 
     let shapefile = require("shapefile");
@@ -58,9 +69,19 @@ class Overlay {
       .catch((error) => console.error(error.stack));
   }
 
+  async update() {
+    if (this.busy) {
+      return;
+    }
+    if (window.requestIdleCallback) {
+      console.log("low priotity ...");
+      window.requestIdleCallback(this.read(), { timeout: 500 });
+    } else {
+      this.read();
+    }
+  }
+
   addpolygon(polygon) {
-    // console.log(polygon);
-    let k = 0;
     let p = [];
     polygon.forEach((c) => {
       var lon = (c[0] / 180.0) * Math.PI;
@@ -69,7 +90,6 @@ class Overlay {
       var y = 6357 * Math.sin(lat);
       var z = 6357 * Math.cos(lat) * Math.cos(lon);
       p.push([x, y, z]);
-      k++;
     });
     this.raw.push(p);
   }
