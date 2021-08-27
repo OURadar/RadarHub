@@ -12,6 +12,7 @@ import { SectionHeader } from "./simple";
 import { Product } from "./product";
 import { theme } from "./theme";
 import { TopBar } from "./topbar";
+import { GLView } from "./glview";
 
 class App2 extends Component {
   constructor(props) {
@@ -33,7 +34,7 @@ class App2 extends Component {
       <ThemeProvider theme={theme}>
         <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
-        <Product debug={true} />
+        <GLView debug={true} />
       </ThemeProvider>
     );
   }

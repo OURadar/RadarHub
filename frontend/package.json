@@ -30,6 +30,7 @@
     "gl-matrix": "^3.3.0",
     "react-regl": "^4.3.2",
     "regl": "^2.1.0",
+    "shapefile": "^0.6.6",
     "stats-js": "^1.0.1"
   }
 }

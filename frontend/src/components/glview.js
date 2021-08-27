@@ -38,8 +38,8 @@ class GLView extends Component {
         left: 0,
       },
       origin: {
-        longitude: -20,
-        latitude: 30,
+        longitude: -100,
+        latitude: 40,
       },
     };
     // satCoordinate = (lon, lat, alt) of satellite
@@ -53,18 +53,6 @@ class GLView extends Component {
     model = mat4.translate([], model, [0, 0, this.constants.radius]);
     this.state = {
       tic: 0,
-      fov: Math.PI / 6,
-      satCoordinate: vec3.fromValues(
-        (origin.longitude / 180.0) * Math.PI,
-        (origin.latitude / 180.0) * Math.PI,
-        3 * this.constants.radius
-      ),
-      satPosition: vec3.create(),
-      model: model,
-      view: mat4.create(),
-      modelview: model,
-      projectionNeedsUpdate: false,
-      alwaysUpdateProjection: true,
       labelParameters: {
         labels: [],
         positions: [],
@@ -75,11 +63,27 @@ class GLView extends Component {
         count: 0,
       },
     };
+    // Important parameters for WebGL
+    this.graphics = {
+      fov: Math.PI / 6,
+      satCoordinate: vec3.fromValues(
+        (origin.longitude / 180.0) * Math.PI,
+        (origin.latitude / 180.0) * Math.PI,
+        3 * this.constants.radius
+      ),
+      satPosition: vec3.create(),
+      model: model,
+      view: mat4.create(),
+      modelview: model,
+      identityMatrix: mat4.create(),
+      projectionNeedsUpdate: false,
+      alwaysUpdateProjection: true,
+    };
     // Our artists
     this.picaso = instanced.interleavedStripRoundCapJoin3D(this.regl, 8);
     this.gogh = artists.sprite(this.regl);
     this.art = artists.basic3(this.regl);
-    this.earth = artists.sphere(this.regl);
+    this.sphere = artists.sphere(this.regl);
     // Bind some methods
     this.updateProjection = this.updateProjection.bind(this);
     this.draw = this.draw.bind(this);
@@ -96,9 +100,17 @@ class GLView extends Component {
     for (let k = 0; k < 2 * Math.PI; k += Math.PI / 18) {
       points.push([250 * Math.sin(k), 250 * Math.cos(k), 0.012]);
     }
+    let points2 = [];
+    points2.push(points[0]);
+    for (let k = 1; k < points.length - 1; k++) {
+      points2.push(points[k], points[k]);
+    }
+    points2.push(points[points.length - 1]);
     this.ring = {
       points: points.flat(),
+      points2: new Float32Array(points2.flat()),
     };
+    console.log(this.ring.points2.length / 6 - 1);
   }
 
   static defaultProps = {
@@ -141,110 +153,100 @@ class GLView extends Component {
   updateProjection() {
     this.canvas.width = this.mount.offsetWidth;
     this.canvas.height = this.mount.offsetHeight;
-    this.setState((state) => {
-      const w = this.canvas.width;
-      const h = this.canvas.height;
-      const c = state.satCoordinate;
-      const x = c[2] * Math.cos(c[1]) * Math.sin(c[0]);
-      const y = c[2] * Math.sin(c[1]);
-      const z = c[2] * Math.cos(c[1]) * Math.cos(c[0]);
-      const satPosition = vec3.fromValues(x, y, z);
-      const view = mat4.lookAt([], satPosition, [0, 0, 0], [0, 1, 0]);
-      return {
-        view: view,
-        modelview: mat4.multiply([], view, state.model),
-        projection: mat4.perspective([], state.fov, w / h, 100, 25000.0),
-        satPosition: satPosition,
-        viewport: { x: 0, y: 0, width: w, height: h },
-        projectionNeedsUpdate: state.alwaysUpdateProjection ? true : false,
-      };
-    });
+    const graph = this.graphics;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const c = graph.satCoordinate;
+    const x = c[2] * Math.cos(c[1]) * Math.sin(c[0]);
+    const y = c[2] * Math.sin(c[1]);
+    const z = c[2] * Math.cos(c[1]) * Math.cos(c[0]);
+    graph.satPosition = vec3.fromValues(x, y, z);
+    graph.view = mat4.lookAt([], graph.satPosition, [0, 0, 0], [0, 1, 0]);
+    graph.modelview = mat4.multiply([], graph.view, graph.model);
+    graph.projection = mat4.perspective([], graph.fov, w / h, 100, 30000.0);
+    graph.viewport = { x: 0, y: 0, width: w, height: h };
+    graph.projectionNeedsUpdate = graph.alwaysUpdateProjection ? true : false;
   }
 
   draw() {
     if (
-      this.state.projectionNeedsUpdate ||
+      this.graphics.projectionNeedsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
       this.canvas.height != this.mount.offsetHeight
     ) {
       this.updateProjection();
     }
-    this.setState((state, props) => {
-      this.regl.clear({
-        color: props.colors.canvas,
-      });
-      this.earth([
-        {
-          modelview: state.view,
-          projection: state.projection,
-          viewport: state.viewport,
-        },
-      ]);
-      this.picaso([
-        {
-          points: this.ring.points,
-          width: 2.5,
-          color: props.colors.lines[2],
-          model: state.model,
-          view: state.view,
-          projection: state.projection,
-          resolution: [this.canvas.width, this.canvas.height],
-          segments: this.ring.points.length / 3 - 1,
-          viewport: state.viewport,
-        },
-      ]);
-      let c = state.satCoordinate;
-      c[0] -= 0.003;
-      if (c[0] < -Math.PI) {
-        c[0] += 2 * Math.PI;
-      }
-      return {
-        tic: state.tic + 1,
-        satCoordinate: c,
-      };
+    const graph = this.graphics;
+    this.regl.clear({
+      color: this.props.colors.canvas,
     });
+    this.sphere({
+      modelview: graph.view,
+      projection: graph.projection,
+      viewport: graph.viewport,
+    });
+    this.picaso({
+      points: this.ring.points,
+      width: 2.5,
+      color: this.props.colors.lines[2],
+      model: graph.model,
+      view: graph.view,
+      projection: graph.projection,
+      resolution: [this.canvas.width, this.canvas.height],
+      segments: this.ring.points.length / 3 - 1,
+      viewport: graph.viewport,
+    });
+    let c = graph.satCoordinate;
+    c[0] -= 0.003;
+    if (c[0] < -Math.PI) {
+      c[0] += 2 * Math.PI;
+    }
+    graph.satCoordinate = c;
     if (this.stats !== undefined) this.stats.update();
   }
 
   pan(x, y) {
-    this.setState((state) => {
-      let c = state.satCoordinate;
-      c[0] = c[0] - 0.003 * state.fov * x;
-      c[1] = common.clamp(
-        c[1] - 0.003 * state.fov * y,
-        -0.5 * Math.PI,
-        +0.5 * Math.PI
-      );
-
-      return {
-        satCoordinate: c,
-        projectionNeedsUpdate: true,
-      };
-    });
-    this.updateProjection();
+    const graph = this.graphics;
+    let c = graph.satCoordinate;
+    c[0] = c[0] - 0.003 * graph.fov * x;
+    c[1] = common.clamp(
+      c[1] - 0.003 * graph.fov * y,
+      -0.499 * Math.PI,
+      +0.499 * Math.PI
+    );
+    graph.projectionNeedsUpdate = true;
+    if (this.props.debugGL) {
+      this.setState({
+        lastPanTime: new Date().getTime(),
+      });
+    }
   }
 
   magnify(x, y, _x, _y) {
-    this.setState((state) => {
-      const fov = common.clamp(state.fov / y, Math.PI / 180, 0.5 * Math.PI);
-      return {
-        fov: fov,
-        projectionNeedsUpdate: true,
+    const graph = this.graphics;
+    graph.fov = common.clamp(graph.fov / y, Math.PI / 180, 0.5 * Math.PI);
+    graph.projectionNeedsUpdate = true;
+    if (this.props.debugGL) {
+      this.setState({
         lastMagnifyTime: new Date().getTime(),
-      };
-    });
+      });
+    }
   }
 
   fitToData() {
-    this.setState({
-      fov: Math.PI / 4,
-      projectionNeedsUpdate: true,
-      satCoordinate: vec3.fromValues(
-        (this.constants.origin.longitude / 180.0) * Math.PI,
-        (this.constants.origin.latitude / 180.0) * Math.PI,
-        3 * this.constants.radius
-      ),
-    });
+    const graph = this.graphics;
+    graph.gov = Math.PI / 6;
+    graph.satCoordinate = vec3.fromValues(
+      (this.constants.origin.longitude / 180.0) * Math.PI,
+      (this.constants.origin.latitude / 180.0) * Math.PI,
+      3 * this.constants.radius
+    );
+    graph.projectionNeedsUpdate = true;
+    if (this.props.debugGL) {
+      this.setState({
+        lastMagnifyTime: new Date().getTime(),
+      });
+    }
   }
 }
 
