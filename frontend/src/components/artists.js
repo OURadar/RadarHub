@@ -176,10 +176,9 @@ export function element3(regl) {
     frag: `
     precision highp float;
     uniform vec4 color;
-    varying vec3 n;
     varying float s;
     void main() {
-      gl_FragColor = vec4(n, s);
+      gl_FragColor = vec4(color.rgb, s);
     }`,
 
     uniforms: {
@@ -215,26 +214,27 @@ export function sphere(regl) {
     attribute vec3 position;
     uniform mat4 modelview;
     uniform mat4 projection;
-    varying vec3 n;
     varying float s;
+    vec3 n;
     void main() {
       gl_Position = projection * modelview * vec4(position, 1.0);
       n = mat3(modelview) * normalize(position);
       s = dot(vec3(0.0, 0.0, 1.0), n);
-      s = clamp(0.4 + 0.6 * s, 0.0, 1.0);
+      s = clamp(0.2 + 0.8 * s, 0.0, 1.0);
     }`,
 
     frag: `
     precision highp float;
-    varying vec3 n;
+    uniform vec4 color;
     varying float s;
     void main() {
-      gl_FragColor = vec4(n.xzy, s);
+      gl_FragColor = vec4(color.rgb, color.a * s);
     }`,
 
     uniforms: {
       modelview: regl.prop("modelview"),
       projection: regl.prop("projection"),
+      color: regl.prop("color"),
     },
 
     attributes: {

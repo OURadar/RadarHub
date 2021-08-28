@@ -40,19 +40,19 @@ class Product extends GLView {
     setTimeout(() => {
       this.overlay.update();
     }, 500);
-    // const createStatsWidget = require("regl-stats-widget");
-    // var drawCalls = [
-    //   [this.andy, "andy"],
-    //   [this.hope, "hope"],
-    //   [this.sphere, "sphere"],
-    // ];
-    // this.statsWidget = createStatsWidget(drawCalls);
+    if (this.props.profileGL) {
+      const createStatsWidget = require("regl-stats-widget");
+      var drawCalls = [
+        [this.andy, "andy"],
+        [this.hope, "hope"],
+        [this.sphere, "sphere"],
+      ];
+      this.statsWidget = createStatsWidget(drawCalls);
+    }
   }
 
   draw() {
-    if (this.mount === null) {
-      return;
-    }
+    if (this.mount === null) return;
     if (
       this.graphics.projectionNeedsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
@@ -68,10 +68,12 @@ class Product extends GLView {
       modelview: graph.view,
       projection: graph.projection,
       viewport: graph.viewport,
+      color: [0.5, 0.5, 0.5, 0.85],
     });
     this.monet({
-      width: 5,
-      color: [0.5, 0.5, 0.5, 0.7],
+      width: 2,
+      color: this.props.colors.lines[2],
+      quad: [0, 0.7, 0, this.overlay.opacity],
       model: graph.model,
       view: graph.view,
       projection: graph.projection,
@@ -82,8 +84,9 @@ class Product extends GLView {
     });
     if (this.overlay.ready) {
       this.picaso({
-        width: 1.8,
-        color: [0.7, 0.5, 0.5, this.overlay.opacity],
+        width: 1.7,
+        color: this.props.colors.lines[3],
+        quad: [1, 0.7, 0, this.overlay.opacity],
         view: graph.view,
         projection: graph.projection,
         resolution: [this.canvas.width, this.canvas.height],
@@ -92,15 +95,31 @@ class Product extends GLView {
         segments: this.overlay.count,
       });
       this.overlay.opacity =
-        0.97 * this.overlay.opacity + 0.03 * this.overlay.targetOpacity;
+        0.95 * this.overlay.opacity + 0.05 * this.overlay.targetOpacity;
     }
 
     if (!this.gesture.panInProgress) {
       graph.satCoordinate[0] =
-        0.97 * graph.satCoordinate[0] + 0.03 * this.getTimedLongitude();
+        0.95 * graph.satCoordinate[0] + 0.05 * this.getTimedLongitude();
     }
     if (this.stats !== undefined) this.stats.update();
-    // this.statsWidget.update(0.017);
+    if (this.props.profileGL) this.statsWidget.update(0.017);
+  }
+
+  fitToData() {
+    const graph = this.graphics;
+    graph.fov = Math.PI / 6;
+    graph.satCoordinate = vec3.fromValues(
+      this.getTimedLongitude(),
+      (this.constants.origin.latitude / 180.0) * Math.PI,
+      3 * this.constants.radius
+    );
+    graph.projectionNeedsUpdate = true;
+    if (this.props.debugGL) {
+      this.setState({
+        lastMagnifyTime: new Date().getTime(),
+      });
+    }
   }
 }
 

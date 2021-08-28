@@ -472,8 +472,9 @@ function instancedLines(regl, resolution) {
       uniform vec2 resolution;
       uniform mat4 model, view, projection;
       uniform vec4 color;
-      varying vec3 n;
-      varying float s;
+      uniform vec4 quad;
+      varying vec4 normal;
+      varying vec4 adjustedColor;
 
       void main() {
         vec4 modelPointA = model * vec4(pointA, 1.0);
@@ -489,20 +490,21 @@ function instancedLines(regl, resolution) {
         vec2 pt = mix(pt0, pt1, position.z);
         vec4 clip = mix(clip0, clip1, position.z);
         gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
-        vec3 modelViewPoint = mat3(view) * modelPointA.xyz;
-        n = normalize(modelViewPoint.xyz);
-        s = dot(vec3(0.0, 0.0, 1.0), n);
-        s = clamp(s, 0.0, 1.0);
-        n = color.a * n;
+        normal.xyz = normalize(mat3(view) * modelPointA.xyz);
+        normal.w = dot(vec3(0.0, 0.0, 1.0), normal.xyz);
+        normal.xyz *= quad.y;
+        adjustedColor = color;
+        adjustedColor.a *= normal.w * quad.a;
       }`,
 
     frag: `
       precision highp float;
-      uniform vec4 color;
-      varying vec3 n;
-      varying float s;
+      uniform vec4 quad;
+      varying vec4 normal;
+      varying vec4 adjustedColor;
       void main() {
-        gl_FragColor = vec4(n.xzy, s);
+        vec4 computedColor = vec4(normal.xzy, normal.w * quad.a);
+        gl_FragColor = mix(computedColor, adjustedColor, quad.x);
       }`,
 
     attributes: {
@@ -528,6 +530,7 @@ function instancedLines(regl, resolution) {
     uniforms: {
       width: regl.prop("width"),
       color: regl.prop("color"),
+      quad: regl.prop("quad"),
       model: regl.prop("model"),
       view: regl.prop("view"),
       projection: regl.prop("projection"),
@@ -567,8 +570,9 @@ function simplifiedInstancedLines(regl) {
       uniform vec2 resolution;
       uniform mat4 view, projection;
       uniform vec4 color;
-      varying vec3 n;
-      varying float s;
+      uniform vec4 quad;
+      varying vec4 normal;
+      varying vec4 adjustedColor;
 
       void main() {
         vec4 modelPointA = vec4(pointA, 1.0);
@@ -585,20 +589,21 @@ function simplifiedInstancedLines(regl) {
         vec2 pt = mix(pt0, pt1, position.z);
         vec4 clip = mix(clip0, clip1, position.z);
         gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
-        vec3 modelViewPoint = mat3(view) * pointA;
-        n = normalize(modelViewPoint);
-        s = dot(vec3(0.0, 0.0, 1.0), n);
-        s = clamp(s, 0.0, 1.0);
-        n = color.r * n;
+        normal.xyz = normalize(mat3(view) * pointA);
+        normal.w = dot(vec3(0.0, 0.0, 1.0), normal.xyz);
+        normal.xyz *= quad.y;
+        adjustedColor = color;
+        adjustedColor.a *= normal.w * quad.a;
       }`,
 
     frag: `
       precision highp float;
-      uniform vec4 color;
-      varying vec3 n;
-      varying float s;
+      uniform vec4 quad;
+      varying vec4 normal;
+      varying vec4 adjustedColor;
       void main() {
-        gl_FragColor = vec4(n.xzy, s * color.a);
+        vec4 computedColor = vec4(normal.xzy, normal.w * quad.a);
+        gl_FragColor = mix(computedColor, adjustedColor, quad.x);
       }`,
 
     attributes: {
@@ -624,6 +629,7 @@ function simplifiedInstancedLines(regl) {
     uniforms: {
       width: regl.prop("width"),
       color: regl.prop("color"),
+      quad: regl.prop("quad"),
       view: regl.prop("view"),
       projection: regl.prop("projection"),
       resolution: regl.prop("resolution"),

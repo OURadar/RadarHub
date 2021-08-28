@@ -82,7 +82,7 @@ class GLView extends Component {
     };
     // Our artists
     this.picaso = instanced.simplifiedInstancedLines(this.regl);
-    this.monet = instanced.instancedLines(this.regl, 4);
+    this.monet = instanced.instancedLines(this.regl, 0);
     this.gogh = artists.sprite(this.regl);
     this.basic3 = artists.basic3(this.regl);
     this.sphere = artists.sphere(this.regl);
@@ -98,12 +98,13 @@ class GLView extends Component {
     this.gesture.handleMagnify = this.magnify;
     this.gesture.handleDoubleTap = this.fitToData;
 
-    this.rings = new Rings(this.regl, [60, 120, 250, 500]);
+    this.rings = new Rings(this.regl, [60, 120, 250, 500], 50);
   }
 
   static defaultProps = {
     debug: false,
     debugGL: false,
+    profileGL: false,
     showStats: false,
     colors: common.colorDict(),
     linewidth: 1.4,
@@ -175,6 +176,7 @@ class GLView extends Component {
       modelview: graph.view,
       projection: graph.projection,
       viewport: graph.viewport,
+      color: this.props.colors.lines[1],
     });
     this.monet({
       width: 2.5,
@@ -197,8 +199,8 @@ class GLView extends Component {
     c[0] = c[0] - 0.003 * graph.fov * x;
     c[1] = common.clamp(
       c[1] - 0.003 * graph.fov * y,
-      -0.499 * Math.PI,
-      +0.499 * Math.PI
+      -0.4999 * Math.PI,
+      +0.4999 * Math.PI
     );
     graph.projectionNeedsUpdate = true;
     if (this.props.debugGL) {
@@ -221,7 +223,7 @@ class GLView extends Component {
 
   fitToData() {
     const graph = this.graphics;
-    graph.gov = Math.PI / 6;
+    graph.fov = Math.PI / 6;
     graph.satCoordinate = vec3.fromValues(
       (this.constants.origin.longitude / 180.0) * Math.PI,
       (this.constants.origin.latitude / 180.0) * Math.PI,

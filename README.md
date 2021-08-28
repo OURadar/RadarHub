@@ -39,6 +39,11 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [ ] 0.9 Landing page, radar selection, etc.
 - [ ] 1.0 RadarKit communicates with RadarHub
 
+## Post Version 1.0
+
+- [ ] - Display frequency spectrum alongside scope view
+- [ ] - Show online users
+
 # Important Topics
 
 Here are some assumptions that developers should be aware of.
