@@ -109,6 +109,7 @@ export function colorDict(theme) {
       spline: [0.6, 0.6, 0.6, 1],
       pane: [0.988, 0.988, 1, 1],
       grid: [0.3, 0.3, 0.3, 0.6],
+      tint: 0.7,
     },
     dark: {
       name: "dark",
@@ -130,6 +131,7 @@ export function colorDict(theme) {
       spline: [0.8, 0.8, 0.8, 1],
       pane: [0.05, 0.05, 0.08, 1],
       grid: [1.0, 1.0, 1.0, 0.18],
+      tint: 1.0,
     },
     vibrant: {
       name: "vibrant",
@@ -151,6 +153,7 @@ export function colorDict(theme) {
       spline: [0.8, 0.8, 0.8, 1],
       pane: [0.0, 0.07, 0.07, 1],
       grid: [1.0, 1.0, 1.0, 0.18],
+      tint: 1.0,
     },
     sat: {
       name: "sat",
@@ -169,6 +172,7 @@ export function colorDict(theme) {
       spline: [0.8, 0.8, 0.8, 1],
       pane: [0.988, 0.988, 1, 1],
       grid: [0.3, 0.3, 0.3, 0.6],
+      tint: 1.0,
     },
     baby: {
       name: "baby",
@@ -190,6 +194,7 @@ export function colorDict(theme) {
       spline: [0.8, 0.8, 0.8, 1],
       pane: [0.988, 0.988, 1, 1],
       grid: [0.3, 0.3, 0.3, 0.6],
+      tint: 1.0,
     },
   };
   return themes[theme];

@@ -19,22 +19,36 @@ class App2 extends Component {
     super(props);
     this.state = {
       colors: colorDict(),
-      tic: 0,
     };
     this.isMobile = detectMob();
-    console.log("isMobile = " + this.isMobile);
   }
   static defaultProps = {
     radar: "demo",
-    receiver: 0,
   };
+
+  componentDidMount() {
+    // Get notified when the desktop theme is changed
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        if (e.matches) {
+          this.setState({
+            colors: colorDict("dark"),
+          });
+        } else {
+          this.setState({
+            colors: colorDict("light"),
+          });
+        }
+      });
+  }
 
   render() {
     return (
       <ThemeProvider theme={theme}>
         <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
-        <Product debug={true} profileGL={false} />
+        <Product colors={this.state.colors} debug={true} profileGL={false} />
       </ThemeProvider>
     );
   }

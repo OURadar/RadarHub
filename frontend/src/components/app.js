@@ -34,7 +34,6 @@ class App extends Component {
 
   static defaultProps = {
     radar: "demo",
-    receiver: 0,
   };
 
   componentDidMount() {
