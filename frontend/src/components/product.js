@@ -10,7 +10,7 @@ import * as artists from "./artists";
 import * as instanced from "./instanced";
 import { Texture } from "./texture";
 import { GLView } from "./glview";
-import { Overlay } from "./overlay";
+import { Polygon } from "./polygon";
 import { mat4, vec3 } from "gl-matrix";
 
 //
@@ -27,7 +27,11 @@ class Product extends GLView {
       this.props.textureScale,
       props.debugGL
     );
-    this.overlay = new Overlay(this.regl);
+    // this.overlay = new Polygon(this.regl, "/static/blob/countries-110m.json");
+    this.overlay = new Polygon(
+      this.regl,
+      "/static/blob/shapefiles/World/ne_50m_admin_0_countries.shp"
+    );
     this.graphics.satCoordinate[0] = this.getTimedLongitude();
   }
 
@@ -43,8 +47,8 @@ class Product extends GLView {
     if (this.props.profileGL) {
       const createStatsWidget = require("regl-stats-widget");
       var drawCalls = [
-        [this.andy, "andy"],
-        [this.hope, "hope"],
+        [this.monet, "monet"],
+        [this.picaso, "picaso"],
         [this.sphere, "sphere"],
       ];
       this.statsWidget = createStatsWidget(drawCalls);
@@ -86,7 +90,7 @@ class Product extends GLView {
       this.picaso({
         width: 1.7,
         color: this.props.colors.lines[3],
-        quad: [1, 0.7, 0, this.overlay.opacity],
+        quad: [0, 0.7, 0, this.overlay.opacity],
         view: graph.view,
         projection: graph.projection,
         resolution: [this.canvas.width, this.canvas.height],
@@ -103,7 +107,7 @@ class Product extends GLView {
         0.95 * graph.satCoordinate[0] + 0.05 * this.getTimedLongitude();
     }
     if (this.stats !== undefined) this.stats.update();
-    if (this.props.profileGL) this.statsWidget.update(0.017);
+    if (this.props.profileGL) this.statsWidget.update(0.0167);
   }
 
   fitToData() {

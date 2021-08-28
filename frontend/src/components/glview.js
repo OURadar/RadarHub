@@ -21,10 +21,18 @@ class GLView extends Component {
     this.canvas = document.createElement("canvas");
     this.canvas.style.width = "100%";
     this.canvas.style.height = "100%";
-    this.regl = require("regl")({
-      canvas: this.canvas,
-      extensions: ["ANGLE_instanced_arrays"],
-    });
+    if (props.profileGL) {
+      this.regl = require("regl")({
+        canvas: this.canvas,
+        extensions: ["ANGLE_instanced_arrays", "ext_disjoint_timer_query"],
+        profile: true,
+      });
+    } else {
+      this.regl = require("regl")({
+        canvas: this.canvas,
+        extensions: ["ANGLE_instanced_arrays"],
+      });
+    }
     if (props.showStats === true || props.debug === true) {
       this.stats = new Stats();
       this.stats.domElement.className = "canvasStats";

@@ -503,6 +503,8 @@ function instancedLines(regl, resolution) {
       varying vec4 normal;
       varying vec4 adjustedColor;
       void main() {
+        if (normal.w < 0.05)
+          discard;
         vec4 computedColor = vec4(normal.xzy, normal.w * quad.a);
         gl_FragColor = mix(computedColor, adjustedColor, quad.x);
       }`,
@@ -590,7 +592,7 @@ function simplifiedInstancedLines(regl) {
         vec4 clip = mix(clip0, clip1, position.z);
         gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
         normal.xyz = normalize(mat3(view) * pointA);
-        normal.w = dot(vec3(0.0, 0.0, 1.0), normal.xyz);
+        normal.w = clamp(dot(vec3(0.0, 0.0, 1.0), normal.xyz), 0.0, 1.0);
         normal.xyz *= quad.y;
         adjustedColor = color;
         adjustedColor.a *= normal.w * quad.a;
@@ -602,6 +604,8 @@ function simplifiedInstancedLines(regl) {
       varying vec4 normal;
       varying vec4 adjustedColor;
       void main() {
+        if (normal.w < 0.05)
+          discard;
         vec4 computedColor = vec4(normal.xzy, normal.w * quad.a);
         gl_FragColor = mix(computedColor, adjustedColor, quad.x);
       }`,

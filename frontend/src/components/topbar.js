@@ -39,7 +39,7 @@ export function TopBar(props) {
     status = <StatusBody message={props.ingest.message} />;
     notify = <Notification message={props.ingest.response || message} />;
   } else {
-    status = <StatusBody message="Some filename" />;
+    status = <StatusBody message="Some text" />;
     notify = <Notification message={message} />;
   }
   return (

@@ -1,6 +1,7 @@
-class Overlay {
-  constructor(regl) {
+class Polygon {
+  constructor(regl, file) {
     this.regl = regl;
+    this.file = file;
     this.raw = [];
     this.points = [];
     this.busy = false;
@@ -12,7 +13,7 @@ class Overlay {
     this.addpolygon = this.addpolygon.bind(this);
   }
 
-  read(choice = 1) {
+  read() {
     const handleShape = (shape) => {
       // console.log(shape);
       // console.log(shape.geometry.type);
@@ -110,19 +111,21 @@ class Overlay {
       this.busy = false;
     };
 
-    if (choice) {
+    const ext = this.file.split(".").pop();
+
+    if (ext == "json") {
       // fetch("/static/blob/counties-10m.json")
       // fetch("/static/blob/countries-110m.json")
-      fetch("/static/blob/countries-50m.json")
+      fetch(this.file)
         .then((response) => response.json())
         .then((data) => {
           handleJSON(data);
         })
         .catch((error) => console.error(error.stack));
-    } else {
+    } else if (ext == "shp") {
       let shapefile = require("shapefile");
       shapefile
-        .open("/static/blob/shapefiles/World/ne_50m_admin_0_countries.shp")
+        .open(this.file)
         .then((source) =>
           source.read().then(function retrieve(result) {
             if (result.done) {
@@ -168,4 +171,4 @@ class Overlay {
   }
 }
 
-export { Overlay };
+export { Polygon };
