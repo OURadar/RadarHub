@@ -27,10 +27,14 @@ class Product extends GLView {
       props.debugGL
     );
     // let file = "/static/blob/counties-10m.json";
-    let file = "/static/blob/countries-50m.json";
+    // let file = "/static/blob/countries-50m.json";
     // let file = "/static/blob/countries-110m.json";
     // let file = "/static/blob/shapefiles/World/ne_50m_admin_0_countries.shp";
-    this.overlay = new Polygon(this.regl, file);
+    this.overlay = [
+      new Polygon(this.regl, "/static/blob/countries-50m.json"),
+      new Polygon(this.regl, "/static/blob/states-10m.json"),
+      new Polygon(this.regl, "/static/blob/counties-10m.json"),
+    ];
     this.graphics.satCoordinate[0] = this.getTimedLongitude();
   }
 
@@ -41,7 +45,7 @@ class Product extends GLView {
   componentDidMount() {
     super.componentDidMount();
     setTimeout(() => {
-      this.overlay.update();
+      this.overlay.forEach((o) => o.update());
     }, 500);
     if (this.props.profileGL) {
       const createStatsWidget = require("regl-stats-widget");
@@ -87,27 +91,53 @@ class Product extends GLView {
       points: this.rings.points,
       segments: this.rings.count,
     });
-    this.picaso({
-      width: 1.7,
-      color: this.props.colors.lines[3],
-      quad: [...mtu, this.overlay.opacity],
-      view: graph.view,
-      projection: graph.projection,
-      resolution: [this.canvas.width, this.canvas.height],
-      viewport: graph.viewport,
-      points: this.overlay.points,
-      segments: this.overlay.count,
+    this.picaso([
+      {
+        width: common.clamp(1.0 / graph.fov, 1.5, 5.0),
+        color: this.props.colors.lines[3],
+        quad: [...mtu, this.overlay[0].opacity],
+        view: graph.view,
+        projection: graph.projection,
+        resolution: [this.canvas.width, this.canvas.height],
+        viewport: graph.viewport,
+        points: this.overlay[0].points,
+        segments: this.overlay[0].count,
+      },
+      {
+        width: common.clamp(0.8 / graph.fov, 1.5, 5.0),
+        color: this.props.colors.lines[3],
+        quad: [...mtu, this.overlay[1].opacity],
+        view: graph.view,
+        projection: graph.projection,
+        resolution: [this.canvas.width, this.canvas.height],
+        viewport: graph.viewport,
+        points: this.overlay[1].points,
+        segments: this.overlay[1].count,
+      },
+      {
+        width: 1.0,
+        color: this.props.colors.lines[3],
+        quad: [...mtu, this.overlay[2].opacity],
+        view: graph.view,
+        projection: graph.projection,
+        resolution: [this.canvas.width, this.canvas.height],
+        viewport: graph.viewport,
+        points: this.overlay[2].points,
+        segments: this.overlay[2].count,
+      },
+    ]);
+    this.overlay.forEach((o) => {
+      if (o.ready) {
+        o.opacity = 0.92 * o.opacity + 0.08 * o.targetOpacity;
+      }
     });
-    if (this.overlay.ready) {
-      this.overlay.opacity =
-        0.92 * this.overlay.opacity + 0.08 * this.overlay.targetOpacity;
-    }
     if (!this.gesture.panInProgress) {
       const x = this.getTimedLongitude();
       if (x - graph.satCoordinate[0] < -10) {
-        console.log("fast forward");
         graph.satCoordinate[0] = x;
-        this.overlay.opacity = 0.0;
+        this.overlay.forEach((o) => {
+          o.opacity = 0.0;
+        });
       } else {
         graph.satCoordinate[0] = 0.92 * graph.satCoordinate[0] + 0.08 * x;
       }
