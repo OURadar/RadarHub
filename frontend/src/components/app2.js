@@ -21,9 +21,12 @@ class App2 extends Component {
       colors: colorDict(),
     };
     this.isMobile = detectMob();
+    console.log(props);
   }
   static defaultProps = {
     radar: "demo",
+    debug: false,
+    profileGL: false,
   };
 
   componentDidMount() {
@@ -48,7 +51,11 @@ class App2 extends Component {
       <ThemeProvider theme={theme}>
         <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
-        <Product colors={this.state.colors} debug={true} profileGL={false} />
+        <Product
+          colors={this.state.colors}
+          debug={this.props.debug}
+          profileGL={this.props.profileGL}
+        />
       </ThemeProvider>
     );
   }

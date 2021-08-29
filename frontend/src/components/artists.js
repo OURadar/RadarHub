@@ -219,8 +219,8 @@ export function sphere(regl) {
     void main() {
       gl_Position = projection * modelview * vec4(position, 1.0);
       n = mat3(modelview) * normalize(position);
-      s = dot(vec3(0.0, 0.0, 1.0), n);
-      s = clamp(0.3 + 0.7 * s, 0.0, 1.0);
+      s = dot(vec3(0.0, 0.0, 1.2), n);
+      s = clamp(s, 0.05, 1.0);
     }`,
 
     frag: `
@@ -228,7 +228,7 @@ export function sphere(regl) {
     uniform vec4 color;
     varying float s;
     void main() {
-      gl_FragColor = vec4(color.rgb, color.a * s);
+      gl_FragColor = vec4(color.rgb * s, color.a * s);
     }`,
 
     uniforms: {

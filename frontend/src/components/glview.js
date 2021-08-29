@@ -47,8 +47,8 @@ class GLView extends Component {
         left: 0,
       },
       origin: {
-        longitude: -100,
-        latitude: 40,
+        longitude: -97.422413,
+        latitude: 35.25527,
       },
     };
     this.state = {
@@ -106,7 +106,7 @@ class GLView extends Component {
     this.gesture.handleMagnify = this.magnify;
     this.gesture.handleDoubleTap = this.fitToData;
 
-    this.rings = new Rings(this.regl, [60, 120, 250, 500], 50);
+    this.rings = new Rings(this.regl, [1, 60, 120, 250], 50);
   }
 
   static defaultProps = {

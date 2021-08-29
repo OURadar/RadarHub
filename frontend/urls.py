@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('profile/', views.archive_profile, name='archive'),
     path('archive/', views.archive, name='archive'),
     path('archive/<str:radar>/', views.archive_radar, name='archive'),
     path('', views.archive, name='archive'),

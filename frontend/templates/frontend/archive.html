@@ -50,7 +50,7 @@
       media="screen and (min-device-width: 550px)"
       href="{% static 'css/desktop.css' %}?r={% now 'U' %}"
     />
-    {{ radar|json_script:"radar-name" }}
+    {{ params|json_script:"params" }}
     <title>RadarHub</title>
   </head>
   <body>

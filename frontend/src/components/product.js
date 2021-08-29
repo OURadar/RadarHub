@@ -112,7 +112,7 @@ class Product extends GLView {
     let o = [];
     let w = [
       [1.5, 4.5],
-      [1.5, 3.5],
+      [1.3, 3.5],
       [1.0, 1.5],
     ];
     this.overlay.forEach((overlay, i) => {
@@ -131,17 +131,17 @@ class Product extends GLView {
       }
     });
     this.picaso(o);
-    // if (!this.gesture.panInProgress) {
-    //   const x = this.getTimedLongitude();
-    //   if (x - graph.satCoordinate[0] < -10) {
-    //     graph.satCoordinate[0] = x;
-    //     this.overlay.forEach((o) => {
-    //       o.opacity = 0.0;
-    //     });
-    //   } else {
-    //     graph.satCoordinate[0] = 0.92 * graph.satCoordinate[0] + 0.08 * x;
-    //   }
-    // }
+    if (!this.gesture.panInProgress) {
+      const x = this.getTimedLongitude();
+      if (x - graph.satCoordinate[0] < -10) {
+        graph.satCoordinate[0] = x;
+        this.overlay.forEach((o) => {
+          o.opacity = 0.0;
+        });
+      } else {
+        graph.satCoordinate[0] = 0.92 * graph.satCoordinate[0] + 0.08 * x;
+      }
+    }
     if (this.stats !== undefined) this.stats.update();
     if (this.props.profileGL) this.statsWidget.update(0.0167);
   }
