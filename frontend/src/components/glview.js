@@ -213,7 +213,7 @@ class GLView extends Component {
     graph.projectionNeedsUpdate = true;
     if (this.props.debugGL) {
       this.setState({
-        lastPanTime: new Date().getTime(),
+        lastPanTime: window.performance.now(),
       });
     }
   }
@@ -224,7 +224,7 @@ class GLView extends Component {
     graph.projectionNeedsUpdate = true;
     if (this.props.debugGL) {
       this.setState({
-        lastMagnifyTime: new Date().getTime(),
+        lastMagnifyTime: window.performance.now(),
       });
     }
   }
@@ -240,7 +240,7 @@ class GLView extends Component {
     graph.projectionNeedsUpdate = true;
     if (this.props.debugGL) {
       this.setState({
-        lastMagnifyTime: new Date().getTime(),
+        lastMagnifyTime: window.performance.now(),
       });
     }
   }

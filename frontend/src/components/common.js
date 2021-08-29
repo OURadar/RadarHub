@@ -201,7 +201,7 @@ export function colorDict(theme) {
 }
 
 //
-// Copied this from
+// Copied from
 // https://stackoverflow.com/questions/11381673/detecting-a-mobile-browser
 //
 export function detectMob() {
@@ -219,3 +219,60 @@ export function detectMob() {
     return navigator.userAgent.match(toMatchItem);
   });
 }
+
+//
+// Copied from
+// https://radiatingstar.com/blog/the-fastest-way-to-get-time-stamps-in-javascript/
+//
+var checkTimerPerformance = function () {
+  var perf = window.performance,
+    t,
+    stampDateNow,
+    stampPerfNow,
+    i;
+
+  // Store the initial time.
+  stampDateNow = Date.now();
+
+  // Run Date.now() performance test.
+  for (i = 0; i < 100000; i += 1) {
+    t = Date.now();
+  }
+
+  // Find out how long the Date.now() test took.
+  stampDateNow = Date.now() - stampDateNow;
+
+  // Run the test for performance.now() only if the browser supports it.
+  if (perf) {
+    // Start the timer for performance.now();
+    stampPerfNow = Date.now();
+
+    // Run performance.now() test.
+    for (i = 0; i < 100000; i += 1) {
+      t = perf.now();
+    }
+
+    // Check the time of performance.now();
+    stampPerfNow = Date.now() - stampPerfNow;
+  } else {
+    // If the browser doesn't have the performance.now method,
+    // the Date.now() will be used by default.
+    stampPerfNow = 0;
+  }
+
+  // If the Date.now() was faster, return it.
+  if (stampPerfNow > stampDateNow) {
+    return function () {
+      return Date.now();
+    };
+
+    // Otherwise use the performance.now() method.
+  } else {
+    return function () {
+      console.log("Using perf.now()");
+      return perf.now();
+    };
+  }
+};
+
+export const getTime = checkTimerPerformance();

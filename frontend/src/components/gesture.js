@@ -26,8 +26,8 @@ class Gesture {
     this.shiftKey = false;
     this.panInProgress = false;
     this.singleTapTimeout = null;
-    this.lastMagnifyTime = new Date().getTime();
-    this.lastTapTime = new Date().getTime();
+    this.lastMagnifyTime = Date.now();
+    this.lastTapTime = Date.now();
     this.message = "debug:";
     this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
     this.handlePan = (_x, _y) => {};
@@ -116,9 +116,17 @@ class Gesture {
       this.rect = rect;
       this.message = "touchstart";
     });
-    this.element.addEventListener("touchend", (_e) => {
-      var now = new Date().getTime();
-      var delta = now - this.lastTapTime;
+    this.element.addEventListener("touchend", (e) => {
+      if (e.targetTouches.length > 0) {
+        let [x, y, u, v] = positionAndDistanceFromTouches(e.targetTouches);
+        this.pointX = x;
+        this.pointY = y;
+        this.pointU = u;
+        this.pointV = v;
+        return;
+      }
+      const now = Date.now();
+      const delta = now - this.lastTapTime;
       if (this.singleTapTimeout !== null) {
         clearTimeout(this.singleTapTimeout);
         this.singleTapTimeout = null;
@@ -166,6 +174,33 @@ class Gesture {
       this.message = "double click";
       this.handleDoubleTap(this.pointX, this.pointY);
     });
+    // this.element.addEventListener("gesturestart", (e) => {
+    //   this.message = "gesturestart (" + e.scale + ")";
+    //   e.preventDefault();
+    //   // if (e.scale > 0) {
+    //   //   let s = 0.04 * (e.scale - 1) + 1.0;
+    //   //   this.handleMagnify(s, s);
+    //   //   e.preventDefault();
+    //   // }
+    // });
+    // this.element.addEventListener("gesturechange", (e) => {
+    //   this.message = "gesturechange (" + e.scale + ")";
+    //   e.preventDefault();
+    //   // if (e.scale > 0) {
+    //   //   let s = 0.04 * (e.scale - 1) + 1.0;
+    //   //   this.handleMagnify(s, s);
+    //   //   e.preventDefault();
+    //   // }
+    // });
+    // this.element.addEventListener("gestureend", (e) => {
+    //   this.message = "gestureend (" + e.scale + ")";
+    //   e.preventDefault();
+    //   // if (e.scale > 0) {
+    //   //   let s = 0.04 * (e.scale - 1) + 1.0;
+    //   //   this.handleMagnify(s, s);
+    //   //   e.preventDefault();
+    //   // }
+    // });
   }
 }
 

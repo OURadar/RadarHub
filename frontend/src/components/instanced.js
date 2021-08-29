@@ -558,7 +558,7 @@ function instancedLines(regl, resolution) {
 }
 
 //
-// modified from interleavedStripRoundCapJoin3D() for drawing castlines
+// modified from interleavedStripRoundCapJoin3D() for drawing map polygons
 // Since model matrix is always identity, it's omitted
 //
 function simplifiedInstancedLines(regl) {

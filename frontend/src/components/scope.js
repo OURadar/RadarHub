@@ -413,7 +413,7 @@ class Scope extends Component {
         scaleX: scaleX,
         scaleY: scaleY,
         offsetX: state.offsetX - deltaX * state.v2dx,
-        lastMagnifyTime: new Date().getTime(),
+        lastMagnifyTime: Date.now(),
       };
     });
     this.updateProjection();

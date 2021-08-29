@@ -66,7 +66,9 @@ export function TopBar(props) {
 }
 
 export function Console(props) {
-  const fullscreen = window.innerHeight == screen.height;
+  const [fullscreen, setFullscreen] = React.useState(
+    window.innerHeight == screen.height
+  );
   return (
     <div id="console">
       <ThemeProvider theme={theme}>
@@ -83,6 +85,7 @@ export function Console(props) {
             aria-label="Fullscreen"
             onClick={() => {
               document.documentElement.webkitRequestFullScreen();
+              setFullscreen(true);
             }}
           >
             <Fullscreen style={{ color: "white" }} />

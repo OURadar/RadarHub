@@ -35,11 +35,12 @@ class Product extends GLView {
       new Polygon(this.regl, "/static/blob/states-10m.json"),
       new Polygon(this.regl, "/static/blob/counties-10m.json"),
     ];
+    this.timeOrigin = 1630207559000 - Date.now();
     this.graphics.satCoordinate[0] = this.getTimedLongitude();
   }
 
   getTimedLongitude() {
-    return 0.0002 * (1630077685393 - new Date().getTime());
+    return 0.0002 * (this.timeOrigin - window.performance.now());
   }
 
   componentDidMount() {
@@ -93,7 +94,7 @@ class Product extends GLView {
     });
     this.picaso([
       {
-        width: common.clamp(1.0 / graph.fov, 1.5, 5.0),
+        width: common.clamp(0.8 / graph.fov, 1.5, 4.5),
         color: this.props.colors.lines[3],
         quad: [...mtu, this.overlay[0].opacity],
         view: graph.view,
@@ -104,7 +105,7 @@ class Product extends GLView {
         segments: this.overlay[0].count,
       },
       {
-        width: common.clamp(0.8 / graph.fov, 1.5, 5.0),
+        width: common.clamp(0.6 / graph.fov, 1.5, 3.5),
         color: this.props.colors.lines[3],
         quad: [...mtu, this.overlay[1].opacity],
         view: graph.view,
@@ -152,11 +153,6 @@ class Product extends GLView {
     graph.satCoordinate[0] = this.getTimedLongitude();
     graph.satCoordinate[1] = (this.constants.origin.latitude / 180.0) * Math.PI;
     graph.projectionNeedsUpdate = true;
-    if (this.props.debugGL) {
-      this.setState({
-        lastMagnifyTime: new Date().getTime(),
-      });
-    }
   }
 }
 

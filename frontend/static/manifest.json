@@ -1,7 +1,7 @@
 {
   "background_color": "black",
   "description": "A hub where radars and users connect",
-  "display": "fullscreen",
+  "display": "standalone",
   "icons": [
     {
       "src": "/static/images/iradar-icon-57x57.png",
