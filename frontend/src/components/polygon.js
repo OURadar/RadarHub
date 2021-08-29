@@ -1,7 +1,9 @@
 class Polygon {
-  constructor(regl, file) {
+  constructor(regl, line, color, file) {
     this.regl = regl;
     this.file = file;
+    this.line = line;
+    this.color = color == [] ? [0.5, 0.5, 0.5] : color;
     this.points = [];
     this.count = 0;
     this.busy = false;
