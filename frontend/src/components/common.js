@@ -15,6 +15,10 @@ export function deg2rad(x) {
   return (x * Math.PI) / 180.0;
 }
 
+export function rad2deg(x) {
+  return (x * 180.0) / Math.PI;
+}
+
 export function ticksInRange(count, min, max, choices) {
   const ticks = [];
   // Attempt to fit (count) ticks in range
@@ -51,17 +55,11 @@ export function prettyString(input) {
 }
 
 export function array2rgba(array) {
-  return (
-    "rgba(" +
-    (array[0] * 255).toFixed(0) +
-    ", " +
-    (array[1] * 255).toFixed(0) +
-    ", " +
-    (array[2] * 255).toFixed(0) +
-    ", " +
-    array[3].toFixed(2) +
-    ")"
-  );
+  const r = (array[0] * 255).toFixed(0);
+  const g = (array[1] * 255).toFixed(0);
+  const b = (array[2] * 255).toFixed(0);
+  const a = array[3].toFixed(3);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
 export function colorDict(theme) {

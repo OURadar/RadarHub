@@ -9,8 +9,8 @@ def radar(request, radar):
     return render(request, 'frontend/index.html', {'radar': radar})
 
 def archive_radar(request, radar, profileGL):
-    json_string = json.dumps({'radar': radar, 'profileGL': profileGL})
-    return render(request, 'frontend/archive.html', {'params': json_string})
+    obj = {'radar': radar, 'profileGL': profileGL}
+    return render(request, 'frontend/archive.html', {'params': obj})
 
 def archive(request):
     return archive_radar(request, "demo", False)

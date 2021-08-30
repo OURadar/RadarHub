@@ -57,7 +57,7 @@ class Ingest {
     this.message = "Connecting ...";
     this.onupdate(this.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
-    const url = p + "://" + window.location.host + "/ws/" + this.radar + "/";
+    const url = `${p}://${window.location.host}/ws/${this.radar}/`;
     this.socket = new WebSocket(url);
     this.socket.binaryType = "arraybuffer";
     this.socket.onopen = (_e) => {
@@ -93,7 +93,7 @@ class Ingest {
         if (dict.name) {
           newData.control = dict["Controls"];
         } else {
-          console.log("dict.name = " + dict.name + " /= " + this.radar);
+          console.log(`dict.name = ${dict.name} /= ${this.radar}`);
         }
       } else if (type == this.enums.Health) {
         // Health data in JSON

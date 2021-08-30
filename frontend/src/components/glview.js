@@ -7,7 +7,7 @@
 
 import React, { Component } from "react";
 import Stats from "stats-js";
-import { mat4, vec3 } from "gl-matrix";
+import { mat4, vec3, quat } from "gl-matrix";
 
 import * as common from "./common";
 import * as artists from "./artists";
@@ -53,6 +53,7 @@ class GLView extends Component {
     };
     this.state = {
       tic: 0,
+      message: "glView",
       labelParameters: {
         labels: [],
         positions: [],
@@ -63,32 +64,35 @@ class GLView extends Component {
         count: 0,
       },
     };
-    // satCoordinate = (lon, lat, alt) of satellite
+    // satCoordinate = (lon-rad, lat-rad, alt-km) of satellite
     // satPosition = (x, y, z) of satellite
+    // satQuaternion = quaternion represent of satellite orientation
+    // satI = sub-quaternion y-axis only, plane I
+    // satQ = sub-quaternion y-axis only, plane Q
     // model = model matrix for product, rings, radar-relative drawings
     // view = view matrix derived from satPosition
     const origin = this.constants.origin;
     let model = mat4.create();
-    model = mat4.rotateY([], model, (origin.longitude / 180.0) * Math.PI);
-    model = mat4.rotateX([], model, (-origin.latitude / 180.0) * Math.PI);
+    model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
+    model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
     model = mat4.translate([], model, [0, 0, this.constants.radius]);
-    // Important parameters for WebGL. Don't want to use state
+    // Important parameters for WebGL. Don't want to use React state
     this.graphics = {
       fov: Math.PI / 4,
       satCoordinate: vec3.fromValues(
-        (origin.longitude / 180.0) * Math.PI,
-        (origin.latitude / 180.0) * Math.PI,
+        common.deg2rad(origin.longitude),
+        common.deg2rad(origin.latitude),
         2 * this.constants.radius
       ),
-      satI: Math.cos((origin.longitude / 180.0) * Math.PI),
-      satQ: Math.sin((origin.longitude / 180.0) * Math.PI),
       satPosition: vec3.create(),
+      satQuaternion: quat.fromEuler([], -origin.latitude, origin.longitude, 0),
+      satI: Math.cos(common.deg2rad(origin.longitude)),
+      satQ: Math.sin(common.deg2rad(origin.longitude)),
       model: model,
       view: mat4.create(),
       modelview: model,
-      identityMatrix: mat4.create(),
       projectionNeedsUpdate: false,
-      alwaysUpdateProjection: true,
+      message: "graphics",
     };
     // Our artists
     this.picaso = instanced.simplifiedInstancedLines(this.regl);
@@ -132,7 +136,7 @@ class GLView extends Component {
 
   render() {
     if (this.props.debug === true) {
-      let str = `${this.gesture.message}`;
+      let str = `${this.gesture.message} : ${this.graphics.message} : ${this.state.message}`;
       return (
         <div>
           <div className="fullHeight" ref={(x) => (this.mount = x)} />
@@ -160,7 +164,8 @@ class GLView extends Component {
     graph.modelview = mat4.multiply([], graph.view, graph.model);
     graph.projection = mat4.perspective([], graph.fov, w / h, 100, 30000.0);
     graph.viewport = { x: 0, y: 0, width: w, height: h };
-    graph.projectionNeedsUpdate = graph.alwaysUpdateProjection ? true : false;
+    graph.projectionNeedsUpdate = false;
+    graph.message = "graphics";
   }
 
   draw() {
@@ -202,9 +207,9 @@ class GLView extends Component {
   pan(x, y) {
     const graph = this.graphics;
     let c = graph.satCoordinate;
-    c[0] -= x * graph.fov * 0.001;
+    c[0] -= x * graph.fov * 0.0015;
     c[1] = common.clamp(
-      c[1] - y * graph.fov * 0.001,
+      c[1] - y * graph.fov * 0.0015,
       -0.4999 * Math.PI,
       +0.4999 * Math.PI
     );
@@ -213,6 +218,8 @@ class GLView extends Component {
     graph.satQ = Math.sin(c[0]);
     graph.projectionNeedsUpdate = true;
     if (this.props.debug) {
+      graph.message += ` satI: ${graph.satI.toFixed(6)}`;
+      graph.message += ` satQ: ${graph.satQ.toFixed(6)}`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
@@ -221,9 +228,10 @@ class GLView extends Component {
 
   magnify(x, y, _x, _y) {
     const graph = this.graphics;
-    graph.fov = common.clamp(graph.fov / y, Math.PI / 180, 0.5 * Math.PI);
+    graph.fov = common.clamp(graph.fov / y, Math.PI / 360, 0.5 * Math.PI);
     graph.projectionNeedsUpdate = true;
     if (this.props.debug) {
+      graph.message = `fov: ${graph.fov.toFixed(2)}`;
       this.setState({
         lastMagnifyTime: window.performance.now(),
       });

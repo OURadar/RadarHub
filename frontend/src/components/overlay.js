@@ -7,23 +7,23 @@ class Overlay {
     this.layers = [
       {
         polygon: new Polygon(this.regl, "/static/blob/countries-50m.json"),
-        color: [],
-        weight: 1.5,
+        color: [0.5, 0.5, 0.5, 1.0],
         limits: [1.5, 4.5],
         linewidth: 1.0,
         opacity: 0.0,
+        weight: 1.5,
       },
       {
         polygon: new Polygon(this.regl, "/static/blob/states-10m.json"),
-        color: [],
-        weight: 1.0,
+        color: [0.5, 0.5, 0.5, 1.0],
         limits: [1.3, 3.5],
         linewidth: 1.0,
         opacity: 0.0,
+        weight: 1.0,
       },
       {
         polygon: new Polygon(this.regl, "/static/blob/counties-10m.json"),
-        color: [],
+        color: [0.5, 0.5, 0.5, 1.0],
         limits: [1.0, 1.5],
         linewidth: 1.0,
         opacity: 0.0,
@@ -33,14 +33,16 @@ class Overlay {
   }
 
   read() {
-    setTimeout(() => {
-      this.layers.forEach((layer) => layer.polygon.update());
-    }, 500);
+    this.layers.forEach((layer, k) => {
+      setTimeout(() => {
+        layer.polygon.update();
+      }, k * 500);
+    });
   }
 
   getDrawables(fov) {
     let t;
-    if (fov < 0.25) {
+    if (fov < 0.45) {
       t = [0, 1, 1];
     } else {
       t = [1, 1, 0];
@@ -50,7 +52,7 @@ class Overlay {
     this.layers.forEach((o, i) => {
       if (o.polygon.ready) {
         if (c < 2 || t[i] == 0) o.targetOpacity = t[i];
-        o.opacity = 0.92 * o.opacity + 0.08 * o.targetOpacity;
+        o.opacity = clamp(o.opacity + (o.targetOpacity ? 0.05 : -0.05), 0, 1);
         o.linewidth = clamp(o.weight / fov, ...o.limits);
       }
     });

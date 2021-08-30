@@ -81,9 +81,9 @@ class Gesture {
       }
       this.message =
         `wheel (${e.offsetX}, ${e.offsetY})` +
-        ` x: ${this.bounds.left} <? ${e.offsetX} <? ${
+        ` x: ${this.bounds.left} < ${e.offsetX} < ${
           this.element.width - this.bounds.right
-        } y: ${this.bounds.top} <? ${e.offsetY} <? ${
+        } y: ${this.bounds.top} < ${e.offsetY} < ${
           this.element.height - this.bounds.bottom
         }`;
       this.bounds.top + ", " + this.element.height;
@@ -155,7 +155,7 @@ class Gesture {
         this.pointU = u;
         this.pointV = v;
       }
-      this.message = "touchmove (" + x + ", " + y + ")";
+      this.message = `touchmove (${x}, ${y})`;
     });
     this.element.addEventListener("dblclick", (e) => {
       this.pointX = e.offsetX;

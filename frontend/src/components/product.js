@@ -6,12 +6,10 @@
 //
 
 import * as common from "./common";
-import * as artists from "./artists";
-import * as instanced from "./instanced";
 import { Texture } from "./texture";
 import { GLView } from "./glview";
-import { Polygon } from "./polygon";
 import { Overlay } from "./overlay";
+import { quat } from "gl-matrix";
 
 //
 // Use as <Product data={input} />
@@ -29,12 +27,21 @@ class Product extends GLView {
     );
     this.overlay = new Overlay(this.regl);
     this.now = 1630207559000 - Date.now();
-    this.graphics.satI = Math.cos((0.0002 * this.now) % (2 * Math.PI));
-    this.graphics.satQ = Math.sin((0.0002 * this.now) % (2 * Math.PI));
-    this.updateSatLongitude();
+    this.state = { ...this.state, spin: true };
+    window.addEventListener("keyup", (e) => {
+      if (e.key == "s") {
+        this.toggleSpin();
+      }
+    });
   }
 
-  updateSatLongitude() {
+  toggleSpin() {
+    this.setState((state) => {
+      return { spin: !state.spin };
+    });
+  }
+
+  updateViewPoint() {
     let t = (0.0002 * (this.now - window.performance.now())) % (2 * Math.PI);
     this.graphics.satI = 0.92 * this.graphics.satI + 0.08 * Math.cos(t);
     this.graphics.satQ = 0.92 * this.graphics.satQ + 0.08 * Math.sin(t);
@@ -42,6 +49,20 @@ class Product extends GLView {
       this.graphics.satQ,
       this.graphics.satI
     );
+    this.graphics.projectionNeedsUpdate = true;
+    // let q = this.graphics.satQuaternion;
+    // let qt = quat.fromEuler(
+    //   [],
+    //   -common.rad2deg(this.graphics.satCoordinate[1]),
+    //   common.rad2deg(t),
+    //   0.0
+    // );
+    // let i = quat.lerp([], q, qt, 0.5);
+    // this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
+    // let a = common.rad2deg(this.graphics.satCoordinate[0]);
+    // this.setState({
+    //   message: `angle = ${a.toFixed(1)}`,
+    // });
   }
 
   componentDidMount() {
@@ -109,8 +130,8 @@ class Product extends GLView {
       }
     });
     this.picaso(o);
-    if (!this.gesture.panInProgress) {
-      this.updateSatLongitude();
+    if (this.state.spin && !this.gesture.panInProgress) {
+      this.updateViewPoint();
     }
     if (this.stats !== undefined) this.stats.update();
     if (this.props.profileGL) this.statsWidget.update(0.01667);
@@ -118,7 +139,8 @@ class Product extends GLView {
 
   fitToData() {
     const graph = this.graphics;
-    graph.fov = Math.PI / 6;
+    graph.fov = 200.0 / this.constants.radius;
+    graph.satCoordinate[0] = common.deg2rad(this.constants.origin.longitude);
     graph.satCoordinate[1] = common.deg2rad(this.constants.origin.latitude);
     graph.projectionNeedsUpdate = true;
   }
