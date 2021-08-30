@@ -11,6 +11,10 @@ export function clamp(x, lo, hi) {
   return Math.min(Math.max(x, lo), hi);
 }
 
+export function deg2rad(x) {
+  return (x * Math.PI) / 180.0;
+}
+
 export function ticksInRange(count, min, max, choices) {
   const ticks = [];
   // Attempt to fit (count) ticks in range

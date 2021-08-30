@@ -28,7 +28,7 @@ class Gesture {
     this.singleTapTimeout = null;
     this.lastMagnifyTime = Date.now();
     this.lastTapTime = Date.now();
-    this.message = "debug:";
+    this.message = "gesture";
     this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
     this.handlePan = (_x, _y) => {};
     this.handleMagnify = (_mx, _my, _x, _y) => {};
@@ -54,7 +54,7 @@ class Gesture {
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
       this.shiftKey = e.shiftKey;
-      this.message = `mousemove (${this.pointX}), ${this.pointY})`;
+      this.message = `mousemove (${this.pointX}, ${this.pointY})`;
     });
     this.element.addEventListener("mouseup", (e) => {
       if (this.panInProgress === true) {
@@ -80,23 +80,12 @@ class Gesture {
         );
       }
       this.message =
-        "wheel (" +
-        e.offsetX +
-        ", " +
-        e.offsetY +
-        ") x: " +
-        this.bounds.left +
-        " <? " +
-        e.offsetX +
-        " <? " +
-        (this.element.width - this.bounds.right) +
-        "; y: " +
-        this.bounds.top +
-        " <? " +
-        e.offsetY +
-        " <? " +
-        (this.element.height - this.bounds.bottom) +
-        ";";
+        `wheel (${e.offsetX}, ${e.offsetY})` +
+        ` x: ${this.bounds.left} <? ${e.offsetX} <? ${
+          this.element.width - this.bounds.right
+        } y: ${this.bounds.top} <? ${e.offsetY} <? ${
+          this.element.height - this.bounds.bottom
+        }`;
       this.bounds.top + ", " + this.element.height;
     });
     this.element.addEventListener("touchstart", (e) => {
@@ -133,7 +122,7 @@ class Gesture {
       }
       this.panInProgress = false;
       if (delta > 90 && delta < 300 && now - this.lastMagnifyTime > 300) {
-        this.message = "touchend: double tap (" + delta + " ms)";
+        this.message = `touchend: double tap (${delta} ms)`;
         this.handleDoubleTap(this.pointX, this.pointY);
       } else {
         // single tap
@@ -141,7 +130,7 @@ class Gesture {
         this.singleTapTimeout = setTimeout(() => {
           clearTimeout(this.singleTapTimeout);
           this.singleTapTimeout = null;
-          this.message = "touchend: single tap (" + delta + " ms)";
+          this.message = `touchend: single tap (${delta} ms)`;
         }, 300);
       }
       this.lastTapTime = now;

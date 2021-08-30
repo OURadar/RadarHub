@@ -80,6 +80,8 @@ class GLView extends Component {
         (origin.latitude / 180.0) * Math.PI,
         2 * this.constants.radius
       ),
+      satI: Math.cos((origin.longitude / 180.0) * Math.PI),
+      satQ: Math.sin((origin.longitude / 180.0) * Math.PI),
       satPosition: vec3.create(),
       model: model,
       view: mat4.create(),
@@ -130,9 +132,7 @@ class GLView extends Component {
 
   render() {
     if (this.props.debug === true) {
-      const str = `${this.gesture.message} ${
-        this.mount ? this.mount.offsetHeight : ""
-      } px  ${this.graphics?.message}`;
+      let str = `${this.gesture.message}`;
       return (
         <div>
           <div className="fullHeight" ref={(x) => (this.mount = x)} />
@@ -208,9 +208,11 @@ class GLView extends Component {
       -0.4999 * Math.PI,
       +0.4999 * Math.PI
     );
-    if (x != 0) graph.message = `x = ${x}, c[0] = ${c[0]}`;
+    // For continuous longitude transition around +/-180 deg, use a complex representation
+    graph.satI = Math.cos(c[0]);
+    graph.satQ = Math.sin(c[0]);
     graph.projectionNeedsUpdate = true;
-    if (this.props.debugGL) {
+    if (this.props.debug) {
       this.setState({
         lastPanTime: window.performance.now(),
       });
@@ -221,7 +223,7 @@ class GLView extends Component {
     const graph = this.graphics;
     graph.fov = common.clamp(graph.fov / y, Math.PI / 180, 0.5 * Math.PI);
     graph.projectionNeedsUpdate = true;
-    if (this.props.debugGL) {
+    if (this.props.debug) {
       this.setState({
         lastMagnifyTime: window.performance.now(),
       });
@@ -237,7 +239,7 @@ class GLView extends Component {
       3 * this.constants.radius
     );
     graph.projectionNeedsUpdate = true;
-    if (this.props.debugGL) {
+    if (this.props.debug) {
       this.setState({
         lastMagnifyTime: window.performance.now(),
       });

@@ -54,7 +54,6 @@ class App2 extends Component {
         <Product
           colors={this.state.colors}
           debug={this.props.debug}
-          debugGL={true}
           profileGL={this.props.profileGL}
         />
       </ThemeProvider>

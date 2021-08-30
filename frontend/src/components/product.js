@@ -11,6 +11,7 @@ import * as instanced from "./instanced";
 import { Texture } from "./texture";
 import { GLView } from "./glview";
 import { Polygon } from "./polygon";
+import { Overlay } from "./overlay";
 
 //
 // Use as <Product data={input} />
@@ -26,42 +27,26 @@ class Product extends GLView {
       this.props.textureScale,
       props.debugGL
     );
-    this.overlay = [
-      new Polygon(this.regl, 0.9, [], "/static/blob/countries-50m.json"),
-      new Polygon(this.regl, 0.6, [], "/static/blob/states-10m.json"),
-      new Polygon(this.regl, 0.3, [], "/static/blob/counties-10m.json"),
-    ];
+    this.overlay = new Overlay(this.regl);
     this.now = 1630207559000 - Date.now();
-    this.graphics.satCoordinate[0] = this.getTimedLongitude();
+    this.graphics.satI = Math.cos((0.0002 * this.now) % (2 * Math.PI));
+    this.graphics.satQ = Math.sin((0.0002 * this.now) % (2 * Math.PI));
+    this.updateSatLongitude();
   }
 
-  getTimedLongitude() {
-    return (0.0002 * (this.now - window.performance.now())) % (2 * Math.PI);
-  }
-
-  getOverlayVisibility() {
-    let t;
-    if (this.graphics.fov < 0.25) {
-      t = [0, 1, 1];
-    } else {
-      t = [1, 1, 0];
-    }
-    let c = 0;
-    this.overlay.forEach((o) => (c += o.opacity > 0.1));
-    this.overlay.forEach((o, i) => {
-      if (o.ready) {
-        if (c < 2 || t[i] == 0) o.targetOpacity = t[i];
-        o.opacity = 0.92 * o.opacity + 0.08 * o.targetOpacity;
-      }
-    });
-    return 0;
+  updateSatLongitude() {
+    let t = (0.0002 * (this.now - window.performance.now())) % (2 * Math.PI);
+    this.graphics.satI = 0.92 * this.graphics.satI + 0.08 * Math.cos(t);
+    this.graphics.satQ = 0.92 * this.graphics.satQ + 0.08 * Math.sin(t);
+    this.graphics.satCoordinate[0] = Math.atan2(
+      this.graphics.satQ,
+      this.graphics.satI
+    );
   }
 
   componentDidMount() {
     super.componentDidMount();
-    setTimeout(() => {
-      this.overlay.forEach((o) => o.update());
-    }, 500);
+    this.overlay.read();
     if (this.props.profileGL) {
       const createStatsWidget = require("regl-stats-widget");
       var drawCalls = [
@@ -106,41 +91,27 @@ class Product extends GLView {
       points: this.rings.points,
       segments: this.rings.count,
     });
-    this.getOverlayVisibility();
     let o = [];
-    const w = [
-      [1.5, 4.5],
-      [1.3, 3.5],
-      [1.0, 1.5],
-    ];
-    this.overlay.forEach((overlay, i) => {
+    let layers = this.overlay.getDrawables(graph.fov);
+    layers.forEach((overlay) => {
       if (overlay.opacity > 0.05) {
         o.push({
-          width: common.clamp(overlay.line / graph.fov, ...w[i]),
+          width: overlay.linewidth,
           color: this.props.colors.lines[3],
           quad: [...mtu, overlay.opacity],
           view: graph.view,
           projection: graph.projection,
           resolution: [this.canvas.width, this.canvas.height],
           viewport: graph.viewport,
-          points: overlay.points,
-          segments: overlay.count,
+          points: overlay.polygon.points,
+          segments: overlay.polygon.count,
         });
       }
     });
     this.picaso(o);
-    // if (!this.gesture.panInProgress) {
-    //   const x = this.getTimedLongitude();
-    //   // If the target longitude is too far off (10 radians), fade out instantly
-    //   if (x - graph.satCoordinate[0] < -10) {
-    //     graph.satCoordinate[0] = x;
-    //     this.overlay.forEach((o) => {
-    //       o.opacity = 0.0;
-    //     });
-    //   } else {
-    //     graph.satCoordinate[0] = 0.92 * graph.satCoordinate[0] + 0.08 * x;
-    //   }
-    // }
+    if (!this.gesture.panInProgress) {
+      this.updateSatLongitude();
+    }
     if (this.stats !== undefined) this.stats.update();
     if (this.props.profileGL) this.statsWidget.update(0.01667);
   }
@@ -148,8 +119,7 @@ class Product extends GLView {
   fitToData() {
     const graph = this.graphics;
     graph.fov = Math.PI / 6;
-    graph.satCoordinate[0] = this.getTimedLongitude();
-    graph.satCoordinate[1] = (this.constants.origin.latitude / 180.0) * Math.PI;
+    graph.satCoordinate[1] = common.deg2rad(this.constants.origin.latitude);
     graph.projectionNeedsUpdate = true;
   }
 }

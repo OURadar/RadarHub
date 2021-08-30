@@ -1,15 +1,11 @@
 class Polygon {
-  constructor(regl, line, color, file) {
+  constructor(regl, file) {
     this.regl = regl;
     this.file = file;
-    this.line = line;
-    this.color = color == [] ? [0.5, 0.5, 0.5] : color;
     this.points = [];
     this.count = 0;
     this.busy = false;
     this.ready = false;
-    this.opacity = 0.0;
-    this.targetOpacity = 1.0;
     this.radius = 6357;
     // Binding methods
     this.read = this.read.bind(this);
