@@ -26,21 +26,17 @@ class Product extends GLView {
       this.props.textureScale,
       props.debugGL
     );
-    // let file = "/static/blob/counties-10m.json";
-    // let file = "/static/blob/countries-50m.json";
-    // let file = "/static/blob/countries-110m.json";
-    // let file = "/static/blob/shapefiles/World/ne_50m_admin_0_countries.shp";
     this.overlay = [
       new Polygon(this.regl, 0.9, [], "/static/blob/countries-50m.json"),
       new Polygon(this.regl, 0.6, [], "/static/blob/states-10m.json"),
       new Polygon(this.regl, 0.3, [], "/static/blob/counties-10m.json"),
     ];
-    this.timeOrigin = 1630207559000 - Date.now();
+    this.now = 1630207559000 - Date.now();
     this.graphics.satCoordinate[0] = this.getTimedLongitude();
   }
 
   getTimedLongitude() {
-    return 0.0002 * (this.timeOrigin - window.performance.now());
+    return (0.0002 * (this.now - window.performance.now())) % (2 * Math.PI);
   }
 
   getOverlayVisibility() {
@@ -50,9 +46,11 @@ class Product extends GLView {
     } else {
       t = [1, 1, 0];
     }
+    let c = 0;
+    this.overlay.forEach((o) => (c += o.opacity > 0.1));
     this.overlay.forEach((o, i) => {
       if (o.ready) {
-        o.targetOpacity = t[i];
+        if (c < 2 || t[i] == 0) o.targetOpacity = t[i];
         o.opacity = 0.92 * o.opacity + 0.08 * o.targetOpacity;
       }
     });
@@ -110,7 +108,7 @@ class Product extends GLView {
     });
     this.getOverlayVisibility();
     let o = [];
-    let w = [
+    const w = [
       [1.5, 4.5],
       [1.3, 3.5],
       [1.0, 1.5],
@@ -131,19 +129,20 @@ class Product extends GLView {
       }
     });
     this.picaso(o);
-    if (!this.gesture.panInProgress) {
-      const x = this.getTimedLongitude();
-      if (x - graph.satCoordinate[0] < -10) {
-        graph.satCoordinate[0] = x;
-        this.overlay.forEach((o) => {
-          o.opacity = 0.0;
-        });
-      } else {
-        graph.satCoordinate[0] = 0.92 * graph.satCoordinate[0] + 0.08 * x;
-      }
-    }
+    // if (!this.gesture.panInProgress) {
+    //   const x = this.getTimedLongitude();
+    //   // If the target longitude is too far off (10 radians), fade out instantly
+    //   if (x - graph.satCoordinate[0] < -10) {
+    //     graph.satCoordinate[0] = x;
+    //     this.overlay.forEach((o) => {
+    //       o.opacity = 0.0;
+    //     });
+    //   } else {
+    //     graph.satCoordinate[0] = 0.92 * graph.satCoordinate[0] + 0.08 * x;
+    //   }
+    // }
     if (this.stats !== undefined) this.stats.update();
-    if (this.props.profileGL) this.statsWidget.update(0.0167);
+    if (this.props.profileGL) this.statsWidget.update(0.01667);
   }
 
   fitToData() {

@@ -74,11 +74,11 @@ class GLView extends Component {
     model = mat4.translate([], model, [0, 0, this.constants.radius]);
     // Important parameters for WebGL. Don't want to use state
     this.graphics = {
-      fov: Math.PI / 6,
+      fov: Math.PI / 4,
       satCoordinate: vec3.fromValues(
         (origin.longitude / 180.0) * Math.PI,
         (origin.latitude / 180.0) * Math.PI,
-        3 * this.constants.radius
+        2 * this.constants.radius
       ),
       satPosition: vec3.create(),
       model: model,
@@ -130,14 +130,12 @@ class GLView extends Component {
 
   render() {
     if (this.props.debug === true) {
-      const str =
-        this.gesture.message +
-        " " +
-        (this.mount ? this.mount.offsetHeight : "") +
-        " px";
+      const str = `${this.gesture.message} ${
+        this.mount ? this.mount.offsetHeight : ""
+      } px  ${this.graphics?.message}`;
       return (
         <div>
-          <div className="ppi" ref={(x) => (this.mount = x)} />
+          <div className="fullHeight" ref={(x) => (this.mount = x)} />
           <div className="debug">
             <div className="leftPadded">{str}</div>
           </div>
@@ -198,18 +196,19 @@ class GLView extends Component {
       segments: this.rings.count,
     });
     graph.satCoordinate[0] -= 0.003;
-    if (this.stats !== undefined) this.stats.update();
+    this.stats?.update();
   }
 
   pan(x, y) {
     const graph = this.graphics;
     let c = graph.satCoordinate;
-    c[0] = c[0] - 0.003 * graph.fov * x;
+    c[0] -= x * graph.fov * 0.001;
     c[1] = common.clamp(
-      c[1] - 0.003 * graph.fov * y,
+      c[1] - y * graph.fov * 0.001,
       -0.4999 * Math.PI,
       +0.4999 * Math.PI
     );
+    if (x != 0) graph.message = `x = ${x}, c[0] = ${c[0]}`;
     graph.projectionNeedsUpdate = true;
     if (this.props.debugGL) {
       this.setState({

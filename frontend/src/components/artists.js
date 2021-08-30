@@ -219,8 +219,8 @@ export function sphere(regl) {
     void main() {
       gl_Position = projection * modelview * vec4(position, 1.0);
       n = mat3(modelview) * normalize(position);
-      s = dot(vec3(0.0, 0.0, 1.2), n);
-      s = clamp(s, 0.05, 1.0);
+      s = dot(vec3(0.0, 0.0, 1.3), n);
+      s = clamp(s, 0.2, 1.0);
     }`,
 
     frag: `

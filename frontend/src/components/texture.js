@@ -28,8 +28,8 @@
 class Texture {
   constructor(regl, scale, debug) {
     this.regl = regl;
-    this.scale = scale || window.devicePixelRatio;
-    this.debug = debug || false;
+    this.scale = scale ?? window.devicePixelRatio;
+    this.debug = debug ?? false;
     this.canvas = document.createElement("canvas");
     this.context = this.canvas.getContext("2d");
     this.constants = {

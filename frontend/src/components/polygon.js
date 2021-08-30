@@ -47,15 +47,14 @@ class Polygon {
     });
     this.count = x.length / 6;
     console.log(
-      "Polygon: " +
-        this.file.split("/").pop() +
-        " " +
-        this.count.toLocaleString() +
-        " lines (" +
-        x.length.toLocaleString() +
-        " floats = " +
-        (x.length * 4).toLocaleString() +
-        " bytes)"
+      `Polygon: %c${this.file
+        .split("/")
+        .pop()} %c${this.count.toLocaleString()} lines %c(${x.length.toLocaleString()} floats = ${(
+        x.length * 4
+      ).toLocaleString()} bytes)`,
+      "font-weight: bold",
+      "",
+      "color:blue"
     );
   }
 

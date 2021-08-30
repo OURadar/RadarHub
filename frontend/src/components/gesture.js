@@ -54,7 +54,7 @@ class Gesture {
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
       this.shiftKey = e.shiftKey;
-      this.message = "mousemove (" + this.pointX + ", " + this.pointY + ")";
+      this.message = `mousemove (${this.pointX}), ${this.pointY})`;
     });
     this.element.addEventListener("mouseup", (e) => {
       if (this.panInProgress === true) {

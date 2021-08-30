@@ -89,60 +89,6 @@ function circleGeometry(regl, resolution) {
   };
 }
 
-function roundJoin(regl, resolution) {
-  const roundBuffer = circleGeometry(regl, resolution);
-  return regl({
-    vert: `
-      precision highp float;
-      attribute vec2 position;
-      attribute vec2 point;
-      uniform float width;
-      uniform mat4 projection;
-  
-      void main() {
-        gl_Position = projection * vec4(width * position + point, 0, 1);
-      }`,
-
-    frag: `
-      precision highp float;
-      uniform vec4 color;
-      void main() {
-        gl_FragColor = color;
-      }`,
-
-    depth: {
-      enable: false,
-    },
-
-    attributes: {
-      position: {
-        buffer: roundBuffer.buffer,
-        divisor: 0,
-      },
-      point: {
-        buffer: regl.prop("points"),
-        divisor: 1,
-        offset: Float32Array.BYTES_PER_ELEMENT * 2,
-      },
-    },
-
-    uniforms: {
-      width: regl.prop("width"),
-      color: regl.prop("color"),
-      projection: regl.prop("projection"),
-    },
-
-    cull: {
-      enable: true,
-      face: "back",
-    },
-
-    primitive: "triangle fan",
-    count: roundBuffer.count,
-    instances: regl.prop("instances"),
-  });
-}
-
 function roundCapJoinGeometry(regl, resolution) {
   const instanceRoundRound = [
     [0, -0.5, 0],
@@ -250,58 +196,6 @@ function interleavedStripRoundCapJoin(regl, resolution) {
 
     count: roundCapJoin.count,
     instances: regl.prop("segments"),
-  });
-}
-
-function customPoints(regl) {
-  return regl({
-    vert: `
-    precision highp float;
-    attribute vec2 position;
-    attribute vec2 point;
-    uniform float width;
-    uniform mat4 projection;
-    void main() {
-      gl_Position = projection * vec4(width * position + point, 0, 1);
-    }`,
-
-    frag: `
-    precision highp float;
-    uniform vec4 color;
-    void main() {
-      gl_FragColor = color;
-    }`,
-
-    depth: {
-      enable: false,
-    },
-
-    attributes: {
-      position: {
-        buffer: regl.prop("pointGeometry"),
-        divisor: 0,
-      },
-      point: {
-        buffer: regl.prop("points"),
-        divisor: 1,
-      },
-    },
-
-    uniforms: {
-      width: regl.prop("width"),
-      color: regl.prop("color"),
-      projection: regl.prop("projection"),
-    },
-
-    cull: {
-      enable: true,
-      face: "back",
-    },
-
-    primitive: regl.prop("pointPrimitive"),
-    count: regl.prop("pointCount"),
-    instances: regl.prop("instances"),
-    viewport: regl.prop("viewport"),
   });
 }
 
@@ -491,7 +385,7 @@ function instancedLines(regl, resolution) {
         vec4 clip = mix(clip0, clip1, position.z);
         gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
         normal.xyz = normalize(mat3(view) * modelPointA.xyz);
-        normal.w = clamp(dot(vec3(0.0, 0.0, 1.2), normal.xyz), 0.05, 1.0) * quad.a;
+        normal.w = clamp(dot(vec3(0.0, 0.0, 1.3), normal.xyz), 0.05, 1.0) * quad.a;
         normal.xyz *= quad.y;
         adjustedColor = color;
         adjustedColor.a *= normal.w;
@@ -562,7 +456,7 @@ function instancedLines(regl, resolution) {
 // Since model matrix is always identity, it's omitted
 //
 function simplifiedInstancedLines(regl) {
-  const roundCapJoin = roundCapJoinGeometry(regl, 6);
+  const roundCapJoin = roundCapJoinGeometry(regl, 4);
   return regl({
     vert: `
       precision highp float;
@@ -592,7 +486,7 @@ function simplifiedInstancedLines(regl) {
         vec4 clip = mix(clip0, clip1, position.z);
         gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
         normal.xyz = normalize(mat3(view) * pointA);
-        normal.w = clamp(dot(vec3(0.0, 0.0, 1.2), normal.xyz), 0.05, 1.0) * quad.a;
+        normal.w = clamp(dot(vec3(0.0, 0.0, 1.3), normal.xyz), 0.05, 1.0) * quad.a;
         normal.xyz *= quad.y;
         adjustedColor = color;
         adjustedColor.a *= normal.w;
