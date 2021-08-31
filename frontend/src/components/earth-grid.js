@@ -6,7 +6,6 @@
 //
 
 let points = [];
-let normals = [];
 let elements = [];
 const latCount = 17;
 const lonCount = 36;
@@ -21,7 +20,6 @@ for (let j = 0; j < latCount; j++) {
       Math.cos(lat) * Math.cos(lon),
     ];
     points.push([r * xyz[0], r * xyz[1], r * xyz[2]]);
-    normals.push(xyz);
   }
   lat -= Math.PI / 18;
 }
@@ -43,7 +41,6 @@ for (let k = 0; k < lonCount; k++) {
 }
 
 points = points.flat();
-normals = normals.flat();
 elements = elements.flat();
 
-export { points, normals, elements };
+export { points, elements };

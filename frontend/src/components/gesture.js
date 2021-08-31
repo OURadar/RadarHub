@@ -194,19 +194,12 @@ class Gesture {
 }
 
 function delta2scale(x) {
-  if (x > 3) {
-    return 1 / 1.1;
-  } else if (x < -3) {
-    return 1.1;
-  } else if (x > 2) {
-    return 1 / 1.05;
-  } else if (x < -2) {
-    return 1.05;
-  } else if (x > 0.2) {
-    return 1 / 1.01;
-  } else if (x < -0.2) {
-    return 1.01;
-  }
+  if (x > +3) return 1 / 1.1;
+  if (x < -3) return 1.1;
+  if (x > +2) return 1 / 1.05;
+  if (x < -2) return 1.05;
+  if (x > +0.2) return 1 / 1.01;
+  if (x < -0.2) return 1.01;
   return 1;
 }
 

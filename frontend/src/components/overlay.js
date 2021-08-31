@@ -24,10 +24,10 @@ class Overlay {
       {
         polygon: new Polygon(this.regl, "/static/blob/counties-10m.json"),
         color: [0.5, 0.5, 0.5, 1.0],
-        limits: [1.0, 1.5],
-        linewidth: 1.0,
+        limits: [0.5, 1.5],
+        linewidth: 0.5,
         opacity: 0.0,
-        weight: 0.6,
+        weight: 0.5,
       },
     ];
   }

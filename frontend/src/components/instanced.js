@@ -498,7 +498,7 @@ function simplifiedInstancedLines(regl) {
       varying vec4 normal;
       varying vec4 adjustedColor;
       void main() {
-        if (normal.w < 0.05)
+        if (normal.w < 0.1)
           discard;
         vec4 computedColor = vec4(normal.xzy * normal.w, normal.w);
         gl_FragColor = mix(computedColor, adjustedColor, quad.x);
@@ -534,7 +534,7 @@ function simplifiedInstancedLines(regl) {
     },
 
     depth: {
-      enable: false,
+      enable: true,
     },
 
     blend: {

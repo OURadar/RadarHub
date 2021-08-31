@@ -26,10 +26,10 @@
 //
 
 class Texture {
-  constructor(regl, scale, debug) {
+  constructor(regl, scale = window.devicePixelRatio, debug = false) {
     this.regl = regl;
-    this.scale = scale ?? window.devicePixelRatio;
-    this.debug = debug ?? false;
+    this.scale = scale;
+    this.debug = debug;
     this.canvas = document.createElement("canvas");
     this.context = this.canvas.getContext("2d");
     this.constants = {
@@ -53,16 +53,17 @@ class Texture {
     );
     font.load().then(() => {
       this.fontLoaded = true;
+      // this.checkFontLoaded();
     });
   }
 
   checkFontLoaded() {
     let meas = this.context.measureText("tesla");
     console.log(
-      meas.width,
-      this.initWidth,
-      meas.width != this.initWidth,
-      this.tic
+      `checkFontLoaded: %cmeas.wdith=${meas.width.toFixed(2)} ${
+        meas.width == this.initWidth ? "=" : "/="
+      } initWidth=${this.initWidth.toFixed(2)} tic = ${this.tic}`,
+      "color:blue"
     );
     if (meas.width != this.initWidth || this.tic++ > 50) {
       this.fontLoaded = true;
@@ -84,8 +85,8 @@ class Texture {
     while (!this.fontLoaded && this.tic++ < 100) {
       await this.waitBriefly();
     }
-    this.busy = true;
     const context = this.context;
+    this.busy = true;
     this.canvas.width = 512 * this.scale;
     this.canvas.height = 128 * this.scale;
     // Clear the part I use

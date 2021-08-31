@@ -8,13 +8,13 @@
 import React, { Component } from "react";
 import { ThemeProvider } from "@material-ui/core/styles";
 import { colorDict, detectMob } from "./common";
-import { Ingest } from "./ingest";
+import { SectionHeader } from "./section-header";
 import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
-import { SectionHeader } from "./simple";
 import { TopBar } from "./topbar";
+import { Ingest } from "./ingest";
 import { theme } from "./theme";
 
 class App extends Component {

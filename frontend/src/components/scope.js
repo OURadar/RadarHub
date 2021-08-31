@@ -53,11 +53,7 @@ class Scope extends Component {
       this.stats = new Stats();
       this.stats.domElement.className = "canvasStats";
     }
-    this.texture = new Texture(
-      this.regl,
-      this.props.textureScale,
-      props.debugGL
-    );
+    this.texture = new Texture(this.regl, props.textureScale, props.debugGL);
     this.constants = {
       rangeX: common.tickChoices(0.1, 5),
       rangeY: common.tickChoices(1, 5),
@@ -136,12 +132,11 @@ class Scope extends Component {
 
   render() {
     if (this.props.debug === true) {
-      const str = this.gesture.message;
       return (
         <div className="fill">
           <div className="fill" ref={(x) => (this.mount = x)} />
           <div className="debug">
-            <div className="leftPadded">{str}</div>
+            <div className="leftPadded">{this.gesture.message}</div>
           </div>
         </div>
       );

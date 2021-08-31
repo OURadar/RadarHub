@@ -131,9 +131,9 @@ class Ingest {
         // Response of a command
         let text = new TextDecoder().decode(e.data.slice(1));
         if (text.includes("not") || text.includes("NAK")) {
-          text = " 👎🏼 " + text + "<div class='emotion'>😿</div>";
+          text = ` 👎🏼 ${text} <div class='emotion'>😿</div>`;
         } else {
-          text = " 👍🏼 " + text + "<div class='emotion'>👻</div>";
+          text = ` 👍🏼 ${text} <div class='emotion'>👻</div>`;
         }
         this.response = text;
         setTimeout(() => {
@@ -170,7 +170,7 @@ class Ingest {
     } else {
       const t = this.wait.toFixed(0);
       if (t <= 3) {
-        this.message = "Connect in " + t + " second" + (t > 1 ? "s" : "");
+        this.message = `Connect in ${t} second${t > 1 ? "s" : ""}`;
         this.onupdate(this.tic++);
       }
       setTimeout(this.waitOrConnect, 200);

@@ -8,8 +8,6 @@
 import { mat4 } from "gl-matrix";
 import { Scope } from "./scope";
 
-import * as common from "./common";
-
 //
 // Use as <Scope data={input} />
 //
