@@ -8,7 +8,7 @@ class Overlay {
       {
         polygon: new Polygon(this.regl, "/static/blob/countries-50m.json"),
         color: [0.5, 0.5, 0.5, 1.0],
-        limits: [1.5, 4.5],
+        limits: [1.5, 4.0],
         linewidth: 1.0,
         opacity: 0.0,
         weight: 1.5,
@@ -16,10 +16,10 @@ class Overlay {
       {
         polygon: new Polygon(this.regl, "/static/blob/states-10m.json"),
         color: [0.5, 0.5, 0.5, 1.0],
-        limits: [1.3, 3.5],
+        limits: [1.3, 2.5],
         linewidth: 1.0,
         opacity: 0.0,
-        weight: 1.0,
+        weight: 0.5,
       },
       {
         polygon: new Polygon(this.regl, "/static/blob/counties-10m.json"),
@@ -27,7 +27,7 @@ class Overlay {
         limits: [0.5, 1.5],
         linewidth: 0.5,
         opacity: 0.0,
-        weight: 0.5,
+        weight: 0.2,
       },
     ];
   }
