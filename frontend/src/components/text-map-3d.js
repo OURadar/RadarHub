@@ -1,12 +1,12 @@
 //
-//  texture.js
+//  text-map-3d.js
 //  RadarHub
 //
-//  Created by Boonleng Cheong on 7/20/2021.
+//  Created by Boonleng Cheong on 9/1/2021.
 //
 //
 //  Initialize as:
-//  obj = Texture(regl)
+//  obj = TextMap3D(regl)
 //
 //  Update as:
 //  obj.update(text, callback)
@@ -15,21 +15,37 @@
 //
 //  text = {
 //    labels: ['label-1', 'label-2', ...]
-//    positions: [[x0, y0], [x1, y1], ... ]
+//    positions: [[x0, y0, z0], [x1, y1, z1], ... ]
 //    alignments: [[u0, v0], [u1, v1], ...]
 //    colors: ['#808080', 'black', ...]
 //    fonts: ['font-1', 'font-2', ...]
 //  }
+//
+//  label = [{
+//    text: string,
+//    coord: {lon: number, lat: number},
+//    align: {u: number, v: number},
+//    color: '#800000',
+//    font: string
+//  }, {
+//    text: string,
+//    coord: {lon: number, lat: number},
+//    align: {u: number, v: number},
+//    color: '#800000',
+//    font: string
+//  }, ...];
+//
 //  callback = a callback function when the texture is ready
 //
 //  NOTE: slices and attributes must have the same length
 //
 
-class Texture {
-  constructor(regl, scale = window.devicePixelRatio, debug = false) {
+class TextMap3D {
+  constructor(regl, debug = false) {
     this.regl = regl;
-    this.scale = scale;
+    this.scale = window.devicePixelRatio;
     this.debug = debug;
+    console.log(this.scale, this.debug);
     this.canvas = document.createElement("canvas");
     this.context = this.canvas.getContext("2d");
     this.constants = {
@@ -53,21 +69,7 @@ class Texture {
     );
     font.load().then(() => {
       this.fontLoaded = true;
-      // this.checkFontLoaded();
     });
-  }
-
-  checkFontLoaded() {
-    let meas = this.context.measureText("tesla");
-    console.log(
-      `checkFontLoaded: %cmeas.wdith=${meas.width.toFixed(2)} ${
-        meas.width == this.initWidth ? "=" : "/="
-      } initWidth=${this.initWidth.toFixed(2)} tic = ${this.tic}`,
-      "color:blue"
-    );
-    if (meas.width != this.initWidth || this.tic++ > 50) {
-      this.fontLoaded = true;
-    }
   }
 
   waitBriefly() {
@@ -79,7 +81,9 @@ class Texture {
   }
 
   async update(text) {
-    if (this.busy) {
+    if (this.busy) return;
+    if (text === undefined) {
+      console.log("Input undefined.");
       return;
     }
     while (!this.fontLoaded && this.tic++ < 100) {
@@ -92,29 +96,22 @@ class Texture {
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.debug) {
       context.fillStyle = "#dddddd";
-      context.fillRect(0, 0, 1024, 512);
+      context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
     const p = this.constants.padding;
-    let f = 0;
-    let x = 0.5;
-    let y = 0.5;
-    let points = [];
-    let origins = [];
-    let spreads = [];
-    for (let k = 0; k < text.labels.length; k++) {
-      const label = text.labels[k];
-      const position = text.positions[k];
-      const alignment = Array.isArray(text.alignments)
-        ? text.alignments[k]
-        : text.alignments;
-      const color = Array.isArray(text.colors) ? text.colors[k] : text.colors;
-      const size = Array.isArray(text.sizes) ? text.sizes[k] : text.sizes;
-      // Measure the label extent
-      context.font = size * this.scale + "px LabelFont";
-      const meas = context.measureText(label);
-      const w = Math.ceil(meas.width);
+    let f = 0,
+      x = 0.5,
+      y = 0.5;
+    let points = [],
+      origins = [],
+      spreads = [];
+    text.forEach((label) => {
+      const size = label?.size || 18;
+      context.font = `${this.scale * size}px LabelFont`;
+      const measure = context.measureText(label.text);
+      const w = Math.ceil(measure.width);
       const h = this.hasDetails
-        ? meas.actualBoundingBoxAscent + meas.actualBoundingBoxDescent
+        ? measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent
         : Math.ceil(0.8 * size);
       const ww = w + 2 * p;
       const hh = h + 2 * p;
@@ -124,28 +121,29 @@ class Texture {
         x = 0.5;
         y += Math.ceil(f + 2 * p);
       }
-      const xx = position[0] + alignment[0] * w;
-      const yy = position[1] + alignment[1] * h;
       origins.push(x, y);
+      points.push([
+        6375 * Math.cos(label.coord.lat) * Math.sin(label.coord.lon),
+        6375 * Math.sin(label.coord.lat),
+        6375 * Math.cos(label.coord.lat) * Math.cos(label.coord.lon),
+      ]);
       spreads.push(ww / this.scale, hh / this.scale);
-      points.push(xx, yy);
       if (this.debug) {
         context.strokeStyle = "skyblue";
         context.strokeRect(x + p, y + p, w, h);
         context.strokeStyle = "orange";
         context.strokeRect(x, y, ww, hh);
       }
-      //context.strokeStyle = "white";
-      context.fillStyle = color;
+      context.fillStyle = label?.color || "gray";
       context.fillText(
-        label,
+        label.text,
         x + p,
-        y + p + (this.hasDetails ? meas.actualBoundingBoxAscent : h)
+        y + p + (this.hasDetails ? measure.actualBoundingBoxAscent : h)
       );
       x += ww + 1;
-      if (this.debug) await this.waitBriefly();
-    }
-    this.busy = false;
+      //console.log(label, context.font);
+    });
+    console.log(points, origins);
     return {
       position: points,
       origin: origins,
@@ -159,4 +157,4 @@ class Texture {
   }
 }
 
-export { Texture };
+export { TextMap3D };

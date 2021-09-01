@@ -49,7 +49,7 @@ class Polygon {
         x.length * 4
       ).toLocaleString()} bytes)`,
       "font-weight: bold",
-      "",
+      "font-weight: normal",
       "color:blue"
     );
   }

@@ -6,10 +6,9 @@
 //
 
 import * as common from "./common";
-import { Texture } from "./texture";
+import { TextMap3D } from "./text-map-3d";
 import { GLView } from "./glview";
 import { Overlay } from "./overlay";
-import { quat } from "gl-matrix";
 
 //
 // Use as <Product data={input} />
@@ -20,13 +19,9 @@ import { quat } from "gl-matrix";
 class Product extends GLView {
   constructor(props) {
     super(props);
-    this.texture = new Texture(
-      this.regl,
-      this.props.textureScale,
-      props.debugGL
-    );
+    this.texture = new TextMap3D(this.regl, true);
     this.overlay = new Overlay(this.regl);
-    this.now = 1630207559000 - Date.now();
+    this.offset = Date.now();
     this.state = { ...this.state, spin: true };
     window.addEventListener("keyup", (e) => {
       if (e.key == "s") {
@@ -42,7 +37,7 @@ class Product extends GLView {
   }
 
   updateViewPoint() {
-    let t = (0.0002 * (this.now - window.performance.now())) % (2 * Math.PI);
+    let t = (0.0002 * (this.offset - window.performance.now())) % (2 * Math.PI);
     this.graphics.satI = 0.92 * this.graphics.satI + 0.08 * Math.cos(t);
     this.graphics.satQ = 0.92 * this.graphics.satQ + 0.08 * Math.sin(t);
     this.graphics.satCoordinate[0] = Math.atan2(
@@ -77,6 +72,27 @@ class Product extends GLView {
       ];
       this.statsWidget = createStatsWidget(drawCalls);
     }
+    let labels = [
+      {
+        text: "Label-1",
+        coord: { lon: 0, lat: 0 },
+        align: { u: 0, v: 0 },
+        color: "blue",
+      },
+      {
+        text: "Label-2",
+        coord: { lon: -10, lat: 10 },
+        align: { u: 0, v: 0 },
+        color: "red",
+      },
+      {
+        text: "Label-3",
+        coord: { lon: -20, lat: 20 },
+        align: { u: 0, v: 0 },
+        color: "white",
+      },
+    ];
+    this.texture.update(labels);
   }
 
   draw() {
@@ -114,11 +130,12 @@ class Product extends GLView {
     });
     let o = [];
     let layers = this.overlay.getDrawables(graph.fov);
+    let message = "linewidths: ";
     layers.forEach((overlay) => {
       if (overlay.opacity > 0.05) {
         o.push({
           width: overlay.linewidth,
-          color: this.props.colors.lines[3],
+          color: overlay.color,
           quad: [...mtu, overlay.opacity],
           view: graph.view,
           projection: graph.projection,
@@ -127,7 +144,11 @@ class Product extends GLView {
           points: overlay.polygon.points,
           segments: overlay.polygon.count,
         });
+        message += ` ${overlay.linewidth.toFixed(2)}`;
       }
+    });
+    this.setState({
+      message: message,
     });
     this.picaso(o);
     if (this.state.spin && !this.gesture.panInProgress) {

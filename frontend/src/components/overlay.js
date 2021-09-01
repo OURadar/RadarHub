@@ -8,26 +8,26 @@ class Overlay {
       {
         polygon: new Polygon(this.regl, "/static/blob/countries-50m.json"),
         color: [0.5, 0.5, 0.5, 1.0],
-        limits: [1.5, 4.0],
+        limits: [1.2, 3.0],
         linewidth: 1.0,
         opacity: 0.0,
-        weight: 1.5,
+        weight: 1.7,
       },
       {
         polygon: new Polygon(this.regl, "/static/blob/states-10m.json"),
         color: [0.5, 0.5, 0.5, 1.0],
-        limits: [1.3, 2.5],
+        limits: [1.3, 3.0],
         linewidth: 1.0,
         opacity: 0.0,
-        weight: 0.5,
+        weight: 0.9,
       },
       {
         polygon: new Polygon(this.regl, "/static/blob/counties-10m.json"),
         color: [0.5, 0.5, 0.5, 1.0],
-        limits: [0.5, 1.5],
+        limits: [0.5, 2.0],
         linewidth: 0.5,
         opacity: 0.0,
-        weight: 0.2,
+        weight: 0.4,
       },
     ];
   }
@@ -53,7 +53,7 @@ class Overlay {
       if (o.polygon.ready) {
         if (c < 2 || t[i] == 0) o.targetOpacity = t[i];
         o.opacity = clamp(o.opacity + (o.targetOpacity ? 0.05 : -0.05), 0, 1);
-        o.linewidth = clamp(o.weight / fov, ...o.limits);
+        o.linewidth = clamp(o.weight / Math.sqrt(fov), ...o.limits);
       }
     });
     return this.layers;

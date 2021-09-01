@@ -218,8 +218,8 @@ class GLView extends Component {
     graph.satQ = Math.sin(c[0]);
     graph.projectionNeedsUpdate = true;
     if (this.props.debug) {
-      graph.message += ` satI: ${graph.satI.toFixed(6)}`;
-      graph.message += ` satQ: ${graph.satQ.toFixed(6)}`;
+      graph.message += ` satI: ${graph.satI.toFixed(3)}`;
+      graph.message += ` satQ: ${graph.satQ.toFixed(3)}`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
@@ -228,10 +228,10 @@ class GLView extends Component {
 
   magnify(x, y, _x, _y) {
     const graph = this.graphics;
-    graph.fov = common.clamp(graph.fov / y, Math.PI / 360, 0.5 * Math.PI);
+    graph.fov = common.clamp(graph.fov / y, 0.01, 0.5 * Math.PI);
     graph.projectionNeedsUpdate = true;
     if (this.props.debug) {
-      graph.message = `fov: ${graph.fov.toFixed(2)}`;
+      graph.message = `fov: ${graph.fov.toFixed(3)}`;
       this.setState({
         lastMagnifyTime: window.performance.now(),
       });
@@ -242,8 +242,8 @@ class GLView extends Component {
     const graph = this.graphics;
     graph.fov = Math.PI / 6;
     graph.satCoordinate = vec3.fromValues(
-      (this.constants.origin.longitude / 180.0) * Math.PI,
-      (this.constants.origin.latitude / 180.0) * Math.PI,
+      common.deg2rad(this.constants.origin.longitude),
+      common.deg2rad(this.constants.origin.latitude),
       3 * this.constants.radius
     );
     graph.projectionNeedsUpdate = true;
