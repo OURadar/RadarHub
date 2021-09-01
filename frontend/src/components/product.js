@@ -42,7 +42,7 @@ class Product extends GLView {
       this.geometry.satQ,
       this.geometry.satI
     );
-    this.geometry.projectionNeedsUpdate = true;
+    this.geometry.needsUpdate = true;
     // let q = this.graphics.satQuaternion;
     // let qt = quat.fromEuler(
     //   [],
@@ -76,7 +76,7 @@ class Product extends GLView {
   draw() {
     if (this.mount === null) return;
     if (
-      this.geometry.projectionNeedsUpdate ||
+      this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
       this.canvas.height != this.mount.offsetHeight
     ) {
@@ -146,11 +146,11 @@ class Product extends GLView {
   }
 
   fitToData() {
-    const graph = this.geometry;
-    graph.fov = 200.0 / this.constants.radius;
-    graph.satCoordinate[0] = common.deg2rad(this.constants.origin.longitude);
-    graph.satCoordinate[1] = common.deg2rad(this.constants.origin.latitude);
-    graph.projectionNeedsUpdate = true;
+    const geo = this.geometry;
+    geo.fov = 200.0 / this.constants.radius;
+    geo.satCoordinate[0] = common.deg2rad(this.constants.origin.longitude);
+    geo.satCoordinate[1] = common.deg2rad(this.constants.origin.latitude);
+    geo.needsUpdate = true;
   }
 }
 

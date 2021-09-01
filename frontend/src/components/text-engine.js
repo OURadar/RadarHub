@@ -1,5 +1,5 @@
 //
-//  text-map-3d.js
+//  text-engine.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong on 9/1/2021.
@@ -13,29 +13,18 @@
 //
 //  where
 //
-//  text = {
-//    labels: ['label-1', 'label-2', ...]
-//    positions: [[x0, y0, z0], [x1, y1, z1], ... ]
-//    alignments: [[u0, v0], [u1, v1], ...]
-//    colors: ['#808080', 'black', ...]
-//    fonts: ['font-1', 'font-2', ...]
-//  }
-//
 //  label = [{
 //    text: string,
-//    coord: {lon: number, lat: number},
-//    align: {u: number, v: number},
+//    point: [x, y, z],
 //    color: '#800000',
 //    font: string
 //  }, {
 //    text: string,
-//    coord: {lon: number, lat: number},
-//    align: {u: number, v: number},
+//    point: [x, y, z],
 //    color: '#800000',
 //    font: string
 //  }, ...];
 //
-//  callback = a callback function when the texture is ready
 //
 //  NOTE: slices and attributes must have the same length
 //
@@ -43,7 +32,7 @@
 class TextEngine {
   constructor(regl, debug = false) {
     this.regl = regl;
-    this.scale = window.devicePixelRatio;
+    this.scale = 1.0;
     this.debug = debug;
     console.log(this.scale, this.debug);
     this.canvas = document.createElement("canvas");

@@ -91,7 +91,7 @@ class GLView extends Component {
       model: model,
       view: mat4.create(),
       modelview: model,
-      projectionNeedsUpdate: false,
+      needsUpdate: false,
       message: "graphics",
     };
     // Our artists
@@ -152,21 +152,21 @@ class GLView extends Component {
   updateProjection() {
     this.canvas.width = this.mount.offsetWidth;
     this.canvas.height = this.mount.offsetHeight;
-    const graph = this.geometry;
+    const geo = this.geometry;
     const w = this.canvas.width;
     const h = this.canvas.height;
-    const c = graph.satCoordinate;
+    const c = geo.satCoordinate;
     const x = c[2] * Math.cos(c[1]) * Math.sin(c[0]);
     const y = c[2] * Math.sin(c[1]);
     const z = c[2] * Math.cos(c[1]) * Math.cos(c[0]);
-    graph.satPosition = vec3.fromValues(x, y, z);
-    graph.view = mat4.lookAt([], graph.satPosition, [0, 0, 0], [0, 1, 0]);
-    graph.modelview = mat4.multiply([], graph.view, graph.model);
-    graph.projection = mat4.perspective([], graph.fov, w / h, 100, 30000.0);
-    graph.viewprojection = mat4.multiply([], graph.projection, graph.view);
-    graph.viewport = { x: 0, y: 0, width: w, height: h };
-    graph.projectionNeedsUpdate = false;
-    graph.message = "graphics";
+    geo.satPosition = vec3.fromValues(x, y, z);
+    geo.view = mat4.lookAt([], geo.satPosition, [0, 0, 0], [0, 1, 0]);
+    geo.modelview = mat4.multiply([], geo.view, geo.model);
+    geo.projection = mat4.perspective([], geo.fov, w / h, 100, 30000.0);
+    geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
+    geo.viewport = { x: 0, y: 0, width: w, height: h };
+    geo.needsUpdate = false;
+    geo.message = "graphics";
   }
 
   draw() {
@@ -174,53 +174,53 @@ class GLView extends Component {
       return;
     }
     if (
-      this.geometry.projectionNeedsUpdate ||
+      this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
       this.canvas.height != this.mount.offsetHeight
     ) {
       this.updateProjection();
     }
-    const graph = this.geometry;
+    const geo = this.geometry;
     this.regl.clear({
       color: this.props.colors.canvas,
     });
     this.sphere({
-      modelview: graph.view,
-      projection: graph.projection,
-      viewport: graph.viewport,
+      modelview: geo.view,
+      projection: geo.projection,
+      viewport: geo.viewport,
       color: this.props.colors.lines[1],
     });
     this.monet({
       width: 2.5,
       color: [0.5, 0.5, 0.5, 1.0],
-      model: graph.model,
-      view: graph.view,
-      projection: graph.projection,
+      model: geo.model,
+      view: geo.view,
+      projection: geo.projection,
       resolution: [this.canvas.width, this.canvas.height],
-      viewport: graph.viewport,
+      viewport: geo.viewport,
       points: this.rings.points,
       segments: this.rings.count,
     });
-    graph.satCoordinate[0] -= 0.003;
+    geo.satCoordinate[0] -= 0.003;
     this.stats?.update();
   }
 
   pan(x, y) {
-    const graph = this.geometry;
-    let c = graph.satCoordinate;
-    c[0] -= x * graph.fov * 0.0015;
+    const geo = this.geometry;
+    let c = geo.satCoordinate;
+    c[0] -= x * geo.fov * 0.0015;
     c[1] = common.clamp(
-      c[1] - y * graph.fov * 0.0015,
+      c[1] - y * geo.fov * 0.0015,
       -0.4999 * Math.PI,
       +0.4999 * Math.PI
     );
     // For continuous longitude transition around +/-180 deg, use a complex representation
-    graph.satI = Math.cos(c[0]);
-    graph.satQ = Math.sin(c[0]);
-    graph.projectionNeedsUpdate = true;
+    geo.satI = Math.cos(c[0]);
+    geo.satQ = Math.sin(c[0]);
+    geo.needsUpdate = true;
     if (this.props.debug) {
-      graph.message += ` satI: ${graph.satI.toFixed(3)}`;
-      graph.message += ` satQ: ${graph.satQ.toFixed(3)}`;
+      geo.message += ` satI: ${geo.satI.toFixed(3)}`;
+      geo.message += ` satQ: ${geo.satQ.toFixed(3)}`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
@@ -228,11 +228,11 @@ class GLView extends Component {
   }
 
   magnify(x, y, _x, _y) {
-    const graph = this.geometry;
-    graph.fov = common.clamp(graph.fov / y, 0.01, 0.5 * Math.PI);
-    graph.projectionNeedsUpdate = true;
+    const geo = this.geometry;
+    geo.fov = common.clamp(geo.fov / y, 0.01, 0.5 * Math.PI);
+    geo.needsUpdate = true;
     if (this.props.debug) {
-      graph.message = `fov: ${graph.fov.toFixed(3)}`;
+      geo.message = `fov: ${geo.fov.toFixed(3)}`;
       this.setState({
         lastMagnifyTime: window.performance.now(),
       });
@@ -240,14 +240,11 @@ class GLView extends Component {
   }
 
   fitToData() {
-    const graph = this.geometry;
-    graph.fov = Math.PI / 6;
-    graph.satCoordinate = vec3.fromValues(
-      common.deg2rad(this.constants.origin.longitude),
-      common.deg2rad(this.constants.origin.latitude),
-      3 * this.constants.radius
-    );
-    graph.projectionNeedsUpdate = true;
+    const geo = this.geometry;
+    geo.fov = Math.PI / 6;
+    geo.satCoordinate[0] = common.deg2rad(this.constants.origin.longitude);
+    geo.satCoordinate[1] = common.deg2rad(this.constants.origin.latitude);
+    geo.needsUpdate = true;
     if (this.props.debug) {
       this.setState({
         lastMagnifyTime: window.performance.now(),

@@ -313,7 +313,7 @@ export function sprite3(regl) {
     },
 
     depth: {
-      enable: true,
+      enable: false,
     },
 
     primitive: "points",

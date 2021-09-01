@@ -69,17 +69,17 @@ class Overlay {
     // Points from (lat, lon) pairs
     let labels = [
       {
-        text: "Label-1",
+        text: "LatLon-1",
         point: coord2point(-90, 20),
         color: "blue",
       },
       {
-        text: "Label-2",
+        text: "LatLon-2",
         point: coord2point(-100, 30),
         color: "red",
       },
       {
-        text: "Label-3",
+        text: "LatLon-3",
         point: coord2point(-110, 40),
         color: this.colors.label.face,
       },
@@ -91,7 +91,7 @@ class Overlay {
       color: "black",
     });
     labels.push({
-      text: "250 km",
+      text: "R-250 km",
       point: polar2point(0.5, 45, 250, this.geometry.model),
       color: "blue",
     });
