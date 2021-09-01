@@ -163,6 +163,7 @@ class GLView extends Component {
     graph.view = mat4.lookAt([], graph.satPosition, [0, 0, 0], [0, 1, 0]);
     graph.modelview = mat4.multiply([], graph.view, graph.model);
     graph.projection = mat4.perspective([], graph.fov, w / h, 100, 30000.0);
+    graph.viewprojection = mat4.multiply([], graph.projection, graph.view);
     graph.viewport = { x: 0, y: 0, width: w, height: h };
     graph.projectionNeedsUpdate = false;
     graph.message = "graphics";

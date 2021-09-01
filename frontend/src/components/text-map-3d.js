@@ -40,6 +40,8 @@
 //  NOTE: slices and attributes must have the same length
 //
 
+import * as common from "./common";
+
 class TextMap3D {
   constructor(regl, debug = false) {
     this.regl = regl;
@@ -54,7 +56,7 @@ class TextMap3D {
     this.busy = false;
     this.fontLoaded = false;
     this.context.font = "14px LabelFont";
-    let meas = this.context.measureText("money");
+    let meas = this.context.measureText("bitcoin");
     this.initWidth = meas.width;
     this.hasDetails =
       undefined !== meas.actualBoundingBoxAscent &&
@@ -94,10 +96,10 @@ class TextMap3D {
     this.canvas.width = 512 * this.scale;
     this.canvas.height = 128 * this.scale;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    if (this.debug) {
-      context.fillStyle = "#dddddd";
-      context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    }
+    // if (this.debug) {
+    //   context.fillStyle = "#dddddd";
+    //   context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    // }
     const p = this.constants.padding;
     let f = 0,
       x = 0.5,
@@ -122,11 +124,13 @@ class TextMap3D {
         y += Math.ceil(f + 2 * p);
       }
       origins.push(x, y);
-      points.push([
-        6375 * Math.cos(label.coord.lat) * Math.sin(label.coord.lon),
-        6375 * Math.sin(label.coord.lat),
-        6375 * Math.cos(label.coord.lat) * Math.cos(label.coord.lon),
-      ]);
+      let lat = common.deg2rad(label.coord.lat);
+      let lon = common.deg2rad(label.coord.lon);
+      let clat = Math.cos(lat);
+      let slat = Math.sin(lat);
+      let clon = Math.cos(lon);
+      let slon = Math.sin(lon);
+      points.push([6375 * clat * slon, 6375 * slat, 6375 * clat * clon]);
       spreads.push(ww / this.scale, hh / this.scale);
       if (this.debug) {
         context.strokeStyle = "skyblue";
@@ -145,9 +149,9 @@ class TextMap3D {
     });
     console.log(points, origins);
     return {
-      position: points,
-      origin: origins,
-      spread: spreads,
+      points: points,
+      origins: origins,
+      spreads: spreads,
       texture: this.regl.texture({
         data: this.canvas,
         min: "linear",
