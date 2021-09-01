@@ -6,8 +6,6 @@
 //
 
 import * as common from "./common";
-import { sprite3 } from "./artists";
-import { TextMap3D } from "./text-map-3d";
 import { GLView } from "./glview";
 import { Overlay } from "./overlay";
 
@@ -20,12 +18,9 @@ import { Overlay } from "./overlay";
 class Product extends GLView {
   constructor(props) {
     super(props);
-    this.textmap = new TextMap3D(this.regl, true);
-    this.overlay = new Overlay(this.regl);
+    this.overlay = new Overlay(this.regl, props.colors);
     this.offset = Date.now();
     this.state = { ...this.state, spin: true };
-    // New artist
-    this.gogh = sprite3(this.regl);
     window.addEventListener("keyup", (e) => {
       if (e.key == "s") {
         this.toggleSpin();
@@ -69,35 +64,13 @@ class Product extends GLView {
     if (this.props.profileGL) {
       const createStatsWidget = require("regl-stats-widget");
       var drawCalls = [
+        [this.gogh, "gogh"],
         [this.monet, "monet"],
         [this.picaso, "picaso"],
         [this.sphere, "sphere"],
       ];
       this.statsWidget = createStatsWidget(drawCalls);
     }
-    let labels = [
-      {
-        text: "Label-1",
-        coord: { lon: 0, lat: 0 },
-        align: { u: 0, v: 0 },
-        color: "cyan",
-      },
-      {
-        text: "Label-2",
-        coord: { lon: -10, lat: 10 },
-        align: { u: 0, v: 0 },
-        color: "red",
-      },
-      {
-        text: "Label-3",
-        coord: { lon: -20, lat: 20 },
-        align: { u: 0, v: 0 },
-        color: "white",
-      },
-    ];
-    this.textmap.update(labels).then((texture) => {
-      this.texture = texture;
-    });
   }
 
   draw() {
@@ -159,18 +132,13 @@ class Product extends GLView {
     if (this.state.spin && !this.gesture.panInProgress) {
       this.updateViewPoint();
     }
-    if (this.texture !== undefined) {
+    let text = this.overlay.getText();
+    if (text) {
       this.gogh({
         projection: graph.viewprojection,
         viewport: graph.viewport,
         scale: 1.0,
-        color: [0.5, 0.5, 0.5, 0.0],
-        bound: [this.textmap.canvas.width, this.textmap.canvas.height],
-        texture: this.texture.texture,
-        points: this.texture.points,
-        origin: this.texture.origins,
-        spread: this.texture.spreads,
-        count: this.texture.points.length,
+        ...text,
       });
     }
     if (this.stats !== undefined) this.stats.update();

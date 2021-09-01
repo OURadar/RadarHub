@@ -308,12 +308,12 @@ export function sprite3(regl) {
 
     attributes: {
       position: regl.prop("points"),
-      origin: regl.prop("origin"),
-      spread: regl.prop("spread"),
+      origin: regl.prop("origins"),
+      spread: regl.prop("spreads"),
     },
 
     depth: {
-      enable: false,
+      enable: true,
     },
 
     primitive: "points",

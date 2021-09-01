@@ -1,9 +1,11 @@
 import { Polygon } from "./polygon";
+import { TextMap3D } from "./text-map-3d";
 import { clamp } from "./common";
 
 class Overlay {
-  constructor(regl) {
+  constructor(regl, colors) {
     this.regl = regl;
+    this.colors = colors;
     this.layers = [
       {
         polygon: new Polygon(this.regl, "/static/blob/countries-50m.json"),
@@ -30,6 +32,7 @@ class Overlay {
         weight: 0.4,
       },
     ];
+    this.textEngine = new TextMap3D(this.regl, true);
   }
 
   read() {
@@ -38,6 +41,27 @@ class Overlay {
         layer.polygon.update();
       }, k * 500);
     });
+    let labels = [
+      {
+        text: "Label-1",
+        coord: { lon: 0, lat: 0 },
+        align: { u: 0, v: 0 },
+        color: "blue",
+      },
+      {
+        text: "Label-2",
+        coord: { lon: -10, lat: 10 },
+        align: { u: 0, v: 0 },
+        color: "red",
+      },
+      {
+        text: "Label-3",
+        coord: { lon: -20, lat: 20 },
+        align: { u: 0, v: 0 },
+        color: this.colors.label.face,
+      },
+    ];
+    this.textEngine.update(labels).then((texture) => (this.texture = texture));
   }
 
   getDrawables(fov) {
@@ -57,6 +81,11 @@ class Overlay {
       }
     });
     return this.layers;
+  }
+
+  getText() {
+    // Compute visibility, ...
+    return this.texture;
   }
 }
 

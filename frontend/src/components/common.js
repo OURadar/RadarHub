@@ -112,6 +112,12 @@ export function colorDict(theme) {
       pane: [0.988, 0.988, 1, 1],
       grid: [0.3, 0.3, 0.3, 0.6],
       tint: 0.7,
+      label: {
+        face: "#000000",
+        stroke: "#ffffff",
+        shadow: "#000000",
+        blur: "3px",
+      },
     },
     dark: {
       name: "dark",
@@ -134,6 +140,12 @@ export function colorDict(theme) {
       pane: [0.05, 0.05, 0.08, 1],
       grid: [1.0, 1.0, 1.0, 0.18],
       tint: 1.0,
+      label: {
+        face: "#ffffff",
+        stroke: "#000000",
+        shadow: "#000000",
+        blur: "3px",
+      },
     },
     vibrant: {
       name: "vibrant",
@@ -156,6 +168,12 @@ export function colorDict(theme) {
       pane: [0.0, 0.07, 0.07, 1],
       grid: [1.0, 1.0, 1.0, 0.18],
       tint: 1.0,
+      label: {
+        face: "#ffffff",
+        stroke: "#000000",
+        shadow: "#000000",
+        blur: "3px",
+      },
     },
     sat: {
       name: "sat",
@@ -175,6 +193,12 @@ export function colorDict(theme) {
       pane: [0.988, 0.988, 1, 1],
       grid: [0.3, 0.3, 0.3, 0.6],
       tint: 1.0,
+      label: {
+        face: "#ffffff",
+        stroke: "#000000",
+        shadow: "#000000",
+        blur: "3px",
+      },
     },
     baby: {
       name: "baby",
@@ -197,6 +221,12 @@ export function colorDict(theme) {
       pane: [0.988, 0.988, 1, 1],
       grid: [0.3, 0.3, 0.3, 0.6],
       tint: 1.0,
+      label: {
+        face: "#ffffff",
+        stroke: "#000000",
+        shadow: "#000000",
+        blur: "3px",
+      },
     },
   };
   return themes[theme];

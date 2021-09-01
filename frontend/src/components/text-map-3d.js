@@ -138,7 +138,7 @@ class TextMap3D {
         context.strokeStyle = "orange";
         context.strokeRect(x, y, ww, hh);
       }
-      context.fillStyle = label?.color || "gray";
+      context.fillStyle = label?.color || "#888888";
       context.fillText(
         label.text,
         x + p,
@@ -149,14 +149,17 @@ class TextMap3D {
     });
     console.log(points, origins);
     return {
-      points: points,
-      origins: origins,
-      spreads: spreads,
+      bound: [this.canvas.width, this.canvas.height],
       texture: this.regl.texture({
         data: this.canvas,
         min: "linear",
         mag: "linear",
       }),
+      color: this.debug ? [0, 0, 1, 0.3] : [0, 0, 0, 0],
+      points: points,
+      origins: origins,
+      spreads: spreads,
+      count: points.length,
     };
   }
 }
