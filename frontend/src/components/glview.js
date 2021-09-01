@@ -77,7 +77,7 @@ class GLView extends Component {
     model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
     model = mat4.translate([], model, [0, 0, this.constants.radius]);
     // Important parameters for WebGL. Don't want to use React state
-    this.graphics = {
+    this.geometry = {
       fov: Math.PI / 4,
       satCoordinate: vec3.fromValues(
         common.deg2rad(origin.longitude),
@@ -136,7 +136,7 @@ class GLView extends Component {
 
   render() {
     if (this.props.debug === true) {
-      let str = `${this.gesture.message} : ${this.graphics.message} : ${this.state.message}`;
+      let str = `${this.gesture.message} : ${this.geometry.message} : ${this.state.message}`;
       return (
         <div>
           <div className="fullHeight" ref={(x) => (this.mount = x)} />
@@ -152,7 +152,7 @@ class GLView extends Component {
   updateProjection() {
     this.canvas.width = this.mount.offsetWidth;
     this.canvas.height = this.mount.offsetHeight;
-    const graph = this.graphics;
+    const graph = this.geometry;
     const w = this.canvas.width;
     const h = this.canvas.height;
     const c = graph.satCoordinate;
@@ -174,13 +174,13 @@ class GLView extends Component {
       return;
     }
     if (
-      this.graphics.projectionNeedsUpdate ||
+      this.geometry.projectionNeedsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
       this.canvas.height != this.mount.offsetHeight
     ) {
       this.updateProjection();
     }
-    const graph = this.graphics;
+    const graph = this.geometry;
     this.regl.clear({
       color: this.props.colors.canvas,
     });
@@ -206,7 +206,7 @@ class GLView extends Component {
   }
 
   pan(x, y) {
-    const graph = this.graphics;
+    const graph = this.geometry;
     let c = graph.satCoordinate;
     c[0] -= x * graph.fov * 0.0015;
     c[1] = common.clamp(
@@ -228,7 +228,7 @@ class GLView extends Component {
   }
 
   magnify(x, y, _x, _y) {
-    const graph = this.graphics;
+    const graph = this.geometry;
     graph.fov = common.clamp(graph.fov / y, 0.01, 0.5 * Math.PI);
     graph.projectionNeedsUpdate = true;
     if (this.props.debug) {
@@ -240,7 +240,7 @@ class GLView extends Component {
   }
 
   fitToData() {
-    const graph = this.graphics;
+    const graph = this.geometry;
     graph.fov = Math.PI / 6;
     graph.satCoordinate = vec3.fromValues(
       common.deg2rad(this.constants.origin.longitude),

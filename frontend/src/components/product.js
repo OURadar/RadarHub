@@ -18,7 +18,7 @@ import { Overlay } from "./overlay";
 class Product extends GLView {
   constructor(props) {
     super(props);
-    this.overlay = new Overlay(this.regl, props.colors);
+    this.overlay = new Overlay(this.regl, props.colors, this.geometry);
     this.offset = Date.now();
     this.state = { ...this.state, spin: true };
     window.addEventListener("keyup", (e) => {
@@ -36,13 +36,13 @@ class Product extends GLView {
 
   updateViewPoint() {
     let t = (0.0002 * (this.offset - window.performance.now())) % (2 * Math.PI);
-    this.graphics.satI = 0.92 * this.graphics.satI + 0.08 * Math.cos(t);
-    this.graphics.satQ = 0.92 * this.graphics.satQ + 0.08 * Math.sin(t);
-    this.graphics.satCoordinate[0] = Math.atan2(
-      this.graphics.satQ,
-      this.graphics.satI
+    this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.cos(t);
+    this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.sin(t);
+    this.geometry.satCoordinate[0] = Math.atan2(
+      this.geometry.satQ,
+      this.geometry.satI
     );
-    this.graphics.projectionNeedsUpdate = true;
+    this.geometry.projectionNeedsUpdate = true;
     // let q = this.graphics.satQuaternion;
     // let qt = quat.fromEuler(
     //   [],
@@ -63,7 +63,7 @@ class Product extends GLView {
     this.overlay.read();
     if (this.props.profileGL) {
       const createStatsWidget = require("regl-stats-widget");
-      var drawCalls = [
+      const drawCalls = [
         [this.gogh, "gogh"],
         [this.monet, "monet"],
         [this.picaso, "picaso"],
@@ -76,49 +76,49 @@ class Product extends GLView {
   draw() {
     if (this.mount === null) return;
     if (
-      this.graphics.projectionNeedsUpdate ||
+      this.geometry.projectionNeedsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
       this.canvas.height != this.mount.offsetHeight
     ) {
       this.updateProjection();
     }
-    const graph = this.graphics;
+    const gmatrix = this.geometry;
     // [shader-user mix, tint, unused]
     const mtu = [0, this.props.colors.tint, 0];
     this.regl.clear({
       color: this.props.colors.canvas,
     });
     this.sphere({
-      modelview: graph.view,
-      projection: graph.projection,
-      viewport: graph.viewport,
+      modelview: gmatrix.view,
+      projection: gmatrix.projection,
+      viewport: gmatrix.viewport,
       color: this.props.colors.grid,
     });
     this.monet({
       width: 2,
       color: this.props.colors.lines[2],
       quad: [...mtu, 1.0],
-      model: graph.model,
-      view: graph.view,
-      projection: graph.projection,
+      model: gmatrix.model,
+      view: gmatrix.view,
+      projection: gmatrix.projection,
       resolution: [this.canvas.width, this.canvas.height],
-      viewport: graph.viewport,
+      viewport: gmatrix.viewport,
       points: this.rings.points,
       segments: this.rings.count,
     });
-    let o = [];
-    let layers = this.overlay.getDrawables(graph.fov);
+    const layers = this.overlay.getDrawables(gmatrix.fov);
     let message = "linewidths: ";
+    let o = [];
     layers.forEach((overlay) => {
       if (overlay.opacity > 0.05) {
         o.push({
           width: overlay.linewidth,
           color: overlay.color,
           quad: [...mtu, overlay.opacity],
-          view: graph.view,
-          projection: graph.projection,
+          view: gmatrix.view,
+          projection: gmatrix.projection,
           resolution: [this.canvas.width, this.canvas.height],
-          viewport: graph.viewport,
+          viewport: gmatrix.viewport,
           points: overlay.polygon.points,
           segments: overlay.polygon.count,
         });
@@ -135,8 +135,8 @@ class Product extends GLView {
     let text = this.overlay.getText();
     if (text) {
       this.gogh({
-        projection: graph.viewprojection,
-        viewport: graph.viewport,
+        projection: gmatrix.viewprojection,
+        viewport: gmatrix.viewport,
         scale: 1.0,
         ...text,
       });
@@ -146,7 +146,7 @@ class Product extends GLView {
   }
 
   fitToData() {
-    const graph = this.graphics;
+    const graph = this.geometry;
     graph.fov = 200.0 / this.constants.radius;
     graph.satCoordinate[0] = common.deg2rad(this.constants.origin.longitude);
     graph.satCoordinate[1] = common.deg2rad(this.constants.origin.latitude);

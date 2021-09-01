@@ -1,11 +1,36 @@
 import { Polygon } from "./polygon";
-import { TextMap3D } from "./text-map-3d";
-import { clamp } from "./common";
+import { TextEngine } from "./text-engine";
+import { clamp, deg2rad } from "./common";
+import { vec3 } from "gl-matrix";
+
+function coord2point(lon, lat) {
+  const r = 6358.0;
+  const rlon = deg2rad(lon);
+  const rlat = deg2rad(lat);
+  const clat = Math.cos(rlat);
+  const slat = Math.sin(rlat);
+  const clon = Math.cos(rlon);
+  const slon = Math.sin(rlon);
+  return [r * clat * slon, r * slat, r * clat * clon];
+}
+
+function polar2point(e, a, r, model) {
+  const re = deg2rad(e);
+  const ra = deg2rad(a);
+  const ce = Math.cos(re);
+  const se = Math.sin(re);
+  const ca = Math.cos(ra);
+  const sa = Math.sin(ra);
+  const p = [r * ce * sa, r * ce * ca, r * se];
+  const q = vec3.transformMat4([], p, model);
+  return q;
+}
 
 class Overlay {
-  constructor(regl, colors) {
+  constructor(regl, colors, geometry) {
     this.regl = regl;
     this.colors = colors;
+    this.geometry = geometry;
     this.layers = [
       {
         polygon: new Polygon(this.regl, "/static/blob/countries-50m.json"),
@@ -32,7 +57,7 @@ class Overlay {
         weight: 0.4,
       },
     ];
-    this.textEngine = new TextMap3D(this.regl, true);
+    this.textEngine = new TextEngine(this.regl, true);
   }
 
   read() {
@@ -41,26 +66,35 @@ class Overlay {
         layer.polygon.update();
       }, k * 500);
     });
+    // Points from (lat, lon) pairs
     let labels = [
       {
         text: "Label-1",
-        coord: { lon: 0, lat: 0 },
-        align: { u: 0, v: 0 },
+        point: coord2point(-90, 20),
         color: "blue",
       },
       {
         text: "Label-2",
-        coord: { lon: -10, lat: 10 },
-        align: { u: 0, v: 0 },
+        point: coord2point(-100, 30),
         color: "red",
       },
       {
         text: "Label-3",
-        coord: { lon: -20, lat: 20 },
-        align: { u: 0, v: 0 },
+        point: coord2point(-110, 40),
         color: this.colors.label.face,
       },
     ];
+    // Points radar-centric polar coordinate
+    labels.push({
+      text: "Origin",
+      point: polar2point(0, 0, 0, this.geometry.model),
+      color: "black",
+    });
+    labels.push({
+      text: "250 km",
+      point: polar2point(0.5, 45, 250, this.geometry.model),
+      color: "blue",
+    });
     this.textEngine.update(labels).then((texture) => (this.texture = texture));
   }
 
