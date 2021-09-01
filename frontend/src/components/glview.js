@@ -11,7 +11,6 @@ import { mat4, vec3, quat } from "gl-matrix";
 
 import * as common from "./common";
 import * as artists from "./artists";
-import * as instanced from "./instanced";
 import { Gesture } from "./gesture";
 import { Rings } from "./rings";
 
@@ -95,8 +94,8 @@ class GLView extends Component {
       message: "graphics",
     };
     // Our artists
-    this.picaso = instanced.simplifiedInstancedLines(this.regl);
-    this.monet = instanced.instancedLines(this.regl, 0);
+    this.picaso = artists.simplifiedInstancedLines(this.regl);
+    this.monet = artists.instancedLines(this.regl, 0);
     this.gogh = artists.sprite3(this.regl);
     this.basic3 = artists.basic3(this.regl);
     this.sphere = artists.sphere(this.regl);

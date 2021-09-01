@@ -5,6 +5,8 @@
 //  Created by Boonleng Cheong
 //
 
+import { roundCapJoinGeometry } from "./instanced";
+
 //  A simple 2D artist with basic shaders
 export function basic(regl) {
   return regl({
@@ -326,5 +328,208 @@ export function sprite3(regl) {
         dst: "one minus src alpha",
       },
     },
+  });
+}
+
+//
+// modified from interleavedStripRoundCapJoin3D()
+// Each segment is indepedent. The end point of the previous segment is not reused.
+// Why? This method is meant for a single draw call to draw many line loops, reusing
+// the previous end point is not appropriate. The trade-off is, of course, more memory
+// usage but there is a lot more memory than compute here.
+//
+export function instancedLines(regl, resolution) {
+  const roundCapJoin = roundCapJoinGeometry(regl, resolution);
+  return regl({
+    vert: `
+      precision highp float;
+      attribute vec3 position;
+      attribute vec3 pointA, pointB;
+      uniform float width;
+      uniform vec2 resolution;
+      uniform mat4 model, view, projection;
+      uniform vec4 color;
+      uniform vec4 quad;
+      varying vec4 normal;
+      varying vec4 adjustedColor;
+
+      void main() {
+        vec4 modelPointA = model * vec4(pointA, 1.0);
+        vec4 modelPointB = model * vec4(pointB, 1.0);
+        vec4 clip0 = projection * view * modelPointA;
+        vec4 clip1 = projection * view * modelPointB;
+        vec2 screen0 = resolution * (0.5 * clip0.xy/clip0.w + 0.5);
+        vec2 screen1 = resolution * (0.5 * clip1.xy/clip1.w + 0.5);
+        vec2 xBasis = normalize(screen1 - screen0);
+        vec2 yBasis = vec2(-xBasis.y, xBasis.x);
+        vec2 pt0 = screen0 + width * (position.x * xBasis + position.y * yBasis);
+        vec2 pt1 = screen1 + width * (position.x * xBasis + position.y * yBasis);
+        vec2 pt = mix(pt0, pt1, position.z);
+        vec4 clip = mix(clip0, clip1, position.z);
+        gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
+        normal.xyz = normalize(mat3(view) * modelPointA.xyz);
+        normal.w = clamp(dot(vec3(0.0, 0.0, 1.3), normal.xyz), 0.05, 1.0) * quad.a;
+        normal.xyz *= quad.y;
+        adjustedColor = color;
+        adjustedColor.a *= normal.w;
+      }`,
+
+    frag: `
+      precision highp float;
+      uniform vec4 quad;
+      varying vec4 normal;
+      varying vec4 adjustedColor;
+      void main() {
+        if (normal.w < 0.05)
+          discard;
+        vec4 computedColor = vec4(normal.xzy * normal.w, normal.w);
+        gl_FragColor = mix(computedColor, adjustedColor, quad.x);
+      }`,
+
+    attributes: {
+      position: {
+        buffer: roundCapJoin.buffer,
+        divisor: 0,
+        stride: Float32Array.BYTES_PER_ELEMENT * 3,
+      },
+      pointA: {
+        buffer: regl.prop("points"),
+        divisor: 1,
+        offset: Float32Array.BYTES_PER_ELEMENT * 0,
+        stride: Float32Array.BYTES_PER_ELEMENT * 6,
+      },
+      pointB: {
+        buffer: regl.prop("points"),
+        divisor: 1,
+        offset: Float32Array.BYTES_PER_ELEMENT * 3,
+        stride: Float32Array.BYTES_PER_ELEMENT * 6,
+      },
+    },
+
+    uniforms: {
+      width: regl.prop("width"),
+      color: regl.prop("color"),
+      quad: regl.prop("quad"),
+      model: regl.prop("model"),
+      view: regl.prop("view"),
+      projection: regl.prop("projection"),
+      resolution: regl.prop("resolution"),
+    },
+
+    depth: {
+      enable: false,
+    },
+
+    blend: {
+      enable: true,
+      func: {
+        src: "src alpha",
+        dst: "one minus src alpha",
+      },
+    },
+
+    count: roundCapJoin.count,
+    instances: regl.prop("segments"),
+    viewport: regl.prop("viewport"),
+  });
+}
+
+//
+// modified from interleavedStripRoundCapJoin3D() for drawing map polygons
+// where model matrix is always an identity matrix and, therefore, it's omitted
+//
+export function simplifiedInstancedLines(regl) {
+  const roundCapJoin = roundCapJoinGeometry(regl, 4);
+  return regl({
+    vert: `
+      precision highp float;
+      attribute vec3 position;
+      attribute vec3 pointA, pointB;
+      uniform float width;
+      uniform vec2 resolution;
+      uniform mat4 view, projection;
+      uniform vec4 color;
+      uniform vec4 quad;
+      varying vec4 normal;
+      varying vec4 adjustedColor;
+
+      void main() {
+        vec4 modelPointA = vec4(pointA, 1.0);
+        vec4 modelPointB = vec4(pointB, 1.0);
+        mat4 mvp = projection * view;
+        vec4 clip0 = mvp * modelPointA;
+        vec4 clip1 = mvp * modelPointB;
+        vec2 screen0 = resolution * (0.5 * clip0.xy/clip0.w + 0.5);
+        vec2 screen1 = resolution * (0.5 * clip1.xy/clip1.w + 0.5);
+        vec2 xBasis = normalize(screen1 - screen0);
+        vec2 yBasis = vec2(-xBasis.y, xBasis.x);
+        vec2 pt0 = screen0 + width * (position.x * xBasis + position.y * yBasis);
+        vec2 pt1 = screen1 + width * (position.x * xBasis + position.y * yBasis);
+        vec2 pt = mix(pt0, pt1, position.z);
+        vec4 clip = mix(clip0, clip1, position.z);
+        gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
+        normal.xyz = normalize(mat3(view) * pointA);
+        normal.w = clamp(dot(vec3(0.0, 0.0, 1.3), normal.xyz), 0.05, 1.0) * quad.a;
+        normal.xyz *= quad.y;
+        adjustedColor = color;
+        adjustedColor.a *= normal.w;
+      }`,
+
+    frag: `
+      precision highp float;
+      uniform vec4 quad;
+      varying vec4 normal;
+      varying vec4 adjustedColor;
+      void main() {
+        if (normal.w < 0.1)
+          discard;
+        vec4 computedColor = vec4(normal.xzy * normal.w, normal.w);
+        gl_FragColor = mix(computedColor, adjustedColor, quad.x);
+      }`,
+
+    attributes: {
+      position: {
+        buffer: roundCapJoin.buffer,
+        divisor: 0,
+        stride: Float32Array.BYTES_PER_ELEMENT * 3,
+      },
+      pointA: {
+        buffer: regl.prop("points"),
+        divisor: 1,
+        offset: Float32Array.BYTES_PER_ELEMENT * 0,
+        stride: Float32Array.BYTES_PER_ELEMENT * 6,
+      },
+      pointB: {
+        buffer: regl.prop("points"),
+        divisor: 1,
+        offset: Float32Array.BYTES_PER_ELEMENT * 3,
+        stride: Float32Array.BYTES_PER_ELEMENT * 6,
+      },
+    },
+
+    uniforms: {
+      width: regl.prop("width"),
+      color: regl.prop("color"),
+      quad: regl.prop("quad"),
+      view: regl.prop("view"),
+      projection: regl.prop("projection"),
+      resolution: regl.prop("resolution"),
+    },
+
+    depth: {
+      enable: true,
+    },
+
+    blend: {
+      enable: true,
+      func: {
+        src: "src alpha",
+        dst: "one minus src alpha",
+      },
+    },
+
+    count: roundCapJoin.count,
+    instances: regl.prop("segments"),
+    viewport: regl.prop("viewport"),
   });
 }
