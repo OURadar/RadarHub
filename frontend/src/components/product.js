@@ -20,7 +20,7 @@ class Product extends GLView {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
     this.offset = Date.now();
-    this.state = { ...this.state, spin: true };
+    this.state = { ...this.state, spin: false };
     window.addEventListener("keyup", (e) => {
       if (e.key == "s") {
         this.toggleSpin();
@@ -136,6 +136,7 @@ class Product extends GLView {
     if (text) {
       this.gogh({
         projection: gmatrix.viewprojection,
+        resolution: [this.canvas.width, this.canvas.height],
         viewport: gmatrix.viewport,
         scale: 1.0,
         ...text,

@@ -115,8 +115,8 @@ export function colorDict(theme) {
       label: {
         face: "#000000",
         stroke: "#ffffff",
-        shadow: "#000000",
-        blur: "3px",
+        shadow: "#ffffff",
+        blur: 3,
       },
     },
     dark: {
@@ -144,7 +144,7 @@ export function colorDict(theme) {
         face: "#ffffff",
         stroke: "#000000",
         shadow: "#000000",
-        blur: "3px",
+        blur: 3,
       },
     },
     vibrant: {
@@ -172,7 +172,7 @@ export function colorDict(theme) {
         face: "#ffffff",
         stroke: "#000000",
         shadow: "#000000",
-        blur: "3px",
+        blur: 3,
       },
     },
     sat: {

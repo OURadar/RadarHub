@@ -96,7 +96,7 @@ class GLView extends Component {
     // Our artists
     this.picaso = artists.simplifiedInstancedLines(this.regl);
     this.monet = artists.instancedLines(this.regl, 0);
-    this.gogh = artists.sprite3(this.regl);
+    this.gogh = artists.instancedPatches(this.regl);
     this.basic3 = artists.basic3(this.regl);
     this.sphere = artists.sphere(this.regl);
     // Bind some methods

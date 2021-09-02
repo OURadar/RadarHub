@@ -57,7 +57,7 @@ class Overlay {
         weight: 0.4,
       },
     ];
-    this.textEngine = new TextEngine(this.regl, true);
+    this.textEngine = new TextEngine(this.regl);
   }
 
   read() {
@@ -71,29 +71,34 @@ class Overlay {
       {
         text: "LatLon-1",
         point: coord2point(-90, 20),
-        color: "blue",
+        color: this.colors.label.face,
+        stroke: this.colors.label.stroke,
       },
       {
         text: "LatLon-2",
         point: coord2point(-100, 30),
-        color: "red",
+        color: this.colors.label.face,
+        stroke: this.colors.label.stroke,
       },
       {
         text: "LatLon-3",
         point: coord2point(-110, 40),
         color: this.colors.label.face,
+        stroke: this.colors.label.stroke,
       },
     ];
     // Points radar-centric polar coordinate
     labels.push({
       text: "Origin",
       point: polar2point(0, 0, 0, this.geometry.model),
-      color: "black",
+      color: this.colors.label.face,
+      stroke: this.colors.label.stroke,
     });
     labels.push({
       text: "R-250 km",
       point: polar2point(0.5, 45, 250, this.geometry.model),
-      color: "blue",
+      color: this.colors.label.face,
+      stroke: this.colors.label.stroke,
     });
     this.textEngine.update(labels).then((texture) => (this.texture = texture));
   }

@@ -288,7 +288,6 @@ export function sprite3(regl) {
       varying vec2 uv;
       varying vec2 wh;
       varying vec2 mn;
-
       void main()	{
           vec2 q = gl_PointCoord;
           vec2 p = (uv + q * size - 0.5 * (size - wh)) / bound;
@@ -530,6 +529,91 @@ export function simplifiedInstancedLines(regl) {
 
     count: roundCapJoin.count,
     instances: regl.prop("segments"),
+    viewport: regl.prop("viewport"),
+  });
+}
+
+// Rectangular patch instancing
+export function instancedPatches(regl) {
+  const buffer = regl.buffer([
+    [-0.5, -0.5],
+    [+0.5, -0.5],
+    [+0.5, +0.5],
+    [-0.5, -0.5],
+    [+0.5, +0.5],
+    [-0.5, +0.5],
+  ]);
+  return regl({
+    vert: `
+      precision highp float;
+      uniform mat4 projection;
+      uniform vec2 resolution;
+      uniform vec2 bound;
+      attribute vec2 position;
+      attribute vec3 point;
+      attribute vec2 origin;
+      attribute vec2 spread;
+      varying vec2 uv;
+      vec4 modelPoint;
+      vec2 screenPoint;
+      void main() {
+        uv = position + 0.5;
+        uv = (uv * spread + origin) / bound;
+        modelPoint = projection * vec4(point, 1.0);
+        screenPoint = resolution * (0.5 * modelPoint.xy / modelPoint.w + 0.5);
+        screenPoint += position * spread;
+        gl_Position = vec4(modelPoint.w * (2.0 * screenPoint / resolution - 1.0), modelPoint.zw);
+      }`,
+
+    frag: `
+      precision highp float;
+      uniform sampler2D texture;
+      uniform vec2 bound;
+      varying vec2 uv;
+      void main() {
+        gl_FragColor = texture2D(texture, uv);
+      }`,
+
+    attributes: {
+      position: {
+        buffer: buffer,
+        divisor: 0,
+      },
+      point: {
+        buffer: regl.prop("points"),
+        divisor: 1,
+      },
+      origin: {
+        buffer: regl.prop("origins"),
+        divisor: 1,
+      },
+      spread: {
+        buffer: regl.prop("spreads"),
+        divisor: 1,
+      },
+    },
+
+    uniforms: {
+      projection: regl.prop("projection"),
+      resolution: regl.prop("resolution"),
+      texture: regl.prop("texture"),
+      bound: regl.prop("bound"),
+    },
+
+    depth: {
+      enable: false,
+    },
+
+    blend: {
+      enable: true,
+      func: {
+        src: "src alpha",
+        dst: "one minus src alpha",
+      },
+    },
+
+    count: 6,
+    instances: regl.prop("count"),
     viewport: regl.prop("viewport"),
   });
 }

@@ -34,11 +34,14 @@ class TextEngine {
     this.regl = regl;
     this.scale = 1.0;
     this.debug = debug;
-    console.log(this.scale, this.debug);
     this.canvas = document.createElement("canvas");
+    this.canvas.width = 2048 * this.scale;
+    this.canvas.height = 2048 * this.scale;
     this.context = this.canvas.getContext("2d");
+    this.context.translate(0, this.canvas.height);
+    this.context.scale(1, -1);
     this.constants = {
-      padding: 2,
+      padding: 4,
     };
     this.busy = false;
     this.fontLoaded = false;
@@ -81,8 +84,6 @@ class TextEngine {
     const context = this.context;
     const p = this.constants.padding;
     this.busy = true;
-    this.canvas.width = 512 * this.scale;
-    this.canvas.height = 128 * this.scale;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     let f = 0;
     let u = 0.5;
@@ -104,27 +105,30 @@ class TextEngine {
       // Move to the next row if we nearing the end of the texture
       if (u + ww > this.canvas.width) {
         u = 0.5;
-        v += Math.ceil(f + 2 * p);
+        v += Math.ceil(f + p + 1);
       }
       origins.push(u, v);
       points.push(label.point);
       spreads.push(ww / this.scale, hh / this.scale);
       if (this.debug) {
+        context.lineWidth = 1;
         context.strokeStyle = "skyblue";
-        context.strokeRect(u + p, v + p, w, h);
+        context.strokeRect(u + p, this.canvas.height - v - p - h, w, h);
         context.strokeStyle = "orange";
-        context.strokeRect(u, v, ww, hh);
+        context.strokeRect(u, this.canvas.height - v - hh, ww, hh);
       }
+      const o = this.hasDetails ? measure.actualBoundingBoxDescent : 0;
+      const x = u + p;
+      const y = this.canvas.height - v - p - o;
+      context.lineWidth = 4.5;
+      context.strokeStyle = label?.stroke || "#000000";
+      context.strokeText(label.text, x, y);
       context.fillStyle = label?.color || "#888888";
-      context.fillText(
-        label.text,
-        u + p,
-        v + p + (this.hasDetails ? measure.actualBoundingBoxAscent : h)
-      );
+      context.fillText(label.text, x, y);
       u += ww + 1;
-      //console.log(label, context.font);
+      // console.log(label.text, measure.actualBoundingBoxDescent);
     });
-    console.log(points, origins);
+    // console.log(points, origins);
     return {
       bound: [this.canvas.width, this.canvas.height],
       texture: this.regl.texture({
