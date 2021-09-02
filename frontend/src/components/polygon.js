@@ -1,5 +1,5 @@
 import { vec3 } from "gl-matrix";
-import { points } from "./earth-grid";
+import { deg2rad } from "./common";
 
 //
 // regl - the shared regl object attached to a canvas
@@ -81,8 +81,10 @@ class Polygon {
     const name = this.file.includes("@")
       ? this.file
       : this.file.split("/").pop();
+    const cString = this.count.toLocaleString();
+    const xString = x.length.toLocaleString();
     console.log(
-      `Polygon: %c${name} %c${this.count.toLocaleString()} lines %c(${x.length.toLocaleString()} floats = ${(
+      `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${(
         x.length * 4
       ).toLocaleString()} bytes)`,
       "font-weight: bold",
@@ -92,11 +94,12 @@ class Polygon {
   }
 
   async update() {
-    if (this.busy) {
-      return;
+    if (this.busy) return;
+    if (this.ready) {
+      console.log("Polygon is ready");
     }
     if (window.requestIdleCallback) {
-      console.log("low priotity ...");
+      console.log("low priority ...");
       window.requestIdleCallback(
         () => {
           this.read();
@@ -132,11 +135,11 @@ class Polygon {
     arcs.forEach((arc) => {
       let l = [];
       arc.forEach((coord) => {
-        let lon = (coord[0] / 180.0) * Math.PI;
-        let lat = (coord[1] / 180.0) * Math.PI;
-        var x = this.radius * Math.cos(lat) * Math.sin(lon);
-        var y = this.radius * Math.sin(lat);
-        var z = this.radius * Math.cos(lat) * Math.cos(lon);
+        const lon = deg2rad(coord[0]);
+        const lat = deg2rad(coord[1]);
+        const x = this.radius * Math.cos(lat) * Math.sin(lon);
+        const y = this.radius * Math.sin(lat);
+        const z = this.radius * Math.cos(lat) * Math.cos(lon);
         l.push([x, y, z]);
       });
       ll.push(l);

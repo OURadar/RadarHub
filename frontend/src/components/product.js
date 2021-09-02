@@ -20,7 +20,11 @@ class Product extends GLView {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
     this.offset = Date.now();
-    this.state = { ...this.state, spin: false };
+    this.state = {
+      ...this.state,
+      spin: false,
+      labelFaceColor: props.colors.label.face,
+    };
     window.addEventListener("keyup", (e) => {
       if (e.key == "s") {
         this.toggleSpin();
@@ -60,12 +64,12 @@ class Product extends GLView {
 
   componentDidMount() {
     super.componentDidMount();
-    this.overlay.read();
+    this.overlay.updatePolygons(this.props.colors);
+    this.overlay.updateLabels(this.props.colors);
     if (this.props.profileGL) {
       const createStatsWidget = require("regl-stats-widget");
       const drawCalls = [
         [this.gogh, "gogh"],
-        [this.monet, "monet"],
         [this.picaso, "picaso"],
         [this.sphere, "sphere"],
       ];
@@ -81,6 +85,10 @@ class Product extends GLView {
       this.canvas.height != this.mount.offsetHeight
     ) {
       this.updateProjection();
+    }
+    if (this.labelFaceColor != this.props.colors.label.face) {
+      this.labelFaceColor = this.props.colors.label.face;
+      this.overlay.updateLabels(this.props.colors);
     }
     const gmatrix = this.geometry;
     // [shader-user mix, tint, unused]

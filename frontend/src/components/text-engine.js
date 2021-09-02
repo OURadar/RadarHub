@@ -35,8 +35,8 @@ class TextEngine {
     this.scale = 1.5;
     this.debug = debug;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 2048 * this.scale;
-    this.canvas.height = 2048 * this.scale;
+    this.canvas.width = 2048;
+    this.canvas.height = 2048;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
@@ -129,7 +129,7 @@ class TextEngine {
       // console.log(label.text, measure.actualBoundingBoxDescent);
     });
     // console.log(points, origins);
-    return {
+    const result = {
       bound: [this.canvas.width, this.canvas.height],
       texture: this.regl.texture({
         data: this.canvas,
@@ -137,11 +137,25 @@ class TextEngine {
         mag: "linear",
       }),
       color: this.debug ? [0, 0, 1, 0.3] : [0, 0, 0, 0],
-      points: points,
-      origins: origins,
-      spreads: spreads,
+      points: this.regl.buffer({
+        usage: "static",
+        type: "float",
+        data: points,
+      }),
+      origins: this.regl.buffer({
+        usage: "static",
+        type: "float",
+        data: origins,
+      }),
+      spreads: this.regl.buffer({
+        usage: "static",
+        type: "float",
+        data: spreads,
+      }),
       count: points.length,
     };
+    this.busy = false;
+    return result;
   }
 }
 

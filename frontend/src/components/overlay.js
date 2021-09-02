@@ -42,14 +42,29 @@ class Overlay {
       },
     ];
     this.textEngine = new TextEngine(this.regl);
+    this.updatingLabels = false;
+
+    this.updatePolygons = this.updatePolygons.bind(this);
+    this.updateLabels = this.updateLabels.bind(this);
   }
 
-  read() {
+  updatePolygons(colors) {
+    this.colors = colors;
     this.layers.forEach((layer, k) => {
       setTimeout(() => {
         layer.polygon.update();
       }, k * 500);
     });
+    // Go through the layers and update the color from ${colors}
+    // ...
+  }
+
+  updateLabels(colors) {
+    if (this.updatingLabels) {
+      return;
+    }
+    this.colors = colors;
+    this.updatingLabels = true;
     // Points from (lat, lon) pairs
     let labels = [
       {
@@ -87,10 +102,13 @@ class Overlay {
     labels.push({
       text: "R-250 km",
       point: polar2point(0.5, -135, 250, this.geometry.model),
-      color: "#66eeff",
+      color: this.colors.label.face2,
       stroke: this.colors.label.stroke,
     });
-    this.textEngine.update(labels).then((texture) => (this.texture = texture));
+    this.textEngine.update(labels).then((texture) => {
+      this.texture = texture;
+      this.updatingLabels = false;
+    });
   }
 
   getDrawables(fov) {

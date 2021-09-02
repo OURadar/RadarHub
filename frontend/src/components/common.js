@@ -116,6 +116,7 @@ export function colorDict(theme) {
       tint: 0.7,
       label: {
         face: "#000000",
+        face2: "#227788",
         stroke: "#ffffff",
         shadow: "#ffffff",
         blur: 3,
@@ -144,6 +145,7 @@ export function colorDict(theme) {
       tint: 1.0,
       label: {
         face: "#ffffff",
+        face2: "#66eeff",
         stroke: "#000000",
         shadow: "#000000",
         blur: 3,
