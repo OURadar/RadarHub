@@ -434,7 +434,7 @@ export function instancedLines(regl, resolution) {
 }
 
 //
-// modified from interleavedStripRoundCapJoin3D() for drawing map polygons
+// modified from interleavedStripRoundCapJoin3D() for drawing map polygon lines
 // where model matrix is always an identity matrix and, therefore, it's omitted
 //
 export function simplifiedInstancedLines(regl) {
@@ -453,20 +453,17 @@ export function simplifiedInstancedLines(regl) {
       varying vec4 adjustedColor;
 
       void main() {
-        vec4 modelPointA = vec4(pointA, 1.0);
-        vec4 modelPointB = vec4(pointB, 1.0);
         mat4 mvp = projection * view;
-        vec4 clip0 = mvp * modelPointA;
-        vec4 clip1 = mvp * modelPointB;
-        vec2 screen0 = resolution * (0.5 * clip0.xy / clip0.w + 0.5);
-        vec2 screen1 = resolution * (0.5 * clip1.xy / clip1.w + 0.5);
-        vec2 xBasis = normalize(screen1 - screen0);
+        vec4 clip0 = mvp * vec4(pointA, 1.0);
+        vec4 clip1 = mvp * vec4(pointB, 1.0);
+        vec2 xBasis = normalize(clip1.xy - clip0.xy);
         vec2 yBasis = vec2(-xBasis.y, xBasis.x);
-        vec2 pt0 = screen0 + width * (position.x * xBasis + position.y * yBasis);
-        vec2 pt1 = screen1 + width * (position.x * xBasis + position.y * yBasis);
+        vec2 anchor = (position.x * xBasis + position.y * yBasis) * 2.0 * width / resolution;
+        vec2 pt0 = clip0.xy + anchor * clip0.w;
+        vec2 pt1 = clip1.xy + anchor * clip1.w;
         vec2 pt = mix(pt0, pt1, position.z);
         vec4 clip = mix(clip0, clip1, position.z);
-        gl_Position = vec4(clip.w * (2.0 * pt / resolution - 1.0), clip.z, clip.w);
+        gl_Position = vec4(pt.xy, clip.z, clip.w);
         normal.xyz = normalize(mat3(view) * pointA);
         normal.w = clamp(dot(vec3(0.0, 0.0, 1.3), normal.xyz), 0.05, 1.0) * quad.a;
         normal.xyz *= quad.y;
