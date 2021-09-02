@@ -7,6 +7,8 @@
 //  A collection of common functions
 //
 
+import { vec3 } from "gl-matrix";
+
 export function clamp(x, lo, hi) {
   return Math.min(Math.max(x, lo), hi);
 }
@@ -308,3 +310,26 @@ var checkTimerPerformance = function () {
 };
 
 export const getTime = checkTimerPerformance();
+
+export function coord2point(lon, lat) {
+  const r = 6358.0;
+  const rlon = deg2rad(lon);
+  const rlat = deg2rad(lat);
+  const clat = Math.cos(rlat);
+  const slat = Math.sin(rlat);
+  const clon = Math.cos(rlon);
+  const slon = Math.sin(rlon);
+  return [r * clat * slon, r * slat, r * clat * clon];
+}
+
+export function polar2point(e, a, r, model) {
+  const re = deg2rad(e);
+  const ra = deg2rad(a);
+  const ce = Math.cos(re);
+  const se = Math.sin(re);
+  const ca = Math.cos(ra);
+  const sa = Math.sin(ra);
+  const p = [r * ce * sa, r * ce * ca, r * se];
+  const q = vec3.transformMat4([], p, model);
+  return q;
+}

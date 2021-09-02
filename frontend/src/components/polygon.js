@@ -1,7 +1,16 @@
+import { vec3 } from "gl-matrix";
+import { points } from "./earth-grid";
+
+//
+// regl - the shared regl object attached to a canvas
+// file - the file containing the points
+// geometry - geometry dictionary of projection matrices
+//
 class Polygon {
-  constructor(regl, file) {
+  constructor(regl, file, geometry = null) {
     this.regl = regl;
     this.file = file;
+    this.geometry = geometry;
     this.points = [];
     this.count = 0;
     this.busy = false;
@@ -30,7 +39,34 @@ class Polygon {
         .then((source) => this.handleShapefile(source))
         .then((points) => this.makeBuffer(points))
         .catch((error) => console.error(error.stack));
+    } else if (this.file.includes("@")) {
+      this.builtInGeometry()
+        .then((points) => this.makeBuffer(points))
+        .catch((error) => console.error(error.stack));
     }
+  }
+
+  async builtInGeometry() {
+    let x = [];
+    if (this.file.includes("@rings")) {
+      const radii = this.file.split("/").slice(1);
+      const sides = 12;
+      const h = 0.012;
+      // Apply the model matrix to make it radar-centric
+      radii.forEach((radius) => {
+        const r = parseFloat(radius);
+        x.push([0, r, h]);
+        for (let k = 1; k < sides; k++) {
+          const a = (k * 2.0 * Math.PI) / sides;
+          const p = [r * Math.sin(a), r * Math.cos(a), h];
+          x.push(p);
+          x.push(p);
+        }
+        x.push([0, r, h]);
+      });
+      x = x.map((p) => vec3.transformMat4([], p, this.geometry.model));
+    }
+    return x.flat();
   }
 
   makeBuffer(x) {
@@ -42,10 +78,11 @@ class Polygon {
       data: x,
     });
     this.count = x.length / 6;
+    const name = this.file.includes("@")
+      ? this.file
+      : this.file.split("/").pop();
     console.log(
-      `Polygon: %c${this.file
-        .split("/")
-        .pop()} %c${this.count.toLocaleString()} lines %c(${x.length.toLocaleString()} floats = ${(
+      `Polygon: %c${name} %c${this.count.toLocaleString()} lines %c(${x.length.toLocaleString()} floats = ${(
         x.length * 4
       ).toLocaleString()} bytes)`,
       "font-weight: bold",

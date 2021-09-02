@@ -1,30 +1,6 @@
 import { Polygon } from "./polygon";
 import { TextEngine } from "./text-engine";
-import { clamp, deg2rad } from "./common";
-import { vec3 } from "gl-matrix";
-
-function coord2point(lon, lat) {
-  const r = 6358.0;
-  const rlon = deg2rad(lon);
-  const rlat = deg2rad(lat);
-  const clat = Math.cos(rlat);
-  const slat = Math.sin(rlat);
-  const clon = Math.cos(rlon);
-  const slon = Math.sin(rlon);
-  return [r * clat * slon, r * slat, r * clat * clon];
-}
-
-function polar2point(e, a, r, model) {
-  const re = deg2rad(e);
-  const ra = deg2rad(a);
-  const ce = Math.cos(re);
-  const se = Math.sin(re);
-  const ca = Math.cos(ra);
-  const sa = Math.sin(ra);
-  const p = [r * ce * sa, r * ce * ca, r * se];
-  const q = vec3.transformMat4([], p, model);
-  return q;
-}
+import { clamp, coord2point, polar2point } from "./common";
 
 class Overlay {
   constructor(regl, colors, geometry) {
@@ -32,6 +8,14 @@ class Overlay {
     this.colors = colors;
     this.geometry = geometry;
     this.layers = [
+      {
+        polygon: new Polygon(this.regl, "@rings/1/60/120/250", geometry),
+        color: [0.5, 0.5, 0.5, 1.0],
+        limits: [2.0, 2.0],
+        linewidth: 2.0,
+        opacity: 0.0,
+        weight: 1.0,
+      },
       {
         polygon: new Polygon(this.regl, "/static/blob/countries-50m.json"),
         color: [0.5, 0.5, 0.5, 1.0],
@@ -112,15 +96,15 @@ class Overlay {
   getDrawables(fov) {
     let t;
     if (fov < 0.45) {
-      t = [0, 1, 1];
+      t = [1, 0, 1, 1];
     } else {
-      t = [1, 1, 0];
+      t = [1, 1, 1, 0];
     }
     let c = 0;
     this.layers.forEach((o) => (c += o.opacity > 0.05));
     this.layers.forEach((o, i) => {
       if (o.polygon.ready) {
-        if (c < 2 || t[i] == 0) o.targetOpacity = t[i];
+        if (c < 3 || t[i] == 0) o.targetOpacity = t[i];
         o.opacity = clamp(o.opacity + (o.targetOpacity ? 0.05 : -0.05), 0, 1);
         o.linewidth = clamp(o.weight / Math.sqrt(fov), ...o.limits);
       }

@@ -17,78 +17,6 @@ const segmentInstanceGeometry = [
   [0, 0.5],
 ];
 
-function interleavedStrip(regl) {
-  return regl({
-    vert: `
-      precision highp float;
-      attribute vec2 position;
-      attribute vec2 pointA, pointB;
-      uniform float width;
-      uniform mat4 projection;
-  
-      void main() {
-        vec2 xBasis = pointB - pointA;
-        vec2 yBasis = normalize(vec2(-xBasis.y, xBasis.x));
-        vec2 point = pointA + xBasis * position.x + yBasis * width * position.y;
-        gl_Position = projection * vec4(point, 0, 1);
-      }`,
-
-    frag: `
-      precision highp float;
-      uniform vec4 color;
-      void main() {
-        gl_FragColor = color;
-      }`,
-
-    attributes: {
-      position: {
-        buffer: regl.buffer(segmentInstanceGeometry),
-        divisor: 0,
-      },
-      pointA: {
-        buffer: regl.prop("points"),
-        divisor: 1,
-        offset: Float32Array.BYTES_PER_ELEMENT * 0,
-      },
-      pointB: {
-        buffer: regl.prop("points"),
-        divisor: 1,
-        offset: Float32Array.BYTES_PER_ELEMENT * 2,
-      },
-    },
-
-    uniforms: {
-      width: regl.prop("width"),
-      color: regl.prop("color"),
-      projection: regl.prop("projection"),
-    },
-
-    cull: {
-      enable: true,
-      face: "back",
-    },
-
-    depth: {
-      enable: false,
-    },
-
-    count: segmentInstanceGeometry.length,
-    instances: regl.prop("segments"),
-  });
-}
-
-function circleGeometry(regl, resolution) {
-  const position = [[0, 0]];
-  for (let wedge = 0; wedge <= resolution; wedge++) {
-    const theta = (2 * Math.PI * wedge) / resolution;
-    position.push([0.5 * Math.cos(theta), 0.5 * Math.sin(theta)]);
-  }
-  return {
-    buffer: regl.buffer(position),
-    count: position.length,
-  };
-}
-
 function roundCapJoinGeometry(regl, resolution) {
   const instanceRoundRound = [
     [0, -0.5, 0],
@@ -221,7 +149,7 @@ function noninterleavedStripRoundCapJoin(regl, resolution) {
         vec2 pointA = offsetA + width * (position.x * xBasis + position.y * yBasis);
         vec2 pointB = offsetB + width * (position.x * xBasis + position.y * yBasis);
         vec2 point = mix(pointA, pointB, position.z);
-        gl_Position = vec4(2.0 * point/resolution - 1.0, 0, 1);
+        gl_Position = vec4(2.0 * point / resolution - 1.0, 0, 1);
       }`,
 
     frag: `
@@ -294,15 +222,15 @@ function interleavedStripRoundCapJoin3D(regl, resolution) {
       void main() {
         vec4 clip0 = projection * view * model * vec4(pointA, 1.0);
         vec4 clip1 = projection * view * model * vec4(pointB, 1.0);
-        vec2 screen0 = resolution * (0.5 * clip0.xy/clip0.w + 0.5);
-        vec2 screen1 = resolution * (0.5 * clip1.xy/clip1.w + 0.5);
+        vec2 screen0 = resolution * (0.5 * clip0.xy / clip0.w + 0.5);
+        vec2 screen1 = resolution * (0.5 * clip1.xy / clip1.w + 0.5);
         vec2 xBasis = normalize(screen1 - screen0);
         vec2 yBasis = vec2(-xBasis.y, xBasis.x);
         vec2 pt0 = screen0 + width * (position.x * xBasis + position.y * yBasis);
         vec2 pt1 = screen1 + width * (position.x * xBasis + position.y * yBasis);
         vec2 pt = mix(pt0, pt1, position.z);
         vec4 clip = mix(clip0, clip1, position.z);
-        gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
+        gl_Position = vec4(clip.w * (2.0 * pt / resolution - 1.0), clip.z, clip.w);
       }`,
 
     frag: `
@@ -355,7 +283,6 @@ function interleavedStripRoundCapJoin3D(regl, resolution) {
 
 export {
   roundCapJoinGeometry,
-  interleavedStrip,
   interleavedStripRoundCapJoin,
   noninterleavedStripRoundCapJoin,
   interleavedStripRoundCapJoin3D,

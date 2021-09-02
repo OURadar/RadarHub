@@ -94,18 +94,6 @@ class Product extends GLView {
       viewport: gmatrix.viewport,
       color: this.props.colors.grid,
     });
-    this.monet({
-      width: 2,
-      color: this.props.colors.lines[2],
-      quad: [...mtu, 1.0],
-      model: gmatrix.model,
-      view: gmatrix.view,
-      projection: gmatrix.projection,
-      resolution: [this.canvas.width, this.canvas.height],
-      viewport: gmatrix.viewport,
-      points: this.rings.points,
-      segments: this.rings.count,
-    });
     const layers = this.overlay.getDrawables(gmatrix.fov);
     let message = "linewidths: ";
     let o = [];
@@ -125,9 +113,9 @@ class Product extends GLView {
         message += ` ${overlay.linewidth.toFixed(2)}`;
       }
     });
-    this.setState({
-      message: message,
-    });
+    // this.setState({
+    //   message: message,
+    // });
     this.picaso(o);
     if (this.state.spin && !this.gesture.panInProgress) {
       this.updateViewPoint();
