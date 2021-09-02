@@ -441,8 +441,8 @@ export function simplifiedInstancedLines(regl) {
   const roundCapJoin = roundCapJoinGeometry(regl, 4);
   return regl({
     vert: `
-      precision highp float;
-      attribute vec3 position;
+    precision highp float;
+    attribute vec3 position;
       attribute vec3 pointA, pointB;
       uniform float width;
       uniform vec2 resolution;
@@ -549,20 +549,19 @@ export function instancedPatches(regl) {
       uniform mat4 projection;
       uniform vec2 resolution;
       uniform vec2 bound;
+      uniform float scale;
       attribute vec2 position;
       attribute vec3 point;
       attribute vec2 origin;
       attribute vec2 spread;
       varying vec2 uv;
       vec4 modelPoint;
-      vec2 screenPoint;
       void main() {
         uv = position + 0.5;
         uv = (uv * spread + origin) / bound;
         modelPoint = projection * vec4(point, 1.0);
-        screenPoint = resolution * (0.5 * modelPoint.xy / modelPoint.w + 0.5);
-        screenPoint += position * spread;
-        gl_Position = vec4(modelPoint.w * (2.0 * screenPoint / resolution - 1.0), modelPoint.zw);
+        modelPoint.xy += position * spread / scale / resolution * 2.0 * modelPoint.w;
+        gl_Position = modelPoint;
       }`,
 
     frag: `
@@ -598,6 +597,7 @@ export function instancedPatches(regl) {
       resolution: regl.prop("resolution"),
       texture: regl.prop("texture"),
       bound: regl.prop("bound"),
+      scale: regl.prop("scale"),
     },
 
     depth: {

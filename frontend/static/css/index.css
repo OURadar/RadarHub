@@ -327,7 +327,7 @@ h3 {
 }
 
 .fullHeight {
-  height: calc(100vh - 84px - 44px - 1px);
+  height: calc(100vh - 84px - 44px - 32px - 1px);
   position: relative;
 }
 

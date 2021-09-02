@@ -100,6 +100,12 @@ class Overlay {
       color: this.colors.label.face,
       stroke: this.colors.label.stroke,
     });
+    labels.push({
+      text: "R-250 km",
+      point: polar2point(0.5, -135, 250, this.geometry.model),
+      color: "#66eeff",
+      stroke: this.colors.label.stroke,
+    });
     this.textEngine.update(labels).then((texture) => (this.texture = texture));
   }
 

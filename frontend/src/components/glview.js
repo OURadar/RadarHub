@@ -111,7 +111,7 @@ class GLView extends Component {
     this.gesture.handleMagnify = this.magnify;
     this.gesture.handleDoubleTap = this.fitToData;
 
-    this.rings = new Rings(this.regl, [1, 60, 120, 250], 50);
+    this.rings = new Rings(this.regl, [1, 60, 120, 250], 60);
   }
 
   static defaultProps = {

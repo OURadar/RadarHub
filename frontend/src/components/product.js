@@ -138,7 +138,7 @@ class Product extends GLView {
         projection: gmatrix.viewprojection,
         resolution: [this.canvas.width, this.canvas.height],
         viewport: gmatrix.viewport,
-        scale: 1.0,
+        scale: 1.5,
         ...text,
       });
     }

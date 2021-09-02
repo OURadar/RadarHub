@@ -30,9 +30,9 @@
 //
 
 class TextEngine {
-  constructor(regl, debug = false) {
+  constructor(regl, debug = true) {
     this.regl = regl;
-    this.scale = 1.0;
+    this.scale = 1.5;
     this.debug = debug;
     this.canvas = document.createElement("canvas");
     this.canvas.width = 2048 * this.scale;
@@ -41,7 +41,7 @@ class TextEngine {
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
     this.constants = {
-      padding: 4,
+      padding: 4 * this.scale,
     };
     this.busy = false;
     this.fontLoaded = false;
@@ -109,7 +109,7 @@ class TextEngine {
       }
       origins.push(u, v);
       points.push(label.point);
-      spreads.push(ww / this.scale, hh / this.scale);
+      spreads.push(ww, hh);
       if (this.debug) {
         context.lineWidth = 1;
         context.strokeStyle = "skyblue";
@@ -120,7 +120,7 @@ class TextEngine {
       const o = this.hasDetails ? measure.actualBoundingBoxDescent : 0;
       const x = u + p;
       const y = this.canvas.height - v - p - o;
-      context.lineWidth = 4.5;
+      context.lineWidth = 4.5 * this.scale;
       context.strokeStyle = label?.stroke || "#000000";
       context.strokeText(label.text, x, y);
       context.fillStyle = label?.color || "#888888";
