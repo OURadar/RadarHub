@@ -23,6 +23,7 @@ class Product extends GLView {
     this.state = {
       ...this.state,
       spin: false,
+      useEuler: true,
       labelFaceColor: props.colors.label.face,
     };
     window.addEventListener("keyup", (e) => {
@@ -40,26 +41,29 @@ class Product extends GLView {
 
   updateViewPoint() {
     let t = (0.0002 * (this.offset - window.performance.now())) % (2 * Math.PI);
-    this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.cos(t);
-    this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.sin(t);
-    this.geometry.satCoordinate[0] = Math.atan2(
-      this.geometry.satQ,
-      this.geometry.satI
-    );
+    if (this.state.useEuler) {
+      this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.cos(t);
+      this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.sin(t);
+      this.geometry.satCoordinate[0] = Math.atan2(
+        this.geometry.satQ,
+        this.geometry.satI
+      );
+    } else {
+      const q = this.graphics.satQuaternion;
+      const qt = quat.fromEuler(
+        [],
+        -common.rad2deg(this.graphics.satCoordinate[1]),
+        common.rad2deg(t),
+        0.0
+      );
+      const i = quat.slerp([], q, qt, 0.5);
+      this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
+      const a = common.rad2deg(this.geometry.satCoordinate[0]);
+      this.setState({
+        message: `angle = ${a.toFixed(1)}`,
+      });
+    }
     this.geometry.needsUpdate = true;
-    // let q = this.graphics.satQuaternion;
-    // let qt = quat.fromEuler(
-    //   [],
-    //   -common.rad2deg(this.graphics.satCoordinate[1]),
-    //   common.rad2deg(t),
-    //   0.0
-    // );
-    // let i = quat.lerp([], q, qt, 0.5);
-    // this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
-    // let a = common.rad2deg(this.graphics.satCoordinate[0]);
-    // this.setState({
-    //   message: `angle = ${a.toFixed(1)}`,
-    // });
   }
 
   componentDidMount() {
@@ -103,7 +107,7 @@ class Product extends GLView {
       color: this.props.colors.grid,
     });
     const layers = this.overlay.getDrawables(gmatrix.fov);
-    let message = "linewidths: ";
+    // let message = "linewidths: ";
     let o = [];
     layers.forEach((overlay) => {
       if (overlay.opacity > 0.05) {
@@ -118,7 +122,7 @@ class Product extends GLView {
           points: overlay.polygon.points,
           segments: overlay.polygon.count,
         });
-        message += ` ${overlay.linewidth.toFixed(2)}`;
+        //message += ` ${overlay.linewidth.toFixed(2)}`;
       }
     });
     // this.setState({

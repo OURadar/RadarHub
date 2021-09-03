@@ -85,7 +85,7 @@ class Polygon {
     const xString = x.length.toLocaleString();
     console.log(
       `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${(
-        x.length * 4
+        x.length * Float32Array.BYTES_PER_ELEMENT
       ).toLocaleString()} bytes)`,
       "font-weight: bold",
       "font-weight: normal",
@@ -99,7 +99,6 @@ class Polygon {
       console.log("Polygon is ready");
     }
     if (window.requestIdleCallback) {
-      console.log("low priority ...");
       window.requestIdleCallback(
         () => {
           this.read();

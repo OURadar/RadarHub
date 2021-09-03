@@ -434,15 +434,18 @@ export function instancedLines(regl, resolution) {
 }
 
 //
-// modified from interleavedStripRoundCapJoin3D() for drawing map polygon lines
-// where model matrix is always an identity matrix and, therefore, it's omitted
+// Inspired by interleavedStripRoundCapJoin3D() for drawing map polygon lines.
+// Here, model matrix is always an identity matrix and, therefore, it's omitted.
+// Also, instead of computing the instance geometry on the w-1 plane (screen),
+// the basic geometry is instanced on whatever w-plane after view-projection
+// operation.
 //
 export function simplifiedInstancedLines(regl) {
   const roundCapJoin = roundCapJoinGeometry(regl, 4);
   return regl({
     vert: `
-    precision highp float;
-    attribute vec3 position;
+      precision highp float;
+      attribute vec3 position;
       attribute vec3 pointA, pointB;
       uniform float width;
       uniform vec2 resolution;

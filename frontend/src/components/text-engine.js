@@ -154,6 +154,7 @@ class TextEngine {
       }),
       count: points.length,
     };
+    console.log(result);
     this.busy = false;
     return result;
   }
