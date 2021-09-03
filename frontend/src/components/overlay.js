@@ -161,26 +161,45 @@ class Overlay {
     if (!mat4.equals(this.viewprojection, this.geometry.viewprojection)) {
       this.viewprojection = this.geometry.viewprojection;
 
-      const s = 2.0 / this.textEngine.scale;
       let rectangles = [];
-      this.labels.forEach((label, k) => {
+      let s = 2.0 / this.textEngine.scale;
+      for (let k = 0; k < this.texture.raw.points.length; k++) {
         const point = [...this.texture.raw.points[k], 1.0];
         const spread = this.texture.raw.spreads[k];
-        const p = vec4.transformMat4([], point, this.viewprojection);
-        const w = (spread[0] / this.geometry.viewport.width) * s * p[3];
-        const h = (spread[1] / this.geometry.viewport.height) * s * p[3];
-        rectangles.push([p[0], p[1], p[0] + w, p[1] + h]);
-      });
+        const t = vec4.transformMat4([], point, this.viewprojection);
+        const p = [
+          (t[0] / t[3]) * this.geometry.viewport.width,
+          (t[1] / t[3]) * this.geometry.viewport.height,
+        ];
+        const r = [p[0], p[1], p[0] + spread[0] * s, p[1] + spread[1] * s];
+        rectangles.push(r);
+      }
 
       let visibility = [];
       rectangles.forEach((d, k) => {
         if (k == 0) return visibility.push(1);
-        rectangles.slice(0, k).forEach((s, j) => {
-          const o = doOverlap(s, d);
-          if (visibility[j] && o) return visibility.push(0);
-        });
-        return visibility.push(1);
+        let v = 1;
+        for (let j = 0; j < k; j++) {
+          const o = doOverlap(d, rectangles[j]);
+          if (visibility[j] && o) {
+            v = 0;
+            break;
+          }
+        }
+        return visibility.push(v);
       });
+      this.texture.opacity = visibility;
+
+      // const rect1 = rectangles[3],
+      //   rect2 = rectangles[5];
+      // console.log(
+      //   rect1.map((x) => x.toFixed(1)),
+      //   rect2.map((x) => x.toFixed(1)),
+      //   rect1[2] <= rect2[0],
+      //   rect1[0] >= rect2[2],
+      //   rect1[3] <= rect2[1],
+      //   rect1[1] >= rect2[3]
+      // );
     }
     return this.texture;
   }

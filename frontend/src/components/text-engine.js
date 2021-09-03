@@ -51,7 +51,10 @@ class TextEngine {
       undefined !== meas.actualBoundingBoxDescent;
     this.tic = 0;
 
-    if (this.debug) document.getElementById("test").appendChild(this.canvas);
+    if (this.debug) {
+      const o = document.getElementById("test");
+      if (o) o.appendChild(this.canvas);
+    }
 
     let font = new FontFace(
       "LabelFont",

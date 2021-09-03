@@ -134,11 +134,12 @@ class Product extends GLView {
     }
     let text = this.overlay.getText();
     if (text) {
+      // console.log(text.opacity);
       this.gogh({
         projection: gmatrix.viewprojection,
         resolution: [this.canvas.width, this.canvas.height],
         viewport: gmatrix.viewport,
-        scale: 1.5,
+        scale: this.overlay.textEngine.scale,
         ...text,
       });
     }

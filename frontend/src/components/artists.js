@@ -554,7 +554,9 @@ export function instancedPatches(regl) {
       attribute vec3 point;
       attribute vec2 origin;
       attribute vec2 spread;
+      attribute float opacity;
       varying vec2 uv;
+      varying float a;
       vec4 modelPoint;
       void main() {
         uv = position + 0.5;
@@ -562,6 +564,7 @@ export function instancedPatches(regl) {
         modelPoint = projection * vec4(point, 1.0);
         modelPoint.xy += position * spread / scale / resolution * 2.0 * modelPoint.w;
         gl_Position = modelPoint;
+        a = opacity;
       }`,
 
     frag: `
@@ -569,7 +572,11 @@ export function instancedPatches(regl) {
       uniform sampler2D texture;
       uniform vec2 bound;
       varying vec2 uv;
+      varying float a;
       void main() {
+        if (a < 0.05) {
+          discard;
+        }
         gl_FragColor = texture2D(texture, uv);
       }`,
 
@@ -588,6 +595,10 @@ export function instancedPatches(regl) {
       },
       spread: {
         buffer: regl.prop("spreads"),
+        divisor: 1,
+      },
+      opacity: {
+        buffer: regl.prop("opacity"),
         divisor: 1,
       },
     },
