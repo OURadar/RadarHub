@@ -1,19 +1,27 @@
 import { Polygon } from "./polygon";
 import { TextEngine } from "./text-engine";
 import { clamp, coord2point, polar2point } from "./common";
-import { vec3 } from "gl-matrix";
+import { vec4, mat4 } from "gl-matrix";
 
-// Returns true if two rectangles
-// (l1, r1) and (l2, r2) overlap
-function doOverlap(l1, r1, l2, r2) {
-  // If one rectangle is on left side of other
-  if (l1.x >= r2.x || l2.x >= r1.x) {
+function doOverlap(rect1, rect2) {
+  //
+  //                  1[2, 3]
+  //     +---------------+
+  //     |               |   2[2, 3]
+  //     |      +--------+------+
+  //     |      |        |      |
+  //     +------+--------+      |
+  //  1[0, 1]   |               |
+  //            +---------------+
+  //         2[0, 1]
+  //
+  if (
+    rect1[2] <= rect2[0] ||
+    rect1[0] >= rect2[2] ||
+    rect1[3] <= rect2[1] ||
+    rect1[1] >= rect2[3]
+  )
     return false;
-  }
-  // If one rectangle is above other
-  if (r1.y >= l2.y || r2.y >= l1.y) {
-    return false;
-  }
   return true;
 }
 
@@ -22,6 +30,7 @@ class Overlay {
     this.regl = regl;
     this.colors = colors;
     this.geometry = geometry;
+    this.viewprojection = mat4.create();
     this.layers = [
       {
         polygon: new Polygon(this.regl, "@rings/1/60/120/250", geometry),
@@ -146,20 +155,33 @@ class Overlay {
   }
 
   getText() {
-    // Compute visibility, ...
-    // console.log(this.geometry.view);
+    if (this.texture === undefined) {
+      return;
+    }
+    if (!mat4.equals(this.viewprojection, this.geometry.viewprojection)) {
+      this.viewprojection = this.geometry.viewprojection;
 
-    // let upperLeftPoints = [];
-    // let lowerRightPoints = [];
-    this.labels.forEach((label) => {
-      const p = vec3.transformMat4(
-        [],
-        label.point,
-        this.geometry.viewprojection
-      );
-      upperLeftPoint.push(p);
-      //   upperLeftPoints.push(label.point);
-    });
+      const s = 2.0 / this.textEngine.scale;
+      let rectangles = [];
+      this.labels.forEach((label, k) => {
+        const point = [...this.texture.raw.points[k], 1.0];
+        const spread = this.texture.raw.spreads[k];
+        const p = vec4.transformMat4([], point, this.viewprojection);
+        const w = (spread[0] / this.geometry.viewport.width) * s * p[3];
+        const h = (spread[1] / this.geometry.viewport.height) * s * p[3];
+        rectangles.push([p[0], p[1], p[0] + w, p[1] + h]);
+      });
+
+      let visibility = [];
+      rectangles.forEach((d, k) => {
+        if (k == 0) return visibility.push(1);
+        rectangles.slice(0, k).forEach((s, j) => {
+          const o = doOverlap(s, d);
+          if (visibility[j] && o) return visibility.push(0);
+        });
+        return visibility.push(1);
+      });
+    }
     return this.texture;
   }
 }

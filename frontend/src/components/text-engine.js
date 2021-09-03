@@ -40,9 +40,7 @@ class TextEngine {
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
-    this.constants = {
-      padding: 4 * this.scale,
-    };
+    this.padding = 3 * this.scale;
     this.busy = false;
     this.fontLoaded = false;
     this.context.font = "14px LabelFont";
@@ -82,7 +80,7 @@ class TextEngine {
       await this.waitBriefly();
     }
     const context = this.context;
-    const p = this.constants.padding;
+    const p = this.padding;
     this.busy = true;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     let f = 0;
@@ -96,9 +94,11 @@ class TextEngine {
       context.font = `${this.scale * size}px LabelFont`;
       const measure = context.measureText(label.text);
       const w = Math.ceil(measure.width);
-      const h = this.hasDetails
-        ? measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent
-        : Math.ceil(0.8 * size);
+      const h = Math.ceil(
+        this.hasDetails
+          ? measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent
+          : 0.8 * size
+      );
       const ww = w + 2 * p;
       const hh = h + 2 * p;
       f = Math.max(f, h);
@@ -107,9 +107,9 @@ class TextEngine {
         u = 0.5;
         v += Math.ceil(f + p + 1);
       }
-      origins.push(u, v);
       points.push(label.point);
-      spreads.push(ww, hh);
+      origins.push([u, v]);
+      spreads.push([ww, hh]);
       if (this.debug) {
         context.lineWidth = 1;
         context.strokeStyle = "skyblue";
@@ -152,9 +152,13 @@ class TextEngine {
         type: "float",
         data: spreads,
       }),
+      raw: {
+        points: points,
+        origins: origins,
+        spreads: spreads,
+      },
       count: points.length,
     };
-    console.log(result);
     this.busy = false;
     return result;
   }
