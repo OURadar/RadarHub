@@ -1,6 +1,21 @@
 import { Polygon } from "./polygon";
 import { TextEngine } from "./text-engine";
 import { clamp, coord2point, polar2point } from "./common";
+import { vec3 } from "gl-matrix";
+
+// Returns true if two rectangles
+// (l1, r1) and (l2, r2) overlap
+function doOverlap(l1, r1, l2, r2) {
+  // If one rectangle is on left side of other
+  if (l1.x >= r2.x || l2.x >= r1.x) {
+    return false;
+  }
+  // If one rectangle is above other
+  if (r1.y >= l2.y || r2.y >= l1.y) {
+    return false;
+  }
+  return true;
+}
 
 class Overlay {
   constructor(regl, colors, geometry) {
@@ -66,7 +81,7 @@ class Overlay {
     this.colors = colors;
     this.updatingLabels = true;
     // Points from (lat, lon) pairs
-    let labels = [
+    this.labels = [
       {
         text: "LatLon-1",
         point: coord2point(-90, 20),
@@ -87,25 +102,25 @@ class Overlay {
       },
     ];
     // Points radar-centric polar coordinate
-    labels.push({
+    this.labels.push({
       text: "Origin",
       point: polar2point(0, 0, 0, this.geometry.model),
       color: this.colors.label.face,
       stroke: this.colors.label.stroke,
     });
-    labels.push({
+    this.labels.push({
       text: "R-250 km",
       point: polar2point(0.5, 45, 250, this.geometry.model),
       color: this.colors.label.face,
       stroke: this.colors.label.stroke,
     });
-    labels.push({
+    this.labels.push({
       text: "R-250 km",
       point: polar2point(0.5, -135, 250, this.geometry.model),
       color: this.colors.label.face2,
       stroke: this.colors.label.stroke,
     });
-    this.textEngine.update(labels).then((texture) => {
+    this.textEngine.update(this.labels).then((texture) => {
       this.texture = texture;
       this.updatingLabels = false;
     });
@@ -132,6 +147,19 @@ class Overlay {
 
   getText() {
     // Compute visibility, ...
+    // console.log(this.geometry.view);
+
+    // let upperLeftPoints = [];
+    // let lowerRightPoints = [];
+    this.labels.forEach((label) => {
+      const p = vec3.transformMat4(
+        [],
+        label.point,
+        this.geometry.viewprojection
+      );
+      upperLeftPoint.push(p);
+      //   upperLeftPoints.push(label.point);
+    });
     return this.texture;
   }
 }

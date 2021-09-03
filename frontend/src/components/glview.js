@@ -89,7 +89,9 @@ class GLView extends Component {
       satQ: Math.sin(common.deg2rad(origin.longitude)),
       model: model,
       view: mat4.create(),
+      projection: mat4.create(),
       modelview: model,
+      viewprojection: mat4.create(),
       needsUpdate: false,
       message: "graphics",
     };
