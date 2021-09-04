@@ -32,7 +32,7 @@ class GLView extends Component {
         extensions: ["ANGLE_instanced_arrays"],
       });
     }
-    if (props.showStats === true || props.debug === true) {
+    if (props.showStats || props.debug || props.profileGL) {
       this.stats = new Stats();
       this.stats.domElement.className = "canvasStats";
     }

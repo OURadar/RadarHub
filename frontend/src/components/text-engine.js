@@ -170,12 +170,6 @@ class TextEngine {
       7 *
       Float32Array.BYTES_PER_ELEMENT
     ).toLocaleString();
-    console.log(
-      `Text: %c${name} %c${cString} patches %c(${xString} floats = ${mString} bytes)`,
-      "font-weight: bold",
-      "font-weight: normal",
-      "color: blue"
-    );
     const wString = `${buffer.bound[0].toLocaleString()} x ${buffer.bound[0].toLocaleString()}`;
     const vString = (
       buffer.bound[0] *
@@ -184,9 +178,12 @@ class TextEngine {
       Float32Array.BYTES_PER_ELEMENT
     ).toLocaleString();
     console.log(
-      `Text: %c${name} %c${wString} = %c${vString} bytes`,
+      `Text: %c${name} %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
+        `%c / texture (%c${wString} RGBA = ${vString} bytes)`,
       "font-weight: bold",
       "font-weight: normal",
+      "color: blue",
+      "font-weight: normal; color: black",
       "color: blue"
     );
     this.busy = false;

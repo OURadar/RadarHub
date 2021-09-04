@@ -48,11 +48,11 @@ class Overlay {
     ];
     this.colors = colors;
     this.updatingPolygons = 4;
-    const layers = [{}, {}, {}, {}];
+    this.layers = [];
     this.polyEngines.forEach((poly, k) => {
       setTimeout(() => {
         poly.update().then((buffer) => {
-          layers[k] = {
+          this.layers[k] = {
             ...buffer,
             color: [0.5, 0.5, 0.5, 1.0],
             linewidth: 1.0,
@@ -61,9 +61,6 @@ class Overlay {
             weight: weights[k],
           };
           this.updatingPolygons--;
-          if (this.updatingPolygons == 0) {
-            this.layers = layers;
-          }
         });
       }, 300 * k);
     });
@@ -76,34 +73,35 @@ class Overlay {
 
     this.colors = colors;
     this.updatingLabels = true;
-    // Points from (lat, lon) pairs
+    // Points radar-centric polar coordinate
     this.labels = [
       {
-        text: "LatLon-1",
-        point: coord2point(-90, 20),
-        color: this.colors.label.face,
-        stroke: this.colors.label.stroke,
-      },
-      {
-        text: "LatLon-2",
-        point: coord2point(-100, 30),
-        color: this.colors.label.face,
-        stroke: this.colors.label.stroke,
-      },
-      {
-        text: "LatLon-3",
-        point: coord2point(-110, 40),
+        text: "Origin",
+        point: polar2point(0, 0, 0, this.geometry.model),
         color: this.colors.label.face,
         stroke: this.colors.label.stroke,
       },
     ];
-    // Points radar-centric polar coordinate
+    // Points from (lat, lon) pairs
     this.labels.push({
-      text: "Origin",
-      point: polar2point(0, 0, 0, this.geometry.model),
+      text: "LatLon-1",
+      point: coord2point(-90, 20),
       color: this.colors.label.face,
       stroke: this.colors.label.stroke,
     });
+    this.labels.push({
+      text: "LatLon-2",
+      point: coord2point(-100, 30),
+      color: this.colors.label.face,
+      stroke: this.colors.label.stroke,
+    });
+    this.labels.push({
+      text: "LatLon-3",
+      point: coord2point(-110, 40),
+      color: this.colors.label.face,
+      stroke: this.colors.label.stroke,
+    });
+    // More radar-centric points
     this.labels.push({
       text: "R-250 km",
       point: polar2point(0.5, 45, 250, this.geometry.model),
@@ -117,14 +115,16 @@ class Overlay {
       stroke: this.colors.label.stroke,
     });
     // Now we use the text engine
-    this.textEngine.update(this.labels).then((texture) => {
-      this.texture = {
-        ...texture,
-        targetOpacity: Array(texture.count).fill(0),
-        opacity: Array(texture.count).fill(0),
-      };
-      this.updatingLabels = false;
-    });
+    setTimeout(() => {
+      this.textEngine.update(this.labels).then((texture) => {
+        this.texture = {
+          ...texture,
+          targetOpacity: Array(texture.count).fill(0),
+          opacity: Array(texture.count).fill(0),
+        };
+        this.updatingLabels = false;
+      });
+    }, 1000);
   }
 
   getDrawables(fov) {
