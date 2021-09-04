@@ -559,8 +559,7 @@ export function instancedPatches(regl) {
       varying float a;
       vec4 modelPoint;
       void main() {
-        uv = position + 0.5;
-        uv = (uv * spread + origin) / bound;
+        uv = ((position + 0.5) * spread + origin) / bound;
         modelPoint = projection * vec4(point, 1.0);
         modelPoint.xy += position * spread / scale / resolution * 2.0 * modelPoint.w;
         gl_Position = modelPoint;
@@ -577,7 +576,7 @@ export function instancedPatches(regl) {
         if (a < 0.05) {
           discard;
         }
-        gl_FragColor = texture2D(texture, uv);
+        gl_FragColor = vec4(texture2D(texture, uv).rgb, a);
       }`,
 
     attributes: {

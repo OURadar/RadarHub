@@ -53,15 +53,6 @@ class GLView extends Component {
     this.state = {
       tic: 0,
       message: "glView",
-      labelParameters: {
-        labels: [],
-        positions: [],
-        alignments: [],
-        foreground: props.colors.foreground,
-        colors: [],
-        sizes: [],
-        count: 0,
-      },
     };
     // satCoordinate = (lon-rad, lat-rad, alt-km) of satellite
     // satPosition = (x, y, z) of satellite

@@ -22,7 +22,7 @@ class Product extends GLView {
     this.offset = Date.now();
     this.state = {
       ...this.state,
-      spin: false,
+      spin: true,
       useEuler: true,
       labelFaceColor: props.colors.label.face,
     };

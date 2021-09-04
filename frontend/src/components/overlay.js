@@ -130,7 +130,11 @@ class Overlay {
       stroke: this.colors.label.stroke,
     });
     this.textEngine.update(this.labels).then((texture) => {
-      this.texture = texture;
+      this.texture = {
+        ...texture,
+        targetOpacity: Array(texture.count).fill(0),
+        opacity: Array(texture.count).fill(0),
+      };
       this.updatingLabels = false;
     });
   }
@@ -164,7 +168,7 @@ class Overlay {
       let rectangles = [];
       let visibility = [];
       let s = 2.0 / this.textEngine.scale;
-      for (let k = 0; k < this.texture.raw.points.length; k++) {
+      for (let k = 0; k < this.texture.count; k++) {
         const point = [...this.texture.raw.points[k], 1.0];
         const spread = this.texture.raw.spreads[k];
         const t = vec4.transformMat4([], point, this.viewprojection);
@@ -194,8 +198,7 @@ class Overlay {
         return (visibility[k] = v);
       });
 
-      this.texture.opacity = visibility;
-
+      this.texture.targetOpacity = visibility;
       // const rect1 = rectangles[3],
       //   rect2 = rectangles[5];
       // console.log(
@@ -207,6 +210,13 @@ class Overlay {
       //   rect1[1] >= rect2[3]
       // );
     }
+
+    const tex = this.texture;
+    tex.targetOpacity.forEach((t, k) => {
+      tex.opacity[k] = clamp(tex.opacity[k] + (t ? 0.05 : -0.05), 0, 1);
+    });
+    // console.log(tex.opacity);
+
     return this.texture;
   }
 }
