@@ -4,6 +4,9 @@
 //
 //  Created by Boonleng Cheong on 9/1/2021.
 //
+
+import { coord2point, polar2point } from "./common";
+
 //
 //  Initialize as:
 //  obj = TextMap3D(regl)
@@ -73,9 +76,56 @@ class TextEngine {
     });
   }
 
-  async update(text) {
+  getLabels(name, model, colors) {
+    if (name == "@demo") {
+      // Points radar-centric polar coordinate
+      let labels = [
+        {
+          text: "Origin",
+          point: polar2point(0, 0, 0, model),
+          color: colors.label.face,
+          stroke: colors.label.stroke,
+        },
+      ];
+      // Points from (lat, lon) pairs
+      labels.push({
+        text: "LatLon-1",
+        point: coord2point(-90, 20),
+        color: colors.label.face,
+        stroke: colors.label.stroke,
+      });
+      labels.push({
+        text: "LatLon-2",
+        point: coord2point(-100, 30),
+        color: colors.label.face,
+        stroke: colors.label.stroke,
+      });
+      labels.push({
+        text: "LatLon-3",
+        point: coord2point(-110, 40),
+        color: colors.label.face,
+        stroke: colors.label.stroke,
+      });
+      // More radar-centric points
+      labels.push({
+        text: "R-250 km",
+        point: polar2point(0.5, 45, 250, model),
+        color: colors.label.face,
+        stroke: colors.label.stroke,
+      });
+      labels.push({
+        text: "R-250 km",
+        point: polar2point(0.5, -135, 250, model),
+        color: colors.label.face2,
+        stroke: colors.label.stroke,
+      });
+      return labels;
+    }
+  }
+
+  async update(name, model, colors) {
     if (this.busy) return;
-    if (text === undefined) {
+    if (name === undefined) {
       console.log("Input undefined.");
       return;
     }
@@ -92,6 +142,10 @@ class TextEngine {
     let points = [];
     let origins = [];
     let spreads = [];
+    const text = this.getLabels(name, model, colors);
+    if (text == undefined) {
+      console.log(`Failed loading ${name}`);
+    }
     text.forEach((label) => {
       const size = label?.size || 18;
       context.font = `${this.scale * size}px LabelFont`;
@@ -162,7 +216,6 @@ class TextEngine {
       },
       count: points.length,
     };
-    const name = "@builtIn";
     const cString = buffer.count.toLocaleString();
     const xString = (buffer.count * 7).toLocaleString();
     const mString = (

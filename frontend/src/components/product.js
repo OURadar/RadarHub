@@ -26,6 +26,7 @@ class Product extends GLView {
       useEuler: true,
       labelFaceColor: props.colors.label.face,
     };
+    this.labelFaceColor = this.props.colors.label.face;
     window.addEventListener("keyup", (e) => {
       if (e.key == "s") {
         this.toggleSpin();
@@ -68,8 +69,7 @@ class Product extends GLView {
 
   componentDidMount() {
     super.componentDidMount();
-    this.overlay.updatePolygons(this.props.colors);
-    this.overlay.updateLabels(this.props.colors);
+    this.overlay.load(this.props.colors);
     if (this.props.profileGL) {
       const createStatsWidget = require("regl-stats-widget");
       const drawCalls = [
@@ -131,9 +131,6 @@ class Product extends GLView {
       // });
       this.picaso(o);
     }
-    if (this.state.spin && !this.gesture.panInProgress) {
-      this.updateViewPoint();
-    }
     const text = this.overlay.getText();
     if (text) {
       // console.log(text.opacity);
@@ -147,6 +144,9 @@ class Product extends GLView {
     }
     if (this.stats !== undefined) this.stats.update();
     if (this.props.profileGL) this.statsWidget.update(0.01667);
+    if (this.state.spin && !this.gesture.panInProgress) {
+      this.updateViewPoint();
+    }
   }
 
   fitToData() {

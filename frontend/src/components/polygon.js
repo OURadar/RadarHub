@@ -28,31 +28,25 @@ class Polygon {
       return fetch(file)
         .then((text) => text.json())
         .then((dict) => this.handleJSON(dict))
-        .then((points) => {
-          return this.makeBuffer(file, points);
-        })
+        .then((points) => this.makeBuffer(file, points))
         .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
       return require("shapefile")
         .open(file)
         .then((source) => this.handleShapefile(source))
-        .then((points) => {
-          return this.makeBuffer(file, points);
-        })
+        .then((points) => this.makeBuffer(file, points))
         .catch((error) => console.error(error.stack));
     } else if (file.includes("@")) {
       return this.builtInGeometry(file, geometry)
-        .then((points) => {
-          return this.makeBuffer(file, points);
-        })
+        .then((points) => this.makeBuffer(file, points))
         .catch((error) => console.error(error.stack));
     }
   }
 
-  async builtInGeometry(file, geometry) {
+  async builtInGeometry(name, geometry) {
     let x = [];
-    if (file.includes("@rings")) {
-      const radii = file.split("/").slice(1);
+    if (name.includes("@rings")) {
+      const radii = name.split("/").slice(1);
       const sides = 12;
       const h = 0.012;
       // Apply the model matrix to make it radar-centric
@@ -73,7 +67,9 @@ class Polygon {
   }
 
   makeBuffer(file, x) {
+    const name = file.includes("@") ? file : file.split("/").pop();
     const buffer = {
+      name: name,
       points: this.regl.buffer({
         usage: "static",
         type: "float",
@@ -81,12 +77,10 @@ class Polygon {
       }),
       count: x.length / 6,
     };
-    const name = file.includes("@") ? file : file.split("/").pop();
+    const bytes = x.length * Float32Array.BYTES_PER_ELEMENT;
     const cString = buffer.count.toLocaleString();
     const xString = x.length.toLocaleString();
-    const mString = (
-      x.length * Float32Array.BYTES_PER_ELEMENT
-    ).toLocaleString();
+    const mString = bytes.toLocaleString();
     console.log(
       `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${mString} bytes)`,
       "font-weight: bold",
@@ -163,8 +157,8 @@ class Polygon {
     const addpolygon = (polygon) => {
       let p = [];
       polygon.forEach((c) => {
-        var lon = (c[0] / 180.0) * Math.PI;
-        var lat = (c[1] / 180.0) * Math.PI;
+        var lon = deg2rad(c[0]);
+        var lat = deg2rad(c[1]);
         var x = this.radius * Math.cos(lat) * Math.sin(lon);
         var y = this.radius * Math.sin(lat);
         var z = this.radius * Math.cos(lat) * Math.cos(lon);
