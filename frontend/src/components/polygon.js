@@ -14,7 +14,6 @@ class Polygon {
     this.points = [];
     this.count = 0;
     this.busy = false;
-    this.ready = false;
     this.radius = 6357;
     // Binding methods
     this.read = this.read.bind(this);
@@ -28,7 +27,7 @@ class Polygon {
     this.busy = true;
     const ext = this.file.split(".").pop();
     if (ext == "json") {
-      fetch(this.file)
+      return fetch(this.file)
         .then((text) => text.json())
         .then((dict) => this.handleJSON(dict))
         .then((points) => {
@@ -36,7 +35,7 @@ class Polygon {
         })
         .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
-      require("shapefile")
+      return require("shapefile")
         .open(this.file)
         .then((source) => this.handleShapefile(source))
         .then((points) => {
@@ -44,7 +43,7 @@ class Polygon {
         })
         .catch((error) => console.error(error.stack));
     } else if (this.file.includes("@")) {
-      this.builtInGeometry()
+      return this.builtInGeometry()
         .then((points) => {
           return this.makeBuffer(points);
         })
@@ -76,8 +75,6 @@ class Polygon {
   }
 
   makeBuffer(x) {
-    this.busy = false;
-    this.ready = true;
     const buffer = {
       points: this.regl.buffer({
         usage: "static",
@@ -91,35 +88,24 @@ class Polygon {
     const name = this.file.includes("@")
       ? this.file
       : this.file.split("/").pop();
-    const cString = this.count.toLocaleString();
+    const cString = buffer.count.toLocaleString();
     const xString = x.length.toLocaleString();
+    const mString = (
+      x.length * Float32Array.BYTES_PER_ELEMENT
+    ).toLocaleString();
     console.log(
-      `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${(
-        x.length * Float32Array.BYTES_PER_ELEMENT
-      ).toLocaleString()} bytes)`,
+      `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${mString} bytes)`,
       "font-weight: bold",
       "font-weight: normal",
-      "color: cyan"
+      "color: blue"
     );
+    this.busy = false;
     return buffer;
   }
 
   async update() {
     if (this.busy) return;
-    if (this.ready) {
-      console.log("Polygon is ready");
-      return this;
-    }
-    if (window.requestIdleCallback) {
-      window.requestIdleCallback(
-        () => {
-          return this.read();
-        },
-        { timeout: 300 }
-      );
-    } else {
-      return this.read();
-    }
+    return this.read();
   }
 
   handleJSON(data) {

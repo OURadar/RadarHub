@@ -576,7 +576,8 @@ export function instancedPatches(regl) {
         if (a < 0.05) {
           discard;
         }
-        gl_FragColor = vec4(texture2D(texture, uv).rgb, a);
+        gl_FragColor = texture2D(texture, uv);
+        gl_FragColor.a *= a;
       }`,
 
     attributes: {

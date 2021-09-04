@@ -35,8 +35,8 @@ class TextEngine {
     this.scale = 1.5;
     this.debug = debug;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 2048;
-    this.canvas.height = 2048;
+    this.canvas.width = 1024;
+    this.canvas.height = 1024;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
@@ -132,7 +132,7 @@ class TextEngine {
       // console.log(label.text, measure.actualBoundingBoxDescent);
     });
     // console.log(points, origins);
-    const result = {
+    const buffer = {
       bound: [this.canvas.width, this.canvas.height],
       texture: this.regl.texture({
         data: this.canvas,
@@ -162,8 +162,35 @@ class TextEngine {
       },
       count: points.length,
     };
+    const name = "@builtIn";
+    const cString = buffer.count.toLocaleString();
+    const xString = (buffer.count * 7).toLocaleString();
+    const mString = (
+      buffer.count *
+      7 *
+      Float32Array.BYTES_PER_ELEMENT
+    ).toLocaleString();
+    console.log(
+      `Text: %c${name} %c${cString} patches %c(${xString} floats = ${mString} bytes)`,
+      "font-weight: bold",
+      "font-weight: normal",
+      "color: blue"
+    );
+    const wString = `${buffer.bound[0].toLocaleString()} x ${buffer.bound[0].toLocaleString()}`;
+    const vString = (
+      buffer.bound[0] *
+      buffer.bound[1] *
+      4 *
+      Float32Array.BYTES_PER_ELEMENT
+    ).toLocaleString();
+    console.log(
+      `Text: %c${name} %c${wString} = %c${vString} bytes`,
+      "font-weight: bold",
+      "font-weight: normal",
+      "color: blue"
+    );
     this.busy = false;
-    return result;
+    return buffer;
   }
 }
 

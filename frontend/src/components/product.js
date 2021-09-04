@@ -22,7 +22,7 @@ class Product extends GLView {
     this.offset = Date.now();
     this.state = {
       ...this.state,
-      spin: true,
+      spin: false,
       useEuler: true,
       labelFaceColor: props.colors.label.face,
     };
@@ -107,32 +107,34 @@ class Product extends GLView {
       color: this.props.colors.grid,
     });
     const layers = this.overlay.getDrawables(gmatrix.fov);
-    // let message = "linewidths: ";
-    let o = [];
-    layers.forEach((overlay) => {
-      if (overlay.opacity > 0.05) {
-        o.push({
-          width: overlay.linewidth,
-          color: overlay.color,
-          quad: [...mtu, overlay.opacity],
-          view: gmatrix.view,
-          projection: gmatrix.projection,
-          resolution: [this.canvas.width, this.canvas.height],
-          viewport: gmatrix.viewport,
-          points: overlay.polygon.points,
-          segments: overlay.polygon.count,
-        });
-        //message += ` ${overlay.linewidth.toFixed(2)}`;
-      }
-    });
-    // this.setState({
-    //   message: message,
-    // });
-    this.picaso(o);
+    if (layers) {
+      // let message = "linewidths: ";
+      let o = [];
+      layers.forEach((overlay) => {
+        if (overlay.opacity > 0.05) {
+          o.push({
+            width: overlay.linewidth,
+            color: overlay.color,
+            quad: [...mtu, overlay.opacity],
+            view: gmatrix.view,
+            projection: gmatrix.projection,
+            resolution: [gmatrix.viewport.width, gmatrix.viewport.height],
+            viewport: gmatrix.viewport,
+            points: overlay.points,
+            segments: overlay.count,
+          });
+          //message += ` ${overlay.linewidth.toFixed(2)}`;
+        }
+      });
+      // this.setState({
+      //   message: message,
+      // });
+      this.picaso(o);
+    }
     if (this.state.spin && !this.gesture.panInProgress) {
       this.updateViewPoint();
     }
-    let text = this.overlay.getText();
+    const text = this.overlay.getText();
     if (text) {
       // console.log(text.opacity);
       this.gogh({

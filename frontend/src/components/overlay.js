@@ -20,40 +20,15 @@ class Overlay {
     this.colors = colors;
     this.geometry = geometry;
     this.viewprojection = mat4.create();
-    this.layers = [
-      {
-        polygon: new Polygon(this.regl, "@rings/1/60/120/250", geometry),
-        color: [0.5, 0.5, 0.5, 1.0],
-        limits: [2.0, 2.0],
-        linewidth: 2.0,
-        opacity: 0.0,
-        weight: 1.0,
-      },
-      {
-        polygon: new Polygon(this.regl, "/static/blob/countries-50m.json"),
-        color: [0.5, 0.5, 0.5, 1.0],
-        limits: [1.2, 3.0],
-        linewidth: 1.0,
-        opacity: 0.0,
-        weight: 1.7,
-      },
-      {
-        polygon: new Polygon(this.regl, "/static/blob/states-10m.json"),
-        color: [0.5, 0.5, 0.5, 1.0],
-        limits: [1.3, 3.0],
-        linewidth: 1.0,
-        opacity: 0.0,
-        weight: 0.9,
-      },
-      {
-        polygon: new Polygon(this.regl, "/static/blob/counties-10m.json"),
-        color: [0.5, 0.5, 0.5, 1.0],
-        limits: [0.5, 2.0],
-        linewidth: 0.5,
-        opacity: 0.0,
-        weight: 0.4,
-      },
+
+    this.polyEngines = [
+      new Polygon(this.regl, "@rings/1/60/120/250", geometry),
+      new Polygon(this.regl, "/static/blob/countries-50m.json"),
+      new Polygon(this.regl, "/static/blob/states-10m.json"),
+      new Polygon(this.regl, "/static/blob/counties-10m.json"),
     ];
+    this.updatingPolygons = 0;
+
     this.textEngine = new TextEngine(this.regl);
     this.updatingLabels = false;
 
@@ -62,22 +37,43 @@ class Overlay {
   }
 
   updatePolygons(colors) {
+    if (this.updatingPolygons) return;
+
+    const weights = [1.0, 1.7, 0.9, 0.4];
+    const limits = [
+      [1.5, 3.0],
+      [1.3, 3.0],
+      [1.3, 3.0],
+      [0.5, 2.0],
+    ];
     this.colors = colors;
-    this.layers.forEach((layer, k) => {
+    this.updatingPolygons = 4;
+    const layers = [{}, {}, {}, {}];
+    this.polyEngines.forEach((poly, k) => {
       setTimeout(() => {
-        layer.polygon.update().then((buffer) => {
-          console.log("polygon update", buffer);
+        poly.update().then((buffer) => {
+          layers[k] = {
+            ...buffer,
+            color: [0.5, 0.5, 0.5, 1.0],
+            linewidth: 1.0,
+            opacity: 0.0,
+            limits: limits[k],
+            weight: weights[k],
+          };
+          this.updatingPolygons--;
+          if (this.updatingPolygons == 0) {
+            this.layers = layers;
+          }
         });
-      }, k * 300);
+      }, 300 * k);
     });
     // Go through the layers and update the color from ${colors}
     // ...
   }
 
   updateLabels(colors) {
-    if (this.updatingLabels) {
-      return;
-    }
+    if (this.updatingLabels) return;
+
     this.colors = colors;
     this.updatingLabels = true;
     // Points from (lat, lon) pairs
@@ -132,28 +128,31 @@ class Overlay {
   }
 
   getDrawables(fov) {
+    if (this.layers === undefined) return;
+
     let t;
     if (fov < 0.45) {
       t = [1, 0, 1, 1];
     } else {
       t = [1, 1, 1, 0];
     }
+
     let c = 0;
     this.layers.forEach((o) => (c += o.opacity > 0.05));
+
     this.layers.forEach((o, i) => {
-      if (o.polygon.ready) {
-        if (c < 3 || t[i] == 0) o.targetOpacity = t[i];
-        o.opacity = clamp(o.opacity + (o.targetOpacity ? 0.05 : -0.05), 0, 1);
-        o.linewidth = clamp(o.weight / Math.sqrt(fov), ...o.limits);
-      }
+      let targetOpacity = 1.0;
+      if (c < 3 || t[i] == 0) targetOpacity = t[i];
+      o.opacity = clamp(o.opacity + (targetOpacity ? 0.05 : -0.05), 0, 1);
+      o.linewidth = clamp(o.weight / Math.sqrt(fov), ...o.limits);
     });
+
     return this.layers;
   }
 
   getText() {
-    if (this.texture === undefined) {
-      return;
-    }
+    if (this.texture === undefined) return;
+
     if (!mat4.equals(this.viewprojection, this.geometry.viewprojection)) {
       this.viewprojection = this.geometry.viewprojection;
 
