@@ -162,6 +162,7 @@ class Overlay {
       this.viewprojection = this.geometry.viewprojection;
 
       let rectangles = [];
+      let visibility = [];
       let s = 2.0 / this.textEngine.scale;
       for (let k = 0; k < this.texture.raw.points.length; k++) {
         const point = [...this.texture.raw.points[k], 1.0];
@@ -173,21 +174,26 @@ class Overlay {
         ];
         const r = [p[0], p[1], p[0] + spread[0] * s, p[1] + spread[1] * s];
         rectangles.push(r);
+        //if (k == 3) console.log(this.labels[k].text, t[2] / t[3]);
+        if (t[2] / t[3] > 0.984) {
+          visibility.push(0);
+        } else {
+          visibility.push(1);
+        }
       }
 
-      let visibility = [];
       rectangles.forEach((d, k) => {
-        if (k == 0) return visibility.push(1);
+        if (k == 0 || visibility[k] == 0) return;
         let v = 1;
         for (let j = 0; j < k; j++) {
-          const o = doOverlap(d, rectangles[j]);
-          if (visibility[j] && o) {
+          if (visibility[j] && doOverlap(d, rectangles[j])) {
             v = 0;
             break;
           }
         }
-        return visibility.push(v);
+        return (visibility[k] = v);
       });
+
       this.texture.opacity = visibility;
 
       // const rect1 = rectangles[3],
