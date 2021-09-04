@@ -83,6 +83,12 @@ class GLView extends Component {
       projection: mat4.create(),
       modelview: model,
       viewprojection: mat4.create(),
+      viewport: {
+        x: 0,
+        y: 0,
+        width: this.canvas.width,
+        height: this.canvas.height,
+      },
       needsUpdate: false,
       message: "graphics",
     };

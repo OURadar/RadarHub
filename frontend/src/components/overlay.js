@@ -21,12 +21,7 @@ class Overlay {
     this.geometry = geometry;
     this.viewprojection = mat4.create();
 
-    this.polyEngines = [
-      new Polygon(this.regl, "@rings/1/60/120/250", geometry),
-      new Polygon(this.regl, "/static/blob/countries-50m.json"),
-      new Polygon(this.regl, "/static/blob/states-10m.json"),
-      new Polygon(this.regl, "/static/blob/counties-10m.json"),
-    ];
+    this.polyEngine = new Polygon(this.regl);
     this.updatingPolygons = 0;
 
     this.textEngine = new TextEngine(this.regl);
@@ -39,28 +34,50 @@ class Overlay {
   updatePolygons(colors) {
     if (this.updatingPolygons) return;
 
-    const weights = [1.0, 1.7, 0.9, 0.4];
-    const limits = [
-      [1.5, 3.0],
-      [1.3, 3.0],
-      [1.3, 3.0],
-      [0.5, 2.0],
+    const overlays = [
+      {
+        name: "@rings/1/60/120/250",
+        color: [0.5, 0.5, 0.5, 1.0],
+        limits: [1.5, 3.0],
+        weight: 1.0,
+      },
+      {
+        name: "/static/blob/countries-50m.json",
+        color: [0.5, 0.5, 0.5, 1.0],
+        limits: [1.3, 3.0],
+        weight: 1.7,
+      },
+      {
+        name: "/static/blob/states-10m.json",
+        color: [0.5, 0.5, 0.5, 1.0],
+        limits: [1.3, 3.0],
+        weight: 0.9,
+      },
+      {
+        name: "/static/blob/counties-10m.json",
+        color: [0.5, 0.5, 0.5, 1.0],
+        limits: [0.5, 2.0],
+        weight: 0.4,
+      },
     ];
     this.colors = colors;
     this.updatingPolygons = 4;
     this.layers = [];
-    this.polyEngines.forEach((poly, k) => {
+    overlays.forEach((overlay, k) => {
       setTimeout(() => {
-        poly.update().then((buffer) => {
+        this.polyEngine.update(overlay.name, this.geometry).then((buffer) => {
           this.layers[k] = {
             ...buffer,
-            color: [0.5, 0.5, 0.5, 1.0],
+            color: overlay.color,
             linewidth: 1.0,
             opacity: 0.0,
-            limits: limits[k],
-            weight: weights[k],
+            limits: overlay.limits,
+            weight: overlay.weight,
           };
           this.updatingPolygons--;
+          if (this.updatingPolygons == 0) {
+            console.log(this.layers);
+          }
         });
       }, 300 * k);
     });

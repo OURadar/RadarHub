@@ -7,54 +7,52 @@ import { deg2rad } from "./common";
 // geometry - geometry dictionary of projection matrices
 //
 class Polygon {
-  constructor(regl, file, geometry = null) {
+  constructor(regl) {
     this.regl = regl;
-    this.file = file;
-    this.geometry = geometry;
     this.points = [];
     this.count = 0;
     this.busy = false;
     this.radius = 6357;
     // Binding methods
-    this.read = this.read.bind(this);
     this.update = this.update.bind(this);
     this.makeBuffer = this.makeBuffer.bind(this);
     this.handleJSON = this.handleJSON.bind(this);
     this.handleShapefile = this.handleShapefile.bind(this);
   }
 
-  read() {
+  async update(file, geometry) {
+    if (this.busy) return;
     this.busy = true;
-    const ext = this.file.split(".").pop();
+    const ext = file.split(".").pop();
     if (ext == "json") {
-      return fetch(this.file)
+      return fetch(file)
         .then((text) => text.json())
         .then((dict) => this.handleJSON(dict))
         .then((points) => {
-          return this.makeBuffer(points);
+          return this.makeBuffer(file, points);
         })
         .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
       return require("shapefile")
-        .open(this.file)
+        .open(file)
         .then((source) => this.handleShapefile(source))
         .then((points) => {
-          return this.makeBuffer(points);
+          return this.makeBuffer(file, points);
         })
         .catch((error) => console.error(error.stack));
-    } else if (this.file.includes("@")) {
-      return this.builtInGeometry()
+    } else if (file.includes("@")) {
+      return this.builtInGeometry(file, geometry)
         .then((points) => {
-          return this.makeBuffer(points);
+          return this.makeBuffer(file, points);
         })
         .catch((error) => console.error(error.stack));
     }
   }
 
-  async builtInGeometry() {
+  async builtInGeometry(file, geometry) {
     let x = [];
-    if (this.file.includes("@rings")) {
-      const radii = this.file.split("/").slice(1);
+    if (file.includes("@rings")) {
+      const radii = file.split("/").slice(1);
       const sides = 12;
       const h = 0.012;
       // Apply the model matrix to make it radar-centric
@@ -69,12 +67,12 @@ class Polygon {
         }
         x.push([0, r, h]);
       });
-      x = x.map((p) => vec3.transformMat4([], p, this.geometry.model));
+      x = x.map((p) => vec3.transformMat4([], p, geometry.model));
     }
     return x.flat();
   }
 
-  makeBuffer(x) {
+  makeBuffer(file, x) {
     const buffer = {
       points: this.regl.buffer({
         usage: "static",
@@ -83,11 +81,7 @@ class Polygon {
       }),
       count: x.length / 6,
     };
-    this.points = buffer.points;
-    this.count = buffer.count;
-    const name = this.file.includes("@")
-      ? this.file
-      : this.file.split("/").pop();
+    const name = file.includes("@") ? file : file.split("/").pop();
     const cString = buffer.count.toLocaleString();
     const xString = x.length.toLocaleString();
     const mString = (
@@ -101,11 +95,6 @@ class Polygon {
     );
     this.busy = false;
     return buffer;
-  }
-
-  async update() {
-    if (this.busy) return;
-    return this.read();
   }
 
   handleJSON(data) {
