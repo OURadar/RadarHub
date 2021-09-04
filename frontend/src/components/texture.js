@@ -126,8 +126,8 @@ class Texture {
       }
       const xx = position[0] + alignment[0] * w;
       const yy = position[1] + alignment[1] * h;
-      origins.push(x, y);
-      spreads.push(ww / this.scale, hh / this.scale);
+      origins.push(x - 0.5, y - 0.5);
+      spreads.push(ww + 1, hh + 1);
       points.push(xx, yy);
       if (this.debug) {
         context.strokeStyle = "skyblue";

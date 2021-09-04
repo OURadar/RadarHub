@@ -32,7 +32,7 @@ import { coord2point, polar2point } from "./common";
 //  NOTE: slices and attributes must have the same length
 //
 
-class TextEngine {
+class Text {
   constructor(regl, debug = false) {
     this.regl = regl;
     this.scale = 1.5;
@@ -53,6 +53,11 @@ class TextEngine {
       undefined !== meas.actualBoundingBoxAscent &&
       undefined !== meas.actualBoundingBoxDescent;
     this.tic = 0;
+    // Binding methods
+    this.update = this.update.bind(this);
+    this.makeBuffer = this.makeBuffer.bind(this);
+    this.handleJSON = this.handleJSON.bind(this);
+    this.handleShapefile = this.handleShapefile.bind(this);
 
     if (this.debug) {
       const o = document.getElementById("test");
@@ -76,7 +81,30 @@ class TextEngine {
     });
   }
 
-  getLabels(name, model, colors) {
+  async update(name, model, colors) {
+    if (this.busy) {
+      console.log("Calling Text.update() too frequent.");
+      return;
+    }
+    if (name === undefined) {
+      console.log("Input undefined.");
+      return;
+    }
+    const ext = name.split(".").pop();
+    if (name.includes("@")) {
+      return this.builtInLabels(name, model, colors)
+        .then((labels) => this.makeBuffer(name, labels))
+        .catch((error) => console.error(error.stack));
+    } else if (ext == "shp") {
+      return require("shapefile")
+        .open(name)
+        .then((source) => this.handleShapefile(source))
+        .then((labels) => this.makeBuffer(labels))
+        .catch((error) => console.error(error.stack));
+    }
+  }
+
+  async builtInLabels(name, model, colors) {
     if (name == "@demo") {
       // Points radar-centric polar coordinate
       let labels = [
@@ -121,17 +149,11 @@ class TextEngine {
       });
       return labels;
     }
+    return {};
   }
 
-  async update(name, model, colors) {
-    if (this.busy) return;
-    if (name === undefined) {
-      console.log("Input undefined.");
-      return;
-    }
-    while (!this.fontLoaded && this.tic++ < 100) {
-      await this.waitBriefly();
-    }
+  async makeBuffer(file, labels) {
+    const name = file.includes("@") ? file : file.split("/").pop();
     const context = this.context;
     const p = this.padding;
     this.busy = true;
@@ -142,11 +164,7 @@ class TextEngine {
     let points = [];
     let origins = [];
     let spreads = [];
-    const text = this.getLabels(name, model, colors);
-    if (text == undefined) {
-      console.log(`Failed loading ${name}`);
-    }
-    text.forEach((label) => {
+    labels.forEach((label) => {
       const size = label?.size || 18;
       context.font = `${this.scale * size}px LabelFont`;
       const measure = context.measureText(label.text);
@@ -185,6 +203,7 @@ class TextEngine {
       u += ww + 1;
       // console.log(label.text, measure.actualBoundingBoxDescent);
     });
+
     // console.log(points, origins);
     const buffer = {
       bound: [this.canvas.width, this.canvas.height],
@@ -216,6 +235,7 @@ class TextEngine {
       },
       count: points.length,
     };
+
     const cString = buffer.count.toLocaleString();
     const xString = (buffer.count * 7).toLocaleString();
     const mString = (
@@ -242,6 +262,22 @@ class TextEngine {
     this.busy = false;
     return buffer;
   }
+
+  handleJSON(dict) {}
+
+  handleShapefile(source) {
+    let raw = [];
+
+    source.read().then(function retrieve(result) {
+      if (result.done) {
+        console.log("done");
+        return;
+      }
+      const shape = result.value;
+      console.log(shape);
+      return source.read().then(retrieve);
+    });
+  }
 }
 
-export { TextEngine };
+export { Text };

@@ -24,7 +24,6 @@ class Product extends GLView {
       ...this.state,
       spin: false,
       useEuler: true,
-      labelFaceColor: props.colors.label.face,
     };
     this.labelFaceColor = this.props.colors.label.face;
     window.addEventListener("keyup", (e) => {
@@ -108,8 +107,8 @@ class Product extends GLView {
     });
     const layers = this.overlay.getDrawables(gmatrix.fov);
     if (layers) {
-      // let message = "linewidths: ";
       let o = [];
+      let message = "linewidths: ";
       layers.forEach((overlay) => {
         if (overlay.opacity > 0.05) {
           o.push({
@@ -118,17 +117,16 @@ class Product extends GLView {
             quad: [...mtu, overlay.opacity],
             view: gmatrix.view,
             projection: gmatrix.projection,
-            resolution: [gmatrix.viewport.width, gmatrix.viewport.height],
             viewport: gmatrix.viewport,
             points: overlay.points,
             segments: overlay.count,
           });
-          //message += ` ${overlay.linewidth.toFixed(2)}`;
+          message += ` ${overlay.linewidth.toFixed(2)}`;
         }
       });
-      // this.setState({
-      //   message: message,
-      // });
+      this.setState({
+        message: message,
+      });
       this.picaso(o);
     }
     const text = this.overlay.getText();
@@ -136,7 +134,6 @@ class Product extends GLView {
       // console.log(text.opacity);
       this.gogh({
         projection: gmatrix.viewprojection,
-        resolution: [gmatrix.viewport.width, gmatrix.viewport.height],
         viewport: gmatrix.viewport,
         scale: this.overlay.textEngine.scale,
         ...text,

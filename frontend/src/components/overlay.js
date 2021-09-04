@@ -6,7 +6,7 @@
 //
 
 import { Polygon } from "./polygon";
-import { TextEngine } from "./text-engine";
+import { Text } from "./text";
 import { clamp } from "./common";
 import { vec4, mat4 } from "gl-matrix";
 
@@ -24,7 +24,7 @@ class Overlay {
     this.polyEngine = new Polygon(this.regl);
     this.updatingPolygons = 0;
 
-    this.textEngine = new TextEngine(this.regl);
+    this.textEngine = new Text(this.regl);
     this.updatingLabels = false;
   }
 
@@ -62,25 +62,25 @@ class Overlay {
     this.layers = [];
     overlays.forEach((overlay, k) => {
       setTimeout(() => {
-        this.polyEngine.update(overlay.name, this.geometry).then((buffer) => {
-          this.layers[k] = {
-            ...buffer,
-            color: overlay.color,
-            linewidth: 1.0,
-            opacity: 0.0,
-            limits: overlay.limits,
-            weight: overlay.weight,
-          };
-          this.updatingPolygons--;
-          if (this.updatingPolygons == 0) {
-            this.updatingPolygons = false;
-            this.updateLabels();
-          }
-        });
+        this.polyEngine
+          .update(overlay.name, this.geometry.model)
+          .then((buffer) => {
+            this.layers[k] = {
+              ...buffer,
+              color: overlay.color,
+              linewidth: 1.0,
+              opacity: 0.0,
+              limits: overlay.limits,
+              weight: overlay.weight,
+            };
+            this.updatingPolygons--;
+            if (this.updatingPolygons == 0) {
+              this.updatingPolygons = false;
+              this.updateLabels();
+            }
+          });
       }, 300 * k);
     });
-    // Go through the layers and update the color from ${colors}
-    // ...
   }
 
   updateLabels() {

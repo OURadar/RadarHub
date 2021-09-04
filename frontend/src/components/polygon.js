@@ -20,34 +20,38 @@ class Polygon {
     this.handleShapefile = this.handleShapefile.bind(this);
   }
 
-  async update(file, geometry) {
+  async update(name, model) {
     if (this.busy) return;
     this.busy = true;
-    const ext = file.split(".").pop();
-    if (ext == "json") {
-      return fetch(file)
+    if (name === undefined) {
+      console.log("Input undefined.");
+      return;
+    }
+    const ext = name.split(".").pop();
+    if (name.includes("@")) {
+      return this.builtInGeometry(name, model)
+        .then((points) => this.makeBuffer(name, points))
+        .catch((error) => console.error(error.stack));
+    } else if (ext == "json") {
+      return fetch(name)
         .then((text) => text.json())
         .then((dict) => this.handleJSON(dict))
-        .then((points) => this.makeBuffer(file, points))
+        .then((points) => this.makeBuffer(name, points))
         .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
       return require("shapefile")
-        .open(file)
+        .open(name)
         .then((source) => this.handleShapefile(source))
-        .then((points) => this.makeBuffer(file, points))
-        .catch((error) => console.error(error.stack));
-    } else if (file.includes("@")) {
-      return this.builtInGeometry(file, geometry)
-        .then((points) => this.makeBuffer(file, points))
+        .then((points) => this.makeBuffer(name, points))
         .catch((error) => console.error(error.stack));
     }
   }
 
-  async builtInGeometry(name, geometry) {
+  async builtInGeometry(name, model) {
     let x = [];
     if (name.includes("@rings")) {
       const radii = name.split("/").slice(1);
-      const sides = 12;
+      const sides = 16;
       const h = 0.012;
       // Apply the model matrix to make it radar-centric
       radii.forEach((radius) => {
@@ -61,7 +65,7 @@ class Polygon {
         }
         x.push([0, r, h]);
       });
-      x = x.map((p) => vec3.transformMat4([], p, geometry.model));
+      x = x.map((p) => vec3.transformMat4([], p, model));
     }
     return x.flat();
   }
