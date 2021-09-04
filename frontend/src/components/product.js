@@ -137,7 +137,7 @@ class Product extends GLView {
       // console.log(text.opacity);
       this.gogh({
         projection: gmatrix.viewprojection,
-        resolution: [this.canvas.width, this.canvas.height],
+        resolution: [gmatrix.viewport.width, gmatrix.viewport.height],
         viewport: gmatrix.viewport,
         scale: this.overlay.textEngine.scale,
         ...text,

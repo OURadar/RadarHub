@@ -1,29 +1,18 @@
+//
+//  overlay.js
+//  RadarHub
+//
+//  Created by Boonleng Cheong
+//
+
 import { Polygon } from "./polygon";
 import { TextEngine } from "./text-engine";
 import { clamp, coord2point, polar2point } from "./common";
 import { vec4, mat4 } from "gl-matrix";
 
-function doOverlap(rect1, rect2) {
-  //
-  //                  1[2, 3]
-  //     +---------------+
-  //     |               |   2[2, 3]
-  //     |      +--------+------+
-  //     |      |        |      |
-  //     +------+--------+      |
-  //  1[0, 1]   |               |
-  //            +---------------+
-  //         2[0, 1]
-  //
-  if (
-    rect1[2] <= rect2[0] ||
-    rect1[0] >= rect2[2] ||
-    rect1[3] <= rect2[1] ||
-    rect1[1] >= rect2[3]
-  )
-    return false;
-  return true;
-}
+//
+// Manages overlays on the earth
+//
 
 class Overlay {
   constructor(regl, colors, geometry) {
@@ -76,8 +65,10 @@ class Overlay {
     this.colors = colors;
     this.layers.forEach((layer, k) => {
       setTimeout(() => {
-        layer.polygon.update();
-      }, k * 500);
+        layer.polygon.update().then((buffer) => {
+          console.log("polygon update", buffer);
+        });
+      }, k * 300);
     });
     // Go through the layers and update the color from ${colors}
     // ...
@@ -129,6 +120,7 @@ class Overlay {
       color: this.colors.label.face2,
       stroke: this.colors.label.stroke,
     });
+    // Now we use the text engine
     this.textEngine.update(this.labels).then((texture) => {
       this.texture = {
         ...texture,
@@ -219,6 +211,28 @@ class Overlay {
 
     return this.texture;
   }
+}
+
+//
+//                  1[2, 3]
+//     +---------------+
+//     |               |   2[2, 3]
+//     |      +--------+------+
+//     |      |        |      |
+//     +------+--------+      |
+//  1[0, 1]   |               |
+//            +---------------+
+//         2[0, 1]
+//
+function doOverlap(rect1, rect2) {
+  if (
+    rect1[2] <= rect2[0] ||
+    rect1[0] >= rect2[2] ||
+    rect1[3] <= rect2[1] ||
+    rect1[1] >= rect2[3]
+  )
+    return false;
+  return true;
 }
 
 export { Overlay };

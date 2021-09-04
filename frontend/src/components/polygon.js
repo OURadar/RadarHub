@@ -31,17 +31,23 @@ class Polygon {
       fetch(this.file)
         .then((text) => text.json())
         .then((dict) => this.handleJSON(dict))
-        .then((points) => this.makeBuffer(points))
+        .then((points) => {
+          return this.makeBuffer(points);
+        })
         .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
       require("shapefile")
         .open(this.file)
         .then((source) => this.handleShapefile(source))
-        .then((points) => this.makeBuffer(points))
+        .then((points) => {
+          return this.makeBuffer(points);
+        })
         .catch((error) => console.error(error.stack));
     } else if (this.file.includes("@")) {
       this.builtInGeometry()
-        .then((points) => this.makeBuffer(points))
+        .then((points) => {
+          return this.makeBuffer(points);
+        })
         .catch((error) => console.error(error.stack));
     }
   }
@@ -72,12 +78,16 @@ class Polygon {
   makeBuffer(x) {
     this.busy = false;
     this.ready = true;
-    this.points = this.regl.buffer({
-      usage: "static",
-      type: "float",
-      data: x,
-    });
-    this.count = x.length / 6;
+    const buffer = {
+      points: this.regl.buffer({
+        usage: "static",
+        type: "float",
+        data: x,
+      }),
+      count: x.length / 6,
+    };
+    this.points = buffer.points;
+    this.count = buffer.count;
     const name = this.file.includes("@")
       ? this.file
       : this.file.split("/").pop();
@@ -89,24 +99,26 @@ class Polygon {
       ).toLocaleString()} bytes)`,
       "font-weight: bold",
       "font-weight: normal",
-      "color:blue"
+      "color: cyan"
     );
+    return buffer;
   }
 
   async update() {
     if (this.busy) return;
     if (this.ready) {
       console.log("Polygon is ready");
+      return this;
     }
     if (window.requestIdleCallback) {
       window.requestIdleCallback(
         () => {
-          this.read();
+          return this.read();
         },
-        { timeout: 500 }
+        { timeout: 300 }
       );
     } else {
-      this.read();
+      return this.read();
     }
   }
 

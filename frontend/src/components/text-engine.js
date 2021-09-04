@@ -30,7 +30,7 @@
 //
 
 class TextEngine {
-  constructor(regl, debug = true) {
+  constructor(regl, debug = false) {
     this.regl = regl;
     this.scale = 1.5;
     this.debug = debug;
@@ -111,8 +111,8 @@ class TextEngine {
         v += Math.ceil(f + p + 1);
       }
       points.push(label.point);
-      origins.push([u, v]);
-      spreads.push([ww, hh]);
+      origins.push([u - 0.5, v - 0.5]);
+      spreads.push([ww + 1, hh + 1]);
       if (this.debug) {
         context.lineWidth = 1;
         context.strokeStyle = "skyblue";
