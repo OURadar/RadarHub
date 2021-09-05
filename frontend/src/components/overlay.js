@@ -7,9 +7,8 @@
 
 import { Polygon } from "./polygon";
 import { Text } from "./text";
-import { clamp } from "./common";
+import { clamp, rad2deg } from "./common";
 import { mat4 } from "gl-matrix";
-import { read } from "shapefile";
 
 //
 // Manages overlays on the earth
@@ -134,59 +133,85 @@ class Overlay {
     this.busy = true;
     this.viewprojection = this.geometry.viewprojection;
 
+    let first = 0;
+    let second = 0;
     let indices = [];
     let rectangles = [];
-    let visibility = new Array(this.texture.count).fill(0);
-    let s = 2.0 / this.textEngine.scale;
+    let visibility = this.texture.targetOpacity.fill(0);
+    const s = 1.0 / this.textEngine.scale;
+    const ar = this.geometry.viewport.width / this.geometry.viewport.height;
+    const fov = this.geometry.fov;
     const satCoord = this.geometry.satCoordinate;
+    const limitX = Math.min(1.0, 1.3 * Math.tan(fov));
+    const limitY = Math.min(1.0, 1.3 * Math.tan(fov / ar));
     for (let k = 0; k < this.texture.count; k++) {
       const coord = this.texture.raw.coords[k];
-      const delta = satCoord[0] - coord[0];
-      if (delta < -1.5 || delta > 1.5) continue;
+      const deltaX = satCoord[0] - coord[0];
+      if (deltaX < -limitX || deltaX > limitX) {
+        first++;
+        continue;
+      }
+      const deltaY = satCoord[1] - coord[1];
+      if (deltaY < -limitY || deltaY > limitY) {
+        second++;
+        continue;
+      }
 
       const point = this.texture.raw.points[k];
       const t = transformMat4([], point, this.viewprojection);
       const x = t[0] / t[3];
       const y = t[1] / t[3];
-      const z = t[2] / t[3];
-      if (z > 0.98 || x > 0.95 || x < -0.95 || y > 0.95 || y < -0.95) continue;
-
       const p = [
         x * this.geometry.viewport.width,
         y * this.geometry.viewport.height,
       ];
       const spread = this.texture.raw.spreads[k];
-      const rect = [p[0], p[1], p[0] + spread[0] * s, p[1] + spread[1] * s];
+      const rect = [
+        p[0] - spread[0] * s,
+        p[1] - spread[1] * s,
+        p[0] + spread[0] * s,
+        p[1] + spread[1] * s,
+      ];
       rectangles.push(rect);
       indices.push(k);
       visibility[k] = 1;
     }
 
-    // indices.forEach((i, k) => {
-    //   if (k == 0 || visibility[i] == 0) return;
-    //   const rect = rectangles[k];
-    //   for (let j = 0; j < k; j++) {
-    //     if (visibility[i] && doOverlap(rect, rectangles[j])) {
-    //       visibility[i] = 0;
-    //       return;
-    //     }
-    //   }
-    // });
-
-    for (let k = 1; k < indices.length; k++) {
-      const i = indices[k];
-      if (visibility[i] == 0) continue;
+    indices.forEach((i, k) => {
+      if (k == 0 || visibility[i] == 0) return;
       const rect = rectangles[k];
       for (let j = 0; j < k; j++) {
         const t = indices[j];
         if (visibility[t] && doOverlap(rect, rectangles[j])) {
           visibility[i] = 0;
-          break;
+          return;
         }
       }
-    }
+    });
 
-    this.texture.targetOpacity = visibility;
+    const v = visibility.reduce((a, x) => a + x);
+    console.log(
+      `limitX = ${rad2deg(limitX).toFixed(2)}` +
+        `  limitY = ${rad2deg(limitY).toFixed(2)}` +
+        `  first = ${first}  second = ${second}` +
+        `  visible = ${indices.length} --> ${v}`
+    );
+
+    // for (let k = 1; k < indices.length; k++) {
+    //   const i = indices[k];
+    //   if (visibility[i] == 0) continue;
+    //   const rect = rectangles[k];
+    //   const v = 1;
+    //   for (let j = 0; j < k; j++) {
+    //     const t = indices[j];
+    //     if (visibility[t] && doOverlap(rect, rectangles[j])) {
+    //       v = 0;
+    //       break;
+    //     }
+    //   }
+    //   visibility[i] = v;
+    // }
+
     this.busy = false;
   }
 
