@@ -164,7 +164,7 @@ class GLView extends Component {
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
     geo.viewport = { x: 0, y: 0, width: w, height: h };
     geo.needsUpdate = false;
-    geo.message = "graphics";
+    geo.message = "geo";
   }
 
   draw() {
@@ -230,7 +230,7 @@ class GLView extends Component {
     geo.fov = common.clamp(geo.fov / y, 0.01, 0.5 * Math.PI);
     geo.needsUpdate = true;
     if (this.props.debug) {
-      geo.message = `fov: ${geo.fov.toFixed(3)}`;
+      geo.message += ` fov: ${geo.fov.toFixed(3)}`;
       this.setState({
         lastMagnifyTime: window.performance.now(),
       });

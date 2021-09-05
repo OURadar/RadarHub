@@ -198,17 +198,23 @@ class Overlay {
   }
 }
 
-//
-//                  1[2, 3]
-//     +---------------+
-//     |               |   2[2, 3]
-//     |      +--------+------+
-//     |      |        |      |
-//     +------+--------+      |
-//  1[0, 1]   |               |
-//            +---------------+
-//         2[0, 1]
-//
+/**
+ * Determines if two retangles overlap
+ *
+ *                     1[2, 3]
+ *      +---------------+
+ *      |               |   2[2, 3]
+ *      |      +--------+------+
+ *      |      |        |      |
+ *      +------+--------+      |
+ *   1[0, 1]   |               |
+ *             +---------------+
+ *          2[0, 1]
+ *
+ * @param {Array4} rect1 the 1st rectangle
+ * @param {Array4} rect2 the 2nd rectangle
+ * @returns {boolean} out
+ */
 function doOverlap(rect1, rect2) {
   if (
     rect1[2] <= rect2[0] ||
@@ -229,7 +235,6 @@ function doOverlap(rect1, rect2) {
  * @param {ReadonlyMat4} m matrix to transform with
  * @returns {vec4} out
  */
-
 function transformMat4(out, a, m) {
   let x = a[0],
     y = a[1],

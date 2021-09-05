@@ -48,6 +48,7 @@ class Product extends GLView {
         this.geometry.satQ,
         this.geometry.satI
       );
+      this.geometry.message = "";
     } else {
       const q = this.graphics.satQuaternion;
       const qt = quat.fromEuler(
@@ -59,9 +60,7 @@ class Product extends GLView {
       const i = quat.slerp([], q, qt, 0.5);
       this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
       const a = common.rad2deg(this.geometry.satCoordinate[0]);
-      this.setState({
-        message: `angle = ${a.toFixed(1)}`,
-      });
+      this.geometry.message = `angle = ${a.toFixed(1)}`;
     }
     this.geometry.needsUpdate = true;
   }
@@ -82,12 +81,16 @@ class Product extends GLView {
 
   draw() {
     if (this.mount === null) return;
+    let message = "";
+    let show = false;
     if (
       this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
       this.canvas.height != this.mount.offsetHeight
     ) {
       this.updateProjection();
+      message += " lines:";
+      show = true;
     }
     if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
@@ -108,7 +111,6 @@ class Product extends GLView {
     const layers = this.overlay.getDrawables(gmatrix.fov);
     if (layers) {
       let o = [];
-      let message = "linewidths: ";
       layers.forEach((overlay) => {
         if (overlay.opacity > 0.05) {
           o.push({
@@ -121,12 +123,10 @@ class Product extends GLView {
             points: overlay.points,
             segments: overlay.count,
           });
-          message += ` ${overlay.linewidth.toFixed(2)}`;
+          if (show) message += ` ${overlay.linewidth.toFixed(2)}`;
         }
       });
-      this.setState({
-        message: message,
-      });
+      if (show) gmatrix.message += message;
       this.picaso(o);
     }
     const text = this.overlay.getText();
