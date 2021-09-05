@@ -39,7 +39,7 @@ class Text {
     this.debug = debug;
     this.canvas = document.createElement("canvas");
     this.canvas.width = 4096;
-    this.canvas.height = 2048;
+    this.canvas.height = 4096;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
@@ -60,7 +60,10 @@ class Text {
     this.handleShapefile = this.handleShapefile.bind(this);
 
     const o = document.getElementById("test");
-    if (o) o.appendChild(this.canvas);
+    if (o) {
+      if (debug) o.appendChild(this.canvas);
+      else o.style.display = "none";
+    }
 
     let font = new FontFace(
       "LabelFont",
@@ -154,7 +157,8 @@ class Text {
   async makeBuffer(file, labels) {
     const name = file.includes("@") ? file : file.split("/").pop();
     const context = this.context;
-    const p = this.padding;
+    const p = Math.ceil(1.5 * this.padding);
+    const q = Math.ceil(this.padding);
     this.busy = true;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     let f = 0;
@@ -174,12 +178,13 @@ class Text {
           : 0.8 * size
       );
       const ww = w + 2 * p;
-      const hh = h + 2 * p;
+      const hh = h + 2 * q;
       f = Math.max(f, h);
       // Move to the next row if we nearing the end of the texture
       if (u + ww > this.canvas.width) {
+        v += Math.ceil(f + 2 * q + 1);
         u = 0.5;
-        v += Math.ceil(f + p + 1);
+        f = 0;
       }
       points.push(label.point);
       origins.push([u - 0.5, v - 0.5]);
@@ -187,13 +192,13 @@ class Text {
       if (this.debug) {
         context.lineWidth = 1;
         context.strokeStyle = "skyblue";
-        context.strokeRect(u + p, this.canvas.height - v - p - h, w, h);
+        context.strokeRect(u + p, this.canvas.height - v - q - h, w, h);
         context.strokeStyle = "orange";
         context.strokeRect(u, this.canvas.height - v - hh, ww, hh);
       }
       const o = this.hasDetails ? measure.actualBoundingBoxDescent : 0;
       const x = u + p;
-      const y = this.canvas.height - v - p - o;
+      const y = this.canvas.height - v - q - o;
       context.lineWidth = 4.5 * this.scale;
       context.strokeStyle = label?.stroke || "#000000";
       context.strokeText(label.text, x, y);
@@ -245,12 +250,7 @@ class Text {
       Float32Array.BYTES_PER_ELEMENT
     ).toLocaleString();
     const wString = `${buffer.bound[0].toLocaleString()} x ${buffer.bound[0].toLocaleString()}`;
-    const vString = (
-      buffer.bound[0] *
-      buffer.bound[1] *
-      4 *
-      Float32Array.BYTES_PER_ELEMENT
-    ).toLocaleString();
+    const vString = (buffer.bound[0] * buffer.bound[1] * 4).toLocaleString();
     console.log(
       `Text: %c${name} %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
         `%c / texture (%c${wString} RGBA = ${vString} bytes)` +
