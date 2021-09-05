@@ -5,7 +5,7 @@
 //  Created by Boonleng Cheong on 9/1/2021.
 //
 
-import { coord2point, polar2point } from "./common";
+import { coord2point, polar2coord, polar2point, deg2rad } from "./common";
 
 //
 //  Initialize as:
@@ -107,31 +107,35 @@ class Text {
   }
 
   async builtInLabels(name, model, colors) {
+    // Points radar-centric polar coordinate
+    let labels = [
+      {
+        text: "Origin",
+        coord: polar2coord(0, 0, 0, model),
+        point: polar2point(0, 0, 0, model),
+        color: colors.label.face,
+        stroke: colors.label.stroke,
+      },
+    ];
     if (name == "@demo") {
-      // Points radar-centric polar coordinate
-      let labels = [
-        {
-          text: "Origin",
-          point: polar2point(0, 0, 0, model),
-          color: colors.label.face,
-          stroke: colors.label.stroke,
-        },
-      ];
       // Points from (lat, lon) pairs
       labels.push({
         text: "LatLon-1",
+        coord: [deg2rad(-90), deg2rad(20)],
         point: coord2point(-90, 20),
         color: colors.label.face,
         stroke: colors.label.stroke,
       });
       labels.push({
         text: "LatLon-2",
+        coord: [deg2rad(-100), deg2rad(30)],
         point: coord2point(-100, 30),
         color: colors.label.face,
         stroke: colors.label.stroke,
       });
       labels.push({
         text: "LatLon-3",
+        coord: [deg2rad(-110), deg2rad(40)],
         point: coord2point(-110, 40),
         color: colors.label.face,
         stroke: colors.label.stroke,
@@ -139,19 +143,20 @@ class Text {
       // More radar-centric points
       labels.push({
         text: "R-250 km",
+        coord: polar2coord(0.5, 45, 250, model),
         point: polar2point(0.5, 45, 250, model),
         color: colors.label.face,
         stroke: colors.label.stroke,
       });
       labels.push({
         text: "R-250 km",
+        coord: polar2coord(0.5, -135, 250, model),
         point: polar2point(0.5, -135, 250, model),
         color: colors.label.face2,
         stroke: colors.label.stroke,
       });
-      return labels;
     }
-    return [];
+    return labels;
   }
 
   async makeBuffer(file, labels) {
@@ -164,6 +169,7 @@ class Text {
     let f = 0;
     let u = 0.5;
     let v = 0.5;
+    let coords = [];
     let points = [];
     let origins = [];
     let spreads = [];
@@ -186,6 +192,7 @@ class Text {
         u = 0.5;
         f = 0;
       }
+      coords.push(label.coord);
       points.push(label.point);
       origins.push([u - 0.5, v - 0.5]);
       spreads.push([ww + 1, hh + 1]);
@@ -235,6 +242,7 @@ class Text {
         data: spreads,
       }),
       raw: {
+        coords: coords,
         points: points,
         origins: origins,
         spreads: spreads,
@@ -296,11 +304,13 @@ class Text {
       raw.push({
         text: label.properties[stringKey],
         weight: label.properties[weightKey],
+        coord: [deg2rad(lon), deg2rad(lat)],
         point: coord2point(lon, lat),
         color: colors.label.face,
         stroke: colors.label.stroke,
       });
     };
+
     return source.read().then(function retrieve(result) {
       if (result.done) {
         return digest();

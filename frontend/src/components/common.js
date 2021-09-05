@@ -335,3 +335,14 @@ export function polar2point(e, a, r, model) {
   const q = vec3.transformMat4([], p, model);
   return q;
 }
+
+export function polar2coord(e, a, r, model) {
+  const p = polar2point(e, a, r, model);
+  return point2coord(p[0], p[1], p[2]);
+}
+
+export function point2coord(x, y, z) {
+  const lat = Math.atan2(y, Math.sqrt(x ** 2 + z ** 2));
+  const lon = Math.atan2(x, z);
+  return [lon, lat];
+}

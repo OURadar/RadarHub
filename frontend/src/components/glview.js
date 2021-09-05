@@ -157,7 +157,7 @@ class GLView extends Component {
     const x = c[2] * Math.cos(c[1]) * Math.sin(c[0]);
     const y = c[2] * Math.sin(c[1]);
     const z = c[2] * Math.cos(c[1]) * Math.cos(c[0]);
-    geo.satPosition = vec3.fromValues(x, y, z);
+    geo.satPosition = [x, y, z];
     geo.view = mat4.lookAt([], geo.satPosition, [0, 0, 0], [0, 1, 0]);
     geo.modelview = mat4.multiply([], geo.view, geo.model);
     geo.projection = mat4.perspective([], geo.fov, w / h, 100, 30000.0);

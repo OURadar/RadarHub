@@ -9,6 +9,7 @@ import { Polygon } from "./polygon";
 import { Text } from "./text";
 import { clamp } from "./common";
 import { mat4 } from "gl-matrix";
+import { read } from "shapefile";
 
 //
 // Manages overlays on the earth
@@ -129,6 +130,66 @@ class Overlay {
     return this.layers;
   }
 
+  async reviseOpacity2() {
+    this.busy = true;
+    this.viewprojection = this.geometry.viewprojection;
+
+    let indices = [];
+    let rectangles = [];
+    let visibility = new Array(this.texture.count).fill(0);
+    let s = 2.0 / this.textEngine.scale;
+    const satCoord = this.geometry.satCoordinate;
+    for (let k = 0; k < this.texture.count; k++) {
+      const coord = this.texture.raw.coords[k];
+      const delta = satCoord[0] - coord[0];
+      if (delta < -1.5 || delta > 1.5) continue;
+
+      const point = this.texture.raw.points[k];
+      const t = transformMat4([], point, this.viewprojection);
+      const x = t[0] / t[3];
+      const y = t[1] / t[3];
+      const z = t[2] / t[3];
+      if (z > 0.98 || x > 0.95 || x < -0.95 || y > 0.95 || y < -0.95) continue;
+
+      const p = [
+        x * this.geometry.viewport.width,
+        y * this.geometry.viewport.height,
+      ];
+      const spread = this.texture.raw.spreads[k];
+      const rect = [p[0], p[1], p[0] + spread[0] * s, p[1] + spread[1] * s];
+      rectangles.push(rect);
+      indices.push(k);
+      visibility[k] = 1;
+    }
+
+    // indices.forEach((i, k) => {
+    //   if (k == 0 || visibility[i] == 0) return;
+    //   const rect = rectangles[k];
+    //   for (let j = 0; j < k; j++) {
+    //     if (visibility[i] && doOverlap(rect, rectangles[j])) {
+    //       visibility[i] = 0;
+    //       return;
+    //     }
+    //   }
+    // });
+
+    for (let k = 1; k < indices.length; k++) {
+      const i = indices[k];
+      if (visibility[i] == 0) continue;
+      const rect = rectangles[k];
+      for (let j = 0; j < k; j++) {
+        const t = indices[j];
+        if (visibility[t] && doOverlap(rect, rectangles[j])) {
+          visibility[i] = 0;
+          break;
+        }
+      }
+    }
+
+    this.texture.targetOpacity = visibility;
+    this.busy = false;
+  }
+
   async reviseOpacity() {
     this.busy = true;
     this.viewprojection = this.geometry.viewprojection;
@@ -180,18 +241,19 @@ class Overlay {
       !mat4.equals(this.viewprojection, this.geometry.viewprojection)
     ) {
       // const t1 = window.performance.now();
-      if (this.tic++ % 30 == 0) this.reviseOpacity();
+      if (this.tic++ % 30 == 0) this.reviseOpacity2();
       // const t0 = window.performance.now();
       // console.log(`${(t0 - t1).toFixed(2)} ms`);
     }
 
-    this.texture.targetOpacity.forEach((t, k) => {
-      this.texture.opacity[k] = clamp(
-        this.texture.opacity[k] + (t ? 0.05 : -0.05),
-        0,
-        1
-      );
-    });
+    for (let k = 0; k < this.texture.opacity.length; k++) {
+      let o =
+        this.texture.opacity[k] +
+        (this.texture.targetOpacity[k] ? 0.05 : -0.05);
+      if (o > 1.0) o = 1.0;
+      else if (o < 0.0) o = 0.0;
+      this.texture.opacity[k] = o;
+    }
     // console.log(tex.opacity);
 
     return this.texture;
