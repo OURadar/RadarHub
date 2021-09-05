@@ -69,7 +69,7 @@ export function colorDict(theme) {
   let body = window.getComputedStyle(document.body).backgroundColor;
   body = body.match(/\d+/g).map((x) => x / 255);
   if (body.length == 3) {
-    body.push(1);
+    body.push(1.0);
   }
   // Check for browser preference if 'theme' was not specified
   if (theme === undefined) {

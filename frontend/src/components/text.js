@@ -38,8 +38,8 @@ class Text {
     this.scale = 1.5;
     this.debug = debug;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 1024;
-    this.canvas.height = 1024;
+    this.canvas.width = 4096;
+    this.canvas.height = 2048;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
@@ -59,10 +59,8 @@ class Text {
     this.handleJSON = this.handleJSON.bind(this);
     this.handleShapefile = this.handleShapefile.bind(this);
 
-    if (this.debug) {
-      const o = document.getElementById("test");
-      if (o) o.appendChild(this.canvas);
-    }
+    const o = document.getElementById("test");
+    if (o) o.appendChild(this.canvas);
 
     let font = new FontFace(
       "LabelFont",
@@ -96,10 +94,11 @@ class Text {
         .then((labels) => this.makeBuffer(name, labels))
         .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
+      const indices = [0, 6];
       return require("shapefile")
         .open(name)
-        .then((source) => this.handleShapefile(source))
-        .then((labels) => this.makeBuffer(labels))
+        .then((source) => this.handleShapefile(source, indices, colors))
+        .then((labels) => this.makeBuffer(name, labels))
         .catch((error) => console.error(error.stack));
     }
   }
@@ -149,7 +148,7 @@ class Text {
       });
       return labels;
     }
-    return {};
+    return [];
   }
 
   async makeBuffer(file, labels) {
@@ -165,7 +164,7 @@ class Text {
     let origins = [];
     let spreads = [];
     labels.forEach((label) => {
-      const size = label?.size || 18;
+      const size = label?.size || 17;
       context.font = `${this.scale * size}px LabelFont`;
       const measure = context.measureText(label.text);
       const w = Math.ceil(measure.width);
@@ -203,6 +202,8 @@ class Text {
       u += ww + 1;
       // console.log(label.text, measure.actualBoundingBoxDescent);
     });
+    this.usage = (v / this.canvas.height) * 100;
+    // console.log(`u = ${u}  v = ${v}  ${v / this.canvas.height}`);
 
     // console.log(points, origins);
     const buffer = {
@@ -252,12 +253,14 @@ class Text {
     ).toLocaleString();
     console.log(
       `Text: %c${name} %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
-        `%c / texture (%c${wString} RGBA = ${vString} bytes)`,
+        `%c / texture (%c${wString} RGBA = ${vString} bytes)` +
+        `%c / usage ${this.usage.toFixed(2)} %%`,
       "font-weight: bold",
       "font-weight: normal",
       "color: blue",
       "font-weight: normal; color: black",
-      "color: blue"
+      "color: blue",
+      "font-weight: normal; color: black"
     );
     this.busy = false;
     return buffer;
@@ -265,16 +268,44 @@ class Text {
 
   handleJSON(dict) {}
 
-  handleShapefile(source) {
+  handleShapefile(source, fields, colors) {
     let raw = [];
+    let stringKey = "";
+    let weightKey = "";
 
-    source.read().then(function retrieve(result) {
-      if (result.done) {
-        console.log("done");
-        return;
+    const digest = () => {
+      raw.sort((a, b) => {
+        if (a.weight < b.weight) return +1;
+        if (a.weight > b.weight) return -1;
+        return 0;
+      });
+      // console.log(`raw has ${raw.length.toLocaleString()} elements`);
+      raw = raw.slice(-2000);
+      return raw;
+    };
+
+    const handleLabel = (label) => {
+      if (stringKey == "") {
+        const keys = Object.keys(label.properties);
+        stringKey = keys[fields[0]];
+        weightKey = keys[fields[1]];
+        console.log(`${stringKey}, ${weightKey}`);
       }
-      const shape = result.value;
-      console.log(shape);
+      const lon = label.geometry.coordinates[0][0];
+      const lat = label.geometry.coordinates[0][1];
+      raw.push({
+        text: label.properties[stringKey],
+        weight: label.properties[weightKey],
+        point: coord2point(lon, lat),
+        color: colors.label.face,
+        stroke: colors.label.stroke,
+      });
+    };
+    return source.read().then(function retrieve(result) {
+      if (result.done) {
+        return digest();
+      }
+      handleLabel(result.value);
       return source.read().then(retrieve);
     });
   }

@@ -21,7 +21,10 @@ class Polygon {
   }
 
   async update(name, model) {
-    if (this.busy) return;
+    if (this.busy) {
+      console.log("Calling Polygon.update() too frequent.");
+      return;
+    }
     this.busy = true;
     if (name === undefined) {
       console.log("Input undefined.");

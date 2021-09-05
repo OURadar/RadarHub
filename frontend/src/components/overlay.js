@@ -8,7 +8,7 @@
 import { Polygon } from "./polygon";
 import { Text } from "./text";
 import { clamp } from "./common";
-import { vec4, mat4 } from "gl-matrix";
+import { mat4 } from "gl-matrix";
 
 //
 // Manages overlays on the earth
@@ -26,6 +26,8 @@ class Overlay {
 
     this.textEngine = new Text(this.regl);
     this.updatingLabels = false;
+
+    this.tic = 0;
   }
 
   load(colors) {
@@ -88,7 +90,11 @@ class Overlay {
 
     // Now we use the text engine
     this.textEngine
-      .update("@demo", this.geometry.model, this.colors)
+      .update(
+        "/static/blob/shapefiles/World/cities.shp",
+        this.geometry.model,
+        this.colors
+      )
       .then((texture) => {
         this.texture = {
           ...texture,
@@ -123,61 +129,68 @@ class Overlay {
     return this.layers;
   }
 
-  getText() {
-    if (this.texture === undefined) return;
+  async reviseOpacity() {
+    this.busy = true;
+    this.viewprojection = this.geometry.viewprojection;
 
-    if (!mat4.equals(this.viewprojection, this.geometry.viewprojection)) {
-      this.viewprojection = this.geometry.viewprojection;
-
-      let rectangles = [];
-      let visibility = [];
-      let s = 2.0 / this.textEngine.scale;
-      for (let k = 0; k < this.texture.count; k++) {
-        const point = [...this.texture.raw.points[k], 1.0];
-        const spread = this.texture.raw.spreads[k];
-        const t = vec4.transformMat4([], point, this.viewprojection);
+    let rectangles = [];
+    let visibility = [];
+    let s = 2.0 / this.textEngine.scale;
+    for (let k = 0; k < this.texture.count; k++) {
+      const point = this.texture.raw.points[k];
+      const spread = this.texture.raw.spreads[k];
+      const t = transformMat4([], point, this.viewprojection);
+      const x = t[0] / t[3];
+      const y = t[1] / t[3];
+      const z = t[2] / t[3];
+      if (z > 0.98 || x > 0.95 || x < -0.95 || y > 0.95 || y < -0.95) {
+        visibility.push(0);
+        rectangles.push([]);
+      } else {
+        visibility.push(1);
         const p = [
-          (t[0] / t[3]) * this.geometry.viewport.width,
-          (t[1] / t[3]) * this.geometry.viewport.height,
+          x * this.geometry.viewport.width,
+          y * this.geometry.viewport.height,
         ];
         const r = [p[0], p[1], p[0] + spread[0] * s, p[1] + spread[1] * s];
         rectangles.push(r);
-        //if (k == 3) console.log(this.labels[k].text, t[2] / t[3]);
-        if (t[2] / t[3] > 0.984) {
-          visibility.push(0);
-        } else {
-          visibility.push(1);
-        }
       }
-
-      rectangles.forEach((d, k) => {
-        if (k == 0 || visibility[k] == 0) return;
-        let v = 1;
-        for (let j = 0; j < k; j++) {
-          if (visibility[j] && doOverlap(d, rectangles[j])) {
-            v = 0;
-            break;
-          }
-        }
-        return (visibility[k] = v);
-      });
-
-      this.texture.targetOpacity = visibility;
-      // const rect1 = rectangles[3],
-      //   rect2 = rectangles[5];
-      // console.log(
-      //   rect1.map((x) => x.toFixed(1)),
-      //   rect2.map((x) => x.toFixed(1)),
-      //   rect1[2] <= rect2[0],
-      //   rect1[0] >= rect2[2],
-      //   rect1[3] <= rect2[1],
-      //   rect1[1] >= rect2[3]
-      // );
     }
 
-    const tex = this.texture;
-    tex.targetOpacity.forEach((t, k) => {
-      tex.opacity[k] = clamp(tex.opacity[k] + (t ? 0.05 : -0.05), 0, 1);
+    rectangles.forEach((d, k) => {
+      if (k == 0 || visibility[k] == 0) return;
+      let v = 1;
+      for (let j = 0; j < k; j++) {
+        if (visibility[j] && doOverlap(d, rectangles[j])) {
+          v = 0;
+          break;
+        }
+      }
+      visibility[k] = v;
+    });
+    this.texture.targetOpacity = visibility;
+    this.busy = false;
+  }
+
+  getText() {
+    if (this.texture === undefined) return;
+
+    if (
+      !this.busy &&
+      !mat4.equals(this.viewprojection, this.geometry.viewprojection)
+    ) {
+      // const t1 = window.performance.now();
+      if (this.tic++ % 30 == 0) this.reviseOpacity();
+      // const t0 = window.performance.now();
+      // console.log(`${(t0 - t1).toFixed(2)} ms`);
+    }
+
+    this.texture.targetOpacity.forEach((t, k) => {
+      this.texture.opacity[k] = clamp(
+        this.texture.opacity[k] + (t ? 0.05 : -0.05),
+        0,
+        1
+      );
     });
     // console.log(tex.opacity);
 
@@ -205,6 +218,27 @@ function doOverlap(rect1, rect2) {
   )
     return false;
   return true;
+}
+
+/**
+ * Transforms the vec4 with a mat4.
+ * Simplified version where w = 1.0
+ *
+ * @param {vec4} out the receiving vector
+ * @param {ReadonlyVec3} a the vector to transform
+ * @param {ReadonlyMat4} m matrix to transform with
+ * @returns {vec4} out
+ */
+
+function transformMat4(out, a, m) {
+  let x = a[0],
+    y = a[1],
+    z = a[2];
+  out[0] = m[0] * x + m[4] * y + m[8] * z + m[12];
+  out[1] = m[1] * x + m[5] * y + m[9] * z + m[13];
+  out[2] = m[2] * x + m[6] * y + m[10] * z + m[14];
+  out[3] = m[3] * x + m[7] * y + m[11] * z + m[15];
+  return out;
 }
 
 export { Overlay };
