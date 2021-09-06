@@ -131,7 +131,6 @@ class Product extends GLView {
     }
     const text = this.overlay.getText();
     if (text) {
-      // console.log(text.opacity);
       this.gogh({
         projection: gmatrix.viewprojection,
         viewport: gmatrix.viewport,

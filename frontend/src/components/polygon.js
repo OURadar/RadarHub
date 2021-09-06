@@ -54,7 +54,7 @@ class Polygon {
     let x = [];
     if (name.includes("@rings")) {
       const radii = name.split("/").slice(1);
-      const sides = 32;
+      const sides = 64;
       const h = 0.012;
       // Apply the model matrix to make it radar-centric
       radii.forEach((radius) => {

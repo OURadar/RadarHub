@@ -5,9 +5,10 @@
 //  Created by Boonleng Cheong
 //
 
+import Worker from "./overlay.worker.js";
 import { Polygon } from "./polygon";
 import { Text } from "./text";
-import { clamp, rad2deg } from "./common";
+import { clamp } from "./common";
 import { mat4 } from "gl-matrix";
 
 //
@@ -34,8 +35,14 @@ class Overlay {
 
     this.handleMessage = this.handleMessage.bind(this);
 
-    this.worker = new Worker(new URL("./overlay-worker.js", import.meta.url));
+    this.worker = new Worker();
+    // this.worker = new Worker(new URL("./overlay.worker.js", import.meta.url));
+    // this.worker = new Worker(
+    //   "/static/frontend/src_components_overlay-worker_js.js"
+    // );
     this.worker.onmessage = this.handleMessage;
+    this.workerReady = false;
+    console.log(this.worker);
 
     this.tic = 0;
   }
@@ -43,11 +50,12 @@ class Overlay {
   handleMessage(e) {
     if (e.data.type == "opacity") {
       this.texture.targetOpacity = e.data.opacity;
+    } else if (e.data.type == "init") {
+      this.workerReady = true;
     }
   }
 
   load(colors) {
-    console.log(this.worker);
     if (this.updatingPolygons || this.updatingLabels) return;
     const overlays = [
       {
@@ -102,9 +110,10 @@ class Overlay {
     });
   }
 
-  updateLabels() {
+  updateLabels(colors) {
     this.updatingLabels = true;
-
+    this.texture?.opacity.fill(0);
+    if (colors !== undefined) this.colors = colors;
     // Now we use the text engine
     this.textEngine
       .update(
@@ -124,6 +133,7 @@ class Overlay {
           type: "init",
           text: texture.raw,
         });
+        this.viewParameters[2] = 0;
       });
   }
 
@@ -131,7 +141,7 @@ class Overlay {
     if (this.layers === undefined) return;
 
     let t;
-    if (fov < 0.45) {
+    if (fov < 0.43) {
       t = [1, 0, 1, 1];
     } else {
       t = [1, 1, 1, 0];
@@ -148,88 +158,6 @@ class Overlay {
     });
 
     return this.layers;
-  }
-
-  // Viewpoint is always 2R from the center of the sphere
-  // Maximum visible longitude = acos(R / 2R) = 1.047
-  async reviseOpacity() {
-    this.busy = true;
-    this.viewprojection = this.geometry.viewprojection;
-
-    let pass1 = 0;
-    let pass2 = 0;
-    let pass3 = 0;
-    let pass4 = 0;
-    let indices = [];
-    let rectangles = [];
-    let visibility = this.texture.targetOpacity.fill(0);
-    const ar = this.geometry.viewport.width / this.geometry.viewport.height;
-    const theta = 0.5 * this.geometry.fov;
-    const satCoord = this.geometry.satCoordinate;
-    const limitX = Math.min(1.047, 1.6 * theta);
-    const limitY = Math.min(1.047, (1.6 * theta) / ar);
-
-    const t2 = window.performance.now();
-
-    const points = this.texture.raw.points;
-    const extents = this.texture.raw.extents;
-    const viewportWidth = this.geometry.viewport.width;
-    const viewportHeight = this.geometry.viewport.height;
-    const maxWeight = 4.5 + 0.5 / this.geometry.fov;
-    for (let k = 0, l = this.texture.count; k < l; k++) {
-      const coord = this.texture.raw.coords[k];
-      const deltaX = satCoord[0] - coord[0];
-      if (deltaX < -limitX || deltaX > limitX) {
-        pass1++;
-        continue;
-      }
-      const deltaY = satCoord[1] - coord[1];
-      if (deltaY < -limitY || deltaY > limitY) {
-        pass2++;
-        continue;
-      }
-      if (this.texture.raw.weights[k] > maxWeight) {
-        pass3++;
-        continue;
-      }
-
-      visibility[k] = 1;
-      const [w, h] = extents[k];
-      const t = transformMat4([], points[k], this.viewprojection);
-      const x = (t[0] / t[3]) * viewportWidth;
-      const y = (t[1] / t[3]) * viewportHeight;
-      const rect = [x - w, y - h, x + w, y + h];
-      rectangles.push(rect);
-      indices.push(k);
-    }
-
-    const t1 = window.performance.now();
-
-    indices.forEach((i, k) => {
-      const rect = rectangles[k];
-      for (let j = 0; j < k; j++) {
-        const t = indices[j];
-        if (visibility[t] && doOverlap(rect, rectangles[j])) {
-          visibility[i] = 0;
-          pass4++;
-          return;
-        }
-      }
-    });
-
-    const t0 = window.performance.now();
-
-    const v = visibility.reduce((a, x) => a + x);
-    console.log(
-      `${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
-        `  minWeight = ${maxWeight.toFixed(1)}` +
-        `  limitX = ${rad2deg(limitX).toFixed(2)}` +
-        `  limitY = ${rad2deg(limitY).toFixed(2)}` +
-        `  pass1-lon = ${pass1}  pass2-lat = ${pass2}  pass3-pop = ${pass3}  pass4-ovr = ${pass4}` +
-        `  visible = ${indices.length} --> ${v}`
-    );
-
-    this.busy = false;
   }
 
   async reviseOpacityV1() {
@@ -297,7 +225,7 @@ class Overlay {
       // const t1 = window.performance.now();
       if (this.tic++ % 10 == 0) {
         this.viewParameters = viewParameters;
-        // this.reviseOpacity();
+        // this.reviseOpacityV1();
         this.worker.postMessage({
           type: "update",
           geometry: this.geometry,
@@ -362,7 +290,6 @@ function transformMat4(out, a, m) {
     z = a[2];
   out[0] = m[0] * x + m[4] * y + m[8] * z + m[12];
   out[1] = m[1] * x + m[5] * y + m[9] * z + m[13];
-  // out[2] = m[2] * x + m[6] * y + m[10] * z + m[14];
   out[2] = 0.0;
   out[3] = m[3] * x + m[7] * y + m[11] * z + m[15];
   return out;

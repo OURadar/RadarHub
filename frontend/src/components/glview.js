@@ -205,16 +205,16 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    let c = geo.satCoordinate;
-    c[0] -= x * geo.fov * 0.0015;
-    c[1] = common.clamp(
-      c[1] - y * geo.fov * 0.0015,
+    const lon = geo.satCoordinate[0] - x * geo.fov * 0.0015;
+    geo.satCoordinate[1] = common.clamp(
+      geo.satCoordinate[1] - y * geo.fov * 0.0015,
       -0.4999 * Math.PI,
       +0.4999 * Math.PI
     );
     // For continuous longitude transition around +/-180 deg, use a complex representation
-    geo.satI = Math.cos(c[0]);
-    geo.satQ = Math.sin(c[0]);
+    geo.satI = Math.cos(lon);
+    geo.satQ = Math.sin(lon);
+    geo.satCoordinate[0] = Math.atan2(geo.satQ, geo.satI);
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message += ` satI: ${geo.satI.toFixed(3)}`;

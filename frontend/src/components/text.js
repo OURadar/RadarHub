@@ -209,9 +209,9 @@ class Text {
       const x = u + p;
       const y = this.canvas.height - v - q - o;
       context.lineWidth = 4.5 * this.scale;
-      context.strokeStyle = label?.stroke || "#000000";
+      context.strokeStyle = label.stroke || "#000000";
       context.strokeText(label.text, x, y);
-      context.fillStyle = label?.color || "#888888";
+      context.fillStyle = label.color || "#888888";
       context.fillText(label.text, x, y);
       u += ww + 1;
       // console.log(label.text, measure.actualBoundingBoxDescent);
@@ -291,7 +291,7 @@ class Text {
         if (a.weight < b.weight) return -1;
         return 0;
       });
-      raw = raw.slice(-2000);
+      raw = raw.slice(-2500);
       return raw;
     };
 
@@ -302,7 +302,7 @@ class Text {
         weightKey = keys[fields[1]];
         // console.log(`${stringKey}, ${weightKey}`);
       }
-      if (label.properties[weightKey] >= 7) return;
+      // if (label.properties[weightKey] >= 7) return;
       const lon = label.geometry.coordinates[0][0];
       const lat = label.geometry.coordinates[0][1];
       raw.push({
@@ -312,6 +312,7 @@ class Text {
         point: coord2point(lon, lat),
         color: colors.label.face,
         stroke: colors.label.stroke,
+        size: 13 + (7 - label.properties[weightKey]),
       });
     };
 

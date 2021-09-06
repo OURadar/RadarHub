@@ -19,8 +19,29 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
+        test: /\.worker\.js$/i,
         exclude: /node_modules/,
+        use: [
+          {
+            loader: "worker-loader",
+            options: {
+              publicPath: path.resolve(__dirname, "static/frontend"),
+              filename: "[name].js",
+              esModule: false,
+              inline: "fallback",
+            },
+          },
+          {
+            loader: "babel-loader",
+            options: {
+              presets: ["@babel/preset-env"],
+            },
+          },
+        ],
+      },
+      {
+        test: /\.(js|jsx)$/,
+        exclude: [/node_modules/, /\.worker\.js$/],
         use: ["babel-loader"],
       },
     ],
