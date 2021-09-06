@@ -20,6 +20,11 @@ class Overlay {
     this.colors = colors;
     this.geometry = geometry;
     this.viewprojection = mat4.create();
+    this.viewParameters = [
+      1.0,
+      this.geometry.satCoordinate[0],
+      this.geometry.satCoordinate[1],
+    ];
 
     this.polyEngine = new Polygon(this.regl);
     this.updatingPolygons = 0;
@@ -129,99 +134,88 @@ class Overlay {
     return this.layers;
   }
 
-  async reviseOpacity2() {
+  // Viewpoint is always 2R from the center of the sphere
+  // Maximum visible longitude = acos(R / 2R) = 1.047
+  async reviseOpacity() {
     this.busy = true;
     this.viewprojection = this.geometry.viewprojection;
 
-    let first = 0;
-    let second = 0;
+    let pass1 = 0;
+    let pass2 = 0;
+    let pass3 = 0;
     let indices = [];
     let rectangles = [];
     let visibility = this.texture.targetOpacity.fill(0);
-    const s = 1.0 / this.textEngine.scale;
     const ar = this.geometry.viewport.width / this.geometry.viewport.height;
-    const fov = this.geometry.fov;
+    const theta = 0.5 * this.geometry.fov;
     const satCoord = this.geometry.satCoordinate;
-    const limitX = Math.min(1.0, 1.3 * Math.tan(fov));
-    const limitY = Math.min(1.0, 1.3 * Math.tan(fov / ar));
-    for (let k = 0; k < this.texture.count; k++) {
+    const limitX = Math.min(1.047, 1.6 * theta);
+    const limitY = Math.min(1.047, (1.6 * theta) / ar);
+
+    const t2 = window.performance.now();
+
+    const points = this.texture.raw.points;
+    const extents = this.texture.raw.extents;
+    const viewportWidth = this.geometry.viewport.width;
+    const viewportHeight = this.geometry.viewport.height;
+    for (let k = 0, l = this.texture.count; k < l; k++) {
       const coord = this.texture.raw.coords[k];
       const deltaX = satCoord[0] - coord[0];
       if (deltaX < -limitX || deltaX > limitX) {
-        first++;
+        pass1++;
         continue;
       }
       const deltaY = satCoord[1] - coord[1];
       if (deltaY < -limitY || deltaY > limitY) {
-        second++;
+        pass2++;
         continue;
       }
 
-      const point = this.texture.raw.points[k];
-      const t = transformMat4([], point, this.viewprojection);
-      const x = t[0] / t[3];
-      const y = t[1] / t[3];
-      const p = [
-        x * this.geometry.viewport.width,
-        y * this.geometry.viewport.height,
-      ];
-      const spread = this.texture.raw.spreads[k];
-      const rect = [
-        p[0] - spread[0] * s,
-        p[1] - spread[1] * s,
-        p[0] + spread[0] * s,
-        p[1] + spread[1] * s,
-      ];
+      visibility[k] = 1;
+      const [w, h] = extents[k];
+      const t = transformMat4([], points[k], this.viewprojection);
+      const x = (t[0] / t[3]) * viewportWidth;
+      const y = (t[1] / t[3]) * viewportHeight;
+      const rect = [x - w, y - h, x + w, y + h];
       rectangles.push(rect);
       indices.push(k);
-      visibility[k] = 1;
     }
 
+    const t1 = window.performance.now();
+
     indices.forEach((i, k) => {
-      if (k == 0 || visibility[i] == 0) return;
       const rect = rectangles[k];
       for (let j = 0; j < k; j++) {
         const t = indices[j];
         if (visibility[t] && doOverlap(rect, rectangles[j])) {
           visibility[i] = 0;
+          pass3++;
           return;
         }
       }
     });
 
+    const t0 = window.performance.now();
+
     const v = visibility.reduce((a, x) => a + x);
     console.log(
-      `limitX = ${rad2deg(limitX).toFixed(2)}` +
+      `${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
+        `  limitX = ${rad2deg(limitX).toFixed(2)}` +
         `  limitY = ${rad2deg(limitY).toFixed(2)}` +
-        `  first = ${first}  second = ${second}` +
+        `  pass1 = ${pass1}  pass2 = ${pass2}  pass3 = ${pass3}` +
         `  visible = ${indices.length} --> ${v}`
     );
-
-    // for (let k = 1; k < indices.length; k++) {
-    //   const i = indices[k];
-    //   if (visibility[i] == 0) continue;
-    //   const rect = rectangles[k];
-    //   const v = 1;
-    //   for (let j = 0; j < k; j++) {
-    //     const t = indices[j];
-    //     if (visibility[t] && doOverlap(rect, rectangles[j])) {
-    //       v = 0;
-    //       break;
-    //     }
-    //   }
-    //   visibility[i] = v;
-    // }
 
     this.busy = false;
   }
 
-  async reviseOpacity() {
+  async reviseOpacityV1() {
     this.busy = true;
     this.viewprojection = this.geometry.viewprojection;
 
     let rectangles = [];
     let visibility = [];
-    let s = 2.0 / this.textEngine.scale;
+    let s = 1.0 / this.textEngine.scale;
     for (let k = 0; k < this.texture.count; k++) {
       const point = this.texture.raw.points[k];
       const spread = this.texture.raw.spreads[k];
@@ -238,7 +232,12 @@ class Overlay {
           x * this.geometry.viewport.width,
           y * this.geometry.viewport.height,
         ];
-        const r = [p[0], p[1], p[0] + spread[0] * s, p[1] + spread[1] * s];
+        const r = [
+          p[0] - spread[0] * s,
+          p[1] - spread[1] * s,
+          p[0] + spread[0] * s,
+          p[1] + spread[1] * s,
+        ];
         rectangles.push(r);
       }
     }
@@ -261,23 +260,32 @@ class Overlay {
   getText() {
     if (this.texture === undefined) return;
 
+    const viewParameters = [
+      this.geometry.fov,
+      this.geometry.satCoordinate[0],
+      this.geometry.satCoordinate[1],
+    ];
+
     if (
-      !this.busy &&
-      !mat4.equals(this.viewprojection, this.geometry.viewprojection)
+      Math.abs(this.viewParameters[0] - viewParameters[0]) > 0.02 ||
+      Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.02 ||
+      Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.02
     ) {
       // const t1 = window.performance.now();
-      if (this.tic++ % 30 == 0) this.reviseOpacity2();
+      if (this.tic++ % 10 == 0) {
+        this.viewParameters = viewParameters;
+        this.reviseOpacity();
+      }
       // const t0 = window.performance.now();
       // console.log(`${(t0 - t1).toFixed(2)} ms`);
     }
 
-    for (let k = 0; k < this.texture.opacity.length; k++) {
+    for (let k = 0, l = this.texture.opacity.length; k < l; k++) {
       let o =
         this.texture.opacity[k] +
         (this.texture.targetOpacity[k] ? 0.05 : -0.05);
       if (o > 1.0) o = 1.0;
-      else if (o < 0.0) o = 0.0;
-      this.texture.opacity[k] = o;
+      this.texture.opacity[k] = o < 0.0 ? 0.0 : o;
     }
     // console.log(tex.opacity);
 
@@ -315,7 +323,7 @@ function doOverlap(rect1, rect2) {
 
 /**
  * Transforms the vec4 with a mat4.
- * Simplified version where w = 1.0
+ * Simplified version where w = 1.0 and z is not calculated
  *
  * @param {vec4} out the receiving vector
  * @param {ReadonlyVec3} a the vector to transform
@@ -328,7 +336,8 @@ function transformMat4(out, a, m) {
     z = a[2];
   out[0] = m[0] * x + m[4] * y + m[8] * z + m[12];
   out[1] = m[1] * x + m[5] * y + m[9] * z + m[13];
-  out[2] = m[2] * x + m[6] * y + m[10] * z + m[14];
+  // out[2] = m[2] * x + m[6] * y + m[10] * z + m[14];
+  out[2] = 0.0;
   out[3] = m[3] * x + m[7] * y + m[11] * z + m[15];
   return out;
 }

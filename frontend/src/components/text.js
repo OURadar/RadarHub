@@ -246,6 +246,7 @@ class Text {
         points: points,
         origins: origins,
         spreads: spreads,
+        extents: spreads.map((x) => [x[0] / this.scale, x[1] / this.scale]),
       },
       count: points.length,
     };
