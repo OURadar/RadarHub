@@ -32,6 +32,8 @@ class Overlay {
     this.textEngine = new Text(this.regl);
     this.updatingLabels = false;
 
+    this.handleMessage = this.handleMessage.bind(this);
+
     this.worker = new Worker(new URL("./overlay-worker.js", import.meta.url));
     this.worker.onmessage = this.handleMessage;
 
@@ -39,15 +41,13 @@ class Overlay {
   }
 
   handleMessage(e) {
-    console.log("from overlay-worker", e.data);
+    if (e.data.type == "opacity") {
+      this.texture.targetOpacity = e.data.opacity;
+    }
   }
 
   load(colors) {
     console.log(this.worker);
-    this.worker.postMessage({
-      type: "init",
-      geometry: this.geometry,
-    });
     if (this.updatingPolygons || this.updatingLabels) return;
     const overlays = [
       {
@@ -120,6 +120,10 @@ class Overlay {
         };
         this.viewprojection = mat4.create();
         this.updatingLabels = false;
+        this.worker.postMessage({
+          type: "init",
+          text: texture.raw,
+        });
       });
   }
 
@@ -293,7 +297,11 @@ class Overlay {
       // const t1 = window.performance.now();
       if (this.tic++ % 10 == 0) {
         this.viewParameters = viewParameters;
-        this.reviseOpacity();
+        // this.reviseOpacity();
+        this.worker.postMessage({
+          type: "update",
+          geometry: this.geometry,
+        });
       }
       // const t0 = window.performance.now();
       // console.log(`${(t0 - t1).toFixed(2)} ms`);
@@ -306,7 +314,6 @@ class Overlay {
       if (o > 1.0) o = 1.0;
       this.texture.opacity[k] = o < 0.0 ? 0.0 : o;
     }
-    // console.log(tex.opacity);
 
     return this.texture;
   }
