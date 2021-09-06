@@ -24,85 +24,6 @@ onmessage = (e) => {
   }
 };
 
-// Viewpoint is always 2R from the center of the sphere
-// Maximum visible longitude = acos(R / 2R) = 1.047
-function reviseOpacity(geometry) {
-  let pass1 = 0;
-  let pass2 = 0;
-  let pass3 = 0;
-  let pass4 = 0;
-  let indices = [];
-  let rectangles = [];
-  let visibility = new Array(text.points.length).fill(0);
-  const ar = geometry.viewport.width / geometry.viewport.height;
-  const theta = 0.5 * geometry.fov;
-  const satCoord = geometry.satCoordinate;
-  const limitX = Math.min(1.047, 1.6 * theta);
-  const limitY = Math.min(1.047, (1.6 * theta) / ar);
-
-  const t2 = new Date().getTime();
-
-  const points = text.points;
-  const extents = text.extents;
-  const viewportWidth = geometry.viewport.width;
-  const viewportHeight = geometry.viewport.height;
-  const maxWeight = 4.5 + 0.5 / geometry.fov;
-  for (let k = 0, l = text.points.length; k < l; k++) {
-    const coord = text.coords[k];
-    const deltaX = satCoord[0] - coord[0];
-    if (deltaX < -limitX || deltaX > limitX) {
-      pass1++;
-      continue;
-    }
-    const deltaY = satCoord[1] - coord[1];
-    if (deltaY < -limitY || deltaY > limitY) {
-      pass2++;
-      continue;
-    }
-    if (text.weights[k] > maxWeight) {
-      pass3++;
-      continue;
-    }
-
-    visibility[k] = 1;
-    const [w, h] = extents[k];
-    const t = transformMat4([], points[k], geometry.viewprojection);
-    const x = (t[0] / t[3]) * viewportWidth;
-    const y = (t[1] / t[3]) * viewportHeight;
-    const rect = [x - w, y - h, x + w, y + h];
-    rectangles.push(rect);
-    indices.push(k);
-  }
-
-  const t1 = new Date().getTime();
-
-  indices.forEach((i, k) => {
-    const rect = rectangles[k];
-    for (let j = 0; j < k; j++) {
-      const t = indices[j];
-      if (visibility[t] && doOverlap(rect, rectangles[j])) {
-        visibility[i] = 0;
-        pass4++;
-        return;
-      }
-    }
-  });
-
-  const t0 = new Date().getTime();
-
-  const v = visibility.reduce((a, x) => a + x);
-  console.log(
-    `${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
-      `  minWeight = ${maxWeight.toFixed(1)}` +
-      `  limitX = ${rad2deg(limitX).toFixed(2)}` +
-      `  limitY = ${rad2deg(limitY).toFixed(2)}` +
-      `  pass1-lon = ${pass1}  pass2-lat = ${pass2}  pass3-pop = ${pass3}  pass4-ovr = ${pass4}` +
-      `  visible = ${indices.length} --> ${v}`
-  );
-
-  return visibility;
-}
-
 /**
  * Determines if two retangles overlap
  *
@@ -152,6 +73,95 @@ function transformMat4(out, a, m) {
   return out;
 }
 
+/**
+ * Convert an angle from radian to degree
+ *
+ * @param {x} x the input angle in radians
+ * @returns angle in degrees
+ */
 function rad2deg(x) {
   return (x / Math.PI) * 180.0;
+}
+
+/**
+ * Returns the angle between two vectors
+ *
+ * @param {*} a input vector 1
+ * @param {*} b input vector 2
+ * @returns angle between vector a and b
+ */
+function dotAngle(a, b) {
+  const m = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+  const n = Math.sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
+  const dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  return Math.acos(dot / m / n);
+}
+
+// Viewpoint is always 2R from the center of the sphere
+// Maximum visible longitude = acos(R / 2R) = 1.047
+function reviseOpacity(geometry) {
+  let pass1 = 0;
+  let pass2 = 0;
+  let pass3 = 0;
+  let indices = [];
+  let rectangles = [];
+  let visibility = new Array(text.points.length).fill(0);
+
+  const t2 = new Date().getTime();
+
+  const points = text.points;
+  const extents = text.extents;
+  const viewportWidth = geometry.viewport.width;
+  const viewportHeight = geometry.viewport.height;
+  const maxWeight = 4.5 + 0.5 / geometry.fov;
+  for (let k = 0, l = text.points.length; k < l; k++) {
+    const theta = dotAngle(geometry.satPosition, points[k]);
+    if (theta > 1.04) {
+      pass1++;
+      continue;
+    }
+    if (text.weights[k] > maxWeight) {
+      pass2++;
+      continue;
+    }
+
+    visibility[k] = 1;
+    const [w, h] = extents[k];
+    const t = transformMat4([], points[k], geometry.viewprojection);
+    const x = (t[0] / t[3]) * viewportWidth;
+    const y = (t[1] / t[3]) * viewportHeight;
+    const rect = [x - w, y - h, x + w, y + h];
+    rectangles.push(rect);
+    indices.push(k);
+  }
+
+  const t1 = new Date().getTime();
+
+  indices.forEach((i, k) => {
+    const rect = rectangles[k];
+    for (let j = 0; j < k; j++) {
+      const t = indices[j];
+      if (visibility[t] && doOverlap(rect, rectangles[j])) {
+        visibility[i] = 0;
+        pass3++;
+        return;
+      }
+    }
+  });
+
+  const t0 = new Date().getTime();
+
+  const v = visibility.reduce((a, x) => a + x);
+  console.log(
+    `%c${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
+      `  %cminWeight = ${maxWeight.toFixed(1)}` +
+      `  %cpass1-dot = ${pass1}  pass2-pop = ${pass2}  pass3-ovr = ${pass3}` +
+      `  %cvisible = ${indices.length} --> ${v}`,
+    "color: blue",
+    "font-weight: bold",
+    "font-weight: normal",
+    "color: green, font-weight: bold"
+  );
+
+  return visibility;
 }
