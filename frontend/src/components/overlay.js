@@ -32,10 +32,22 @@ class Overlay {
     this.textEngine = new Text(this.regl);
     this.updatingLabels = false;
 
+    this.worker = new Worker(new URL("./overlay-worker.js", import.meta.url));
+    this.worker.onmessage = this.handleMessage;
+
     this.tic = 0;
   }
 
+  handleMessage(e) {
+    console.log("from overlay-worker", e.data);
+  }
+
   load(colors) {
+    console.log(this.worker);
+    this.worker.postMessage({
+      type: "init",
+      geometry: this.geometry,
+    });
     if (this.updatingPolygons || this.updatingLabels) return;
     const overlays = [
       {
@@ -143,6 +155,7 @@ class Overlay {
     let pass1 = 0;
     let pass2 = 0;
     let pass3 = 0;
+    let pass4 = 0;
     let indices = [];
     let rectangles = [];
     let visibility = this.texture.targetOpacity.fill(0);
@@ -158,6 +171,7 @@ class Overlay {
     const extents = this.texture.raw.extents;
     const viewportWidth = this.geometry.viewport.width;
     const viewportHeight = this.geometry.viewport.height;
+    const maxWeight = 4.5 + 0.5 / this.geometry.fov;
     for (let k = 0, l = this.texture.count; k < l; k++) {
       const coord = this.texture.raw.coords[k];
       const deltaX = satCoord[0] - coord[0];
@@ -168,6 +182,10 @@ class Overlay {
       const deltaY = satCoord[1] - coord[1];
       if (deltaY < -limitY || deltaY > limitY) {
         pass2++;
+        continue;
+      }
+      if (this.texture.raw.weights[k] > maxWeight) {
+        pass3++;
         continue;
       }
 
@@ -189,7 +207,7 @@ class Overlay {
         const t = indices[j];
         if (visibility[t] && doOverlap(rect, rectangles[j])) {
           visibility[i] = 0;
-          pass3++;
+          pass4++;
           return;
         }
       }
@@ -200,9 +218,10 @@ class Overlay {
     const v = visibility.reduce((a, x) => a + x);
     console.log(
       `${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
+        `  minWeight = ${maxWeight.toFixed(1)}` +
         `  limitX = ${rad2deg(limitX).toFixed(2)}` +
         `  limitY = ${rad2deg(limitY).toFixed(2)}` +
-        `  pass1 = ${pass1}  pass2 = ${pass2}  pass3 = ${pass3}` +
+        `  pass1-lon = ${pass1}  pass2-lat = ${pass2}  pass3-pop = ${pass3}  pass4-ovr = ${pass4}` +
         `  visible = ${indices.length} --> ${v}`
     );
 

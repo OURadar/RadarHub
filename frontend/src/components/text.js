@@ -171,6 +171,7 @@ class Text {
     let v = 0.5;
     let coords = [];
     let points = [];
+    let weights = [];
     let origins = [];
     let spreads = [];
     labels.forEach((label) => {
@@ -194,6 +195,7 @@ class Text {
       }
       coords.push(label.coord);
       points.push(label.point);
+      weights.push(label.weight);
       origins.push([u - 0.5, v - 0.5]);
       spreads.push([ww + 1, hh + 1]);
       if (this.debug) {
@@ -244,6 +246,7 @@ class Text {
       raw: {
         coords: coords,
         points: points,
+        weights: weights,
         origins: origins,
         spreads: spreads,
         extents: spreads.map((x) => [x[0] / this.scale, x[1] / this.scale]),
@@ -284,11 +287,10 @@ class Text {
 
     const digest = () => {
       raw.sort((a, b) => {
-        if (a.weight < b.weight) return +1;
-        if (a.weight > b.weight) return -1;
+        if (a.weight > b.weight) return +1;
+        if (a.weight < b.weight) return -1;
         return 0;
       });
-      // console.log(`raw has ${raw.length.toLocaleString()} elements`);
       raw = raw.slice(-2000);
       return raw;
     };
@@ -298,8 +300,9 @@ class Text {
         const keys = Object.keys(label.properties);
         stringKey = keys[fields[0]];
         weightKey = keys[fields[1]];
-        console.log(`${stringKey}, ${weightKey}`);
+        // console.log(`${stringKey}, ${weightKey}`);
       }
+      if (label.properties[weightKey] >= 7) return;
       const lon = label.geometry.coordinates[0][0];
       const lat = label.geometry.coordinates[0][1];
       raw.push({
