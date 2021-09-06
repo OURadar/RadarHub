@@ -108,7 +108,7 @@ class Product extends GLView {
       viewport: gmatrix.viewport,
       color: this.props.colors.grid,
     });
-    const layers = this.overlay.getDrawables(gmatrix.fov);
+    const layers = this.overlay.getDrawables(gmatrix);
     if (layers) {
       let o = [];
       layers.forEach((overlay) => {

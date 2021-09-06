@@ -38,8 +38,8 @@ class Text {
     this.scale = 1.5;
     this.debug = debug;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 4096;
-    this.canvas.height = 4096;
+    this.canvas.width = Math.ceil(3200 / 64) * 64;
+    this.canvas.height = this.canvas.width;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
@@ -312,7 +312,7 @@ class Text {
         point: coord2point(lon, lat),
         color: colors.label.face,
         stroke: colors.label.stroke,
-        size: 13 + (7 - label.properties[weightKey]),
+        size: 12 + (7 - label.properties[weightKey]),
       });
     };
 

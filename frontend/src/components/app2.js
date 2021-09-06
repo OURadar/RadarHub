@@ -25,7 +25,7 @@ class App2 extends Component {
   }
   static defaultProps = {
     radar: "demo",
-    debug: true,
+    debug: false,
     profileGL: false,
   };
 
@@ -54,6 +54,7 @@ class App2 extends Component {
         <Product
           colors={this.state.colors}
           debug={this.props.debug}
+          showStats={true}
           profileGL={this.props.profileGL}
         />
       </ThemeProvider>

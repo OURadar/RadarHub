@@ -18,19 +18,29 @@ module.exports = {
   },
   module: {
     rules: [
+      // {
+      //   test: /\.worker\.js$/,
+      //   use: [
+      //     {
+      //       loader: "worker-loader",
+      //       options: {
+      //         publicPath: path.resolve(__dirname, "static/frontend"),
+      //         filename: "[name].js",
+      //         inline: "no-fallback",
+      //       },
+      //     },
+      //     {
+      //       loader: "babel-loader",
+      //       options: {
+      //         presets: ["@babel/preset-env"],
+      //       },
+      //     },
+      //   ],
+      // },
       {
-        test: /\.worker\.js$/i,
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: [
-          {
-            loader: "worker-loader",
-            options: {
-              publicPath: path.resolve(__dirname, "static/frontend"),
-              filename: "[name].js",
-              esModule: false,
-              inline: "fallback",
-            },
-          },
           {
             loader: "babel-loader",
             options: {
@@ -38,11 +48,6 @@ module.exports = {
             },
           },
         ],
-      },
-      {
-        test: /\.(js|jsx)$/,
-        exclude: [/node_modules/, /\.worker\.js$/],
-        use: ["babel-loader"],
       },
     ],
   },

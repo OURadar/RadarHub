@@ -5,7 +5,6 @@
 //  Created by Boonleng Cheong
 //
 
-import Worker from "./overlay.worker.js";
 import { Polygon } from "./polygon";
 import { Text } from "./text";
 import { clamp } from "./common";
@@ -35,23 +34,19 @@ class Overlay {
 
     this.handleMessage = this.handleMessage.bind(this);
 
-    this.worker = new Worker();
-    // this.worker = new Worker(new URL("./overlay.worker.js", import.meta.url));
-    // this.worker = new Worker(
-    //   "/static/frontend/src_components_overlay-worker_js.js"
-    // );
+    const url = new URL("./overlay.worker.js", import.meta.url);
+    this.worker = new Worker(url);
     this.worker.onmessage = this.handleMessage;
     this.workerReady = false;
-    console.log(this.worker);
 
     this.tic = 0;
   }
 
-  handleMessage(e) {
-    if (e.data.type == "opacity") {
-      this.texture.targetOpacity = e.data.opacity;
-    } else if (e.data.type == "init") {
-      this.workerReady = true;
+  handleMessage({ data: { type, payload } }) {
+    if (type == "opacity") {
+      this.texture.targetOpacity = payload;
+    } else if (type == "init") {
+      if (payload == "ready") this.workerReady = true;
     }
   }
 
@@ -131,17 +126,21 @@ class Overlay {
         this.updatingLabels = false;
         this.worker.postMessage({
           type: "init",
-          text: texture.raw,
+          payload: texture.raw,
         });
         this.viewParameters[2] = 0;
       });
   }
 
-  getDrawables(fov) {
+  getDrawables(geometry) {
     if (this.layers === undefined) return;
 
+    // Overlays are rings, countries, states, counties
+    const dx = geometry.satCoordinate[0] + 1.75;
+    const dy = geometry.satCoordinate[1] - 0.72;
+    const d = Math.sqrt(dx * dx + dy * dy);
     let t;
-    if (fov < 0.43) {
+    if (geometry.fov < 0.43 && d < 0.25) {
       t = [1, 0, 1, 1];
     } else {
       t = [1, 1, 1, 0];
@@ -154,7 +153,7 @@ class Overlay {
       let targetOpacity = 1.0;
       if (c < 3 || t[i] == 0) targetOpacity = t[i];
       o.opacity = clamp(o.opacity + (targetOpacity ? 0.05 : -0.05), 0, 1);
-      o.linewidth = clamp(o.weight / Math.sqrt(fov), ...o.limits);
+      o.linewidth = clamp(o.weight / Math.sqrt(geometry.fov), ...o.limits);
     });
 
     return this.layers;
@@ -228,7 +227,7 @@ class Overlay {
         // this.reviseOpacityV1();
         this.worker.postMessage({
           type: "update",
-          geometry: this.geometry,
+          payload: this.geometry,
         });
       }
       // const t0 = window.performance.now();

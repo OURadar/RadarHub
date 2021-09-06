@@ -5,20 +5,29 @@
 //  Created by Boonleng Cheong
 //
 
-let text;
+let text = {
+  coords: [[]],
+  extends: [[]],
+  origins: [[]],
+  points: [[]],
+  spreads: [[]],
+  weights: [],
+};
 
-onmessage = (e) => {
-  if (e.data.type == "init") {
-    text = e.data.text;
+self.onmessage = ({ data: { type, payload } }) => {
+  self.postMessage({ type: "init" });
+  if (type == "init") {
+    text = payload;
     self.postMessage({
-      reply: "init",
+      type: "init",
+      payload: "ready",
     });
-  } else if (e.data.type == "update") {
-    if (text === undefined) return;
-    const opacity = reviseOpacity(e.data.geometry);
+  } else if (type == "update") {
+    if (text.coords.length == 0) return;
+    const opacity = reviseOpacity(payload);
     self.postMessage({
       type: "opacity",
-      opacity: opacity,
+      payload: opacity,
     });
   }
 };
@@ -105,15 +114,13 @@ function reviseOpacity(geometry) {
   let rectangles = [];
   let visibility = new Array(text.points.length).fill(0);
 
-  const t2 = new Date().getTime();
+  const t2 = Date.now();
 
-  const points = text.points;
-  const extents = text.extents;
   const viewportWidth = geometry.viewport.width;
   const viewportHeight = geometry.viewport.height;
   const maxWeight = 4.5 + 0.5 / geometry.fov;
   for (let k = 0, l = text.points.length; k < l; k++) {
-    if (dotAngle(geometry.satPosition, points[k]) > 0.9) {
+    if (dotAngle(geometry.satPosition, text.points[k]) > 0.9) {
       pass1++;
       continue;
     }
@@ -124,8 +131,9 @@ function reviseOpacity(geometry) {
     }
 
     visibility[k] = 1;
-    const [w, h] = extents[k];
-    const t = transformMat4([], points[k], geometry.viewprojection);
+    const w = text.extents[k][0];
+    const h = text.extents[k][1];
+    const t = transformMat4([], text.points[k], geometry.viewprojection);
     const x = (t[0] / t[3]) * viewportWidth;
     const y = (t[1] / t[3]) * viewportHeight;
     const rect = [x - w, y - h, x + w, y + h];
@@ -133,7 +141,7 @@ function reviseOpacity(geometry) {
     indices.push(k);
   }
 
-  const t1 = new Date().getTime();
+  const t1 = Date.now();
 
   indices.forEach((i, k) => {
     const rect = rectangles[k];
@@ -147,7 +155,7 @@ function reviseOpacity(geometry) {
     }
   });
 
-  const t0 = new Date().getTime();
+  const t0 = Date.now();
 
   const v = visibility.reduce((a, x) => a + x);
   console.log(
