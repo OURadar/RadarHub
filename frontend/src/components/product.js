@@ -113,16 +113,10 @@ class Product extends GLView {
       let o = [];
       layers.forEach((overlay) => {
         if (overlay.opacity > 0.05) {
-          const quad = [
-            overlay.color[3] > 0 && gmatrix.fov < 0.25,
-            this.props.colors.tint,
-            0,
-            overlay.opacity,
-          ];
           o.push({
             width: overlay.linewidth,
             color: overlay.color,
-            quad: quad,
+            quad: overlay.quad,
             view: gmatrix.view,
             projection: gmatrix.projection,
             viewport: gmatrix.viewport,

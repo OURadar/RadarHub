@@ -101,6 +101,7 @@ class Overlay {
               weight: overlay.weight,
               linewidth: 1.0,
               opacity: 0.0,
+              quad: [0, this.colors.tint, 0, 0],
             };
             this.updatingPolygons--;
             if (this.updatingPolygons == 0) {
@@ -188,17 +189,19 @@ class Overlay {
   getDrawables(geometry) {
     if (this.layers === undefined) return;
 
-    // Overlays are rings, countries, states, counties
+    // Compute deviation from the USA
     const dx = geometry.satCoordinate[0] + 1.75;
     const dy = geometry.satCoordinate[1] - 0.72;
     const d = Math.sqrt(dx * dx + dy * dy);
     let t;
     if (geometry.fov < 0.43 && d < 0.25) {
+      // Overlays are rings, countries, states, counties
       t = [1, 0, 1, 1];
     } else {
       t = [1, 1, 1, 0];
     }
 
+    // Quickly go through all overlays to count the visible layers
     let c = 0;
     this.layers.forEach((o) => (c += o.opacity > 0.05));
 
@@ -207,6 +210,8 @@ class Overlay {
       if (c < 3 || t[i] == 0) targetOpacity = t[i];
       o.opacity = clamp(o.opacity + (targetOpacity ? 0.05 : -0.05), 0, 1);
       o.linewidth = clamp(o.weight / Math.sqrt(geometry.fov), ...o.limits);
+      o.quad[0] = 1.0 * (o.color[3] > 0 && geometry.fov < 0.25);
+      o.quad[3] = o.opacity;
     });
 
     return this.layers;
