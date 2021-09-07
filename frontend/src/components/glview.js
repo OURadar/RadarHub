@@ -230,24 +230,7 @@ class GLView extends Component {
 
   tap(x, y) {}
 
-  taptap(x, y) {
-    console.log(
-      `taptap: ${x} / ${0.8 * this.canvas.width} : ${y} / ${
-        0.8 * this.canvas.width
-      }`
-    );
-    if (x > 0.8 * this.canvas.width && y < 0.2 * this.canvas.height) {
-      console.log("toggle spin");
-      return this.setState((state) => {
-        return {
-          spin: !state.spin,
-        };
-      });
-    } else {
-      console.log(`fit to data ${this.state.spin}`);
-      this.fitToData();
-    }
-  }
+  taptap(x, y) {}
 
   magnify(_mx, _my, m, _x, _y) {
     const geo = this.geometry;

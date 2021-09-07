@@ -155,6 +155,19 @@ class Product extends GLView {
       spin: false,
     });
   }
+
+  taptap(x, y) {
+    // console.log(
+    //   `taptap: ${x} / ${0.8 * this.canvas.width} : ${y} / ${
+    //     0.8 * this.canvas.width
+    //   }`
+    // );
+    if (x > 0.8 * this.canvas.width && y < 0.2 * this.canvas.height) {
+      return this.toggleSpin();
+    } else {
+      this.fitToData();
+    }
+  }
 }
 
 export { Product };
