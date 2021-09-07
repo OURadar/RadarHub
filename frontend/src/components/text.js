@@ -1,5 +1,5 @@
 //
-//  text-engine.js
+//  text.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong on 9/1/2021.
@@ -9,27 +9,10 @@ import { coord2point, polar2coord, polar2point, deg2rad } from "./common";
 
 //
 //  Initialize as:
-//  obj = TextMap3D(regl)
+//  obj = Text()
 //
 //  Update as:
-//  obj.update(text, callback)
-//
-//  where
-//
-//  label = [{
-//    text: string,
-//    point: [x, y, z],
-//    color: '#800000',
-//    font: string
-//  }, {
-//    text: string,
-//    point: [x, y, z],
-//    color: '#800000',
-//    font: string
-//  }, ...];
-//
-//
-//  NOTE: slices and attributes must have the same length
+//  buffer = obj.update(files, model, colors)
 //
 
 class Text {
@@ -285,15 +268,12 @@ class Text {
       count: points.length,
     };
 
+    const bytes_per_float = 4;
     const width = this.canvas.width;
     const height = this.canvas.height;
     const cString = buffer.count.toLocaleString();
-    const xString = (buffer.count * 7).toLocaleString();
-    const mString = (
-      buffer.count *
-      7 *
-      Float32Array.BYTES_PER_ELEMENT
-    ).toLocaleString();
+    const xString = (buffer.count * 11).toLocaleString();
+    const mString = (buffer.count * 11 * bytes_per_float).toLocaleString();
     const wString = `${width.toLocaleString()} x ${height.toLocaleString()}`;
     const vString = (width * height * 4).toLocaleString();
     console.log(

@@ -16,7 +16,6 @@ class Gesture {
           bottom: 0,
           left: 0,
         };
-    this.startD = 0;
     this.pointX = 0;
     this.pointY = 0;
     this.pointD = 0;
@@ -152,7 +151,7 @@ class Gesture {
         this.handleMagnify(
           delta2scale(0.3 * (this.pointU - u)),
           delta2scale(0.3 * (this.pointV - v)),
-          d / this.pointD,
+          d > 0 ? d / this.pointD : 1,
           x,
           y
         );
@@ -224,7 +223,7 @@ function positionAndDistanceFromTouches(touches) {
     y = touches[0].clientY;
     u = 0;
     v = 0;
-    d = this.pointD;
+    d = 0;
   }
   return [x, y, u, v, d];
 }

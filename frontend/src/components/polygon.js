@@ -1,14 +1,15 @@
+//
+//  polygon.js
+//  RadarHub
+//
+//  Created by Boonleng Cheong
+//
+
 import { vec3 } from "gl-matrix";
 import { deg2rad } from "./common";
 
-//
-// regl - the shared regl object attached to a canvas
-// file - the file containing the points
-// geometry - geometry dictionary of projection matrices
-//
 class Polygon {
-  constructor(regl) {
-    this.regl = regl;
+  constructor() {
     this.points = [];
     this.count = 0;
     this.busy = false;
@@ -77,11 +78,7 @@ class Polygon {
     const name = file.includes("@") ? file : file.split("/").pop();
     const buffer = {
       name: name,
-      points: this.regl.buffer({
-        usage: "static",
-        type: "float",
-        data: x,
-      }),
+      data: x,
       count: x.length / 6,
     };
     const bytes = x.length * Float32Array.BYTES_PER_ELEMENT;

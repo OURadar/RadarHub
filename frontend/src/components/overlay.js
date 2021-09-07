@@ -26,7 +26,7 @@ class Overlay {
       this.geometry.satCoordinate[1],
     ];
 
-    this.polyEngine = new Polygon(this.regl);
+    this.polyEngine = new Polygon();
     this.updatingPolygons = 0;
 
     this.textEngine = new Text();
@@ -50,29 +50,29 @@ class Overlay {
     }
   }
 
-  load(colors) {
+  async load(colors) {
     if (this.updatingPolygons || this.updatingLabels) return;
     const overlays = [
       {
-        name: "@rings/1/60/120/250",
+        file: "@rings/1/60/120/250",
         color: [0.5, 0.5, 0.5, 1.0],
         limits: [1.5, 3.0],
         weight: 1.0,
       },
       {
-        name: "/static/blob/countries-50m.json",
+        file: "/static/blob/countries-50m.json",
         color: [0.5, 0.5, 0.5, 1.0],
         limits: [1.3, 3.0],
         weight: 1.7,
       },
       {
-        name: "/static/blob/states-10m.json",
+        file: "/static/blob/states-10m.json",
         color: [0.5, 0.5, 0.5, 1.0],
         limits: [1.3, 3.0],
         weight: 0.9,
       },
       {
-        name: "/static/blob/counties-10m.json",
+        file: "/static/blob/counties-10m.json",
         color: [0.5, 0.5, 0.5, 1.0],
         limits: [0.5, 2.0],
         weight: 0.4,
@@ -85,15 +85,21 @@ class Overlay {
     overlays.forEach((overlay, k) => {
       setTimeout(() => {
         this.polyEngine
-          .update(overlay.name, this.geometry.model)
+          .update(overlay.file, this.geometry.model)
           .then((buffer) => {
             this.layers[k] = {
-              ...buffer,
+              name: buffer.name,
+              points: this.regl.buffer({
+                usage: "static",
+                type: "float",
+                data: buffer.data,
+              }),
+              count: buffer.count,
               color: overlay.color,
-              linewidth: 1.0,
-              opacity: 0.0,
               limits: overlay.limits,
               weight: overlay.weight,
+              linewidth: 1.0,
+              opacity: 0.0,
             };
             this.updatingPolygons--;
             if (this.updatingPolygons == 0) {
@@ -103,11 +109,31 @@ class Overlay {
           });
       }, 300 * k);
     });
+    // const model = this.geometry.model;
+    // for (let k = 0; k < overlays.length; k++) {
+    //   const overlay = overlays[k];
+    //   const buffer = await this.polyEngine.update(overlay.file, model);
+    //   this.layers[k] = {
+    //     name: buffer.name,
+    //     points: this.regl.buffer({
+    //       usage: "static",
+    //       type: "float",
+    //       data: buffer.data,
+    //     }),
+    //     count: buffer.count,
+    //     color: overlay.color,
+    //     limits: overlay.limits,
+    //     weight: overlay.weight,
+    //     linewidth: 1.0,
+    //     opacity: 0.0,
+    //   };
+    // }
+    // this.updatingPolygons = false;
+    // this.updateLabels();
   }
 
   updateLabels(colors) {
     this.updatingLabels = true;
-    this.texture?.opacity.fill(0);
     if (colors !== undefined) this.colors = colors;
     // Now we use the text engine
     this.textEngine
@@ -156,20 +182,6 @@ class Overlay {
         });
         this.viewParameters[2] = 0;
       });
-    // .then((texture) => {
-    //   this.texture = {
-    //     ...texture,
-    //     targetOpacity: Array(texture.count).fill(0),
-    //     opacity: Array(texture.count).fill(0),
-    //   };
-    //   this.viewprojection = mat4.create();
-    //   this.updatingLabels = false;
-    //   this.worker.postMessage({
-    //     type: "init",
-    //     payload: texture.raw,
-    //   });
-    //   this.viewParameters[2] = 0;
-    // });
   }
 
   getDrawables(geometry) {
