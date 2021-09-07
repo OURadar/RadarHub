@@ -177,18 +177,35 @@ class Text {
         stroke: colors.label.stroke,
       });
     } else if (name.includes("@ring")) {
+      // Parse out the radius from name
       labels.push({
-        text: "R-250 km",
-        coord: polar2coord(0.5, -135, 250, model),
-        point: polar2point(0.5, -135, 250, model),
+        text: "120 km",
+        coord: polar2coord(0.5, -135, 120, model),
+        point: polar2point(0.5, -135, 120, model),
         color: colors.label.face2,
         stroke: colors.label.stroke,
         weight: 5,
       });
       labels.push({
-        text: "R-250 km",
-        coord: polar2coord(0.5, 45, 250, model),
-        point: polar2point(0.5, 45, 250, model),
+        text: "120 km",
+        coord: polar2coord(0.5, 45, 120, model),
+        point: polar2point(0.5, 45, 120, model),
+        color: colors.label.face2,
+        stroke: colors.label.stroke,
+        weight: 5,
+      });
+      labels.push({
+        text: "60 km",
+        coord: polar2coord(0.5, -135, 60, model),
+        point: polar2point(0.5, -135, 60, model),
+        color: colors.label.face2,
+        stroke: colors.label.stroke,
+        weight: 5,
+      });
+      labels.push({
+        text: "60 km",
+        coord: polar2coord(0.5, 45, 60, model),
+        point: polar2point(0.5, 45, 60, model),
         color: colors.label.face2,
         stroke: colors.label.stroke,
         weight: 5,

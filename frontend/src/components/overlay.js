@@ -7,7 +7,7 @@
 
 import { Polygon } from "./polygon";
 import { Text } from "./text";
-import { clamp } from "./common";
+import { clamp, hex2rgb } from "./common";
 import { mat4 } from "gl-matrix";
 
 //
@@ -52,28 +52,29 @@ class Overlay {
 
   async load(colors) {
     if (this.updatingPolygons || this.updatingLabels) return;
+
     const overlays = [
       {
-        file: "@rings/1/60/120/250",
-        color: [0.5, 0.5, 0.5, 1.0],
+        file: "@rings/1/60/120",
+        color: colors.ring,
         limits: [1.5, 3.0],
         weight: 1.0,
       },
       {
         file: "/static/blob/countries-50m.json",
-        color: [0.5, 0.5, 0.5, 1.0],
+        color: [0.5, 0.5, 0.5, 0.0],
         limits: [1.3, 3.0],
         weight: 1.7,
       },
       {
         file: "/static/blob/states-10m.json",
-        color: [0.5, 0.5, 0.5, 1.0],
+        color: colors.state,
         limits: [1.3, 3.0],
         weight: 0.9,
       },
       {
         file: "/static/blob/counties-10m.json",
-        color: [0.5, 0.5, 0.5, 1.0],
+        color: colors.county,
         limits: [0.5, 2.0],
         weight: 0.4,
       },

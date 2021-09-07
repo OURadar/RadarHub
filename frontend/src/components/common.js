@@ -56,6 +56,14 @@ export function prettyString(input) {
     .replace(/(?:[\s])deg/g, "°");
 }
 
+export function hex2rgb(hex) {
+  const r = parseInt(hex.slice(0, 2), 16) / 255.0;
+  const g = parseInt(hex.slice(2, 4), 16) / 255.0;
+  const b = parseInt(hex.slice(4, 6), 16) / 255.0;
+  const a = hex.length > 6 ? parseInt(hex.slice(6, 8), 16) / 255.0 : 1.0;
+  return [r, g, b, a];
+}
+
 export function array2rgba(array) {
   const r = (array[0] * 255).toFixed(0);
   const g = (array[1] * 255).toFixed(0);
@@ -121,6 +129,10 @@ export function colorDict(theme) {
         shadow: "#ffffff",
         blur: 3,
       },
+      ring: hex2rgb("227788"),
+      state: hex2rgb("40bf91"),
+      county: hex2rgb("40bf91"),
+      street: [0.5, 0.5, 1.0, 1.0],
     },
     dark: {
       name: "dark",
@@ -145,11 +157,15 @@ export function colorDict(theme) {
       tint: 1.0,
       label: {
         face: "#ffffff",
-        face2: "#66eeff",
+        face2: "#78dcff",
         stroke: "#000000",
         shadow: "#000000",
         blur: 3,
       },
+      ring: hex2rgb("78dcffff"),
+      state: hex2rgb("96e6c8ff"),
+      county: hex2rgb("96e6c8ff"),
+      street: [0.5, 0.5, 1.0, 1.0],
     },
     vibrant: {
       name: "vibrant",
