@@ -108,36 +108,9 @@ class Product extends GLView {
       viewport: gmatrix.viewport,
       color: this.props.colors.grid,
     });
-    const layers = this.overlay.getDrawables(gmatrix);
-    if (layers) {
-      let o = [];
-      layers.forEach((overlay) => {
-        if (overlay.opacity > 0.05) {
-          o.push({
-            width: overlay.linewidth,
-            color: overlay.color,
-            quad: overlay.quad,
-            view: gmatrix.view,
-            projection: gmatrix.projection,
-            viewport: gmatrix.viewport,
-            points: overlay.points,
-            segments: overlay.count,
-          });
-          if (show) message += ` ${overlay.linewidth.toFixed(2)}`;
-        }
-      });
-      if (show) gmatrix.message += message;
-      this.picaso(o);
-    }
-    const text = this.overlay.getText();
-    if (text) {
-      this.gogh({
-        projection: gmatrix.viewprojection,
-        viewport: gmatrix.viewport,
-        scale: this.overlay.textEngine.scale,
-        ...text,
-      });
-    }
+    const shapes = this.overlay.getDrawables();
+    if (shapes.poly) this.picaso(shapes.poly);
+    if (shapes.text) this.gogh(shapes.text);
     if (this.stats !== undefined) this.stats.update();
     if (this.props.profileGL) this.statsWidget.update(0.01667);
     if (this.state.spin && !this.gesture.panInProgress) {

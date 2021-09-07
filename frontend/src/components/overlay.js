@@ -147,6 +147,7 @@ class Overlay {
       .then((buffer) => {
         this.texture = {
           bound: [buffer.canvas.width, buffer.canvas.height],
+          scale: this.textEngine.scale,
           texture: this.regl.texture({
             data: buffer.canvas,
             min: "linear",
@@ -172,7 +173,6 @@ class Overlay {
           count: buffer.count,
           raw: buffer,
         };
-        this.viewprojection = mat4.create();
         this.updatingLabels = false;
         this.worker.postMessage({
           type: "init",
@@ -186,15 +186,19 @@ class Overlay {
       });
   }
 
-  getDrawables(geometry) {
-    if (this.layers === undefined) return;
+  getDrawables() {
+    const viewParameters = [
+      this.geometry.fov,
+      this.geometry.satCoordinate[0],
+      this.geometry.satCoordinate[1],
+    ];
 
     // Compute deviation from the USA
-    const dx = geometry.satCoordinate[0] + 1.75;
-    const dy = geometry.satCoordinate[1] - 0.72;
+    const dx = this.geometry.satCoordinate[0] + 1.75;
+    const dy = this.geometry.satCoordinate[1] - 0.72;
     const d = Math.sqrt(dx * dx + dy * dy);
     let t;
-    if (geometry.fov < 0.43 && d < 0.25) {
+    if (this.geometry.fov < 0.43 && d < 0.25) {
       // Overlays are rings, countries, states, counties
       t = [1, 0, 1, 1];
     } else {
@@ -203,23 +207,78 @@ class Overlay {
 
     // Quickly go through all overlays to count the visible layers
     let c = 0;
-    this.layers.forEach((o) => (c += o.opacity > 0.05));
+    this.layers.forEach((o, k) => (c += o.opacity > 0.05));
 
+    let shapes = {
+      poly: [],
+      text: null,
+    };
     this.layers.forEach((o, i) => {
       let targetOpacity = 1.0;
       if (c < 3 || t[i] == 0) targetOpacity = t[i];
       o.opacity = clamp(o.opacity + (targetOpacity ? 0.05 : -0.05), 0, 1);
-      o.linewidth = clamp(o.weight / Math.sqrt(geometry.fov), ...o.limits);
-      o.quad[0] = 1.0 * (o.color[3] > 0 && geometry.fov < 0.25);
-      o.quad[3] = o.opacity;
+      if (o.opacity > 0.05) {
+        o.linewidth = clamp(
+          o.weight / Math.sqrt(this.geometry.fov),
+          ...o.limits
+        );
+        o.quad[0] = 1.0 * (o.color[3] > 0 && this.geometry.fov < 0.25);
+        o.quad[3] = o.opacity;
+        shapes.poly.push({
+          points: o.points,
+          segments: o.count,
+          width: o.linewidth,
+          color: o.color,
+          quad: o.quad,
+          view: this.geometry.view,
+          projection: this.geometry.projection,
+          viewport: this.geometry.viewport,
+        });
+      }
     });
 
-    return this.layers;
+    if (this.texture) {
+      if (
+        Math.abs(this.viewParameters[0] - viewParameters[0]) > 0.02 ||
+        Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.02 ||
+        Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.02
+      ) {
+        // const t1 = window.performance.now();
+        if (this.tic++ % 10 == 0) {
+          this.viewParameters = viewParameters;
+
+          // this.reviseOpacityV1();
+
+          this.worker.postMessage({
+            type: "update",
+            payload: this.geometry,
+          });
+          //console.log(this.texture);
+        }
+        // const t0 = window.performance.now();
+        // console.log(`${(t0 - t1).toFixed(2)} ms`);
+      }
+
+      for (let k = 0, l = this.texture.opacity.length; k < l; k++) {
+        let o =
+          this.texture.opacity[k] +
+          (this.texture.targetOpacity[k] ? 0.05 : -0.05);
+        if (o > 1.0) o = 1.0;
+        this.texture.opacity[k] = o < 0.0 ? 0.0 : o;
+      }
+
+      shapes.text = {
+        ...this.texture,
+        projection: this.geometry.viewprojection,
+        viewport: this.geometry.viewport,
+      };
+    }
+
+    return shapes;
   }
 
-  async reviseOpacityV1() {
+  async reviseOpacityV1(geometry) {
     this.busy = true;
-    this.viewprojection = this.geometry.viewprojection;
 
     let rectangles = [];
     let visibility = [];
@@ -227,7 +286,7 @@ class Overlay {
     for (let k = 0; k < this.texture.count; k++) {
       const point = this.texture.raw.points[k];
       const spread = this.texture.raw.spreads[k];
-      const t = transformMat4([], point, this.viewprojection);
+      const t = transformMat4([], point, geometry.viewprojection);
       const x = t[0] / t[3];
       const y = t[1] / t[3];
       const z = t[2] / t[3];
@@ -263,44 +322,6 @@ class Overlay {
     });
     this.texture.targetOpacity = visibility;
     this.busy = false;
-  }
-
-  getText() {
-    if (this.texture === undefined) return;
-
-    const viewParameters = [
-      this.geometry.fov,
-      this.geometry.satCoordinate[0],
-      this.geometry.satCoordinate[1],
-    ];
-
-    if (
-      Math.abs(this.viewParameters[0] - viewParameters[0]) > 0.02 ||
-      Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.02 ||
-      Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.02
-    ) {
-      // const t1 = window.performance.now();
-      if (this.tic++ % 10 == 0) {
-        this.viewParameters = viewParameters;
-        // this.reviseOpacityV1();
-        this.worker.postMessage({
-          type: "update",
-          payload: this.geometry,
-        });
-      }
-      // const t0 = window.performance.now();
-      // console.log(`${(t0 - t1).toFixed(2)} ms`);
-    }
-
-    for (let k = 0, l = this.texture.opacity.length; k < l; k++) {
-      let o =
-        this.texture.opacity[k] +
-        (this.texture.targetOpacity[k] ? 0.05 : -0.05);
-      if (o > 1.0) o = 1.0;
-      this.texture.opacity[k] = o < 0.0 ? 0.0 : o;
-    }
-
-    return this.texture;
   }
 }
 
