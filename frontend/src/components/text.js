@@ -33,8 +33,7 @@ import { coord2point, polar2coord, polar2point, deg2rad } from "./common";
 //
 
 class Text {
-  constructor(regl, debug = false) {
-    this.regl = regl;
+  constructor(debug = false) {
     this.scale = 1.5;
     this.debug = debug;
     this.canvas = document.createElement("canvas");
@@ -276,39 +275,18 @@ class Text {
 
     // console.log(points, origins);
     const buffer = {
-      bound: [this.canvas.width, this.canvas.height],
-      texture: this.regl.texture({
-        data: this.canvas,
-        min: "linear",
-        mag: "linear",
-      }),
-      color: this.debug ? [0, 0, 1, 0.3] : [0, 0, 0, 0],
-      points: this.regl.buffer({
-        usage: "static",
-        type: "float",
-        data: points,
-      }),
-      origins: this.regl.buffer({
-        usage: "static",
-        type: "float",
-        data: origins,
-      }),
-      spreads: this.regl.buffer({
-        usage: "static",
-        type: "float",
-        data: spreads,
-      }),
-      raw: {
-        coords: coords,
-        points: points,
-        weights: weights,
-        origins: origins,
-        spreads: spreads,
-        extents: spreads.map((x) => [x[0] / this.scale, x[1] / this.scale]),
-      },
+      canvas: this.canvas,
+      coords: coords,
+      points: points,
+      weights: weights,
+      origins: origins,
+      spreads: spreads,
+      extents: spreads.map((x) => [x[0] / this.scale, x[1] / this.scale]),
       count: points.length,
     };
 
+    const width = this.canvas.width;
+    const height = this.canvas.height;
     const cString = buffer.count.toLocaleString();
     const xString = (buffer.count * 7).toLocaleString();
     const mString = (
@@ -316,8 +294,8 @@ class Text {
       7 *
       Float32Array.BYTES_PER_ELEMENT
     ).toLocaleString();
-    const wString = `${buffer.bound[0].toLocaleString()} x ${buffer.bound[0].toLocaleString()}`;
-    const vString = (buffer.bound[0] * buffer.bound[1] * 4).toLocaleString();
+    const wString = `${width.toLocaleString()} x ${height.toLocaleString()}`;
+    const vString = (width * height * 4).toLocaleString();
     console.log(
       `Text: %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
         `%c / texture (%c${wString} RGBA = ${vString} bytes)` +

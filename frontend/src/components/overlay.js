@@ -29,7 +29,7 @@ class Overlay {
     this.polyEngine = new Polygon(this.regl);
     this.updatingPolygons = 0;
 
-    this.textEngine = new Text(this.regl);
+    this.textEngine = new Text();
     this.updatingLabels = false;
 
     this.handleMessage = this.handleMessage.bind(this);
@@ -116,20 +116,60 @@ class Overlay {
         this.geometry.model,
         this.colors
       )
-      .then((texture) => {
+      .then((buffer) => {
         this.texture = {
-          ...texture,
-          targetOpacity: Array(texture.count).fill(0),
-          opacity: Array(texture.count).fill(0),
+          bound: [buffer.canvas.width, buffer.canvas.height],
+          texture: this.regl.texture({
+            data: buffer.canvas,
+            min: "linear",
+            mag: "linear",
+          }),
+          points: this.regl.buffer({
+            usage: "static",
+            type: "float",
+            data: buffer.points,
+          }),
+          origins: this.regl.buffer({
+            usage: "static",
+            type: "float",
+            data: buffer.origins,
+          }),
+          spreads: this.regl.buffer({
+            usage: "static",
+            type: "float",
+            data: buffer.spreads,
+          }),
+          targetOpacity: Array(buffer.count).fill(0),
+          opacity: Array(buffer.count).fill(0),
+          count: buffer.count,
+          raw: buffer,
         };
         this.viewprojection = mat4.create();
         this.updatingLabels = false;
         this.worker.postMessage({
           type: "init",
-          payload: texture.raw,
+          payload: {
+            points: buffer.points,
+            weights: buffer.weights,
+            extents: buffer.extents,
+          },
         });
         this.viewParameters[2] = 0;
       });
+    // .then((texture) => {
+    //   this.texture = {
+    //     ...texture,
+    //     targetOpacity: Array(texture.count).fill(0),
+    //     opacity: Array(texture.count).fill(0),
+    //   };
+    //   this.viewprojection = mat4.create();
+    //   this.updatingLabels = false;
+    //   this.worker.postMessage({
+    //     type: "init",
+    //     payload: texture.raw,
+    //   });
+    //   this.viewParameters[2] = 0;
+    // });
   }
 
   getDrawables(geometry) {

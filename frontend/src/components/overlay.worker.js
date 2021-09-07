@@ -6,11 +6,8 @@
 //
 
 let text = {
-  coords: [[]],
-  extents: [[]],
-  origins: [[]],
   points: [[]],
-  spreads: [[]],
+  extents: [[]],
   weights: [],
 };
 
@@ -23,7 +20,7 @@ self.onmessage = ({ data: { type, payload } }) => {
       payload: "ready",
     });
   } else if (type == "update") {
-    if (text.coords.length == 0) return;
+    if (text.points.length == 0) return;
     const opacity = reviseOpacity(payload);
     self.postMessage({
       type: "opacity",
