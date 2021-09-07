@@ -33,10 +33,9 @@ class Gesture {
     this.message = "gesture";
     this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
     this.handlePan = (_x, _y) => {};
-    this.handleMagnify = (_mx, _my, _x, _y) => {};
     this.handleSingleTap = () => {};
     this.handleDoubleTap = (_x, _y) => {};
-    this.handleMagnifySingle = (_m) => {};
+    this.handleMagnify = (_mx, _my, _m, _x, _y) => {};
 
     this.element.addEventListener("mousedown", (e) => {
       if (
@@ -77,6 +76,7 @@ class Gesture {
         e.preventDefault();
         this.handleMagnify(
           delta2scale(e.deltaX),
+          delta2scale(-e.deltaY),
           delta2scale(-e.deltaY),
           e.offsetX - this.bounds.left,
           e.offsetY - this.bounds.bottom
@@ -152,10 +152,10 @@ class Gesture {
         this.handleMagnify(
           delta2scale(0.3 * (this.pointU - u)),
           delta2scale(0.3 * (this.pointV - v)),
+          d / this.pointD,
           x,
           y
         );
-        this.handleMagnifySingle(d / this.pointD);
         this.handlePan(x - this.pointX, this.pointY - y);
         this.pointX = x;
         this.pointY = y;
@@ -224,7 +224,7 @@ function positionAndDistanceFromTouches(touches) {
     y = touches[0].clientY;
     u = 0;
     v = 0;
-    d = 0;
+    d = this.pointD;
   }
   return [x, y, u, v, d];
 }

@@ -25,7 +25,7 @@ class App2 extends Component {
   }
   static defaultProps = {
     radar: "demo",
-    debug: true,
+    debug: false,
     profileGL: false,
   };
 

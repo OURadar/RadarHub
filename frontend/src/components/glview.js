@@ -102,13 +102,16 @@ class GLView extends Component {
     this.updateProjection = this.updateProjection.bind(this);
     this.draw = this.draw.bind(this);
     this.pan = this.pan.bind(this);
+    this.tap = this.tap.bind(this);
+    this.taptap = this.taptap.bind(this);
     this.magnify = this.magnify.bind(this);
     this.fitToData = this.fitToData.bind(this);
     // User interaction
     this.gesture = new Gesture(this.canvas, this.constants.bounds);
     this.gesture.handlePan = this.pan;
-    this.gesture.handleDoubleTap = this.fitToData;
-    this.gesture.handleMagnifySingle = this.magnify;
+    this.gesture.handleSingleTap = this.tap;
+    this.gesture.handleDoubleTap = this.taptap;
+    this.gesture.handleMagnify = this.magnify;
 
     this.rings = new Rings(this.regl, [1, 60, 120, 250], 60);
   }
@@ -225,9 +228,30 @@ class GLView extends Component {
     }
   }
 
-  magnify(m) {
+  tap(x, y) {}
+
+  taptap(x, y) {
+    console.log(
+      `taptap: ${x} / ${0.8 * this.canvas.width} : ${y} / ${
+        0.8 * this.canvas.width
+      }`
+    );
+    if (x > 0.8 * this.canvas.width && y < 0.2 * this.canvas.height) {
+      console.log("toggle spin");
+      return this.setState((state) => {
+        return {
+          spin: !state.spin,
+        };
+      });
+    } else {
+      console.log(`fit to data ${this.state.spin}`);
+      this.fitToData();
+    }
+  }
+
+  magnify(_mx, _my, m, _x, _y) {
     const geo = this.geometry;
-    geo.fov = common.clamp(Math.PI / 8 / m, 0.01, 0.5 * Math.PI);
+    geo.fov = common.clamp(geo.fov / m, 0.01, 0.5 * Math.PI);
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message += ` fov: ${geo.fov.toFixed(3)}`;

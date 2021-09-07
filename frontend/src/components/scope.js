@@ -398,7 +398,7 @@ class Scope extends Component {
     this.updateProjection();
   }
 
-  magnify(mx, my, x, _y) {
+  magnify(mx, my, _d, x, _y) {
     this.setState((state) => {
       const scaleX = common.clamp(state.scaleX * mx, 1 / 10000, 1 / 10);
       const scaleY = common.clamp(state.scaleY * my, 1 / 70000, 1 / 10);

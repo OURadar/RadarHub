@@ -151,10 +151,8 @@ class Product extends GLView {
     geo.satCoordinate[0] = common.deg2rad(this.constants.origin.longitude);
     geo.satCoordinate[1] = common.deg2rad(this.constants.origin.latitude);
     geo.needsUpdate = true;
-    this.setState((state) => {
-      return {
-        spin: !state.spin,
-      };
+    this.setState({
+      spin: false,
     });
   }
 }
