@@ -112,7 +112,7 @@ class Overlay {
     // Now we use the text engine
     this.textEngine
       .update(
-        "/static/blob/shapefiles/World/cities.shp",
+        ["/static/blob/shapefiles/World/cities.shp", "@rings"],
         this.geometry.model,
         this.colors
       )

@@ -16,9 +16,11 @@ class Gesture {
           bottom: 0,
           left: 0,
         };
+    this.startD = 0;
     this.pointX = 0;
     this.pointY = 0;
     this.pointD = 0;
+    this.scale = 1;
     this.minX = 0;
     this.maxX = 1000;
     this.minY = -32000;
@@ -34,6 +36,7 @@ class Gesture {
     this.handleMagnify = (_mx, _my, _x, _y) => {};
     this.handleSingleTap = () => {};
     this.handleDoubleTap = (_x, _y) => {};
+    this.handleMagnifySingle = (_m) => {};
 
     this.element.addEventListener("mousedown", (e) => {
       if (
@@ -89,7 +92,7 @@ class Gesture {
       this.bounds.top + ", " + this.element.height;
     });
     this.element.addEventListener("touchstart", (e) => {
-      let [x, y, u, v] = positionAndDistanceFromTouches(e.targetTouches);
+      let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
       const rect = this.element.getBoundingClientRect();
       if (
         x - rect.left > this.bounds.left &&
@@ -98,20 +101,23 @@ class Gesture {
         e.preventDefault();
         this.panInProgress = true;
       }
+      if (e.targetTouches.length == 2) this.scale = 1;
       this.pointX = x;
       this.pointY = y;
       this.pointU = u;
       this.pointV = v;
+      this.pointD = d;
       this.rect = rect;
       this.message = "touchstart";
     });
     this.element.addEventListener("touchend", (e) => {
       if (e.targetTouches.length > 0) {
-        let [x, y, u, v] = positionAndDistanceFromTouches(e.targetTouches);
+        let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
         this.pointX = x;
         this.pointY = y;
         this.pointU = u;
         this.pointV = v;
+        this.pointD = d;
         return;
       }
       const now = Date.now();
@@ -140,7 +146,7 @@ class Gesture {
       this.message = "touchcancel";
     });
     this.element.addEventListener("touchmove", (e) => {
-      let [x, y, u, v] = positionAndDistanceFromTouches(e.targetTouches);
+      let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
       if (this.panInProgress === true) {
         e.preventDefault();
         this.handleMagnify(
@@ -149,13 +155,15 @@ class Gesture {
           x,
           y
         );
+        this.handleMagnifySingle(d / this.pointD);
         this.handlePan(x - this.pointX, this.pointY - y);
         this.pointX = x;
         this.pointY = y;
         this.pointU = u;
         this.pointV = v;
+        this.pointD = d;
       }
-      this.message = `touchmove (${x}, ${y})`;
+      this.message = `touchmove (${x}, ${y})  scale: ${this.scale.toFixed(2)}`;
     });
     this.element.addEventListener("dblclick", (e) => {
       this.pointX = e.offsetX;
@@ -204,19 +212,21 @@ function delta2scale(x) {
 }
 
 function positionAndDistanceFromTouches(touches) {
-  let x, y, u, v;
+  let x, y, u, v, d;
   if (touches.length > 1) {
     x = 0.5 * (touches[0].clientX + touches[1].clientX);
     y = 0.5 * (touches[0].clientY + touches[1].clientY);
     u = Math.abs(touches[0].clientX - touches[1].clientX);
     v = Math.abs(touches[0].clientY - touches[1].clientY);
+    d = Math.sqrt(u * u + v * v);
   } else {
     x = touches[0].clientX;
     y = touches[0].clientY;
     u = 0;
     v = 0;
+    d = 0;
   }
-  return [x, y, u, v];
+  return [x, y, u, v, d];
 }
 
 export { Gesture };

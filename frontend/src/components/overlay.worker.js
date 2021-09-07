@@ -7,7 +7,7 @@
 
 let text = {
   coords: [[]],
-  extends: [[]],
+  extents: [[]],
   origins: [[]],
   points: [[]],
   spreads: [[]],
@@ -114,13 +114,14 @@ function reviseOpacity(geometry) {
   let rectangles = [];
   let visibility = new Array(text.points.length).fill(0);
 
-  const t2 = Date.now();
+  // const t2 = Date.now();
 
   const viewportWidth = geometry.viewport.width;
   const viewportHeight = geometry.viewport.height;
   const maxWeight = 4.5 + 0.5 / geometry.fov;
+  const theta = Math.min(0.9, geometry.fov);
   for (let k = 0, l = text.points.length; k < l; k++) {
-    if (dotAngle(geometry.satPosition, text.points[k]) > 0.9) {
+    if (dotAngle(geometry.satPosition, text.points[k]) > theta) {
       pass1++;
       continue;
     }
@@ -141,7 +142,7 @@ function reviseOpacity(geometry) {
     indices.push(k);
   }
 
-  const t1 = Date.now();
+  // const t1 = Date.now();
 
   indices.forEach((i, k) => {
     const rect = rectangles[k];
@@ -155,19 +156,20 @@ function reviseOpacity(geometry) {
     }
   });
 
-  const t0 = Date.now();
+  // const t0 = Date.now();
 
-  const v = visibility.reduce((a, x) => a + x);
-  console.log(
-    `%c${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
-      `  %cminWeight = ${maxWeight.toFixed(1)}` +
-      `  %cpass1-dot = ${pass1}  pass2-pop = ${pass2}  pass3-ovr = ${pass3}` +
-      `  %cvisible = ${indices.length} --> ${v}`,
-    "color: blue",
-    "font-weight: bold",
-    "font-weight: normal",
-    "color: green, font-weight: bold"
-  );
+  // const v = visibility.reduce((a, x) => a + x);
+  // console.log(
+  //   `%c${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
+  //     `  %cmaxWeight = ${maxWeight.toFixed(1)}` +
+  //     `  theta = ${theta.toFixed(2)}` +
+  //     `  %cpass1-dot = ${pass1}  pass2-pop = ${pass2}  pass3-ovr = ${pass3}` +
+  //     `  %cvisible = ${indices.length} --> ${v}`,
+  //   "color: blue",
+  //   "font-weight: bold",
+  //   "font-weight: normal",
+  //   "color: green, font-weight: bold"
+  // );
 
   return visibility;
 }

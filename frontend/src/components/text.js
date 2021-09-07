@@ -82,7 +82,39 @@ class Text {
     });
   }
 
-  async update(name, model, colors) {
+  async update(names, model, colors) {
+    if (this.busy) {
+      console.log("Calling Text.update() too frequent.");
+      return;
+    }
+    if (names === undefined) {
+      console.log("Input undefined.");
+      return;
+    }
+    let allLabels = [];
+    for (const name of names) {
+      const labels = await this.getLabel(name, model, colors);
+      allLabels.push(...labels);
+    }
+    return this.makeBuffer(allLabels);
+  }
+
+  async getLabel(name, model, colors) {
+    const ext = name.split(".").pop();
+    if (name.includes("@")) {
+      return this.builtInLabels(name, model, colors).catch((error) =>
+        console.error(error.stack)
+      );
+    } else if (ext == "shp") {
+      const indices = [0, 6];
+      return require("shapefile")
+        .open(name)
+        .then((source) => this.handleShapefile(source, indices, colors))
+        .catch((error) => console.error(error.stack));
+    }
+  }
+
+  async updateV1(name, model, colors) {
     if (this.busy) {
       console.log("Calling Text.update() too frequent.");
       return;
@@ -94,40 +126,43 @@ class Text {
     const ext = name.split(".").pop();
     if (name.includes("@")) {
       return this.builtInLabels(name, model, colors)
-        .then((labels) => this.makeBuffer(name, labels))
+        .then((labels) => this.makeBuffer(labels))
         .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
       const indices = [0, 6];
       return require("shapefile")
         .open(name)
         .then((source) => this.handleShapefile(source, indices, colors))
-        .then((labels) => this.makeBuffer(name, labels))
+        .then((labels) => this.makeBuffer(labels))
         .catch((error) => console.error(error.stack));
     }
   }
 
   async builtInLabels(name, model, colors) {
     // Points radar-centric polar coordinate
-    let labels = [
-      {
+    let labels = [];
+    if (name == "@demo") {
+      labels.push({
         text: "Origin",
         coord: polar2coord(0, 0, 0, model),
         point: polar2point(0, 0, 0, model),
         color: colors.label.face,
         stroke: colors.label.stroke,
-      },
-    ];
-    if (name == "@demo") {
+        weight: 0,
+      });
       // Points from (lat, lon) pairs
       labels.push({
         text: "LatLon-1",
+        weight: 0,
         coord: [deg2rad(-90), deg2rad(20)],
         point: coord2point(-90, 20),
         color: colors.label.face,
         stroke: colors.label.stroke,
+        weight: 0,
       });
       labels.push({
         text: "LatLon-2",
+        weight: 0,
         coord: [deg2rad(-100), deg2rad(30)],
         point: coord2point(-100, 30),
         color: colors.label.face,
@@ -135,6 +170,7 @@ class Text {
       });
       labels.push({
         text: "LatLon-3",
+        weight: 0,
         coord: [deg2rad(-110), deg2rad(40)],
         point: coord2point(-110, 40),
         color: colors.label.face,
@@ -143,24 +179,43 @@ class Text {
       // More radar-centric points
       labels.push({
         text: "R-250 km",
+        weight: 0,
         coord: polar2coord(0.5, 45, 250, model),
         point: polar2point(0.5, 45, 250, model),
         color: colors.label.face,
         stroke: colors.label.stroke,
+        weight: 0,
       });
+      labels.push({
+        text: "R-250 km",
+        weight: 0,
+        coord: polar2coord(0.5, -135, 250, model),
+        point: polar2point(0.5, -135, 250, model),
+        color: colors.label.face2,
+        stroke: colors.label.stroke,
+      });
+    } else if (name.includes("@ring")) {
       labels.push({
         text: "R-250 km",
         coord: polar2coord(0.5, -135, 250, model),
         point: polar2point(0.5, -135, 250, model),
         color: colors.label.face2,
         stroke: colors.label.stroke,
+        weight: 5,
+      });
+      labels.push({
+        text: "R-250 km",
+        coord: polar2coord(0.5, 45, 250, model),
+        point: polar2point(0.5, 45, 250, model),
+        color: colors.label.face2,
+        stroke: colors.label.stroke,
+        weight: 5,
       });
     }
     return labels;
   }
 
-  async makeBuffer(file, labels) {
-    const name = file.includes("@") ? file : file.split("/").pop();
+  async makeBuffer(labels) {
     const context = this.context;
     const p = Math.ceil(1.5 * this.padding);
     const q = Math.ceil(this.padding);
@@ -264,10 +319,9 @@ class Text {
     const wString = `${buffer.bound[0].toLocaleString()} x ${buffer.bound[0].toLocaleString()}`;
     const vString = (buffer.bound[0] * buffer.bound[1] * 4).toLocaleString();
     console.log(
-      `Text: %c${name} %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
+      `Text: %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
         `%c / texture (%c${wString} RGBA = ${vString} bytes)` +
         `%c / usage ${this.usage.toFixed(2)} %%`,
-      "font-weight: bold",
       "font-weight: normal",
       "color: blue",
       "font-weight: normal; color: black",

@@ -107,8 +107,8 @@ class GLView extends Component {
     // User interaction
     this.gesture = new Gesture(this.canvas, this.constants.bounds);
     this.gesture.handlePan = this.pan;
-    this.gesture.handleMagnify = this.magnify;
     this.gesture.handleDoubleTap = this.fitToData;
+    this.gesture.handleMagnifySingle = this.magnify;
 
     this.rings = new Rings(this.regl, [1, 60, 120, 250], 60);
   }
@@ -225,9 +225,9 @@ class GLView extends Component {
     }
   }
 
-  magnify(x, y, _x, _y) {
+  magnify(m) {
     const geo = this.geometry;
-    geo.fov = common.clamp(geo.fov / y, 0.01, 0.5 * Math.PI);
+    geo.fov = common.clamp(Math.PI / 8 / m, 0.01, 0.5 * Math.PI);
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message += ` fov: ${geo.fov.toFixed(3)}`;
