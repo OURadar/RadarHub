@@ -177,17 +177,21 @@ class Polygon {
       }
       const shape = result.value;
       // console.log(shape);
-      // console.log(shape.geometry.type);
       if (shape.geometry.type.includes("MultiPolygon")) {
         shape.geometry.coordinates.forEach((multipolygon) => {
           multipolygon.forEach((polygon) => {
             addpolygon(polygon);
           });
         });
-      } else if (shape.geometry.type.includes("Polygon")) {
+      } else if (
+        shape.geometry.type.includes("Polygon") ||
+        shape.geometry.type.includes("MultiLineString")
+      ) {
         shape.geometry.coordinates.forEach((polygon) => {
           addpolygon(polygon);
         });
+      } else if (shape.geometry.type.includes("LineString")) {
+        addpolygon(shape.geometry.coordinates);
       }
       return source.read().then(retrieve);
     });

@@ -444,7 +444,7 @@ export function instancedLines(regl, resolution) {
 // operation.
 //
 export function simplifiedInstancedLines(regl) {
-  const roundCapJoin = roundCapJoinGeometry(regl, 4);
+  const roundCapJoin = roundCapJoinGeometry(regl, 0);
   return regl({
     vert: `
       precision highp float;

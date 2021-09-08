@@ -74,7 +74,14 @@ class Overlay {
       },
       {
         file: "/static/blob/counties-10m.json",
+        // file: "/static/blob/shapefiles/United States/gz_2010_us_050_00_500k.shp",
         color: colors.county,
+        limits: [0.5, 2.0],
+        weight: 0.4,
+      },
+      {
+        file: "/static/blob/shapefiles/United States/intrstat.shp",
+        color: colors.highway,
         limits: [0.5, 2.0],
         weight: 0.4,
       },
@@ -220,10 +227,10 @@ class Overlay {
       const d = Math.sqrt(dx * dx + dy * dy);
       let t;
       if (this.geometry.fov < 0.43 && d < 0.25) {
-        // Overlays are rings, countries, states, counties
-        t = [1, 0, 1, 1];
+        // Overlays are rings, countries, states, counties, highways
+        t = [1, 0, 1, 1, 1];
       } else {
-        t = [1, 1, 1, 0];
+        t = [1, 1, 1, 0, 0];
       }
 
       // Quickly go through all poly layers to count up visible layers

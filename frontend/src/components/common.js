@@ -126,15 +126,15 @@ export function colorDict(theme) {
       tint: 0.7,
       label: {
         face: "#000000",
-        face2: "#227788",
+        face2: "#00bbff",
         stroke: "#ffffff",
         shadow: "#ffffff",
         blur: 3,
       },
-      ring: hex2rgb("227788"),
+      ring: hex2rgb("00bbff"),
       state: hex2rgb("40bf91"),
       county: hex2rgb("40bf91"),
-      street: [0.5, 0.5, 1.0, 1.0],
+      highway: hex2rgb("e6b955"),
     },
     dark: {
       name: "dark",
@@ -167,7 +167,7 @@ export function colorDict(theme) {
       ring: hex2rgb("78dcffff"),
       state: hex2rgb("96e6c8ff"),
       county: hex2rgb("83e2bfff"),
-      street: [0.5, 0.5, 1.0, 1.0],
+      highway: hex2rgb("e6b955"),
     },
     vibrant: {
       name: "vibrant",
