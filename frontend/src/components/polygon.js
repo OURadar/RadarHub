@@ -6,17 +6,17 @@
 //
 
 import { vec3 } from "gl-matrix";
-import { polar2coord, coord2point, dotAngle } from "./common";
+import { deg } from "./common";
 
 class Polygon {
   constructor() {
     this.points = [];
     this.count = 0;
     // Binding methods
-    this.update = this.update.bind(this);
+    this.update = this.load.bind(this);
   }
 
-  async update(name, geometry) {
+  async load(name, geometry) {
     if (this.busy > 5) {
       console.log("Calling update() too frequently.");
       return;
@@ -27,6 +27,11 @@ class Polygon {
     }
     const ext = name.split(".").pop();
     if (name.includes("@")) {
+      this.busy--;
+      return builtInGeometryDirect(name, geometry.model)
+        .then((points) => makeBuffer(name, points))
+        .catch((error) => console.error(error.stack));
+    } else if (name.includes("#")) {
       this.busy--;
       return builtInGeometry(name, geometry.model)
         .then((lines) => lines2points(lines))
@@ -50,8 +55,8 @@ class Polygon {
         .then((points) => makeBuffer(name, points))
         .catch((error) => console.error(error.stack));
     } else {
-      console.log(`%cUnable to handle ${name}`, "color: red");
       this.busy--;
+      console.log(`%cUnable to handle ${name}`, "color: red");
     }
   }
 }
@@ -88,8 +93,8 @@ async function builtInGeometry(name, model) {
       let line = [];
       const r = parseFloat(radius);
       for (let k = 0; k < sides + 1; k++) {
-        const a = (k * 2.0 * Math.PI) / sides;
-        line.push(polar2coord(0, a, r, model));
+        const a = (k * 360.0) / sides;
+        line.push(deg.polar2coord(0, a, r, model));
       }
       lines.push(line);
     });
@@ -133,7 +138,6 @@ function handleShapefile(source) {
       return lines;
     }
     const shape = result.value;
-    // console.log(shape);
     if (shape.geometry.type.includes("MultiPolygon")) {
       shape.geometry.coordinates.forEach((multipolygon) => {
         multipolygon.forEach((polygon) => {
@@ -155,38 +159,30 @@ function handleShapefile(source) {
 }
 
 function filterLines(inputLines, origin) {
-  const theta = 0.05;
+  const theta = 12.0;
   let outputLines = [];
-  const ref = coord2point(origin.longitude, origin.latitude);
+  const ref = deg.coord2point(origin.longitude, origin.latitude);
   inputLines.forEach((line) => {
-    const p = coord2point(...line[0]);
-    if (dotAngle(ref, p) > theta) return;
-    const q = coord2point(...line[line.length - 1]);
-    if (dotAngle(ref, q) > theta) return;
+    const p = deg.coord2point(...line[0]);
+    if (deg.dotAngle(ref, p) > theta) return;
+    const q = deg.coord2point(...line[line.length - 1]);
+    if (deg.dotAngle(ref, q) > theta) return;
     outputLines.push(line);
   });
   return outputLines;
 }
 
 function lines2points(lines) {
-  let segments = [];
-  lines.forEach((line) => {
-    let segment = [];
-    line.forEach((coord) => {
-      const point = coord2point(...coord);
-      segment.push(point);
-    });
-    segments.push(segment);
-  });
   // Go through each line, repeat intermediate points
   let x = [];
-  segments.forEach((segment) => {
-    x.push(segment[0]);
-    for (let k = 1; k < segment.length - 1; k++) {
-      x.push(segment[k]);
-      x.push(segment[k]);
+  lines.forEach((line) => {
+    x.push(deg.coord2point(...line[0]));
+    for (let k = 1; k < line.length - 1; k++) {
+      const p = deg.coord2point(...line[k]);
+      x.push(p);
+      x.push(p);
     }
-    x.push(segment[segment.length - 1]);
+    x.push(deg.coord2point(...line[line.length - 1]));
   });
   return x.flat();
 }

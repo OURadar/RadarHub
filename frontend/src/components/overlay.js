@@ -92,7 +92,7 @@ class Overlay {
     this.layers = [];
     overlays.forEach((overlay, k) => {
       setTimeout(() => {
-        this.polyEngine.update(overlay.file, this.geometry).then((buffer) => {
+        this.polyEngine.load(overlay.file, this.geometry).then((buffer) => {
           this.layers[k] = {
             name: buffer.name,
             points: this.regl.buffer({
@@ -214,17 +214,17 @@ class Overlay {
     if (
       this.tic++ % 12 == 0 &&
       (Math.abs(this.viewParameters[0] - viewParameters[0]) > 0.02 ||
-        Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.02 ||
-        Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.02)
+        Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.2 ||
+        Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.2)
     ) {
       this.viewParameters = viewParameters;
 
       // Compute deviation from the USA
-      const dx = this.geometry.satCoordinate[0] + 1.75;
-      const dy = this.geometry.satCoordinate[1] - 0.72;
+      const dx = this.geometry.satCoordinate[0] + 100;
+      const dy = this.geometry.satCoordinate[1] - 40;
       const d = Math.sqrt(dx * dx + dy * dy);
       let t;
-      if (this.geometry.fov < 0.43 && d < 0.25) {
+      if (this.geometry.fov < 0.43 && d < 15) {
         // Overlays are rings, countries, states, counties, highways
         t = [1, 0, 1, 1, 1];
       } else {

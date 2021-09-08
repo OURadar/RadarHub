@@ -45,22 +45,24 @@ class Product extends GLView {
     if (this.state.useEuler) {
       this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.cos(a);
       this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.sin(a);
-      this.geometry.satCoordinate[0] = Math.atan2(
-        this.geometry.satQ,
-        this.geometry.satI
+      this.geometry.satCoordinate[0] = common.rad2deg(
+        Math.atan2(this.geometry.satQ, this.geometry.satI)
       );
       this.geometry.message = "";
     } else {
+      // Not fully tested
       const q = this.graphics.satQuaternion;
       const qt = quat.fromEuler(
         [],
-        -common.rad2deg(this.graphics.satCoordinate[1]),
+        -this.graphics.satCoordinate[1],
         common.rad2deg(a),
         0.0
       );
       const i = quat.slerp([], q, qt, 0.5);
-      this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
-      const b = common.rad2deg(this.geometry.satCoordinate[0]);
+      this.graphics.satCoordinate[0] = -common.rad2deg(
+        Math.atan2(i[1], i[3]) * 2.0
+      );
+      const b = this.geometry.satCoordinate[0];
       this.geometry.message = `angle = ${b.toFixed(1)}`;
     }
     this.geometry.fov += 0.001 * Math.cos(t);
@@ -116,8 +118,8 @@ class Product extends GLView {
   fitToData() {
     const geo = this.geometry;
     geo.fov = 200.0 / common.earthRadius;
-    geo.satCoordinate[0] = common.deg2rad(this.constants.origin.longitude);
-    geo.satCoordinate[1] = common.deg2rad(this.constants.origin.latitude);
+    geo.satCoordinate[0] = this.constants.origin.longitude;
+    geo.satCoordinate[1] = this.constants.origin.latitude;
     geo.needsUpdate = true;
     this.setState({
       spin: false,

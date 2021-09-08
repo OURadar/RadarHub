@@ -55,11 +55,11 @@ class GLView extends Component {
     };
     const origin = this.constants.origin;
     const satCoordinate = vec3.fromValues(
-      common.deg2rad(origin.longitude),
-      common.deg2rad(origin.latitude),
+      origin.longitude,
+      origin.latitude,
       2.0 * common.earthRadius
     );
-    const satPosition = common.coord2point(satCoordinate, false);
+    const satPosition = common.deg.coord2point(satCoordinate);
     // satCoordinate = (lon-rad, lat-rad, alt-km) of satellite
     // satPosition = (x, y, z) of satellite
     // satQuaternion = quaternion represent of satellite orientation
@@ -158,11 +158,7 @@ class GLView extends Component {
     const geo = this.geometry;
     const w = this.canvas.width;
     const h = this.canvas.height;
-    const c = geo.satCoordinate;
-    const x = c[2] * Math.cos(c[1]) * Math.sin(c[0]);
-    const y = c[2] * Math.sin(c[1]);
-    const z = c[2] * Math.cos(c[1]) * Math.cos(c[0]);
-    geo.satPosition = [x, y, z];
+    geo.satPosition = common.deg.coord2point(...geo.satCoordinate);
     geo.view = mat4.lookAt([], geo.satPosition, [0, 0, 0], [0, 1, 0]);
     geo.modelview = mat4.multiply([], geo.view, geo.model);
     geo.projection = mat4.perspective([], geo.fov, w / h, 100, 30000.0);
@@ -210,16 +206,16 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    const lon = geo.satCoordinate[0] - x * geo.fov * 0.0015;
+    const lon = geo.satCoordinate[0] - x * geo.fov * 0.055;
     geo.satCoordinate[1] = common.clamp(
-      geo.satCoordinate[1] - y * geo.fov * 0.0015,
-      -0.4999 * Math.PI,
-      +0.4999 * Math.PI
+      geo.satCoordinate[1] - y * geo.fov * 0.055,
+      -179.99,
+      +179.99
     );
     // For continuous longitude transition around +/-180 deg, use a complex representation
-    geo.satI = Math.cos(lon);
-    geo.satQ = Math.sin(lon);
-    geo.satCoordinate[0] = Math.atan2(geo.satQ, geo.satI);
+    geo.satI = Math.cos(common.deg2rad(lon));
+    geo.satQ = Math.sin(common.deg2rad(lon));
+    geo.satCoordinate[0] = common.rad2deg(Math.atan2(geo.satQ, geo.satI));
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message += ` satI: ${geo.satI.toFixed(3)}`;
@@ -249,8 +245,8 @@ class GLView extends Component {
   fitToData() {
     const geo = this.geometry;
     geo.fov = Math.PI / 6;
-    geo.satCoordinate[0] = common.deg2rad(this.constants.origin.longitude);
-    geo.satCoordinate[1] = common.deg2rad(this.constants.origin.latitude);
+    geo.satCoordinate[0] = this.constants.origin.longitude;
+    geo.satCoordinate[1] = this.constants.origin.latitude;
     geo.needsUpdate = true;
     if (this.props.debug) {
       this.setState({

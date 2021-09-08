@@ -5,7 +5,7 @@
 //  Created by Boonleng Cheong on 9/1/2021.
 //
 
-import { coord2point, polar2coord, polar2point, deg2rad } from "./common";
+import { deg } from "./common";
 
 //
 //  Initialize as:
@@ -126,8 +126,7 @@ class Text {
     if (name == "@demo") {
       labels.push({
         text: "Origin",
-        coord: polar2coord(0, 0, 0, model),
-        point: polar2point(0, 0, 0, model),
+        point: deg.polar2point(0, 0, 0, model),
         color: colors.label.face,
         stroke: colors.label.stroke,
         weight: 0,
@@ -136,8 +135,7 @@ class Text {
       labels.push({
         text: "LatLon-1",
         weight: 0,
-        coord: [deg2rad(-90), deg2rad(20)],
-        point: coord2point(-90, 20),
+        point: deg.coord2point(-90, 20),
         color: colors.label.face,
         stroke: colors.label.stroke,
         weight: 0,
@@ -145,16 +143,14 @@ class Text {
       labels.push({
         text: "LatLon-2",
         weight: 0,
-        coord: [deg2rad(-100), deg2rad(30)],
-        point: coord2point(-100, 30),
+        point: deg.coord2point(-100, 30),
         color: colors.label.face,
         stroke: colors.label.stroke,
       });
       labels.push({
         text: "LatLon-3",
         weight: 0,
-        coord: [deg2rad(-110), deg2rad(40)],
-        point: coord2point(-110, 40),
+        point: deg.coord2point(-110, 40),
         color: colors.label.face,
         stroke: colors.label.stroke,
       });
@@ -162,8 +158,7 @@ class Text {
       labels.push({
         text: "R-250 km",
         weight: 0,
-        coord: polar2coord(0.5, 45, 250, model),
-        point: polar2point(0.5, 45, 250, model),
+        point: deg.polar2point(0.5, 45, 250, model),
         color: colors.label.face,
         stroke: colors.label.stroke,
         weight: 0,
@@ -171,8 +166,7 @@ class Text {
       labels.push({
         text: "R-250 km",
         weight: 0,
-        coord: polar2coord(0.5, -135, 250, model),
-        point: polar2point(0.5, -135, 250, model),
+        point: deg.polar2point(0.5, -135, 250, model),
         color: colors.label.face2,
         stroke: colors.label.stroke,
       });
@@ -182,16 +176,14 @@ class Text {
       radii.forEach((radius) => {
         labels.push({
           text: `${radius} km`,
-          coord: polar2coord(0, -135, radius, model),
-          point: polar2point(0, -135, radius, model),
+          point: deg.polar2point(0, -135, radius, model),
           color: colors.label.face2,
           stroke: colors.label.stroke,
           weight: 5,
         });
         labels.push({
           text: `${radius} km`,
-          coord: polar2coord(0, 45, radius, model),
-          point: polar2point(0, 45, radius, model),
+          point: deg.polar2point(0, 45, radius, model),
           color: colors.label.face2,
           stroke: colors.label.stroke,
           weight: 5,
@@ -324,8 +316,7 @@ class Text {
       raw.push({
         text: label.properties[stringKey],
         weight: label.properties[weightKey],
-        coord: [deg2rad(lon), deg2rad(lat)],
-        point: coord2point(lon, lat),
+        point: deg.coord2point(lon, lat),
         color: colors.label.face,
         stroke: colors.label.stroke,
         size: 12 + (7 - label.properties[weightKey]),
