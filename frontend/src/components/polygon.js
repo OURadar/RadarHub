@@ -6,196 +6,209 @@
 //
 
 import { vec3 } from "gl-matrix";
-import { deg2rad } from "./common";
+import { polar2coord, coord2point, dotAngle } from "./common";
 
 class Polygon {
   constructor() {
     this.points = [];
     this.count = 0;
-    this.busy = false;
-    this.radius = 6357;
     // Binding methods
     this.update = this.update.bind(this);
-    this.makeBuffer = this.makeBuffer.bind(this);
-    this.handleJSON = this.handleJSON.bind(this);
-    this.handleShapefile = this.handleShapefile.bind(this);
   }
 
-  async update(name, model) {
-    if (this.busy) {
-      console.log("Calling Polygon.update() too frequent.");
+  async update(name, geometry) {
+    if (this.busy > 5) {
+      console.log("Calling update() too frequently.");
       return;
     }
-    this.busy = true;
     if (name === undefined) {
-      console.log("Input undefined.");
+      console.log("Input for update() undefined.");
       return;
     }
     const ext = name.split(".").pop();
     if (name.includes("@")) {
-      return this.builtInGeometry(name, model)
-        .then((points) => this.makeBuffer(name, points))
+      this.busy--;
+      return builtInGeometry(name, geometry.model)
+        .then((lines) => lines2points(lines))
+        .then((points) => makeBuffer(name, points))
         .catch((error) => console.error(error.stack));
     } else if (ext == "json") {
+      this.busy--;
       return fetch(name)
         .then((text) => text.json())
-        .then((dict) => this.handleJSON(dict))
-        .then((points) => this.makeBuffer(name, points))
+        .then((dict) => handleJSON(dict))
+        .then((lines) => lines2points(lines))
+        .then((points) => makeBuffer(name, points))
         .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
+      this.busy--;
       return require("shapefile")
         .open(name)
-        .then((source) => this.handleShapefile(source))
-        .then((points) => this.makeBuffer(name, points))
+        .then((source) => handleShapefile(source))
+        .then((lines) => filterLines(lines, geometry.origin))
+        .then((lines) => lines2points(lines))
+        .then((points) => makeBuffer(name, points))
         .catch((error) => console.error(error.stack));
+    } else {
+      console.log(`%cUnable to handle ${name}`, "color: red");
+      this.busy--;
     }
   }
+}
 
-  async builtInGeometry(name, model) {
-    let x = [];
-    if (name.includes("@rings")) {
-      const radii = name.split("/").slice(1);
-      const sides = 64;
-      const h = 0.012;
-      // Apply the model matrix to make it radar-centric
-      radii.forEach((radius) => {
-        const r = parseFloat(radius);
-        x.push([0, r, h]);
-        for (let k = 1; k < sides; k++) {
-          const a = (k * 2.0 * Math.PI) / sides;
-          const p = [r * Math.sin(a), r * Math.cos(a), h];
-          x.push(p);
-          x.push(p);
-        }
-        x.push([0, r, h]);
-      });
-      x = x.map((p) => vec3.transformMat4([], p, model));
+async function builtInGeometryDirect(name, model) {
+  let x = [];
+  if (name.includes("@rings")) {
+    const radii = name.split("/").slice(1);
+    const sides = 64;
+    const h = 0.012;
+    // Apply the model matrix to make it radar-centric
+    radii.forEach((radius) => {
+      const r = parseFloat(radius);
+      x.push([0, r, h]);
+      for (let k = 1; k < sides; k++) {
+        const a = (k * 2.0 * Math.PI) / sides;
+        const p = [r * Math.sin(a), r * Math.cos(a), h];
+        x.push(p);
+        x.push(p);
+      }
+      x.push([0, r, h]);
+    });
+    x = x.map((p) => vec3.transformMat4([], p, model));
+  }
+  return x.flat();
+}
+
+async function builtInGeometry(name, model) {
+  let lines = [];
+  if (name.includes("@rings")) {
+    const sides = 6;
+    const radii = name.split("/").slice(1);
+    radii.forEach((radius) => {
+      let line = [];
+      const r = parseFloat(radius);
+      for (let k = 0; k < sides + 1; k++) {
+        const a = (k * 2.0 * Math.PI) / sides;
+        line.push(polar2coord(0, a, r, model));
+      }
+      lines.push(line);
+    });
+    console.log(lines);
+  }
+  return lines;
+}
+
+function handleJSON(data) {
+  let lines = [];
+  const w = data.transform.scale;
+  const b = data.transform.translate;
+  data.arcs.forEach((arc) => {
+    // Ignore this line on the south pole
+    let lat = w[1] * arc[0][1] + b[1];
+    if (lat < -89) return;
+    let line = [];
+    let point = [0, 0];
+    arc.forEach((p) => {
+      point[0] += p[0];
+      point[1] += p[1];
+      let lon = w[0] * point[0] + b[0];
+      let lat = w[1] * point[1] + b[1];
+      line.push([lon, lat]);
+    });
+    lines.push(line);
+  });
+  return lines;
+}
+
+function handleShapefile(source) {
+  let lines = [];
+
+  const addpolygon = (polygon) => {
+    lines.push(polygon);
+  };
+
+  let k = 0;
+  return source.read().then(function retrieve(result) {
+    if (result.done) {
+      return lines;
     }
-    return x.flat();
-  }
-
-  makeBuffer(file, x) {
-    const name = file.includes("@") ? file : file.split("/").pop();
-    const buffer = {
-      name: name,
-      data: x,
-      count: x.length / 6,
-    };
-    const bytes = x.length * Float32Array.BYTES_PER_ELEMENT;
-    const cString = buffer.count.toLocaleString();
-    const xString = x.length.toLocaleString();
-    const mString = bytes.toLocaleString();
-    console.log(
-      `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${mString} bytes)`,
-      "font-weight: bold",
-      "font-weight: normal",
-      "color: blue"
-    );
-    this.busy = false;
-    return buffer;
-  }
-
-  handleJSON(data) {
-    const w = data.transform.scale;
-    const b = data.transform.translate;
-    let arcs = [];
-    data.arcs.forEach((line) => {
-      // Ignore this line on the south pole
-      let lat = w[1] * line[0][1] + b[1];
-      if (lat < -89) return;
-      let arc = [];
-      let point = [0, 0];
-      line.forEach((p) => {
-        point[0] += p[0];
-        point[1] += p[1];
-        let lon = w[0] * point[0] + b[0];
-        let lat = w[1] * point[1] + b[1];
-        arc.push([lon, lat]);
-      });
-      arcs.push(arc);
-    });
-
-    let ll = [];
-    arcs.forEach((arc) => {
-      let l = [];
-      arc.forEach((coord) => {
-        const lon = deg2rad(coord[0]);
-        const lat = deg2rad(coord[1]);
-        const x = this.radius * Math.cos(lat) * Math.sin(lon);
-        const y = this.radius * Math.sin(lat);
-        const z = this.radius * Math.cos(lat) * Math.cos(lon);
-        l.push([x, y, z]);
-      });
-      ll.push(l);
-    });
-    // Go through each line loop
-    let x = [];
-    ll.forEach((arc) => {
-      x.push(arc[0]);
-      for (let k = 1; k < arc.length - 1; k++) {
-        x.push(arc[k]);
-        x.push(arc[k]);
-      }
-      x.push(arc[arc.length - 1]);
-    });
-    return x.flat();
-  }
-
-  handleShapefile(source) {
-    let raw = [];
-
-    const digest = () => {
-      let x = [];
-      raw.forEach((segment) => {
-        // Duplicate everything except the first and last points
-        x.push(segment[0]);
-        for (let k = 1; k < segment.length - 1; k++) {
-          x.push(segment[k]);
-          x.push(segment[k]);
-        }
-        x.push(segment[segment.length - 1]);
-      });
-      return x.flat();
-    };
-
-    const addpolygon = (polygon) => {
-      let p = [];
-      polygon.forEach((c) => {
-        var lon = deg2rad(c[0]);
-        var lat = deg2rad(c[1]);
-        var x = this.radius * Math.cos(lat) * Math.sin(lon);
-        var y = this.radius * Math.sin(lat);
-        var z = this.radius * Math.cos(lat) * Math.cos(lon);
-        p.push([x, y, z]);
-      });
-      raw.push(p);
-    };
-
-    return source.read().then(function retrieve(result) {
-      if (result.done) {
-        return digest();
-      }
-      const shape = result.value;
-      // console.log(shape);
-      if (shape.geometry.type.includes("MultiPolygon")) {
-        shape.geometry.coordinates.forEach((multipolygon) => {
-          multipolygon.forEach((polygon) => {
-            addpolygon(polygon);
-          });
-        });
-      } else if (
-        shape.geometry.type.includes("Polygon") ||
-        shape.geometry.type.includes("MultiLineString")
-      ) {
-        shape.geometry.coordinates.forEach((polygon) => {
+    const shape = result.value;
+    // console.log(shape);
+    if (shape.geometry.type.includes("MultiPolygon")) {
+      shape.geometry.coordinates.forEach((multipolygon) => {
+        multipolygon.forEach((polygon) => {
           addpolygon(polygon);
         });
-      } else if (shape.geometry.type.includes("LineString")) {
-        addpolygon(shape.geometry.coordinates);
-      }
-      return source.read().then(retrieve);
+      });
+    } else if (
+      shape.geometry.type.includes("Polygon") ||
+      shape.geometry.type.includes("MultiLineString")
+    ) {
+      shape.geometry.coordinates.forEach((polygon) => {
+        addpolygon(polygon);
+      });
+    } else if (shape.geometry.type.includes("LineString")) {
+      addpolygon(shape.geometry.coordinates);
+    }
+    return source.read().then(retrieve);
+  });
+}
+
+function filterLines(inputLines, origin) {
+  const theta = 0.05;
+  let outputLines = [];
+  const ref = coord2point(origin.longitude, origin.latitude);
+  inputLines.forEach((line) => {
+    const p = coord2point(...line[0]);
+    if (dotAngle(ref, p) > theta) return;
+    const q = coord2point(...line[line.length - 1]);
+    if (dotAngle(ref, q) > theta) return;
+    outputLines.push(line);
+  });
+  return outputLines;
+}
+
+function lines2points(lines) {
+  let segments = [];
+  lines.forEach((line) => {
+    let segment = [];
+    line.forEach((coord) => {
+      const point = coord2point(...coord);
+      segment.push(point);
     });
-  }
+    segments.push(segment);
+  });
+  // Go through each line, repeat intermediate points
+  let x = [];
+  segments.forEach((segment) => {
+    x.push(segment[0]);
+    for (let k = 1; k < segment.length - 1; k++) {
+      x.push(segment[k]);
+      x.push(segment[k]);
+    }
+    x.push(segment[segment.length - 1]);
+  });
+  return x.flat();
+}
+
+function makeBuffer(name, x) {
+  name = name.includes("@") ? name : name.split("/").pop();
+  const buffer = {
+    name: name,
+    data: x,
+    count: x.length / 6,
+  };
+  const bytes = x.length * Float32Array.BYTES_PER_ELEMENT;
+  const cString = buffer.count.toLocaleString();
+  const xString = x.length.toLocaleString();
+  const mString = bytes.toLocaleString();
+  console.log(
+    `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${mString} bytes)`,
+    "font-weight: bold",
+    "font-weight: normal",
+    "color: blue"
+  );
+  return buffer;
 }
 
 export { Polygon };

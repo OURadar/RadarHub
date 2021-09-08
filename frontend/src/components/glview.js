@@ -53,6 +53,13 @@ class GLView extends Component {
       tic: 0,
       message: "glView",
     };
+    const origin = this.constants.origin;
+    const satCoordinate = vec3.fromValues(
+      common.deg2rad(origin.longitude),
+      common.deg2rad(origin.latitude),
+      2.0 * common.earthRadius
+    );
+    const satPosition = common.coord2point(satCoordinate, false);
     // satCoordinate = (lon-rad, lat-rad, alt-km) of satellite
     // satPosition = (x, y, z) of satellite
     // satQuaternion = quaternion represent of satellite orientation
@@ -60,23 +67,19 @@ class GLView extends Component {
     // satQ = sub-quaternion y-axis only, plane Q
     // model = model matrix for product, rings, radar-relative drawings
     // view = view matrix derived from satPosition
-    const origin = this.constants.origin;
     let model = mat4.create();
     model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
     model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
     model = mat4.translate([], model, [0, 0, common.earthRadius]);
     // Important parameters for WebGL. Don't want to use React state
     this.geometry = {
-      fov: Math.PI / 4,
-      satCoordinate: vec3.fromValues(
-        common.deg2rad(origin.longitude),
-        common.deg2rad(origin.latitude),
-        2.0 * common.earthRadius
-      ),
-      satPosition: vec3.create(),
+      fov: 0.8,
+      origin: origin,
+      satCoordinate: satCoordinate,
+      satPosition: satPosition,
       satQuaternion: quat.fromEuler([], -origin.latitude, origin.longitude, 0),
-      satI: Math.cos(common.deg2rad(origin.longitude)),
-      satQ: Math.sin(common.deg2rad(origin.longitude)),
+      satI: Math.cos(satCoordinate[0]),
+      satQ: Math.sin(satCoordinate[0]),
       model: model,
       view: mat4.create(),
       projection: mat4.create(),

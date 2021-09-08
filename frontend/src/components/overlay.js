@@ -92,31 +92,29 @@ class Overlay {
     this.layers = [];
     overlays.forEach((overlay, k) => {
       setTimeout(() => {
-        this.polyEngine
-          .update(overlay.file, this.geometry.model)
-          .then((buffer) => {
-            this.layers[k] = {
-              name: buffer.name,
-              points: this.regl.buffer({
-                usage: "static",
-                type: "float",
-                data: buffer.data,
-              }),
-              count: buffer.count,
-              color: overlay.color,
-              limits: overlay.limits,
-              weight: overlay.weight,
-              linewidth: 1.0,
-              opacity: 0.0,
-              targetOpacity: 0.0,
-              quad: [0, this.colors.tint, 0, 0],
-            };
-            this.updatingPolygons--;
-            if (this.updatingPolygons == 0) {
-              this.updatingPolygons = false;
-              this.updateLabels();
-            }
-          });
+        this.polyEngine.update(overlay.file, this.geometry).then((buffer) => {
+          this.layers[k] = {
+            name: buffer.name,
+            points: this.regl.buffer({
+              usage: "static",
+              type: "float",
+              data: buffer.data,
+            }),
+            count: buffer.count,
+            color: overlay.color,
+            limits: overlay.limits,
+            weight: overlay.weight,
+            linewidth: 1.0,
+            opacity: 0.0,
+            targetOpacity: 0.0,
+            quad: [0, this.colors.tint, 0, 0],
+          };
+          this.updatingPolygons--;
+          if (this.updatingPolygons == 0) {
+            this.updatingPolygons = false;
+            this.updateLabels();
+          }
+        });
       }, 300 * k);
     });
     // const model = this.geometry.model;

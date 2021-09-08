@@ -338,9 +338,13 @@ export const getTime = checkTimerPerformance();
  * @param {float} lat the latitude in degrees
  * @returns {Array3} [x, y, z] in km
  */
-export function coord2point(lon, lat) {
-  const rlon = deg2rad(lon);
-  const rlat = deg2rad(lat);
+export function coord2point(lon, lat, inDegrees = true) {
+  let rlon = lon;
+  let rlat = lat;
+  if (inDegrees) {
+    rlon = deg2rad(rlon);
+    rlat = deg2rad(rlat);
+  }
   const clat = Math.cos(rlat);
   const slat = Math.sin(rlat);
   const clon = Math.cos(rlon);
@@ -362,12 +366,10 @@ export function coord2point(lon, lat) {
  * @returns {vec4} out in km
  */
 export function polar2point(e, a, r, model) {
-  const re = deg2rad(e);
-  const ra = deg2rad(a);
-  const ce = Math.cos(re);
-  const se = Math.sin(re);
-  const ca = Math.cos(ra);
-  const sa = Math.sin(ra);
+  const ce = Math.cos(e);
+  const se = Math.sin(e);
+  const ca = Math.cos(a);
+  const sa = Math.sin(a);
   const p = [r * ce * sa, r * ce * ca, r * se, 1.0];
   const q = vec3.transformMat4([], p, model);
   return q;
@@ -380,7 +382,7 @@ export function polar2point(e, a, r, model) {
  * @param {float} a the azimuth angle in radians
  * @param {float} r the range in km
  * @param {ReadonlyMat4} model matrix to transform with
- * @returns {Array2} out [lon, lat] in radians
+ * @returns {Array2} out [lon, lat] in degrees
  */
 export function polar2coord(e, a, r, model) {
   const p = polar2point(e, a, r, model);
@@ -393,10 +395,24 @@ export function polar2coord(e, a, r, model) {
  * @param {float} x the x-component in km
  * @param {float} y the y-component in km
  * @param {float} z the z-component in km
- * @returns {Array2} out [lon, lat] in radians
+ * @returns {Array2} out [lon, lat] in degrees
  */
 export function point2coord(x, y, z) {
-  const lat = Math.atan2(y, Math.sqrt(x ** 2 + z ** 2));
-  const lon = Math.atan2(x, z);
+  const lat = rad2deg(Math.atan2(y, Math.sqrt(x ** 2 + z ** 2)));
+  const lon = rad2deg(Math.atan2(x, z));
   return [lon, lat];
+}
+
+/**
+ * Returns the angle between two vectors
+ *
+ * @param {*} a input vector 1
+ * @param {*} b input vector 2
+ * @returns angle between vector a and b
+ */
+export function dotAngle(a, b) {
+  const m = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+  const n = Math.sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
+  const dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  return Math.acos(dot / (m * n));
 }
