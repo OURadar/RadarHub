@@ -7,8 +7,8 @@
 
 import { Polygon } from "./polygon";
 import { Text } from "./text";
-import { clamp, hex2rgb } from "./common";
-import { mat4 } from "gl-matrix";
+import { clamp } from "./common";
+import { mat4, vec4 } from "gl-matrix";
 
 //
 // Manages overlays on the earth
@@ -101,6 +101,7 @@ class Overlay {
               weight: overlay.weight,
               linewidth: 1.0,
               opacity: 0.0,
+              targetOpacity: 0.0,
               quad: [0, this.colors.tint, 0, 0],
             };
             this.updatingPolygons--;
@@ -134,13 +135,24 @@ class Overlay {
     // this.updateLabels();
   }
 
-  updateLabels(colors) {
+  updateColors(colors) {
+    this.colors = colors;
+    this.layers[0].color = colors.ring;
+    this.layers[2].color = colors.state;
+    this.layers[3].color = colors.county;
+    this.layers[0].quad[1] = colors.tint;
+    this.layers[1].quad[1] = colors.tint;
+    this.layers[2].quad[1] = colors.tint;
+    this.layers[3].quad[1] = colors.tint;
+    this.texture?.opacity.fill(0);
+    this.updateLabels();
+  }
+
+  updateLabels() {
     this.updatingLabels = true;
-    if (colors !== undefined) this.colors = colors;
-    // Now we use the text engine
     this.textEngine
       .update(
-        ["/static/blob/shapefiles/World/cities.shp", "@rings"],
+        ["/static/blob/shapefiles/World/cities.shp", "@rings/60/120"],
         this.geometry.model,
         this.colors
       )
@@ -174,15 +186,16 @@ class Overlay {
           raw: buffer,
         };
         this.updatingLabels = false;
-        this.worker.postMessage({
-          type: "init",
-          payload: {
-            points: buffer.points,
-            weights: buffer.weights,
-            extents: buffer.extents,
-          },
-        });
-        this.viewParameters[2] = 0;
+        this.viewParameters[0] = 0;
+        if (this.worker)
+          this.worker.postMessage({
+            type: "init",
+            payload: {
+              points: buffer.points,
+              weights: buffer.weights,
+              extents: buffer.extents,
+            },
+          });
       });
   }
 
@@ -193,36 +206,60 @@ class Overlay {
       this.geometry.satCoordinate[1],
     ];
 
-    // Compute deviation from the USA
-    const dx = this.geometry.satCoordinate[0] + 1.75;
-    const dy = this.geometry.satCoordinate[1] - 0.72;
-    const d = Math.sqrt(dx * dx + dy * dy);
-    let t;
-    if (this.geometry.fov < 0.43 && d < 0.25) {
-      // Overlays are rings, countries, states, counties
-      t = [1, 0, 1, 1];
-    } else {
-      t = [1, 1, 1, 0];
-    }
+    if (
+      this.tic++ % 12 == 0 &&
+      (Math.abs(this.viewParameters[0] - viewParameters[0]) > 0.02 ||
+        Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.02 ||
+        Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.02)
+    ) {
+      this.viewParameters = viewParameters;
 
-    // Quickly go through all overlays to count the visible layers
-    let c = 0;
-    this.layers.forEach((o, k) => (c += o.opacity > 0.05));
+      // Compute deviation from the USA
+      const dx = this.geometry.satCoordinate[0] + 1.75;
+      const dy = this.geometry.satCoordinate[1] - 0.72;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      let t;
+      if (this.geometry.fov < 0.43 && d < 0.25) {
+        // Overlays are rings, countries, states, counties
+        t = [1, 0, 1, 1];
+      } else {
+        t = [1, 1, 1, 0];
+      }
+
+      // Quickly go through all poly layers to count up visible layers
+      let c = 0;
+      this.layers.forEach((o) => (c += o.opacity > 0.05));
+      this.layers.forEach((o, k) => {
+        if (c < 3 || t[k] == 0) o.targetOpacity = t[k];
+        else o.targetOpacity = 1.0;
+      });
+
+      // const t1 = window.performance.now();
+      if (this.texture) {
+        if (this.worker)
+          this.worker.postMessage({
+            type: "update",
+            payload: this.geometry,
+          });
+        else this.reviseOpacityV1();
+      }
+      // const t0 = window.performance.now();
+      // console.log(`${(t0 - t1).toFixed(2)} ms`);
+    }
 
     let shapes = {
       poly: [],
       text: null,
     };
     this.layers.forEach((o, i) => {
-      let targetOpacity = 1.0;
-      if (c < 3 || t[i] == 0) targetOpacity = t[i];
-      o.opacity = clamp(o.opacity + (targetOpacity ? 0.05 : -0.05), 0, 1);
-      if (o.opacity > 0.05) {
+      o.opacity = clamp(o.opacity + (o.targetOpacity ? 0.05 : -0.05), 0, 1);
+      if (o.opacity >= 0.05) {
         o.linewidth = clamp(
           o.weight / Math.sqrt(this.geometry.fov),
           ...o.limits
         );
-        o.quad[0] = 1.0 * (o.color[3] > 0 && this.geometry.fov < 0.25);
+        // quad: [shader-user mix, shader color tint, unused, opacity]
+        o.quad[0] = 1.0 * (o.color[3] > 0 && this.geometry.fov < 0.43);
         o.quad[3] = o.opacity;
         shapes.poly.push({
           points: o.points,
@@ -238,27 +275,6 @@ class Overlay {
     });
 
     if (this.texture) {
-      if (
-        Math.abs(this.viewParameters[0] - viewParameters[0]) > 0.02 ||
-        Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.02 ||
-        Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.02
-      ) {
-        // const t1 = window.performance.now();
-        if (this.tic++ % 10 == 0) {
-          this.viewParameters = viewParameters;
-
-          // this.reviseOpacityV1();
-
-          this.worker.postMessage({
-            type: "update",
-            payload: this.geometry,
-          });
-          //console.log(this.texture);
-        }
-        // const t0 = window.performance.now();
-        // console.log(`${(t0 - t1).toFixed(2)} ms`);
-      }
-
       for (let k = 0, l = this.texture.opacity.length; k < l; k++) {
         let o =
           this.texture.opacity[k] +
@@ -277,16 +293,16 @@ class Overlay {
     return shapes;
   }
 
-  async reviseOpacityV1(geometry) {
+  async reviseOpacityV1() {
     this.busy = true;
 
     let rectangles = [];
     let visibility = [];
     let s = 1.0 / this.textEngine.scale;
     for (let k = 0; k < this.texture.count; k++) {
-      const point = this.texture.raw.points[k];
+      const point = [...this.texture.raw.points[k], 1.0];
       const spread = this.texture.raw.spreads[k];
-      const t = transformMat4([], point, geometry.viewprojection);
+      const t = vec4.transformMat4([], point, this.geometry.viewprojection);
       const x = t[0] / t[3];
       const y = t[1] / t[3];
       const z = t[2] / t[3];

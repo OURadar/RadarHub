@@ -38,7 +38,6 @@ class GLView extends Component {
     }
     this.constants = {
       rings: common.tickChoices(1, 150),
-      radius: 6357,
       bounds: {
         top: 10,
         right: 0,
@@ -65,14 +64,14 @@ class GLView extends Component {
     let model = mat4.create();
     model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
     model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
-    model = mat4.translate([], model, [0, 0, this.constants.radius]);
+    model = mat4.translate([], model, [0, 0, common.earthRadius]);
     // Important parameters for WebGL. Don't want to use React state
     this.geometry = {
       fov: Math.PI / 4,
       satCoordinate: vec3.fromValues(
         common.deg2rad(origin.longitude),
         common.deg2rad(origin.latitude),
-        2 * this.constants.radius
+        2.0 * common.earthRadius
       ),
       satPosition: vec3.create(),
       satQuaternion: quat.fromEuler([], -origin.latitude, origin.longitude, 0),
@@ -166,8 +165,8 @@ class GLView extends Component {
     geo.projection = mat4.perspective([], geo.fov, w / h, 100, 30000.0);
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
     geo.viewport = { x: 0, y: 0, width: w, height: h };
-    geo.needsUpdate = false;
     geo.message = "geo";
+    geo.needsUpdate = false;
   }
 
   draw() {

@@ -1,25 +1,25 @@
 //
-//  texture.js
+//  earth-grid.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong on 8/25/2021.
 //
 
+import { earthRadius } from "./common";
+
 let points = [];
 let elements = [];
 const latCount = 17;
 const lonCount = 36;
-const r = 6357;
 var lat = (80.0 / 180.0) * Math.PI;
 for (let j = 0; j < latCount; j++) {
   for (let k = 0; k < lonCount; k++) {
     const lon = (k * 2 * Math.PI) / lonCount;
-    const xyz = [
-      Math.cos(lat) * Math.sin(lon),
-      Math.sin(lat),
-      Math.cos(lat) * Math.cos(lon),
-    ];
-    points.push([r * xyz[0], r * xyz[1], r * xyz[2]]);
+    points.push([
+      earthRadius * Math.cos(lat) * Math.sin(lon),
+      earthRadius * Math.sin(lat),
+      earthRadius * Math.cos(lat) * Math.cos(lon),
+    ]);
   }
   lat -= Math.PI / 18;
 }

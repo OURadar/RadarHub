@@ -40,10 +40,11 @@ class Product extends GLView {
   }
 
   updateViewPoint() {
-    let t = (0.0002 * (this.offset - window.performance.now())) % (2 * Math.PI);
+    const t = 0.0002 * (this.offset - window.performance.now());
+    const a = t % (2 * Math.PI);
     if (this.state.useEuler) {
-      this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.cos(t);
-      this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.sin(t);
+      this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.cos(a);
+      this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.sin(a);
       this.geometry.satCoordinate[0] = Math.atan2(
         this.geometry.satQ,
         this.geometry.satI
@@ -54,14 +55,15 @@ class Product extends GLView {
       const qt = quat.fromEuler(
         [],
         -common.rad2deg(this.graphics.satCoordinate[1]),
-        common.rad2deg(t),
+        common.rad2deg(a),
         0.0
       );
       const i = quat.slerp([], q, qt, 0.5);
       this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
-      const a = common.rad2deg(this.geometry.satCoordinate[0]);
-      this.geometry.message = `angle = ${a.toFixed(1)}`;
+      const b = common.rad2deg(this.geometry.satCoordinate[0]);
+      this.geometry.message = `angle = ${b.toFixed(1)}`;
     }
+    this.geometry.fov += 0.001 * Math.cos(t);
     this.geometry.needsUpdate = true;
   }
 
@@ -81,31 +83,24 @@ class Product extends GLView {
 
   draw() {
     if (this.mount === null) return;
-    let message = "";
-    let show = false;
     if (
       this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
       this.canvas.height != this.mount.offsetHeight
     ) {
       this.updateProjection();
-      message += " lines:";
-      show = true;
     }
     if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
-      this.overlay.updateLabels(this.props.colors);
+      this.overlay.updateColors(this.props.colors);
     }
-    const gmatrix = this.geometry;
-    // [shader-user mix, tint, unused]
-    // const mtu = [, this.props.colors.tint, 0];
     this.regl.clear({
       color: this.props.colors.canvas,
     });
     this.sphere({
-      modelview: gmatrix.view,
-      projection: gmatrix.projection,
-      viewport: gmatrix.viewport,
+      modelview: this.geometry.view,
+      projection: this.geometry.projection,
+      viewport: this.geometry.viewport,
       color: this.props.colors.grid,
     });
     const shapes = this.overlay.getDrawables();
@@ -120,7 +115,7 @@ class Product extends GLView {
 
   fitToData() {
     const geo = this.geometry;
-    geo.fov = 200.0 / this.constants.radius;
+    geo.fov = 200.0 / common.earthRadius;
     geo.satCoordinate[0] = common.deg2rad(this.constants.origin.longitude);
     geo.satCoordinate[1] = common.deg2rad(this.constants.origin.latitude);
     geo.needsUpdate = true;
@@ -135,7 +130,7 @@ class Product extends GLView {
     //     0.8 * this.canvas.width
     //   }`
     // );
-    if (x > 0.8 * this.canvas.width && y < 0.2 * this.canvas.height) {
+    if (x > 0.8 * this.canvas.width && y < 0.5 * this.canvas.height) {
       return this.toggleSpin();
     } else {
       this.fitToData();

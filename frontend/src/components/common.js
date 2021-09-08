@@ -9,6 +9,8 @@
 
 import { vec3 } from "gl-matrix";
 
+export const earthRadius = 6371.0;
+
 export function clamp(x, lo, hi) {
   return Math.min(Math.max(x, lo), hi);
 }
@@ -164,7 +166,7 @@ export function colorDict(theme) {
       },
       ring: hex2rgb("78dcffff"),
       state: hex2rgb("96e6c8ff"),
-      county: hex2rgb("96e6c8ff"),
+      county: hex2rgb("83e2bfff"),
       street: [0.5, 0.5, 1.0, 1.0],
     },
     vibrant: {
@@ -329,17 +331,36 @@ var checkTimerPerformance = function () {
 
 export const getTime = checkTimerPerformance();
 
+/**
+ * Transform the (lon, lat) coordinate to (x, y, z)
+ *
+ * @param {float} lon the longitude in degrees
+ * @param {float} lat the latitude in degrees
+ * @returns {Array3} [x, y, z] in km
+ */
 export function coord2point(lon, lat) {
-  const r = 6358.0;
   const rlon = deg2rad(lon);
   const rlat = deg2rad(lat);
   const clat = Math.cos(rlat);
   const slat = Math.sin(rlat);
   const clon = Math.cos(rlon);
   const slon = Math.sin(rlon);
-  return [r * clat * slon, r * slat, r * clat * clon];
+  return [
+    earthRadius * clat * slon,
+    earthRadius * slat,
+    earthRadius * clat * clon,
+  ];
 }
 
+/**
+ * Transform a radar coordinate (e, a, r) to [x, y, z, w]
+ *
+ * @param {float} e the elevation angle in radians
+ * @param {float} a the azimuth angle in radians
+ * @param {float} r the range in km
+ * @param {ReadonlyMat4} model matrix to transform with
+ * @returns {vec4} out in km
+ */
 export function polar2point(e, a, r, model) {
   const re = deg2rad(e);
   const ra = deg2rad(a);
@@ -347,16 +368,33 @@ export function polar2point(e, a, r, model) {
   const se = Math.sin(re);
   const ca = Math.cos(ra);
   const sa = Math.sin(ra);
-  const p = [r * ce * sa, r * ce * ca, r * se];
+  const p = [r * ce * sa, r * ce * ca, r * se, 1.0];
   const q = vec3.transformMat4([], p, model);
   return q;
 }
 
+/**
+ * Transform a radar coordinate (e, a, r) to [lon, lat]
+ *
+ * @param {float} e the elevation angle in radians
+ * @param {float} a the azimuth angle in radians
+ * @param {float} r the range in km
+ * @param {ReadonlyMat4} model matrix to transform with
+ * @returns {Array2} out [lon, lat] in radians
+ */
 export function polar2coord(e, a, r, model) {
   const p = polar2point(e, a, r, model);
   return point2coord(p[0], p[1], p[2]);
 }
 
+/**
+ * Transform a point (x, y, z) to [lon, lat]
+ *
+ * @param {float} x the x-component in km
+ * @param {float} y the y-component in km
+ * @param {float} z the z-component in km
+ * @returns {Array2} out [lon, lat] in radians
+ */
 export function point2coord(x, y, z) {
   const lat = Math.atan2(y, Math.sqrt(x ** 2 + z ** 2));
   const lon = Math.atan2(x, z);
