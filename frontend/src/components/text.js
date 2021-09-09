@@ -88,8 +88,6 @@ class Text {
         console.error(error.stack)
       );
     } else if (ext == "shp") {
-      // const indices = [0, 6];
-      // const indices = [2, 4];
       console.log(name, indices, model, colors);
       return require("shapefile")
         .open(name)
@@ -314,15 +312,19 @@ class Text {
         console.log(`${stringKey}, ${weightKey}`);
       }
       // if (label.properties[weightKey] >= 7) return;
-      const lon = label.geometry.coordinates[0][0];
-      const lat = label.geometry.coordinates[0][1];
+      // const lon = label.geometry.coordinates[0][0];
+      // const lat = label.geometry.coordinates[0][1];
+      // const w = label.properties[weightKey];
+      const lon = label.geometry.coordinates[0];
+      const lat = label.geometry.coordinates[1];
+      const w = 3;
       raw.push({
         text: label.properties[stringKey],
-        weight: label.properties[weightKey],
+        weight: w,
         point: deg.coord2point(lon, lat),
         color: colors.label.face,
         stroke: colors.label.stroke,
-        size: 11 + (7 - label.properties[weightKey]),
+        size: 11 + (7 - w),
       });
     };
     let k = 0;
@@ -331,7 +333,7 @@ class Text {
       if (result.done) {
         return digest();
       }
-      if (k++ == 0) {
+      if (k++ <= 10) {
         console.log(result.value);
       }
       handleLabel(result.value);
