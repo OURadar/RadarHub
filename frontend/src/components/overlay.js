@@ -25,6 +25,7 @@ class Overlay {
       this.geometry.satCoordinate[0],
       this.geometry.satCoordinate[1],
     ];
+    this.targetOpacity = [0, 0, 0, 0, 0, 0];
 
     this.polyEngine = new Polygon();
     this.updatingPolygons = 0;
@@ -74,7 +75,12 @@ class Overlay {
       },
       {
         file: "/static/blob/counties-10m.json",
-        // file: "/static/blob/shapefiles/United States/gz_2010_us_050_00_500k.shp",
+        color: colors.county,
+        limits: [0.5, 2.0],
+        weight: 0.4,
+      },
+      {
+        file: "/static/blob/shapefiles/United States/gz_2010_us_050_00_500k.shp",
         color: colors.county,
         limits: [0.5, 2.0],
         weight: 0.4,
@@ -109,6 +115,7 @@ class Overlay {
             targetOpacity: 0.0,
             quad: [0, this.colors.tint, 0, 0],
           };
+          this.viewParameters[0] = 0;
           this.updatingPolygons--;
           if (this.updatingPolygons == 0) {
             this.updatingPolygons = false;
@@ -213,9 +220,9 @@ class Overlay {
 
     if (
       this.tic++ % 12 == 0 &&
-      (Math.abs(this.viewParameters[0] - viewParameters[0]) > 0.02 ||
-        Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.02 ||
-        Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.02)
+      (Math.abs(this.viewParameters[0] - viewParameters[0]) > 0.01 ||
+        Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.01 ||
+        Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.01)
     ) {
       this.viewParameters = viewParameters;
 
@@ -223,21 +230,15 @@ class Overlay {
       const dx = this.geometry.satCoordinate[0] + 1.745;
       const dy = this.geometry.satCoordinate[1] - 0.698;
       const d = Math.sqrt(dx * dx + dy * dy);
-      let t;
-      if (this.geometry.fov < 0.43 && d < 15) {
-        // Overlays are rings, countries, states, counties, highways
-        t = [1, 0, 1, 1, 1];
+      console.log(this.geometry.fov, d);
+      // Overlays are rings, countries, states, counties, hi-res counties, highways
+      if (this.geometry.fov < 0.05 && d < 0.1) {
+        this.targetOpacity = [1, 0, 0, 0, 1, 1];
+      } else if (this.geometry.fov < 0.42 && d < 1.0) {
+        this.targetOpacity = [1, 0, 1, 1, 0, 0];
       } else {
-        t = [1, 1, 1, 0, 0];
+        this.targetOpacity = [1, 1, 1, 0, 0, 0];
       }
-
-      // Quickly go through all poly layers to count up visible layers
-      let c = 0;
-      this.layers.forEach((o) => (c += o.opacity > 0.05));
-      this.layers.forEach((o, k) => {
-        if (c < 3 || t[k] == 0) o.targetOpacity = t[k];
-        else o.targetOpacity = 1.0;
-      });
 
       // const t1 = window.performance.now();
       if (this.texture) {
@@ -252,12 +253,27 @@ class Overlay {
       // console.log(`${(t0 - t1).toFixed(2)} ms`);
     }
 
+    // Quickly go through all poly layers to count up visible layers
+    let c = 0;
+    let allSame = true;
+    this.layers.forEach((o, k) => {
+      allSame &= o.opacity == this.targetOpacity[k];
+      c += o.opacity >= 0.05;
+    });
+    if (!allSame) {
+      this.layers.forEach((o, k) => {
+        if (c < 3 || this.targetOpacity[k] == 0) {
+          o.targetOpacity = this.targetOpacity[k];
+        }
+        o.opacity = clamp(o.opacity + (o.targetOpacity ? 0.05 : -0.05), 0, 1);
+      });
+    }
+
     let shapes = {
       poly: [],
       text: null,
     };
-    this.layers.forEach((o, i) => {
-      o.opacity = clamp(o.opacity + (o.targetOpacity ? 0.05 : -0.05), 0, 1);
+    this.layers.forEach((o) => {
       if (o.opacity >= 0.05) {
         o.linewidth = clamp(
           o.weight / Math.sqrt(this.geometry.fov),
@@ -278,6 +294,17 @@ class Overlay {
         });
       }
     });
+    if (shapes.poly.length > 3) {
+      console.log(`does not work shapes.poly.length = ${shapes.poly.length}`);
+      console.log(
+        `${this.layers[0].opacity.toFixed(2)}` +
+          ` ${this.layers[1].opacity.toFixed(2)}` +
+          ` ${this.layers[2].opacity.toFixed(2)}` +
+          ` ${this.layers[3].opacity.toFixed(2)}` +
+          ` ${this.layers[4].opacity.toFixed(2)}` +
+          ` ${this.layers[5].opacity.toFixed(2)}`
+      );
+    }
 
     if (this.texture) {
       for (let k = 0, l = this.texture.opacity.length; k < l; k++) {

@@ -19,17 +19,13 @@ class Gesture {
     this.pointX = 0;
     this.pointY = 0;
     this.pointD = 0;
-    this.scale = 1;
-    this.minX = 0;
-    this.maxX = 1000;
-    this.minY = -32000;
-    this.maxY = +32000;
     this.shiftKey = false;
     this.panInProgress = false;
     this.singleTapTimeout = null;
     this.lastMagnifyTime = Date.now();
     this.lastTapTime = Date.now();
     this.message = "gesture";
+    this.scale = 1.4;
     this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
     this.handlePan = (_x, _y) => {};
     this.handleSingleTap = () => {};
@@ -100,7 +96,6 @@ class Gesture {
         e.preventDefault();
         this.panInProgress = true;
       }
-      if (e.targetTouches.length == 2) this.scale = 1;
       this.pointX = x;
       this.pointY = y;
       this.pointU = u;
@@ -148,21 +143,25 @@ class Gesture {
       let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
       if (this.panInProgress === true) {
         e.preventDefault();
-        this.handleMagnify(
-          delta2scale(0.3 * (this.pointU - u)),
-          delta2scale(0.3 * (this.pointV - v)),
-          d > 0 ? d / this.pointD : 1,
-          x,
-          y
+        if (e.targetTouches.length == 2)
+          this.handleMagnify(
+            delta2scale(0.3 * (this.pointU - u)),
+            delta2scale(0.3 * (this.pointV - v)),
+            d > 0 ? d / this.pointD : 1,
+            x,
+            y
+          );
+        this.handlePan(
+          this.scale * (x - this.pointX),
+          this.scale * (this.pointY - y)
         );
-        this.handlePan(x - this.pointX, this.pointY - y);
         this.pointX = x;
         this.pointY = y;
         this.pointU = u;
         this.pointV = v;
         this.pointD = d;
       }
-      this.message = `touchmove (${x}, ${y})  scale: ${this.scale.toFixed(2)}`;
+      this.message = `touchmove (${x}, ${y})`;
     });
     this.element.addEventListener("dblclick", (e) => {
       this.pointX = e.offsetX;

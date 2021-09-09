@@ -197,11 +197,12 @@ function makeBuffer(name, x) {
   const cString = buffer.count.toLocaleString();
   const xString = x.length.toLocaleString();
   const mString = bytes.toLocaleString();
+
   console.log(
     `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${mString} bytes)`,
     "font-weight: bold",
     "font-weight: normal",
-    "color: blue"
+    "color: orange"
   );
   return buffer;
 }

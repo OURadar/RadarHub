@@ -206,9 +206,9 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    const lon = geo.satCoordinate[0] - x * geo.fov * 0.001;
+    const lon = geo.satCoordinate[0] - x * geo.fov * 0.0015;
     geo.satCoordinate[1] = common.clamp(
-      geo.satCoordinate[1] - y * geo.fov * 0.001,
+      geo.satCoordinate[1] - y * geo.fov * 0.0015,
       -0.499 * Math.PI,
       +0.499 * Math.PI
     );

@@ -373,8 +373,6 @@ function _polar2point(e, a, r, model) {
   const sa = Math.sin(a);
   const rce = r * ce;
   const p = [rce * sa, rce * ca, r * se, 1.0];
-  // console.log(`_polar2coord e = ${e}  a = ${a}  r = ${r}`);
-  // console.log(model);
   const q = vec3.transformMat4([], p, model);
   return q;
 }
