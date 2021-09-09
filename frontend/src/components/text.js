@@ -81,14 +81,16 @@ class Text {
     return this.makeBuffer(allLabels);
   }
 
-  async getLabel(name, model, colors) {
+  async getLabel({ name, model, indices }, colors) {
     const ext = name.split(".").pop();
     if (name.includes("@")) {
       return this.builtInLabels(name, model, colors).catch((error) =>
         console.error(error.stack)
       );
     } else if (ext == "shp") {
-      const indices = [0, 6];
+      // const indices = [0, 6];
+      // const indices = [2, 4];
+      console.log(name, indices, model, colors);
       return require("shapefile")
         .open(name)
         .then((source) => this.handleShapefile(source, indices, colors))
@@ -308,7 +310,8 @@ class Text {
         const keys = Object.keys(label.properties);
         stringKey = keys[fields[0]];
         weightKey = keys[fields[1]];
-        // console.log(`${stringKey}, ${weightKey}`);
+        console.log(keys);
+        console.log(`${stringKey}, ${weightKey}`);
       }
       // if (label.properties[weightKey] >= 7) return;
       const lon = label.geometry.coordinates[0][0];
@@ -322,10 +325,14 @@ class Text {
         size: 11 + (7 - label.properties[weightKey]),
       });
     };
+    let k = 0;
 
     return source.read().then(function retrieve(result) {
       if (result.done) {
         return digest();
+      }
+      if (k++ == 0) {
+        console.log(result.value);
       }
       handleLabel(result.value);
       return source.read().then(retrieve);

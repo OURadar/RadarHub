@@ -202,7 +202,7 @@ function makeBuffer(name, x) {
     `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${mString} bytes)`,
     "font-weight: bold",
     "font-weight: normal",
-    "color: orange"
+    "color: darkorange"
   );
   return buffer;
 }

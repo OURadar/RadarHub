@@ -164,8 +164,21 @@ class Overlay {
     this.updatingLabels = true;
     this.textEngine
       .update(
-        ["/static/blob/shapefiles/World/cities.shp", "@rings/60/120"],
-        this.geometry.model,
+        [
+          {
+            name: "/static/blob/shapefiles/World/cities.shp",
+            indices: [0, 6],
+          },
+          // {
+          //   name: "/static/blob/shapefiles/United States/citiesx020.shp",
+          //   indices: [2, 4],
+          // },
+          {
+            name: "@rings/60/120",
+            model: this.geometry.model,
+          },
+        ],
+        // this.geometry.model,
         this.colors
       )
       .then((buffer) => {
