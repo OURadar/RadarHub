@@ -159,14 +159,13 @@ function handleShapefile(source) {
 }
 
 function filterLines(inputLines, origin) {
-  const theta = 12.0;
+  const theta = 2.5;
   let outputLines = [];
   const ref = deg.coord2point(origin.longitude, origin.latitude);
   inputLines.forEach((line) => {
     const p = deg.coord2point(...line[0]);
-    if (deg.dotAngle(ref, p) > theta) return;
     const q = deg.coord2point(...line[line.length - 1]);
-    if (deg.dotAngle(ref, q) > theta) return;
+    if (deg.dotAngle(ref, q) > theta && deg.dotAngle(ref, p) > theta) return;
     outputLines.push(line);
   });
   return outputLines;

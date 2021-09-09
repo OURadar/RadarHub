@@ -45,8 +45,9 @@ class Product extends GLView {
     if (this.state.useEuler) {
       this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.cos(a);
       this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.sin(a);
-      this.geometry.satCoordinate[0] = common.rad2deg(
-        Math.atan2(this.geometry.satQ, this.geometry.satI)
+      this.geometry.satCoordinate[0] = Math.atan2(
+        this.geometry.satQ,
+        this.geometry.satI
       );
       this.geometry.message = "";
     } else {
@@ -59,9 +60,7 @@ class Product extends GLView {
         0.0
       );
       const i = quat.slerp([], q, qt, 0.5);
-      this.graphics.satCoordinate[0] = -common.rad2deg(
-        Math.atan2(i[1], i[3]) * 2.0
-      );
+      this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
       const b = this.geometry.satCoordinate[0];
       this.geometry.message = `angle = ${b.toFixed(1)}`;
     }

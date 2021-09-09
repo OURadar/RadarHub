@@ -208,7 +208,7 @@ class Text {
     let origins = [];
     let spreads = [];
     labels.forEach((label) => {
-      const size = label?.size || 17;
+      const size = label?.size || 15;
       context.font = `${this.scale * size}px LabelFont`;
       const measure = context.measureText(label.text);
       const w = Math.ceil(measure.width);
@@ -319,7 +319,7 @@ class Text {
         point: deg.coord2point(lon, lat),
         color: colors.label.face,
         stroke: colors.label.stroke,
-        size: 12 + (7 - label.properties[weightKey]),
+        size: 11 + (7 - label.properties[weightKey]),
       });
     };
 
