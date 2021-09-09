@@ -230,11 +230,11 @@ class Overlay {
       const dx = this.geometry.satCoordinate[0] + 1.745;
       const dy = this.geometry.satCoordinate[1] - 0.698;
       const d = Math.sqrt(dx * dx + dy * dy);
-      console.log(this.geometry.fov, d);
+      // console.log(`fov = ${this.geometry.fov.toFixed(3)}  d = ${d.toFixed(2)}`);
       // Overlays are rings, countries, states, counties, hi-res counties, highways
       if (this.geometry.fov < 0.05 && d < 0.1) {
         this.targetOpacity = [1, 0, 0, 0, 1, 1];
-      } else if (this.geometry.fov < 0.42 && d < 1.0) {
+      } else if (this.geometry.fov < 0.42 && d < 0.3) {
         this.targetOpacity = [1, 0, 1, 1, 0, 0];
       } else {
         this.targetOpacity = [1, 1, 1, 0, 0, 0];
@@ -262,8 +262,11 @@ class Overlay {
     });
     if (!allSame) {
       this.layers.forEach((o, k) => {
-        if (c < 3 || this.targetOpacity[k] == 0) {
-          o.targetOpacity = this.targetOpacity[k];
+        if (this.targetOpacity[k] == 0) {
+          o.targetOpacity = 0;
+        } else if (c < 3) {
+          if (o.targetOpacity == 0) c++;
+          o.targetOpacity = 1;
         }
         o.opacity = clamp(o.opacity + (o.targetOpacity ? 0.05 : -0.05), 0, 1);
       });
