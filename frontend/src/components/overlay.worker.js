@@ -26,6 +26,13 @@ self.onmessage = ({ data: { type, payload } }) => {
       type: "opacity",
       payload: opacity,
     });
+  } else if (type == "read") {
+    console.log(`overlay.worker ${payload}`);
+    const content = read(payload);
+    self.postMessage({
+      type: "read",
+      payload: content,
+    });
   }
 };
 
@@ -169,4 +176,15 @@ function reviseOpacity(geometry) {
   // );
 
   return visibility;
+}
+
+function read(name) {
+  console.log(`reading ${name} ...`);
+  // require("shapefile")
+  //   .open(name)
+  //   .then((source) => console.log(source));
+  return {
+    name: name,
+    array: [1, 2, 3],
+  };
 }

@@ -40,6 +40,11 @@ class Overlay {
     this.worker.onmessage = this.handleMessage;
     this.workerReady = false;
 
+    this.worker.postMessage({
+      type: "read",
+      payload: "bitcoin",
+    });
+
     this.tic = 0;
   }
 
@@ -48,6 +53,9 @@ class Overlay {
       this.texture.targetOpacity = payload;
     } else if (type == "init") {
       if (payload == "ready") this.workerReady = true;
+    } else if (type == "read") {
+      console.log(`read() ->`);
+      console.log(payload);
     }
   }
 
@@ -165,13 +173,21 @@ class Overlay {
     this.textEngine
       .update(
         [
-          // {
-          //   name: "/static/blob/shapefiles/World/cities.shp",
-          //   indices: [0, 6],
-          // },
+          {
+            name: "/static/blob/shapefiles/World/cities.shp",
+            keys: {
+              name: "CITY_NAME",
+              weight: "POP_RANK",
+            },
+          },
           {
             name: "/static/blob/shapefiles/United States/citiesx020.shp",
-            indices: [2, 4],
+            keys: {
+              name: "NAME",
+              population: "POP_2000",
+              filterByDistance: true,
+              origin: this.geometry.origin,
+            },
           },
           {
             name: "@rings/60/120",

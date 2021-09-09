@@ -64,34 +64,33 @@ class Text {
     });
   }
 
-  async update(names, model, colors) {
+  async update(configs, colors) {
     if (this.busy) {
       console.log("Calling Text.update() too frequent.");
       return;
     }
-    if (names === undefined) {
+    if (configs === undefined) {
       console.log("Input undefined.");
       return;
     }
     let allLabels = [];
-    for (const name of names) {
-      const labels = await this.getLabel(name, model, colors);
+    for (const config of configs) {
+      const labels = await this.getLabel(config, colors);
       allLabels.push(...labels);
     }
     return this.makeBuffer(allLabels);
   }
 
-  async getLabel({ name, model, indices }, colors) {
+  async getLabel({ name, model, keys }, colors) {
     const ext = name.split(".").pop();
     if (name.includes("@")) {
       return this.builtInLabels(name, model, colors).catch((error) =>
         console.error(error.stack)
       );
     } else if (ext == "shp") {
-      console.log(name, indices, model, colors);
       return require("shapefile")
         .open(name)
-        .then((source) => this.handleShapefile(source, indices, colors))
+        .then((source) => this.handleShapefile(source, keys, colors))
         .catch((error) => console.error(error.stack));
     }
   }
@@ -288,10 +287,20 @@ class Text {
 
   handleJSON(dict) {}
 
-  handleShapefile(source, fields, colors) {
+  handleShapefile(source, keys, colors) {
     let raw = [];
-    let stringKey = "";
-    let weightKey = "";
+    const nameKey = keys.name;
+    const weightKey = keys.weight ?? false;
+    const populationKey = keys.population ?? false;
+    const filterByDistance = keys.filterByDistance ?? false;
+    const origin = keys.origin ?? false;
+    if (filterByDistance && !origin) {
+      console.log("filterByDistance must be used with origin.");
+      return;
+    }
+    const o = deg.coord2point(origin.longitude, origin.latitude, 1.0);
+    const th = Math.cos((2.5 / 180) * Math.PI);
+    // console.log(`filter = ${filterByDistance}  o = ${o}  th = ${th}`);
 
     const digest = () => {
       raw.sort((a, b) => {
@@ -299,47 +308,51 @@ class Text {
         if (a.weight < b.weight) return -1;
         return 0;
       });
+      console.log(`list contains ${raw.length.toLocaleString()} labels`);
       raw = raw.slice(-2500);
       return raw;
     };
 
     const handleLabel = (label) => {
-      if (stringKey == "") {
-        const keys = Object.keys(label.properties);
-        stringKey = keys[fields[0]];
-        weightKey = keys[fields[1]];
-        console.log(keys);
-        console.log(`${stringKey}, ${weightKey}`);
+      const lon = label.geometry.coordinates.flat()[0];
+      const lat = label.geometry.coordinates.flat()[1];
+      const weight = weightKey
+        ? label.properties[weightKey]
+        : pop2weight(label.properties[populationKey]);
+      // if (weight > 6) return;
+      if (filterByDistance) {
+        const p = deg.coord2point(lon, lat, 1.0);
+        const dot = o[0] * p[0] + o[1] * p[1] + o[2] * p[2];
+        if (dot < th) return;
       }
-      // if (label.properties[weightKey] >= 7) return;
-      // const lon = label.geometry.coordinates[0][0];
-      // const lat = label.geometry.coordinates[0][1];
-      // const w = label.properties[weightKey];
-      const lon = label.geometry.coordinates[0];
-      const lat = label.geometry.coordinates[1];
-      const w = 3;
       raw.push({
-        text: label.properties[stringKey],
-        weight: w,
+        text: label.properties[nameKey],
+        weight: weight,
         point: deg.coord2point(lon, lat),
         color: colors.label.face,
         stroke: colors.label.stroke,
-        size: 11 + (7 - w),
+        size: 11 + (7 - weight),
       });
     };
-    let k = 0;
 
     return source.read().then(function retrieve(result) {
       if (result.done) {
         return digest();
       }
-      if (k++ <= 10) {
-        console.log(result.value);
-      }
       handleLabel(result.value);
       return source.read().then(retrieve);
     });
   }
+}
+
+function pop2weight(pop) {
+  if (pop < 100) return 7;
+  if (pop < 1000) return 6;
+  if (pop < 10000) return 5;
+  if (pop < 100000) return 4;
+  if (pop < 1000000) return 3;
+  if (pop < 10000000) return 2;
+  return 1;
 }
 
 export { Text };
