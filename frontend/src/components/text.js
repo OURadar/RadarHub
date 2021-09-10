@@ -20,7 +20,7 @@ class Text {
     this.scale = 1.5;
     this.debug = debug;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = Math.ceil(3200 / 64) * 64;
+    this.canvas.width = Math.ceil(3200 / 256) * 256;
     this.canvas.height = this.canvas.width;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
@@ -38,7 +38,7 @@ class Text {
     // Binding methods
     this.update = this.update.bind(this);
     this.makeBuffer = this.makeBuffer.bind(this);
-    this.handleJSON = this.handleJSON.bind(this);
+    this.parseArray = this.parseArray.bind(this);
     this.handleShapefile = this.handleShapefile.bind(this);
 
     const o = document.getElementById("test");
@@ -87,34 +87,16 @@ class Text {
       return this.builtInLabels(name, model, colors).catch((error) =>
         console.error(error.stack)
       );
+    } else if (name.includes(".shp.json")) {
+      return fetch(name)
+        .then((text) => text.json())
+        .then((array) => this.parseArray(array, keys, colors))
+        .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
       return require("shapefile")
         .open(name)
-        .then((source) => this.handleShapefile(source, keys, colors))
-        .catch((error) => console.error(error.stack));
-    }
-  }
-
-  async updateV1(name, model, colors) {
-    if (this.busy) {
-      console.log("Calling Text.update() too frequent.");
-      return;
-    }
-    if (name === undefined) {
-      console.log("Input undefined.");
-      return;
-    }
-    const ext = name.split(".").pop();
-    if (name.includes("@")) {
-      return this.builtInLabels(name, model, colors)
-        .then((labels) => this.makeBuffer(labels))
-        .catch((error) => console.error(error.stack));
-    } else if (ext == "shp") {
-      const indices = [0, 6];
-      return require("shapefile")
-        .open(name)
-        .then((source) => this.handleShapefile(source, indices, colors))
-        .then((labels) => this.makeBuffer(labels))
+        .then((source) => this.handleShapefile(source))
+        .then((array) => this.parseArray(array, keys, colors))
         .catch((error) => console.error(error.stack));
     }
   }
@@ -270,25 +252,23 @@ class Text {
     const xString = (buffer.count * 11).toLocaleString();
     const mString = (buffer.count * 11 * bytes_per_float).toLocaleString();
     const wString = `${width.toLocaleString()} x ${height.toLocaleString()}`;
-    const vString = (width * height * 4).toLocaleString();
+    const vString = ((width * height * 4) / 1024 / 1024).toLocaleString();
     console.log(
       `Text: %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
-        `%c / texture (%c${wString} RGBA = ${vString} bytes)` +
-        `%c / usage ${this.usage.toFixed(2)} %%`,
+        `%c / texture (%c${wString} RGBA = ${vString} MB)` +
+        `%c / ${this.usage.toFixed(2)} %%`,
       "font-weight: normal",
-      "color: blue",
+      "color: darkorange",
       "font-weight: normal; color: black",
-      "color: blue",
+      "color: darkorange",
       "font-weight: normal; color: black"
     );
     this.busy = false;
     return buffer;
   }
 
-  handleJSON(dict) {}
-
-  handleShapefile(source, keys, colors) {
-    let raw = [];
+  parseArray(array, keys, colors) {
+    let labels = [];
     const nameKey = keys.name;
     const weightKey = keys.weight ?? false;
     const populationKey = keys.population ?? false;
@@ -298,22 +278,11 @@ class Text {
       console.log("filterByDistance must be used with origin.");
       return;
     }
+    const theta = Math.cos((3.0 / 180) * Math.PI);
     const o = deg.coord2point(origin.longitude, origin.latitude, 1.0);
-    const th = Math.cos((2.5 / 180) * Math.PI);
     // console.log(`filter = ${filterByDistance}  o = ${o}  th = ${th}`);
 
-    const digest = () => {
-      raw.sort((a, b) => {
-        if (a.weight > b.weight) return +1;
-        if (a.weight < b.weight) return -1;
-        return 0;
-      });
-      console.log(`list contains ${raw.length.toLocaleString()} labels`);
-      raw = raw.slice(-2500);
-      return raw;
-    };
-
-    const handleLabel = (label) => {
+    array.forEach((label) => {
       const lon = label.geometry.coordinates.flat()[0];
       const lat = label.geometry.coordinates.flat()[1];
       const weight = weightKey
@@ -323,9 +292,9 @@ class Text {
       if (filterByDistance) {
         const p = deg.coord2point(lon, lat, 1.0);
         const dot = o[0] * p[0] + o[1] * p[1] + o[2] * p[2];
-        if (dot < th) return;
+        if (dot < theta) return;
       }
-      raw.push({
+      labels.push({
         text: label.properties[nameKey],
         weight: weight,
         point: deg.coord2point(lon, lat),
@@ -333,13 +302,25 @@ class Text {
         stroke: colors.label.stroke,
         size: 11 + (7 - weight),
       });
-    };
+    });
 
+    labels.sort((a, b) => {
+      if (a.weight > b.weight) return +1;
+      if (a.weight < b.weight) return -1;
+      return 0;
+    });
+    // console.log(`list contains ${labels.length.toLocaleString()} labels`);
+    labels = labels.slice(-2500);
+    return labels;
+  }
+
+  handleShapefile(source) {
+    let array = [];
     return source.read().then(function retrieve(result) {
       if (result.done) {
-        return digest();
+        return array;
       }
-      handleLabel(result.value);
+      array.push(result.value);
       return source.read().then(retrieve);
     });
   }

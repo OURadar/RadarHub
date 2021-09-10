@@ -159,8 +159,8 @@ function handleShapefile(source) {
 }
 
 function filterLines(inputLines, origin) {
-  const theta = Math.cos((2.5 / 180) * Math.PI);
   let outputLines = [];
+  const theta = Math.cos((3.0 / 180) * Math.PI);
   const o = deg.coord2point(origin.longitude, origin.latitude, 1.0);
   inputLines.forEach((line) => {
     const p = deg.coord2point(...line[0], 1.0);

@@ -7,7 +7,7 @@
 
 import { Polygon } from "./polygon";
 import { Text } from "./text";
-import { clamp } from "./common";
+import { clamp, deg2rad } from "./common";
 import { mat4, vec4 } from "gl-matrix";
 
 //
@@ -40,10 +40,10 @@ class Overlay {
     this.worker.onmessage = this.handleMessage;
     this.workerReady = false;
 
-    this.worker.postMessage({
-      type: "read",
-      payload: "bitcoin",
-    });
+    // this.worker.postMessage({
+    //   type: "read",
+    //   payload: "bitcoin",
+    // });
 
     this.tic = 0;
   }
@@ -173,15 +173,31 @@ class Overlay {
     this.textEngine
       .update(
         [
+          // {
+          //   name: "/static/blob/shapefiles/World/cities.shp",
+          //   keys: {
+          //     name: "CITY_NAME",
+          //     weight: "POP_RANK",
+          //   },
+          // },
+          // {
+          //   name: "/static/blob/shapefiles/World/cities.shp.json",
+          //   keys: {
+          //     name: "CITY_NAME",
+          //     weight: "POP_RANK",
+          //   },
+          // },
+          // {
+          //   name: "/static/blob/shapefiles/United States/citiesx020.shp",
+          //   keys: {
+          //     name: "NAME",
+          //     population: "POP_2000",
+          //     filterByDistance: true,
+          //     origin: this.geometry.origin,
+          //   },
+          // },
           {
-            name: "/static/blob/shapefiles/World/cities.shp",
-            keys: {
-              name: "CITY_NAME",
-              weight: "POP_RANK",
-            },
-          },
-          {
-            name: "/static/blob/shapefiles/United States/citiesx020.shp",
+            name: "/static/blob/shapefiles/United States/citiesx020.shp.json",
             keys: {
               name: "NAME",
               population: "POP_2000",
@@ -255,12 +271,17 @@ class Overlay {
       this.viewParameters = viewParameters;
 
       // Compute deviation from the USA
-      const dx = this.geometry.satCoordinate[0] + 1.745;
-      const dy = this.geometry.satCoordinate[1] - 0.698;
+      // const dx = this.geometry.satCoordinate[0] + 1.745;
+      // const dy = this.geometry.satCoordinate[1] - 0.698;
+      const dx =
+        this.geometry.satCoordinate[0] -
+        deg2rad(this.geometry.origin.longitude);
+      const dy =
+        this.geometry.satCoordinate[1] - deg2rad(this.geometry.origin.latitude);
       const d = Math.sqrt(dx * dx + dy * dy);
       // console.log(`fov = ${this.geometry.fov.toFixed(3)}  d = ${d.toFixed(2)}`);
       // Overlays are rings, countries, states, counties, hi-res counties, highways
-      if (this.geometry.fov < 0.05 && d < 0.1) {
+      if (this.geometry.fov < 0.06 && d < 0.1) {
         this.targetOpacity = [1, 0, 0, 0, 1, 1];
       } else if (this.geometry.fov < 0.42 && d < 0.3) {
         this.targetOpacity = [1, 0, 1, 1, 0, 0];
