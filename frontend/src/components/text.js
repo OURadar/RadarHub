@@ -20,12 +20,13 @@ class Text {
     this.scale = 1.5;
     this.debug = debug;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = Math.ceil(3200 / 256) * 256;
+    this.canvas.width = Math.ceil(3500 / 256) * 256;
     this.canvas.height = this.canvas.width;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
     this.padding = 3 * this.scale;
+    this.texts = [];
     this.busy = false;
     this.fontLoaded = false;
     this.context.font = "14px LabelFont";
@@ -38,8 +39,6 @@ class Text {
     // Binding methods
     this.update = this.update.bind(this);
     this.makeBuffer = this.makeBuffer.bind(this);
-    this.parseArray = this.parseArray.bind(this);
-    this.handleShapefile = this.handleShapefile.bind(this);
 
     const o = document.getElementById("test");
     if (o) {
@@ -73,105 +72,70 @@ class Text {
       console.log("Input undefined.");
       return;
     }
+    let texts = [];
+    let points = [];
     let allLabels = [];
     for (const config of configs) {
       const labels = await this.getLabel(config, colors);
-      allLabels.push(...labels);
+      if (config.name.includes("@")) {
+        allLabels.push(...labels);
+      } else {
+        labels.forEach((label) => {
+          const index = texts.indexOf(label.text);
+          if (index > 0) {
+            const d = distance(label.point, points[index]);
+            if (d < 5) {
+              // if (this.debug)
+              console.log(
+                `Duplicate %c${label.text}  distance = ${d}`,
+                "color: purple"
+              );
+              console.log(label);
+              var item = Object.entries(allLabels).find(
+                (x) => x[1].text == label.text
+              )[1];
+              console.log(item);
+              return;
+            }
+          }
+          texts.push(label.text);
+          points.push(label.point);
+          allLabels.push(label);
+        });
+      }
     }
+    allLabels.sort((a, b) => {
+      if (a.weight > b.weight) return +1;
+      if (a.weight < b.weight) return -1;
+      return 0;
+    });
+    // console.log(allLabels[0]);
+    // console.log(allLabels[allLabels.length - 1]);
+    var item = Object.entries(allLabels).find((a) => a[1].text == "Norman")[1];
+    console.log(item);
+    // var item = Object.entries(allLabels).find((a) => a[1].text == "Hall Park")[1];
+    // console.log(item);
     return this.makeBuffer(allLabels);
   }
 
   async getLabel({ name, model, keys }, colors) {
     const ext = name.split(".").pop();
     if (name.includes("@")) {
-      return this.builtInLabels(name, model, colors).catch((error) =>
+      return builtInLabels(name, model, colors).catch((error) =>
         console.error(error.stack)
       );
     } else if (name.includes(".shp.json")) {
       return fetch(name)
         .then((text) => text.json())
-        .then((array) => this.parseArray(array, keys, colors))
+        .then((array) => parseArray(array, keys, colors))
         .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
       return require("shapefile")
         .open(name)
-        .then((source) => this.handleShapefile(source))
-        .then((array) => this.parseArray(array, keys, colors))
+        .then((source) => handleShapefile(source))
+        .then((array) => parseArray(array, keys, colors))
         .catch((error) => console.error(error.stack));
     }
-  }
-
-  async builtInLabels(name, model, colors) {
-    // Points radar-centric polar coordinate
-    let labels = [];
-    if (name == "@demo") {
-      labels.push({
-        text: "Origin",
-        point: deg.polar2point(0, 0, 0, model),
-        color: colors.label.face,
-        stroke: colors.label.stroke,
-        weight: 0,
-      });
-      // Points from (lat, lon) pairs
-      labels.push({
-        text: "LatLon-1",
-        weight: 0,
-        point: deg.coord2point(-90, 20),
-        color: colors.label.face,
-        stroke: colors.label.stroke,
-        weight: 0,
-      });
-      labels.push({
-        text: "LatLon-2",
-        weight: 0,
-        point: deg.coord2point(-100, 30),
-        color: colors.label.face,
-        stroke: colors.label.stroke,
-      });
-      labels.push({
-        text: "LatLon-3",
-        weight: 0,
-        point: deg.coord2point(-110, 40),
-        color: colors.label.face,
-        stroke: colors.label.stroke,
-      });
-      // More radar-centric points
-      labels.push({
-        text: "R-250 km",
-        weight: 0,
-        point: deg.polar2point(0.5, 45, 250, model),
-        color: colors.label.face,
-        stroke: colors.label.stroke,
-        weight: 0,
-      });
-      labels.push({
-        text: "R-250 km",
-        weight: 0,
-        point: deg.polar2point(0.5, -135, 250, model),
-        color: colors.label.face2,
-        stroke: colors.label.stroke,
-      });
-    } else if (name.includes("@ring")) {
-      // Parse out the radius from name
-      const radii = name.split("/").slice(1);
-      radii.forEach((radius) => {
-        labels.push({
-          text: `${radius} km`,
-          point: deg.polar2point(0, -135, radius, model),
-          color: colors.label.face2,
-          stroke: colors.label.stroke,
-          weight: 5,
-        });
-        labels.push({
-          text: `${radius} km`,
-          point: deg.polar2point(0, 45, radius, model),
-          color: colors.label.face2,
-          stroke: colors.label.stroke,
-          weight: 5,
-        });
-      });
-    }
-    return labels;
   }
 
   async makeBuffer(labels) {
@@ -266,74 +230,153 @@ class Text {
     this.busy = false;
     return buffer;
   }
+}
 
-  parseArray(array, keys, colors) {
-    let labels = [];
-    const nameKey = keys.name;
-    const weightKey = keys.weight ?? false;
-    const populationKey = keys.population ?? false;
-    const filterByDistance = keys.filterByDistance ?? false;
-    const origin = keys.origin ?? false;
-    if (filterByDistance && !origin) {
-      console.log("filterByDistance must be used with origin.");
-      return;
-    }
-    const theta = Math.cos((3.0 / 180) * Math.PI);
-    const o = deg.coord2point(origin.longitude, origin.latitude, 1.0);
-    // console.log(`filter = ${filterByDistance}  o = ${o}  th = ${th}`);
-
-    array.forEach((label) => {
-      const lon = label.geometry.coordinates.flat()[0];
-      const lat = label.geometry.coordinates.flat()[1];
-      const weight = weightKey
-        ? label.properties[weightKey]
-        : pop2weight(label.properties[populationKey]);
-      // if (weight > 6) return;
-      if (filterByDistance) {
-        const p = deg.coord2point(lon, lat, 1.0);
-        const dot = o[0] * p[0] + o[1] * p[1] + o[2] * p[2];
-        if (dot < theta) return;
-      }
+async function builtInLabels(name, model, colors) {
+  // Points radar-centric polar coordinate
+  let labels = [];
+  if (name == "@demo") {
+    labels.push({
+      text: "Origin",
+      point: deg.polar2point(0, 0, 0, model),
+      color: colors.label.face,
+      stroke: colors.label.stroke,
+      weight: 0,
+    });
+    // Points from (lat, lon) pairs
+    labels.push({
+      text: "LatLon-1",
+      weight: 0,
+      point: deg.coord2point(-90, 20),
+      color: colors.label.face,
+      stroke: colors.label.stroke,
+      weight: 0,
+    });
+    labels.push({
+      text: "LatLon-2",
+      weight: 0,
+      point: deg.coord2point(-100, 30),
+      color: colors.label.face,
+      stroke: colors.label.stroke,
+    });
+    labels.push({
+      text: "LatLon-3",
+      weight: 0,
+      point: deg.coord2point(-110, 40),
+      color: colors.label.face,
+      stroke: colors.label.stroke,
+    });
+    // More radar-centric points
+    labels.push({
+      text: "R-250 km",
+      weight: 0,
+      point: deg.polar2point(0.5, 45, 250, model),
+      color: colors.label.face,
+      stroke: colors.label.stroke,
+      weight: 0,
+    });
+    labels.push({
+      text: "R-250 km",
+      weight: 0,
+      point: deg.polar2point(0.5, -135, 250, model),
+      color: colors.label.face2,
+      stroke: colors.label.stroke,
+    });
+  } else if (name.includes("@rings")) {
+    // Parse out the radius from name
+    const radii = name.split("/").slice(1);
+    radii.forEach((radius) => {
       labels.push({
-        text: label.properties[nameKey],
-        weight: weight,
-        point: deg.coord2point(lon, lat),
-        color: colors.label.face,
+        text: `${radius} km`,
+        point: deg.polar2point(0, -135, radius, model),
+        color: colors.label.face2,
         stroke: colors.label.stroke,
-        size: 11 + (7 - weight),
+        weight: 5,
+      });
+      labels.push({
+        text: `${radius} km`,
+        point: deg.polar2point(0, 45, radius, model),
+        color: colors.label.face2,
+        stroke: colors.label.stroke,
+        weight: 5,
       });
     });
-
-    labels.sort((a, b) => {
-      if (a.weight > b.weight) return +1;
-      if (a.weight < b.weight) return -1;
-      return 0;
-    });
-    // console.log(`list contains ${labels.length.toLocaleString()} labels`);
-    labels = labels.slice(-2500);
-    return labels;
   }
+  return labels;
+}
 
-  handleShapefile(source) {
-    let array = [];
-    return source.read().then(function retrieve(result) {
-      if (result.done) {
-        return array;
-      }
-      array.push(result.value);
-      return source.read().then(retrieve);
-    });
+function handleShapefile(source) {
+  let array = [];
+  return source.read().then(function retrieve(result) {
+    if (result.done) {
+      return array;
+    }
+    array.push(result.value);
+    return source.read().then(retrieve);
+  });
+}
+
+function parseArray(array, keys, colors) {
+  let labels = [];
+  const nameKey = keys.name;
+  const weightKey = keys.weight ?? false;
+  const populationKey = keys.population ?? false;
+  const filterByDistance = keys.filterByDistance ?? false;
+  const origin = keys.origin ?? false;
+  if (filterByDistance && !origin) {
+    console.log("filterByDistance must be used with origin.");
+    return;
   }
+  const theta = Math.cos((3.0 / 180) * Math.PI);
+  const o = deg.coord2point(origin.longitude, origin.latitude, 1.0);
+  // console.log(`filter = ${filterByDistance}  o = ${o}  th = ${th}`);
+
+  array.forEach((label) => {
+    const lon = label.geometry.coordinates.flat()[0];
+    const lat = label.geometry.coordinates.flat()[1];
+    const weight = weightKey
+      ? label.properties[weightKey]
+      : pop2weight(label.properties[populationKey]);
+    // if (weight > 6) return;
+    if (filterByDistance) {
+      const p = deg.coord2point(lon, lat, 1.0);
+      const dot = o[0] * p[0] + o[1] * p[1] + o[2] * p[2];
+      if (dot < theta) return;
+    }
+    const text = label.properties[nameKey];
+    labels.push({
+      text: text,
+      weight: weight,
+      point: deg.coord2point(lon, lat),
+      color: colors.label.face,
+      stroke: colors.label.stroke,
+      size: 11 + (7 - weight),
+    });
+  });
+
+  // console.log(`list contains ${labels.length.toLocaleString()} labels`);
+  labels = labels.slice(-2500);
+  return labels;
 }
 
 function pop2weight(pop) {
-  if (pop < 100) return 7;
-  if (pop < 1000) return 6;
-  if (pop < 10000) return 5;
-  if (pop < 100000) return 4;
-  if (pop < 1000000) return 3;
-  if (pop < 10000000) return 2;
+  // if (pop < 100) return 7;
+  // if (pop < 1000) return 6;
+  // if (pop < 10000) return 5;
+  // if (pop < 100000) return 4;
+  // if (pop < 1000000) return 3;
+  // if (pop < 10000000) return 2;
+  if (pop < 500) return 7;
+  if (pop < 5000) return 6;
+  if (pop < 50000) return 5;
+  if (pop < 500000) return 4;
+  if (pop < 5000000) return 3;
+  if (pop < 50000000) return 2;
   return 1;
+}
+
+function distance(p, q) {
+  return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
 }
 
 export { Text };

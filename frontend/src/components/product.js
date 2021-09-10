@@ -35,6 +35,7 @@ class Product extends GLView {
 
   toggleSpin() {
     this.setState((state) => {
+      if (!state.spin) this.geometry.fov = 1.5;
       return { spin: !state.spin };
     });
   }
@@ -74,9 +75,9 @@ class Product extends GLView {
     if (this.props.profileGL) {
       const createStatsWidget = require("regl-stats-widget");
       const drawCalls = [
-        [this.gogh, "gogh"],
-        [this.picaso, "picaso"],
-        [this.sphere, "sphere"],
+        [this.gogh, "text"],
+        [this.picaso, "poly"],
+        [this.sphere, "grid"],
       ];
       this.statsWidget = createStatsWidget(drawCalls);
     }

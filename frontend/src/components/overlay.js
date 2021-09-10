@@ -66,7 +66,7 @@ class Overlay {
       {
         file: "@rings/1/60/120",
         color: colors.ring,
-        limits: [1.5, 3.0],
+        limits: [0.8, 2.0],
         weight: 0.4,
       },
       {
@@ -173,13 +173,13 @@ class Overlay {
     this.textEngine
       .update(
         [
-          // {
-          //   name: "/static/maps/World/cities.shp.json",
-          //   keys: {
-          //     name: "CITY_NAME",
-          //     weight: "POP_RANK",
-          //   },
-          // },
+          {
+            name: "/static/maps/World/cities.shp.json",
+            keys: {
+              name: "CITY_NAME",
+              weight: "POP_RANK",
+            },
+          },
           {
             name: "/static/maps/United States/citiesx020.shp.json",
             keys: {
@@ -248,7 +248,7 @@ class Overlay {
 
     if (
       this.tic++ % 12 == 0 &&
-      (Math.abs(this.viewParameters[0] - viewParameters[0]) > 0.01 ||
+      (Math.abs(this.viewParameters[0] / viewParameters[0] - 1.0) > 0.1 ||
         Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.01 ||
         Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.01)
     ) {

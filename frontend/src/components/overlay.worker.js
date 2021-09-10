@@ -109,10 +109,10 @@ function dotAngle(a, b) {
 }
 
 function getMaxWeight(fov) {
-  if (fov < 0.03) return 6;
-  if (fov < 0.06) return 5;
-  if (fov < 0.12) return 4;
-  return 3;
+  if (fov < 0.019) return 7;
+  if (fov < 0.026) return 6;
+  if (fov < 0.057) return 5;
+  return 4;
 }
 
 // Viewpoint is always 2R from the center of the sphere
@@ -133,8 +133,8 @@ function reviseOpacity(geometry) {
   const maxWeight = getMaxWeight(geometry.fov);
   const theta = Math.min(0.9, geometry.fov);
   console.log(
-    `fov = ${geometry.fov.toFixed(2)}` +
-      `  theta = ${theta.toFixed(2)}` +
+    `fov = ${geometry.fov.toFixed(3)}` +
+      `  theta = ${theta.toFixed(3)}` +
       `  maxWeight = ${maxWeight.toFixed(0)}`
   );
   for (let k = 0, l = text.points.length; k < l; k++) {
