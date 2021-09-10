@@ -108,6 +108,13 @@ function dotAngle(a, b) {
   return Math.acos(dot / (m * n));
 }
 
+function getMaxWeight(fov) {
+  if (fov < 0.03) return 6;
+  if (fov < 0.06) return 5;
+  if (fov < 0.12) return 4;
+  return 3;
+}
+
 // Viewpoint is always 2R from the center of the sphere
 // Maximum visible longitude = acos(R / 2R) = 1.047, no need to go extreme
 function reviseOpacity(geometry) {
@@ -122,8 +129,14 @@ function reviseOpacity(geometry) {
 
   const viewportWidth = geometry.viewport.width;
   const viewportHeight = geometry.viewport.height;
-  const maxWeight = 4.5 + 0.5 / geometry.fov;
+  // const maxWeight = 4.5 + 0.5 / geometry.fov;
+  const maxWeight = getMaxWeight(geometry.fov);
   const theta = Math.min(0.9, geometry.fov);
+  console.log(
+    `fov = ${geometry.fov.toFixed(2)}` +
+      `  theta = ${theta.toFixed(2)}` +
+      `  maxWeight = ${maxWeight.toFixed(0)}`
+  );
   for (let k = 0, l = text.points.length; k < l; k++) {
     if (dotAngle(geometry.satPosition, text.points[k]) > theta) {
       pass1++;

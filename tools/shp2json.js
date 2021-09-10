@@ -23,9 +23,10 @@ function handleShapefile(source, keys) {
       },
       properties: props,
     };
-    if (k++ < 10) {
+    if (k++ < 3) {
       console.log(input);
       console.log(label);
+      console.log("===");
     }
     raw.push(label);
   };
@@ -49,34 +50,28 @@ function sortByWeight(raw) {
 }
 
 //
-//
 
-// const keys = {
-//   name: "NAME",
-//   population: "POP_2000",
-// };
-
-// require("../frontend/node_modules/shapefile")
-//   .open("../frontend/static/blob/shapefiles/United States/citiesx020.shp")
-//   .then((source) => handleShapefile(source, keys))
-//   .then((list) => sortByWeight(list))
-//   .then((list) => {
-//     const fs = require("fs");
-//     fs.writeFileSync("citiesx020.shp.json", JSON.stringify(list));
-//     console.log(`list contains ${list.length.toLocaleString()} labels`);
-//   });
-
+const src = "../frontend/static/maps/United States/citiesx020.shp";
 const keys = {
-  name: "CITY_NAME",
-  weight: "POP_RANK",
+  name: "NAME",
+  population: "POP_2000",
 };
 
+// const src = "../frontend/static/maps/World/cities.shp";
+// const keys = {
+//   name: "CITY_NAME",
+//   weight: "POP_RANK",
+// };
+
+const dst = src.concat(".json");
+console.log(`Generating ${dst} ...`);
+
 require("../frontend/node_modules/shapefile")
-  .open("../frontend/static/blob/shapefiles/World/cities.shp")
+  .open(src)
   .then((source) => handleShapefile(source, keys))
   .then((list) => sortByWeight(list))
   .then((list) => {
     const fs = require("fs");
-    fs.writeFileSync("cities.shp.json", JSON.stringify(list));
+    fs.writeFileSync(dst, JSON.stringify(list));
     console.log(`list contains ${list.length.toLocaleString()} labels`);
   });

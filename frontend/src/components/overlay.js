@@ -67,34 +67,34 @@ class Overlay {
         file: "@rings/1/60/120",
         color: colors.ring,
         limits: [1.5, 3.0],
-        weight: 1.0,
+        weight: 0.4,
       },
       {
-        file: "/static/blob/countries-50m.json",
+        file: "/static/maps/World/countries-50m.json",
         color: [0.5, 0.5, 0.5, 0.0],
         limits: [1.3, 3.0],
         weight: 1.7,
       },
       {
-        file: "/static/blob/states-10m.json",
+        file: "/static/maps/United States/states-10m.json",
         color: colors.state,
         limits: [1.3, 3.0],
         weight: 0.9,
       },
       {
-        file: "/static/blob/counties-10m.json",
+        file: "/static/maps/United States/counties-10m.json",
         color: colors.county,
         limits: [0.5, 2.0],
         weight: 0.4,
       },
       {
-        file: "/static/blob/shapefiles/United States/gz_2010_us_050_00_500k.shp",
+        file: "/static/maps/United States/gz_2010_us_050_00_500k.shp",
         color: colors.county,
         limits: [0.5, 2.0],
         weight: 0.4,
       },
       {
-        file: "/static/blob/shapefiles/United States/intrstat.shp",
+        file: "/static/maps/United States/intrstat.shp",
         color: colors.highway,
         limits: [0.5, 2.0],
         weight: 0.4,
@@ -174,30 +174,14 @@ class Overlay {
       .update(
         [
           // {
-          //   name: "/static/blob/shapefiles/World/cities.shp",
+          //   name: "/static/maps/World/cities.shp.json",
           //   keys: {
           //     name: "CITY_NAME",
           //     weight: "POP_RANK",
-          //   },
-          // },
-          // {
-          //   name: "/static/blob/shapefiles/World/cities.shp.json",
-          //   keys: {
-          //     name: "CITY_NAME",
-          //     weight: "POP_RANK",
-          //   },
-          // },
-          // {
-          //   name: "/static/blob/shapefiles/United States/citiesx020.shp",
-          //   keys: {
-          //     name: "NAME",
-          //     population: "POP_2000",
-          //     filterByDistance: true,
-          //     origin: this.geometry.origin,
           //   },
           // },
           {
-            name: "/static/blob/shapefiles/United States/citiesx020.shp.json",
+            name: "/static/maps/United States/citiesx020.shp.json",
             keys: {
               name: "NAME",
               population: "POP_2000",
