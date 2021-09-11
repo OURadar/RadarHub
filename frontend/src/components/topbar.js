@@ -31,13 +31,13 @@ function StatusBodyQuick(props) {
 // - xxx - archived data ingest
 
 export function TopBar(props) {
-  const name = props.ingest ? " / " + props.ingest.radar : "";
-  const prefix = "v" + version + name;
+  const name = props.ingest ? ` / ${props.ingest.radar}` : "";
+  const prefix = `v${version}${name}`;
   const [message, setMessage] = React.useState("");
   let status, notify;
   if (props.ingest) {
     status = <StatusBody message={props.ingest.message} />;
-    notify = <Notification message={props.ingest.response ?? message} />;
+    notify = <Notification message={props.ingest.response || message} />;
   } else {
     status = <StatusBody message="Some text" />;
     notify = <Notification message={message} />;
@@ -50,7 +50,7 @@ export function TopBar(props) {
         {status}
         {notify}
         <Console
-          isMobile={props.isMobile}
+          isMobile={props.isMobile ?? false}
           handleAccount={() => {
             setMessage(
               "<h3>Nothing 🍔</h3>Coming soon to v0.8<div class='emotion'>🤷🏻‍♀️</div>"

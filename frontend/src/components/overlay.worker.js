@@ -115,7 +115,7 @@ function ndot(a, b) {
 
 function getMaxWeight(fov) {
   if (fov < 0.014) return 8;
-  if (fov < 0.02) return 7;
+  if (fov < 0.03) return 7;
   if (fov < 0.06) return 6;
   if (fov < 0.5) return 5;
   if (fov < 1.0) return 4;

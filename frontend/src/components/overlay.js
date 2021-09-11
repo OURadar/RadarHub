@@ -248,7 +248,7 @@ class Overlay {
 
     if (
       this.tic++ % 12 == 0 &&
-      (Math.abs(this.viewParameters[0] / viewParameters[0] - 1.0) > 0.1 ||
+      (Math.abs(this.viewParameters[0] / viewParameters[0] - 1.0) > 0.05 ||
         Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.01 ||
         Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.01)
     ) {

@@ -6,13 +6,17 @@ class Notification extends React.Component {
     this.timer = null;
     this.state = {
       message: props.message,
-      class: props.message.length > 0 ? "fadeIn" : "invisible",
+      class: props.message.length ? "fadeIn" : "invisible",
     };
   }
 
+  static defaultProps = {
+    message: "",
+  };
+
   componentWillUnmount() {
     if (this.timer) {
-      clearTimeout(this.state.timer);
+      clearTimeout(this.timer);
       this.timer = null;
     }
   }
@@ -22,9 +26,6 @@ class Notification extends React.Component {
       clearTimeout(this.timer);
       this.timer = null;
     }
-    let stateToChange = {
-      class: this.props.message == "" ? "fadeOut" : "fadeIn",
-    };
     if (this.props.message == "") {
       this.timer = setTimeout(() => {
         this.setState({
@@ -33,10 +34,11 @@ class Notification extends React.Component {
         });
         this.timer = null;
       }, 300);
-    } else {
-      stateToChange.message = this.props.message;
     }
-    this.setState(stateToChange);
+    this.setState({
+      class: this.props.message == "" ? "fadeOut" : "fadeIn",
+      message: this.props.message,
+    });
   }
 
   componentDidUpdate(prevProps) {

@@ -29,7 +29,7 @@ class App extends Component {
       this.forceUpdate();
     };
     this.isMobile = detectMob();
-    console.log("isMobile = " + this.isMobile);
+    console.log(`isMobile = ${this.isMobile}`);
   }
 
   static defaultProps = {

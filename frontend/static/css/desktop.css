@@ -15,6 +15,8 @@ Copyright Boonleng Cheong
 }
 .controlContainer,
 .healthContainer {
+  background-color: var(--system-background);
+  border-radius: 5px;
   padding: var(--padding);
   padding-bottom: calc(var(--padding) - var(--button-margin-bottom));
 }
@@ -87,15 +89,13 @@ Copyright Boonleng Cheong
 #flex {
   display: flex;
   flex-direction: row;
-}
-#left,
-#right {
-  width: 100%;
+  background-color: var(--gray6);
+  overflow-y: hidden;
 }
 #right {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100vh - 84px - 1px);
   overflow-y: scroll;
 }
 
@@ -107,11 +107,11 @@ Copyright Boonleng Cheong
 .split,
 .gutter.gutter-horizontal {
   float: left;
-  height: 100vh;
-  z-index: 100;
+  height: calc(100vh - 84px - 1px);
+  z-index: 3;
 }
 .gutter {
-  background-repeat: no-repeat;
+  background-color: var(--gray6);
   transition: background-color 0.3s linear;
 }
 .gutter:hover {
@@ -119,11 +119,10 @@ Copyright Boonleng Cheong
   transition: background-color 0.3s linear;
 }
 .gutter.gutter-vertical {
-  /* background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII="); */
-  /* background-position: 50%; */
   cursor: row-resize;
 }
+
 .gutter.gutter-horizontal {
-  /* background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg=="); */
   cursor: col-resize;
+  width: 8px !important;
 }

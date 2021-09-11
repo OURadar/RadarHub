@@ -117,7 +117,7 @@ class Product extends GLView {
 
   fitToData() {
     const geo = this.geometry;
-    geo.fov = 0.03;
+    geo.fov = 0.028;
     geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
     geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
     geo.needsUpdate = true;
