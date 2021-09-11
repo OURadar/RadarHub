@@ -35,7 +35,7 @@ class Product extends GLView {
 
   toggleSpin() {
     this.setState((state) => {
-      if (!state.spin) this.geometry.fov = 1.5;
+      if (!state.spin) this.geometry.fov = 1.0;
       return { spin: !state.spin };
     });
   }

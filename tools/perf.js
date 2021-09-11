@@ -1,4 +1,7 @@
-const { mat4, vec3 } = require("gl-matrix");
+// A standalone script to test some ideas
+//
+
+const { mat4, vec3 } = require("../frontend/node_modules/gl-matrix");
 
 function deg2rad(x) {
   return (x * Math.PI) / 180.0;
@@ -151,7 +154,8 @@ function makeBuffer(file, labels) {
   return buffer;
 }
 
-function reviseOpacity(buffer, geometry) {
+// The straight-forward approach
+function reviseOpacityV1(buffer, geometry) {
   let rectangles = [];
   let visibility = [];
   let s = 2.0 / 1.5;
@@ -190,7 +194,8 @@ function reviseOpacity(buffer, geometry) {
   return visibility;
 }
 
-function reviseOpacity2(buffer, geometry, verbose = 1) {
+// Simplified for performance
+function reviseOpacityV2(buffer, geometry, verbose = 1) {
   let indices = [];
   let rectangles = [];
   let visibility = new Array(buffer.count).fill(0);
@@ -287,12 +292,14 @@ function getGeometry(buffer) {
 
 function single(buffer) {
   const geometry = getGeometry(buffer);
-  const visibility = reviseOpacity2(buffer, geometry);
+  const visibility = reviseOpacityV2(buffer, geometry);
 
   console.log(geometry.satCoord, visibility.reduce((a, x) => a + x));
   console.log(`satPosition = ${geometry.satPosition}`);
   let satCoordinate = point2coord(...geometry.satPosition);
   console.log(`satCoordinate = ${satCoordinate}`);
+
+  return buffer;
 }
 
 function eval(buffer) {
@@ -300,7 +307,7 @@ function eval(buffer) {
   const count = 50000;
   
   const geometry = getGeometry(buffer);
-  const visibility = reviseOpacity(buffer, geometry);
+  const visibility = reviseOpacityV1(buffer, geometry);
   console.log(geometry.satCoord, visibility.reduce((a, x) => a + x));
 
 
@@ -320,26 +327,29 @@ function eval(buffer) {
   t1 = new Date().getTime();
   for (let k = 0; k < count; k++) {
     const geometry = geoms[k];
-    const visibility = reviseOpacity2(buffer, geometry);
+    const visibility = reviseOpacityV2(buffer, geometry, 0);
   }
   t0 = new Date().getTime();
-  console.log(`reviseOpacity: ${(t0 - t1) / count}`);
+  console.log(`reviseOpacityV2: ${(t0 - t1) / count}`);
 
 
   t1 = new Date().getTime();
   for (let k = 0; k < count; k++) {
     const geometry = geoms[k];
-    const visibility = reviseOpacity(buffer, geometry);
+    const visibility = reviseOpacityV1(buffer, geometry);
   }
   t0 = new Date().getTime();
-  console.log(`reviseOpacity2: ${(t0 - t1) / count}`);
+  console.log(`reviseOpacityV1: ${(t0 - t1) / count}`);
 }
 
-const file = "../static/blob/shapefiles/World/cities.shp";
-const buffer = require("shapefile")
+//
+
+const file = "../frontend/static/maps/World/cities.shp";
+const buffer = require("../frontend/node_modules/shapefile")
   .open(file)
   .then((source) => handleShapefile(source, [0, 6]))
   .then((labels) => makeBuffer(file, labels))
-  .then((buffer) => single(buffer));
+  .then((buffer) => single(buffer))
+  .then((buffer) => eval(buffer));
 
-// console.log(buffer);
+console.log(buffer[0]);

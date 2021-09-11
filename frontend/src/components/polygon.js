@@ -18,7 +18,7 @@ class Polygon {
 
   async load(name, geometry) {
     if (this.busy > 5) {
-      console.log("Calling update() too frequently.");
+      console.log("Calling Polygon.load() too frequently.");
       return;
     }
     if (name === undefined) {
@@ -39,17 +39,13 @@ class Polygon {
         .catch((error) => console.error(error.stack));
     } else if (ext == "json") {
       this.busy--;
-      return fetch(name)
-        .then((text) => text.json())
-        .then((dict) => handleJSON(dict))
+      return handleJSON(name)
         .then((lines) => lines2points(lines))
         .then((points) => makeBuffer(name, points))
         .catch((error) => console.error(error.stack));
     } else if (ext == "shp") {
       this.busy--;
-      return require("shapefile")
-        .open(name)
-        .then((source) => handleShapefile(source))
+      return handleShapefile(name)
         .then((lines) => filterLines(lines, geometry.origin))
         .then((lines) => lines2points(lines))
         .then((points) => makeBuffer(name, points))
@@ -57,6 +53,7 @@ class Polygon {
     } else {
       this.busy--;
       console.log(`%cUnable to handle ${name}`, "color: red");
+      return {};
     }
   }
 }
@@ -103,59 +100,61 @@ async function builtInGeometry(name, model) {
   return lines;
 }
 
-function handleJSON(data) {
-  let lines = [];
-  const w = data.transform.scale;
-  const b = data.transform.translate;
-  data.arcs.forEach((arc) => {
-    // Ignore this line on the south pole
-    let lat = w[1] * arc[0][1] + b[1];
-    if (lat < -89) return;
-    let line = [];
-    let point = [0, 0];
-    arc.forEach((p) => {
-      point[0] += p[0];
-      point[1] += p[1];
-      let lon = w[0] * point[0] + b[0];
-      let lat = w[1] * point[1] + b[1];
-      line.push([lon, lat]);
+async function handleJSON(name) {
+  return fetch(name)
+    .then((text) => text.json())
+    .then((data) => {
+      let lines = [];
+      const w = data.transform.scale;
+      const b = data.transform.translate;
+      data.arcs.forEach((arc) => {
+        // Ignore this line on the south pole
+        let lat = w[1] * arc[0][1] + b[1];
+        if (lat < -89) return;
+        let line = [];
+        let point = [0, 0];
+        arc.forEach((p) => {
+          point[0] += p[0];
+          point[1] += p[1];
+          let lon = w[0] * point[0] + b[0];
+          let lat = w[1] * point[1] + b[1];
+          line.push([lon, lat]);
+        });
+        lines.push(line);
+      });
+      return lines;
     });
-    lines.push(line);
-  });
-  return lines;
 }
 
-function handleShapefile(source) {
-  let lines = [];
-
-  const addpolygon = (polygon) => {
-    lines.push(polygon);
-  };
-
-  let k = 0;
-  return source.read().then(function retrieve(result) {
-    if (result.done) {
-      return lines;
-    }
-    const shape = result.value;
-    if (shape.geometry.type.includes("MultiPolygon")) {
-      shape.geometry.coordinates.forEach((multipolygon) => {
-        multipolygon.forEach((polygon) => {
-          addpolygon(polygon);
-        });
+function handleShapefile(name) {
+  return require("shapefile")
+    .open(name)
+    .then((source) => {
+      let lines = [];
+      return source.read().then(function retrieve(result) {
+        if (result.done) {
+          return lines;
+        }
+        const shape = result.value;
+        if (shape.geometry.type.includes("MultiPolygon")) {
+          shape.geometry.coordinates.forEach((multipolygon) => {
+            multipolygon.forEach((polygon) => {
+              lines.push(polygon);
+            });
+          });
+        } else if (
+          shape.geometry.type.includes("Polygon") ||
+          shape.geometry.type.includes("MultiLineString")
+        ) {
+          shape.geometry.coordinates.forEach((polygon) => {
+            lines.push(polygon);
+          });
+        } else if (shape.geometry.type.includes("LineString")) {
+          lines.push(shape.geometry.coordinates);
+        }
+        return source.read().then(retrieve);
       });
-    } else if (
-      shape.geometry.type.includes("Polygon") ||
-      shape.geometry.type.includes("MultiLineString")
-    ) {
-      shape.geometry.coordinates.forEach((polygon) => {
-        addpolygon(polygon);
-      });
-    } else if (shape.geometry.type.includes("LineString")) {
-      addpolygon(shape.geometry.coordinates);
-    }
-    return source.read().then(retrieve);
-  });
+    });
 }
 
 function filterLines(inputLines, origin) {

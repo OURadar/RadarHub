@@ -20,7 +20,7 @@ class Text {
     this.scale = 1.5;
     this.debug = debug;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = Math.ceil(3500 / 256) * 256;
+    this.canvas.width = Math.ceil(3000 / 256) * 256;
     this.canvas.height = this.canvas.width;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
@@ -37,7 +37,7 @@ class Text {
       undefined !== meas.actualBoundingBoxDescent;
     this.tic = 0;
     // Binding methods
-    this.update = this.update.bind(this);
+    this.update = this.load.bind(this);
     this.makeBuffer = this.makeBuffer.bind(this);
 
     const o = document.getElementById("test");
@@ -63,9 +63,9 @@ class Text {
     });
   }
 
-  async update(configs, colors) {
-    if (this.busy) {
-      console.log("Calling Text.update() too frequent.");
+  async load(configs, colors) {
+    if (this.busy > 5) {
+      console.log("Calling Text.load() too frequent.");
       return;
     }
     if (configs === undefined) {
@@ -76,7 +76,7 @@ class Text {
     let points = [];
     let allLabels = [];
     for (const config of configs) {
-      const labels = await this.getLabel(config, colors);
+      const labels = await makeLabels(config, colors);
       if (config.name.includes("@")) {
         allLabels.push(...labels);
       } else {
@@ -85,16 +85,18 @@ class Text {
           if (index > 0) {
             const d = distance(label.point, points[index]);
             if (d < 5) {
-              // if (this.debug)
               console.log(
-                `Duplicate %c${label.text}  distance = ${d}`,
-                "color: purple"
+                `Duplicate %c${label.text}%c  range = ${d.toFixed(2)} km`,
+                "color: purple",
+                "color: normal"
               );
-              console.log(label);
-              var item = Object.entries(allLabels).find(
-                (x) => x[1].text == label.text
-              )[1];
-              console.log(item);
+              if (this.debug) {
+                console.log(label);
+                var item = Object.entries(allLabels).find(
+                  (x) => x[1].text == label.text
+                )[1];
+                console.log(item);
+              }
               return;
             }
           }
@@ -109,33 +111,16 @@ class Text {
       if (a.weight < b.weight) return -1;
       return 0;
     });
-    // console.log(allLabels[0]);
-    // console.log(allLabels[allLabels.length - 1]);
-    var item = Object.entries(allLabels).find((a) => a[1].text == "Norman")[1];
-    console.log(item);
+    // I Love You 3,000 -Morgan Stark
+    allLabels = allLabels.slice(0, 3000);
+
+    // var item = Object.entries(allLabels).find((a) => a[1].text == "Criner");
+    // console.log(item);
+    // var item = Object.entries(allLabels).find((a) => a[1].text == "Norman")[1];
+    // console.log(item);
     // var item = Object.entries(allLabels).find((a) => a[1].text == "Hall Park")[1];
     // console.log(item);
     return this.makeBuffer(allLabels);
-  }
-
-  async getLabel({ name, model, keys }, colors) {
-    const ext = name.split(".").pop();
-    if (name.includes("@")) {
-      return builtInLabels(name, model, colors).catch((error) =>
-        console.error(error.stack)
-      );
-    } else if (name.includes(".shp.json")) {
-      return fetch(name)
-        .then((text) => text.json())
-        .then((array) => parseArray(array, keys, colors))
-        .catch((error) => console.error(error.stack));
-    } else if (ext == "shp") {
-      return require("shapefile")
-        .open(name)
-        .then((source) => handleShapefile(source))
-        .then((array) => parseArray(array, keys, colors))
-        .catch((error) => console.error(error.stack));
-    }
   }
 
   async makeBuffer(labels) {
@@ -232,6 +217,26 @@ class Text {
   }
 }
 
+async function makeLabels({ name, model, keys }, colors) {
+  const ext = name.split(".").pop();
+  if (name.includes("@")) {
+    return builtInLabels(name, model, colors).catch((error) =>
+      console.error(error.stack)
+    );
+  } else if (name.includes(".shp.json")) {
+    return handleShapefileJSON(name)
+      .then((array) => parseArray(array, keys, colors))
+      .catch((error) => console.error(error.stack));
+  } else if (ext == "shp") {
+    return handleShapefile(name)
+      .then((array) => parseArray(array, keys, colors))
+      .catch((error) => console.error(error.stack));
+  } else {
+    console.log(`%cUnable to handle ${name}`, "color: red");
+    return [];
+  }
+}
+
 async function builtInLabels(name, model, colors) {
   // Points radar-centric polar coordinate
   let labels = [];
@@ -250,7 +255,6 @@ async function builtInLabels(name, model, colors) {
       point: deg.coord2point(-90, 20),
       color: colors.label.face,
       stroke: colors.label.stroke,
-      weight: 0,
     });
     labels.push({
       text: "LatLon-2",
@@ -283,20 +287,20 @@ async function builtInLabels(name, model, colors) {
       stroke: colors.label.stroke,
     });
   } else if (name.includes("@rings")) {
-    // Parse out the radius from name
+    // Parse out the radii from the name
     const radii = name.split("/").slice(1);
     radii.forEach((radius) => {
       labels.push({
         text: `${radius} km`,
         point: deg.polar2point(0, -135, radius, model),
-        color: colors.label.face2,
+        color: colors.label.ring,
         stroke: colors.label.stroke,
         weight: 5,
       });
       labels.push({
         text: `${radius} km`,
         point: deg.polar2point(0, 45, radius, model),
-        color: colors.label.face2,
+        color: colors.label.ring,
         stroke: colors.label.stroke,
         weight: 5,
       });
@@ -305,15 +309,23 @@ async function builtInLabels(name, model, colors) {
   return labels;
 }
 
-function handleShapefile(source) {
-  let array = [];
-  return source.read().then(function retrieve(result) {
-    if (result.done) {
-      return array;
-    }
-    array.push(result.value);
-    return source.read().then(retrieve);
-  });
+async function handleShapefileJSON(name) {
+  return fetch(name).then((text) => text.json());
+}
+
+async function handleShapefile(name) {
+  return require("shapefile")
+    .open(name)
+    .then((source) => {
+      let array = [];
+      return source.read().then(function retrieve(result) {
+        if (result.done) {
+          return array;
+        }
+        array.push(result.value);
+        return source.read().then(retrieve);
+      });
+    });
 }
 
 function parseArray(array, keys, colors) {
@@ -321,12 +333,8 @@ function parseArray(array, keys, colors) {
   const nameKey = keys.name;
   const weightKey = keys.weight ?? false;
   const populationKey = keys.population ?? false;
-  const filterByDistance = keys.filterByDistance ?? false;
+  const maximumWeight = keys.maximumWeight ?? 999;
   const origin = keys.origin ?? false;
-  if (filterByDistance && !origin) {
-    console.log("filterByDistance must be used with origin.");
-    return;
-  }
   const theta = Math.cos((3.0 / 180) * Math.PI);
   const o = deg.coord2point(origin.longitude, origin.latitude, 1.0);
   // console.log(`filter = ${filterByDistance}  o = ${o}  th = ${th}`);
@@ -337,8 +345,8 @@ function parseArray(array, keys, colors) {
     const weight = weightKey
       ? label.properties[weightKey]
       : pop2weight(label.properties[populationKey]);
-    // if (weight > 6) return;
-    if (filterByDistance) {
+    if (weight > maximumWeight) return;
+    if (origin) {
       const p = deg.coord2point(lon, lat, 1.0);
       const dot = o[0] * p[0] + o[1] * p[1] + o[2] * p[2];
       if (dot < theta) return;
@@ -350,12 +358,11 @@ function parseArray(array, keys, colors) {
       point: deg.coord2point(lon, lat),
       color: colors.label.face,
       stroke: colors.label.stroke,
-      size: 11 + (7 - weight),
+      size: weight > 6 ? 13 : 19 - weight,
     });
   });
 
   // console.log(`list contains ${labels.length.toLocaleString()} labels`);
-  labels = labels.slice(-2500);
   return labels;
 }
 
@@ -366,6 +373,7 @@ function pop2weight(pop) {
   // if (pop < 100000) return 4;
   // if (pop < 1000000) return 3;
   // if (pop < 10000000) return 2;
+  if (pop < 50) return 8;
   if (pop < 500) return 7;
   if (pop < 5000) return 6;
   if (pop < 50000) return 5;

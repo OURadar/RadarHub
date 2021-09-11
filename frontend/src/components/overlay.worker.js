@@ -2,10 +2,15 @@
 //  overlay.worker.js
 //  RadarHub
 //
+//  A separate web worker to compute the visibility of the labels.
+//  This task is time-consuming so it is offloaded to a separate
+//  thread for asynchronous operation.
+//
 //  Created by Boonleng Cheong
 //
 
-let text = {
+// A variable to store the arrays of label attributes
+let labels = {
   points: [[]],
   extents: [[]],
   weights: [],
@@ -14,13 +19,13 @@ let text = {
 self.onmessage = ({ data: { type, payload } }) => {
   self.postMessage({ type: "init" });
   if (type == "init") {
-    text = payload;
+    labels = payload;
     self.postMessage({
       type: "init",
       payload: "ready",
     });
   } else if (type == "update") {
-    if (text.points.length == 0) return;
+    if (labels.points.length == 0) return;
     const opacity = reviseOpacity(payload);
     self.postMessage({
       type: "opacity",
@@ -91,28 +96,30 @@ function transformMat4(out, a, m) {
  * @returns angle in degrees
  */
 function rad2deg(x) {
-  return (x / Math.PI) * 180.0;
+  return x * (180.0 / Math.PI);
 }
 
 /**
- * Returns the angle between two vectors
+ * Normalized dot product between two vectors
  *
  * @param {*} a input vector 1
  * @param {*} b input vector 2
- * @returns angle between vector a and b
+ * @returns out
  */
-function dotAngle(a, b) {
-  const m = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
-  const n = Math.sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
+function ndot(a, b) {
+  const m = Math.hypot(a[0], a[1], a[2]);
+  const n = Math.hypot(b[0], b[1], b[2]);
   const dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-  return Math.acos(dot / (m * n));
+  return dot / (m * n);
 }
 
 function getMaxWeight(fov) {
+  if (fov < 0.014) return 8;
   if (fov < 0.019) return 7;
-  if (fov < 0.026) return 6;
+  if (fov < 0.027) return 6;
   if (fov < 0.057) return 5;
-  return 4;
+  if (fov < 1.0) return 4;
+  return 3;
 }
 
 // Viewpoint is always 2R from the center of the sphere
@@ -123,35 +130,34 @@ function reviseOpacity(geometry) {
   let pass3 = 0;
   let indices = [];
   let rectangles = [];
-  let visibility = new Array(text.points.length).fill(0);
+  let visibility = new Array(labels.points.length).fill(0);
 
   // const t2 = Date.now();
 
   const viewportWidth = geometry.viewport.width;
   const viewportHeight = geometry.viewport.height;
-  // const maxWeight = 4.5 + 0.5 / geometry.fov;
   const maxWeight = getMaxWeight(geometry.fov);
-  const theta = Math.min(0.9, geometry.fov);
-  console.log(
-    `fov = ${geometry.fov.toFixed(3)}` +
-      `  theta = ${theta.toFixed(3)}` +
-      `  maxWeight = ${maxWeight.toFixed(0)}`
-  );
-  for (let k = 0, l = text.points.length; k < l; k++) {
-    if (dotAngle(geometry.satPosition, text.points[k]) > theta) {
+  const theta = Math.cos(Math.min(0.9, geometry.fov));
+  // console.log(
+  //   `fov = ${geometry.fov.toFixed(3)}` +
+  //     `  theta = ${theta.toFixed(3)}` +
+  //     `  maxWeight = ${maxWeight.toFixed(0)}`
+  // );
+  for (let k = 0, l = labels.points.length; k < l; k++) {
+    if (ndot(geometry.satPosition, labels.points[k]) < theta) {
       pass1++;
       continue;
     }
 
-    if (text.weights[k] > maxWeight) {
+    if (labels.weights[k] > maxWeight) {
       pass2++;
       continue;
     }
 
     visibility[k] = 1;
-    const w = text.extents[k][0];
-    const h = text.extents[k][1];
-    const t = transformMat4([], text.points[k], geometry.viewprojection);
+    const w = labels.extents[k][0];
+    const h = labels.extents[k][1];
+    const t = transformMat4([], labels.points[k], geometry.viewprojection);
     const x = (t[0] / t[3]) * viewportWidth;
     const y = (t[1] / t[3]) * viewportHeight;
     const rect = [x - w, y - h, x + w, y + h];
@@ -173,9 +179,10 @@ function reviseOpacity(geometry) {
     }
   });
 
+  // const v = visibility.reduce((a, x) => a + x);
+
   // const t0 = Date.now();
 
-  // const v = visibility.reduce((a, x) => a + x);
   // console.log(
   //   `%c${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
   //     `  %cmaxWeight = ${maxWeight.toFixed(1)}` +

@@ -64,7 +64,7 @@ class Overlay {
 
     const overlays = [
       {
-        file: "@rings/1/60/120",
+        file: "@rings/1/30/60/120",
         color: colors.ring,
         limits: [0.8, 2.0],
         weight: 0.4,
@@ -171,13 +171,14 @@ class Overlay {
   updateLabels() {
     this.updatingLabels = true;
     this.textEngine
-      .update(
+      .load(
         [
           {
             name: "/static/maps/World/cities.shp.json",
             keys: {
               name: "CITY_NAME",
               weight: "POP_RANK",
+              maximumWeight: 4,
             },
           },
           {
@@ -185,12 +186,11 @@ class Overlay {
             keys: {
               name: "NAME",
               population: "POP_2000",
-              filterByDistance: true,
               origin: this.geometry.origin,
             },
           },
           {
-            name: "@rings/60/120",
+            name: "@rings/30/60/120",
             model: this.geometry.model,
           },
         ],

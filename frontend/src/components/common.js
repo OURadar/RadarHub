@@ -16,11 +16,11 @@ export function clamp(x, lo, hi) {
 }
 
 export function deg2rad(x) {
-  return (x * Math.PI) / 180.0;
+  return x * (Math.PI / 180.0);
 }
 
 export function rad2deg(x) {
-  return (x * 180.0) / Math.PI;
+  return x * (180.0 / Math.PI);
 }
 
 export function ticksInRange(count, min, max, choices) {
@@ -126,9 +126,10 @@ export function colorDict(theme) {
       tint: 0.7,
       label: {
         face: "#000000",
-        face2: "#00bbff",
+        face2: "#333333",
         stroke: "#ffffff",
         shadow: "#ffffff",
+        ring: "#00bbff",
         blur: 3,
       },
       ring: hex2rgb("00bbff"),
@@ -159,9 +160,10 @@ export function colorDict(theme) {
       tint: 1.0,
       label: {
         face: "#ffffff",
-        face2: "#78dcff",
+        face2: "#cccccc",
         stroke: "#000000",
         shadow: "#000000",
+        ring: "#78dcff",
         blur: 3,
       },
       ring: hex2rgb("78dcffff"),
