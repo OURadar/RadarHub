@@ -31,6 +31,7 @@
     "regl": "^2.1.0",
     "regl-stats-widget": "^0.0.1",
     "shapefile": "^0.6.6",
+    "split.js": "^1.6.4",
     "stats-js": "^1.0.1"
   }
 }

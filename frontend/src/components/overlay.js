@@ -178,7 +178,7 @@ class Overlay {
             keys: {
               name: "CITY_NAME",
               weight: "POP_RANK",
-              maximumWeight: 4,
+              maximumWeight: 5,
             },
           },
           {

@@ -20,7 +20,7 @@ class Text {
     this.scale = 1.5;
     this.debug = debug;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = Math.ceil(3000 / 256) * 256;
+    this.canvas.width = Math.ceil(3500 / 256) * 256;
     this.canvas.height = this.canvas.width;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
@@ -85,12 +85,12 @@ class Text {
           if (index > 0) {
             const d = distance(label.point, points[index]);
             if (d < 5) {
-              console.log(
-                `Duplicate %c${label.text}%c  range = ${d.toFixed(2)} km`,
-                "color: purple",
-                "color: normal"
-              );
               if (this.debug) {
+                console.log(
+                  `Duplicate %c${label.text}%c  range = ${d.toFixed(2)} km`,
+                  "color: purple",
+                  "color: normal"
+                );
                 console.log(label);
                 var item = Object.entries(allLabels).find(
                   (x) => x[1].text == label.text
@@ -138,8 +138,8 @@ class Text {
     let origins = [];
     let spreads = [];
     labels.forEach((label) => {
-      const size = label?.size || 15;
-      context.font = `${this.scale * size}px LabelFont`;
+      const size = Math.round((label.size ?? 15) * this.scale);
+      context.font = `${size}px LabelFont`;
       const measure = context.measureText(label.text);
       const w = Math.ceil(measure.width);
       const h = Math.ceil(
@@ -367,19 +367,13 @@ function parseArray(array, keys, colors) {
 }
 
 function pop2weight(pop) {
-  // if (pop < 100) return 7;
-  // if (pop < 1000) return 6;
-  // if (pop < 10000) return 5;
-  // if (pop < 100000) return 4;
-  // if (pop < 1000000) return 3;
-  // if (pop < 10000000) return 2;
-  if (pop < 50) return 8;
-  if (pop < 500) return 7;
-  if (pop < 5000) return 6;
-  if (pop < 50000) return 5;
-  if (pop < 500000) return 4;
-  if (pop < 5000000) return 3;
-  if (pop < 50000000) return 2;
+  if (pop < 500) return 8;
+  if (pop < 5000) return 7;
+  if (pop < 50000) return 6;
+  if (pop < 500000) return 5;
+  if (pop < 5000000) return 4;
+  if (pop < 10000000) return 3;
+  if (pop < 20000000) return 2;
   return 1;
 }
 

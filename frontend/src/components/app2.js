@@ -23,6 +23,7 @@ class App2 extends Component {
     this.isMobile = detectMob();
     console.log(props);
   }
+
   static defaultProps = {
     radar: "demo",
     debug: false,

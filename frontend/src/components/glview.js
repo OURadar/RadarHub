@@ -206,9 +206,9 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    const lon = geo.satCoordinate[0] - x * geo.fov * 0.0011;
+    const lon = geo.satCoordinate[0] - x * geo.fov * 0.0015;
     geo.satCoordinate[1] = common.clamp(
-      geo.satCoordinate[1] - y * geo.fov * 0.0011,
+      geo.satCoordinate[1] - y * geo.fov * 0.0015,
       -0.499 * Math.PI,
       +0.499 * Math.PI
     );
@@ -232,7 +232,7 @@ class GLView extends Component {
 
   magnify(_mx, _my, m, _x, _y) {
     const geo = this.geometry;
-    geo.fov = common.clamp(geo.fov / m, 0.005, 0.5 * Math.PI);
+    geo.fov = common.clamp(geo.fov / m, 0.001, 0.5 * Math.PI);
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message += ` fov: ${geo.fov.toFixed(3)}`;
