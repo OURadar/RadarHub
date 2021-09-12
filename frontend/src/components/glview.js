@@ -109,7 +109,7 @@ class GLView extends Component {
     this.gesture.handleSingleTap = this.tap;
     this.gesture.handleDoubleTap = this.taptap;
     this.gesture.handleMagnify = this.magnify;
-
+    // Other built-in assets
     this.rings = new Rings(this.regl, [1, 60, 120, 250], 60);
   }
 

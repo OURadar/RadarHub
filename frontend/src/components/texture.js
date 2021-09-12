@@ -38,14 +38,19 @@ class Texture {
     this.busy = false;
     this.fontLoaded = false;
     this.context.font = "14px LabelFont";
-    let meas = this.context.measureText("money");
+    let meas = this.context.measureText("bitcoin");
     this.initWidth = meas.width;
     this.hasDetails =
       undefined !== meas.actualBoundingBoxAscent &&
       undefined !== meas.actualBoundingBoxDescent;
     this.tic = 0;
 
-    if (this.debug) document.getElementById("test").appendChild(this.canvas);
+    if (this.debug) {
+      const o = document.getElementById("test");
+      if (o) o.appendChild(this.canvas);
+    } else {
+      console.log("Debugging element <div id='test'></div> not found.");
+    }
 
     let font = new FontFace(
       "LabelFont",
@@ -155,6 +160,7 @@ class Texture {
         min: "linear",
         mag: "linear",
       }),
+      count: text.labels.length,
     };
   }
 }
