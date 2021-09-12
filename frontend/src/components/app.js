@@ -73,10 +73,10 @@ class App extends Component {
         <div className="scopeSingle">
           <Scope data={single} colors={this.state.colors} />
         </div>
-        {/* <h3>Dual-Channel</h3>
+        <h3>Dual-Channel</h3>
         <div className="scopeDouble">
           <Scope2 data={this.ingest.data} colors={this.state.colors} />
-        </div> */}
+        </div>
       </ThemeProvider>
     );
   }

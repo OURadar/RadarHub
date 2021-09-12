@@ -79,7 +79,7 @@ class Scope extends Component {
     // offsetX, offsetY - offset component of view matrix
     // v2dx, v2dy - data view to display view scaling
     // screen - projection matrix to screen space
-    // projection - projection matrix to data space
+    // projection - model-view-projection matrix for the shaders
     this.geometry = {
       scaleX: 1 / 1000,
       scaleY: 1 / 60000,
@@ -181,7 +181,6 @@ class Scope extends Component {
     const y0 = b;
     const x1 = x0 + ww;
     const y1 = y0 + hh;
-
     const minX = -geo.offsetX / w / geo.scaleX;
     const maxX = (w - geo.offsetX) / w / geo.scaleX;
     const minY = (-h2 - geo.offsetY) / h / geo.scaleY;
@@ -215,7 +214,7 @@ class Scope extends Component {
     geo.pane[7] = y1;
     // Ticks in viewport's coordinate
     geo.grid = this.makeGrid(x0, x1, minX, maxX, y0, y1, minY, maxY);
-
+    // Directly change the view matrix's coefficients
     geo.view[0] = geo.scaleX * w;
     geo.view[5] = geo.scaleY * h;
     geo.view[12] = geo.offsetX;
@@ -279,7 +278,6 @@ class Scope extends Component {
       if (result !== undefined) {
         this.geometry.label = result;
         this.geometry.labelParameters = labelParameters;
-        console.log(this.geometry.label);
       }
     });
     return grid.flat();

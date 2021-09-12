@@ -43,273 +43,263 @@ import { Scope } from "./scope";
 //
 
 class Scope2 extends Scope {
+  constructor(props) {
+    super(props);
+    this.geometry = {
+      ...this.geometry,
+      screen1: mat4.create(),
+      screen2: mat4.create(),
+      dataport1: { x: 0, y: 0, width: 1, height: 1 },
+      dataport2: { x: 0, y: 0, width: 1, height: 1 },
+    };
+  }
+
   static defaultProps = {
     ...super.defaultProps,
     d: 10,
   };
 
   updateProjection() {
-    this.canvas.setAttribute("width", this.mount.offsetWidth);
-    this.canvas.setAttribute("height", this.mount.offsetHeight);
-    this.setState((state, props) => {
-      const a = props.a;
-      const b = props.b;
-      const c = props.c;
-      const d = props.d;
-      const w = this.canvas.width;
-      const h = this.canvas.height;
-      const h2 = Math.floor(h / 2);
-      const ww = Math.floor(w - a - c);
-      const hh = Math.floor((h - b - c - d) / 2);
-      const x0 = a;
-      const y0 = b;
-      const x1 = x0 + ww;
-      const y1 = y0 + hh;
-      // const y2 = y1 + d;
-      const y2 = h - hh;
-      const minX = -state.offsetX / w / state.scaleX;
-      const maxX = (w - state.offsetX) / w / state.scaleX;
-      const minY = (-h2 - state.offsetY) / h / state.scaleY;
-      const maxY = (h - h2 - state.offsetY) / h / state.scaleY;
-      const spline = new Float32Array(
-        [
-          [x1 - 0.5, y0 + 0.5],
-          [x1 - 0.5, y1 - 0.5],
-          [x0 + 0.5, y1 - 0.5],
-          [x0 + 0.5, y0 + 0.5],
-        ].flat()
-      );
-      const pane = new Float32Array([x0, y0, x1, y0, x0, y1, x1, y1]);
-      const v2dx = w / ww;
-      const v2dy = h / hh;
-
-      // Ticks in viewport's coordinate
-      const grid = this.makeGrid(
-        v2dx,
-        x0,
-        x1,
-        minX,
-        maxX,
-        v2dy,
-        y0,
-        y1,
-        minY,
-        maxY
-      );
-
-      const p = mat4.ortho(mat4.create(), 0, w, 0, h, 0, -1);
-      // m[0, 0] scale x
-      // m[1, 1] scale y
-      // m[3, 0] translate x (view coordinate)
-      // m[3, 1] translate y (view coordinate)
-      const mv = mat4.fromValues(
-        state.scaleX * w,
-        0,
-        0,
-        0,
-        0,
-        state.scaleY * h,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        state.offsetX,
-        state.offsetY + h2,
-        0,
-        1
-      );
-      const mvp = mat4.multiply([], p, mv);
-      const two = mat4.fromTranslation([], [0, y2 - b, 0]);
-      const p2 = mat4.multiply([], p, two);
-      return {
-        screen1: p,
-        screen2: p2,
-        projection: mvp,
-        spline: spline,
-        pane: pane,
-        grid: grid,
-        viewport: { x: 0, y: 0, width: w, height: h },
-        dataport1: { x: a, y: y0, width: ww, height: hh },
-        dataport2: { x: a, y: y2, width: ww, height: hh },
-        minX: minX,
-        minY: minY,
-        maxX: maxX,
-        maxY: maxY,
-        v2dx: v2dx,
-        v2dy: v2dy,
-      };
-    });
+    this.canvas.width = this.mount.offsetWidth;
+    this.canvas.height = this.mount.offsetHeight;
+    const geo = this.geometry;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const a = this.props.a;
+    const b = this.props.b;
+    const c = this.props.c;
+    const d = this.props.d;
+    const h2 = Math.floor(h / 2);
+    const ww = Math.floor(w - a - c);
+    const hh = Math.floor((h - b - c - d) / 2);
+    const x0 = a;
+    const y0 = b;
+    const x1 = x0 + ww;
+    const y1 = y0 + hh;
+    // const y2 = y1 + d;
+    const y2 = h - hh;
+    const minX = -geo.offsetX / w / geo.scaleX;
+    const maxX = (w - geo.offsetX) / w / geo.scaleX;
+    const minY = (-h2 - geo.offsetY) / h / geo.scaleY;
+    const maxY = (h - h2 - geo.offsetY) / h / geo.scaleY;
+    geo.v2dx = w / ww;
+    geo.v2dy = h / hh;
+    geo.spline[0] = x1 - 0.5;
+    geo.spline[1] = y0 + 0.5;
+    geo.spline[2] = x1 - 0.5;
+    geo.spline[3] = y1 - 0.5;
+    geo.spline[4] = x0 + 0.5;
+    geo.spline[5] = y1 - 0.5;
+    geo.spline[6] = x0 + 0.5;
+    geo.spline[7] = y0 + 0.5;
+    geo.pane[0] = x0;
+    geo.pane[1] = y0;
+    geo.pane[2] = x1;
+    geo.pane[3] = y0;
+    geo.pane[4] = x0;
+    geo.pane[5] = y1;
+    geo.pane[6] = x1;
+    geo.pane[7] = y1;
+    // Ticks in viewport's coordinate
+    geo.grid = this.makeGrid(x0, x1, minX, maxX, y0, y1, minY, maxY);
+    // Directly change the view matrix's coefficients
+    geo.view[0] = geo.scaleX * w;
+    geo.view[5] = geo.scaleY * h;
+    geo.view[12] = geo.offsetX;
+    geo.view[13] = geo.offsetY + h2;
+    geo.screen1 = mat4.ortho([], 0, w, 0, h, 0, -1);
+    geo.screen2 = translateY([], geo.screen1, y2 - b);
+    geo.projection = mat4.multiply([], geo.screen1, geo.view);
+    geo.dataport1 = { x: a, y: y0, width: ww, height: hh };
+    geo.dataport2 = { x: a, y: y2, width: ww, height: hh };
+    geo.viewport = { x: 0, y: 0, width: w, height: h };
+    geo.needsUpdate = false;
   }
 
   draw() {
     if (
-      this.mount.offsetWidth != this.canvas.width ||
-      this.mount.offsetHeight != this.canvas.height ||
-      this.state.labelParameters.foreground != this.props.colors.foreground
+      this.geometry.needsUpdate ||
+      this.canvas.width != this.mount.offsetWidth ||
+      this.canvas.height != this.mount.offsetHeight ||
+      this.geometry.labelParameters.foreground != this.props.colors.foreground
     ) {
       this.updateProjection();
     }
-    this.setState((state, props) => {
-      this.regl.clear({
-        color: props.colors.canvas,
-      });
-      this.monet([
-        {
-          primitive: "triangle strip",
-          color: props.colors.pane,
-          projection: state.screen1,
-          viewport: state.viewport,
-          points: state.pane,
-          count: state.pane.length / 2,
-        },
-        {
-          primitive: "triangle strip",
-          color: props.colors.pane,
-          projection: state.screen2,
-          viewport: state.viewport,
-          points: state.pane,
-          count: state.pane.length / 2,
-        },
-      ]);
-      if (props.data.t !== null) {
-        const segments = props.data.t.length - 1;
-        this.picaso([
-          {
-            dataX: props.data.t,
-            dataY: props.data.ch1.a,
-            width: props.linewidth,
-            color: props.colors.lines[0],
-            projection: state.projection,
-            resolution: [state.dataport1.width, state.dataport1.height],
-            segments: segments,
-            viewport: state.dataport1,
-          },
-          {
-            dataX: props.data.t,
-            dataY: props.data.ch1.i,
-            width: props.linewidth,
-            color: props.colors.lines[5],
-            projection: state.projection,
-            resolution: [state.dataport1.width, state.dataport1.height],
-            segments: segments,
-            viewport: state.dataport1,
-          },
-          {
-            dataX: props.data.t,
-            dataY: props.data.ch1.q,
-            width: props.linewidth,
-            color: props.colors.lines[6],
-            projection: state.projection,
-            resolution: [state.dataport1.width, state.dataport1.height],
-            segments: segments,
-            viewport: state.dataport1,
-          },
-          {
-            dataX: props.data.t,
-            dataY: props.data.ch2.a,
-            width: props.linewidth,
-            color: props.colors.lines[0],
-            projection: state.projection,
-            resolution: [state.dataport2.width, state.dataport2.height],
-            segments: segments,
-            viewport: state.dataport2,
-          },
-          {
-            dataX: props.data.t,
-            dataY: props.data.ch2.i,
-            width: props.linewidth,
-            color: props.colors.lines[3],
-            projection: state.projection,
-            resolution: [state.dataport2.width, state.dataport2.height],
-            segments: segments,
-            viewport: state.dataport2,
-          },
-          {
-            dataX: props.data.t,
-            dataY: props.data.ch2.q,
-            width: props.linewidth,
-            color: props.colors.lines[4],
-            projection: state.projection,
-            resolution: [state.dataport2.width, state.dataport2.height],
-            segments: segments,
-            viewport: state.dataport2,
-          },
-        ]);
-      }
-      this.monet([
-        {
-          primitive: "lines",
-          color: props.colors.grid,
-          projection: state.screen1,
-          viewport: state.viewport,
-          points: state.grid,
-          count: state.grid.length / 2,
-        },
-        {
-          primitive: "lines",
-          color: props.colors.grid,
-          projection: state.screen2,
-          viewport: state.viewport,
-          points: state.grid,
-          count: state.grid.length / 2,
-        },
-        {
-          primitive: "line loop",
-          color: props.colors.spline,
-          projection: state.screen1,
-          viewport: state.viewport,
-          points: state.spline,
-          count: state.spline.length / 2,
-        },
-        {
-          primitive: "line loop",
-          color: props.colors.spline,
-          projection: state.screen2,
-          viewport: state.viewport,
-          points: state.spline,
-          count: state.spline.length / 2,
-        },
-      ]);
-      if (state.label !== undefined) {
-        let origin = 2 * state.labelParameters.countX;
-        let ypoints = state.label.position.slice(origin);
-        let yorigin = state.label.origin.slice(origin);
-        let yspread = state.label.spread.slice(origin);
-        this.gogh([
-          {
-            projection: state.screen1,
-            viewport: state.viewport,
-            scale: props.textureScale,
-            color: props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
-            bound: [this.texture.canvas.width, this.texture.canvas.height],
-            texture: state.label.texture,
-            points: state.label.position,
-            origin: state.label.origin,
-            spread: state.label.spread,
-            count: state.label.position.length / 2,
-          },
-          {
-            projection: state.screen2,
-            viewport: state.viewport,
-            scale: props.textureScale,
-            color: props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
-            bound: [this.texture.canvas.width, this.texture.canvas.height],
-            texture: state.label.texture,
-            points: ypoints,
-            origin: yorigin,
-            spread: yspread,
-            count: ypoints.length / 2,
-          },
-        ]);
-      }
-      return {
-        tic: state.tic + 1,
-      };
+    const geo = this.geometry;
+    this.regl.clear({
+      color: this.props.colors.canvas,
     });
+    this.monet([
+      {
+        primitive: "triangle strip",
+        color: this.props.colors.pane,
+        projection: geo.screen1,
+        viewport: geo.viewport,
+        points: geo.pane,
+        count: geo.pane.length / 2,
+      },
+      {
+        primitive: "triangle strip",
+        color: this.props.colors.pane,
+        projection: geo.screen2,
+        viewport: geo.viewport,
+        points: geo.pane,
+        count: geo.pane.length / 2,
+      },
+    ]);
+    if (this.props.data.t !== null) {
+      const segments = this.props.data.t.length - 1;
+      this.picaso([
+        {
+          dataX: this.props.data.t,
+          dataY: this.props.data.ch1.a,
+          width: this.props.linewidth,
+          color: this.props.colors.lines[0],
+          projection: geo.projection,
+          resolution: [geo.dataport1.width, geo.dataport1.height],
+          segments: segments,
+          viewport: geo.dataport1,
+        },
+        {
+          dataX: this.props.data.t,
+          dataY: this.props.data.ch1.i,
+          width: this.props.linewidth,
+          color: this.props.colors.lines[5],
+          projection: geo.projection,
+          resolution: [geo.dataport1.width, geo.dataport1.height],
+          segments: segments,
+          viewport: geo.dataport1,
+        },
+        {
+          dataX: this.props.data.t,
+          dataY: this.props.data.ch1.q,
+          width: this.props.linewidth,
+          color: this.props.colors.lines[6],
+          projection: geo.projection,
+          resolution: [geo.dataport1.width, geo.dataport1.height],
+          segments: segments,
+          viewport: geo.dataport1,
+        },
+        {
+          dataX: this.props.data.t,
+          dataY: this.props.data.ch2.a,
+          width: this.props.linewidth,
+          color: this.props.colors.lines[0],
+          projection: geo.projection,
+          resolution: [geo.dataport2.width, geo.dataport2.height],
+          segments: segments,
+          viewport: geo.dataport2,
+        },
+        {
+          dataX: this.props.data.t,
+          dataY: this.props.data.ch2.i,
+          width: this.props.linewidth,
+          color: this.props.colors.lines[3],
+          projection: geo.projection,
+          resolution: [geo.dataport2.width, geo.dataport2.height],
+          segments: segments,
+          viewport: geo.dataport2,
+        },
+        {
+          dataX: this.props.data.t,
+          dataY: this.props.data.ch2.q,
+          width: this.props.linewidth,
+          color: this.props.colors.lines[4],
+          projection: geo.projection,
+          resolution: [geo.dataport2.width, geo.dataport2.height],
+          segments: segments,
+          viewport: geo.dataport2,
+        },
+      ]);
+    }
+    this.monet([
+      {
+        primitive: "lines",
+        color: this.props.colors.grid,
+        projection: geo.screen1,
+        viewport: geo.viewport,
+        points: geo.grid,
+        count: geo.grid.length / 2,
+      },
+      {
+        primitive: "lines",
+        color: this.props.colors.grid,
+        projection: geo.screen2,
+        viewport: geo.viewport,
+        points: geo.grid,
+        count: geo.grid.length / 2,
+      },
+      {
+        primitive: "line loop",
+        color: this.props.colors.spline,
+        projection: geo.screen1,
+        viewport: geo.viewport,
+        points: geo.spline,
+        count: geo.spline.length / 2,
+      },
+      {
+        primitive: "line loop",
+        color: this.props.colors.spline,
+        projection: geo.screen2,
+        viewport: geo.viewport,
+        points: geo.spline,
+        count: geo.spline.length / 2,
+      },
+    ]);
+    if (geo.label.texture !== null) {
+      let origin = 2 * geo.labelParameters.countX;
+      let ypoints = geo.label.position.slice(origin);
+      let yorigin = geo.label.origin.slice(origin);
+      let yspread = geo.label.spread.slice(origin);
+      this.gogh([
+        {
+          projection: geo.screen1,
+          viewport: geo.viewport,
+          scale: this.props.textureScale,
+          color: this.props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
+          bound: [this.textEngine.canvas.width, this.textEngine.canvas.height],
+          texture: geo.label.texture,
+          points: geo.label.position,
+          origin: geo.label.origin,
+          spread: geo.label.spread,
+          count: geo.label.position.length / 2,
+        },
+        {
+          projection: geo.screen2,
+          viewport: geo.viewport,
+          scale: this.props.textureScale,
+          color: this.props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
+          bound: [this.textEngine.canvas.width, this.textEngine.canvas.height],
+          texture: geo.label.texture,
+          points: ypoints,
+          origin: yorigin,
+          spread: yspread,
+          count: ypoints.length / 2,
+        },
+      ]);
+    }
     if (this.stats !== undefined) this.stats.update();
   }
 }
 
 export { Scope2 };
+
+function translateY(out, a, y) {
+  out[0] = a[0];
+  out[1] = a[1];
+  out[2] = a[2];
+  out[3] = a[3];
+  out[4] = a[4];
+  out[5] = a[5];
+  out[6] = a[6];
+  out[7] = a[7];
+  out[8] = a[8];
+  out[9] = a[9];
+  out[10] = a[10];
+  out[11] = a[11];
+  out[12] = a[12];
+  out[13] = a[13] + a[5] * y;
+  out[14] = a[14];
+  out[15] = a[15];
+  return out;
+}
