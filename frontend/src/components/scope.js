@@ -87,6 +87,18 @@ class Scope extends Component {
         countY: 0,
       },
     };
+    this.geometry = {
+      v2dx: 1,
+      v2dy: 1,
+      scaleX: 1 / 1000,
+      scaleY: 1 / 60000,
+      offsetX: 0,
+      offsetY: 0,
+      screen: mat4.create(),
+      projection: mat4.create(),
+      viewport: { x: 0, y: 0, width: 1, height: 1 },
+      needsUpdate: true,
+    };
     // Our artists
     this.picaso = instanced.noninterleavedStripRoundCapJoin(this.regl, 8);
     this.monet = artists.basic(this.regl);

@@ -106,11 +106,7 @@ class Text {
         });
       }
     }
-    allLabels.sort((a, b) => {
-      if (a.weight > b.weight) return +1;
-      if (a.weight < b.weight) return -1;
-      return 0;
-    });
+    allLabels.sort((a, b) => a.weight - b.weight);
     // I Love You 3,000 -Morgan Stark
     allLabels = allLabels.slice(0, 3000);
 
