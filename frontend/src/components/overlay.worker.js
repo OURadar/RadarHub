@@ -138,11 +138,11 @@ function reviseOpacity(geometry) {
   const viewportHeight = geometry.viewport.height;
   const maxWeight = getMaxWeight(geometry.fov);
   const theta = Math.cos(Math.min(0.9, geometry.fov));
-  console.log(
-    `fov = ${geometry.fov.toFixed(3)}` +
-      `  theta = ${theta.toFixed(3)}` +
-      `  maxWeight = ${maxWeight.toFixed(0)}`
-  );
+  // console.log(
+  //   `fov = ${geometry.fov.toFixed(3)}` +
+  //     `  theta = ${theta.toFixed(3)}` +
+  //     `  maxWeight = ${maxWeight.toFixed(0)}`
+  // );
   for (let k = 0, l = labels.points.length; k < l; k++) {
     if (ndot(geometry.satPosition, labels.points[k]) < theta) {
       pass1++;

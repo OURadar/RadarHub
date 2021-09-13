@@ -11,20 +11,20 @@ import { roundCapJoinGeometry } from "./instanced";
 export function basic(regl) {
   return regl({
     vert: `
-        precision highp float;
-        uniform vec4 color;
-        uniform mat4 projection;
-        attribute vec2 position;
-        void main() {
-            gl_Position = projection * vec4(position, 0.0, 1.0);
-        }`,
+      precision highp float;
+      uniform vec4 color;
+      uniform mat4 projection;
+      attribute vec2 position;
+      void main() {
+        gl_Position = projection * vec4(position, 0.0, 1.0);
+      }`,
 
     frag: `
-        precision highp float;
-        uniform vec4 color;
-        void main() {
-          gl_FragColor = color;
-        }`,
+      precision highp float;
+      uniform vec4 color;
+      void main() {
+        gl_FragColor = color;
+      }`,
 
     uniforms: {
       color: regl.prop("color"),
@@ -67,11 +67,11 @@ export function sprite(regl) {
       varying vec2 wh;
       varying vec2 mn;
       void main()	{
-          uv = origin;
-          wh = spread;
-          size = max(spread.x, spread.y);
-          gl_Position = projection * vec4(position, 0.0, 1.0);
-          gl_PointSize = scale * size;
+        uv = origin;
+        wh = spread;
+        size = max(spread.x, spread.y);
+        gl_Position = projection * vec4(position, 0.0, 1.0);
+        gl_PointSize = scale * size;
       }`,
 
     frag: `
@@ -85,14 +85,14 @@ export function sprite(regl) {
       varying vec2 mn;
 
       void main()	{
-          vec2 q = gl_PointCoord;
-          vec2 p = (uv + q * size - 0.5 * (size - wh)) / bound;
-          if (any(lessThan(q, 0.5 * (size - wh) / size)) ||
-              any(greaterThan(q, 0.5 * (size + wh) / size))) {
-              gl_FragColor = color;
-          } else {
-              gl_FragColor = texture2D(texture, p);
-          }
+        vec2 q = gl_PointCoord;
+        vec2 p = (uv + q * size - 0.5 * (size - wh)) / bound;
+        if (any(lessThan(q, 0.5 * (size - wh) / size)) ||
+          any(greaterThan(q, 0.5 * (size + wh) / size))) {
+          gl_FragColor = color;
+        } else {
+          gl_FragColor = texture2D(texture, p);
+        }
       }`,
 
     uniforms: {
@@ -130,19 +130,19 @@ export function sprite(regl) {
 export function basic3(regl) {
   return regl({
     vert: `
-    precision highp float;
-    attribute vec3 position;
-    uniform mat4 projection;
-    void main() {
-      gl_Position = projection * vec4(position, 1);
-    }`,
+      precision highp float;
+      attribute vec3 position;
+      uniform mat4 projection;
+      void main() {
+        gl_Position = projection * vec4(position, 1);
+      }`,
 
     frag: `
-    precision highp float;
-    uniform vec4 color;
-    void main() {
-      gl_FragColor = color;
-    }`,
+      precision highp float;
+      uniform vec4 color;
+      void main() {
+        gl_FragColor = color;
+      }`,
 
     uniforms: {
       color: regl.prop("color"),
@@ -162,26 +162,26 @@ export function basic3(regl) {
 export function element3(regl) {
   return regl({
     vert: `
-    precision highp float;
-    attribute vec3 position;
-    uniform mat4 modelview;
-    uniform mat4 projection;
-    varying vec3 n;
-    varying float s;
-    void main() {
-      gl_Position = projection * modelview * vec4(position, 1.0);
-      n = mat3(modelview) * normalize(position);
-      s = dot(vec3(0.0, 0.0, 1.0), n);
-      s = clamp(0.4 + 0.6 * s, 0.0, 1.0);
-    }`,
+      precision highp float;
+      attribute vec3 position;
+      uniform mat4 modelview;
+      uniform mat4 projection;
+      varying vec3 n;
+      varying float s;
+      void main() {
+        gl_Position = projection * modelview * vec4(position, 1.0);
+        n = mat3(modelview) * normalize(position);
+        s = dot(vec3(0.0, 0.0, 1.0), n);
+        s = clamp(0.4 + 0.6 * s, 0.0, 1.0);
+      }`,
 
     frag: `
-    precision highp float;
-    uniform vec4 color;
-    varying float s;
-    void main() {
-      gl_FragColor = vec4(color.rgb, s);
-    }`,
+      precision highp float;
+      uniform vec4 color;
+      varying float s;
+      void main() {
+        gl_FragColor = vec4(color.rgb, s);
+      }`,
 
     uniforms: {
       color: regl.prop("color"),
@@ -212,26 +212,27 @@ const earth = require("./earth-grid");
 export function sphere(regl) {
   return regl({
     vert: `
-    precision highp float;
-    attribute vec3 position;
-    uniform mat4 modelview;
-    uniform mat4 projection;
-    varying float s;
-    vec3 n;
-    void main() {
-      gl_Position = projection * modelview * vec4(position, 1.0);
-      n = mat3(modelview) * normalize(position);
-      s = dot(vec3(0.0, 0.0, 1.3), n);
-      s = clamp(s, 0.2, 1.0);
-    }`,
+      precision highp float;
+      attribute vec3 position;
+      uniform mat4 modelview;
+      uniform mat4 projection;
+      uniform vec4 color;
+      varying vec4 adjustedColor;
+      varying float s;
+      vec3 n;
+      void main() {
+        gl_Position = projection * modelview * vec4(position, 1.0);
+        n = mat3(modelview) * normalize(position);
+        s = clamp(1.3 * n.z, 0.2, 1.0);
+        adjustedColor = color * s;
+      }`,
 
     frag: `
-    precision highp float;
-    uniform vec4 color;
-    varying float s;
-    void main() {
-      gl_FragColor = vec4(color.rgb * s, color.a * s);
-    }`,
+      precision highp float;
+      varying vec4 adjustedColor;
+      void main() {
+        gl_FragColor = adjustedColor;
+      }`,
 
     uniforms: {
       modelview: regl.prop("modelview"),
@@ -272,11 +273,11 @@ export function sprite3(regl) {
       varying vec2 wh;
       varying vec2 mn;
       void main()	{
-          uv = origin;
-          wh = spread;
-          size = max(spread.x, spread.y);
-          gl_Position = projection * vec4(position, 1.0);
-          gl_PointSize = scale * size;
+        uv = origin;
+        wh = spread;
+        size = max(spread.x, spread.y);
+        gl_Position = projection * vec4(position, 1.0);
+        gl_PointSize = scale * size;
       }`,
 
     frag: `
@@ -289,14 +290,14 @@ export function sprite3(regl) {
       varying vec2 wh;
       varying vec2 mn;
       void main()	{
-          vec2 q = gl_PointCoord;
-          vec2 p = (uv + q * size - 0.5 * (size - wh)) / bound;
-          if (any(lessThan(q, 0.5 * (size - wh) / size)) ||
-              any(greaterThan(q, 0.5 * (size + wh) / size))) {
-              gl_FragColor = color;
-          } else {
-              gl_FragColor = texture2D(texture, p);
-          }
+        vec2 q = gl_PointCoord;
+        vec2 p = (uv + q * size - 0.5 * (size - wh)) / bound;
+        if (any(lessThan(q, 0.5 * (size - wh) / size)) ||
+          any(greaterThan(q, 0.5 * (size + wh) / size))) {
+          gl_FragColor = color;
+        } else {
+          gl_FragColor = texture2D(texture, p);
+        }
       }`,
 
     uniforms: {
@@ -438,10 +439,10 @@ export function instancedLines(regl, resolution) {
 
 //
 // Inspired by interleavedStripRoundCapJoin3D() for drawing map polygon lines.
-// Here, model matrix is always an identity matrix and, therefore, it's omitted.
-// Also, instead of computing the instance geometry on the w-1 plane (screen),
-// the basic geometry is instanced on whatever w-plane after view-projection
-// operation.
+// Here, the model matrix is always an identity matrix so it's omitted.
+// Also, instead of computing the instanced geometry on the w=1 plane (screen),
+// the instanced geometry is computed on the itermediate w-plane after the
+// view-projection operation.
 //
 export function simplifiedInstancedLines(regl) {
   const roundCapJoin = roundCapJoinGeometry(regl, 0);
@@ -471,22 +472,20 @@ export function simplifiedInstancedLines(regl) {
         vec4 clip = mix(clip0, clip1, position.z);
         gl_Position = vec4(pt.xy, clip.z, clip.w);
         normal.xyz = normalize(mat3(view) * pointA);
-        normal.w = clamp(dot(vec3(0.0, 0.0, 1.3), normal.xyz), 0.05, 1.0) * quad.a;
-        normal.xyz *= quad.y;
+        normal.w = clamp(normal.z * 1.3, 0.0, 1.0) * quad.a;
         adjustedColor = color;
         adjustedColor.a *= normal.w;
+        vec4 computedColor = vec4(normal.xzy * quad.y * normal.w, normal.w);
+        adjustedColor = mix(computedColor, adjustedColor, quad.x);
       }`,
 
     frag: `
       precision highp float;
-      uniform vec4 quad;
-      varying vec4 normal;
       varying vec4 adjustedColor;
       void main() {
-        if (normal.w < 0.1)
+        if (adjustedColor.w < 0.1)
           discard;
-        vec4 computedColor = vec4(normal.xzy * normal.w, normal.w);
-        gl_FragColor = mix(computedColor, adjustedColor, quad.x);
+        gl_FragColor = adjustedColor;
       }`,
 
     attributes: {

@@ -8,7 +8,6 @@
 import React, { Component } from "react";
 import { ThemeProvider } from "@material-ui/core/styles";
 import { colorDict, detectMob } from "./common";
-import { SectionHeader } from "./section-header";
 import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
@@ -63,20 +62,14 @@ class App extends Component {
 
   render() {
     let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
+    let double = this.ingest.data;
     return (
       <ThemeProvider theme={theme}>
         <TopBar ingest={this.ingest} isMobile={this.isMobile} />
         <Health dict={this.ingest.data.health} />
         <Control ingest={this.ingest} />
-        <SectionHeader name="scope" />
-        <h3>Single-Channel</h3>
-        <div className="scopeSingle">
-          <Scope data={single} colors={this.state.colors} />
-        </div>
-        <h3>Dual-Channel</h3>
-        <div className="scopeDouble">
-          <Scope2 data={this.ingest.data} colors={this.state.colors} />
-        </div>
+        <Scope data={single} colors={this.state.colors} />
+        <Scope2 data={double} colors={this.state.colors} showHeader={false} />
       </ThemeProvider>
     );
   }

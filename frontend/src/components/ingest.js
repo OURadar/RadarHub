@@ -39,6 +39,7 @@ class Ingest {
       Control: 1,
       Health: 1,
       Scope: 1,
+      Response: 1,
       RadialZ: 1,
       RadialV: 1,
       RadialW: 1,
@@ -110,7 +111,7 @@ class Ingest {
         const q = new Float32Array(samples.slice(len));
         const a = new Float32Array(len);
         for (var k = 0; k < len; k++) {
-          a[k] = Math.sqrt(i[k] * i[k] + q[k] * q[k]);
+          a[k] = Math.hypot(i[k], q[k]);
         }
         newData.ch1 = {
           i: i,

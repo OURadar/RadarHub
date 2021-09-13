@@ -32,7 +32,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [x] 0.2 Scope + Health working (7/21/2021)
 - [x] 0.3 Some button actions to backhaul (7/29/2021)
 - [x] 0.4 Migrate data module to an external websocket client (8/9/2021)
-- [ ] 0.5 PPI / 3D view for radar products
+- [x] 0.5 3D view for radar products with map overlay (9/13/2021)
 - [ ] 0.6 SQLite / product browser
 - [ ] 0.7 General page template + stylesheets
 - [ ] 0.8 Authentication + user priviledges
@@ -50,7 +50,7 @@ Here are some assumptions that developers should be aware of.
 
 ## Data Types
 
-Currently defined in `reporter/types.h`, which is arguably a less optimal location. Perhaps the project root folder is better. Will revisit.
+Currently defined in `reporter/types.h`, which is arguably sub-optimal. Perhaps the project root folder is better. Will revisit.
 
 In the C space, obviously you just include the header and you are done.
 

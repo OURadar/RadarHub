@@ -2,7 +2,12 @@ import React from "react";
 
 import { ThemeProvider } from "@material-ui/core/styles";
 import IconButton from "@material-ui/core/IconButton";
-import { Refresh, Fullscreen, AccountCircle } from "@material-ui/icons";
+import {
+  Refresh,
+  Fullscreen,
+  WebAsset,
+  AccountCircle,
+} from "@material-ui/icons";
 
 import { Notification } from "./notification";
 import { theme } from "./theme";
@@ -50,7 +55,7 @@ export function TopBar(props) {
         {status}
         {notify}
         <Console
-          isMobile={props.isMobile ?? false}
+          isMobile={props.isMobile || false}
           handleAccount={() => {
             setMessage(
               "<h3>Nothing 🍔</h3>Coming soon to v0.8<div class='emotion'>🤷🏻‍♀️</div>"
@@ -80,15 +85,18 @@ export function Console(props) {
         >
           <Refresh style={{ color: "white" }} />
         </IconButton>
-        {!props.isMobile && !fullscreen && (
+        {!props.isMobile && (
           <IconButton
             aria-label="Fullscreen"
             onClick={() => {
-              document.documentElement.webkitRequestFullScreen();
-              setFullscreen(true);
+              if (fullscreen) document.webkitExitFullscreen();
+              else document.documentElement.webkitRequestFullScreen();
+              setFullscreen(!fullscreen);
             }}
           >
-            <Fullscreen style={{ color: "white" }} />
+            {(fullscreen && <WebAsset style={{ color: "white" }} />) || (
+              <Fullscreen style={{ color: "white" }} />
+            )}
           </IconButton>
         )}
         <IconButton

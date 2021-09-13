@@ -101,7 +101,6 @@ body {
 canvas {
   display: block;
   position: relative;
-  image-rendering: pixelated;
   image-rendering: -webkit-optimize-contrast;
   font-family: "LabelFont";
 }
@@ -116,6 +115,9 @@ canvas {
 }
 .invisible {
   display: none !important;
+}
+.roundCorder {
+  border-radius: 5px;
 }
 .fadeIn {
   opacity: 1;
@@ -163,6 +165,10 @@ h3 {
   background-color: var(--gray5);
   padding-bottom: 10px;
 }
+.spacer5 {
+  display: block;
+  height: 5px;
+}
 
 .sampleContainer {
   margin: -5px;
@@ -187,6 +193,10 @@ h3 {
   background-color: var(--green);
 }
 
+.scopeWrapper {
+  background-color: var(--system-background);
+  border-radius: 5px;
+}
 .scopeSingle {
   height: 200px;
 }

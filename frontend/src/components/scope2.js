@@ -57,6 +57,8 @@ class Scope2 extends Scope {
   static defaultProps = {
     ...super.defaultProps,
     d: 10,
+    title: "Dual-Channel",
+    class: "scopeDouble",
   };
 
   updateProjection() {

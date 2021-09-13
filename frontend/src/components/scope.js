@@ -12,6 +12,7 @@ import { mat4 } from "gl-matrix";
 import * as common from "./common";
 import * as artists from "./artists";
 import * as instanced from "./instanced";
+import { SectionHeader } from "./section-header";
 import { Gesture } from "./gesture";
 import { Texture } from "./texture";
 
@@ -106,6 +107,7 @@ class Scope extends Component {
         countX: 0,
         countY: 0,
       },
+      message: "geometry",
       needsUpdate: true,
     };
     // Our artists
@@ -139,6 +141,9 @@ class Scope extends Component {
     colors: common.colorDict(),
     linewidth: 1.4,
     textureScale: 1.0,
+    title: "Single-Channel",
+    class: "scopeSingle",
+    showHeader: true,
   };
 
   componentDidMount() {
@@ -151,18 +156,25 @@ class Scope extends Component {
   }
 
   render() {
-    if (this.props.debug === true) {
-      let str = `${this.gesture.message} : ${this.geometry.message} : ${this.state.message}`;
-      return (
-        <div className="fill">
-          <div className="fill" ref={(x) => (this.mount = x)} />
-          <div className="debug">
-            <div className="leftPadded">{str}</div>
+    const str = this.props.debug
+      ? `${this.gesture.message} : ${this.geometry.message} : ${this.state.message}`
+      : "";
+    return (
+      <div>
+        {this.props.showHeader && <SectionHeader name="scope" />}
+        <div className="scopeWrapper roundCorner">
+          <h3>{this.props.title}</h3>
+          <div className={this.props.class}>
+            <div className="fill" ref={(x) => (this.mount = x)} />
+            {this.props.debug && (
+              <div className="debug">
+                <div className="leftPadded">{str}</div>
+              </div>
+            )}
           </div>
         </div>
-      );
-    }
-    return <div className="fill" ref={(x) => (this.mount = x)} />;
+      </div>
+    );
   }
 
   updateProjection() {
@@ -187,14 +199,6 @@ class Scope extends Component {
     const maxY = (h - h2 - geo.offsetY) / h / geo.scaleY;
     geo.v2dx = w / ww;
     geo.v2dy = h / hh;
-    // geo.spline = new Float32Array(
-    //   [
-    //     [x1 - 0.5, y0 + 0.5],
-    //     [x1 - 0.5, y1 - 0.5],
-    //     [x0 + 0.5, y1 - 0.5],
-    //     [x0 + 0.5, y0 + 0.5],
-    //   ].flat()
-    // );
     geo.spline[0] = x1 - 0.5;
     geo.spline[1] = y0 + 0.5;
     geo.spline[2] = x1 - 0.5;
@@ -203,7 +207,6 @@ class Scope extends Component {
     geo.spline[5] = y1 - 0.5;
     geo.spline[6] = x0 + 0.5;
     geo.spline[7] = y0 + 0.5;
-    // geo.pane = new Float32Array([x0, y0, x1, y0, x0, y1, x1, y1]);
     geo.pane[0] = x0;
     geo.pane[1] = y0;
     geo.pane[2] = x1;
@@ -296,16 +299,14 @@ class Scope extends Component {
     this.regl.clear({
       color: this.props.colors.canvas,
     });
-    this.monet([
-      {
-        primitive: "triangles",
-        color: this.props.colors.pane,
-        projection: geo.screen,
-        viewport: geo.viewport,
-        points: geo.pane,
-        count: geo.pane.length / 2,
-      },
-    ]);
+    this.monet({
+      primitive: "triangle strip",
+      color: this.props.colors.pane,
+      projection: geo.screen,
+      viewport: geo.viewport,
+      points: geo.pane,
+      count: geo.pane.length / 2,
+    });
     if (this.props.data.t !== null) {
       const segments = this.props.data.t.length - 1;
       this.picaso([
@@ -360,20 +361,18 @@ class Scope extends Component {
       },
     ]);
     if (geo.label.texture !== null) {
-      this.gogh([
-        {
-          projection: geo.screen,
-          viewport: geo.viewport,
-          scale: this.props.textureScale,
-          color: this.props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
-          bound: [this.textEngine.canvas.width, this.textEngine.canvas.height],
-          texture: geo.label.texture,
-          points: geo.label.position,
-          origin: geo.label.origin,
-          spread: geo.label.spread,
-          count: geo.label.count,
-        },
-      ]);
+      this.gogh({
+        projection: geo.screen,
+        viewport: geo.viewport,
+        scale: this.props.textureScale,
+        color: this.props.debugGL ? [0, 0, 0.6, 0.7] : [0, 0, 0, 0],
+        bound: [this.textEngine.canvas.width, this.textEngine.canvas.height],
+        texture: geo.label.texture,
+        points: geo.label.position,
+        origin: geo.label.origin,
+        spread: geo.label.spread,
+        count: geo.label.count,
+      });
     }
     if (this.stats !== undefined) this.stats.update();
   }

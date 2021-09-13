@@ -18,6 +18,7 @@ class GLView extends Component {
   constructor(props) {
     super(props);
     this.canvas = document.createElement("canvas");
+    this.canvas.classList.add("roundCorder");
     this.canvas.style.width = "100%";
     this.canvas.style.height = "100%";
     if (props.profileGL) {
@@ -74,12 +75,13 @@ class GLView extends Component {
     // Important parameters for WebGL. Don't want to use React state
     this.geometry = {
       fov: 0.8,
+      aspect: 1,
       origin: origin,
       satCoordinate: satCoordinate,
       satPosition: satPosition,
       satQuaternion: quat.fromEuler([], -origin.latitude, origin.longitude, 0),
-      satI: Math.cos(satCoordinate[0]),
-      satQ: Math.sin(satCoordinate[0]),
+      satI: 1.0,
+      satQ: 0.0,
       model: model,
       view: mat4.create(),
       projection: mat4.create(),
@@ -153,10 +155,11 @@ class GLView extends Component {
     const geo = this.geometry;
     const w = this.canvas.width;
     const h = this.canvas.height;
+    geo.aspect = w / h;
     geo.satPosition = common.rad.coord2point(...geo.satCoordinate);
     geo.view = mat4.lookAt([], geo.satPosition, [0, 0, 0], [0, 1, 0]);
     geo.modelview = mat4.multiply([], geo.view, geo.model);
-    geo.projection = mat4.perspective([], geo.fov, w / h, 100, 30000.0);
+    geo.projection = mat4.perspective([], geo.fov, geo.aspect, 100, 30000.0);
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
     geo.viewport = { x: 0, y: 0, width: w, height: h };
     geo.message = "geo";
@@ -201,9 +204,12 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    const lon = geo.satCoordinate[0] - x * geo.fov * 0.0015;
+    const lon =
+      geo.satCoordinate[0] -
+      ((x / this.mount.offsetWidth) * geo.fov * geo.aspect) /
+        Math.cos(geo.satCoordinate[1]);
     geo.satCoordinate[1] = common.clamp(
-      geo.satCoordinate[1] - y * geo.fov * 0.0015,
+      geo.satCoordinate[1] - (y / this.mount.offsetHeight) * geo.fov,
       -0.499 * Math.PI,
       +0.499 * Math.PI
     );

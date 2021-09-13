@@ -10,14 +10,12 @@ import Split from "split.js";
 import { ThemeProvider } from "@material-ui/core/styles";
 import { colorDict, detectMob } from "./common";
 import { SectionHeader } from "./section-header";
-import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
 import { Product } from "./product";
 import { theme } from "./theme";
 import { TopBar } from "./topbar";
-import { GLView } from "./glview";
 import { Ingest } from "./ingest";
 
 class App3 extends Component {
@@ -56,7 +54,7 @@ class App3 extends Component {
         }
       });
     if (!this.isMobile) {
-      const w = 33;
+      const w = 40;
       Split(["#left", "#right"], {
         sizes: [100 - w, w],
         minSize: [400, 500],
@@ -70,20 +68,18 @@ class App3 extends Component {
   }
 
   render() {
-    const mobileLayout = (
-      <ThemeProvider theme={theme}>
-        <TopBar isMobile={true} />
-        <SectionHeader name="product" />
-        <Product
-          colors={this.state.colors}
-          debug={this.props.debug}
-          showStats={true}
-          profileGL={this.props.profileGL}
-        />
-      </ThemeProvider>
-    );
-    if (this.isMobile) return mobileLayout;
-    let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
+    if (this.isMobile)
+      return (
+        <ThemeProvider theme={theme}>
+          <TopBar isMobile={true} />
+          <SectionHeader name="product" />
+          <Product
+            colors={this.state.colors}
+            debug={this.props.debug}
+            profileGL={this.props.profileGL}
+          />
+        </ThemeProvider>
+      );
     return (
       <ThemeProvider theme={theme}>
         <TopBar ingest={this.ingest} />
@@ -94,7 +90,6 @@ class App3 extends Component {
               <Product
                 colors={this.state.colors}
                 debug={this.props.debug}
-                showStats={true}
                 profileGL={this.props.profileGL}
               />
             </div>
@@ -102,11 +97,7 @@ class App3 extends Component {
           <div id="right">
             <Health dict={this.ingest.data.health} />
             <Control ingest={this.ingest} />
-            {/* <SectionHeader name="scope" />
-            <h3>Single-Channel</h3>
-            <div className="scopeSingle">
-              <Scope data={single} colors={this.state.colors} />
-            </div> */}
+            <Scope2 data={this.ingest.data} colors={this.state.colors} />
           </div>
         </div>
       </ThemeProvider>
