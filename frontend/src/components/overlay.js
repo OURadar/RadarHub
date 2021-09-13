@@ -254,14 +254,9 @@ class Overlay {
     ) {
       this.viewParameters = viewParameters;
 
-      // Compute deviation from the USA
-      // const dx = this.geometry.satCoordinate[0] + 1.745;
-      // const dy = this.geometry.satCoordinate[1] - 0.698;
-      const dx =
-        this.geometry.satCoordinate[0] -
-        deg2rad(this.geometry.origin.longitude);
-      const dy =
-        this.geometry.satCoordinate[1] - deg2rad(this.geometry.origin.latitude);
+      // Compute deviation from the origin
+      const dx = viewParameters[1] - deg2rad(this.geometry.origin.longitude);
+      const dy = viewParameters[2] - deg2rad(this.geometry.origin.latitude);
       const d = Math.sqrt(dx * dx + dy * dy);
       // console.log(`fov = ${this.geometry.fov.toFixed(3)}  d = ${d.toFixed(2)}`);
       // Overlays are rings, countries, states, counties, hi-res counties, highways

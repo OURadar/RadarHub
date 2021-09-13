@@ -374,7 +374,10 @@ function pop2weight(pop) {
 }
 
 function distance(p, q) {
-  return Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+  const dx = p[0] - q[0];
+  const dy = p[1] - q[1];
+  const dz = p[2] - q[2];
+  return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 export { Text };

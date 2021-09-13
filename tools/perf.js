@@ -342,14 +342,45 @@ function eval(buffer) {
   console.log(`reviseOpacityV1: ${(t0 - t1) / count}`);
 }
 
+function evalHypot() {
+  const count = 50000000;
+
+  let xyz = [];
+  for (let k = 0; k < count; k++) {
+    const p = [Math.random() * 10, Math.random() * 10, Math.random() * 10];
+    xyz.push(p);
+  }
+  console.log(`xyz has ${xyz.length.toLocaleString()} ${xyz[0].length}-number vectors`);
+
+  let t2 = new Date().getTime();
+
+  for (let k = 0; k < count; k++) {
+    const p = xyz[k];
+    const d = Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]);
+  }
+
+  let t1 = new Date().getTime();
+
+  for (let k = 0; k < count; k++) {
+    const p = xyz[k];
+    const d = Math.hypot(p[0], p[1], p[2]);
+  }
+
+  let t0 = new Date().getTime();
+
+  console.log(`Math.sqrt(x^2 + y^2 + z^2): ${1000 * (t1 - t2) / count} ms`);
+  console.log(`Math.hypot(x, y, z): ${1000 * (t0 - t1) / count} ms`);
+}
 //
 
-const file = "../frontend/static/maps/World/cities.shp";
-const buffer = require("../frontend/node_modules/shapefile")
-  .open(file)
-  .then((source) => handleShapefile(source, [0, 6]))
-  .then((labels) => makeBuffer(file, labels))
-  .then((buffer) => single(buffer))
-  .then((buffer) => eval(buffer));
+// const file = "../frontend/static/maps/World/cities.shp";
+// const buffer = require("../frontend/node_modules/shapefile")
+//   .open(file)
+//   .then((source) => handleShapefile(source, [0, 6]))
+//   .then((labels) => makeBuffer(file, labels))
+//   .then((buffer) => single(buffer))
+//   .then((buffer) => eval(buffer));
 
-console.log(buffer[0]);
+// console.log(buffer[0]);
+
+evalHypot();

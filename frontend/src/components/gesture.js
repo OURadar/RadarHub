@@ -214,7 +214,7 @@ function positionAndDistanceFromTouches(touches) {
     y = 0.5 * (touches[0].clientY + touches[1].clientY);
     u = Math.abs(touches[0].clientX - touches[1].clientX);
     v = Math.abs(touches[0].clientY - touches[1].clientY);
-    d = Math.hypot(u, v);
+    d = Math.sqrt(u * u + v * v);
   } else {
     x = touches[0].clientX;
     y = touches[0].clientY;
