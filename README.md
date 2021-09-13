@@ -20,7 +20,7 @@ Some design constraints:
 
 # (Evolving) Concept of Operations
 
-Currently, the RadarHub is almost like a chat program with an exception that the messages are not echoed back. The radars do not recieve the payload they send home and the users do not see the command they issue. Everyone connects through the frontend websocket, either join as a radar (`frontend.consumers.Radar`) or join as a user (`frontend.consumers.User`). When a radar joins and sends in proper greeting, it receives a welcome message from the hub. When a user joins through a web browser, the frontend javascript `main.js` ensures the connection is properly made, the user is assigned to a group, named after the radar name.
+Currently, the RadarHub is almost like a chat program with an exception that the messages are not echoed back. The radars do not recieve the payload they send home and the users do not see the command they issue. Everyone connects through the frontend websocket, either join as a radar (`frontend.consumers.Radar`) or join as a user (`frontend.consumers.User`). When a radar joins and sends in proper greeting, it receives a welcome message from the hub. When a user joins through a web browser, the frontend javascript main script ensures the connection is properly made, the user is assigned to a group, named after the radar name.
 
 When a user request is issued, it is first received by the frontend, which checks for the required fields. If failed, nothing happens. Otherwise, it is routed to the backhaul asynchronously. Frontend immediately regain control, GUI should always be responsive. Backhaul decides which radar to send the request to, awaits for the radar response, and then routes it to the user.
 
@@ -33,7 +33,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [x] 0.3 Some button actions to backhaul (7/29/2021)
 - [x] 0.4 Migrate data module to an external websocket client (8/9/2021)
 - [x] 0.5 3D view for radar products with map overlay (9/13/2021)
-- [ ] 0.6 SQLite / product browser
+- [ ] 0.6 SQLite / radar products to 3D view
 - [ ] 0.7 General page template + stylesheets
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Landing page, radar selection, etc.
@@ -43,6 +43,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 
 - [ ] - Display frequency spectrum alongside scope view
 - [ ] - Show online users
+- [ ] - High-DPI support
 
 # Important Topics
 
