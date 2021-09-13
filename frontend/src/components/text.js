@@ -190,12 +190,12 @@ class Text {
       count: points.length,
     };
 
-    const bytes_per_float = 4;
     const width = this.canvas.width;
     const height = this.canvas.height;
+    const wordsize = Float32Array.BYTES_PER_ELEMENT;
     const cString = buffer.count.toLocaleString();
     const xString = (buffer.count * 11).toLocaleString();
-    const mString = (buffer.count * 11 * bytes_per_float).toLocaleString();
+    const mString = (buffer.count * 11 * wordsize).toLocaleString();
     const wString = `${width.toLocaleString()} x ${height.toLocaleString()}`;
     const vString = ((width * height * 4) / 1024 / 1024).toLocaleString();
     console.log(

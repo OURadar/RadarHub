@@ -34,7 +34,7 @@ class App3 extends Component {
 
   static defaultProps = {
     radar: "demo",
-    debug: false,
+    debug: true,
     profileGL: false,
   };
 

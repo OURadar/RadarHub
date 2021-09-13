@@ -384,14 +384,12 @@ class Scope extends Component {
     geo.needsUpdate = true;
   }
 
-  magnify(mx, my, _d, x, _y) {
+  magnify(mx, my, _d, _x, _y) {
     const geo = this.geometry;
     const scaleX = common.clamp(geo.scaleX * mx, 1 / 10000, 1 / 10);
     const scaleY = common.clamp(geo.scaleY * my, 1 / 70000, 1 / 10);
-    const deltaX = (x - geo.offsetX) * (scaleX / geo.scaleX - 1);
     geo.scaleX = scaleX;
     geo.scaleY = scaleY;
-    geo.offsetX -= deltaX * geo.v2dx;
     geo.needsUpdate = true;
   }
 

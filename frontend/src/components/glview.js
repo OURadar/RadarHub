@@ -89,7 +89,7 @@ class GLView extends Component {
       viewprojection: mat4.create(),
       viewport: { x: 0, y: 0, width: 1, height: 1 },
       needsUpdate: true,
-      message: "graphics",
+      message: "geo",
     };
     // Our artists
     this.picaso = artists.simplifiedInstancedLines(this.regl);
@@ -135,7 +135,7 @@ class GLView extends Component {
   }
 
   render() {
-    if (this.props.debug === true) {
+    if (this.props.debug) {
       let str = `${this.gesture.message} : ${this.geometry.message} : ${this.state.message}`;
       return (
         <div>
@@ -151,7 +151,7 @@ class GLView extends Component {
 
   updateProjection() {
     this.canvas.width = this.mount.offsetWidth;
-    this.canvas.height = this.mount.offsetHeight;
+    this.canvas.height = this.mount.offsetWidth;
     const geo = this.geometry;
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -161,7 +161,8 @@ class GLView extends Component {
     geo.modelview = mat4.multiply([], geo.view, geo.model);
     geo.projection = mat4.perspective([], geo.fov, geo.aspect, 100, 30000.0);
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
-    geo.viewport = { x: 0, y: 0, width: w, height: h };
+    geo.viewport.width = w;
+    geo.viewport.height = h;
     geo.message = "geo";
     geo.needsUpdate = false;
   }
@@ -206,10 +207,10 @@ class GLView extends Component {
     const geo = this.geometry;
     const lon =
       geo.satCoordinate[0] -
-      ((x / this.mount.offsetWidth) * geo.fov * geo.aspect) /
+      ((x / this.mount.clientWidth) * geo.fov * geo.aspect) /
         Math.cos(geo.satCoordinate[1]);
     geo.satCoordinate[1] = common.clamp(
-      geo.satCoordinate[1] - (y / this.mount.offsetHeight) * geo.fov,
+      geo.satCoordinate[1] - (y / this.mount.clientHeight) * geo.fov,
       -0.499 * Math.PI,
       +0.499 * Math.PI
     );
@@ -219,8 +220,7 @@ class GLView extends Component {
     geo.satCoordinate[0] = Math.atan2(geo.satQ, geo.satI);
     geo.needsUpdate = true;
     if (this.props.debug) {
-      geo.message += ` satI: ${geo.satI.toFixed(3)}`;
-      geo.message += ` satQ: ${geo.satQ.toFixed(3)}`;
+      geo.message += ` satQ (${geo.satI.toFixed(3)}, ${geo.satQ.toFixed(3)})`;
       this.setState({
         lastPanTime: window.performance.now(),
       });

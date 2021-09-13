@@ -25,7 +25,6 @@ class Gesture {
     this.lastMagnifyTime = Date.now();
     this.lastTapTime = Date.now();
     this.message = "gesture";
-    this.scale = 1.4;
     this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
     this.handlePan = (_x, _y) => {};
     this.handleSingleTap = () => {};
@@ -70,9 +69,9 @@ class Gesture {
       ) {
         e.preventDefault();
         this.handleMagnify(
-          delta2scale(e.deltaX),
-          delta2scale(-e.deltaY),
-          delta2scale(-e.deltaY),
+          delta2scale(3 * e.deltaX),
+          delta2scale(-3 * e.deltaY),
+          delta2scale(-3 * e.deltaY),
           e.offsetX - this.bounds.left,
           e.offsetY - this.bounds.bottom
         );
@@ -145,23 +144,22 @@ class Gesture {
         e.preventDefault();
         if (e.targetTouches.length == 2)
           this.handleMagnify(
-            delta2scale(0.3 * (this.pointU - u)),
-            delta2scale(0.3 * (this.pointV - v)),
-            d > 0 ? d / this.pointD : 1,
+            u > 10 ? u / this.pointU : 1,
+            v > 10 ? v / this.pointV : 1,
+            d > 10 ? d / this.pointD : 1,
             x,
             y
           );
-        this.handlePan(
-          this.scale * (x - this.pointX),
-          this.scale * (this.pointY - y)
-        );
+        this.handlePan(x - this.pointX, this.pointY - y);
         this.pointX = x;
         this.pointY = y;
         this.pointU = u;
         this.pointV = v;
         this.pointD = d;
       }
-      this.message = `touchmove (${x}, ${y})`;
+      const w = this.element.clientWidth;
+      const h = this.element.clientHeight;
+      this.message = `touchmove (${x}, ${y}) / (${w}, ${h})`;
     });
     this.element.addEventListener("dblclick", (e) => {
       this.pointX = e.offsetX;
@@ -200,12 +198,12 @@ class Gesture {
 }
 
 function delta2scale(x) {
-  if (x > +3) return 1 / 1.1;
-  if (x < -3) return 1.1;
-  if (x > +2) return 1 / 1.05;
-  if (x < -2) return 1.05;
-  if (x > +0.2) return 1 / 1.01;
-  if (x < -0.2) return 1.01;
+  if (x > +10) return 1 / 1.1;
+  if (x < -10) return 1.1;
+  if (x > +5) return 1 / 1.05;
+  if (x < -5) return 1.05;
+  if (x > +1) return 1 / 1.01;
+  if (x < -1) return 1.01;
   return 1;
 }
 
@@ -216,7 +214,7 @@ function positionAndDistanceFromTouches(touches) {
     y = 0.5 * (touches[0].clientY + touches[1].clientY);
     u = Math.abs(touches[0].clientX - touches[1].clientX);
     v = Math.abs(touches[0].clientY - touches[1].clientY);
-    d = Math.sqrt(u * u + v * v);
+    d = Math.hypot(u, v);
   } else {
     x = touches[0].clientX;
     y = touches[0].clientY;
@@ -224,6 +222,7 @@ function positionAndDistanceFromTouches(touches) {
     v = 0;
     d = 0;
   }
+  console.log(`(x, y) = (${x}, ${y})`);
   return [x, y, u, v, d];
 }
 
