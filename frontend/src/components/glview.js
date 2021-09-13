@@ -151,7 +151,7 @@ class GLView extends Component {
 
   updateProjection() {
     this.canvas.width = this.mount.offsetWidth;
-    this.canvas.height = this.mount.offsetWidth;
+    this.canvas.height = this.mount.offsetHeight;
     const geo = this.geometry;
     const w = this.canvas.width;
     const h = this.canvas.height;

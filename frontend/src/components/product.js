@@ -132,7 +132,7 @@ class Product extends GLView {
     //     0.8 * this.canvas.width
     //   }`
     // );
-    if (x > 0.8 * this.canvas.width && y < 0.5 * this.canvas.height) {
+    if (x > 0.8 * this.mount.clientWidth && y < 0.5 * this.mount.clientHeight) {
       return this.toggleSpin();
     } else {
       this.fitToData();
