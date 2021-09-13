@@ -11,6 +11,7 @@
 #  Copyright (c) 2021 Boonleng Cheong. All rights reserved.
 #
 
+import os
 import sys
 import json
 import time
@@ -32,8 +33,10 @@ with open('../frontend/package.json') as fid:
 
 class client(websocket.WebSocketApp):
     def __init__(self, url, verbose=0):
-        with open('secret') as fid:
-            secret = fid.read().strip()
+        secret = ''
+        if os.path.exists('secret'):
+            with open('secret') as fid:
+                secret = fid.read().strip()
         if len(secret) != 22:
             secret = 'RadarHub123456789abcde'
         super().__init__(url, header={'Sec-WebSocket-Key': f'{secret}=='})
@@ -87,6 +90,7 @@ class Reporter():
         self.connected = False
         self.go = False
         self.rate = 1.0
+        self.ws = None
 
     def start(self):
         self.rt = threading.Thread(target=self.run)
@@ -97,7 +101,8 @@ class Reporter():
 
     def stop(self):
         self.wantActive = False
-        self.ws.stop()
+        if self.ws:
+            self.ws.stop()
         self.rt.join()
         print(f'R.wantActive = {R.wantActive}')
 
@@ -180,7 +185,8 @@ hdepth = len(healths)
 
 def handleSignals(sig, frame):
     print(f'\nCaught {sig}')
-    R.stop()
+    if R:
+        R.stop()
 
 def handleOpen(ws):
     if R.verbose:

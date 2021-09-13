@@ -6,7 +6,7 @@
 //
 
 import React from "react";
-import { SectionHeader } from "./simple";
+import { SectionHeader } from "./section-header";
 import { prettyString } from "./common";
 
 function styleFromEnum(x) {

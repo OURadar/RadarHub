@@ -6,7 +6,18 @@ module.exports = {
       import: "./src/index.js",
       dependOn: "shared",
     },
-    shared: ["react", "react-dom", "regl", "gl-matrix", "stats-js"],
+    archive: {
+      import: "./src/archive.js",
+      dependOn: "shared",
+    },
+    shared: [
+      "react",
+      "react-dom",
+      "regl",
+      "gl-matrix",
+      "stats-js",
+      "shapefile",
+    ],
   },
   output: {
     filename: "[name].js",
@@ -15,9 +26,35 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.worker\.js$/,
+        use: [
+          // {
+          //   loader: "worker-loader",
+          //   options: {
+          //     publicPath: path.resolve(__dirname, "static/frontend"),
+          //     filename: "[name].js",
+          //     inline: "no-fallback",
+          //   },
+          // },
+          {
+            loader: "babel-loader",
+            options: {
+              presets: ["@babel/preset-env"],
+            },
+          },
+        ],
+      },
+      {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
-        use: ["babel-loader"],
+        use: [
+          {
+            loader: "babel-loader",
+            options: {
+              presets: ["@babel/preset-env"],
+            },
+          },
+        ],
       },
     ],
   },

@@ -15,9 +15,12 @@ Copyright Boonleng Cheong
 }
 .controlContainer,
 .healthContainer {
+  background-color: var(--system-background);
+  border-radius: 5px;
   padding: var(--padding);
   padding-bottom: calc(var(--padding) - var(--button-margin-bottom));
 }
+
 .controlContainer {
   columns: 7 220px;
 }
@@ -82,6 +85,44 @@ Copyright Boonleng Cheong
   max-width: calc(100vw - 200px);
   padding: 8px 80px;
 }
-.MuiButton-root:hover {
-  background-color: var(--button-hover) !important;
+
+#flex {
+  display: flex;
+  flex-direction: row;
+  background-color: var(--gray6);
+  overflow-y: hidden;
+}
+#right {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 84px - 1px);
+  overflow-y: scroll;
+}
+
+.split {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.split,
+.gutter.gutter-horizontal {
+  float: left;
+  height: calc(100vh - 84px - 1px);
+  z-index: 3;
+}
+.gutter {
+  background-color: var(--gray6);
+  transition: background-color 0.3s linear;
+}
+.gutter:hover {
+  background-color: var(--gray3);
+  transition: background-color 0.3s linear;
+}
+.gutter.gutter-vertical {
+  cursor: row-resize;
+}
+
+.gutter.gutter-horizontal {
+  cursor: col-resize;
+  width: 8px !important;
 }

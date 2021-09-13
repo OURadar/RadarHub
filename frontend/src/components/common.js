@@ -7,8 +7,20 @@
 //  A collection of common functions
 //
 
+import { vec3 } from "gl-matrix";
+
+export const earthRadius = 6371.0;
+
 export function clamp(x, lo, hi) {
   return Math.min(Math.max(x, lo), hi);
+}
+
+export function deg2rad(x) {
+  return x * (Math.PI / 180.0);
+}
+
+export function rad2deg(x) {
+  return x * (180.0 / Math.PI);
 }
 
 export function ticksInRange(count, min, max, choices) {
@@ -46,18 +58,20 @@ export function prettyString(input) {
     .replace(/(?:[\s])deg/g, "°");
 }
 
+export function hex2rgb(hex) {
+  const r = parseInt(hex.slice(0, 2), 16) / 255.0;
+  const g = parseInt(hex.slice(2, 4), 16) / 255.0;
+  const b = parseInt(hex.slice(4, 6), 16) / 255.0;
+  const a = hex.length > 6 ? parseInt(hex.slice(6, 8), 16) / 255.0 : 1.0;
+  return [r, g, b, a];
+}
+
 export function array2rgba(array) {
-  return (
-    "rgba(" +
-    (array[0] * 255).toFixed(0) +
-    ", " +
-    (array[1] * 255).toFixed(0) +
-    ", " +
-    (array[2] * 255).toFixed(0) +
-    ", " +
-    array[3].toFixed(2) +
-    ")"
-  );
+  const r = (array[0] * 255).toFixed(0);
+  const g = (array[1] * 255).toFixed(0);
+  const b = (array[2] * 255).toFixed(0);
+  const a = array[3].toFixed(3);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
 export function colorDict(theme) {
@@ -65,7 +79,7 @@ export function colorDict(theme) {
   let body = window.getComputedStyle(document.body).backgroundColor;
   body = body.match(/\d+/g).map((x) => x / 255);
   if (body.length == 3) {
-    body.push(1);
+    body.push(1.0);
   }
   // Check for browser preference if 'theme' was not specified
   if (theme === undefined) {
@@ -109,6 +123,19 @@ export function colorDict(theme) {
       spline: [0.6, 0.6, 0.6, 1],
       pane: [0.988, 0.988, 1, 1],
       grid: [0.3, 0.3, 0.3, 0.6],
+      tint: 0.7,
+      label: {
+        face: "#000000",
+        face2: "#333333",
+        stroke: "#ffffff",
+        shadow: "#ffffff",
+        ring: "#00bbff",
+        blur: 3,
+      },
+      ring: hex2rgb("00bbff"),
+      state: hex2rgb("40bf91"),
+      county: hex2rgb("40bf91"),
+      highway: hex2rgb("e6b955"),
     },
     dark: {
       name: "dark",
@@ -130,6 +157,19 @@ export function colorDict(theme) {
       spline: [0.8, 0.8, 0.8, 1],
       pane: [0.05, 0.05, 0.08, 1],
       grid: [1.0, 1.0, 1.0, 0.18],
+      tint: 1.0,
+      label: {
+        face: "#ffffff",
+        face2: "#cccccc",
+        stroke: "#000000",
+        shadow: "#000000",
+        ring: "#78dcff",
+        blur: 3,
+      },
+      ring: hex2rgb("78dcffff"),
+      state: hex2rgb("96e6c8ff"),
+      county: hex2rgb("83e2bfff"),
+      highway: hex2rgb("e6b955"),
     },
     vibrant: {
       name: "vibrant",
@@ -151,6 +191,13 @@ export function colorDict(theme) {
       spline: [0.8, 0.8, 0.8, 1],
       pane: [0.0, 0.07, 0.07, 1],
       grid: [1.0, 1.0, 1.0, 0.18],
+      tint: 1.0,
+      label: {
+        face: "#ffffff",
+        stroke: "#000000",
+        shadow: "#000000",
+        blur: 3,
+      },
     },
     sat: {
       name: "sat",
@@ -169,6 +216,13 @@ export function colorDict(theme) {
       spline: [0.8, 0.8, 0.8, 1],
       pane: [0.988, 0.988, 1, 1],
       grid: [0.3, 0.3, 0.3, 0.6],
+      tint: 1.0,
+      label: {
+        face: "#ffffff",
+        stroke: "#000000",
+        shadow: "#000000",
+        blur: "3px",
+      },
     },
     baby: {
       name: "baby",
@@ -190,13 +244,20 @@ export function colorDict(theme) {
       spline: [0.8, 0.8, 0.8, 1],
       pane: [0.988, 0.988, 1, 1],
       grid: [0.3, 0.3, 0.3, 0.6],
+      tint: 1.0,
+      label: {
+        face: "#ffffff",
+        stroke: "#000000",
+        shadow: "#000000",
+        blur: "3px",
+      },
     },
   };
   return themes[theme];
 }
 
 //
-// Copied this from
+// Copied from
 // https://stackoverflow.com/questions/11381673/detecting-a-mobile-browser
 //
 export function detectMob() {
@@ -214,3 +275,221 @@ export function detectMob() {
     return navigator.userAgent.match(toMatchItem);
   });
 }
+
+//
+// Copied from
+// https://radiatingstar.com/blog/the-fastest-way-to-get-time-stamps-in-javascript/
+//
+var checkTimerPerformance = function () {
+  var perf = window.performance,
+    t,
+    stampDateNow,
+    stampPerfNow,
+    i;
+
+  // Store the initial time.
+  stampDateNow = Date.now();
+
+  // Run Date.now() performance test.
+  for (i = 0; i < 100000; i += 1) {
+    t = Date.now();
+  }
+
+  // Find out how long the Date.now() test took.
+  stampDateNow = Date.now() - stampDateNow;
+
+  // Run the test for performance.now() only if the browser supports it.
+  if (perf) {
+    // Start the timer for performance.now();
+    stampPerfNow = Date.now();
+
+    // Run performance.now() test.
+    for (i = 0; i < 100000; i += 1) {
+      t = perf.now();
+    }
+
+    // Check the time of performance.now();
+    stampPerfNow = Date.now() - stampPerfNow;
+  } else {
+    // If the browser doesn't have the performance.now method,
+    // the Date.now() will be used by default.
+    stampPerfNow = 0;
+  }
+
+  // If the Date.now() was faster, return it.
+  if (stampPerfNow > stampDateNow) {
+    return function () {
+      return Date.now();
+    };
+
+    // Otherwise use the performance.now() method.
+  } else {
+    return function () {
+      console.log("Using perf.now()");
+      return perf.now();
+    };
+  }
+};
+
+export const getTime = checkTimerPerformance();
+
+/**
+ * Transform the (lon, lat) coordinate to (x, y, z)
+ *
+ * @param {float} lon the longitude in radians
+ * @param {float} lat the latitude in radians
+ * @returns {Array3} [x, y, z] in km
+ */
+function _coord2point(lon, lat, r = earthRadius) {
+  const clat = Math.cos(lat);
+  const slat = Math.sin(lat);
+  const clon = Math.cos(lon);
+  const slon = Math.sin(lon);
+  return [r * clat * slon, r * slat, r * clat * clon];
+}
+
+/**
+ * Transform the (lon, lat) coordinate to (x, y, z)
+ *
+ * @param {float} lon the longitude in degrees
+ * @param {float} lat the latitude in degrees
+ * @returns {Array3} [x, y, z] in km
+ */
+function coord2point(lon, lat, r = earthRadius) {
+  return _coord2point(deg2rad(lon), deg2rad(lat), r);
+}
+
+/**
+ * Transform a radar coordinate (e, a, r) to [x, y, z, w]
+ *
+ * @param {float} e the elevation angle in radians
+ * @param {float} a the azimuth angle in radians
+ * @param {float} r the range in km
+ * @param {ReadonlyMat4} model matrix to transform with
+ * @returns {vec4} out in km
+ */
+function _polar2point(e, a, r, model) {
+  const ce = Math.cos(e);
+  const se = Math.sin(e);
+  const ca = Math.cos(a);
+  const sa = Math.sin(a);
+  const rce = r * ce;
+  const p = [rce * sa, rce * ca, r * se, 1.0];
+  const q = vec3.transformMat4([], p, model);
+  return q;
+}
+
+/**
+ * Transform a radar coordinate (e, a, r) to [x, y, z, w]
+ *
+ * @param {float} e the elevation angle in degrees
+ * @param {float} a the azimuth angle in degrees
+ * @param {float} r the range in km
+ * @param {ReadonlyMat4} model matrix to transform with
+ * @returns {vec4} out in km
+ */
+function polar2point(e, a, r, model) {
+  return _polar2point(deg2rad(e), deg2rad(a), r, model);
+}
+
+/**
+ * Transform a radar coordinate (e, a, r) to [lon, lat]
+ *
+ * @param {float} e the elevation angle in radians
+ * @param {float} a the azimuth angle in radians
+ * @param {float} r the range in km
+ * @param {ReadonlyMat4} model matrix to transform with
+ * @returns {Array2} out [lon, lat] in radians
+ */
+function _polar2coord(e, a, r, model) {
+  const point = _polar2point(e, a, r, model);
+  return _point2coord(...point);
+}
+
+/**
+ * Transform a radar coordinate (e, a, r) to [lon, lat]
+ *
+ * @param {float} e the elevation angle in degrees
+ * @param {float} a the azimuth angle in degrees
+ * @param {float} r the range in km
+ * @param {ReadonlyMat4} model matrix to transform with
+ * @returns {Array2} out [lon, lat] in degrees
+ */
+function polar2coord(e, a, r, model) {
+  const point = polar2point(e, a, r, model);
+  return point2coord(...point);
+}
+
+/**
+ * Transform a point (x, y, z) to [lon, lat]
+ *
+ * @param {float} x the x-component in km
+ * @param {float} y the y-component in km
+ * @param {float} z the z-component in km
+ * @returns {Array2} out [lon, lat] in degrees
+ */
+function _point2coord(x, y, z) {
+  const lat = Math.atan2(y, Math.sqrt(x ** 2 + z ** 2));
+  const lon = Math.atan2(x, z);
+  return [lon, lat];
+}
+
+/**
+ * Transform a point (x, y, z) to [lon, lat]
+ *
+ * @param {float} x the x-component in km
+ * @param {float} y the y-component in km
+ * @param {float} z the z-component in km
+ * @returns {Array2} out [lon, lat] in degrees
+ */
+function point2coord(x, y, z) {
+  const [lon, lat] = _point2coord(x, y, z);
+  return [rad2deg(lon), rad2deg(lat)];
+}
+
+/**
+ * Returns the angle between two vectors
+ *
+ * @param {*} a input vector 1
+ * @param {*} b input vector 2
+ * @returns angle between vector a and b in radians
+ */
+function _dotAngle(a, b) {
+  const m = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+  const n = Math.sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
+  const dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  return Math.acos(dot / (m * n));
+}
+
+/**
+ * Returns the angle between two vectors
+ *
+ * @param {*} a input vector 1
+ * @param {*} b input vector 2
+ * @returns angle between vector a and b in degrees
+ */
+function dotAngle(a, b) {
+  return rad2deg(_dotAngle(a, b));
+}
+
+/**
+ * Functions collected in a two dictionaries:
+ * deg.[func] are functions that operate in degrees
+ * rad.[func] are functions that operate in radians
+ */
+
+export const deg = {
+  coord2point: coord2point,
+  polar2point: polar2point,
+  polar2coord: polar2coord,
+  point2coord: point2coord,
+  dotAngle: dotAngle,
+};
+
+export const rad = {
+  coord2point: _coord2point,
+  polar2point: _polar2point,
+  polar2coord: _polar2coord,
+  point2coord: _point2coord,
+  dotAngle: _dotAngle,
+};

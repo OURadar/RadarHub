@@ -9,7 +9,7 @@
 //  obj = Texture(regl)
 //
 //  Update as:
-//  obj.update(text, allback)
+//  obj.update(text, callback)
 //
 //  where
 //
@@ -26,10 +26,10 @@
 //
 
 class Texture {
-  constructor(regl, scale, debug) {
+  constructor(regl, scale = window.devicePixelRatio, debug = false) {
     this.regl = regl;
-    this.scale = scale || window.devicePixelRatio;
-    this.debug = debug || false;
+    this.scale = scale;
+    this.debug = debug;
     this.canvas = document.createElement("canvas");
     this.context = this.canvas.getContext("2d");
     this.constants = {
@@ -38,14 +38,19 @@ class Texture {
     this.busy = false;
     this.fontLoaded = false;
     this.context.font = "14px LabelFont";
-    let meas = this.context.measureText("money");
+    let meas = this.context.measureText("bitcoin");
     this.initWidth = meas.width;
     this.hasDetails =
       undefined !== meas.actualBoundingBoxAscent &&
       undefined !== meas.actualBoundingBoxDescent;
     this.tic = 0;
 
-    if (this.debug) document.getElementById("test").appendChild(this.canvas);
+    if (this.debug) {
+      const o = document.getElementById("test");
+      if (o) o.appendChild(this.canvas);
+    } else {
+      console.log("Debugging element <div id='test'></div> not found.");
+    }
 
     let font = new FontFace(
       "LabelFont",
@@ -53,16 +58,17 @@ class Texture {
     );
     font.load().then(() => {
       this.fontLoaded = true;
+      // this.checkFontLoaded();
     });
   }
 
   checkFontLoaded() {
     let meas = this.context.measureText("tesla");
     console.log(
-      meas.width,
-      this.initWidth,
-      meas.width != this.initWidth,
-      this.tic
+      `checkFontLoaded: %cmeas.wdith=${meas.width.toFixed(2)} ${
+        meas.width == this.initWidth ? "=" : "/="
+      } initWidth=${this.initWidth.toFixed(2)} tic = ${this.tic}`,
+      "color:blue"
     );
     if (meas.width != this.initWidth || this.tic++ > 50) {
       this.fontLoaded = true;
@@ -84,12 +90,11 @@ class Texture {
     while (!this.fontLoaded && this.tic++ < 100) {
       await this.waitBriefly();
     }
-    this.busy = true;
     const context = this.context;
+    this.busy = true;
     this.canvas.width = 512 * this.scale;
     this.canvas.height = 128 * this.scale;
-    // Clear the part I use
-    context.clearRect(0, 0, 1024, 512);
+    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.debug) {
       context.fillStyle = "#dddddd";
       context.fillRect(0, 0, 1024, 512);
@@ -126,8 +131,8 @@ class Texture {
       }
       const xx = position[0] + alignment[0] * w;
       const yy = position[1] + alignment[1] * h;
-      origins.push(x, y);
-      spreads.push(ww / this.scale, hh / this.scale);
+      origins.push(x - 0.5, y - 0.5);
+      spreads.push(ww + 1, hh + 1);
       points.push(xx, yy);
       if (this.debug) {
         context.strokeStyle = "skyblue";
@@ -155,6 +160,7 @@ class Texture {
         min: "linear",
         mag: "linear",
       }),
+      count: text.labels.length,
     };
   }
 }

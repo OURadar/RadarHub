@@ -39,6 +39,7 @@ class Ingest {
       Control: 1,
       Health: 1,
       Scope: 1,
+      Response: 1,
       RadialZ: 1,
       RadialV: 1,
       RadialW: 1,
@@ -57,7 +58,7 @@ class Ingest {
     this.message = "Connecting ...";
     this.onupdate(this.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
-    const url = p + "://" + window.location.host + "/ws/" + this.radar + "/";
+    const url = `${p}://${window.location.host}/ws/${this.radar}/`;
     this.socket = new WebSocket(url);
     this.socket.binaryType = "arraybuffer";
     this.socket.onopen = (_e) => {
@@ -93,7 +94,7 @@ class Ingest {
         if (dict.name) {
           newData.control = dict["Controls"];
         } else {
-          console.log("dict.name = " + dict.name + " /= " + this.radar);
+          console.log(`dict.name = ${dict.name} /= ${this.radar}`);
         }
       } else if (type == this.enums.Health) {
         // Health data in JSON
@@ -110,7 +111,7 @@ class Ingest {
         const q = new Float32Array(samples.slice(len));
         const a = new Float32Array(len);
         for (var k = 0; k < len; k++) {
-          a[k] = Math.sqrt(i[k] * i[k] + q[k] * q[k]);
+          a[k] = Math.hypot(i[k], q[k]);
         }
         newData.ch1 = {
           i: i,
@@ -131,9 +132,9 @@ class Ingest {
         // Response of a command
         let text = new TextDecoder().decode(e.data.slice(1));
         if (text.includes("not") || text.includes("NAK")) {
-          text = " 👎🏼 " + text + "<div class='emotion'>😿</div>";
+          text = ` 👎🏼 ${text} <div class='emotion'>😿</div>`;
         } else {
-          text = " 👍🏼 " + text + "<div class='emotion'>👻</div>";
+          text = ` 👍🏼 ${text} <div class='emotion'>👻</div>`;
         }
         this.response = text;
         setTimeout(() => {
@@ -170,7 +171,7 @@ class Ingest {
     } else {
       const t = this.wait.toFixed(0);
       if (t <= 3) {
-        this.message = "Connect in " + t + " second" + (t > 1 ? "s" : "");
+        this.message = `Connect in ${t} second${t > 1 ? "s" : ""}`;
         this.onupdate(this.tic++);
       }
       setTimeout(this.waitOrConnect, 200);
