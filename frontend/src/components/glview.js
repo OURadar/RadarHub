@@ -188,10 +188,12 @@ class GLView extends Component {
       viewport: geo.viewport,
       color: this.props.colors.lines[1],
     });
+    // quad: [shader-user mix, shader color tint, unused, opacity]
     this.monet({
       width: 2.5,
       color: [0.5, 0.5, 0.5, 1.0],
       model: geo.model,
+      quad: [1.0, 0.5, 0.0, 1.0],
       view: geo.view,
       projection: geo.projection,
       resolution: [this.canvas.width, this.canvas.height],
@@ -199,7 +201,6 @@ class GLView extends Component {
       points: this.rings.points,
       segments: this.rings.count,
     });
-    geo.satCoordinate[0] -= 0.003;
     this.stats?.update();
   }
 

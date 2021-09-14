@@ -14,7 +14,11 @@ html {
 :root {
   --padding: 20px;
   --base-size: 14;
-  --gradient-topbar: linear-gradient(45deg, #369a54 30%, #aba242 90%);
+  --gradient-topbar: linear-gradient(
+    171.8deg,
+    rgba(5, 111, 146, 1) 13.5%,
+    rgba(6, 57, 84, 1) 78.6%
+  );
   box-sizing: border-box;
 }
 
