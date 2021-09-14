@@ -7,7 +7,7 @@ module.exports = {
       dependOn: "shared",
     },
     archive: {
-      import: "./src/archive.js",
+      import: "./src/dev.js",
       dependOn: "shared",
     },
     shared: [
@@ -28,14 +28,6 @@ module.exports = {
       {
         test: /\.worker\.js$/,
         use: [
-          // {
-          //   loader: "worker-loader",
-          //   options: {
-          //     publicPath: path.resolve(__dirname, "static/frontend"),
-          //     filename: "[name].js",
-          //     inline: "no-fallback",
-          //   },
-          // },
           {
             loader: "babel-loader",
             options: {

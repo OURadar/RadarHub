@@ -473,7 +473,7 @@ export function simplifiedInstancedLines(regl) {
         gl_Position = vec4(pt.xy, clip.z, clip.w);
         normal.xyz = normalize(mat3(view) * pointA);
         normal.w = clamp(normal.z * 1.3, 0.0, 1.0) * quad.a;
-        adjustedColor = color;
+        adjustedColor = color * quad.a;
         adjustedColor.a *= normal.w;
         vec4 computedColor = vec4(normal.xzy * quad.y * normal.w, normal.w);
         adjustedColor = mix(computedColor, adjustedColor, quad.x);

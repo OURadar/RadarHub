@@ -12,9 +12,8 @@ import { SectionHeader } from "./section-header";
 import { Product } from "./product";
 import { theme } from "./theme";
 import { TopBar } from "./topbar";
-import { GLView } from "./glview";
 
-class App2 extends Component {
+class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -78,4 +77,4 @@ class App2 extends Component {
   }
 }
 
-export default App2;
+export default App;

@@ -1,5 +1,5 @@
 //
-//  App.js
+//  app.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong

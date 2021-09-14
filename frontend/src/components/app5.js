@@ -1,6 +1,8 @@
 //
-//  App3.js
+//  app5.js
 //  RadarHub
+//
+//  Milestone 5 was a big one
 //
 //  Created by Boonleng Cheong
 //
@@ -18,7 +20,7 @@ import { theme } from "./theme";
 import { TopBar } from "./topbar";
 import { Ingest } from "./ingest";
 
-class App3 extends Component {
+class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -105,4 +107,4 @@ class App3 extends Component {
   }
 }
 
-export default App3;
+export default App;
