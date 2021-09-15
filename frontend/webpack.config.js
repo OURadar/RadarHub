@@ -17,6 +17,7 @@ module.exports = {
       "gl-matrix",
       "stats-js",
       "shapefile",
+      "binary-parser",
     ],
   },
   output: {

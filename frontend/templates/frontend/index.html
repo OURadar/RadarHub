@@ -67,7 +67,7 @@
       media="screen and (min-device-width: 550px)"
       href="{% static 'css/desktop.css' %}?r={% now 'U' %}"
     /> {% endcomment %}
-    {{ radar|json_script:"radar-name" }} {{ receiver|json_script:"receiver" }}
+    {{ params|json_script:"params" }}
     <title>RadarHub</title>
   </head>
   <body>

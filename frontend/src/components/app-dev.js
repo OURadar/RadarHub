@@ -45,35 +45,40 @@ class App extends Component {
         }
       });
 
-    fetch("/data/binary/PX-20200520-060102")
-      .then((resp) => resp.arrayBuffer())
-      .then((data) => {
-        var elev = new Float32Array(data.slice(0, 4));
-        var bytes = new Uint8Array(data.slice(4));
-        console.log(`elev = ${elev}`);
-        console.log(bytes);
+    // fetch("/data/binary/PX-20200520-060102")
+    //   .then((resp) => resp.arrayBuffer())
+    //   .then((data) => {
+    //     var elev = new Float32Array(data.slice(0, 4));
+    //     var bytes = new Uint8Array(data.slice(4));
+    //     console.log(`elev = ${elev}`);
+    //     console.log(bytes);
+    //   });
+
+    var Parser = require("binary-parser").Parser;
+
+    var sweep = new Parser()
+      .endianess("little")
+      .uint16("na")
+      .uint16("nr")
+      .array("azimuth", { type: "floatle", length: "na" })
+      .array("values", {
+        type: "uint8",
+        length: function () {
+          return this.na * this.nr;
+        },
       });
 
-    fetch("/data/header/PX-20200520-060102")
+    fetch("/data/header/PX-20170220-050706-E2.4-Z")
       .then((resp) => resp.json())
       .then((data) => {
         console.log(data);
       });
 
-    fetch("/data/file/PX-20200520-060102")
+    fetch("/data/file/PX-20170220-050706-E2.4-Z")
       .then((resp) => resp.arrayBuffer())
       .then((data) => {
-        var head = new Int16Array(data.slice(0, 4));
-        const [na, nr] = head;
-        console.log(`nr = ${nr}   na = ${na}`);
-        var azimuths = new Float32Array(
-          data.slice(4, 4 + na * Float32Array.BYTES_PER_ELEMENT)
-        );
-        console.log(azimuths);
-        var values = new Float32Array(
-          data.slice(4 + na * Float32Array.BYTES_PER_ELEMENT)
-        );
-        console.log(values);
+        const buff = new Uint8Array(data);
+        console.log(sweep.parse(buff));
       });
   }
 
