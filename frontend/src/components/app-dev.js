@@ -59,6 +59,22 @@ class App extends Component {
       .then((data) => {
         console.log(data);
       });
+
+    fetch("/data/file/PX-20200520-060102")
+      .then((resp) => resp.arrayBuffer())
+      .then((data) => {
+        var head = new Int16Array(data.slice(0, 4));
+        const [na, nr] = head;
+        console.log(`nr = ${nr}   na = ${na}`);
+        var azimuths = new Float32Array(
+          data.slice(4, 4 + na * Float32Array.BYTES_PER_ELEMENT)
+        );
+        console.log(azimuths);
+        var values = new Float32Array(
+          data.slice(4 + na * Float32Array.BYTES_PER_ELEMENT)
+        );
+        console.log(values);
+      });
   }
 
   render() {
