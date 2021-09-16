@@ -2,6 +2,10 @@ import json
 import struct
 import numpy as np
 from django.http import HttpResponse
+# from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+
+from .models import File
 from netCDF4 import Dataset
 
 def binary(request, name):
@@ -21,10 +25,17 @@ def header(requst, name):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
+def find(name):
+    files = File.objects.all()
+    print(files[0].name, files[0].path)
+    # file = f'/Users/boonleng/Downloads/{name}.nc'
+    file = files[0].path
+    print(f'file = {file}')
+    return file
+
 def file(request, name):
     print(f'archives.file() name = {name}')
-    file = f'/Users/boonleng/Downloads/{name}.nc'
-    print(f'file = {file}')
+    file = find(name)
     with open(file, 'rb') as fid:
         with Dataset('dummy', mode='r', memory=fid.read()) as nc:
             #e = np.array(nc.variables['Elevation'][:], dtype=np.float32)

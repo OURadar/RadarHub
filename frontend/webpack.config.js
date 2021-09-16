@@ -6,7 +6,7 @@ module.exports = {
       import: "./src/index.js",
       dependOn: "shared",
     },
-    archive: {
+    dev: {
       import: "./src/dev.js",
       dependOn: "shared",
     },
