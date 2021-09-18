@@ -1,5 +1,5 @@
 //
-//  overlay.loader.js
+//  polygon.worker.js
 //  RadarHub
 //
 //  A separate web worker to load things
@@ -31,7 +31,6 @@ self.onmessage = ({ data: { type, payload } }) => {
       builtInGeometryDirect(name, model)
         .then((points) => makeBuffer(name, points))
         .then((buffer) => self.postMessage({ buffer: buffer }));
-      //);
     } else if (name.includes("#")) {
       builtInGeometry(name, model)
         .then((lines) => lines2points(lines))

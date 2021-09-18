@@ -7,14 +7,14 @@
 
 import React, { Component } from "react";
 import { ThemeProvider } from "@material-ui/core/styles";
-import { colorDict, detectMob } from "./common";
+import { detectMob } from "./common";
 import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
 import { TopBar } from "./topbar";
 import { Ingest } from "./ingest";
-import { theme } from "./theme";
+import { theme, colorDict } from "./theme";
 
 class App extends Component {
   constructor(props) {
