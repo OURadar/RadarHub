@@ -36,15 +36,10 @@ class Overlay {
     this.handleMessage = this.handleMessage.bind(this);
 
     // const url = new URL("./overlay.worker.js", import.meta.url);
-    // this.worker = new Worker(url);
-    this.worker = new Worker("/static/frontend/worker.js");
+    const url = "/static/frontend/opacity.js";
+    this.worker = new Worker(url);
     this.worker.onmessage = this.handleMessage;
     this.workerReady = false;
-
-    // this.worker.postMessage({
-    //   type: "read",
-    //   payload: "bitcoin",
-    // });
 
     this.tic = 0;
   }
@@ -54,9 +49,6 @@ class Overlay {
       this.texture.targetOpacity = payload;
     } else if (type == "init") {
       if (payload == "ready") this.workerReady = true;
-    } else if (type == "read") {
-      console.log(`read() ->`);
-      console.log(payload);
     }
   }
 

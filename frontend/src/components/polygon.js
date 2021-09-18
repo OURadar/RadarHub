@@ -21,7 +21,7 @@ class Polygon {
     }
     this.busy++;
     // Initialize a new worker for each load since they could happen in parallel
-    const worker = new Worker("/static/frontend/loader.js");
+    const worker = new Worker("/static/frontend/polygon.js");
     return new Promise((resolve) => {
       worker.onmessage = ({ data: { buffer } }) => {
         if (buffer) {

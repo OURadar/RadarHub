@@ -10,7 +10,8 @@ module.exports = {
       import: "./src/dev.js",
       dependOn: "shared",
     },
-    loader: "./src/components/overlay.loader.js",
+    polygon: "./src/components/polygon.worker.js",
+    opacity: "./src/components/overlay.worker.js",
     common: "./src/components/common.js",
     shared: [
       "react",
