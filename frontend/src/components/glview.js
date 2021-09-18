@@ -9,6 +9,7 @@ import React, { Component } from "react";
 import Stats from "stats-js";
 import { mat4, vec3, quat } from "gl-matrix";
 
+import * as theme from "./theme";
 import * as common from "./common";
 import * as artists from "./artists";
 import { Gesture } from "./gesture";
@@ -120,7 +121,7 @@ class GLView extends Component {
     debugGL: false,
     profileGL: false,
     showStats: false,
-    colors: common.colorDict(),
+    colors: theme.colorDict(),
     linewidth: 1.4,
     textureScale: 1.0,
   };

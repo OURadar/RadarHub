@@ -10,13 +10,13 @@
 import React, { Component } from "react";
 import Split from "split.js";
 import { ThemeProvider } from "@material-ui/core/styles";
-import { colorDict, detectMob } from "./common";
+import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
 import { Product } from "./product";
-import { theme } from "./theme";
+import { theme, colorDict } from "./theme";
 import { TopBar } from "./topbar";
 import { Ingest } from "./ingest";
 

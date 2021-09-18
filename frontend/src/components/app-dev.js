@@ -7,10 +7,10 @@
 
 import React, { Component } from "react";
 import { ThemeProvider } from "@material-ui/core/styles";
-import { colorDict, detectMob } from "./common";
+import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { Product } from "./product";
-import { theme } from "./theme";
+import { theme, colorDict } from "./theme";
 import { TopBar } from "./topbar";
 
 class App extends Component {

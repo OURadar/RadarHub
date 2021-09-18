@@ -9,6 +9,7 @@ import React, { Component } from "react";
 import Stats from "stats-js";
 import { mat4 } from "gl-matrix";
 
+import * as theme from "./theme";
 import * as common from "./common";
 import * as artists from "./artists";
 import * as instanced from "./instanced";
@@ -138,7 +139,7 @@ class Scope extends Component {
     debugGL: false,
     profileGL: false,
     showStats: false,
-    colors: common.colorDict(),
+    colors: theme.colorDict(),
     linewidth: 1.4,
     textureScale: 1.0,
     title: "Single-Channel",
@@ -271,7 +272,7 @@ class Scope extends Component {
       positions: positions,
       alignments: alignments,
       foreground: this.props.colors.foreground,
-      colors: common.array2rgba(this.props.colors.foreground),
+      colors: theme.array2rgba(this.props.colors.foreground),
       sizes: 14,
       countX: count,
       countY: labels.length - count,

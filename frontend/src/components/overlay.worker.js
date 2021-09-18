@@ -17,7 +17,6 @@ let labels = {
 };
 
 self.onmessage = ({ data: { type, payload } }) => {
-  self.postMessage({ type: "init" });
   if (type == "init") {
     labels = payload;
     self.postMessage({
