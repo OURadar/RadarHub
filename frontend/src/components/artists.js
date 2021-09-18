@@ -241,7 +241,11 @@ export function sphere(regl) {
     },
 
     attributes: {
-      position: earth.points,
+      position: regl.buffer({
+        usage: "static",
+        type: "float",
+        data: earth.points,
+      }),
     },
 
     primitive: "lines",
@@ -369,7 +373,7 @@ export function instancedLines(regl, resolution) {
         gl_Position = vec4(clip.w * (2.0 * pt/resolution - 1.0), clip.z, clip.w);
         normal.xyz = normalize(mat3(view) * modelPointA.xyz);
         normal.w = clamp(dot(vec3(0.0, 0.0, 1.3), normal.xyz), 0.05, 1.0) * quad.a;
-        normal.xyz *= quad.y;
+        normal.xyz *= quad.z;
         adjustedColor = color;
         adjustedColor.a *= normal.w;
       }`,
@@ -383,7 +387,7 @@ export function instancedLines(regl, resolution) {
         if (normal.w < 0.05)
           discard;
         vec4 computedColor = vec4(normal.xzy * normal.w, normal.w);
-        gl_FragColor = mix(computedColor, adjustedColor, quad.x);
+        gl_FragColor = mix(computedColor, adjustedColor, quad.y);
       }`,
 
     attributes: {
@@ -473,10 +477,10 @@ export function simplifiedInstancedLines(regl) {
         gl_Position = vec4(pt.xy, clip.z, clip.w);
         normal.xyz = normalize(mat3(view) * pointA);
         normal.w = clamp(normal.z * 1.3, 0.0, 1.0) * quad.a;
-        adjustedColor = color * quad.a;
-        adjustedColor.a *= normal.w;
-        vec4 computedColor = vec4(normal.xzy * quad.y * normal.w, normal.w);
-        adjustedColor = mix(computedColor, adjustedColor, quad.x);
+        adjustedColor.rgb = color.rgb * quad.a;
+        adjustedColor.a = color.a * normal.w;
+        vec4 computedColor = vec4(normal.xzy * quad.z * normal.w * quad.a, normal.w);
+        adjustedColor = mix(computedColor, adjustedColor, quad.y);
       }`,
 
     frag: `

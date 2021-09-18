@@ -13,7 +13,6 @@ module.exports = {
     polygon: "./src/components/polygon.worker.js",
     opacity: "./src/components/overlay.worker.js",
     ingest: "./src/components/ingest.worker.js",
-    common: "./src/components/common.js",
     shared: [
       "react",
       "react-dom",

@@ -19,7 +19,10 @@ class Product extends GLView {
   constructor(props) {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
-    this.offset = Date.now();
+    this.offset = (Date.now() % 86400000) / 5000;
+    var t = this.offset + 0.0002 * window.performance.now();
+    var a = t % (2.0 * Math.PI);
+    console.log(`offset = ${this.offset}  t = ${t}  a = ${a.toFixed(3)}`);
     this.state = {
       ...this.state,
       spin: false,
@@ -41,11 +44,12 @@ class Product extends GLView {
   }
 
   updateViewPoint() {
-    const t = 0.0002 * (this.offset - window.performance.now());
-    const a = t % (2 * Math.PI);
+    const t = this.offset + 0.0002 * window.performance.now();
+    const a = t % (2.0 * Math.PI);
+    // console.log(` = ${t.toFixed(3)}   a = ${a.toFixed(2)}`);
     if (this.state.useEuler) {
-      this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.cos(a);
-      this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.sin(a);
+      this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.sin(a);
+      this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.cos(a);
       this.geometry.satCoordinate[0] = Math.atan2(
         this.geometry.satQ,
         this.geometry.satI
@@ -77,7 +81,6 @@ class Product extends GLView {
       const drawCalls = [
         [this.gogh, "text"],
         [this.picaso, "poly"],
-        [this.sphere, "grid"],
       ];
       this.statsWidget = createStatsWidget(drawCalls);
     }
@@ -97,13 +100,7 @@ class Product extends GLView {
       this.overlay.updateColors(this.props.colors);
     }
     this.regl.clear({
-      color: this.props.colors.canvas,
-    });
-    this.sphere({
-      modelview: this.geometry.view,
-      projection: this.geometry.projection,
-      viewport: this.geometry.viewport,
-      color: this.props.colors.grid,
+      color: this.props.colors.glview,
     });
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);

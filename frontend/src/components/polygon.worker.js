@@ -8,7 +8,9 @@
 //
 
 const vec3 = require("gl-matrix").vec3;
-const deg = require("./common").deg;
+const common = require("./common");
+const deg = common.deg;
+const rad = common.rad;
 
 self.onmessage = ({ data: { type, payload } }) => {
   if (type == "poly") {
@@ -21,21 +23,21 @@ self.onmessage = ({ data: { type, payload } }) => {
         .then((lines) => filterLines(lines, origin))
         .then((lines) => lines2points(lines))
         .then((points) => makeBuffer(name, points))
-        .then((buffer) => self.postMessage({ buffer: buffer }));
+        .then((buffer) => self.postMessage({ buffer }));
     } else if (type == "json") {
       handleJSON(name)
         .then((lines) => lines2points(lines))
         .then((points) => makeBuffer(name, points))
-        .then((buffer) => self.postMessage({ buffer: buffer }));
+        .then((buffer) => self.postMessage({ buffer }));
     } else if (name.includes("@")) {
       builtInGeometryDirect(name, model)
         .then((points) => makeBuffer(name, points))
-        .then((buffer) => self.postMessage({ buffer: buffer }));
+        .then((buffer) => self.postMessage({ buffer }));
     } else if (name.includes("#")) {
       builtInGeometry(name, model)
         .then((lines) => lines2points(lines))
         .then((points) => makeBuffer(name, points))
-        .then((buffer) => self.postMessage({ buffer: buffer }));
+        .then((buffer) => self.postMessage({ buffer }));
     } else {
       console.log(`Unable to handle ${name}`);
       self.postMessage({ buffer: null });
@@ -45,7 +47,7 @@ self.onmessage = ({ data: { type, payload } }) => {
 
 async function builtInGeometryDirect(name, model) {
   let x = [];
-  if (name.includes("@rings")) {
+  if (name.includes("rings")) {
     const radii = name.split("/").slice(1);
     const sides = 64;
     const h = 0.012;
@@ -53,23 +55,54 @@ async function builtInGeometryDirect(name, model) {
     // console.log(name);
     radii.forEach((radius) => {
       const r = parseFloat(radius);
-      x.push([0, r, h]);
+      const o = vec3.transformMat4([], [0, r, h], model);
+      x.push(o);
       for (let k = 1; k < sides; k++) {
         const a = (k * 2.0 * Math.PI) / sides;
         const p = [r * Math.sin(a), r * Math.cos(a), h];
+        const q = vec3.transformMat4([], p, model);
+        x.push(q);
+        x.push(q);
+      }
+      x.push(o);
+    });
+  } else if (name == "@grid") {
+    const latCount = 17;
+    const lonCount = 36;
+    var lat = (80.0 / 180.0) * Math.PI;
+    for (let j = 0; j < latCount; j++) {
+      const o = rad.coord2point(0.0, lat);
+      x.push(o);
+      for (let k = 1; k < lonCount; k++) {
+        const lon = (k * 2 * Math.PI) / lonCount;
+        const p = rad.coord2point(lon, lat);
         x.push(p);
         x.push(p);
       }
-      x.push([0, r, h]);
-    });
-    x = x.map((p) => vec3.transformMat4([], p, model));
+      x.push(o);
+      lat -= Math.PI / 18;
+    }
+    for (let j = 0; j < lonCount; j++) {
+      const lon = (j * 2 * Math.PI) / lonCount;
+      let lat = (80.0 / 180.0) * Math.PI;
+      x.push(rad.coord2point(lon, lat));
+      lat -= Math.PI / 18;
+      for (let k = 1; k < latCount - 1; k++) {
+        const p = rad.coord2point(lon, lat);
+        x.push(p);
+        x.push(p);
+        lat -= Math.PI / 18;
+      }
+      x.push(rad.coord2point(lon, lat));
+    }
+    // console.log(`${name} ${x.length.toLocaleString()}`);
   }
   return x.flat();
 }
 
 async function builtInGeometry(name, model) {
   let lines = [];
-  if (name.includes("@rings")) {
+  if (name.includes("rings")) {
     const sides = 6;
     const radii = name.split("/").slice(1);
     radii.forEach((radius) => {
@@ -188,7 +221,7 @@ function makeBuffer(name, x) {
   console.log(
     `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${mString} bytes)`,
     "font-weight: bold",
-    "font-weight: normal",
+    "font-weight: initial",
     "color: darkorange"
   );
   return buffer;

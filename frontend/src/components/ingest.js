@@ -43,6 +43,7 @@ class Ingest {
           }
         }, 2000);
       } else if (type == "scope") {
+        //if (this.tic < 5) console.log(payload);
         this.data.ch1 = payload.ch1;
         this.data.ch2 = payload.ch2;
         if (this.data.t === null || this.data.t.length != payload.count) {

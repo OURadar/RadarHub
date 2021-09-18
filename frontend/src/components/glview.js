@@ -181,20 +181,20 @@ class GLView extends Component {
     }
     const geo = this.geometry;
     this.regl.clear({
-      color: this.props.colors.canvas,
+      color: this.props.colors.glview,
     });
     this.sphere({
       modelview: geo.view,
       projection: geo.projection,
       viewport: geo.viewport,
-      color: this.props.colors.lines[1],
+      color: this.props.colors.lines[2],
     });
-    // quad: [shader-user mix, shader color tint, unused, opacity]
+    // quad: [mode, shader-user mix, shader color tint, opacity]
     this.monet({
       width: 2.5,
       color: [0.5, 0.5, 0.5, 1.0],
       model: geo.model,
-      quad: [1.0, 0.5, 0.0, 1.0],
+      quad: [0.0, 1.0, 0.5, 1.0],
       view: geo.view,
       projection: geo.projection,
       resolution: [this.canvas.width, this.canvas.height],

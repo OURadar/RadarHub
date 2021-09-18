@@ -7,13 +7,13 @@
 
 import React, { Component } from "react";
 import { ThemeProvider } from "@material-ui/core/styles";
-import { colorDict, detectMob } from "./common";
+import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
-import { theme } from "./theme";
+import { theme, colorDict } from "./theme";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 
-class AppGLView extends Component {
+class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -57,4 +57,4 @@ class AppGLView extends Component {
   }
 }
 
-export default AppGLView;
+export default App;

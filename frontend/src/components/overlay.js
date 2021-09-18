@@ -11,7 +11,7 @@ import { clamp, deg2rad } from "./common";
 import { mat4, vec4 } from "gl-matrix";
 
 //
-// Manages overlays on the earth
+// Manages overlays
 //
 
 class Overlay {
@@ -57,88 +57,102 @@ class Overlay {
 
     const overlays = [
       {
+        file: "@grid",
+        color: colors.grid,
+        limits: [1.0, 1.5],
+        weight: 0.4,
+        fixed: true,
+      },
+      {
         file: "@rings/1/30/60/120",
         color: colors.ring,
         limits: [0.8, 2.0],
         weight: 0.4,
+        fixed: true,
       },
       {
         file: "/static/maps/World/countries-50m.json",
-        color: [0.5, 0.5, 0.5, 0.0],
+        color: colors.state,
         limits: [1.3, 3.0],
         weight: 1.7,
+        fixed: false,
       },
       {
         file: "/static/maps/United States/states-10m.json",
         color: colors.state,
         limits: [1.3, 3.0],
         weight: 0.9,
+        fixed: false,
       },
       {
         file: "/static/maps/United States/counties-10m.json",
         color: colors.county,
         limits: [0.5, 2.0],
         weight: 0.4,
+        fixed: false,
       },
       {
         file: "/static/maps/United States/gz_2010_us_050_00_500k.shp",
         color: colors.county,
         limits: [0.5, 2.0],
         weight: 0.4,
+        fixed: false,
       },
       {
         file: "/static/maps/United States/intrstat.shp",
         color: colors.highway,
         limits: [0.5, 2.0],
         weight: 0.4,
+        fixed: false,
       },
     ];
 
-    this.updatingLabels = true;
-    this.updateLabels();
-    this.updatingLabels = false;
+    // Give label a small delay so that rings load quickly
+    setTimeout(() => {
+      this.updateLabels();
+    }, 100);
 
+    this.layers = [];
     this.colors = colors;
     this.updatingPolygons = overlays.length;
-    this.layers = [];
-    overlays.forEach((overlay, k) => {
-      setTimeout(() => {
-        this.polyEngine.load(overlay.file, this.geometry).then((buffer) => {
-          this.layers[k] = {
-            name: buffer.name,
-            points: this.regl.buffer({
-              usage: "static",
-              type: "float",
-              data: buffer.data,
-            }),
-            count: buffer.count,
-            color: overlay.color,
-            limits: overlay.limits,
-            weight: overlay.weight,
-            linewidth: 1.0,
-            opacity: 0.0,
-            targetOpacity: 0.0,
-            quad: [0, this.colors.tint, 0, 0],
-          };
-          this.viewParameters[0] = 0;
-          this.updatingPolygons--;
-          if (this.updatingPolygons == 0) {
-            this.updatingPolygons = false;
-          }
-        });
-      }, 200 * k + 300);
-    });
+    for (let k = 0; k < overlays.length; k++) {
+      const overlay = overlays[k];
+      const buffer = await this.polyEngine.load(overlay.file, this.geometry);
+      this.layers[k] = {
+        name: buffer.name,
+        points: this.regl.buffer({
+          usage: "static",
+          type: "float",
+          data: buffer.data,
+        }),
+        count: buffer.count,
+        color: overlay.color,
+        limits: overlay.limits,
+        weight: overlay.weight,
+        linewidth: 1.0,
+        opacity: k < 2 ? 1.0 : 0.0,
+        targetOpacity: k < 2 ? 1.0 : 0.0,
+        quad: [overlay.fixed, 0, this.colors.tint, 0],
+      };
+      this.viewParameters[0] = 0;
+      this.updatingPolygons--;
+    }
+    this.updatingPolygons = false;
   }
 
   updateColors(colors) {
     this.colors = colors;
-    this.layers[0].color = colors.ring;
+    console.log(colors);
+    this.layers[0].color = colors.grid;
+    this.layers[1].color = colors.ring;
     this.layers[2].color = colors.state;
-    this.layers[3].color = colors.county;
-    this.layers[0].quad[1] = colors.tint;
-    this.layers[1].quad[1] = colors.tint;
-    this.layers[2].quad[1] = colors.tint;
-    this.layers[3].quad[1] = colors.tint;
+    this.layers[3].color = colors.state;
+    this.layers[4].color = colors.county;
+    this.layers[5].color = colors.county;
+    this.layers[6].color = colors.highway;
+    this.layers.forEach((layer) => {
+      layer.quad[2] = colors.tint;
+    });
     this.texture?.opacity.fill(0);
     this.updateLabels();
   }
@@ -234,13 +248,13 @@ class Overlay {
       const dy = viewParameters[2] - deg2rad(this.geometry.origin.latitude);
       const d = Math.sqrt(dx * dx + dy * dy);
       // console.log(`fov = ${this.geometry.fov.toFixed(3)}  d = ${d.toFixed(2)}`);
-      // Overlays are rings, countries, states, counties, hi-res counties, highways
+      // Overlays are grid, rings, countries, states, counties, hi-res counties, highways
       if (this.geometry.fov < 0.06 && d < 0.1) {
-        this.targetOpacity = [1, 0, 0, 0, 1, 1];
+        this.targetOpacity = [1, 1, 0, 0, 0, 1, 1];
       } else if (this.geometry.fov < 0.42 && d < 0.3) {
-        this.targetOpacity = [1, 0, 1, 1, 0, 0];
+        this.targetOpacity = [1, 1, 0, 1, 1, 0, 0];
       } else {
-        this.targetOpacity = [1, 1, 1, 0, 0, 0];
+        this.targetOpacity = [1, 1, 1, 1, 0, 0, 0];
       }
 
       // const t1 = window.performance.now();
@@ -267,7 +281,7 @@ class Overlay {
       this.layers.forEach((o, k) => {
         if (this.targetOpacity[k] == 0) {
           o.targetOpacity = 0;
-        } else if (c < 3) {
+        } else if (c < 4) {
           if (o.targetOpacity == 0) c++;
           o.targetOpacity = 1;
         }
@@ -279,14 +293,23 @@ class Overlay {
       poly: [],
       text: null,
     };
-    this.layers.forEach((o) => {
+    this.layers.forEach((o, k) => {
       if (o.opacity >= 0.05) {
         o.linewidth = clamp(
           o.weight / Math.sqrt(this.geometry.fov),
           ...o.limits
         );
-        // quad: [shader-user mix, shader color tint, unused, opacity]
-        o.quad[0] = 1.0 * (o.color[3] > 0 && this.geometry.fov < 0.43);
+        // quad: [mode, shader-user mix, shader color tint, opacity]
+        // 0.43 --> 1.0
+        // 0.63 --> 0
+        o.quad[1] = o.quad[0]
+          ? 1.0
+          : clamp(3.15 - 5.0 * this.geometry.fov, 0.0, 1.0);
+        // if (k == 2)
+        //   console.log(`fov = ${this.geometry.fov.toFixed(2)} --> ${o.quad[1]}`);
+        // o.quad[1] = o.quad[0]
+        //   ? 1.0
+        //   : 1.0 * (o.color[3] > 0 && this.geometry.fov < 0.43);
         o.quad[3] = o.opacity;
         shapes.poly.push({
           points: o.points,
@@ -300,7 +323,7 @@ class Overlay {
         });
       }
     });
-    if (shapes.poly.length > 3) {
+    if (shapes.poly.length > 4) {
       console.log(`does not work shapes.poly.length = ${shapes.poly.length}`);
       console.log(
         `${this.layers[0].opacity.toFixed(2)}` +

@@ -381,7 +381,7 @@ class Scope extends Component {
   pan(x, y) {
     const geo = this.geometry;
     geo.offsetX += x * geo.v2dx;
-    geo.offsetY += y * geo.v2dx;
+    geo.offsetY += y * geo.v2dy;
     geo.needsUpdate = true;
   }
 

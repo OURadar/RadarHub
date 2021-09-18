@@ -81,8 +81,8 @@ export function array2rgba(array) {
 
 export function colorDict(theme) {
   // Retrieve the body color so we can match the canvas with it
-  let body = window.getComputedStyle(document.body).backgroundColor;
-  body = body.match(/\d+/g).map((x) => x / 255);
+  let bg = window.getComputedStyle(document.body).backgroundColor;
+  let body = new Array(bg.match(/\d+/g).map((x) => x / 255));
   if (body.length == 3) {
     body.push(1.0);
   }
@@ -106,11 +106,13 @@ export function colorDict(theme) {
       theme = "dark";
     }
   }
+  // console.log(`body = ${body}`);
   // Pick the dictionary according to the final theme value
   const themes = {
     light: {
       name: "light",
       canvas: body,
+      glview: hex2rgb("f9f5ed"),
       background: [1, 1, 1, 1],
       foreground: [0, 0, 0, 1],
       lines: [
@@ -145,6 +147,7 @@ export function colorDict(theme) {
     dark: {
       name: "dark",
       canvas: body,
+      glview: body,
       background: [0, 0, 0, 1],
       foreground: [1, 1, 1, 1],
       lines: [
@@ -179,6 +182,7 @@ export function colorDict(theme) {
     vibrant: {
       name: "vibrant",
       canvas: [0, 0.07, 0.07, 1],
+      glview: [0, 0.07, 0.07, 1],
       background: [0, 0.07, 0.07, 1],
       foreground: [1, 1, 1, 1],
       lines: [
@@ -207,6 +211,7 @@ export function colorDict(theme) {
     sat: {
       name: "sat",
       canvas: body,
+      glview: body,
       background: [0, 0, 0, 1],
       foreground: [1, 1, 1, 1],
       lines: [
@@ -232,6 +237,7 @@ export function colorDict(theme) {
     baby: {
       name: "baby",
       canvas: body,
+      glview: body,
       background: [0, 0, 0, 1],
       foreground: [1, 1, 1, 1],
       lines: [

@@ -202,11 +202,11 @@ class Text {
       `Text: %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
         `%c / texture (%c${wString} RGBA = ${vString} MB)` +
         `%c / ${this.usage.toFixed(2)} %%`,
-      "font-weight: normal",
+      "font-weight: initial",
       "color: darkorange",
-      "font-weight: normal; color: black",
+      "font-weight: initial; color: initial",
       "color: darkorange",
-      "font-weight: normal; color: black"
+      "font-weight: initial; color: initial"
     );
     this.busy = false;
     return buffer;

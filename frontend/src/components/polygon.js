@@ -7,11 +7,12 @@
 
 class Polygon {
   constructor() {
-    this.busy = 0;
+    this.busy = false;
+    this.worker = new Worker("/static/frontend/polygon.js");
   }
 
   async load(name, geometry) {
-    if (this.busy > 5) {
+    if (this.busy) {
       console.log("Calling Polygon.load() too frequently.");
       return;
     }
@@ -19,17 +20,15 @@ class Polygon {
       console.log("Input for update() undefined.");
       return;
     }
-    this.busy++;
-    // Initialize a new worker for each load since they could happen in parallel
-    const worker = new Worker("/static/frontend/polygon.js");
+    this.busy = true;
     return new Promise((resolve) => {
-      worker.onmessage = ({ data: { buffer } }) => {
+      this.worker.onmessage = ({ data: { buffer } }) => {
         if (buffer) {
           resolve(buffer);
-          this.busy--;
+          this.busy = false;
         }
       };
-      worker.postMessage({
+      this.worker.postMessage({
         type: "poly",
         payload: {
           name: name,

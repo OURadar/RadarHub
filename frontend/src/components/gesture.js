@@ -222,7 +222,7 @@ function positionAndDistanceFromTouches(touches) {
     v = 0;
     d = 0;
   }
-  console.log(`(x, y) = (${x}, ${y})`);
+  // console.log(`(x, y) = (${x}, ${y})`);
   return [x, y, u, v, d];
 }
 

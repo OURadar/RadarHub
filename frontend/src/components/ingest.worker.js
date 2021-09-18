@@ -25,6 +25,19 @@ let enums = {
 };
 let message = "";
 let wait = 0;
+let scope = {
+  ch1: {
+    i: [],
+    q: [],
+    a: [],
+  },
+  ch2: {
+    i: [],
+    q: [],
+    a: [],
+  },
+  count: 0,
+};
 
 self.onmessage = ({ data: { task, payload } }) => {
   if (task == "connect") {
@@ -99,28 +112,33 @@ function connect(newRadar, url) {
       // AScope data - convert arraybuffer to int16 typed array
       const samples = new Int16Array(e.data.slice(1));
       // Parse out the array into I/Q/A arrays for Scope
-      const len = Math.floor(samples.length / 2);
-      const i = new Float32Array(samples.slice(0, len));
-      const q = new Float32Array(samples.slice(len));
-      const a = new Float32Array(len);
-      for (var k = 0; k < len; k++) {
-        a[k] = Math.hypot(i[k], q[k]);
+      const count = Math.floor(samples.length / 2);
+      if (scope.count != count) {
+        scope.count = count;
+        const i = new ArrayBuffer(4 * count);
+        const q = new ArrayBuffer(4 * count);
+        const a = new ArrayBuffer(4 * count);
+        scope.ch1.i = new Float32Array(i);
+        scope.ch1.q = new Float32Array(q);
+        scope.ch1.a = new Float32Array(a);
+        scope.ch2.i = new Float32Array(i);
+        scope.ch2.q = new Float32Array(q);
+        scope.ch2.a = new Float32Array(a);
+      }
+      for (var k = 0; k < count; k++) {
+        const i = samples[k];
+        const q = samples[count + k];
+        const a = Math.sqrt(i * i + q * q);
+        scope.ch1.i[k] = i;
+        scope.ch1.q[k] = q;
+        scope.ch1.a[k] = a;
+        scope.ch2.i[k] = i;
+        scope.ch2.q[k] = q;
+        scope.ch2.a[k] = a;
       }
       self.postMessage({
         type: "scope",
-        payload: {
-          ch1: {
-            i: i,
-            q: q,
-            a: a,
-          },
-          ch2: {
-            i: i,
-            q: q,
-            a: a,
-          },
-          count: len,
-        },
+        payload: scope,
       });
     } else if (type == enums.Response) {
       // Response of a command
