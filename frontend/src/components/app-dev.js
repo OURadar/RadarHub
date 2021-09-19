@@ -68,13 +68,13 @@ class App extends Component {
         },
       });
 
-    fetch("/data/header/PX-20170220-050706-E2.4-Z")
+    fetch("/data/header/PX-20170220-050706-E2.4-Z/")
       .then((resp) => resp.json())
       .then((data) => {
         console.log(data);
       });
 
-    fetch("/data/file/PX-20170220-050706-E2.4-Z")
+    fetch("/data/file/PX-20170220-050706-E2.4-Z/")
       .then((resp) => resp.arrayBuffer())
       .then((data) => {
         const buff = new Uint8Array(data);

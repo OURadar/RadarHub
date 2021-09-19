@@ -22,8 +22,8 @@ class Text {
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
     this.scale = this.ratio > 1 ? 1 : 1.25;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 4096;
-    this.canvas.height = 4096;
+    this.canvas.width = 2048;
+    this.canvas.height = 8192;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
@@ -113,7 +113,6 @@ class Text {
     const context = this.context;
     const p = Math.ceil(this.stroke);
     const q = Math.ceil(this.stroke - 1.0);
-    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     let f = 0;
     let u = 0.5;
     let v = 0.5;
@@ -124,17 +123,24 @@ class Text {
     let spreads = [];
     let originOffset = 0;
 
-    // const t1 = Date.now();
+    context.lineWidth = this.stroke;
+    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    const t1 = Date.now();
 
     const len = labels.length;
+    const scale = this.scale * this.ratio;
+    const width = this.canvas.width;
+    const height = this.canvas.height;
+    const useDetails = this.hasDetails;
     for (let k = 0; k < len; k++) {
       const label = labels[k];
-      const size = Math.round((label.size ?? 15) * this.scale * this.ratio);
+      const size = Math.round((label.size ?? 15) * scale);
       context.font = `${size}px LabelFont`;
       const measure = context.measureText(label.text);
       const w = Math.ceil(measure.width);
       const h = Math.ceil(
-        this.hasDetails
+        useDetails
           ? measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent
           : size
       );
@@ -142,12 +148,12 @@ class Text {
       const hh = h + 2 * q;
       f = Math.max(f, h);
       // Move to the next row if we nearing the end of the texture
-      if (u + ww > this.canvas.width) {
+      if (u + ww > width) {
         v += Math.ceil(f + 2 * q + 1);
-        if (v > this.canvas.height - f - 2 * q) {
+        if (v > height - f - 2 * q) {
           // Wrap this context, save the image data, clean up the canvas
           const ph = Math.ceil(v - 1);
-          const piece = this.context.getImageData(0, 0, this.canvas.width, ph);
+          const piece = this.context.getImageData(0, 0, width, ph);
           if (originOffset) {
             //scratch.data = [...scratch.data, ...piece.data];
             const carr = scratch.data;
@@ -165,7 +171,7 @@ class Text {
             for (let j = 0; j < plen; j++) carr[j] = parr[j];
           }
           scratch.height += piece.height;
-          context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          context.clearRect(0, 0, width, height);
           originOffset += ph;
           v = 0.5;
         }
@@ -183,11 +189,10 @@ class Text {
         context.strokeRect(u + p, this.canvas.height - v - q - h, w, h);
         context.strokeStyle = "orange";
         context.strokeRect(u, this.canvas.height - v - hh, ww, hh);
+        context.lineWidth = this.stroke;
       }
-      const o = this.hasDetails ? measure.actualBoundingBoxDescent : 0;
       const x = u + p;
-      const y = this.canvas.height - v - q - o;
-      context.lineWidth = this.stroke;
+      const y = height - v - q - (measure.actualBoundingBoxDescent ?? 0);
       context.strokeStyle = label.stroke || "#000000";
       context.fillStyle = label.color || "#888888";
       context.strokeText(label.text, x, y);
@@ -220,8 +225,8 @@ class Text {
       image = this.context.getImageData(0, 0, this.canvas.width, ph);
     }
 
-    // const t0 = Date.now();
-    // console.log(`time = ${(t0 - t1).toFixed(2)} ms`);
+    const t0 = Date.now();
+    console.log(`time = ${(t0 - t1).toFixed(2)} ms`);
 
     // console.log(image);
 
@@ -236,14 +241,12 @@ class Text {
       count: points.length,
     };
 
-    const width = image.width;
-    const height = image.height;
     const wordsize = Float32Array.BYTES_PER_ELEMENT;
     const cString = buffer.count.toLocaleString();
     const xString = (buffer.count * 11).toLocaleString();
     const mString = (buffer.count * 11 * wordsize).toLocaleString();
-    const wString = `${width.toLocaleString()} x ${height.toLocaleString()}`;
-    const vString = (width * height * 4).toLocaleString();
+    const wString = `${width.toLocaleString()} x ${image.height.toLocaleString()}`;
+    const vString = (width * image.height * 4).toLocaleString();
     console.log(
       `Text: %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
         `%c / texture (%c${wString} RGBA = ${vString} bytes)`,
@@ -376,7 +379,7 @@ function parseArray(array, keys, colors) {
   const maximumWeight = keys.maximumWeight ?? 999;
   const origin = keys.origin ?? false;
   const theta = keys.theta ?? Math.cos((3.0 / 180) * Math.PI);
-  const theta2 = 0.5 * (1.0 + theta);
+  const theta2 = Math.cos((1.5 / 180) * Math.PI);
   const o = deg.coord2point(origin.longitude, origin.latitude, 1.0);
   // console.log(`filter = ${filterByDistance}  o = ${o}  th = ${th}`);
 

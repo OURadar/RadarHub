@@ -1,12 +1,14 @@
 import json
+from os import stat_result
 import struct
 import numpy as np
 from django.http import HttpResponse
 # from django.utils.dateparse import parse_datetime
-from django.utils import timezone
+# from django.utils import timezone
 
 from .models import File
 from netCDF4 import Dataset
+from common import colorize
 
 def binary(request, name):
     print(f'archives.binary() name={name}')
@@ -19,7 +21,8 @@ def binary(request, name):
     return response
 
 def header(requst, name):
-    print(f'archives.header() name = {name}')
+    show = colorize(name, 'orange')
+    print(f'archives.header() {show}')
     data = {'elev': 0.5, 'count': 2000}
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -34,7 +37,8 @@ def find(name):
     return file
 
 def file(request, name):
-    print(f'archives.file() name = {name}')
+    show = colorize(name, 'green')
+    print(f'archives.file() {show}')
     file = find(name)
     with open(file, 'rb') as fid:
         with Dataset('dummy', mode='r', memory=fid.read()) as nc:
