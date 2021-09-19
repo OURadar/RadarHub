@@ -16,13 +16,13 @@ import { deg } from "./common";
 //
 
 class Text {
-  constructor(debug = false) {
+  constructor(debug = true) {
     this.debug = debug;
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
     this.scale = this.ratio > 1 ? 1 : 1.5;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = Math.ceil((2048 * this.scale * this.ratio) / 256) * 256;
-    this.canvas.height = this.canvas.width;
+    this.canvas.width = 512;
+    this.canvas.height = 128;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
@@ -122,10 +122,12 @@ class Text {
   }
 
   async makeBuffer(labels) {
+    this.busy = true;
+    const image = { data: [], height: 0, width: this.canvas.width };
     const context = this.context;
+    const len = 20;
     const p = Math.ceil(1.5 * this.padding);
     const q = Math.ceil(this.padding);
-    this.busy = true;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     let f = 0;
     let u = 0.5;
@@ -135,7 +137,10 @@ class Text {
     let weights = [];
     let origins = [];
     let spreads = [];
-    labels.forEach((label) => {
+    //labels.forEach((label) => {
+    let page = 0;
+    for (let k = 0; k < len; k++) {
+      const label = labels[k];
       const size = Math.round((label.size ?? 15) * this.scale * this.ratio);
       context.font = `${size}px LabelFont`;
       const measure = context.measureText(label.text);
@@ -151,13 +156,24 @@ class Text {
       // Move to the next row if we nearing the end of the texture
       if (u + ww > this.canvas.width) {
         v += Math.ceil(f + 2 * q + 1);
+        if (v > this.canvas.height - f - 2 * q) {
+          // Wrap this context, save the image data, clean up the canvas
+          const ph = Math.ceil(v - 1);
+          const piece = this.context.getImageData(0, 0, this.canvas.width, ph);
+          image.data = new Uint8ClampedArray([...image.data, ...piece.data]);
+          image.height += piece.height;
+          console.log("new page");
+          context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          page++;
+          v = 0.5;
+        }
         u = 0.5;
         f = 0;
       }
       coords.push(label.coord);
       points.push(label.point);
       weights.push(label.weight);
-      origins.push([u - 0.5, v - 0.5]);
+      origins.push([u - 0.5, page * this.canvas.height + v - 0.5]);
       spreads.push([ww + 1, hh + 1]);
       if (this.debug) {
         context.lineWidth = 1;
@@ -176,13 +192,25 @@ class Text {
       context.fillText(label.text, x, y);
       u += ww + 1;
       // console.log(label.text, measure.actualBoundingBoxDescent);
-    });
+    }
     this.usage = (v / this.canvas.height) * 100;
     // console.log(`u = ${u}  v = ${v}  ${v / this.canvas.height}`);
-
+    console.log(`page = ${page}`);
     // console.log(points, origins);
+    const ph = Math.ceil(v + f + 2 * q);
+    const piece = this.context.getImageData(0, 0, this.canvas.width, ph);
+    image.data = new Uint8ClampedArray([...image.data, ...piece.data]);
+    image.height += piece.height;
+    console.log(image);
+
+    this.canvas.width = 1024;
+    this.canvas.height = 512;
+    const ii = new ImageData(image.data, image.width, image.height);
+    console.log(ii);
+    context.putImageData(ii, 512, 256);
+
     const buffer = {
-      canvas: this.canvas,
+      image: image,
       coords: coords,
       points: points,
       weights: weights,
@@ -192,8 +220,8 @@ class Text {
       count: points.length,
     };
 
-    const width = this.canvas.width;
-    const height = this.canvas.height;
+    const width = image.width;
+    const height = image.height;
     const wordsize = Float32Array.BYTES_PER_ELEMENT;
     const cString = buffer.count.toLocaleString();
     const xString = (buffer.count * 11).toLocaleString();

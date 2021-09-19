@@ -189,10 +189,12 @@ class Overlay {
       )
       .then((buffer) => {
         this.texture = {
-          bound: [buffer.canvas.width, buffer.canvas.height],
+          bound: [buffer.image.width, buffer.image.height],
           scale: this.textEngine.scale,
           texture: this.regl.texture({
-            data: buffer.canvas,
+            height: buffer.image.height,
+            width: buffer.image.width,
+            data: buffer.image.data,
             min: "linear",
             mag: "linear",
             premultiplyAlpha: true,

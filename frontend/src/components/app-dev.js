@@ -25,7 +25,7 @@ class App extends Component {
 
   static defaultProps = {
     radar: "demo",
-    debug: false,
+    debug: true,
     profileGL: false,
   };
 
@@ -90,6 +90,7 @@ class App extends Component {
         <Product
           colors={this.state.colors}
           debug={this.props.debug}
+          debugGL={true}
           showStats={true}
           profileGL={this.props.profileGL}
         />
