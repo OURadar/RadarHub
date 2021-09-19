@@ -134,7 +134,7 @@ export function colorDict(theme) {
       label: {
         face: "#000000",
         face2: "#333333",
-        stroke: "#ffffff",
+        stroke: "#f9f5ed",
         shadow: "#ffffff",
         ring: "#00bbff",
         blur: 3,

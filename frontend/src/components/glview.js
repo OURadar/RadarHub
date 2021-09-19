@@ -235,7 +235,7 @@ class GLView extends Component {
 
   magnify(_mx, _my, m, _x, _y) {
     const geo = this.geometry;
-    geo.fov = common.clamp(geo.fov / m, 0.001, 0.5 * Math.PI);
+    geo.fov = common.clamp(geo.fov / m, 0.001, 0.4 * Math.PI);
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message += ` fov: ${geo.fov.toFixed(3)}`;

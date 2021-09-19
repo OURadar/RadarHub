@@ -477,17 +477,15 @@ export function simplifiedInstancedLines(regl) {
         gl_Position = vec4(pt.xy, clip.z, clip.w);
         normal.xyz = normalize(mat3(view) * pointA);
         normal.w = clamp(normal.z * 1.3, 0.0, 1.0) * quad.a;
-        adjustedColor.rgb = color.rgb * quad.a;
-        adjustedColor.a = color.a * normal.w;
-        vec4 computedColor = vec4(normal.xzy * quad.z * normal.w * quad.a, normal.w);
-        adjustedColor = mix(computedColor, adjustedColor, quad.y);
+        vec4 computedColor = vec4(normal.xzy * quad.z * normal.w, normal.w);
+        adjustedColor = mix(computedColor, color * normal.w, quad.y);
       }`,
 
     frag: `
       precision highp float;
       varying vec4 adjustedColor;
       void main() {
-        if (adjustedColor.w < 0.1)
+        if (adjustedColor.w < 0.05)
           discard;
         gl_FragColor = adjustedColor;
       }`,
@@ -578,7 +576,6 @@ export function instancedPatches(regl) {
     frag: `
       precision highp float;
       uniform sampler2D texture;
-      uniform vec2 bound;
       varying vec2 uv;
       varying float a;
       void main() {
@@ -629,7 +626,7 @@ export function instancedPatches(regl) {
     blend: {
       enable: true,
       func: {
-        src: "src alpha",
+        src: "one",
         dst: "one minus src alpha",
       },
     },

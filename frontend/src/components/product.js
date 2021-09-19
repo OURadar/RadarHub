@@ -20,9 +20,9 @@ class Product extends GLView {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
     this.offset = (Date.now() % 86400000) / 5000;
-    var t = this.offset + 0.0002 * window.performance.now();
-    var a = t % (2.0 * Math.PI);
-    console.log(`offset = ${this.offset}  t = ${t}  a = ${a.toFixed(3)}`);
+    //var t = this.offset + 0.0002 * window.performance.now();
+    //var a = t % (2.0 * Math.PI);
+    //console.log(`offset = ${this.offset}  t = ${t}  a = ${a.toFixed(3)}`);
     this.state = {
       ...this.state,
       spin: false,

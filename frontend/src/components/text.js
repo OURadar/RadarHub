@@ -64,7 +64,7 @@ class Text {
   }
 
   async load(configs, colors) {
-    if (this.busy > 5) {
+    if (this.busy > 2) {
       console.log("Calling Text.load() too frequent.");
       return;
     }
@@ -107,6 +107,7 @@ class Text {
       }
     }
     allLabels.sort((a, b) => a.weight - b.weight);
+
     // I Love You 3,000 -Morgan Stark
     allLabels = allLabels.slice(0, 3000);
 
