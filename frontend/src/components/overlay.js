@@ -25,7 +25,8 @@ class Overlay {
       this.geometry.satCoordinate[0],
       this.geometry.satCoordinate[1],
     ];
-    this.targetOpacity = [0, 0, 0, 0, 0, 0];
+    this.targetOpacity = [];
+    this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
 
     this.polyEngine = new Polygon();
     this.updatingPolygons = 0;
@@ -57,54 +58,55 @@ class Overlay {
 
     this.colors = colors;
 
+    const ratio = this.ratio > 1 ? 0.8 * this.ratio : this.ratio;
     const overlays = [
       {
         file: "@grid",
         color: this.colors.grid,
-        limits: [1.0, 1.5],
-        weight: 0.4,
+        limits: [1.0, 1.5 * ratio],
+        weight: 0.4 * ratio,
         fixed: true,
       },
       {
         file: "@rings/1/30/60/120",
         color: this.colors.ring,
-        limits: [0.8, 2.0],
-        weight: 0.4,
+        limits: [0.8, 2.0 * ratio],
+        weight: 0.4 * ratio,
         fixed: true,
       },
       {
         file: "/static/maps/World/countries-50m.json",
         color: this.colors.state,
-        limits: [1.3, 3.0],
-        weight: 1.7,
+        limits: [1.3, 3.0 * ratio],
+        weight: 1.7 * ratio,
         fixed: false,
       },
       {
         file: "/static/maps/United States/states-10m.json",
         color: this.colors.state,
-        limits: [1.3, 3.0],
-        weight: 0.9,
+        limits: [1.3, 3.0 * ratio],
+        weight: 0.9 * ratio,
         fixed: false,
       },
       {
         file: "/static/maps/United States/counties-10m.json",
         color: this.colors.county,
-        limits: [0.5, 2.0],
-        weight: 0.4,
+        limits: [0.5, 2.0 * ratio],
+        weight: 0.4 * ratio,
         fixed: false,
       },
       {
         file: "/static/maps/United States/gz_2010_us_050_00_500k.shp",
         color: this.colors.county,
-        limits: [0.5, 2.0],
-        weight: 0.4,
+        limits: [0.5, 2.0 * ratio],
+        weight: 0.4 * ratio,
         fixed: false,
       },
       {
         file: "/static/maps/United States/intrstat.shp",
         color: this.colors.highway,
-        limits: [0.5, 2.0],
-        weight: 0.4,
+        limits: [0.5, 2.0 * ratio],
+        weight: 0.4 * ratio,
         fixed: false,
       },
     ];

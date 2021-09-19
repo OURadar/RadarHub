@@ -18,6 +18,7 @@ import { Rings } from "./rings";
 class GLView extends Component {
   constructor(props) {
     super(props);
+    this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
     this.canvas = document.createElement("canvas");
     this.canvas.classList.add("roundCorder");
     this.canvas.style.width = "100%";
@@ -151,8 +152,8 @@ class GLView extends Component {
   }
 
   updateProjection() {
-    this.canvas.width = this.mount.offsetWidth;
-    this.canvas.height = this.mount.offsetHeight;
+    this.canvas.width = this.mount.offsetWidth * this.ratio;
+    this.canvas.height = this.mount.offsetHeight * this.ratio;
     const geo = this.geometry;
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -174,8 +175,8 @@ class GLView extends Component {
     }
     if (
       this.geometry.needsUpdate ||
-      this.canvas.width != this.mount.offsetWidth ||
-      this.canvas.height != this.mount.offsetHeight
+      this.canvas.width != this.mount.offsetWidth * this.ratio ||
+      this.canvas.height != this.mount.offsetHeight * this.ratio
     ) {
       this.updateProjection();
     }

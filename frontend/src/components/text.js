@@ -17,15 +17,16 @@ import { deg } from "./common";
 
 class Text {
   constructor(debug = false) {
-    this.scale = 1.5;
     this.debug = debug;
+    this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
+    this.scale = this.ratio > 1 ? 1 : 1.5;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = Math.ceil(3500 / 256) * 256;
+    this.canvas.width = Math.ceil((2048 * this.scale * this.ratio) / 256) * 256;
     this.canvas.height = this.canvas.width;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
-    this.padding = 3 * this.scale;
+    this.padding = 3 * this.scale * this.ratio;
     this.texts = [];
     this.busy = false;
     this.fontLoaded = false;
@@ -135,7 +136,7 @@ class Text {
     let origins = [];
     let spreads = [];
     labels.forEach((label) => {
-      const size = Math.round((label.size ?? 15) * this.scale);
+      const size = Math.round((label.size ?? 15) * this.scale * this.ratio);
       context.font = `${size}px LabelFont`;
       const measure = context.measureText(label.text);
       const w = Math.ceil(measure.width);
@@ -168,7 +169,7 @@ class Text {
       const o = this.hasDetails ? measure.actualBoundingBoxDescent : 0;
       const x = u + p;
       const y = this.canvas.height - v - q - o;
-      context.lineWidth = 4.5 * this.scale;
+      context.lineWidth = 4.5 * this.scale * this.ratio;
       context.strokeStyle = label.stroke || "#000000";
       context.strokeText(label.text, x, y);
       context.fillStyle = label.color || "#888888";
@@ -205,9 +206,9 @@ class Text {
         `%c / ${this.usage.toFixed(2)} %%`,
       "font-weight: initial",
       "color: darkorange",
-      "font-weight: initial; color: initial",
+      "font-weight: initial; color: inherit",
       "color: darkorange",
-      "font-weight: initial; color: initial"
+      "font-weight: initial; color: inherit"
     );
     this.busy = false;
     return buffer;
