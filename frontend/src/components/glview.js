@@ -76,7 +76,7 @@ class GLView extends Component {
     model = mat4.translate([], model, [0, 0, common.earthRadius]);
     // Important parameters for WebGL. Don't want to use React state
     this.geometry = {
-      fov: 0.8,
+      fov: 0.028,
       aspect: 1,
       origin: origin,
       satCoordinate: satCoordinate,
@@ -248,7 +248,7 @@ class GLView extends Component {
 
   fitToData() {
     const geo = this.geometry;
-    geo.fov = Math.PI / 8;
+    geo.fov = 0.028;
     geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
     geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
     geo.needsUpdate = true;

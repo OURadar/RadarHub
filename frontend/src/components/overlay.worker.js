@@ -30,96 +30,8 @@ self.onmessage = ({ data: { type, payload } }) => {
       type: "opacity",
       payload: opacity,
     });
-  } else if (type == "read") {
-    console.log(`overlay.worker ${payload}`);
-    const content = read(payload);
-    self.postMessage({
-      type: "read",
-      payload: content,
-    });
   }
 };
-
-/**
- * Determines if two retangles overlap
- *
- *                     1[2, 3]
- *      +---------------+
- *      |               |   2[2, 3]
- *      |      +--------+------+
- *      |      |        |      |
- *      +------+--------+      |
- *   1[0, 1]   |               |
- *             +---------------+
- *          2[0, 1]
- *
- * @param {Array4} rect1 the 1st rectangle
- * @param {Array4} rect2 the 2nd rectangle
- * @returns {boolean} out
- */
-function doOverlap(rect1, rect2) {
-  if (
-    rect1[2] <= rect2[0] ||
-    rect1[0] >= rect2[2] ||
-    rect1[3] <= rect2[1] ||
-    rect1[1] >= rect2[3]
-  )
-    return false;
-  return true;
-}
-
-/**
- * Transforms the vec4 with a mat4.
- * Simplified version where w = 1.0 and z is not calculated
- *
- * @param {vec4} out the receiving vector
- * @param {ReadonlyVec3} a the vector to transform
- * @param {ReadonlyMat4} m matrix to transform with
- * @returns {vec4} out
- */
-function transformMat4(out, a, m) {
-  let x = a[0],
-    y = a[1],
-    z = a[2];
-  out[0] = m[0] * x + m[4] * y + m[8] * z + m[12];
-  out[1] = m[1] * x + m[5] * y + m[9] * z + m[13];
-  out[2] = 0.0;
-  out[3] = m[3] * x + m[7] * y + m[11] * z + m[15];
-  return out;
-}
-
-/**
- * Convert an angle from radian to degree
- *
- * @param {x} x the input angle in radians
- * @returns angle in degrees
- */
-function rad2deg(x) {
-  return x * (180.0 / Math.PI);
-}
-
-/**
- * Normalized dot product between two vectors
- *
- * @param {*} a input vector 1
- * @param {*} b input vector 2
- * @returns out
- */
-function ndot(a, b) {
-  const m = Math.hypot(a[0], a[1], a[2]);
-  const n = Math.hypot(b[0], b[1], b[2]);
-  const dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-  return dot / (m * n);
-}
-
-function getMaxWeight(fov) {
-  if (fov < 0.014) return 8;
-  if (fov < 0.03) return 7;
-  if (fov < 0.06) return 6;
-  if (fov < 0.5) return 5;
-  if (fov < 1.0) return 4;
-  return 3;
-}
 
 // Viewpoint is always 2R from the center of the sphere
 // Maximum visible longitude = acos(R / 2R) = 1.047, no need to go extreme
@@ -197,13 +109,84 @@ function reviseOpacity(geometry) {
   return visibility;
 }
 
-function read(name) {
-  console.log(`reading ${name} ...`);
-  // require("shapefile")
-  //   .open(name)
-  //   .then((source) => console.log(source));
-  return {
-    name: name,
-    array: [1, 2, 3],
-  };
+function getMaxWeight(fov) {
+  if (fov < 0.018) return 9;
+  if (fov < 0.024) return 8;
+  if (fov < 0.03) return 7;
+  if (fov < 0.06) return 6;
+  if (fov < 0.5) return 5;
+  if (fov < 1.0) return 4;
+  return 3;
+}
+
+/**
+ * Determines if two retangles overlap
+ *
+ *                     1[2, 3]
+ *      +---------------+
+ *      |               |   2[2, 3]
+ *      |      +--------+------+
+ *      |      |        |      |
+ *      +------+--------+      |
+ *   1[0, 1]   |               |
+ *             +---------------+
+ *          2[0, 1]
+ *
+ * @param {Array4} rect1 the 1st rectangle
+ * @param {Array4} rect2 the 2nd rectangle
+ * @returns {boolean} out
+ */
+function doOverlap(rect1, rect2) {
+  if (
+    rect1[2] <= rect2[0] ||
+    rect1[0] >= rect2[2] ||
+    rect1[3] <= rect2[1] ||
+    rect1[1] >= rect2[3]
+  )
+    return false;
+  return true;
+}
+
+/**
+ * Transforms the vec4 with a mat4.
+ * Simplified version where w = 1.0 and z is not calculated
+ *
+ * @param {vec4} out the receiving vector
+ * @param {ReadonlyVec3} a the vector to transform
+ * @param {ReadonlyMat4} m matrix to transform with
+ * @returns {vec4} out
+ */
+function transformMat4(out, a, m) {
+  let x = a[0],
+    y = a[1],
+    z = a[2];
+  out[0] = m[0] * x + m[4] * y + m[8] * z + m[12];
+  out[1] = m[1] * x + m[5] * y + m[9] * z + m[13];
+  out[2] = 0.0;
+  out[3] = m[3] * x + m[7] * y + m[11] * z + m[15];
+  return out;
+}
+
+/**
+ * Convert an angle from radian to degree
+ *
+ * @param {x} x the input angle in radians
+ * @returns angle in degrees
+ */
+function rad2deg(x) {
+  return x * (180.0 / Math.PI);
+}
+
+/**
+ * Normalized dot product between two vectors
+ *
+ * @param {*} a input vector 1
+ * @param {*} b input vector 2
+ * @returns out
+ */
+function ndot(a, b) {
+  const m = Math.hypot(a[0], a[1], a[2]);
+  const n = Math.hypot(b[0], b[1], b[2]);
+  const dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  return dot / (m * n);
 }

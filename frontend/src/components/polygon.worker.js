@@ -67,8 +67,10 @@ async function builtInGeometryDirect(name, model) {
       x.push(o);
     });
   } else if (name == "@grid") {
-    const latCount = 17;
-    const lonCount = 36;
+    // Zonal lines every 10-deg latitude
+    const deltaX = 5;
+    let latCount = 17;
+    let lonCount = 360 / deltaX;
     var lat = (80.0 / 180.0) * Math.PI;
     for (let j = 0; j < latCount; j++) {
       const o = rad.coord2point(0.0, lat);
@@ -82,20 +84,25 @@ async function builtInGeometryDirect(name, model) {
       x.push(o);
       lat -= Math.PI / 18;
     }
+    // console.log(`x ${x.length.toLocaleString()}`);
+    // Meriodnal lines from +80(N) to -80(S)
+    const deltaY = 5;
+    lonCount = 36;
+    latCount = 160 / deltaY + 1;
     for (let j = 0; j < lonCount; j++) {
       const lon = (j * 2 * Math.PI) / lonCount;
       let lat = (80.0 / 180.0) * Math.PI;
       x.push(rad.coord2point(lon, lat));
-      lat -= Math.PI / 18;
+      lat -= Math.PI / (180 / deltaY);
       for (let k = 1; k < latCount - 1; k++) {
         const p = rad.coord2point(lon, lat);
         x.push(p);
         x.push(p);
-        lat -= Math.PI / 18;
+        lat -= Math.PI / (180 / deltaY);
       }
       x.push(rad.coord2point(lon, lat));
     }
-    // console.log(`${name} ${x.length.toLocaleString()}`);
+    // console.log(`x ${x.length.toLocaleString()}`);
   }
   return x.flat();
 }

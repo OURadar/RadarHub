@@ -178,6 +178,7 @@ class Overlay {
               name: "NAME",
               population: "POP_2000",
               origin: this.geometry.origin,
+              theta: Math.cos((3.0 / 180) * Math.PI),
             },
           },
           {

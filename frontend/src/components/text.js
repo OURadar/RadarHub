@@ -12,24 +12,23 @@ import { deg } from "./common";
 //  obj = Text()
 //
 //  Update as:
-//  buffer = obj.update(files, model, colors)
+//  buffer = obj.load(files, model, colors)
 //
 
 class Text {
-  constructor(debug = true) {
+  constructor(debug = false) {
     this.debug = debug;
+    // this.ratio = 1.5;
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
-    this.scale = this.ratio > 1 ? 1 : 1.5;
+    this.scale = this.ratio > 1 ? 1 : 1.25;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 512;
-    this.canvas.height = 128;
+    this.canvas.width = 4096;
+    this.canvas.height = 4096;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
-    this.padding = 3 * this.scale * this.ratio;
-    this.texts = [];
+    this.stroke = 3.5 * this.scale * this.ratio;
     this.busy = false;
-    this.fontLoaded = false;
     this.context.font = "14px LabelFont";
     let meas = this.context.measureText("bitcoin");
     this.initWidth = meas.width;
@@ -37,8 +36,9 @@ class Text {
       undefined !== meas.actualBoundingBoxAscent &&
       undefined !== meas.actualBoundingBoxDescent;
     this.tic = 0;
+
     // Binding methods
-    this.update = this.load.bind(this);
+    this.load = this.load.bind(this);
     this.makeBuffer = this.makeBuffer.bind(this);
 
     const o = document.getElementById("test");
@@ -46,22 +46,6 @@ class Text {
       if (debug) o.appendChild(this.canvas);
       else o.style.display = "none";
     }
-
-    let font = new FontFace(
-      "LabelFont",
-      "url(/static/blob/helveticaneue/HelveticaNeueMed.ttf)"
-    );
-    font.load().then(() => {
-      this.fontLoaded = true;
-    });
-  }
-
-  waitBriefly() {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve("waited");
-      }, 10);
-    });
   }
 
   async load(configs, colors) {
@@ -78,9 +62,11 @@ class Text {
     let allLabels = [];
     for (const config of configs) {
       const labels = await makeLabels(config, colors);
+      if (!Array.isArray(labels)) continue;
       if (config.name.includes("@")) {
         allLabels.push(...labels);
       } else {
+        if (this.debug) console.log(config.name, labels.length);
         labels.forEach((label) => {
           const index = texts.indexOf(label.text);
           if (index > 0) {
@@ -123,11 +109,10 @@ class Text {
 
   async makeBuffer(labels) {
     this.busy = true;
-    const image = { data: [], height: 0, width: this.canvas.width };
+    const scratch = { data: [], height: 0, width: this.canvas.width };
     const context = this.context;
-    const len = 20;
-    const p = Math.ceil(1.5 * this.padding);
-    const q = Math.ceil(this.padding);
+    const p = Math.ceil(this.stroke);
+    const q = Math.ceil(this.stroke - 1.0);
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     let f = 0;
     let u = 0.5;
@@ -137,8 +122,11 @@ class Text {
     let weights = [];
     let origins = [];
     let spreads = [];
-    //labels.forEach((label) => {
-    let page = 0;
+    let originOffset = 0;
+
+    // const t1 = Date.now();
+
+    const len = labels.length;
     for (let k = 0; k < len; k++) {
       const label = labels[k];
       const size = Math.round((label.size ?? 15) * this.scale * this.ratio);
@@ -148,7 +136,7 @@ class Text {
       const h = Math.ceil(
         this.hasDetails
           ? measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent
-          : 0.8 * size
+          : size
       );
       const ww = w + 2 * p;
       const hh = h + 2 * q;
@@ -160,11 +148,25 @@ class Text {
           // Wrap this context, save the image data, clean up the canvas
           const ph = Math.ceil(v - 1);
           const piece = this.context.getImageData(0, 0, this.canvas.width, ph);
-          image.data = new Uint8ClampedArray([...image.data, ...piece.data]);
-          image.height += piece.height;
-          console.log("new page");
+          if (originOffset) {
+            //scratch.data = [...scratch.data, ...piece.data];
+            const carr = scratch.data;
+            const clen = scratch.data.length;
+            const parr = piece.data;
+            const plen = piece.data.length;
+            scratch.data.length = clen + piece.data.length;
+            for (let j = 0; j < plen; j++) carr[clen + j] = parr[j];
+          } else {
+            // scratch.data = [...piece.data];
+            const carr = scratch.data;
+            const parr = piece.data;
+            const plen = piece.data.length;
+            scratch.data.len = piece.data.length;
+            for (let j = 0; j < plen; j++) carr[j] = parr[j];
+          }
+          scratch.height += piece.height;
           context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          page++;
+          originOffset += ph;
           v = 0.5;
         }
         u = 0.5;
@@ -173,7 +175,7 @@ class Text {
       coords.push(label.coord);
       points.push(label.point);
       weights.push(label.weight);
-      origins.push([u - 0.5, page * this.canvas.height + v - 0.5]);
+      origins.push([u - 0.5, originOffset + v - 0.5]);
       spreads.push([ww + 1, hh + 1]);
       if (this.debug) {
         context.lineWidth = 1;
@@ -185,29 +187,43 @@ class Text {
       const o = this.hasDetails ? measure.actualBoundingBoxDescent : 0;
       const x = u + p;
       const y = this.canvas.height - v - q - o;
-      context.lineWidth = 4.5 * this.scale * this.ratio;
+      context.lineWidth = this.stroke;
       context.strokeStyle = label.stroke || "#000000";
-      context.strokeText(label.text, x, y);
       context.fillStyle = label.color || "#888888";
+      context.strokeText(label.text, x, y);
       context.fillText(label.text, x, y);
       u += ww + 1;
-      // console.log(label.text, measure.actualBoundingBoxDescent);
     }
-    this.usage = (v / this.canvas.height) * 100;
-    // console.log(`u = ${u}  v = ${v}  ${v / this.canvas.height}`);
-    console.log(`page = ${page}`);
-    // console.log(points, origins);
-    const ph = Math.ceil(v + f + 2 * q);
-    const piece = this.context.getImageData(0, 0, this.canvas.width, ph);
-    image.data = new Uint8ClampedArray([...image.data, ...piece.data]);
-    image.height += piece.height;
-    console.log(image);
 
-    this.canvas.width = 1024;
-    this.canvas.height = 512;
-    const ii = new ImageData(image.data, image.width, image.height);
-    console.log(ii);
-    context.putImageData(ii, 512, 256);
+    const ph = Math.ceil(v + f + 2 * q);
+    let image;
+    if (originOffset) {
+      const piece = this.context.getImageData(0, 0, this.canvas.width, ph);
+
+      // scratch.data = [...scratch.data, ...piece.data];
+
+      const carr = scratch.data;
+      const clen = scratch.data.length;
+      const parr = piece.data;
+      const plen = piece.data.length;
+      scratch.data.length = clen + piece.data.length;
+      for (let j = 0; j < plen; j++) carr[clen + j] = parr[j];
+
+      scratch.height += piece.height;
+
+      image = new ImageData(
+        new Uint8ClampedArray(scratch.data),
+        this.canvas.width,
+        scratch.height
+      );
+    } else {
+      image = this.context.getImageData(0, 0, this.canvas.width, ph);
+    }
+
+    // const t0 = Date.now();
+    // console.log(`time = ${(t0 - t1).toFixed(2)} ms`);
+
+    // console.log(image);
 
     const buffer = {
       image: image,
@@ -227,16 +243,14 @@ class Text {
     const xString = (buffer.count * 11).toLocaleString();
     const mString = (buffer.count * 11 * wordsize).toLocaleString();
     const wString = `${width.toLocaleString()} x ${height.toLocaleString()}`;
-    const vString = ((width * height * 4) / 1024 / 1024).toLocaleString();
+    const vString = (width * height * 4).toLocaleString();
     console.log(
       `Text: %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
-        `%c / texture (%c${wString} RGBA = ${vString} MB)` +
-        `%c / ${this.usage.toFixed(2)} %%`,
+        `%c / texture (%c${wString} RGBA = ${vString} bytes)`,
       "font-weight: initial",
       "color: darkorange",
       "font-weight: initial; color: inherit",
-      "color: darkorange",
-      "font-weight: initial; color: inherit"
+      "color: darkorange"
     );
     this.busy = false;
     return buffer;
@@ -361,7 +375,8 @@ function parseArray(array, keys, colors) {
   const populationKey = keys.population ?? false;
   const maximumWeight = keys.maximumWeight ?? 999;
   const origin = keys.origin ?? false;
-  const theta = Math.cos((3.0 / 180) * Math.PI);
+  const theta = keys.theta ?? Math.cos((3.0 / 180) * Math.PI);
+  const theta2 = 0.5 * (1.0 + theta);
   const o = deg.coord2point(origin.longitude, origin.latitude, 1.0);
   // console.log(`filter = ${filterByDistance}  o = ${o}  th = ${th}`);
 
@@ -376,6 +391,7 @@ function parseArray(array, keys, colors) {
       const p = deg.coord2point(lon, lat, 1.0);
       const dot = o[0] * p[0] + o[1] * p[1] + o[2] * p[2];
       if (dot < theta) return;
+      if (dot < theta2 && weight == 9) return;
     }
     const text = label.properties[nameKey];
     labels.push({
@@ -393,6 +409,7 @@ function parseArray(array, keys, colors) {
 }
 
 function pop2weight(pop) {
+  if (pop < 50) return 9;
   if (pop < 500) return 8;
   if (pop < 5000) return 7;
   if (pop < 50000) return 6;
