@@ -105,10 +105,10 @@ class Product extends GLView {
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);
-    if (this.props.profileGL) this.statsWidget.update(0.01667);
     if (this.state.spin && !this.gesture.panInProgress) {
       this.updateViewPoint();
     }
+    this.statsWidget?.update(0.01667);
     this.stats?.update();
   }
 

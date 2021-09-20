@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #
 #  dgen.py
 #  Data Generator in Python
