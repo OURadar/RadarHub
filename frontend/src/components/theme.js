@@ -71,6 +71,11 @@ export function hex2rgb(hex) {
   return [r, g, b, a];
 }
 
+export function hex2luminance(hex) {
+  [r, g, b, _] = hex2rgb(hex);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
 export function array2rgba(array) {
   const r = (array[0] * 255).toFixed(0);
   const g = (array[1] * 255).toFixed(0);

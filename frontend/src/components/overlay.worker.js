@@ -41,7 +41,7 @@ function reviseOpacity(geometry, verbose = 0) {
   let pass3 = 0;
   let indices = [];
   let rectangles = [];
-  let visibility = new Array(labels.points.length).fill(0);
+  let visibility = new Float32Array(labels.points.length).fill(0);
 
   const t2 = Date.now();
 
@@ -95,15 +95,15 @@ function reviseOpacity(geometry, verbose = 0) {
     pass3 = pass3.toLocaleString();
     console.log(
       `%c${t1 - t2} ms / ${t0 - t1} ms` +
-        `  %cfov = ${geometry.fov.toFixed(3)}` +
+        `  %cfov = ${geometry.fov.toFixed(4)}` +
         `  theta = ${theta.toFixed(4)}` +
         `  maxWeight = ${maxWeight}` +
-        `  %cpass1-dot = ${pass1}  pass2-pop = ${pass2}  pass3-ovr = ${pass3}` +
-        `  %cvisible = ${indices.length} --> ${v}`,
-      "color: lightseagreen",
-      "font-weight: bold",
-      "font-weight: normal",
-      "color: green, font-weight: bold"
+        `  %cvisible = ${indices.length} --> ${v}` +
+        `  %cpass1-dot = ${pass1}  pass2-pop = ${pass2}  pass3-ovr = ${pass3}`,
+      "font-weight: bold; color: lightseagreen",
+      "font-weight: bold; color: inherit",
+      "font-weight: bold; color: #ee8000;",
+      "font-weight: normal; color: inherit"
     );
   }
 
