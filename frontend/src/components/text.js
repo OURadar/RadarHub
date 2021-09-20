@@ -244,6 +244,7 @@ class Text {
       spreads: spreads,
       extents: spreads.map((x) => [x[0] / this.scale, x[1] / this.scale]),
       count: points.length,
+      scale: this.scale,
     };
 
     const wordsize = Float32Array.BYTES_PER_ELEMENT;

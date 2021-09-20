@@ -73,7 +73,7 @@ class Overlay {
       },
       {
         file: "/static/maps/United States/intrstat.shp",
-        color: this.colors.highway,
+        color: this.colors.street,
         limits: [0.5, 2.5 * ratio],
         weight: 0.4 * ratio,
         fixed: false,
@@ -139,17 +139,18 @@ class Overlay {
 
   updateColors(colors) {
     this.colors = colors;
+    this.texture?.opacity.fill(0);
+    // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
     this.layers[0].color = colors.grid;
     this.layers[1].color = colors.ring;
-    this.layers[2].color = colors.state;
-    this.layers[3].color = colors.state;
+    this.layers[2].color = colors.street;
+    this.layers[3].color = colors.county;
     this.layers[4].color = colors.county;
-    this.layers[5].color = colors.county;
-    this.layers[6].color = colors.highway;
+    this.layers[5].color = colors.state;
+    this.layers[6].color = colors.state;
     this.layers.forEach((layer) => {
       layer.quad[2] = colors.tint;
     });
-    this.texture?.opacity.fill(0);
     this.updateLabels();
   }
 
@@ -184,7 +185,6 @@ class Overlay {
       .then((buffer) => {
         this.texture = {
           bound: [buffer.image.width, buffer.image.height],
-          scale: this.textEngine.scale,
           texture: this.regl.texture({
             height: buffer.image.height,
             width: buffer.image.width,
@@ -208,9 +208,10 @@ class Overlay {
             type: "float",
             data: buffer.spreads,
           }),
-          targetOpacity: Array(buffer.count).fill(0),
-          opacity: Array(buffer.count).fill(0),
+          targetOpacity: new Float32Array(buffer.count).fill(0),
+          opacity: new Float32Array(buffer.count).fill(0),
           count: buffer.count,
+          scale: buffer.scale,
           raw: buffer,
         };
         this.viewParameters[0] = 0;

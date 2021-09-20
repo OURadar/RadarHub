@@ -43,7 +43,7 @@ function reviseOpacity(geometry, verbose = 0) {
   let rectangles = [];
   let visibility = new Array(labels.points.length).fill(0);
 
-  // const t2 = Date.now();
+  const t2 = Date.now();
 
   const viewportWidth = geometry.viewport.width;
   const viewportHeight = geometry.viewport.height;
@@ -89,25 +89,22 @@ function reviseOpacity(geometry, verbose = 0) {
   const t0 = Date.now();
 
   if (verbose) {
+    const v = visibility.reduce((a, x) => a + x);
+    pass1 = pass1.toLocaleString();
+    pass2 = pass2.toLocaleString();
+    pass3 = pass3.toLocaleString();
     console.log(
-      `fov = ${geometry.fov.toFixed(3)}` +
-        `  theta = ${theta.toFixed(3)}` +
-        `  maxWeight = ${maxWeight.toFixed(0)}`
+      `%c${t1 - t2} ms / ${t0 - t1} ms` +
+        `  %cfov = ${geometry.fov.toFixed(3)}` +
+        `  theta = ${theta.toFixed(4)}` +
+        `  maxWeight = ${maxWeight}` +
+        `  %cpass1-dot = ${pass1}  pass2-pop = ${pass2}  pass3-ovr = ${pass3}` +
+        `  %cvisible = ${indices.length} --> ${v}`,
+      "color: lightseagreen",
+      "font-weight: bold",
+      "font-weight: normal",
+      "color: green, font-weight: bold"
     );
-    if (verbose > 1) {
-      const v = visibility.reduce((a, x) => a + x);
-      console.log(
-        `%c${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
-          `  %cmaxWeight = ${maxWeight.toFixed(1)}` +
-          `  theta = ${theta.toFixed(2)}` +
-          `  %cpass1-dot = ${pass1}  pass2-pop = ${pass2}  pass3-ovr = ${pass3}` +
-          `  %cvisible = ${indices.length} --> ${v}`,
-        "color: blue",
-        "font-weight: bold",
-        "font-weight: normal",
-        "color: green, font-weight: bold"
-      );
-    }
   }
 
   return visibility;

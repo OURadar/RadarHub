@@ -142,7 +142,7 @@ export function colorDict(theme) {
       ring: hex2rgb("00bbff"),
       state: hex2rgb("40bf91"),
       county: hex2rgb("40bf91"),
-      highway: hex2rgb("e6b955"),
+      street: hex2rgb("e6b955"),
     },
     dark: {
       name: "dark",
@@ -177,7 +177,7 @@ export function colorDict(theme) {
       ring: hex2rgb("78dcffff"),
       state: hex2rgb("96e6c8ff"),
       county: hex2rgb("83e2bfff"),
-      highway: hex2rgb("e6b955"),
+      street: hex2rgb("e6b955"),
     },
     vibrant: {
       name: "vibrant",
