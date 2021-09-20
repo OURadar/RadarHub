@@ -75,23 +75,9 @@ class Overlay {
         fixed: true,
       },
       {
-        file: "/static/maps/World/countries-50m.json",
-        color: this.colors.state,
-        limits: [1.3, 3.0 * ratio],
-        weight: 1.7 * ratio,
-        fixed: false,
-      },
-      {
-        file: "/static/maps/United States/states-10m.json",
-        color: this.colors.state,
-        limits: [1.3, 3.0 * ratio],
-        weight: 0.9 * ratio,
-        fixed: false,
-      },
-      {
-        file: "/static/maps/United States/counties-10m.json",
-        color: this.colors.county,
-        limits: [0.5, 2.0 * ratio],
+        file: "/static/maps/United States/intrstat.shp",
+        color: this.colors.highway,
+        limits: [0.5, 2.5 * ratio],
         weight: 0.4 * ratio,
         fixed: false,
       },
@@ -103,15 +89,29 @@ class Overlay {
         fixed: false,
       },
       {
-        file: "/static/maps/United States/intrstat.shp",
-        color: this.colors.highway,
+        file: "/static/maps/United States/counties-10m.json",
+        color: this.colors.county,
         limits: [0.5, 2.0 * ratio],
         weight: 0.4 * ratio,
         fixed: false,
       },
+      {
+        file: "/static/maps/United States/states-10m.json",
+        color: this.colors.state,
+        limits: [1.3, 5.0 * ratio],
+        weight: 0.9 * ratio,
+        fixed: false,
+      },
+      {
+        file: "/static/maps/World/countries-50m.json",
+        color: this.colors.state,
+        limits: [1.3, 5.0 * ratio],
+        weight: 1.7 * ratio,
+        fixed: false,
+      },
     ];
 
-    // Give label a small delay so that rings load quickly
+    // Give label a small delay so that grid and rings appear with no transition
     setTimeout(() => {
       this.updateLabels();
     }, 100);
@@ -254,13 +254,13 @@ class Overlay {
       const dy = viewParameters[2] - deg2rad(this.geometry.origin.latitude);
       const d = Math.sqrt(dx * dx + dy * dy);
       // console.log(`fov = ${this.geometry.fov.toFixed(3)}  d = ${d.toFixed(2)}`);
-      // Overlays are grid, rings, countries, states, counties, hi-res counties, highways
+      // Overlays are grid, rings, highways, hi-res counties, counties, states, countries
       if (this.geometry.fov < 0.06 && d < 0.1) {
-        this.targetOpacity = [0, 1, 0, 0, 0, 1, 1];
+        this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
       } else if (this.geometry.fov < 0.42 && d < 0.3) {
-        this.targetOpacity = [1, 1, 0, 1, 1, 0, 0];
+        this.targetOpacity = [1, 1, 0, 0, 1, 1, 0];
       } else {
-        this.targetOpacity = [1, 1, 1, 1, 0, 0, 0];
+        this.targetOpacity = [1, 1, 0, 0, 0, 1, 1];
       }
 
       // const t1 = window.performance.now();

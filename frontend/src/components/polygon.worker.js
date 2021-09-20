@@ -49,7 +49,7 @@ async function builtInGeometryDirect(name, model) {
   let x = [];
   if (name.includes("rings")) {
     const radii = name.split("/").slice(1);
-    const sides = 64;
+    const sides = 120;
     const h = 0.012;
     // Apply the model matrix to make it radar-centric
     // console.log(name);

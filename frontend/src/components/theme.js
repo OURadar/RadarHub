@@ -147,7 +147,7 @@ export function colorDict(theme) {
     dark: {
       name: "dark",
       canvas: body,
-      glview: body,
+      glview: hex2rgb("22252a"),
       background: [0, 0, 0, 1],
       foreground: [1, 1, 1, 1],
       lines: [
@@ -169,7 +169,7 @@ export function colorDict(theme) {
       label: {
         face: "#ffffff",
         face2: "#cccccc",
-        stroke: "#000000",
+        stroke: "#22252a",
         shadow: "#000000",
         ring: "#78dcff",
         blur: 3,

@@ -18,12 +18,12 @@ import { deg } from "./common";
 class Text {
   constructor(debug = false) {
     this.debug = debug;
-    // this.ratio = 1.5;
+    // this.ratio = 2.2;
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
-    this.scale = this.ratio > 1 ? 1 : 1.25;
+    this.scale = this.ratio > 1 ? 1 : 1.2;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 2048;
-    this.canvas.height = 8192;
+    this.canvas.width = 4096;
+    this.canvas.height = 4096;
     this.context = this.canvas.getContext("2d");
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
@@ -95,22 +95,21 @@ class Text {
     }
     allLabels.sort((a, b) => a.weight - b.weight);
 
-    // I Love You 3,000 -Morgan Stark
-    allLabels = allLabels.slice(0, 3000);
-
     // var item = Object.entries(allLabels).find((a) => a[1].text == "Criner");
     // console.log(item);
     // var item = Object.entries(allLabels).find((a) => a[1].text == "Norman")[1];
     // console.log(item);
     // var item = Object.entries(allLabels).find((a) => a[1].text == "Hall Park")[1];
     // console.log(item);
+
+    // I Love You 3,000 -Morgan Stark
+    allLabels = allLabels.slice(0, 3000);
     return this.makeBuffer(allLabels);
   }
 
   async makeBuffer(labels) {
     this.busy = true;
     const scratch = { data: [], height: 0, width: this.canvas.width };
-    const context = this.context;
     const p = Math.ceil(this.stroke);
     const q = Math.ceil(this.stroke - 1.0);
     let f = 0;
@@ -123,10 +122,11 @@ class Text {
     let spreads = [];
     let originOffset = 0;
 
+    const context = this.context;
     context.lineWidth = this.stroke;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const t1 = Date.now();
+    // const t1 = Date.now();
 
     const len = labels.length;
     const scale = this.scale * this.ratio;
@@ -186,9 +186,9 @@ class Text {
       if (this.debug) {
         context.lineWidth = 1;
         context.strokeStyle = "skyblue";
-        context.strokeRect(u + p, this.canvas.height - v - q - h, w, h);
+        context.strokeRect(u + p, height - v - q - h, w, h);
         context.strokeStyle = "orange";
-        context.strokeRect(u, this.canvas.height - v - hh, ww, hh);
+        context.strokeRect(u, height - v - hh, ww, hh);
         context.lineWidth = this.stroke;
       }
       const x = u + p;
@@ -200,13 +200,17 @@ class Text {
       u += ww + 1;
     }
 
-    const ph = Math.ceil(v + f + 2 * q);
+    // const t1 = Date.now();
+
+    const pageHeight = Math.ceil(v + f + 2 * q);
     let image;
     if (originOffset) {
-      const piece = this.context.getImageData(0, 0, this.canvas.width, ph);
+      const piece = context.getImageData(0, 0, width, pageHeight);
 
+      // Recommended way but slow
       // scratch.data = [...scratch.data, ...piece.data];
 
+      // Naive push. The fastest. Weird
       const carr = scratch.data;
       const clen = scratch.data.length;
       const parr = piece.data;
@@ -218,15 +222,15 @@ class Text {
 
       image = new ImageData(
         new Uint8ClampedArray(scratch.data),
-        this.canvas.width,
+        width,
         scratch.height
       );
     } else {
-      image = this.context.getImageData(0, 0, this.canvas.width, ph);
+      image = context.getImageData(0, 0, width, pageHeight);
     }
 
-    const t0 = Date.now();
-    console.log(`time = ${(t0 - t1).toFixed(2)} ms`);
+    // const t0 = Date.now();
+    // console.log(`time = ${(t0 - t1).toFixed(1)} ms`);
 
     // console.log(image);
 
