@@ -29,10 +29,7 @@ class Overlay {
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
 
     this.polyEngine = new Polygon();
-    this.updatingPolygons = 0;
-
     this.textEngine = new Text();
-    this.updatingLabels = false;
 
     this.handleMessage = this.handleMessage.bind(this);
 
@@ -54,11 +51,11 @@ class Overlay {
   }
 
   async load(colors) {
-    if (this.updatingPolygons || this.updatingLabels) return;
-
     this.colors = colors;
 
     const ratio = this.ratio > 1 ? 0.8 * this.ratio : this.ratio;
+
+    // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
     const overlays = [
       {
         file: "@grid",
@@ -117,7 +114,6 @@ class Overlay {
     }, 100);
 
     this.layers = [];
-    this.updatingPolygons = overlays.length;
     for (let k = 0; k < overlays.length; k++) {
       const overlay = overlays[k];
       const buffer = await this.polyEngine.load(overlay.file, this.geometry);
@@ -138,9 +134,7 @@ class Overlay {
         quad: [overlay.fixed, 0, this.colors.tint, 0],
       };
       this.viewParameters[0] = 0;
-      this.updatingPolygons--;
     }
-    this.updatingPolygons = false;
   }
 
   updateColors(colors) {
@@ -160,7 +154,6 @@ class Overlay {
   }
 
   updateLabels() {
-    this.updatingLabels = true;
     this.textEngine
       .load(
         [
@@ -220,7 +213,6 @@ class Overlay {
           count: buffer.count,
           raw: buffer,
         };
-        this.updatingLabels = false;
         this.viewParameters[0] = 0;
         if (this.worker)
           this.worker.postMessage({
@@ -254,7 +246,8 @@ class Overlay {
       const dy = viewParameters[2] - deg2rad(this.geometry.origin.latitude);
       const d = Math.sqrt(dx * dx + dy * dy);
       // console.log(`fov = ${this.geometry.fov.toFixed(3)}  d = ${d.toFixed(2)}`);
-      // Overlays are grid, rings, highways, hi-res counties, counties, states, countries
+
+      // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
       if (this.geometry.fov < 0.06 && d < 0.1) {
         this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
       } else if (this.geometry.fov < 0.42 && d < 0.3) {
@@ -267,7 +260,7 @@ class Overlay {
       if (this.texture) {
         if (this.worker)
           this.worker.postMessage({
-            type: "update",
+            type: "revise",
             payload: this.geometry,
           });
         else this.reviseOpacityV1();

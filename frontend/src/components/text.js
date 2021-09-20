@@ -5,7 +5,8 @@
 //  Created by Boonleng Cheong on 9/1/2021.
 //
 
-import { deg } from "./common";
+import { common } from "@material-ui/core/colors";
+import { deg, earthRadius } from "./common";
 
 //
 //  Initialize as:
@@ -383,7 +384,7 @@ function parseArray(array, keys, colors) {
   const maximumWeight = keys.maximumWeight ?? 999;
   const origin = keys.origin ?? false;
   const theta = keys.theta ?? Math.cos((3.0 / 180) * Math.PI);
-  const theta2 = Math.cos((1.5 / 180) * Math.PI);
+  const theta2 = Math.cos(150 / earthRadius);
   const o = deg.coord2point(origin.longitude, origin.latitude, 1.0);
   // console.log(`filter = ${filterByDistance}  o = ${o}  th = ${th}`);
 

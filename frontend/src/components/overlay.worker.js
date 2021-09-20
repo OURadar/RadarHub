@@ -23,7 +23,7 @@ self.onmessage = ({ data: { type, payload } }) => {
       type: "init",
       payload: "ready",
     });
-  } else if (type == "update") {
+  } else if (type == "revise") {
     if (labels.points.length == 0) return;
     const opacity = reviseOpacity(payload);
     self.postMessage({
@@ -35,7 +35,7 @@ self.onmessage = ({ data: { type, payload } }) => {
 
 // Viewpoint is always 2R from the center of the sphere
 // Maximum visible longitude = acos(R / 2R) = 1.047, no need to go extreme
-function reviseOpacity(geometry) {
+function reviseOpacity(geometry, verbose = 0) {
   let pass1 = 0;
   let pass2 = 0;
   let pass3 = 0;
@@ -49,11 +49,7 @@ function reviseOpacity(geometry) {
   const viewportHeight = geometry.viewport.height;
   const maxWeight = getMaxWeight(geometry.fov);
   const theta = Math.cos(Math.min(0.9, geometry.fov));
-  // console.log(
-  //   `fov = ${geometry.fov.toFixed(3)}` +
-  //     `  theta = ${theta.toFixed(3)}` +
-  //     `  maxWeight = ${maxWeight.toFixed(0)}`
-  // );
+
   for (let k = 0, l = labels.points.length; k < l; k++) {
     if (ndot(geometry.satPosition, labels.points[k]) < theta) {
       pass1++;
@@ -76,7 +72,7 @@ function reviseOpacity(geometry) {
     indices.push(k);
   }
 
-  // const t1 = Date.now();
+  const t1 = Date.now();
 
   indices.forEach((i, k) => {
     const rect = rectangles[k];
@@ -90,21 +86,29 @@ function reviseOpacity(geometry) {
     }
   });
 
-  // const v = visibility.reduce((a, x) => a + x);
+  const t0 = Date.now();
 
-  // const t0 = Date.now();
-
-  // console.log(
-  //   `%c${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
-  //     `  %cmaxWeight = ${maxWeight.toFixed(1)}` +
-  //     `  theta = ${theta.toFixed(2)}` +
-  //     `  %cpass1-dot = ${pass1}  pass2-pop = ${pass2}  pass3-ovr = ${pass3}` +
-  //     `  %cvisible = ${indices.length} --> ${v}`,
-  //   "color: blue",
-  //   "font-weight: bold",
-  //   "font-weight: normal",
-  //   "color: green, font-weight: bold"
-  // );
+  if (verbose) {
+    console.log(
+      `fov = ${geometry.fov.toFixed(3)}` +
+        `  theta = ${theta.toFixed(3)}` +
+        `  maxWeight = ${maxWeight.toFixed(0)}`
+    );
+    if (verbose > 1) {
+      const v = visibility.reduce((a, x) => a + x);
+      console.log(
+        `%c${(t1 - t2).toFixed(2)} ms  ${(t0 - t1).toFixed(2)} ms` +
+          `  %cmaxWeight = ${maxWeight.toFixed(1)}` +
+          `  theta = ${theta.toFixed(2)}` +
+          `  %cpass1-dot = ${pass1}  pass2-pop = ${pass2}  pass3-ovr = ${pass3}` +
+          `  %cvisible = ${indices.length} --> ${v}`,
+        "color: blue",
+        "font-weight: bold",
+        "font-weight: normal",
+        "color: green, font-weight: bold"
+      );
+    }
+  }
 
   return visibility;
 }
@@ -165,16 +169,6 @@ function transformMat4(out, a, m) {
   out[2] = 0.0;
   out[3] = m[3] * x + m[7] * y + m[11] * z + m[15];
   return out;
-}
-
-/**
- * Convert an angle from radian to degree
- *
- * @param {x} x the input angle in radians
- * @returns angle in degrees
- */
-function rad2deg(x) {
-  return x * (180.0 / Math.PI);
 }
 
 /**

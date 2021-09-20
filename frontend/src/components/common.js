@@ -15,10 +15,22 @@ export function clamp(x, lo, hi) {
   return Math.min(Math.max(x, lo), hi);
 }
 
+/**
+ * Convert an angle from degrees to radians
+ *
+ * @param {x} x the input angle in degrees
+ * @returns angle in radians
+ */
 export function deg2rad(x) {
   return x * (Math.PI / 180.0);
 }
 
+/**
+ * Convert an angle from radians to degrees
+ *
+ * @param {x} x the input angle in radians
+ * @returns angle in degrees
+ */
 export function rad2deg(x) {
   return x * (180.0 / Math.PI);
 }

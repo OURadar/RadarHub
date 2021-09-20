@@ -7,10 +7,8 @@
 //  Created by Boonleng Cheong
 //
 
-const vec3 = require("gl-matrix").vec3;
-const common = require("./common");
-const deg = common.deg;
-const rad = common.rad;
+import { vec3 } from "gl-matrix";
+import { deg, rad } from "./common";
 
 self.onmessage = ({ data: { type, payload } }) => {
   if (type == "poly") {
