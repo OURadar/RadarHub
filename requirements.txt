@@ -5,3 +5,4 @@ numpy
 asgiref==3.3.4
 pyparsing
 websocket_client
+netCDF4

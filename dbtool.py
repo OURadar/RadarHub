@@ -13,6 +13,7 @@
 import os
 import re
 # import tar
+import glob
 import django
 import pprint
 import argparse
@@ -27,12 +28,14 @@ from frontend.models import File
 
 def insert(filename):
     (path, name) = os.path.split(filename)
-    print(f'path = {path}   name = {name}')
+    if File.objects.filter(name=name):
+        print(f'File {name} exists')
+        return
     s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', name).group(0)
     datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
     x = File(name=name, path=path, date=datestr)
-    print(f'X -> {x.name} :: {x.path} :: {x.date}')
-    # x.save()
+    print(f'{x.name} :: {x.path} :: {x.date}')
+    x.save()
 
 def main():
     parser = argparse.ArgumentParser(prog='dbtool.py',
@@ -49,12 +52,17 @@ def main():
     args = parser.parse_args()
 
     # xs = File.objects.all()
-    files = File.objects.filter(date__gte='2017-01-01 00:00Z').filter(date__lte='2018-12-31 23:59Z')
+    # files = File.objects.filter(date__gte='2017-01-01 00:00Z').filter(date__lte='2018-12-31 23:59Z')
 
     # x = File(name='PX-20210520-160000', path='/Volumes/data/px1000/', date='2021-05-20 16:00:00Z')
     # x.save()
 
-    insert('/data/px1000/2021/20210520/_original/PX-20210520-161145-E4.0.tar.xz')
+    # insert('/data/px1000/2021/20210520/_original/PX-20210520-161145-E4.0.tar.xz')
+
+    files = sorted(glob.glob('/mnt/data/PX1000/2013/20130520/_original/PX*'))
+    for file in files:
+        print(file)
+        insert(file)
 
     # pp.pprint(files[0])
 
