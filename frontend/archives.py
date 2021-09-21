@@ -1,8 +1,8 @@
 import json
-from os import stat_result
 import struct
 import numpy as np
 from django.http import HttpResponse
+
 # from django.utils.dateparse import parse_datetime
 # from django.utils import timezone
 
@@ -48,6 +48,10 @@ def file(request, name):
             values = np.array(nc.variables['Corrected_Intensity'][:], dtype=np.float32)
     head = struct.pack('hh', *values.shape)
     data = np.array(values * 0.5 + 32, dtype=np.uint8)
+
+    # x = File.objects.filter(name=name)
+    # data = x.getData()
+
     payload = bytes(head) + bytes(a) + bytes(data)
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
