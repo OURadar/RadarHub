@@ -12,13 +12,19 @@ class File(models.Model):
     def __repr__(self):
         return f'name = {self.name}   path = {self.getFullpath()}'
 
-    def getFullpath(self):
+    def getFullpath(self, search=True):
         path = os.path.join(self.path, self.name)
-        if not os.path.exists(path):
-            path = os.path.join(self.path.replace('/mnt/data', '/Volumes/Data'), self.name)
-        if not os.path.exists(path):
+        if os.path.exists(path):
+            return path
+        if not search:
             return None
-        return path
+        path = os.path.join(self.path.replace('/mnt/data', '/Volumes/Data'), self.name)
+        if os.path.exists(path):
+            return path
+        path = os.path.join(os.path.expanduser('~/Downloads'), self.name)
+        if os.path.exists(path):
+            return path
+        return None
 
     def getData(self):
         fullpath = self.getFullpath()
@@ -38,11 +44,13 @@ class File(models.Model):
                 sweepTime = nc.getncattr('Time')
                 symbol = self.name.split('.')[-2].split('-')[-1]
             return {
+                'longitude': longitude,
+                'latitude': latitude,
                 'sweepTime': sweepTime,
                 'sweepElevation': sweepElevation,
+                'gatewidth': gatewidth,
                 'elevations': elevations,
                 'azimuths': azimuths,
-                'gatewidth': gatewidth,
                 'values': values
             }
 
