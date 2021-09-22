@@ -255,11 +255,11 @@ class Text {
     const vString = (width * image.height * 4).toLocaleString();
     console.log(
       `Text: %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
-        `%c / texture (%c${wString} RGBA = ${vString} bytes)`,
+        `%c / texture %c(${wString} RGBA = ${vString} bytes)`,
       "font-weight: initial",
-      "color: darkorange",
+      "color: lightseagreen",
       "font-weight: initial; color: inherit",
-      "color: darkorange"
+      "color: mediumpurple"
     );
     this.busy = false;
     return buffer;

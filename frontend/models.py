@@ -32,11 +32,11 @@ class File(models.Model):
             return None
         with open(fullpath, 'rb') as fid:
             with Dataset('dummy', mode='r', memory=fid.read()) as nc:
-                typename = nc.getncattr('TypeName')
+                type = nc.getncattr('TypeName')
                 elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
                 azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
                 gatewidth = np.array(nc.variables['GateWidth'][:], dtype=np.float32)
-                values = np.array(nc.variables[typename][:], dtype=np.float32)
+                values = np.array(nc.variables[type][:], dtype=np.float32)
                 values[values < -90] = np.nan
                 longitude = nc.getncattr('Longitude')
                 latitude = nc.getncattr('Latitude')
@@ -44,6 +44,7 @@ class File(models.Model):
                 sweepTime = nc.getncattr('Time')
                 symbol = self.name.split('.')[-2].split('-')[-1]
             return {
+                'symbol': symbol,
                 'longitude': longitude,
                 'latitude': latitude,
                 'sweepTime': sweepTime,
