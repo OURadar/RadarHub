@@ -28,30 +28,36 @@ def header(requst, name):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
-def find(name):
-    files = File.objects.all()
-    print(files[0].name, files[0].path)
-    # file = f'/Users/boonleng/Downloads/{name}.nc'
-    file = files[0].path
-    print(f'file = {file}')
-    return file
+# def find(name):
+#     files = File.objects.all()
+#     print(files[0].name, files[0].path)
+#     # file = f'/Users/boonleng/Downloads/{name}.nc'
+#     file = files[0].path
+#     print(f'file = {file}')
+#     return file
 
 def file(request, name):
     show = colorize(name, 'green')
     print(f'archives.file() {show}')
-    file = find(name)
-    with open(file, 'rb') as fid:
-        with Dataset('dummy', mode='r', memory=fid.read()) as nc:
-            #e = np.array(nc.variables['Elevation'][:], dtype=np.float32)
-            a = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
-            #r = np.array(nc.variables['GateWidth'][:], dtype=np.float32)
-            values = np.array(nc.variables['Corrected_Intensity'][:], dtype=np.float32)
-    head = struct.pack('hh', *values.shape)
-    data = np.array(values * 0.5 + 32, dtype=np.uint8)
+    # file = find(name)
+    # with open(file, 'rb') as fid:
+    #     with Dataset('dummy', mode='r', memory=fid.read()) as nc:
+    #         #e = np.array(nc.variables['Elevation'][:], dtype=np.float32)
+    #         a = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
+    #         #r = np.array(nc.variables['GateWidth'][:], dtype=np.float32)
+    #         values = np.array(nc.variables['Corrected_Intensity'][:], dtype=np.float32)
+    # head = struct.pack('hh', *values.shape)
+    # data = np.array(values * 0.5 + 32, dtype=np.uint8)
 
-    # x = File.objects.filter(name=name)
-    # data = x.getData()
+    x = File.objects.filter(name=name)
+    if len(x):
+        x = x[0]
+    else:
+        return HttpResponse('', content_type='application/octet-stream')
 
-    payload = bytes(head) + bytes(a) + bytes(data)
+    sweep = x.getData()
+    head = struct.pack('hh', *sweep['values'].shape)
+    data = np.array(sweep['values'] * 0.5 + 32, dtype=np.uint8)
+    payload = bytes(head) + bytes(sweep['azimuths']) + bytes(data)
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response

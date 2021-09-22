@@ -26,16 +26,25 @@ class File(models.Model):
             return None
         with open(fullpath, 'rb') as fid:
             with Dataset('dummy', mode='r', memory=fid.read()) as nc:
-                e = np.array(nc.variables['Elevation'][:], dtype=np.float32)
-                a = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
-                r = np.array(nc.variables['GateWidth'][:], dtype=np.float32)
-                values = np.array(nc.variables['Corrected_Intensity'][:], dtype=np.float32)
-        return {
-            'e': e,
-            'a': a,
-            'r': r,
-            'values': values
-        }
+                typename = nc.getncattr('TypeName')
+                elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
+                azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
+                gatewidth = np.array(nc.variables['GateWidth'][:], dtype=np.float32)
+                values = np.array(nc.variables[typename][:], dtype=np.float32)
+                values[values < -90] = np.nan
+                longitude = nc.getncattr('Longitude')
+                latitude = nc.getncattr('Latitude')
+                sweepElevation = nc.getncattr('Elevation')
+                sweepTime = nc.getncattr('Time')
+                symbol = self.name.split('.')[-2].split('-')[-1]
+            return {
+                'sweepTime': sweepTime,
+                'sweepElevation': sweepElevation,
+                'elevations': elevations,
+                'azimuths': azimuths,
+                'gatewidth': gatewidth,
+                'values': values
+            }
 
 # models.File.objects.filter(date__year=2015)
 # models.File.objects.filter(date__lte='2018-01-01 00:00Z')
