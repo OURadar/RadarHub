@@ -8,6 +8,7 @@
 class Archive {
   constructor() {
     this.data = {
+      list: [],
       sweep: {
         az: [],
         el: [],
@@ -24,12 +25,19 @@ class Archive {
       if (type == "data") {
         this.data.sweep = payload;
         this.onupdate(this.data.sweep);
+      } else if (type == "list") {
+        this.data.list = payload;
+        this.onupdate(this.data.list);
       }
     };
   }
 
   load(name) {
     this.worker.postMessage({ task: "load", name: name });
+  }
+
+  list(day) {
+    this.worker.postMessage({ task: "list", day: day });
   }
 }
 

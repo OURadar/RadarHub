@@ -7,17 +7,26 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 
 function Browser(props) {
-  const files = [];
-  const retriever = new Archive();
+  const [list, setList] = React.useState([]);
 
-  const entries = [];
-  for (let k = 0; k < 5; k++) {
-    entries.push(<Button key={`file-${k}`}>File {k}</Button>);
-  }
+  // Ogden "Og" Morrow
+  const og = new Archive();
+  og.onupdate = (array) => {
+    console.log("browser received a list");
+    console.log(array);
+    var newList = [];
+    for (let k = 0; k < array.length; k++) {
+      newList.push(<Button key={`list-${k}`}>{array[k]}</Button>);
+    }
+    setList(newList);
+  };
+
+  if (list.length == 0) og.list("20130520-1900");
+
   return (
     <div>
       <SectionHeader name="archive" />
-      {entries}
+      {list}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import json
+import time
 import struct
 import numpy as np
 from django.http import HttpResponse
@@ -44,4 +45,32 @@ def file(request, name):
     data = np.array(sweep['values'] * 0.5 + 32, dtype=np.uint8)
     payload = bytes(head) + bytes(sweep['azimuths']) + bytes(data)
     response = HttpResponse(payload, content_type='application/octet-stream')
+    return response
+
+'''
+    day - a string in the forms of
+          - YYYYMMDD
+          - YYYYMMDD-HH
+          - YYYYMMDD-HHMM
+'''
+def list(request, day):
+    show = colorize(day, 'orange')
+    print(f'archives.list() {show}')
+
+    if len(day) == 8:
+        prefix = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
+        dateRange = [f'{prefix} 00:00Z', f'{prefix} 00:59Z']
+    elif len(day) == 11:
+        prefix = time.strftime('%Y-%m-%d %H', time.strptime(day, '%Y%m%d-%H'))
+        dateRange = [f'{prefix}:00Z', f'{prefix}:59Z']
+    elif len(day) == 13:
+        prefix = time.strftime('%Y-%m-%d %H', time.strptime(day, '%Y%m%d-%H%M'))
+        dateRange = [f'{prefix}:00Z', f'{prefix}:59Z']
+
+    matches = File.objects.filter(name__contains='-Z', date__range=dateRange)
+    data = {
+        'list': [o.name for o in matches]
+    }
+    payload = json.dumps(data)
+    response = HttpResponse(payload, content_type='application/json')
     return response

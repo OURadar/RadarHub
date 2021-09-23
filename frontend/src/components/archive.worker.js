@@ -22,6 +22,7 @@ const sweepParser = new Parser()
   });
 
 let data = {
+  list: [],
   sweep: {
     el: [],
     az: [],
@@ -29,31 +30,37 @@ let data = {
   },
 };
 
-self.onmessage = ({ data: { task, name } }) => {
+self.onmessage = ({ data: { task, name, day } }) => {
   if (task == "load") {
     load(name);
+  } else if (task == "list") {
+    list(day);
   }
 };
+
+function list(day) {
+  console.log(`%carchive.worker.list() ${day}`, "color: darkgreen");
+  const url = `/data/list/${day}/`;
+  fetch(url)
+    .then((response) => {
+      if (response.status == 200)
+        response.json().then((buffer) => {
+          data.list = buffer.list;
+          self.postMessage({ type: "list", payload: data.list });
+        });
+      else
+        response.text().then((error) => {
+          console.log(error);
+        });
+    })
+    .catch((error) => {
+      console.log(`Unexpected error ${error}`);
+    });
+}
 
 function load(name) {
   const url = `/data/file/${name}`;
   console.log(`Background fetching ${url}`);
-
-  // fetch("/data/binary/PX-20200520-060102")
-  //   .then((resp) => resp.arrayBuffer())
-  //   .then((data) => {
-  //     var elev = new Float32Array(data.slice(0, 4));
-  //     var bytes = new Uint8Array(data.slice(4));
-  //     console.log(`elev = ${elev}`);
-  //     console.log(bytes);
-  //   });
-
-  // fetch("/data/header/PX-20130520-191140-E2.6-Z.nc/")
-  //   .then((resp) => resp.json())
-  //   .then((data) => {
-  //     console.log(data);
-  //   });
-
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -70,3 +77,18 @@ function load(name) {
       console.log(`Unexpected error ${error}`);
     });
 }
+
+// fetch("/data/binary/PX-20200520-060102")
+//   .then((resp) => resp.arrayBuffer())
+//   .then((data) => {
+//     var elev = new Float32Array(data.slice(0, 4));
+//     var bytes = new Uint8Array(data.slice(4));
+//     console.log(`elev = ${elev}`);
+//     console.log(bytes);
+//   });
+
+// fetch("/data/header/PX-20130520-191140-E2.6-Z.nc/")
+//   .then((resp) => resp.json())
+//   .then((data) => {
+//     console.log(data);
+//   });
