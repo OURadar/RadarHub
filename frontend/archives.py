@@ -32,15 +32,14 @@ def file(request, name):
     print(f'archives.file() {show}')
 
     match = File.objects.filter(name=name)
-    print(match)
     if len(match):
         match = match[0]
     else:
-        return HttpResponse('', content_type='application/octet-stream')
+        return HttpResponse(f'No match of {name} in database', status=404)
 
     sweep = match.getData()
     if sweep is None:
-        return HttpResponse('', content_type='application/octet-stream')
+        return HttpResponse(f'File {name} not found', status=404)
     head = struct.pack('hh', *sweep['values'].shape)
     data = np.array(sweep['values'] * 0.5 + 32, dtype=np.uint8)
     payload = bytes(head) + bytes(sweep['azimuths']) + bytes(data)

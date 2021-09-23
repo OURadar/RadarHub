@@ -105,7 +105,6 @@ body {
 canvas {
   display: block;
   position: relative;
-  image-rendering: -webkit-optimize-contrast;
   font-family: "LabelFont";
 }
 

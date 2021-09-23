@@ -49,7 +49,7 @@ export function TopBar(props) {
   }
   return (
     <div>
-      <div id="topbar">
+      <div id="topbar" roll="banner">
         <h1>RadarHub</h1>
         <div id="statusPrefix">{prefix}</div>
         {status}

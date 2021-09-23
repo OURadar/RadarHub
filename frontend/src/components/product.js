@@ -36,6 +36,11 @@ class Product extends GLView {
     });
   }
 
+  static defaultProps = {
+    ...super.defaultProps,
+    sweep: null,
+  };
+
   toggleSpin() {
     this.setState((state) => {
       if (!state.spin) this.geometry.fov = 1.0;
@@ -121,6 +126,7 @@ class Product extends GLView {
     this.setState({
       spin: false,
     });
+    console.log(this.props.sweep);
   }
 
   taptap(x, y) {

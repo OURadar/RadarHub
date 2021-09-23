@@ -18,6 +18,7 @@ class App extends Component {
     super(props);
     this.state = {
       colors: colorDict(),
+      sweep: null,
     };
     this.isMobile = detectMob();
     console.log(props);
@@ -54,9 +55,15 @@ class App extends Component {
     //     console.log(bytes);
     //   });
 
+    // fetch("/data/header/PX-20130520-191140-E2.6-Z.nc/")
+    //   .then((resp) => resp.json())
+    //   .then((data) => {
+    //     console.log(data);
+    //   });
+
     var Parser = require("binary-parser").Parser;
 
-    var sweep = new Parser()
+    var sweepParser = new Parser()
       .endianess("little")
       .uint16("na")
       .uint16("nr")
@@ -68,17 +75,25 @@ class App extends Component {
         },
       });
 
-    fetch("/data/header/PX-20130520-191140-E2.6-Z.nc/")
-      .then((resp) => resp.json())
-      .then((data) => {
-        console.log(data);
-      });
+    const url = "/data/file/PX-20130520-191141-E2.6-Z.nc/"; // not in database
+    // const url = "/data/file/PX-20130520-191140-E2.6-Z.nc/";
 
-    fetch("/data/file/PX-20130520-191140-E2.6-Z.nc/")
-      .then((resp) => resp.arrayBuffer())
-      .then((data) => {
-        const buff = new Uint8Array(data);
-        console.log(sweep.parse(buff));
+    fetch(url)
+      .then((response) => {
+        if (response.status == 200)
+          response.arrayBuffer().then((data) => {
+            const buff = new Uint8Array(data);
+            this.setState({
+              sweep: sweepParser.parse(buff),
+            });
+          });
+        else
+          response.text().then((error) => {
+            console.log(error);
+          });
+      })
+      .catch((error) => {
+        console.log(`Unexpected error ${error}`);
       });
   }
 
@@ -88,6 +103,7 @@ class App extends Component {
         <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
         <Product
+          sweep={this.state.sweep}
           colors={this.state.colors}
           debug={this.props.debug}
           showStats={true}
