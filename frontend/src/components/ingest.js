@@ -72,10 +72,6 @@ class Ingest {
     // this.waitOrConnect = this.waitOrConnect.bind(this);
   }
 
-  handleUpdate() {
-    return;
-  }
-
   connect() {
     this.message = "Connecting ...";
     this.onupdate(this.tic++);

@@ -12,6 +12,7 @@ module.exports = {
     },
     polygon: "./src/components/polygon.worker.js",
     opacity: "./src/components/overlay.worker.js",
+    archive: "./src/components/archive.worker.js",
     ingest: "./src/components/ingest.worker.js",
     shared: [
       "react",
