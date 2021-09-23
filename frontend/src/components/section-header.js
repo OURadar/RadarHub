@@ -5,6 +5,7 @@ import {
   Favorite,
   BrokenImage,
   TrackChanges,
+  Storage,
 } from "@material-ui/icons";
 
 export function SectionHeader(props) {
@@ -17,6 +18,8 @@ export function SectionHeader(props) {
     icon = <BrokenImage style={{ color: "var(--blue)" }} />;
   } else if (props.name == "product") {
     icon = <TrackChanges style={{ color: "var(--green)" }} />;
+  } else if (props.name == "archive") {
+    icon = <Storage style={{ color: "var(--brown)" }} />;
   }
   return (
     <div className="sectionHeader">

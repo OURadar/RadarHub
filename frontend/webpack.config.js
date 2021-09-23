@@ -21,6 +21,7 @@ module.exports = {
       "gl-matrix",
       "stats-js",
       "binary-parser",
+      "split.js",
     ],
   },
   output: {

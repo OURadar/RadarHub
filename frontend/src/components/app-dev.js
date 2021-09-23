@@ -6,9 +6,11 @@
 //
 
 import React, { Component } from "react";
+import Split from "split.js";
 import { ThemeProvider } from "@material-ui/core/styles";
 import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
+import { Browser } from "./browser";
 import { Product } from "./product";
 import { theme, colorDict } from "./theme";
 import { TopBar } from "./topbar";
@@ -51,21 +53,53 @@ class App extends Component {
           });
         }
       });
+    if (!this.isMobile) {
+      const w = (300 / window.innerWidth) * 100;
+      console.log(`w = ${w}`);
+      Split(["#left", "#right"], {
+        sizes: [100 - w, w],
+        minSize: [400, 300],
+        expandToMin: true,
+      });
+    }
     this.archive.load("PX-20130520-191140-E2.6-Z.nc");
   }
 
   render() {
+    if (this.isMobile)
+      return (
+        <ThemeProvider theme={theme}>
+          <TopBar isMobile={this.isMobile} />
+          <SectionHeader name="product" />
+          <Product
+            sweep={this.state.sweep}
+            colors={this.state.colors}
+            debug={this.props.debug}
+            showStats={true}
+            profileGL={this.props.profileGL}
+          />
+        </ThemeProvider>
+      );
     return (
       <ThemeProvider theme={theme}>
-        <TopBar isMobile={this.isMobile} />
-        <SectionHeader name="product" />
-        <Product
-          sweep={this.state.sweep}
-          colors={this.state.colors}
-          debug={this.props.debug}
-          showStats={true}
-          profileGL={this.props.profileGL}
-        />
+        <TopBar />
+        <div id="flex">
+          <div id="left">
+            <div>
+              <SectionHeader name="product" isMobile={false} />
+              <Product
+                sweep={this.state.sweep}
+                colors={this.state.colors}
+                debug={this.props.debug}
+                showStats={true}
+                profileGL={this.props.profileGL}
+              />
+            </div>
+          </div>
+          <div id="right">
+            <Browser />
+          </div>
+        </div>
       </ThemeProvider>
     );
   }

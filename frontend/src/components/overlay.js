@@ -108,11 +108,6 @@ class Overlay {
       },
     ];
 
-    // Give label a small delay so that grid and rings appear with no transition
-    setTimeout(() => {
-      this.updateLabels();
-    }, 100);
-
     this.layers = [];
     for (let k = 0; k < overlays.length; k++) {
       const overlay = overlays[k];
@@ -134,6 +129,10 @@ class Overlay {
         quad: [overlay.fixed, 0, this.colors.tint, 0],
       };
       this.viewParameters[0] = 0;
+      if (k == 2) {
+        // load the labels after the rings and grid are loaded
+        this.updateLabels();
+      }
     }
   }
 
