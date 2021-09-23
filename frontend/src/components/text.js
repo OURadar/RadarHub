@@ -258,7 +258,7 @@ class Text {
         `%c / texture %c(${wString} RGBA = ${vString} bytes)`,
       "font-weight: initial",
       "color: lightseagreen",
-      "font-weight: initial; color: inherit",
+      "color: inherit",
       "color: mediumpurple"
     );
     this.busy = false;

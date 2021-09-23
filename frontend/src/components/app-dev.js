@@ -24,7 +24,8 @@ class App extends Component {
     this.isMobile = detectMob();
     this.archive = new Archive();
     this.archive.onupdate = (data) => {
-      console.log(data);
+      console.log("app-dev", data);
+      this.setState({ sweep: data });
     };
     console.log(props);
   }
