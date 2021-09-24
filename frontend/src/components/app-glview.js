@@ -6,7 +6,7 @@
 //
 
 import React, { Component } from "react";
-import { ThemeProvider } from "@material-ui/core/styles";
+import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { theme, colorDict } from "./theme";
@@ -48,11 +48,13 @@ class App extends Component {
 
   render() {
     return (
-      <ThemeProvider theme={theme}>
-        <TopBar isMobile={this.isMobile} />
-        <SectionHeader name="product" />
-        <GLView colors={this.state.colors} debug={true} showStats={true} />
-      </ThemeProvider>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <TopBar isMobile={this.isMobile} />
+          <SectionHeader name="product" />
+          <GLView colors={this.state.colors} debug={true} showStats={true} />
+        </ThemeProvider>
+      </StyledEngineProvider>
     );
   }
 }

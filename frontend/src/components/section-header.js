@@ -6,7 +6,7 @@ import {
   BrokenImage,
   TrackChanges,
   Storage,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 export function SectionHeader(props) {
   let icon;

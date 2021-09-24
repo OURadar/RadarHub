@@ -9,7 +9,7 @@
 
 import React, { Component } from "react";
 import Split from "split.js";
-import { ThemeProvider } from "@material-ui/core/styles";
+import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { Scope2 } from "./scope2";

@@ -7,7 +7,7 @@
 
 import React, { Component } from "react";
 import Split from "split.js";
-import { ThemeProvider } from "@material-ui/core/styles";
+import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { Browser } from "./browser";
@@ -74,19 +74,22 @@ class App extends Component {
   render() {
     if (this.isMobile)
       return (
-        <ThemeProvider theme={theme}>
-          <TopBar isMobile={this.isMobile} />
-          <SectionHeader name="product" />
-          <Product
-            sweep={this.archive.data.sweep}
-            colors={this.state.colors}
-            debug={this.props.debug}
-            showStats={true}
-            profileGL={this.props.profileGL}
-          />
-        </ThemeProvider>
+        <StyledEngineProvider injectFirst>
+          <ThemeProvider theme={theme}>
+            <TopBar isMobile={this.isMobile} />
+            <SectionHeader name="product" />
+            <Product
+              sweep={this.archive.data.sweep}
+              colors={this.state.colors}
+              debug={this.props.debug}
+              showStats={true}
+              profileGL={this.props.profileGL}
+            />
+          </ThemeProvider>
+        </StyledEngineProvider>
       );
     return (
+      // <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
         <TopBar />
         <div id="flex">
@@ -107,6 +110,7 @@ class App extends Component {
           </div>
         </div>
       </ThemeProvider>
+      // </StyledEngineProvider>
     );
   }
 }

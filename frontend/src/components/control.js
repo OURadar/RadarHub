@@ -6,7 +6,7 @@
 //
 
 import React from "react";
-import Button from "@material-ui/core/Button";
+import Button from "@mui/material/Button";
 import { SectionHeader } from "./section-header";
 import { prettyString } from "./common";
 
@@ -22,6 +22,7 @@ function Control(props) {
           onClick={() => {
             props.ingest.execute(item.Command);
           }}
+          variant="control"
         >
           {prettyString(item.Label)}
         </Button>

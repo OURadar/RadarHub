@@ -1,13 +1,13 @@
 import React from "react";
 
-import { ThemeProvider } from "@material-ui/core/styles";
-import IconButton from "@material-ui/core/IconButton";
+import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
+import IconButton from "@mui/material/IconButton";
 import {
   Refresh,
   Fullscreen,
   WebAsset,
   AccountCircle,
-} from "@material-ui/icons";
+} from "@mui/icons-material";
 
 import { Notification } from "./notification";
 import { theme } from "./theme";
@@ -76,38 +76,40 @@ export function Console(props) {
   );
   return (
     <div id="console">
-      <ThemeProvider theme={theme}>
-        <IconButton
-          aria-label="Refresh"
-          onClick={() => {
-            window.location.reload();
-          }}
-        >
-          <Refresh style={{ color: "white" }} />
-        </IconButton>
-        {!props.isMobile && (
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
           <IconButton
-            aria-label="Fullscreen"
+            aria-label="Refresh"
             onClick={() => {
-              if (fullscreen) document.webkitExitFullscreen();
-              else document.documentElement.webkitRequestFullScreen();
-              setFullscreen(!fullscreen);
+              window.location.reload();
             }}
-          >
-            {(fullscreen && <WebAsset style={{ color: "white" }} />) || (
-              <Fullscreen style={{ color: "white" }} />
-            )}
+            size="large">
+            <Refresh style={{ color: "white" }} />
           </IconButton>
-        )}
-        <IconButton
-          aria-label="Account"
-          onClick={() => {
-            props.handleAccount();
-          }}
-        >
-          <AccountCircle style={{ color: "white" }} />
-        </IconButton>
-      </ThemeProvider>
+          {!props.isMobile && (
+            <IconButton
+              aria-label="Fullscreen"
+              onClick={() => {
+                if (fullscreen) document.webkitExitFullscreen();
+                else document.documentElement.webkitRequestFullScreen();
+                setFullscreen(!fullscreen);
+              }}
+              size="large">
+              {(fullscreen && <WebAsset style={{ color: "white" }} />) || (
+                <Fullscreen style={{ color: "white" }} />
+              )}
+            </IconButton>
+          )}
+          <IconButton
+            aria-label="Account"
+            onClick={() => {
+              props.handleAccount();
+            }}
+            size="large">
+            <AccountCircle style={{ color: "white" }} />
+          </IconButton>
+        </ThemeProvider>
+      </StyledEngineProvider>
     </div>
   );
 }

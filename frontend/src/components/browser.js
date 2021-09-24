@@ -1,9 +1,6 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
+import Button from "@mui/material/Button";
 import { SectionHeader } from "./section-header";
-
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
 
 function Browser(props) {
   const files = props.archive?.data.list || [];

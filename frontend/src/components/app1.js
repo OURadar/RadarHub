@@ -6,7 +6,7 @@
 //
 
 import React, { Component } from "react";
-import { ThemeProvider } from "@material-ui/core/styles";
+import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import { detectMob } from "./common";
 import { Scope } from "./scope";
 import { Scope2 } from "./scope2";
@@ -64,13 +64,15 @@ class App extends Component {
     let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
     let double = this.ingest.data;
     return (
-      <ThemeProvider theme={theme}>
-        <TopBar ingest={this.ingest} isMobile={this.isMobile} />
-        <Health dict={this.ingest.data.health} />
-        <Control ingest={this.ingest} />
-        <Scope data={single} colors={this.state.colors} />
-        <Scope2 data={double} colors={this.state.colors} showHeader={false} />
-      </ThemeProvider>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <TopBar ingest={this.ingest} isMobile={this.isMobile} />
+          <Health dict={this.ingest.data.health} />
+          <Control ingest={this.ingest} />
+          <Scope data={single} colors={this.state.colors} />
+          <Scope2 data={double} colors={this.state.colors} showHeader={false} />
+        </ThemeProvider>
+      </StyledEngineProvider>
     );
   }
 }

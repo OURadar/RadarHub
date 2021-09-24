@@ -5,7 +5,7 @@
 //  Created by Boonleng Cheong on 9/1/2021.
 //
 
-import { common } from "@material-ui/core/colors";
+import { common } from "@mui/material/colors";
 import { deg, earthRadius } from "./common";
 
 //

@@ -1,13 +1,14 @@
-import { createTheme } from "@material-ui/core/styles";
+// import { createTheme } from "@mui/material/styles";
+import { createTheme } from "@mui/material/styles";
 
-export const theme = createTheme({
+let theme = createTheme({
   palette: {
     primary: {
-      main: "#ff4400",
+      main: "#000000",
     },
     secondary: {
-      light: "#0066ff",
       main: "#0044ff",
+      light: "#0066ff",
       contrastText: "#ffcc00",
     },
     contrastThreshold: 3,
@@ -27,41 +28,88 @@ export const theme = createTheme({
       '"Segoe UI Symbol"',
     ].join(","),
   },
-  overrides: {
+  shape: {
+    borderRadius: "var(--button-border-radius)",
+    color: "var(--system-foreground)",
+  },
+});
+theme = createTheme(theme, {
+  components: {
     MuiButton: {
-      root: {
-        width: "100%",
-        height: "var(--button-height)",
-        padding: "0 30px",
-        borderRadius: "var(--button-border-radius)",
-        borderTop: "var(--button-border-top)",
-        borderRight: "var(--button-border-right)",
-        borderBottom: "var(--button-border-bottom)",
-        borderLeft: "var(--button-border-left)",
-        marginBottom: "var(--button-margin-bottom)",
-        boxSizing: "border-box",
-      },
-      text: {
-        color: "var(--system-foreground)",
-        fontSize: "var(--font-size)",
-        lineHeight: "var(--font-size)",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        textTransform: "none",
-        boxSizing: "border-box",
-      },
-      label: {
-        fontSize: "var(--font-size)",
-        lineHeight: "var(--font-size)",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-        textTransform: "none",
-        boxSizing: "border-box",
-      },
+      variants: [
+        {
+          props: { variant: "control" },
+          style: {
+            boxSizing: "border-box",
+            borderTop: "var(--button-border-top)",
+            borderRight: "var(--button-border-right)",
+            borderBottom: "var(--button-border-bottom)",
+            borderLeft: "var(--button-border-left)",
+            display: "inline-block",
+            fontSize: "var(--font-size)",
+            marginBottom: "var(--button-margin-bottom)",
+            overflow: "hidden",
+            padding: "0 30px",
+            textTransform: "none",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            width: "100%",
+          },
+        },
+        {
+          props: { variant: "file" },
+          style: {
+            color: "primary",
+            display: "inline-block",
+            textTransform: "none",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            width: "100%",
+          },
+        },
+      ],
     },
   },
 });
+
+export { theme };
+
+/*
+overrides: {
+  MuiButton: {
+    root: {
+      width: "100%",
+      height: "var(--button-height)",
+      padding: "0 30px",
+      borderRadius: "var(--button-border-radius)",
+      borderTop: "var(--button-border-top)",
+      borderRight: "var(--button-border-right)",
+      borderBottom: "var(--button-border-bottom)",
+      borderLeft: "var(--button-border-left)",
+      marginBottom: "var(--button-margin-bottom)",
+      boxSizing: "border-box",
+    },
+    text: {
+      color: "var(--system-foreground)",
+      fontSize: "var(--font-size)",
+      lineHeight: "var(--font-size)",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      textTransform: "none",
+      boxSizing: "border-box",
+    },
+    label: {
+      fontSize: "var(--font-size)",
+      lineHeight: "var(--font-size)",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      textTransform: "none",
+      boxSizing: "border-box",
+    },
+  },
+}
+*/
 
 export function hex2rgb(hex) {
   const r = parseInt(hex.slice(0, 2), 16) / 255.0;
