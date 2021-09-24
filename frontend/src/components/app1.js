@@ -64,15 +64,15 @@ class App extends Component {
     let single = { t: this.ingest.data.t, ...this.ingest.data.ch1 };
     let double = this.ingest.data;
     return (
-      <StyledEngineProvider injectFirst>
-        <ThemeProvider theme={theme}>
-          <TopBar ingest={this.ingest} isMobile={this.isMobile} />
-          <Health dict={this.ingest.data.health} />
-          <Control ingest={this.ingest} />
-          <Scope data={single} colors={this.state.colors} />
-          <Scope2 data={double} colors={this.state.colors} showHeader={false} />
-        </ThemeProvider>
-      </StyledEngineProvider>
+      // <StyledEngineProvider injectFirst>
+      <ThemeProvider theme={theme}>
+        <TopBar ingest={this.ingest} isMobile={this.isMobile} />
+        <Health dict={this.ingest.data.health} />
+        <Control ingest={this.ingest} />
+        <Scope data={single} colors={this.state.colors} />
+        <Scope2 data={double} colors={this.state.colors} showHeader={false} />
+      </ThemeProvider>
+      // </StyledEngineProvider>
     );
   }
 }

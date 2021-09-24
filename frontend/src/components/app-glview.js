@@ -48,13 +48,13 @@ class App extends Component {
 
   render() {
     return (
-      <StyledEngineProvider injectFirst>
-        <ThemeProvider theme={theme}>
-          <TopBar isMobile={this.isMobile} />
-          <SectionHeader name="product" />
-          <GLView colors={this.state.colors} debug={true} showStats={true} />
-        </ThemeProvider>
-      </StyledEngineProvider>
+      // <StyledEngineProvider injectFirst>
+      <ThemeProvider theme={theme}>
+        <TopBar isMobile={this.isMobile} />
+        <SectionHeader name="product" />
+        <GLView colors={this.state.colors} debug={true} showStats={true} />
+      </ThemeProvider>
+      // </StyledEngineProvider>
     );
   }
 }

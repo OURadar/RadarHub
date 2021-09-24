@@ -74,19 +74,19 @@ class App extends Component {
   render() {
     if (this.isMobile)
       return (
-        <StyledEngineProvider injectFirst>
-          <ThemeProvider theme={theme}>
-            <TopBar isMobile={this.isMobile} />
-            <SectionHeader name="product" />
-            <Product
-              sweep={this.archive.data.sweep}
-              colors={this.state.colors}
-              debug={this.props.debug}
-              showStats={true}
-              profileGL={this.props.profileGL}
-            />
-          </ThemeProvider>
-        </StyledEngineProvider>
+        // <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <TopBar isMobile={this.isMobile} />
+          <SectionHeader name="product" />
+          <Product
+            sweep={this.archive.data.sweep}
+            colors={this.state.colors}
+            debug={this.props.debug}
+            showStats={true}
+            profileGL={this.props.profileGL}
+          />
+        </ThemeProvider>
+        // </StyledEngineProvider>
       );
     return (
       // <StyledEngineProvider injectFirst>

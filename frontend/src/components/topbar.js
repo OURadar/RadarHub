@@ -75,41 +75,42 @@ export function Console(props) {
     window.innerHeight == screen.height
   );
   return (
-    <div id="console">
-      <StyledEngineProvider injectFirst>
-        <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme}>
+      <div id="console">
+        <IconButton
+          aria-label="Refresh"
+          onClick={() => {
+            window.location.reload();
+          }}
+          size="large"
+        >
+          <Refresh style={{ color: "white" }} />
+        </IconButton>
+        {!props.isMobile && (
           <IconButton
-            aria-label="Refresh"
+            aria-label="Fullscreen"
             onClick={() => {
-              window.location.reload();
+              if (fullscreen) document.webkitExitFullscreen();
+              else document.documentElement.webkitRequestFullScreen();
+              setFullscreen(!fullscreen);
             }}
-            size="large">
-            <Refresh style={{ color: "white" }} />
+            size="large"
+          >
+            {(fullscreen && <WebAsset style={{ color: "white" }} />) || (
+              <Fullscreen style={{ color: "white" }} />
+            )}
           </IconButton>
-          {!props.isMobile && (
-            <IconButton
-              aria-label="Fullscreen"
-              onClick={() => {
-                if (fullscreen) document.webkitExitFullscreen();
-                else document.documentElement.webkitRequestFullScreen();
-                setFullscreen(!fullscreen);
-              }}
-              size="large">
-              {(fullscreen && <WebAsset style={{ color: "white" }} />) || (
-                <Fullscreen style={{ color: "white" }} />
-              )}
-            </IconButton>
-          )}
-          <IconButton
-            aria-label="Account"
-            onClick={() => {
-              props.handleAccount();
-            }}
-            size="large">
-            <AccountCircle style={{ color: "white" }} />
-          </IconButton>
-        </ThemeProvider>
-      </StyledEngineProvider>
-    </div>
+        )}
+        <IconButton
+          aria-label="Account"
+          onClick={() => {
+            props.handleAccount();
+          }}
+          size="large"
+        >
+          <AccountCircle style={{ color: "white" }} />
+        </IconButton>
+      </div>
+    </ThemeProvider>
   );
 }
