@@ -11,7 +11,7 @@ import { SectionHeader } from "./section-header";
 import { prettyString } from "./common";
 
 function Control(props) {
-  const elements = props.ingest.data.control;
+  const elements = props.ingest?.data.control || [];
   const controls = [];
   for (let k = 0; k < elements.length; k++) {
     let item = elements[k];

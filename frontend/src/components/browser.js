@@ -1,13 +1,12 @@
 import React from "react";
 import Button from "@material-ui/core/Button";
 import { SectionHeader } from "./section-header";
-import { Archive } from "./archive";
 
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 
 function Browser(props) {
-  const files = props.archive.data.list;
+  const files = props.archive?.data.list || [];
   const items = [];
   for (let k = 0; k < files.length; k++) {
     let file = files[k];
