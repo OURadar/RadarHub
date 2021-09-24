@@ -28,9 +28,11 @@ class App extends Component {
     this.archive.onupdate = ({ type, payload }) => {
       console.log("app-dev onupdate", type, payload);
       if (type == "data") {
-        console.log("app-dev", payload);
-        this.setState({ sweep: payload });
+        //this.setState({ sweep: payload });
+      } else if (type == "list") {
+        //console.log("app-dev list", payload);
       }
+      this.forceUpdate();
     };
     console.log(props);
   }
@@ -65,7 +67,8 @@ class App extends Component {
         expandToMin: true,
       });
     }
-    this.archive.load("PX-20130520-191140-E2.6-Z.nc");
+    // this.archive.load("PX-20130520-191140-E2.6-Z.nc");
+    this.archive.list("20130520-1900");
   }
 
   render() {
@@ -75,7 +78,7 @@ class App extends Component {
           <TopBar isMobile={this.isMobile} />
           <SectionHeader name="product" />
           <Product
-            sweep={this.state.sweep}
+            sweep={this.archive.data.sweep}
             colors={this.state.colors}
             debug={this.props.debug}
             showStats={true}
@@ -91,7 +94,7 @@ class App extends Component {
             <div>
               <SectionHeader name="product" isMobile={false} />
               <Product
-                sweep={this.state.sweep}
+                sweep={this.archive.data.sweep}
                 colors={this.state.colors}
                 debug={this.props.debug}
                 showStats={true}
@@ -100,7 +103,7 @@ class App extends Component {
             </div>
           </div>
           <div id="right">
-            <Browser />
+            <Browser archive={this.archive} />
           </div>
         </div>
       </ThemeProvider>
