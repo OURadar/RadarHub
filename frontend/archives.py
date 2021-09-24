@@ -57,17 +57,20 @@ def list(request, day):
     show = colorize(day, 'orange')
     print(f'archives.list() {show}')
 
-    if len(day) == 8:
-        prefix = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
-        dateRange = [f'{prefix} 00:00Z', f'{prefix} 00:59Z']
+    if len(day) == 13:
+        s = time.strptime(day, '%Y%m%d-%H%M')
+        e = time.localtime(time.mktime(s) + 3600)
+        ss = time.strftime('%Y-%m-%d %H:%MZ', s)
+        ee = time.strftime('%Y-%m-%d %H:%MZ', e)
+        dateRange = [ss, ee]
     elif len(day) == 11:
         prefix = time.strftime('%Y-%m-%d %H', time.strptime(day, '%Y%m%d-%H'))
         dateRange = [f'{prefix}:00Z', f'{prefix}:59Z']
-    elif len(day) == 13:
-        prefix = time.strftime('%Y-%m-%d %H', time.strptime(day, '%Y%m%d-%H%M'))
-        dateRange = [f'{prefix}:00Z', f'{prefix}:59Z']
+    elif len(day) == 8:
+        prefix = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
+        dateRange = [f'{prefix} 00:00Z', f'{prefix} 00:59Z']
 
-    matches = File.objects.filter(name__contains='-Z', date__range=dateRange)
+    matches = File.objects.filter(name__contains='-Z', date__range=dateRange)[:100]
     data = {
         'list': [o.name for o in matches]
     }

@@ -12,8 +12,6 @@ function Browser(props) {
   // Ogden "Og" Morrow
   const og = new Archive();
   og.onupdate = (array) => {
-    console.log("browser received a list");
-    console.log(array);
     var newList = [];
     for (let k = 0; k < array.length; k++) {
       newList.push(<Button key={`list-${k}`}>{array[k]}</Button>);
@@ -21,7 +19,7 @@ function Browser(props) {
     setList(newList);
   };
 
-  if (list.length == 0) og.list("20130520-1900");
+  if (list.length == 0) og.list("20130520-1930");
 
   return (
     <div>
