@@ -25,20 +25,14 @@ class App extends Component {
     };
     this.isMobile = detectMob();
     this.archive = new Archive();
-    this.archive.onupdate = ({ type, payload }) => {
-      console.log("app-dev onupdate", type, payload);
-      if (type == "data") {
-        //this.setState({ sweep: payload });
-      } else if (type == "list") {
-        //console.log("app-dev list", payload);
-      }
+    this.archive.onupdate = (_dontcare) => {
       this.forceUpdate();
     };
     console.log(props);
   }
 
   static defaultProps = {
-    radar: "demo",
+    radar: "archive",
     debug: false,
     profileGL: false,
   };
@@ -67,7 +61,7 @@ class App extends Component {
         expandToMin: true,
       });
     }
-    // this.archive.load("PX-20130520-191140-E2.6-Z.nc");
+
     this.archive.list("20130520-1900");
   }
 
@@ -89,9 +83,8 @@ class App extends Component {
         // </StyledEngineProvider>
       );
     return (
-      // <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
-        <TopBar />
+        <TopBar ingest={this.archive} />
         <div id="flex">
           <div id="left">
             <div>
@@ -110,7 +103,6 @@ class App extends Component {
           </div>
         </div>
       </ThemeProvider>
-      // </StyledEngineProvider>
     );
   }
 }

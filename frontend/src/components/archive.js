@@ -7,6 +7,7 @@
 
 class Archive {
   constructor() {
+    this.radar = "archive";
     this.data = {
       list: [],
       sweep: {
@@ -22,17 +23,31 @@ class Archive {
 
     this.worker = new Worker("/static/frontend/archive.js");
     this.worker.onmessage = ({ data: { type, payload } }) => {
-      if (type == "data") {
+      if (type == "message") {
+        this.message = payload;
+        setTimeout(() => {
+          if (this.message == payload) {
+            this.message = "";
+            this.onupdate(this.tic++);
+          }
+        }, 2500);
+      } else if (type == "load") {
         this.data.sweep = payload;
-        this.onupdate({ type: "data", payload: this.data.sweep });
+        console.log(this.data.sweep);
+        this.message = "";
       } else if (type == "list") {
         this.data.list = payload;
-        this.onupdate({ type: "list", payload: this.data.list });
       }
+      this.onupdate(this.tic++);
     };
+
+    this.load = this.load.bind(this);
+    this.list = this.list.bind(this);
   }
 
   load(name) {
+    this.message = `Loading ${name} ...`;
+    this.onupdate(this.tic++);
     this.worker.postMessage({ task: "load", name: name });
   }
 

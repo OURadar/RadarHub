@@ -69,7 +69,6 @@ class Ingest {
     this.connect = this.connect.bind(this);
     this.execute = this.execute.bind(this);
     this.disconnect = this.disconnect.bind(this);
-    // this.waitOrConnect = this.waitOrConnect.bind(this);
   }
 
   connect() {

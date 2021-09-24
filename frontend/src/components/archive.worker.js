@@ -50,7 +50,7 @@ function list(day) {
         });
       else
         response.text().then((error) => {
-          console.log(error);
+          self.postMessage({ type: "message", payload: error });
         });
     })
     .catch((error) => {
@@ -66,11 +66,12 @@ function load(name) {
       if (response.status == 200)
         response.arrayBuffer().then((buffer) => {
           data.sweep = sweepParser.parse(new Uint8Array(buffer));
-          self.postMessage({ type: "data", payload: data.sweep });
+          self.postMessage({ type: "load", payload: data.sweep });
         });
       else
         response.text().then((error) => {
           console.log(error);
+          self.postMessage({ type: "message", payload: error });
         });
     })
     .catch((error) => {
