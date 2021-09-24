@@ -11,15 +11,30 @@ function Browser(props) {
 
   // Ogden "Og" Morrow
   const og = new Archive();
-  og.onupdate = (array) => {
-    var newList = [];
-    for (let k = 0; k < array.length; k++) {
-      newList.push(<Button key={`list-${k}`}>{array[k]}</Button>);
+  og.onupdate = ({ type, payload }) => {
+    if (type == "list") {
+      var newList = [];
+      for (let k = 0; k < payload.length; k++) {
+        newList.push(
+          <Button
+            key={`list-${k}`}
+            onClick={() => {
+              console.log(`Loading ${payload[k]}`);
+              og.load(payload[k]);
+            }}
+          >
+            {payload[k]}
+          </Button>
+        );
+      }
+      setList(newList);
+    } else if (type == "data") {
+      console.log("received data");
+      console.log(payload);
     }
-    setList(newList);
   };
 
-  if (list.length == 0) og.list("20130520-1930");
+  if (list.length == 0) og.list("20130520-1900");
 
   return (
     <div>

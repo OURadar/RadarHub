@@ -24,10 +24,10 @@ class Archive {
     this.worker.onmessage = ({ data: { type, payload } }) => {
       if (type == "data") {
         this.data.sweep = payload;
-        this.onupdate(this.data.sweep);
+        this.onupdate({ type: "data", payload: this.data.sweep });
       } else if (type == "list") {
         this.data.list = payload;
-        this.onupdate(this.data.list);
+        this.onupdate({ type: "list", payload: this.data.list });
       }
     };
   }

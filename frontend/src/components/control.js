@@ -18,10 +18,10 @@ function Control(props) {
     if (typeof item == "object" && "Label" in item && "Command" in item) {
       controls.push(
         <Button
+          key={k}
           onClick={() => {
             props.ingest.execute(item.Command);
           }}
-          key={k}
         >
           {prettyString(item.Label)}
         </Button>
