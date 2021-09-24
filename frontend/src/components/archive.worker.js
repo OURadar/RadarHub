@@ -66,6 +66,7 @@ function load(name) {
       if (response.status == 200)
         response.arrayBuffer().then((buffer) => {
           data.sweep = sweepParser.parse(new Uint8Array(buffer));
+          data.sweep = { ...data.sweep, name: name };
           self.postMessage({ type: "load", payload: data.sweep });
         });
       else

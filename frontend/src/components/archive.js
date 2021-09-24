@@ -34,7 +34,14 @@ class Archive {
       } else if (type == "load") {
         this.data.sweep = payload;
         console.log(this.data.sweep);
-        this.message = "";
+        const message = `${payload.name} loaded`;
+        this.message = message;
+        setTimeout(() => {
+          if (this.message == message) {
+            this.message = "";
+            this.onupdate(this.tic++);
+          }
+        }, 2000);
       } else if (type == "list") {
         this.data.list = payload;
       }

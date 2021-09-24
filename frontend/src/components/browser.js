@@ -1,6 +1,11 @@
 import React from "react";
-import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import AdapterDateFns from "@mui/lab/AdapterDateFns";
+import LocalizationProvider from "@mui/lab/LocalizationProvider";
+import DatePicker from "@mui/lab/DatePicker";
+
 import { SectionHeader } from "./section-header";
+import Button from "@mui/material/Button";
 
 function Browser(props) {
   const files = props.archive?.data.list || [];
@@ -14,14 +19,31 @@ function Browser(props) {
           console.log(`Clicked ${file}`);
           props.archive.load(file);
         }}
+        variant="file"
       >
         {file}
       </Button>
     );
   }
+  // Need to supply a event handler function from props
+
+  const [value, setValue] = React.useState(null);
+
   return (
     <div>
       <SectionHeader name="archive" />
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <DatePicker
+          label="Collection Date"
+          value={value}
+          onChange={(newValue) => {
+            console.log("new date picked", newValue);
+            setValue(newValue);
+          }}
+          renderInput={(params) => <TextField {...params} />}
+        />
+      </LocalizationProvider>
+      <SectionHeader name="files" />
       {items}
     </div>
   );
