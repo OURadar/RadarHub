@@ -9,39 +9,40 @@ import DatePicker from "@mui/lab/DatePicker";
 import { SectionHeader } from "./section-header";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
 import { FixedSizeList, areEqual } from "react-window";
 
-const Row = memo(({ data, index, style }) => {
-  // Data passed to List as "itemData" is available as props.data
-  const { items, archive } = data;
-  const item = items[index];
+const Item = memo(({ data, index, style }) => {
+  const { list, selectedIndex, loadItem } = data;
+  const selected = index == selectedIndex;
+  const item = list[index];
 
   return (
-    <ListItem style={style} key={index} component="div" disablePadding>
-      <ListItemButton onClick={() => archive.load(item)}>
-        <ListItemText primary={`File ${index + 1}. ${item}`} />
-      </ListItemButton>
-    </ListItem>
+    <Button
+      key={index}
+      onClick={() => loadItem(item, index)}
+      style={{ ...style, overflow: "hidden", textOverflow: "ellipsis" }}
+      variant="file"
+      selected={selected}
+    >
+      {item}
+    </Button>
   );
 }, areEqual);
 
-const createItemData = memoize((items, archive) => ({
-  items,
-  archive,
+const createItemData = memoize((list, index, load) => ({
+  list: list,
+  selectedIndex: index,
+  loadItem: load,
 }));
 
 function Browser(props) {
   const files = props.archive?.data.list || [];
-  const itemData = createItemData(files, props.archive);
+  const index = props.archive?.data.index || -1;
+  const itemData = createItemData(files, index, props.archive.load);
 
   // Need to supply a event handler function from props
   let t = new Date("2013-05-20T00:00:00");
-  console.log(t);
-
-  const [value, setValue] = React.useState(t);
+  // const [value, setValue] = React.useState(null);
 
   return (
     <div className="fill">
@@ -49,10 +50,11 @@ function Browser(props) {
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <DatePicker
           label="Collection Date"
-          value={value}
+          value={t}
           onChange={(newValue) => {
             console.log("new date picked", newValue);
-            setValue(newValue);
+            // setValue(newValue);
+            // props.archive.list()
           }}
           renderInput={(params) => <TextField {...params} />}
         />
@@ -66,7 +68,7 @@ function Browser(props) {
           itemData={itemData}
           overscanCount={5}
         >
-          {Row}
+          {Item}
         </FixedSizeList>
       </Box>
     </div>

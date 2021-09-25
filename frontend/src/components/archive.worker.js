@@ -72,6 +72,7 @@ function load(name) {
       else
         response.text().then((error) => {
           console.log(error);
+          self.postMessage({ type: "reset" });
           self.postMessage({ type: "message", payload: error });
         });
     })

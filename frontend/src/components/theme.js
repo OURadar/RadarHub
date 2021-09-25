@@ -60,28 +60,28 @@ theme = createTheme(theme, {
         {
           props: { variant: "file" },
           style: {
-            color: "primary",
+            borderRadius: 0,
             display: "inline-block",
+            padding: "0 20px",
             textTransform: "none",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
             width: "100%",
           },
         },
-      ],
-    },
-    MuiListItemButton: {
-      styleOverrides: {
-        root: {
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+        {
+          props: { variant: "file", selected: true },
+          style: {
+            color: "var(--blue)",
+            backgroundColor: "var(--gray6)",
+          },
         },
-      },
+      ],
     },
     MuiListItemText: {
       styleOverrides: {
         root: {
+          display: "inline-block",
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",

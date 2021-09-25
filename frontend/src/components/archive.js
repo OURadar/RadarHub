@@ -13,8 +13,10 @@ class Archive {
       sweep: {
         az: [],
         el: [],
+        name: "",
         values: [],
       },
+      index: -1,
     };
     this.tic = 0;
     this.message = "";
@@ -33,7 +35,6 @@ class Archive {
         }, 2500);
       } else if (type == "load") {
         this.data.sweep = payload;
-        console.log(this.data.sweep);
         const message = `${payload.name} loaded`;
         this.message = message;
         setTimeout(() => {
@@ -44,6 +45,8 @@ class Archive {
         }, 2000);
       } else if (type == "list") {
         this.data.list = payload;
+      } else if (type == "reset") {
+        this.data.index = -1;
       }
       this.onupdate(this.tic++);
     };
@@ -52,9 +55,10 @@ class Archive {
     this.list = this.list.bind(this);
   }
 
-  load(name) {
-    this.message = `Loading ${name} ...`;
-    this.onupdate(this.tic++);
+  load(name, index = -1) {
+    this.data.index = index;
+    // this.message = `Loading ${name} ...`;
+    // this.onupdate(this.tic++);
     this.worker.postMessage({ task: "load", name: name });
   }
 

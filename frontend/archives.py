@@ -70,7 +70,7 @@ def list(request, day):
         prefix = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
         dateRange = [f'{prefix} 00:00Z', f'{prefix} 00:59Z']
 
-    matches = File.objects.filter(name__contains='-Z', date__range=dateRange)[:100]
+    matches = File.objects.filter(name__contains='-Z', date__range=dateRange)[:200]
     data = {
         'list': [o.name for o in matches]
     }
