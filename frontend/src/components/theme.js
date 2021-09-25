@@ -1,4 +1,5 @@
 // import { createTheme } from "@mui/material/styles";
+import { Hidden } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 
 let theme = createTheme({
@@ -68,6 +69,24 @@ theme = createTheme(theme, {
           },
         },
       ],
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        },
+      },
+    },
+    MuiListItemText: {
+      styleOverrides: {
+        root: {
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        },
+      },
     },
   },
 });

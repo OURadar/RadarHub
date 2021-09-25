@@ -1,4 +1,6 @@
-import React from "react";
+import React, { memo } from "react";
+import memoize from "memoize-one";
+
 import TextField from "@mui/material/TextField";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
@@ -6,31 +8,43 @@ import DatePicker from "@mui/lab/DatePicker";
 
 import { SectionHeader } from "./section-header";
 import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
+import { FixedSizeList, areEqual } from "react-window";
+
+const Row = memo(({ data, index, style }) => {
+  // Data passed to List as "itemData" is available as props.data
+  const { items, archive } = data;
+  const item = items[index];
+
+  return (
+    <ListItem style={style} key={index} component="div" disablePadding>
+      <ListItemButton onClick={() => archive.load(item)}>
+        <ListItemText primary={`File ${index + 1}. ${item}`} />
+      </ListItemButton>
+    </ListItem>
+  );
+}, areEqual);
+
+const createItemData = memoize((items, archive) => ({
+  items,
+  archive,
+}));
 
 function Browser(props) {
   const files = props.archive?.data.list || [];
-  const items = [];
-  for (let k = 0; k < files.length; k++) {
-    let file = files[k];
-    items.push(
-      <Button
-        key={`file-${k}`}
-        onClick={() => {
-          console.log(`Clicked ${file}`);
-          props.archive.load(file);
-        }}
-        variant="file"
-      >
-        {file}
-      </Button>
-    );
-  }
-  // Need to supply a event handler function from props
+  const itemData = createItemData(files, props.archive);
 
-  const [value, setValue] = React.useState(null);
+  // Need to supply a event handler function from props
+  let t = new Date("2013-05-20T00:00:00");
+  console.log(t);
+
+  const [value, setValue] = React.useState(t);
 
   return (
-    <div>
+    <div className="fill">
       <SectionHeader name="archive" />
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <DatePicker
@@ -44,7 +58,17 @@ function Browser(props) {
         />
       </LocalizationProvider>
       <SectionHeader name="files" />
-      {items}
+      <Box sx={{ width: "100%", height: 600, bgcolor: "background.paper" }}>
+        <FixedSizeList
+          height={600}
+          itemSize={40}
+          itemCount={files.length}
+          itemData={itemData}
+          overscanCount={5}
+        >
+          {Row}
+        </FixedSizeList>
+      </Box>
     </div>
   );
 }
