@@ -7,12 +7,12 @@
 
 import React, { Component } from "react";
 import Split from "split.js";
-import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { Browser } from "./browser";
 import { Product } from "./product";
-import { theme, colorDict } from "./theme";
+import { makeTheme, colorDict } from "./theme";
 import { TopBar } from "./topbar";
 import { Archive } from "./archive";
 
@@ -21,7 +21,9 @@ class App extends Component {
     super(props);
     this.state = {
       colors: colorDict(),
+      theme: makeTheme(),
       sweep: null,
+      time: new Date("2013-05-20T19:00"),
     };
     this.isMobile = detectMob();
     this.archive = new Archive();
@@ -45,10 +47,12 @@ class App extends Component {
         if (e.matches) {
           this.setState({
             colors: colorDict("dark"),
+            theme: makeTheme("dark"),
           });
         } else {
           this.setState({
             colors: colorDict("light"),
+            theme: makeTheme("ligth"),
           });
         }
       });
@@ -83,7 +87,7 @@ class App extends Component {
         // </StyledEngineProvider>
       );
     return (
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={this.state.theme}>
         <TopBar ingest={this.archive} />
         <div id="flex">
           <div id="left">
@@ -99,7 +103,7 @@ class App extends Component {
             </div>
           </div>
           <div id="right">
-            <Browser archive={this.archive} />
+            <Browser archive={this.archive} hour={19} />
           </div>
         </div>
       </ThemeProvider>

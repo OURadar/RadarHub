@@ -45,6 +45,8 @@ class Archive {
         }, 2000);
       } else if (type == "list") {
         this.data.list = payload;
+        this.data.index = -1;
+        this.message = "";
       } else if (type == "reset") {
         this.data.index = -1;
       }
@@ -57,13 +59,15 @@ class Archive {
 
   load(name, index = -1) {
     this.data.index = index;
-    // this.message = `Loading ${name} ...`;
-    // this.onupdate(this.tic++);
+    this.message = `Loading ${name} ...`;
     this.worker.postMessage({ task: "load", name: name });
+    this.onupdate(this.tic++);
   }
 
   list(day) {
+    this.message = `Listing ${day} ...`;
     this.worker.postMessage({ task: "list", day: day });
+    this.onupdate(this.tic++);
   }
 }
 

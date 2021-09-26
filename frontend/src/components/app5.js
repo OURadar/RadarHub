@@ -9,14 +9,14 @@
 
 import React, { Component } from "react";
 import Split from "split.js";
-import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
 import { Product } from "./product";
-import { theme, colorDict } from "./theme";
+import { colorDict, makeTheme } from "./theme";
 import { TopBar } from "./topbar";
 import { Ingest } from "./ingest";
 
@@ -25,6 +25,7 @@ class App extends Component {
     super(props);
     this.state = {
       colors: colorDict(),
+      theme: makeTheme(),
     };
     this.ingest = new Ingest(props.radar);
     this.ingest.onupdate = () => {
@@ -48,10 +49,12 @@ class App extends Component {
         if (e.matches) {
           this.setState({
             colors: colorDict("dark"),
+            theme: makeTheme("dark"),
           });
         } else {
           this.setState({
             colors: colorDict("light"),
+            theme: makeTheme("light"),
           });
         }
       });
@@ -72,7 +75,7 @@ class App extends Component {
   render() {
     if (this.isMobile)
       return (
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={this.state.theme}>
           <TopBar isMobile={true} />
           <SectionHeader name="product" />
           <Product
@@ -83,7 +86,7 @@ class App extends Component {
         </ThemeProvider>
       );
     return (
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={this.state.theme}>
         <TopBar ingest={this.ingest} />
         <div id="flex">
           <div id="left">

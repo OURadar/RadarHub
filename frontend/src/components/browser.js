@@ -29,7 +29,7 @@ const Item = memo(({ data, index, style }) => {
   );
 }, areEqual);
 
-const createItemData = memoize((list, index, load) => ({
+const createFileList = memoize((list, index, load) => ({
   list: list,
   selectedIndex: index,
   loadItem: load,
@@ -38,34 +38,69 @@ const createItemData = memoize((list, index, load) => ({
 function Browser(props) {
   const files = props.archive?.data.list || [];
   const index = props.archive?.data.index || -1;
-  const itemData = createItemData(files, index, props.archive.load);
+  const fileData = createFileList(files, index, props.archive.load);
 
-  // Need to supply a event handler function from props
-  let t = new Date("2013-05-20T00:00:00");
-  // const [value, setValue] = React.useState(null);
+  const t = new Date("2013-05-20T12:00");
+  const [day, setDay] = React.useState(t);
+  const [hour, setHour] = React.useState(props.hour);
+
+  const setDayHour = (newDay, newHour) => {
+    setDay(newDay);
+    setHour(newHour);
+    let tmp = newDay.toISOString();
+    let yyyymmdd = tmp.slice(0, 4) + tmp.slice(5, 7) + tmp.slice(8, 10);
+    let hh = newHour.toString().padStart(2, "0");
+    console.log(`calling archive.list() ... ${yyyymmdd}-${hh}00`);
+    props.archive.list(`${yyyymmdd}-${hh}00`);
+  };
+
+  const hours = Array(24);
+  for (let k = 0; k < 24; k++) {
+    const hourString = k.toString().padStart(2, "0") + ":00";
+    const selected = k == hour;
+    hours[k] = (
+      <Button
+        key={k}
+        selected={selected}
+        variant="hour"
+        onClick={() => {
+          setDayHour(day, k);
+        }}
+      >
+        {hourString}
+      </Button>
+    );
+  }
 
   return (
     <div className="fill">
       <SectionHeader name="archive" />
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <DatePicker
-          label="Collection Date"
-          value={t}
-          onChange={(newValue) => {
-            console.log("new date picked", newValue);
-            // setValue(newValue);
-            // props.archive.list()
-          }}
-          renderInput={(params) => <TextField {...params} />}
-        />
-      </LocalizationProvider>
+      <div className="calendarContainer">
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <DatePicker
+            label="Date"
+            value={day}
+            onChange={(newDay) => {
+              setDayHour(newDay, hour);
+            }}
+            renderInput={(params) => <TextField {...params} />}
+          />
+        </LocalizationProvider>
+      </div>
+      <div className="hoursContainer">{hours}</div>
       <SectionHeader name="files" />
-      <Box sx={{ width: "100%", height: 600, bgcolor: "background.paper" }}>
+      <Box
+        sx={{
+          width: "100%",
+          height: 600,
+          backgroundColor: "var(--system-background)",
+        }}
+      >
         <FixedSizeList
           height={600}
           itemSize={40}
           itemCount={files.length}
-          itemData={itemData}
+          itemData={fileData}
           overscanCount={5}
         >
           {Item}

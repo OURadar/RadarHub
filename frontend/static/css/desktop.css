@@ -126,3 +126,16 @@ Copyright Boonleng Cheong
   cursor: col-resize;
   width: 8px !important;
 }
+
+.calendarContainer {
+  background-color: var(--system-background);
+  padding-top: var(--padding);
+  padding-bottom: calc(0.5 * var(--padding));
+  text-align: center;
+}
+.daysContainer {
+  background-color: var(--system-background);
+  display: block;
+  height: 120px;
+  overflow-y: scroll;
+}

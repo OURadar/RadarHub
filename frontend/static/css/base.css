@@ -14,11 +14,7 @@ html {
 :root {
   --padding: 20px;
   --base-size: 14;
-  --gradient-topbar: linear-gradient(
-    171.8deg,
-    rgba(5, 111, 146, 1) 13.5%,
-    rgba(6, 57, 84, 1) 78.6%
-  );
+  --topbar-background: rgb(5, 111, 146);
   box-sizing: border-box;
 }
 
@@ -81,7 +77,7 @@ html {
     --gray5: rgb(44, 44, 46);
     --gray6: rgb(28, 28, 30);
     --gray7: rgb(16, 16, 18);
-    --system-foreground: #ffffff;
+    --system-foreground: #cccccc;
     --system-background: #222328;
     --secondary-system-background: #1c1c1eff;
     --tertiary-system-background: #2c2c2eff;
@@ -112,6 +108,9 @@ canvas {
   width: 100%;
   height: 100%;
   position: relative;
+}
+.center {
+  text-align: center;
 }
 .leftPadded {
   padding-left: 20px;
@@ -290,7 +289,7 @@ h3 {
   color: white;
   padding-bottom: 5px;
   overflow-y: auto;
-  background: var(--gradient-topbar);
+  background-color: var(--topbar-background);
 }
 #statusPrefix,
 #statusBody {
@@ -351,4 +350,10 @@ h3 {
   left: 0;
   width: 100%;
   height: 512px;
+}
+
+.hoursContainer {
+  background-color: var(--system-background);
+  display: block;
+  overflow-y: scroll;
 }

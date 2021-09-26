@@ -5,6 +5,7 @@ import {
   Favorite,
   BrokenImage,
   TrackChanges,
+  History,
   Storage,
 } from "@mui/icons-material";
 
@@ -19,7 +20,7 @@ export function SectionHeader(props) {
   } else if (props.name == "product") {
     icon = <TrackChanges style={{ color: "var(--green)" }} />;
   } else if (props.name == "archive") {
-    icon = <Storage style={{ color: "var(--mint)" }} />;
+    icon = <History style={{ color: "var(--mint)" }} />;
   } else if (props.name == "files") {
     icon = <Storage style={{ color: "var(--brown)" }} />;
   }

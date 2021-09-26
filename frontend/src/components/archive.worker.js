@@ -39,7 +39,7 @@ self.onmessage = ({ data: { task, name, day } }) => {
 };
 
 function list(day) {
-  console.log(`%carchive.worker.list() ${day}`, "color: darkgreen");
+  console.log(`%carchive.worker.list() ${day}`, "color: lightseagreen");
   const url = `/data/list/${day}/`;
   fetch(url)
     .then((response) => {

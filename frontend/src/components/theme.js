@@ -2,96 +2,147 @@
 import { Hidden } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 
-let theme = createTheme({
-  palette: {
-    primary: {
-      main: "#000000",
+function reviseMode(mode) {
+  // Retrieve the body color so we can match the canvas with it
+  let bg = window.getComputedStyle(document.body).backgroundColor;
+  let body = new Array(bg.match(/\d+/g).map((x) => x / 255));
+  if (body.length == 3) {
+    body.push(1.0);
+  }
+  // Check for browser preference if 'theme' was not specified
+  if (mode === undefined) {
+    const matchMedia = window.matchMedia("(prefers-color-scheme: dark)");
+    if (matchMedia.media != "not all") {
+      if (matchMedia.matches === true) {
+        mode = "dark";
+      } else {
+        mode = "light";
+      }
+    }
+  }
+  // If the previous step failed, choose based on the brightness of the body
+  if (mode === undefined || mode == "auto") {
+    let brightness = 0.2125 * body[0] + 0.7152 * body[1] + 0.0722 * body[2];
+    if (brightness > 0.5) {
+      mode = "light";
+    } else {
+      mode = "dark";
+    }
+  }
+  return { body, mode };
+}
+
+export function makeTheme(inputMode) {
+  let { mode } = reviseMode(inputMode);
+  let theme = createTheme({
+    palette: {
+      contrastThreshold: 3,
+      tonalOffset: 0.2,
+      mode: mode,
     },
-    secondary: {
-      main: "#0044ff",
-      light: "#0066ff",
-      contrastText: "#ffcc00",
+    typography: {
+      fontFamily: [
+        "-apple-system",
+        "BlinkMacSystemFont",
+        '"Segoe UI"',
+        "Roboto",
+        '"Helvetica Neue"',
+        "Arial",
+        "sans-serif",
+        '"Apple Color Emoji"',
+        '"Segoe UI Emoji"',
+        '"Segoe UI Symbol"',
+      ].join(","),
     },
-    contrastThreshold: 3,
-    tonalOffset: 0.2,
-  },
-  typography: {
-    fontFamily: [
-      "-apple-system",
-      "BlinkMacSystemFont",
-      '"Segoe UI"',
-      "Roboto",
-      '"Helvetica Neue"',
-      "Arial",
-      "sans-serif",
-      '"Apple Color Emoji"',
-      '"Segoe UI Emoji"',
-      '"Segoe UI Symbol"',
-    ].join(","),
-  },
-  shape: {
-    borderRadius: "var(--button-border-radius)",
-    color: "var(--system-foreground)",
-  },
-});
-theme = createTheme(theme, {
-  components: {
-    MuiButton: {
-      variants: [
-        {
-          props: { variant: "control" },
-          style: {
-            boxSizing: "border-box",
-            borderTop: "var(--button-border-top)",
-            borderRight: "var(--button-border-right)",
-            borderBottom: "var(--button-border-bottom)",
-            borderLeft: "var(--button-border-left)",
+    shape: {
+      borderRadius: "var(--button-border-radius)",
+      color: "var(--system-foreground)",
+    },
+  });
+  theme = createTheme(theme, {
+    components: {
+      MuiButton: {
+        variants: [
+          {
+            props: { variant: "control" },
+            style: {
+              boxSizing: "border-box",
+              borderTop: "var(--button-border-top)",
+              borderRight: "var(--button-border-right)",
+              borderBottom: "var(--button-border-bottom)",
+              borderLeft: "var(--button-border-left)",
+              display: "inline-block",
+              fontSize: "var(--font-size)",
+              marginBottom: "var(--button-margin-bottom)",
+              overflow: "hidden",
+              padding: "0 30px",
+              textTransform: "none",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              width: "100%",
+            },
+          },
+          {
+            props: { variant: "file" },
+            style: {
+              borderRadius: 0,
+              display: "inline-block",
+              padding: "0 20px",
+              textTransform: "none",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              width: "100%",
+            },
+          },
+          {
+            props: { variant: "file", selected: true },
+            style: {
+              color: "var(--brown)",
+              backgroundColor: "var(--gray6)",
+              fontWeight: 600,
+            },
+          },
+          {
+            props: { variant: "hour" },
+            style: {
+              height: "40px",
+              width: "25%",
+            },
+          },
+          {
+            props: { variant: "hour", selected: true },
+            style: {
+              color: "var(--mint)",
+              fontWeight: 600,
+              height: "40px",
+              width: "25%",
+            },
+          },
+        ],
+      },
+      MuiListItemText: {
+        styleOverrides: {
+          root: {
             display: "inline-block",
-            fontSize: "var(--font-size)",
-            marginBottom: "var(--button-margin-bottom)",
             overflow: "hidden",
-            padding: "0 30px",
-            textTransform: "none",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
-            width: "100%",
           },
         },
-        {
-          props: { variant: "file" },
-          style: {
-            borderRadius: 0,
-            display: "inline-block",
-            padding: "0 20px",
-            textTransform: "none",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            width: "100%",
+      },
+      MuiBox: {
+        styleOverrides: {
+          root: {
+            backgroundColor: "#222255",
           },
-        },
-        {
-          props: { variant: "file", selected: true },
-          style: {
-            color: "var(--blue)",
-            backgroundColor: "var(--gray6)",
-          },
-        },
-      ],
-    },
-    MuiListItemText: {
-      styleOverrides: {
-        root: {
-          display: "inline-block",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
         },
       },
     },
-  },
-});
+  });
+  return theme;
+}
 
-export { theme };
+export const theme = makeTheme();
 
 /*
 overrides: {
@@ -151,33 +202,8 @@ export function array2rgba(array) {
   return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-export function colorDict(theme) {
-  // Retrieve the body color so we can match the canvas with it
-  let bg = window.getComputedStyle(document.body).backgroundColor;
-  let body = new Array(bg.match(/\d+/g).map((x) => x / 255));
-  if (body.length == 3) {
-    body.push(1.0);
-  }
-  // Check for browser preference if 'theme' was not specified
-  if (theme === undefined) {
-    const matchMedia = window.matchMedia("(prefers-color-scheme: dark)");
-    if (matchMedia.media != "not all") {
-      if (matchMedia.matches === true) {
-        theme = "dark";
-      } else {
-        theme = "light";
-      }
-    }
-  }
-  // If the previous step failed, choose based on the brightness of the body
-  if (theme === undefined || theme == "auto") {
-    let brightness = 0.2125 * body[0] + 0.7152 * body[1] + 0.0722 * body[2];
-    if (brightness > 0.5) {
-      theme = "light";
-    } else {
-      theme = "dark";
-    }
-  }
+export function colorDict(inputMode) {
+  let { body, mode } = reviseMode(inputMode);
   // console.log(`body = ${body}`);
   // Pick the dictionary according to the final theme value
   const themes = {
@@ -336,5 +362,5 @@ export function colorDict(theme) {
       },
     },
   };
-  return themes[theme];
+  return themes[mode];
 }
