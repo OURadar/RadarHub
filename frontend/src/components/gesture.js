@@ -19,6 +19,7 @@ class Gesture {
     this.pointX = 0;
     this.pointY = 0;
     this.pointD = 0;
+    this.scale = 1;
     this.shiftKey = false;
     this.panInProgress = false;
     this.singleTapTimeout = null;
@@ -167,33 +168,27 @@ class Gesture {
       this.message = "double click";
       this.handleDoubleTap(this.pointX, this.pointY);
     });
-    // this.element.addEventListener("gesturestart", (e) => {
-    //   this.message = "gesturestart (" + e.scale + ")";
-    //   e.preventDefault();
-    //   // if (e.scale > 0) {
-    //   //   let s = 0.04 * (e.scale - 1) + 1.0;
-    //   //   this.handleMagnify(s, s);
-    //   //   e.preventDefault();
-    //   // }
-    // });
-    // this.element.addEventListener("gesturechange", (e) => {
-    //   this.message = "gesturechange (" + e.scale + ")";
-    //   e.preventDefault();
-    //   // if (e.scale > 0) {
-    //   //   let s = 0.04 * (e.scale - 1) + 1.0;
-    //   //   this.handleMagnify(s, s);
-    //   //   e.preventDefault();
-    //   // }
-    // });
-    // this.element.addEventListener("gestureend", (e) => {
-    //   this.message = "gestureend (" + e.scale + ")";
-    //   e.preventDefault();
-    //   // if (e.scale > 0) {
-    //   //   let s = 0.04 * (e.scale - 1) + 1.0;
-    //   //   this.handleMagnify(s, s);
-    //   //   e.preventDefault();
-    //   // }
-    // });
+    this.element.addEventListener("gesturestart", (e) => {
+      this.message = `gesturestart (${e.scale})`;
+      e.preventDefault();
+      const s = e.scale / this.scale;
+      this.handleMagnify(s, s, s, 0, 0);
+      this.scale = e.scale;
+    });
+    this.element.addEventListener("gesturechange", (e) => {
+      this.message = `gesturechange (${e.scale})`;
+      e.preventDefault();
+      const s = e.scale / this.scale;
+      this.handleMagnify(s, s, s, 0, 0);
+      this.scale = e.scale;
+    });
+    this.element.addEventListener("gestureend", (e) => {
+      this.message = `gestureend (${e.scale})`;
+      e.preventDefault();
+      const s = e.scale / this.scale;
+      this.handleMagnify(s, s, s, 0, 0);
+      this.scale = e.scale;
+    });
   }
 }
 

@@ -36,9 +36,26 @@ export function makeTheme(inputMode) {
   let { mode } = reviseMode(inputMode);
   let theme = createTheme({
     palette: {
+      mode,
+      ...(mode === "light"
+        ? {
+            primary: {
+              main: "rgb(0, 199, 190)",
+            },
+            secondary: {
+              main: "rgb(162, 132, 94)",
+            },
+          }
+        : {
+            primary: {
+              main: "rgb(102, 212, 207)",
+            },
+            secondary: {
+              main: "rgb(172, 142, 104)",
+            },
+          }),
       contrastThreshold: 3,
       tonalOffset: 0.2,
-      mode: mode,
     },
     typography: {
       fontFamily: [
@@ -97,8 +114,8 @@ export function makeTheme(inputMode) {
           {
             props: { variant: "file", selected: true },
             style: {
-              color: "var(--brown)",
-              backgroundColor: "var(--gray6)",
+              color: theme.palette.secondary.main,
+              backgroundColor: theme.palette.action.selected,
               fontWeight: 600,
             },
           },
@@ -112,7 +129,8 @@ export function makeTheme(inputMode) {
           {
             props: { variant: "hour", selected: true },
             style: {
-              color: "var(--mint)",
+              color: theme.palette.primary.main,
+              backgroundColor: theme.palette.action.selected,
               fontWeight: 600,
               height: "40px",
               width: "25%",
@@ -127,13 +145,6 @@ export function makeTheme(inputMode) {
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
-          },
-        },
-      },
-      MuiBox: {
-        styleOverrides: {
-          root: {
-            backgroundColor: "#222255",
           },
         },
       },
