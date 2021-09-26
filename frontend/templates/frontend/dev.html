@@ -34,7 +34,7 @@
       type="image/jpg"
       href="{% static 'images/favicon.ico' %}"
     />
-    <link
+    {% comment %} <link
       rel="stylesheet"
       type="text/css"
       href="{% static 'css/base.css' %}"
@@ -50,11 +50,11 @@
       type="text/css"
       media="screen and (max-device-width: 550px)"
       href="{% static 'css/mobile.css' %}"
-    />
-    {% comment %} <link
+    /> {% endcomment %}
+    <link
       rel="stylesheet"
       type="text/css"
-      href="{% static 'css/index.css' %}?r={% now 'U' %}"
+      href="{% static 'css/base.css' %}?r={% now 'U' %}"
     />
     <link
       rel="stylesheet"
@@ -67,13 +67,13 @@
       type="text/css"
       media="screen and (min-device-width: 550px)"
       href="{% static 'css/desktop.css' %}?r={% now 'U' %}"
-    /> {% endcomment %}
+    />
     {{ params|json_script:"params" }}
     <title>RadarHub</title>
   </head>
   <body>
     <div id="app"></div>
-    <div id="test"></div>
+    {% comment %} <div id="test"></div> {% endcomment %}
   </body>
   <script src="{% static 'frontend/shared.js' %}"></script>
   <script src="{% static 'frontend/dev.js' %}?v={% now 'U' %}"></script>

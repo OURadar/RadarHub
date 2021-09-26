@@ -139,3 +139,6 @@ Copyright Boonleng Cheong
   height: 120px;
   overflow-y: scroll;
 }
+.hoursContainer {
+  column-count: 4;
+}

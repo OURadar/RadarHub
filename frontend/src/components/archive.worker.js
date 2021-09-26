@@ -22,6 +22,7 @@ const sweepParser = new Parser()
   });
 
 let data = {
+  hour: new Array(24).fill(0),
   list: [],
   sweep: {
     el: [],
@@ -38,9 +39,9 @@ self.onmessage = ({ data: { task, name, day } }) => {
   }
 };
 
-function list(day) {
-  console.log(`%carchive.worker.list() ${day}`, "color: lightseagreen");
-  const url = `/data/list/${day}/`;
+function list(dayHour) {
+  console.log(`%carchive.worker.list() ${dayHour}`, "color: lightseagreen");
+  const url = `/data/list/${dayHour}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)

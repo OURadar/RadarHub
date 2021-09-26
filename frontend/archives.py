@@ -28,6 +28,58 @@ def header(requst, name):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
+'''
+    day - a string in the forms of
+          - YYYYMMDD
+'''
+def count(request, day):
+    show = colorize(day, 'orange')
+    print(f'archives.count() {show}')
+    prefix = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
+    n = [0 for _ in range(24)]
+    for h in range(24):
+        dateRange = [f'{prefix} {h:02d}:00Z', f'{prefix} {h:02d}:59Z']
+        matches = File.objects.filter(name__contains='-Z', date__range=dateRange)
+        n[h] = len(matches)
+    data = {
+        'count': n
+    }
+    print(data)
+    payload = json.dumps(data)
+    response = HttpResponse(payload, content_type='application/json')
+    return response
+
+'''
+    hour - a string in the forms of
+           - YYYYMMDD-HHMM
+           - YYYYMMDD-HH
+           - YYYYMMDD
+'''
+def list(request, hour):
+    show = colorize(hour, 'orange')
+    print(f'archives.list() {show}')
+
+    if len(hour) == 13:
+        s = time.strptime(hour, '%Y%m%d-%H%M')
+        e = time.localtime(time.mktime(s) + 3600)
+        ss = time.strftime('%Y-%m-%d %H:%MZ', s)
+        ee = time.strftime('%Y-%m-%d %H:%MZ', e)
+        dateRange = [ss, ee]
+    elif len(hour) == 11:
+        prefix = time.strftime('%Y-%m-%d %H', time.strptime(hour, '%Y%m%d-%H'))
+        dateRange = [f'{prefix}:00Z', f'{prefix}:59Z']
+    elif len(hour) == 8:
+        prefix = time.strftime('%Y-%m-%d', time.strptime(hour, '%Y%m%d'))
+        dateRange = [f'{prefix} 00:00Z', f'{prefix} 00:59Z']
+
+    matches = File.objects.filter(name__contains='-Z', date__range=dateRange)[:200]
+    data = {
+        'list': [o.name for o in matches]
+    }
+    payload = json.dumps(data)
+    response = HttpResponse(payload, content_type='application/json')
+    return response
+
 def file(request, name):
     show = colorize(name, 'green')
     print(f'archives.file() {show}')
@@ -47,33 +99,3 @@ def file(request, name):
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
-'''
-    day - a string in the forms of
-          - YYYYMMDD
-          - YYYYMMDD-HH
-          - YYYYMMDD-HHMM
-'''
-def list(request, day):
-    show = colorize(day, 'orange')
-    print(f'archives.list() {show}')
-
-    if len(day) == 13:
-        s = time.strptime(day, '%Y%m%d-%H%M')
-        e = time.localtime(time.mktime(s) + 3600)
-        ss = time.strftime('%Y-%m-%d %H:%MZ', s)
-        ee = time.strftime('%Y-%m-%d %H:%MZ', e)
-        dateRange = [ss, ee]
-    elif len(day) == 11:
-        prefix = time.strftime('%Y-%m-%d %H', time.strptime(day, '%Y%m%d-%H'))
-        dateRange = [f'{prefix}:00Z', f'{prefix}:59Z']
-    elif len(day) == 8:
-        prefix = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
-        dateRange = [f'{prefix} 00:00Z', f'{prefix} 00:59Z']
-
-    matches = File.objects.filter(name__contains='-Z', date__range=dateRange)[:200]
-    data = {
-        'list': [o.name for o in matches]
-    }
-    payload = json.dumps(data)
-    response = HttpResponse(payload, content_type='application/json')
-    return response
