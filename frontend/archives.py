@@ -44,7 +44,6 @@ def count(request, day):
     data = {
         'count': n
     }
-    print(data)
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response
@@ -58,6 +57,8 @@ def count(request, day):
 def list(request, hour):
     show = colorize(hour, 'orange')
     print(f'archives.list() {show}')
+    if hour == 'undefined':
+        return HttpResponse(f'Not a valid query.', status=500)
 
     if len(hour) == 13:
         s = time.strptime(hour, '%Y%m%d-%H%M')
@@ -80,9 +81,9 @@ def list(request, hour):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
-def file(request, name):
+def load(request, name):
     show = colorize(name, 'green')
-    print(f'archives.file() {show}')
+    print(f'archives.load() {show}')
 
     match = File.objects.filter(name=name)
     if len(match):

@@ -9,7 +9,10 @@ class Archive {
   constructor() {
     this.radar = "archive";
     this.data = {
-      list: [],
+      day: "",
+      date: new Date("2013-05-20T12:00"),
+      count: new Array(24).fill(0),
+      files: [],
       sweep: {
         az: [],
         el: [],
@@ -44,29 +47,47 @@ class Archive {
           }
         }, 2000);
       } else if (type == "list") {
-        this.data.list = payload;
+        this.data.files = payload;
         this.data.index = -1;
         this.message = "";
+      } else if (type == "count") {
+        this.data.count = payload;
       } else if (type == "reset") {
         this.data.index = -1;
       }
       this.onupdate(this.tic++);
     };
 
-    this.load = this.load.bind(this);
+    this.count = this.count.bind(this);
     this.list = this.list.bind(this);
+    this.load = this.load.bind(this);
+  }
+
+  count(day) {
+    this.data.day = day;
+    const y = day.slice(0, 4);
+    const m = day.slice(4, 6);
+    const d = day.slice(6, 8);
+    const isoDateString = `${y}-${m}-${d}T12:00`;
+    this.data.date = new Date(isoDateString);
+    this.worker.postMessage({ task: "count", day: day });
+    this.onupdate(this.tic++);
+  }
+
+  list(time) {
+    this.message = `Listing ${time} ...`;
+    const day = time.slice(0, 8);
+    if (this.data.day != day) {
+      this.count(day);
+    }
+    this.worker.postMessage({ task: "list", time: time });
+    this.onupdate(this.tic++);
   }
 
   load(name, index = -1) {
     this.data.index = index;
     this.message = `Loading ${name} ...`;
     this.worker.postMessage({ task: "load", name: name });
-    this.onupdate(this.tic++);
-  }
-
-  list(day) {
-    this.message = `Listing ${day} ...`;
-    this.worker.postMessage({ task: "list", day: day });
     this.onupdate(this.tic++);
   }
 }

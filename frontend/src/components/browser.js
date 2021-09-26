@@ -36,12 +36,13 @@ const createFileList = memoize((list, index, load) => ({
 }));
 
 function Browser(props) {
-  const files = props.archive?.data.list || [];
+  const date = props.archive?.data.date || new Date("2013-05-20T12:00");
+  const count = props.archive?.data.count || new Array(24).fill(0);
+  const files = props.archive?.data.files || [];
   const index = props.archive?.data.index || -1;
   const fileData = createFileList(files, index, props.archive.load);
 
-  const t = new Date("2013-05-20T12:00");
-  const [day, setDay] = React.useState(t);
+  const [day, setDay] = React.useState(date);
   const [hour, setHour] = React.useState(props.hour);
 
   const setDayHour = (newDay, newHour) => {
@@ -50,7 +51,7 @@ function Browser(props) {
     let tmp = newDay.toISOString();
     let yyyymmdd = tmp.slice(0, 4) + tmp.slice(5, 7) + tmp.slice(8, 10);
     let hh = newHour.toString().padStart(2, "0");
-    console.log(`calling archive.list() ... ${yyyymmdd}-${hh}00`);
+    // console.log(`calling archive.list() ... ${yyyymmdd}-${hh}00`);
     props.archive.list(`${yyyymmdd}-${hh}00`);
   };
 
@@ -58,11 +59,13 @@ function Browser(props) {
   for (let k = 0; k < 24; k++) {
     const hourString = k.toString().padStart(2, "0") + ":00";
     const selected = k == hour;
+    const disabled = count[k] == 0;
     hours[k] = (
       <Button
         key={k}
-        selected={selected}
         variant="hour"
+        disabled={disabled}
+        selected={selected}
         onClick={() => {
           setDayHour(day, k);
         }}

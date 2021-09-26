@@ -66,6 +66,7 @@ class App extends Component {
       });
     }
 
+    // this.archive.count("20130520");
     this.archive.list("20130520-1900");
   }
 

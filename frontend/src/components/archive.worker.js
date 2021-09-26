@@ -21,33 +21,43 @@ const sweepParser = new Parser()
     },
   });
 
-let data = {
-  hour: new Array(24).fill(0),
-  list: [],
-  sweep: {
-    el: [],
-    az: [],
-    values: [],
-  },
-};
-
-self.onmessage = ({ data: { task, name, day } }) => {
+self.onmessage = ({ data: { task, name, day, time } }) => {
   if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(day);
+    list(time);
+  } else if (task == "count") {
+    count(day);
   }
 };
 
-function list(dayHour) {
-  console.log(`%carchive.worker.list() ${dayHour}`, "color: lightseagreen");
-  const url = `/data/list/${dayHour}/`;
+function count(day) {
+  console.log(`%carchive.worker.count() ${day}`, "color: lightseagreen");
+  const url = `/data/count/${day}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          data.list = buffer.list;
-          self.postMessage({ type: "list", payload: data.list });
+          self.postMessage({ type: "count", payload: buffer.count });
+        });
+      else
+        response.text().then((error) => {
+          self.postMessage({ type: "message", payload: error });
+        });
+    })
+    .catch((error) => {
+      console.log(`Unexpected error ${error}`);
+    });
+}
+
+function list(day) {
+  console.log(`%carchive.worker.list() ${day}`, "color: lightseagreen");
+  const url = `/data/list/${day}/`;
+  fetch(url)
+    .then((response) => {
+      if (response.status == 200)
+        response.json().then((buffer) => {
+          self.postMessage({ type: "list", payload: buffer.list });
         });
       else
         response.text().then((error) => {
@@ -60,15 +70,15 @@ function list(dayHour) {
 }
 
 function load(name) {
-  const url = `/data/file/${name}`;
+  const url = `/data/load/${name}`;
   console.log(`Background fetching ${url}`);
   fetch(url)
     .then((response) => {
       if (response.status == 200)
         response.arrayBuffer().then((buffer) => {
-          data.sweep = sweepParser.parse(new Uint8Array(buffer));
-          data.sweep = { ...data.sweep, name: name };
-          self.postMessage({ type: "load", payload: data.sweep });
+          let sweep = { name, ...sweepParser.parse(new Uint8Array(buffer)) };
+          console.log(sweep);
+          self.postMessage({ type: "load", payload: sweep });
         });
       else
         response.text().then((error) => {
