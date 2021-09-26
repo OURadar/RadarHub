@@ -52,7 +52,7 @@ class App extends Component {
         } else {
           this.setState({
             colors: colorDict("light"),
-            theme: makeTheme("ligth"),
+            theme: makeTheme("light"),
           });
         }
       });
@@ -74,7 +74,7 @@ class App extends Component {
     if (this.isMobile)
       return (
         // <StyledEngineProvider injectFirst>
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={this.state.theme}>
           <TopBar isMobile={this.isMobile} />
           <SectionHeader name="product" />
           <Product

@@ -35,12 +35,31 @@ const createFileList = memoize((list, index, load) => ({
   loadItem: load,
 }));
 
+const createFileButtons = (list, index, load) => {
+  const fileButtons = Array(list.length);
+  for (let k = 0, l = list.length; k < l; k++) {
+    const selected = k == index;
+    const file = list[k];
+    fileButtons[k] = (
+      <Button
+        key={k}
+        variant="file"
+        onClick={() => load(file, k)}
+        style={{ height: 36, overflow: "hidden", textOverflow: "ellipsis" }}
+        selected={selected}
+      >
+        {file}
+      </Button>
+    );
+  }
+  return fileButtons;
+};
+
 function Browser(props) {
   const date = props.archive?.data.date || new Date("2013-05-20T12:00");
   const count = props.archive?.data.count || new Array(24).fill(0);
   const files = props.archive?.data.files || [];
   const index = props.archive?.data.index || -1;
-  const fileData = createFileList(files, index, props.archive.load);
 
   const [day, setDay] = React.useState(date);
   const [hour, setHour] = React.useState(props.hour);
@@ -55,12 +74,12 @@ function Browser(props) {
     props.archive.list(`${yyyymmdd}-${hh}00`);
   };
 
-  const hours = Array(24);
+  const hourButtons = Array(24);
   for (let k = 0; k < 24; k++) {
     const hourString = k.toString().padStart(2, "0") + ":00";
-    const selected = k == hour;
+    const selected = files.length ? k == hour : false;
     const disabled = count[k] == 0;
-    hours[k] = (
+    hourButtons[k] = (
       <Button
         key={k}
         variant="hour"
@@ -74,6 +93,32 @@ function Browser(props) {
       </Button>
     );
   }
+
+  // console.log(`files.length = ${files.length}   index = ${index}`);
+
+  const fileBrowser = props.useMemo ? (
+    <Box
+      sx={{
+        width: "100%",
+        height: 600,
+        backgroundColor: "var(--system-background)",
+      }}
+    >
+      <FixedSizeList
+        height={600}
+        itemSize={32}
+        itemCount={files.length}
+        itemData={createFileList(files, index, props.archive.load)}
+        overscanCount={5}
+      >
+        {Item}
+      </FixedSizeList>
+    </Box>
+  ) : (
+    <div className="filesContainer">
+      {createFileButtons(files, index, props.archive.load)}
+    </div>
+  );
 
   return (
     <div className="fill">
@@ -90,25 +135,9 @@ function Browser(props) {
           />
         </LocalizationProvider>
       </div>
-      <div className="hoursContainer">{hours}</div>
+      <div className="hoursContainer">{hourButtons}</div>
       <SectionHeader name="files" />
-      <Box
-        sx={{
-          width: "100%",
-          height: 600,
-          backgroundColor: "var(--system-background)",
-        }}
-      >
-        <FixedSizeList
-          height={600}
-          itemSize={40}
-          itemCount={files.length}
-          itemData={fileData}
-          overscanCount={5}
-        >
-          {Item}
-        </FixedSizeList>
-      </Box>
+      {fileBrowser}
     </div>
   );
 }

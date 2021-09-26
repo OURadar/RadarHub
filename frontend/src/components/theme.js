@@ -41,18 +41,24 @@ export function makeTheme(inputMode) {
         ? {
             primary: {
               main: "rgb(0, 199, 190)",
+              dark: "rgb(0, 179, 170)",
             },
             secondary: {
               main: "rgb(162, 132, 94)",
+              dark: "rgb(146, 119, 85)",
             },
+            divider: "rgba(0, 0, 0, 0.06)",
           }
         : {
             primary: {
               main: "rgb(102, 212, 207)",
+              dark: "rgb(92, 191, 186)",
             },
             secondary: {
               main: "rgb(172, 142, 104)",
+              dark: "rgb(155, 128, 94)",
             },
+            divider: "rgba(255, 255, 255, 0.08)",
           }),
       contrastThreshold: 3,
       tonalOffset: 0.2,
@@ -112,28 +118,48 @@ export function makeTheme(inputMode) {
             },
           },
           {
+            props: { variant: "file", selected: false },
+            style: {
+              "&:nth-of-type(even)": {
+                backgroundColor: theme.palette.divider,
+              },
+            },
+          },
+          {
             props: { variant: "file", selected: true },
             style: {
-              color: theme.palette.secondary.main,
-              backgroundColor: theme.palette.action.selected,
+              color: "white",
+              "&:hover": {
+                color: "white",
+              },
+              backgroundColor: theme.palette.secondary.main,
+              "&:hover": {
+                backgroundColor: theme.palette.secondary.dark,
+              },
+              height: 32,
               fontWeight: 600,
             },
           },
           {
             props: { variant: "hour" },
             style: {
-              height: "40px",
+              color: "var(--system-foreground)",
+              height: 32,
               width: "25%",
             },
           },
           {
             props: { variant: "hour", selected: true },
             style: {
-              color: theme.palette.primary.main,
-              backgroundColor: theme.palette.action.selected,
+              color: "white",
+              "&:hover": {
+                color: "white",
+              },
+              backgroundColor: theme.palette.primary.main,
+              "&:hover": {
+                backgroundColor: theme.palette.primary.dark,
+              },
               fontWeight: 600,
-              height: "40px",
-              width: "25%",
             },
           },
         ],

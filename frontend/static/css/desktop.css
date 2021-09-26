@@ -133,12 +133,11 @@ Copyright Boonleng Cheong
   padding-bottom: calc(0.5 * var(--padding));
   text-align: center;
 }
-.daysContainer {
-  background-color: var(--system-background);
-  display: block;
-  height: 120px;
-  overflow-y: scroll;
-}
 .hoursContainer {
   column-count: 4;
+}
+.filesContainer {
+  background-color: var(--system-background);
+  height: calc(100vh - 84px - 86px - 44px - 192px - 44px - 1px);
+  overflow-y: scroll;
 }
