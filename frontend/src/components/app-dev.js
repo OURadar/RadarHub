@@ -8,11 +8,11 @@
 import React, { Component } from "react";
 import Split from "split.js";
 import { ThemeProvider } from "@mui/material/styles";
+import { makeTheme, colorDict } from "./theme";
 import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { Browser } from "./browser";
 import { Product } from "./product";
-import { makeTheme, colorDict } from "./theme";
 import { TopBar } from "./topbar";
 import { Archive } from "./archive";
 
@@ -58,7 +58,6 @@ class App extends Component {
       });
     if (!this.isMobile) {
       const w = (300 / window.innerWidth) * 100;
-      console.log(`w = ${w}`);
       Split(["#left", "#right"], {
         sizes: [100 - w, w],
         minSize: [400, 300],

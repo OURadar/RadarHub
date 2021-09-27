@@ -112,11 +112,11 @@ Copyright Boonleng Cheong
 }
 .gutter {
   background-color: var(--gray6);
-  transition: background-color 0.3s linear;
+  transition: background-color 0.25s linear;
 }
 .gutter:hover {
   background-color: var(--gray3);
-  transition: background-color 0.3s linear;
+  transition: background-color 0.25s linear;
 }
 .gutter.gutter-vertical {
   cursor: row-resize;

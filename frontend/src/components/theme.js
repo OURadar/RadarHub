@@ -41,27 +41,29 @@ export function makeTheme(inputMode) {
         ? {
             primary: {
               main: "rgb(0, 199, 190)",
-              dark: "rgb(0, 179, 170)",
+              light: "rgba(0, 199, 190, 0.2)",
+              dark: "rgba(0, 199, 190, 0.3)",
             },
             secondary: {
               main: "rgb(162, 132, 94)",
-              dark: "rgb(146, 119, 85)",
+              light: "rgba(162, 132, 94, 0.2)",
+              dark: "rgba(162, 132, 94, 0.3)",
             },
-            divider: "rgba(0, 0, 0, 0.06)",
+            divider: "rgba(0, 0, 0, 0.04)",
           }
         : {
             primary: {
               main: "rgb(102, 212, 207)",
-              dark: "rgb(92, 191, 186)",
+              light: "rgba(102, 212, 207, 0.2)",
+              dark: "rgba(102, 212, 207, 0.3)",
             },
             secondary: {
               main: "rgb(172, 142, 104)",
-              dark: "rgb(155, 128, 94)",
+              light: "rgba(172, 142, 104, 0.2)",
+              dark: "rgba(172, 142, 104, 0.3)",
             },
-            divider: "rgba(255, 255, 255, 0.08)",
+            divider: "rgba(255, 255, 255, 0.04)",
           }),
-      contrastThreshold: 3,
-      tonalOffset: 0.2,
     },
     typography: {
       fontFamily: [
@@ -109,6 +111,7 @@ export function makeTheme(inputMode) {
             props: { variant: "file" },
             style: {
               borderRadius: 0,
+              color: theme.palette.text.secondary,
               display: "inline-block",
               padding: "0 20px",
               textTransform: "none",
@@ -128,11 +131,11 @@ export function makeTheme(inputMode) {
           {
             props: { variant: "file", selected: true },
             style: {
-              color: "white",
+              color: theme.palette.secondary.main,
               "&:hover": {
                 color: "white",
               },
-              backgroundColor: theme.palette.secondary.main,
+              backgroundColor: theme.palette.secondary.light,
               "&:hover": {
                 backgroundColor: theme.palette.secondary.dark,
               },
@@ -143,7 +146,7 @@ export function makeTheme(inputMode) {
           {
             props: { variant: "hour" },
             style: {
-              color: "var(--system-foreground)",
+              color: theme.palette.text.secondary,
               height: 32,
               width: "25%",
             },
@@ -151,11 +154,11 @@ export function makeTheme(inputMode) {
           {
             props: { variant: "hour", selected: true },
             style: {
-              color: "white",
+              color: theme.palette.primary.main,
               "&:hover": {
                 color: "white",
               },
-              backgroundColor: theme.palette.primary.main,
+              backgroundColor: theme.palette.primary.light,
               "&:hover": {
                 backgroundColor: theme.palette.primary.dark,
               },
@@ -168,6 +171,7 @@ export function makeTheme(inputMode) {
         styleOverrides: {
           root: {
             display: "inline-block",
+            color: theme.palette.text.secondary,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
