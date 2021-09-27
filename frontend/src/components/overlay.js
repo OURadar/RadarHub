@@ -157,19 +157,42 @@ class Overlay {
     this.textEngine
       .load(
         [
+          // {
+          //   name: "/static/maps/World/cities.shp",
+          //   keys: {
+          //     name: "CITY_NAME",
+          //     weight: "POP_RANK",
+          //     maximumWeight: 5,
+          //   },
+          // },
           {
             name: "/static/maps/World/cities.shp.json",
             keys: {
-              name: "CITY_NAME",
-              weight: "POP_RANK",
+              name: "N",
+              geometry: "G",
+              properties: "P",
+              coordinates: "C",
+              weight: "W",
               maximumWeight: 5,
             },
           },
+          // {
+          //   name: "/static/maps/United States/citiesx020.shp",
+          //   keys: {
+          //     name: "NAME",
+          //     population: "POP_2000",
+          //     origin: this.geometry.origin,
+          //     theta: Math.cos((3.0 / 180) * Math.PI),
+          //   },
+          // },
           {
             name: "/static/maps/United States/citiesx020.shp.json",
             keys: {
-              name: "NAME",
-              population: "POP_2000",
+              name: "N",
+              geometry: "G",
+              properties: "P",
+              coordinates: "C",
+              population: "P",
               origin: this.geometry.origin,
               theta: Math.cos((3.0 / 180) * Math.PI),
             },
@@ -424,26 +447,6 @@ function doOverlap(rect1, rect2) {
   )
     return false;
   return true;
-}
-
-/**
- * Transforms the vec4 with a mat4.
- * Simplified version where w = 1.0 and z is not calculated
- *
- * @param {vec4} out the receiving vector
- * @param {ReadonlyVec3} a the vector to transform
- * @param {ReadonlyMat4} m matrix to transform with
- * @returns {vec4} out
- */
-function transformMat4(out, a, m) {
-  let x = a[0],
-    y = a[1],
-    z = a[2];
-  out[0] = m[0] * x + m[4] * y + m[8] * z + m[12];
-  out[1] = m[1] * x + m[5] * y + m[9] * z + m[13];
-  out[2] = 0.0;
-  out[3] = m[3] * x + m[7] * y + m[11] * z + m[15];
-  return out;
 }
 
 export { Overlay };

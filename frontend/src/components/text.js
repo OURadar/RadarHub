@@ -359,7 +359,7 @@ async function builtInLabels(name, model, colors) {
 }
 
 async function handleShapefileJSON(name) {
-  return fetch(name, { cache: "force-cache" }).then((text) => text.json());
+  return fetch(name, { cache: "no-cache" }).then((text) => text.json());
 }
 
 async function handleShapefile(name) {
@@ -382,19 +382,27 @@ function parseArray(array, keys, colors) {
   const nameKey = keys.name;
   const weightKey = keys.weight ?? false;
   const populationKey = keys.population ?? false;
+  const geometryKey = keys.geometry ?? "geometry";
+  const propertiesKey = keys.properties ?? "properties";
+  const coordinatesKey = keys.coordinates ?? "coordinates";
   const maximumWeight = keys.maximumWeight ?? 999;
   const origin = keys.origin ?? false;
   const theta = keys.theta ?? Math.cos((3.0 / 180) * Math.PI);
   const theta2 = Math.cos(150 / earthRadius);
   const o = deg.coord2point(origin.longitude, origin.latitude, 1.0);
   // console.log(`filter = ${filterByDistance}  o = ${o}  th = ${th}`);
-
+  // console.log(
+  //   `nameKey = ${nameKey}` +
+  //     `  geometryKey = ${geometryKey}` +
+  //     `  propertiesKey = ${propertiesKey}` +
+  //     `  coordinatesKey = ${coordinatesKey}`
+  // );
   array.forEach((label) => {
-    const lon = label.geometry.coordinates.flat()[0];
-    const lat = label.geometry.coordinates.flat()[1];
+    const [lon, lat] = label[geometryKey][coordinatesKey].flat();
+    const properties = label[propertiesKey];
     const weight = weightKey
-      ? label.properties[weightKey]
-      : pop2weight(label.properties[populationKey]);
+      ? properties[weightKey]
+      : pop2weight(properties[populationKey]);
     if (weight > maximumWeight) return;
     if (origin) {
       const p = deg.coord2point(lon, lat, 1.0);
@@ -402,7 +410,7 @@ function parseArray(array, keys, colors) {
       if (dot < theta) return;
       if (dot < theta2 && weight == 9) return;
     }
-    const text = label.properties[nameKey];
+    const text = properties[nameKey];
     labels.push({
       text: text,
       weight: weight,
