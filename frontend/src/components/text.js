@@ -359,7 +359,7 @@ async function builtInLabels(name, model, colors) {
 }
 
 async function handleShapefileJSON(name) {
-  return fetch(name, { cache: "no-cache" }).then((text) => text.json());
+  return fetch(name, { cache: "force-cache" }).then((text) => text.json());
 }
 
 async function handleShapefile(name) {

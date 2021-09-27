@@ -89,11 +89,11 @@ def load(request, name):
     if len(match):
         match = match[0]
     else:
-        return HttpResponse(f'No match of {name} in database', status=404)
+        return HttpResponse(f'No match of {name} in database', status=202)
 
     sweep = match.getData()
     if sweep is None:
-        return HttpResponse(f'File {name} not found', status=404)
+        return HttpResponse(f'File {name} not found', status=202)
     head = struct.pack('hh', *sweep['values'].shape)
     data = np.array(sweep['values'] * 0.5 + 32, dtype=np.uint8)
     payload = bytes(head) + bytes(sweep['azimuths']) + bytes(data)

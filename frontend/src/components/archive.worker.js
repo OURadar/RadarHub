@@ -60,8 +60,8 @@ function list(day) {
           self.postMessage({ type: "list", payload: buffer.list });
         });
       else
-        response.text().then((error) => {
-          self.postMessage({ type: "message", payload: error });
+        response.text().then((response) => {
+          self.postMessage({ type: "message", payload: response });
         });
     })
     .catch((error) => {
@@ -80,12 +80,12 @@ function load(name) {
           console.log(sweep);
           self.postMessage({ type: "load", payload: sweep });
         });
-      else
-        response.text().then((error) => {
-          console.log(error);
-          self.postMessage({ type: "reset" });
-          self.postMessage({ type: "message", payload: error });
+      else {
+        response.text().then((text) => {
+          console.log(text);
+          self.postMessage({ type: "reset", payload: text });
         });
+      }
     })
     .catch((error) => {
       console.log(`Unexpected error ${error}`);

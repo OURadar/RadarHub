@@ -111,6 +111,7 @@ export function makeTheme(inputMode) {
             props: { variant: "file" },
             style: {
               borderRadius: 0,
+              borderBottom: "solid 1px var(--gray5)",
               color: theme.palette.text.secondary,
               display: "inline-block",
               padding: "0 20px",
@@ -118,16 +119,19 @@ export function makeTheme(inputMode) {
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               width: "100%",
-            },
-          },
-          {
-            props: { variant: "file", selected: false },
-            style: {
-              "&:nth-of-type(even)": {
-                backgroundColor: theme.palette.divider,
+              "&:last-child": {
+                borderBottom: "none",
               },
             },
           },
+          // {
+          //   props: { variant: "file", selected: false },
+          //   style: {
+          //     "&:nth-of-type(even)": {
+          //       backgroundColor: theme.palette.divider,
+          //     },
+          //   },
+          // },
           {
             props: { variant: "file", selected: true },
             style: {

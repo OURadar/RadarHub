@@ -22,6 +22,7 @@ class Archive {
       index: -1,
     };
     this.tic = 0;
+    this.timer = null;
     this.message = "";
     this.response = "";
     this.onupdate = (_data) => {};
@@ -29,23 +30,10 @@ class Archive {
     this.worker = new Worker("/static/frontend/archive.js");
     this.worker.onmessage = ({ data: { type, payload } }) => {
       if (type == "message") {
-        this.message = payload;
-        setTimeout(() => {
-          if (this.message == payload) {
-            this.message = "";
-            this.onupdate(this.tic++);
-          }
-        }, 2500);
+        this.showMessage(payload, 2500);
       } else if (type == "load") {
         this.data.sweep = payload;
-        const message = `${payload.name} loaded`;
-        this.message = message;
-        setTimeout(() => {
-          if (this.message == message) {
-            this.message = "";
-            this.onupdate(this.tic++);
-          }
-        }, 2000);
+        this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
         this.data.files = payload;
         this.data.index = -1;
@@ -53,14 +41,28 @@ class Archive {
       } else if (type == "count") {
         this.data.count = payload;
       } else if (type == "reset") {
+        this.showMessage(payload);
         this.data.index = -1;
       }
       this.onupdate(this.tic++);
     };
 
+    this.showMessage = this.showMessage.bind(this);
     this.count = this.count.bind(this);
     this.list = this.list.bind(this);
     this.load = this.load.bind(this);
+  }
+
+  showMessage(message, duration = 2000) {
+    this.message = message;
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      if (this.message == message) {
+        this.message = "";
+        this.timer = null;
+        this.onupdate(this.tic++);
+      }
+    }, duration);
   }
 
   count(day) {
