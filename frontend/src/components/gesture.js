@@ -18,6 +18,8 @@ class Gesture {
         };
     this.pointX = 0;
     this.pointY = 0;
+    this.pointU = 0;
+    this.pointV = 0;
     this.pointD = 0;
     this.scale = 1;
     this.shiftKey = false;
@@ -72,7 +74,7 @@ class Gesture {
         this.handleMagnify(
           delta2scale(3 * e.deltaX),
           delta2scale(-3 * e.deltaY),
-          delta2scale(-3 * e.deltaY),
+          delta2scale(3 * e.deltaY),
           e.offsetX - this.bounds.left,
           e.offsetY - this.bounds.bottom
         );
@@ -101,6 +103,7 @@ class Gesture {
       this.pointU = u;
       this.pointV = v;
       this.pointD = d;
+      this.scale = 1;
       this.rect = rect;
       this.message = "touchstart";
     });

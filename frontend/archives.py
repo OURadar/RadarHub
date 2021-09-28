@@ -82,7 +82,7 @@ def list(request, hour):
     return response
 
 def load(request, name):
-    show = colorize(name, 'green')
+    show = colorize(name, 'teal')
     print(f'archives.load() {show}')
 
     match = File.objects.filter(name=name)

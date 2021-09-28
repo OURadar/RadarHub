@@ -46,8 +46,8 @@ export function makeTheme(inputMode) {
             },
             secondary: {
               main: "rgb(162, 132, 94)",
-              light: "rgba(162, 132, 94, 0.2)",
-              dark: "rgba(162, 132, 94, 0.3)",
+              light: "rgba(162, 132, 94, 0.15)",
+              dark: "rgba(162, 132, 94, 0.25)",
             },
             divider: "rgba(0, 0, 0, 0.04)",
           }
@@ -111,7 +111,7 @@ export function makeTheme(inputMode) {
             props: { variant: "file" },
             style: {
               borderRadius: 0,
-              borderBottom: "solid 1px var(--gray5)",
+              borderBottom: "solid 0.5px var(--gray3)",
               color: theme.palette.text.secondary,
               display: "inline-block",
               padding: "0 20px",
@@ -188,43 +188,6 @@ export function makeTheme(inputMode) {
 }
 
 export const theme = makeTheme();
-
-/*
-overrides: {
-  MuiButton: {
-    root: {
-      width: "100%",
-      height: "var(--button-height)",
-      padding: "0 30px",
-      borderRadius: "var(--button-border-radius)",
-      borderTop: "var(--button-border-top)",
-      borderRight: "var(--button-border-right)",
-      borderBottom: "var(--button-border-bottom)",
-      borderLeft: "var(--button-border-left)",
-      marginBottom: "var(--button-margin-bottom)",
-      boxSizing: "border-box",
-    },
-    text: {
-      color: "var(--system-foreground)",
-      fontSize: "var(--font-size)",
-      lineHeight: "var(--font-size)",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      textTransform: "none",
-      boxSizing: "border-box",
-    },
-    label: {
-      fontSize: "var(--font-size)",
-      lineHeight: "var(--font-size)",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      whiteSpace: "nowrap",
-      textTransform: "none",
-      boxSizing: "border-box",
-    },
-  },
-}
-*/
 
 export function hex2rgb(hex) {
   const r = parseInt(hex.slice(0, 2), 16) / 255.0;
