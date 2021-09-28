@@ -33,6 +33,10 @@ function reviseMode(mode) {
 }
 
 export function makeTheme(inputMode) {
+  const border =
+    window.devicePixelRatio > 1
+      ? "solid 0.5px var(--gray3)"
+      : "solid 1.0px var(--gray5)";
   let { mode } = reviseMode(inputMode);
   let theme = createTheme({
     palette: {
@@ -111,7 +115,7 @@ export function makeTheme(inputMode) {
             props: { variant: "file" },
             style: {
               borderRadius: 0,
-              borderBottom: "solid 0.5px var(--gray3)",
+              borderBottom: border,
               color: theme.palette.text.secondary,
               display: "inline-block",
               padding: "0 20px",

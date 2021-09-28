@@ -174,8 +174,6 @@ class Gesture {
     this.element.addEventListener("gesturestart", (e) => {
       this.message = `gesturestart (${e.scale})`;
       e.preventDefault();
-      const s = e.scale / this.scale;
-      this.handleMagnify(s, s, s, 0, 0);
       this.scale = e.scale;
     });
     this.element.addEventListener("gesturechange", (e) => {
