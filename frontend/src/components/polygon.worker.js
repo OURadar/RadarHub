@@ -125,7 +125,7 @@ async function builtInGeometry(name, model) {
 }
 
 async function handleJSON(name) {
-  return fetch(name, { cache: "force-cache" })
+  return fetch(name, { cache: "no-cache" })
     .then((text) => text.json())
     .then((data) => {
       let lines = [];

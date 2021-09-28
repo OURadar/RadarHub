@@ -681,7 +681,7 @@ export function triangleFan(regl) {
       },
     },
 
-    count: regl.prop("count"),
+    elements: regl.prop("elements"),
     viewport: regl.prop("viewport"),
   });
 }
