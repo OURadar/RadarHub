@@ -48,6 +48,20 @@ class Product extends GLView {
     });
   }
 
+  updateData() {
+    let points = [];
+    let origins = [];
+    const e = deg2rad(4.0);
+    const r = this.sweep.nr * 60.0;
+    const rce = r * Math.cos(e);
+    const rse = r * Math.sin(e);
+    for (let k = 0, l = this.sweep.az.length; k < l; k++) {
+      const a = deg2rad(this.sweep.az[k]);
+      points.push(rce * Math.sin(a), rce * Math.cos(a), rse);
+      origins.push(0.5, (k + 0.5) / l);
+    }
+  }
+
   updateViewPoint() {
     const t = this.offset + 0.0002 * window.performance.now();
     const a = t % (2.0 * Math.PI);

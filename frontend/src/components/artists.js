@@ -636,3 +636,52 @@ export function instancedPatches(regl) {
     viewport: regl.prop("viewport"),
   });
 }
+
+export function triangleFan(regl) {
+  return regl({
+    vert: `
+      precision highp float;
+      uniform mat4 projection;
+      uniform vec2 bound;
+      attribute vec3 position;
+      attribute vec2 origin;
+      varying vec2 uv;
+      void main() {
+        uv = origin;
+        gl_Position = projection * vec4(position, 1.0);
+      }`,
+
+    frag: `
+      precision highp float;
+      uniform sampler2D colormap;
+      uniform sampler2D data;
+      uniform float index;
+      varying vec2 uv;
+      void main() {
+        float x = texture2D(data, uv).x;
+        gl_FragColor = texture2D(colormap, vec2(x, index));
+      }`,
+
+    attributes: {
+      position: regl.prop("points"),
+      origin: regl.prop("origin"),
+    },
+
+    uniforms: {
+      bound: regl.prop("bound"),
+      colormap: regl.prop("colormap"),
+      data: regl.prop("data"),
+    },
+
+    blend: {
+      enable: true,
+      func: {
+        src: "one",
+        dst: "one minus src alpha",
+      },
+    },
+
+    count: regl.prop("count"),
+    viewport: regl.prop("viewport"),
+  });
+}
