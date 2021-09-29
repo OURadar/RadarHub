@@ -93,23 +93,7 @@ class GLView extends Component {
       needsUpdate: true,
       message: "geo",
     };
-    // fetch("static/images/colormap.png", { cache: "no-cache" })
-    //   .then((response) => response.blob())
-    //   .then((blob) => {
-    //     this.colormap = this.regl.texture({
-    //       data: blob,
-    //       min: "nearest",
-    //       mag: "nearest",
-    //       wrapS: "clamp",
-    //       wrapT: "clamp",
-    //     });
-    //     console.log(this.colormap);
-    //   });
-    var image = new Image();
-    image.src = "static/images/colormap.png";
-    image.addEventListener("load", () => {
-      this.colormap = this.regl.texture(image);
-    });
+
     // Our artists
     this.picaso = artists.simplifiedInstancedLines(this.regl);
     this.monet = artists.instancedLines(this.regl, 0);
@@ -143,7 +127,6 @@ class GLView extends Component {
     colors: theme.colorDict(),
     linewidth: 1.4,
     textureScale: 1.0,
-    sweep: null,
   };
 
   componentDidMount() {
@@ -153,15 +136,6 @@ class GLView extends Component {
     }
     this.updateProjection();
     this.regl.frame(this.draw);
-  }
-
-  updateData() {
-    console.log("updateData()");
-    this.dataTexture = this.regl.texture({
-      shape: [this.props.sweep.nr, this.props.sweep.na],
-      data: this.props.sweep.values,
-      format: "luminance",
-    });
   }
 
   render() {
@@ -208,9 +182,6 @@ class GLView extends Component {
     ) {
       this.updateProjection();
     }
-    if (this.props.sweep && !this.dataTexture) {
-      this.updateData();
-    }
     const geo = this.geometry;
     this.regl.clear({
       color: this.props.colors.glview,
@@ -234,18 +205,6 @@ class GLView extends Component {
       points: this.rings.points,
       segments: this.rings.count,
     });
-    if (this.colormap && this.dataTexture)
-      this.umbrella({
-        modelview: geo.modelview,
-        projection: geo.projection,
-        viewport: geo.viewport,
-        colormap: this.colormap,
-        points: this.props.sweep.points,
-        elements: this.props.sweep.indices,
-        origins: this.props.sweep.origins,
-        data: this.dataTexture,
-        index: 0.5 / 16,
-      });
     this.stats?.update();
   }
 
@@ -275,7 +234,9 @@ class GLView extends Component {
 
   tap(x, y) {}
 
-  taptap(x, y) {}
+  taptap(x, y) {
+    this.fitToData();
+  }
 
   magnify(_mx, _my, m, _x, _y) {
     const geo = this.geometry;

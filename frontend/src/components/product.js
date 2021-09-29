@@ -28,8 +28,37 @@ class Product extends GLView {
       spin: false,
       useEuler: true,
     };
+
     this.labelFaceColor = this.props.colors.label.face;
     this.sweepTime = 0;
+
+    this.textures = {
+      data: null,
+      colormap: null,
+      complete: false,
+      needsUpdate: false,
+    };
+
+    // fetch("static/images/colormap.png", { cache: "no-cache" })
+    //   .then((response) => response.blob())
+    //   .then((blob) => {
+    //     this.colormap = this.regl.texture({
+    //       data: blob,
+    //       min: "nearest",
+    //       mag: "nearest",
+    //       wrapS: "clamp",
+    //       wrapT: "clamp",
+    //     });
+    //     console.log(this.colormap);
+    //   });
+    var image = new Image();
+    image.src = "static/images/colormap.png";
+    image.addEventListener("load", () => {
+      // console.log("colormap loaded");
+      this.textures.colormap = this.regl.texture(image);
+      if (this.textures.data != null) this.textures.complete = true;
+    });
+
     window.addEventListener("keyup", (e) => {
       if (e.key == "s") {
         this.toggleSpin();
@@ -93,12 +122,22 @@ class Product extends GLView {
   }
 
   updateData() {
-    this.dataTexture = this.regl.texture({
+    if (this.props.sweep == null) {
+      this.textures.complete = false;
+      this.textures.data?.destroy();
+      this.textures.data = null;
+      this.sweepTime = 0;
+      return;
+    }
+    // Could update this.geometry.origin
+    this.textures.data = this.regl.texture({
       shape: [this.props.sweep.nr, this.props.sweep.na],
       data: this.props.sweep.values,
       format: "luminance",
     });
-    console.log("product.updateData()");
+    this.sweepTime = this.props.sweep.time;
+    if (this.textures.colormap) this.textures.complete = true;
+    console.log("product.updateData()", this.textures.complete);
   }
 
   draw() {
@@ -114,23 +153,25 @@ class Product extends GLView {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
     }
-    if (this.props.sweep && this.sweepTime != this.props.sweep.time) {
-      this.sweepTime = this.props.sweep.time;
+    if (
+      (this.props.sweep === null && this.textures.data) ||
+      (this.props.sweep !== null && this.sweepTime != this.props.sweep.time)
+    ) {
       this.updateData();
     }
     this.regl.clear({
       color: this.props.colors.glview,
     });
-    if (this.dataTexture)
+    if (this.textures.complete)
       this.umbrella({
         modelview: this.geometry.modelview,
         projection: this.geometry.projection,
         viewport: this.geometry.viewport,
-        colormap: this.colormap,
+        colormap: this.textures.colormap,
         points: this.props.sweep.points,
         elements: this.props.sweep.indices,
         origins: this.props.sweep.origins,
-        data: this.dataTexture,
+        data: this.textures.data,
         index: 0.5 / 16,
       });
     const shapes = this.overlay.getDrawables();
@@ -145,15 +186,21 @@ class Product extends GLView {
 
   fitToData() {
     const geo = this.geometry;
-    geo.fov = 0.028;
+    if (this.props.sweep) {
+      const sweep = this.props.sweep;
+      const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
+      const d = Math.sqrt(1 + geo.aspect ** 2);
+      // console.log(`r = ${r}   d = ${d}`);
+      geo.fov = (2.5 * r) / d / common.earthRadius;
+    } else {
+      geo.fov = 0.028;
+    }
     geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
     geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
     geo.needsUpdate = true;
     this.setState({
       spin: false,
     });
-    console.log(this.props.sweep);
-    this.updateData();
   }
 
   taptap(x, y) {

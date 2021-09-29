@@ -672,8 +672,8 @@ export function triangleFan(regl) {
       projection: regl.prop("projection"),
       modelview: regl.prop("modelview"),
       colormap: regl.prop("colormap"),
+      index: regl.prop("index"),
       data: regl.prop("data"),
-      index: 0.5 / 16,
     },
 
     blend: {

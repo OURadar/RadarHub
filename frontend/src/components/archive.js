@@ -37,6 +37,8 @@ class Archive {
         this.data.count = payload;
       } else if (type == "reset") {
         this.showMessage(payload);
+        console.log("resetting ...");
+        this.data.sweep = null;
         this.data.index = -1;
       }
       this.onupdate(this.tic++);
