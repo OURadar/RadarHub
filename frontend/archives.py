@@ -94,9 +94,16 @@ def load(request, name):
     sweep = match.getData()
     if sweep is None:
         return HttpResponse(f'File {name} not found', status=202)
-    head = struct.pack('hh', *sweep['values'].shape)
-    data = np.array(sweep['values'] * 0.5 + 32, dtype=np.uint8)
-    payload = bytes(head) + bytes(sweep['azimuths']) + bytes(data)
+    gatewidth = 1.0e-3 * sweep['gatewidth'][0];
+    if gatewidth < 0.05:
+        gatewidth *= 2.0;
+    sweep['values'] = sweep['values'][:, ::2];
+    head = struct.pack('hhffff', *sweep['values'].shape,
+        4.0, 0.0, 0.0, gatewidth);
+    data = np.array(sweep['values'] * 0.5 + 64, dtype=np.uint8)
+    payload = bytes(head) \
+            + bytes(sweep['elevations']) \
+            + bytes(sweep['azimuths']) \
+            + bytes(data)
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
-

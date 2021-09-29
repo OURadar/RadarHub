@@ -23,8 +23,6 @@ class App extends Component {
     this.isMobile = detectMob();
     this.archive = new Archive();
     this.archive.onupdate = (_dontcare) => {
-      console.log("force update");
-      console.log(this.archive.data.sweep);
       this.forceUpdate();
     };
     console.log(props);
@@ -60,10 +58,10 @@ class App extends Component {
         <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
         <GLView
+          sweep={this.archive.data.sweep}
           colors={this.state.colors}
           debug={true}
           showStats={true}
-          sweep={this.archive.data.sweep}
         />
       </ThemeProvider>
       // </StyledEngineProvider>

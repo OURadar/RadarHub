@@ -91,6 +91,16 @@ class Product extends GLView {
     }
   }
 
+  updateData() {
+    console.log("product.updateData()");
+    this.dataTexture = this.regl.texture({
+      shape: [this.props.sweep.nr, this.props.sweep.na],
+      data: this.props.sweep.values,
+      format: "luminance",
+    });
+    this.data = true;
+  }
+
   draw() {
     if (this.mount === null) return;
     if (
@@ -104,9 +114,24 @@ class Product extends GLView {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
     }
+    if (this.props.sweep && !this.data) {
+      this.updateData();
+    }
     this.regl.clear({
       color: this.props.colors.glview,
     });
+    if (this.dataTexture)
+      this.umbrella({
+        modelview: this.geometry.modelview,
+        projection: this.geometry.projection,
+        viewport: this.geometry.viewport,
+        colormap: this.colormap,
+        points: this.props.sweep.points,
+        elements: this.props.sweep.indices,
+        origins: this.props.sweep.origins,
+        data: this.dataTexture,
+        index: 0.5 / 16,
+      });
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);

@@ -28,7 +28,6 @@ class Archive {
         this.showMessage(payload, 2500);
       } else if (type == "load") {
         this.data.sweep = payload;
-        console.log(`${payload.name} loaded`);
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
         this.data.files = payload;
@@ -42,7 +41,6 @@ class Archive {
       }
       this.onupdate(this.tic++);
     };
-    this.worker.postMessage({ task: "dummy" });
 
     this.showMessage = this.showMessage.bind(this);
     this.count = this.count.bind(this);

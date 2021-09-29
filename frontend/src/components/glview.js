@@ -93,6 +93,23 @@ class GLView extends Component {
       needsUpdate: true,
       message: "geo",
     };
+    // fetch("static/images/colormap.png", { cache: "no-cache" })
+    //   .then((response) => response.blob())
+    //   .then((blob) => {
+    //     this.colormap = this.regl.texture({
+    //       data: blob,
+    //       min: "nearest",
+    //       mag: "nearest",
+    //       wrapS: "clamp",
+    //       wrapT: "clamp",
+    //     });
+    //     console.log(this.colormap);
+    //   });
+    var image = new Image();
+    image.src = "static/images/colormap.png";
+    image.addEventListener("load", () => {
+      this.colormap = this.regl.texture(image);
+    });
     // Our artists
     this.picaso = artists.simplifiedInstancedLines(this.regl);
     this.monet = artists.instancedLines(this.regl, 0);
@@ -134,40 +151,17 @@ class GLView extends Component {
     if (this.stats !== undefined) {
       this.mount.appendChild(this.stats.domElement);
     }
-    // fetch("static/images/colormap.png", { cache: "no-cache" })
-    //   .then((response) => response.blob())
-    //   .then((blob) => {
-    //     this.colormap = this.regl.texture({
-    //       data: blob,
-    //       min: "nearest",
-    //       mag: "nearest",
-    //       wrapS: "clamp",
-    //       wrapT: "clamp",
-    //     });
-    //     console.log(this.colormap);
-    //   });
-
-    var image = new Image();
-    image.src = "static/images/colormap.png";
-    image.addEventListener("load", () => {
-      this.colormap = this.regl.texture(image);
-      console.log(this.colormap);
-    });
-
     this.updateProjection();
     this.regl.frame(this.draw);
   }
 
   updateData() {
-    // console.log("updateData()");
-    console.log(this.props.sweep);
+    console.log("updateData()");
     this.dataTexture = this.regl.texture({
       shape: [this.props.sweep.nr, this.props.sweep.na],
       data: this.props.sweep.values,
       format: "luminance",
     });
-    // console.log(this.dataTexture);
-    console.log("data updated");
   }
 
   render() {

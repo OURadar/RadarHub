@@ -524,7 +524,7 @@ export function simplifiedInstancedLines(regl) {
     },
 
     depth: {
-      enable: true,
+      enable: false,
     },
 
     blend: {
