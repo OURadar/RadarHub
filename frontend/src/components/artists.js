@@ -673,7 +673,7 @@ export function triangleFan(regl) {
       modelview: regl.prop("modelview"),
       colormap: regl.prop("colormap"),
       data: regl.prop("data"),
-      index: 0,
+      index: 0.5 / 16,
     },
 
     blend: {

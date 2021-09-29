@@ -126,12 +126,7 @@ class GLView extends Component {
     colors: theme.colorDict(),
     linewidth: 1.4,
     textureScale: 1.0,
-    sweep: {
-      na: 4,
-      nr: 3,
-      azimuth: [0.0, 1.0, 2.0, 3.0, 4.0],
-      values: new Uint8Array([20, 25, 30, 10, 20, 15, 50, 60, 50, 80, 90, 100]),
-    },
+    sweep: null,
   };
 
   componentDidMount() {
@@ -159,57 +154,19 @@ class GLView extends Component {
       console.log(this.colormap);
     });
 
-    this.updateData();
-
     this.updateProjection();
     this.regl.frame(this.draw);
   }
 
   updateData() {
-    let points = [];
-    let origins = [];
-    let indices = [];
-    const sweep = this.props.sweep;
-    const e = common.deg2rad(4.0);
-    const r = sweep.nr * 80.0;
-    const rce = r * Math.cos(e);
-    const rse = r * Math.sin(e);
-    for (let k = 0, l = sweep.na; k < l; k++) {
-      const a = common.deg2rad(sweep.azimuth[k]);
-      const v = (k + 0.5) / l;
-      const x = rce * Math.sin(a);
-      const y = rce * Math.cos(a);
-      points.push(x, y, rse);
-      points.push(0.1 * x, 0.1 * y, 0.1 * rse);
-      origins.push(0, v);
-      origins.push(1, v);
-    }
-    let k = sweep.na;
-    const a = common.deg2rad(sweep.azimuth[k]);
-    const v = (k - 0.5) / sweep.na;
-    const x = rce * Math.sin(a);
-    const y = rce * Math.cos(a);
-    points.push(x, y, rse);
-    points.push(0.1 * x, 0.1 * y, 0.1 * rse);
-    origins.push(0, v);
-    origins.push(1, v);
-
-    for (let o = 2, l = 2 * sweep.na; o <= l; o += 2) {
-      indices.push(o - 2, o - 1, o);
-      indices.push(o - 1, o, o + 1);
-    }
-    this.data = {
-      points,
-      origins,
-      indices,
-    };
-    console.log(this.data);
+    // console.log("updateData()");
+    console.log(this.props.sweep);
     this.dataTexture = this.regl.texture({
-      shape: [sweep.nr, sweep.na],
-      data: sweep.values,
+      shape: [this.props.sweep.nr, this.props.sweep.na],
+      data: this.props.sweep.values,
       format: "luminance",
     });
-    console.log(this.dataTexture);
+    // console.log(this.dataTexture);
     console.log("data updated");
   }
 
@@ -257,6 +214,9 @@ class GLView extends Component {
     ) {
       this.updateProjection();
     }
+    if (this.props.sweep && !this.dataTexture) {
+      this.updateData();
+    }
     const geo = this.geometry;
     this.regl.clear({
       color: this.props.colors.glview,
@@ -285,11 +245,12 @@ class GLView extends Component {
         modelview: geo.modelview,
         projection: geo.projection,
         viewport: geo.viewport,
-        points: this.data.points,
-        elements: this.data.indices,
-        origins: this.data.origins,
         colormap: this.colormap,
+        points: this.props.sweep.points,
+        elements: this.props.sweep.indices,
+        origins: this.props.sweep.origins,
         data: this.dataTexture,
+        index: 0.5 / 16,
       });
     this.stats?.update();
   }

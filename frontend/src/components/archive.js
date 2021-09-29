@@ -13,12 +13,7 @@ class Archive {
       date: new Date("2013-05-20T12:00"),
       count: new Array(24).fill(0),
       files: [],
-      sweep: {
-        az: [],
-        el: [],
-        name: "",
-        values: [],
-      },
+      sweep: null,
       index: -1,
     };
     this.tic = 0;
@@ -33,6 +28,7 @@ class Archive {
         this.showMessage(payload, 2500);
       } else if (type == "load") {
         this.data.sweep = payload;
+        console.log(`${payload.name} loaded`);
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
         this.data.files = payload;
@@ -46,6 +42,7 @@ class Archive {
       }
       this.onupdate(this.tic++);
     };
+    this.worker.postMessage({ task: "dummy" });
 
     this.showMessage = this.showMessage.bind(this);
     this.count = this.count.bind(this);

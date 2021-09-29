@@ -12,6 +12,7 @@ import { SectionHeader } from "./section-header";
 import { theme, colorDict } from "./theme";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
+import { Archive } from "./archive";
 
 class App extends Component {
   constructor(props) {
@@ -20,6 +21,12 @@ class App extends Component {
       colors: colorDict(),
     };
     this.isMobile = detectMob();
+    this.archive = new Archive();
+    this.archive.onupdate = (_dontcare) => {
+      console.log("force update");
+      console.log(this.archive.data.sweep);
+      this.forceUpdate();
+    };
     console.log(props);
   }
 
@@ -52,7 +59,12 @@ class App extends Component {
       <ThemeProvider theme={theme}>
         <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
-        <GLView colors={this.state.colors} debug={true} showStats={true} />
+        <GLView
+          colors={this.state.colors}
+          debug={true}
+          showStats={true}
+          sweep={this.archive.data.sweep}
+        />
       </ThemeProvider>
       // </StyledEngineProvider>
     );
