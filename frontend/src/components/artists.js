@@ -28,6 +28,7 @@ export function basic(regl) {
 
     uniforms: {
       color: regl.prop("color"),
+      modelview: regl.prop("modelview"),
       projection: regl.prop("projection"),
     },
 
@@ -642,13 +643,13 @@ export function triangleFan(regl) {
     vert: `
       precision highp float;
       uniform mat4 projection;
-      uniform vec2 bound;
+      uniform mat4 modelview;
       attribute vec3 position;
       attribute vec2 origin;
       varying vec2 uv;
       void main() {
         uv = origin;
-        gl_Position = projection * vec4(position, 1.0);
+        gl_Position = projection * modelview * vec4(position, 1.0);
       }`,
 
     frag: `
@@ -664,13 +665,15 @@ export function triangleFan(regl) {
 
     attributes: {
       position: regl.prop("points"),
-      origin: regl.prop("origin"),
+      origin: regl.prop("origins"),
     },
 
     uniforms: {
-      bound: regl.prop("bound"),
+      projection: regl.prop("projection"),
+      modelview: regl.prop("modelview"),
       colormap: regl.prop("colormap"),
       data: regl.prop("data"),
+      index: 0,
     },
 
     blend: {
