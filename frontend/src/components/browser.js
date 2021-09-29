@@ -31,8 +31,8 @@ const Item = memo(({ data, index, style }) => {
 
 const createFileList = memoize((list, index, load) => ({
   list: list,
-  selectedIndex: index,
   loadItem: load,
+  selectedIndex: index,
 }));
 
 const createFileButtons = (list, index, load) => {
@@ -63,6 +63,58 @@ function Browser(props) {
 
   const [day, setDay] = React.useState(date);
   const [hour, setHour] = React.useState(props.hour);
+  const [hourButtons, setHourButtons] = React.useState([]);
+  const [fileBrowser, setFileBrowser] = React.useState([]);
+
+  React.useEffect(() => {
+    const newFileBrowser = props.useMemo ? (
+      <Box
+        sx={{
+          width: "100%",
+          height: 600,
+          backgroundColor: "var(--system-background)",
+        }}
+      >
+        <FixedSizeList
+          height={600}
+          itemSize={32}
+          itemCount={files.length}
+          itemData={createFileList(files, index, props.archive.load)}
+          overscanCount={5}
+        >
+          {Item}
+        </FixedSizeList>
+      </Box>
+    ) : (
+      <div className="filesContainer">
+        {createFileButtons(files, index, props.archive.load)}
+      </div>
+    );
+    setFileBrowser(newFileBrowser);
+  }, [files, index]);
+
+  React.useEffect(() => {
+    const newButtons = Array(24);
+    for (let k = 0; k < 24; k++) {
+      const hourString = k.toString().padStart(2, "0") + ":00";
+      const selected = count[k] > 0 && k == hour;
+      const disabled = count[k] == 0;
+      newButtons[k] = (
+        <Button
+          key={k}
+          variant="hour"
+          disabled={disabled}
+          selected={selected}
+          onClick={() => {
+            setDayHour(day, k);
+          }}
+        >
+          {hourString}
+        </Button>
+      );
+    }
+    setHourButtons(newButtons);
+  }, [day, hour, count]);
 
   const setDayHour = (newDay, newHour) => {
     setDay(newDay);
@@ -74,51 +126,7 @@ function Browser(props) {
     props.archive.list(`${yyyymmdd}-${hh}00`);
   };
 
-  const hourButtons = Array(24);
-  for (let k = 0; k < 24; k++) {
-    const hourString = k.toString().padStart(2, "0") + ":00";
-    const selected = files.length ? k == hour : false;
-    const disabled = count[k] == 0;
-    hourButtons[k] = (
-      <Button
-        key={k}
-        variant="hour"
-        disabled={disabled}
-        selected={selected}
-        onClick={() => {
-          setDayHour(day, k);
-        }}
-      >
-        {hourString}
-      </Button>
-    );
-  }
-
   // console.log(`files.length = ${files.length}   index = ${index}`);
-
-  const fileBrowser = props.useMemo ? (
-    <Box
-      sx={{
-        width: "100%",
-        height: 600,
-        backgroundColor: "var(--system-background)",
-      }}
-    >
-      <FixedSizeList
-        height={600}
-        itemSize={32}
-        itemCount={files.length}
-        itemData={createFileList(files, index, props.archive.load)}
-        overscanCount={5}
-      >
-        {Item}
-      </FixedSizeList>
-    </Box>
-  ) : (
-    <div className="filesContainer">
-      {createFileButtons(files, index, props.archive.load)}
-    </div>
-  );
 
   return (
     <div className="fill">

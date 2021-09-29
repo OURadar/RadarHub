@@ -30,10 +30,10 @@ class Product extends GLView {
     };
 
     this.labelFaceColor = this.props.colors.label.face;
-    this.sweepTime = 0;
 
     this.textures = {
       data: null,
+      time: 0,
       colormap: null,
       complete: false,
       needsUpdate: false,
@@ -126,7 +126,7 @@ class Product extends GLView {
       this.textures.complete = false;
       this.textures.data?.destroy();
       this.textures.data = null;
-      this.sweepTime = 0;
+      this.textures.time = 0;
       return;
     }
     // Could update this.geometry.origin
@@ -135,9 +135,10 @@ class Product extends GLView {
       data: this.props.sweep.values,
       format: "luminance",
     });
-    this.sweepTime = this.props.sweep.time;
+    this.textures.time = this.props.sweep.time;
     if (this.textures.colormap) this.textures.complete = true;
-    console.log("product.updateData()", this.textures.complete);
+    if (this.props.debug)
+      console.log("product.updateData()", this.textures.complete);
   }
 
   draw() {
@@ -154,8 +155,8 @@ class Product extends GLView {
       this.overlay.updateColors(this.props.colors);
     }
     if (
-      (this.props.sweep === null && this.textures.data) ||
-      (this.props.sweep !== null && this.sweepTime != this.props.sweep.time)
+      (this.props.sweep === null && this.textures.data !== null) ||
+      (this.props.sweep !== null && this.textures.time != this.props.sweep.time)
     ) {
       this.updateData();
     }
