@@ -8,7 +8,7 @@
 //
 
 import { Parser } from "binary-parser";
-import { deg2rad } from "./common";
+import { deg2rad, clamp } from "./common";
 
 self.onmessage = ({ data: { task, name, day, time } }) => {
   if (task == "load") {
@@ -26,6 +26,12 @@ const sweepParser = new Parser()
   .endianess("little")
   .uint16("na")
   .uint16("nr")
+  .uint16("reserved1")
+  .uint16("reserved2")
+  .doublele("time")
+  .doublele("longitude")
+  .doublele("latitude")
+  .doublele("reserved3")
   .floatle("scanElevation")
   .floatle("scanAzimuth")
   .floatle("rangeStart")
@@ -45,6 +51,7 @@ function createSweep(name = "dummy") {
     name,
     na: 4,
     nr: 3,
+    time: 9,
     isRHI: false,
     scanElevation: 4.0,
     scanAzimuth: 0.0,
@@ -135,16 +142,17 @@ function geometry(sweep) {
   const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
   const ce = Math.cos(e);
   const z = Math.sin(e);
-  let az =
-    sweep.azimuths[sweep.na - 1] + (sweep.azimuths[1] - sweep.azimuths[0]);
+  const m = clamp(sweep.na / 2, 0, sweep.na - 1);
+  const da = sweep.azimuths[m] - sweep.azimuths[m - 1];
+  let az = sweep.azimuths[sweep.na - 1] + da;
   sweep.azimuths.push(az);
   for (let k = 0; k < sweep.azimuths.length; k++) {
     const a = deg2rad(sweep.azimuths[k]);
     const v = k / sweep.na;
     const x = ce * Math.sin(a);
     const y = ce * Math.cos(a);
-    points.push(re * x, re * y, re * z);
     points.push(rs * x, rs * y, rs * z);
+    points.push(re * x, re * y, re * z);
     origins.push(0, v);
     origins.push(1, v);
   }

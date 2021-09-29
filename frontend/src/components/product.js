@@ -29,6 +29,7 @@ class Product extends GLView {
       useEuler: true,
     };
     this.labelFaceColor = this.props.colors.label.face;
+    this.sweepTime = 0;
     window.addEventListener("keyup", (e) => {
       if (e.key == "s") {
         this.toggleSpin();
@@ -92,13 +93,12 @@ class Product extends GLView {
   }
 
   updateData() {
-    console.log("product.updateData()");
     this.dataTexture = this.regl.texture({
       shape: [this.props.sweep.nr, this.props.sweep.na],
       data: this.props.sweep.values,
       format: "luminance",
     });
-    this.data = true;
+    console.log("product.updateData()");
   }
 
   draw() {
@@ -114,7 +114,8 @@ class Product extends GLView {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
     }
-    if (this.props.sweep && !this.data) {
+    if (this.props.sweep && this.sweepTime != this.props.sweep.time) {
+      this.sweepTime = this.props.sweep.time;
       this.updateData();
     }
     this.regl.clear({
