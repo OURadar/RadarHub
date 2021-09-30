@@ -28,19 +28,24 @@ pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
 from frontend.models import File
 
-def insert(filename, archive=None, offset=0, size=0):
+def insert(filename, archive=None, offset=0, offset_data=0, size=0):
     (path, name) = os.path.split(filename)
-    if File.objects.filter(name=name):
-        print(f'File {name} exists')
-        return
     s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', name).group(0)
     datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
-    if archive:
-        x = File(name=name, path=archive, offset=offset, size=size, date=datestr)
+    if File.objects.filter(name=name):
+        print(f'File {name} exists. Updating ...')
+        x = File.objects.filter(name=name)[0]
+        x.size = size
+        x.offset = offset
+        x.offset_data = offset_data
+    elif archive:
+        # File is stored inside a tgz archive
+        x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
     else:
+        # File is stored in plain sight
         x = File(name=name, path=path, date=datestr)
-    print(f'{x.name} :: {x.path} :: {x.date} :: {x.offset} :: {x.size}')
-    # x.save()
+    print(f'{x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
+    x.save()
 
 def retrieve(name):
     x = File.objects.filter(name=name)
@@ -55,7 +60,7 @@ def proc_archive(archive):
     with tarfile.open(archive) as aid:
         for info in aid.getmembers():
             # print(f'{info.name} {info.offset} {info.size}')
-            insert(info.name, archive=archive, offset=info.offset, size=info.size)
+            insert(info.name, archive=archive, size=info.size, offset=info.offset, offset_data=info.offset_data)
 
 def folder(folder):
     if os.path.exists('_original'):

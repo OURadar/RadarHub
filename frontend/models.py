@@ -8,9 +8,10 @@ from django.db import models
 class File(models.Model):
     name = models.CharField(max_length=32)
     path = models.CharField(max_length=256)
-    offset = models.PositiveIntegerField(0)
-    size = models.PositiveIntegerField(0)
     date = models.DateTimeField()
+    size = models.PositiveIntegerField(0)
+    offset = models.PositiveIntegerField(default=0)
+    offset_data = models.PositiveIntegerField(default=0)
     
     def __repr__(self):
         return f'name = {self.name}   path = {self.getFullpath()}'
@@ -42,30 +43,30 @@ class File(models.Model):
             sweepElevation = nc.getncattr('Elevation')
             sweepTime = nc.getncattr('Time')
             symbol = self.name.split('.')[-2].split('-')[-1]
-        return {
-            'symbol': symbol,
-            'longitude': longitude,
-            'latitude': latitude,
-            'sweepTime': sweepTime,
-            'sweepElevation': sweepElevation,
-            'gatewidth': gatewidth,
-            'elevations': elevations,
-            'azimuths': azimuths,
-            'values': values
-        }
+            return {
+                'symbol': symbol,
+                'longitude': longitude,
+                'latitude': latitude,
+                'sweepTime': sweepTime,
+                'sweepElevation': sweepElevation,
+                'gatewidth': gatewidth,
+                'elevations': elevations,
+                'azimuths': azimuths,
+                'values': values
+            }
 
     def getData(self):
         if '.tgz' in self.path:
             print('handling .tgz ...')
             # Open archive
-            with tarfile.open(self.path) as aid:
-                name = f'./{self.name}'
-                print(f'extracting {name} from {self.path}')
-                info = aid.getmember(name)
-                print(f'info {info.name} {info.offset}')
-                with aid.extractfile(name) as fid:
+            with tarfile.open(self.path, 'r:gz') as aid:
+                info = tarfile.TarInfo(f'./{self.name}')
+                info.size = self.size
+                info.offset = self.offset
+                info.offset_data = self.offset_data
+                print(f'extracting {info.name} from {self.path}')
+                with aid.extractfile(info) as fid:
                     return self.read(fid)
-
         else:
             fullpath = self.getFullpath()
             if fullpath is None:
