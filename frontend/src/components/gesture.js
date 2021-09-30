@@ -22,6 +22,7 @@ class Gesture {
     this.pointV = 0;
     this.pointD = 0;
     this.scale = 1;
+    this.hasTouch = false;
     this.shiftKey = false;
     this.panInProgress = false;
     this.singleTapTimeout = null;
@@ -105,6 +106,7 @@ class Gesture {
       this.pointD = d;
       this.scale = 1;
       this.rect = rect;
+      this.hasTouch = true;
       this.message = "touchstart";
     });
     this.element.addEventListener("touchend", (e) => {
@@ -144,16 +146,27 @@ class Gesture {
     });
     this.element.addEventListener("touchmove", (e) => {
       let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
+      let s = 1.0;
+      let m = "";
       if (this.panInProgress === true) {
         e.preventDefault();
-        if (e.targetTouches.length == 2)
+        if (e.targetTouches.length == 2) {
+          if (e.scale) {
+            s = e.scale / this.scale;
+            this.scale = e.scale;
+            m = "s";
+          } else if (d > 10) {
+            s = d / this.pointD;
+            m = "d";
+          }
           this.handleMagnify(
             u > 10 ? u / this.pointU : 1,
             v > 10 ? v / this.pointV : 1,
-            d > 10 ? d / this.pointD : 1,
+            s,
             x,
             y
           );
+        }
         this.handlePan(x - this.pointX, this.pointY - y);
         this.pointX = x;
         this.pointY = y;
@@ -161,9 +174,7 @@ class Gesture {
         this.pointV = v;
         this.pointD = d;
       }
-      const w = this.element.clientWidth;
-      const h = this.element.clientHeight;
-      this.message = `touchmove (${x}, ${y}) / (${w}, ${h})`;
+      this.message = `touchmove (${x}, ${y}) / ${s.toFixed(4)}${m} `;
     });
     this.element.addEventListener("dblclick", (e) => {
       this.pointX = e.offsetX;
@@ -172,22 +183,25 @@ class Gesture {
       this.handleDoubleTap(this.pointX, this.pointY);
     });
     this.element.addEventListener("gesturestart", (e) => {
-      this.message = `gesturestart (${e.scale})`;
+      if (this.hasTouch) return;
+      this.message += `gesturestart (${e.scale.toFixed(4)})`;
       e.preventDefault();
       this.scale = e.scale;
     });
     this.element.addEventListener("gesturechange", (e) => {
-      this.message = `gesturechange (${e.scale})`;
+      if (this.hasTouch) return;
+      this.message = `gesturechange (${e.scale.toFixed(4)})`;
       e.preventDefault();
       const s = e.scale / this.scale;
-      this.handleMagnify(s, s, s, 0, 0);
+      this.handleMagnify(s, s, s, e.clientX, e.clientY);
       this.scale = e.scale;
     });
     this.element.addEventListener("gestureend", (e) => {
-      this.message = `gestureend (${e.scale})`;
+      if (this.hasTouch) return;
+      this.message = `gestureend (${e.scale.toFixed(4)})`;
       e.preventDefault();
       const s = e.scale / this.scale;
-      this.handleMagnify(s, s, s, 0, 0);
+      this.handleMagnify(s, s, s, e.clientX, e.clientY);
       this.scale = e.scale;
     });
   }
