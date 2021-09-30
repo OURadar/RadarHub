@@ -20,9 +20,6 @@ class Product extends GLView {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
     this.offset = (Date.now() % 86400000) / 5000;
-    //var t = this.offset + 0.0002 * window.performance.now();
-    //var a = t % (2.0 * Math.PI);
-    //console.log(`offset = ${this.offset}  t = ${t}  a = ${a.toFixed(3)}`);
     this.state = {
       ...this.state,
       spin: false,
@@ -31,37 +28,40 @@ class Product extends GLView {
 
     this.labelFaceColor = this.props.colors.label.face;
 
-    this.textures = {
-      data: null,
+    this.assets = {
       time: 0,
+      index: 0,
       colormap: null,
+      data: null,
+      points: null,
+      origins: null,
+      elements: null,
       complete: false,
       needsUpdate: false,
     };
-
-    // fetch("static/images/colormap.png", { cache: "no-cache" })
-    //   .then((response) => response.blob())
-    //   .then((blob) => {
-    //     this.colormap = this.regl.texture({
-    //       data: blob,
-    //       min: "nearest",
-    //       mag: "nearest",
-    //       wrapS: "clamp",
-    //       wrapT: "clamp",
-    //     });
-    //     console.log(this.colormap);
-    //   });
     var image = new Image();
-    image.src = "static/images/colormap.png";
+    image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
-      // console.log("colormap loaded");
-      this.textures.colormap = this.regl.texture(image);
-      if (this.textures.data != null) this.textures.complete = true;
+      this.assets.colormap = this.regl.texture({
+        data: image,
+        flipY: true,
+        wrapS: "clamp",
+        wrapT: "clamp",
+        premultiplyAlpha: true,
+      });
+      this.assets.index = 0.5 / this.assets.colormap.height;
+      if (this.assets.data != null) this.assets.complete = true;
     });
 
     window.addEventListener("keyup", (e) => {
       if (e.key == "s") {
         this.toggleSpin();
+      } else if (e.key == "c") {
+        const h = this.assets.colormap.height;
+        const m = h - 1;
+        this.assets.index =
+          this.assets.index > m / h ? 0.5 / h : this.assets.index + 1.0 / h;
+        console.log(`this.textures.index = ${this.assets.index}`);
       }
     });
   }
@@ -116,6 +116,7 @@ class Product extends GLView {
       const drawCalls = [
         [this.gogh, "text"],
         [this.picaso, "poly"],
+        [this.umbrella, "data"],
       ];
       this.statsWidget = createStatsWidget(drawCalls);
     }
@@ -123,22 +124,44 @@ class Product extends GLView {
 
   updateData() {
     if (this.props.sweep == null) {
-      this.textures.complete = false;
-      this.textures.data?.destroy();
-      this.textures.data = null;
-      this.textures.time = 0;
+      this.assets.complete = false;
+      this.assets.data?.destroy();
+      this.assets.data = null;
+      this.assets.points?.destroy();
+      this.assets.points = null;
+      this.assets.origins?.destroy();
+      this.assets.origins = null;
+      this.assets.elements?.destroy();
+      this.assets.elements = null;
+      this.assets.time = 0;
       return;
     }
     // Could update this.geometry.origin
-    this.textures.data = this.regl.texture({
+    this.assets.data = this.regl.texture({
       shape: [this.props.sweep.nr, this.props.sweep.na],
       data: this.props.sweep.values,
       format: "luminance",
+      type: "uint8",
     });
-    this.textures.time = this.props.sweep.time;
-    if (this.textures.colormap) this.textures.complete = true;
+    this.assets.points = this.regl.buffer({
+      usage: "static",
+      type: "float",
+      data: this.props.sweep.points,
+    });
+    this.assets.origins = this.regl.buffer({
+      usage: "static",
+      type: "float",
+      data: this.props.sweep.origins,
+    });
+    this.assets.elements = this.regl.elements({
+      usage: "static",
+      data: this.props.sweep.elements,
+    });
+    console.log(this.assets);
+    this.assets.time = this.props.sweep.time;
+    if (this.assets.colormap) this.assets.complete = true;
     if (this.props.debug)
-      console.log("product.updateData()", this.textures.complete);
+      console.log("product.updateData()", this.assets.complete);
   }
 
   draw() {
@@ -155,25 +178,28 @@ class Product extends GLView {
       this.overlay.updateColors(this.props.colors);
     }
     if (
-      (this.props.sweep === null && this.textures.data !== null) ||
-      (this.props.sweep !== null && this.textures.time != this.props.sweep.time)
+      (this.props.sweep === null && this.assets.data !== null) ||
+      (this.props.sweep !== null && this.assets.time != this.props.sweep.time)
     ) {
       this.updateData();
     }
     this.regl.clear({
       color: this.props.colors.glview,
     });
-    if (this.textures.complete)
+    if (this.assets.complete)
       this.umbrella({
         modelview: this.geometry.modelview,
         projection: this.geometry.projection,
         viewport: this.geometry.viewport,
-        colormap: this.textures.colormap,
-        points: this.props.sweep.points,
-        elements: this.props.sweep.indices,
-        origins: this.props.sweep.origins,
-        data: this.textures.data,
-        index: 0.5 / 16,
+        colormap: this.assets.colormap,
+        data: this.assets.data,
+        index: this.assets.index,
+        // points: this.props.sweep.points,
+        // origins: this.props.sweep.origins,
+        // elements: this.props.sweep.elements,
+        points: this.assets.points,
+        origins: this.assets.origins,
+        elements: this.assets.elements,
       });
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);

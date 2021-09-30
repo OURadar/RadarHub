@@ -105,7 +105,7 @@ def load(request, name):
     head = struct.pack('hhhhddddffff', *sweep['values'].shape, 0, 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
         sweep['sweepElevation'], 0.0, 0.0, gatewidth)
-    data = np.array(sweep['values'] * 2 + 32, dtype=np.uint8)
+    data = np.array(sweep['values'] * 2 + 64, dtype=np.uint8)
     payload = bytes(head) \
             + bytes(sweep['elevations']) \
             + bytes(sweep['azimuths']) \

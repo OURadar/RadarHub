@@ -136,7 +136,7 @@ function dummy() {
 function geometry(sweep) {
   let points = [];
   let origins = [];
-  let indices = [];
+  let elements = [];
   const e = deg2rad(sweep.scanElevation);
   const rs = sweep.rangeStart;
   const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
@@ -157,12 +157,12 @@ function geometry(sweep) {
     origins.push(1, v);
   }
   for (let o = 2, l = 2 * sweep.na; o <= l; o += 2) {
-    indices.push(o - 2, o - 1, o);
-    indices.push(o - 1, o, o + 1);
+    elements.push(o - 2, o - 1, o);
+    elements.push(o - 1, o, o + 1);
   }
   sweep.points = points;
-  sweep.indices = indices;
   sweep.origins = origins;
+  sweep.elements = elements;
   return sweep;
 }
 
