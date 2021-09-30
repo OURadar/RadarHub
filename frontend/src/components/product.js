@@ -155,6 +155,7 @@ class Product extends GLView {
     });
     this.assets.elements = this.regl.elements({
       usage: "static",
+      type: "uint16",
       data: this.props.sweep.elements,
     });
     console.log(this.assets);
@@ -187,9 +188,9 @@ class Product extends GLView {
       color: this.props.colors.glview,
     });
     if (this.assets.complete)
-      this.umbrella({
-        modelview: this.geometry.modelview,
+      this.vinci({
         projection: this.geometry.projection,
+        modelview: this.geometry.modelview,
         viewport: this.geometry.viewport,
         colormap: this.assets.colormap,
         data: this.assets.data,

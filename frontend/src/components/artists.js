@@ -638,7 +638,7 @@ export function instancedPatches(regl) {
   });
 }
 
-export function triangleFan(regl) {
+export function texturedElements(regl) {
   return regl({
     vert: `
       precision highp float;
@@ -660,7 +660,7 @@ export function triangleFan(regl) {
       varying vec2 uv;
       void main() {
         float x = texture2D(data, uv).x;
-        if (x < 1.0 / 256.0)
+        if (x < 1.0 / 255.0)
           discard;
         gl_FragColor = texture2D(colormap, vec2(x, index));
       }`,
