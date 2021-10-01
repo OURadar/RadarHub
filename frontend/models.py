@@ -56,15 +56,12 @@ class File(models.Model):
             }
 
     def getData(self):
-        if '.tgz' in self.path:
-            print('handling .tgz ...')
-            # Open archive
-            with tarfile.open(self.path, 'r:gz') as aid:
-                info = tarfile.TarInfo(f'./{self.name}')
+        if any([ext in self.path for ext in ['tgz', 'tar.xz']]):
+            with tarfile.open(self.path) as aid:
+                info = tarfile.TarInfo(self.name)
                 info.size = self.size
                 info.offset = self.offset
                 info.offset_data = self.offset_data
-                print(f'extracting {info.name} from {self.path}')
                 with aid.extractfile(info) as fid:
                     return self.read(fid)
         else:
@@ -74,8 +71,3 @@ class File(models.Model):
         
             with open(fullpath, 'rb') as fid:
                 return self.read(fid)
-
-# models.File.objects.filter(date__year=2015)
-# models.File.objects.filter(date__lte='2018-01-01 00:00Z')
-# models.File.objects.filter(date__gte='2017-01-01 00:00Z')
-# models.File.objects.filter(date__gte='2017-01-01 00:00Z').filter(date__lte='2018-12-31 23:59Z')

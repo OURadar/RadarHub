@@ -35,6 +35,7 @@ def insert(filename, archive=None, offset=0, offset_data=0, size=0):
     if File.objects.filter(name=name):
         print(f'File {name} exists. Updating ...')
         x = File.objects.filter(name=name)[0]
+        x.path = archive
         x.size = size
         x.offset = offset
         x.offset_data = offset_data
@@ -72,6 +73,12 @@ def folder(folder):
         if os.path.exists(archive):
             proc_archive(archive)
 
+def xzfolder(folder):
+    print(f'xzfolder: {folder}')
+    files = sorted(glob.glob(os.path.join(folder, '*.xz')))
+    for file in files:
+        proc_archive(file)
+
 def main():
     parser = argparse.ArgumentParser(prog='dbtool.py',
         formatter_class=argparse.RawTextHelpFormatter,
@@ -83,16 +90,12 @@ def main():
             dbtool.py -i /data/PX1000/2013/20130520
             dbtool.py -v
         '''))
-    parser.add_argument('-i', dest='insert', action='append', help='insert a folder')
+    parser.add_argument('source', nargs='+', help='sources')
+    parser.add_argument('-x', dest='xz', action='store_true', help='insert a folder with xz archives')
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
     args = parser.parse_args()
 
-    # xs = File.objects.all()
-    # files = File.objects.filter(date__gte='2017-01-01 00:00Z').filter(date__lte='2018-12-31 23:59Z')
-
-    # x = File(name='PX-20210520-160000', path='/Volumes/data/px1000/', date='2021-05-20 16:00:00Z')
-    # x.save()
 
     # insert('/data/px1000/2021/20210520/_original/PX-20210520-161145-E4.0.tar.xz')
 
@@ -102,16 +105,17 @@ def main():
     #     insert(file)
     # pp.pprint(files[0])
 
-    print(f'args.insert = {args.insert}')
-    for path in args.insert:
-        if os.path.isdir(path):
-            folder(path)
-        elif 'tgz' in path:
-            proc_archive(path)
-
-    # x = retrieve('PX-20130520-191140-E2.6-Z.nc')
-    # print(x.name)
-    # print(x.getFullpath())
+    # print(f'args.insert = {args.insert}')
+    # for path in args.insert:
+    #     if os.path.isdir(path):
+    #         folder(path)
+    #     elif 'tgz' in path:
+    #         proc_archive(path)
+    
+    if args.xz:
+        print('Processing a folder with .tar.xz archives')
+        for folder in args.source:
+            xzfolder(folder)
 
 if __name__ == '__main__':
     main()
