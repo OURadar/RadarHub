@@ -28,7 +28,9 @@ pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
 from frontend.models import File
 
-def insert(filename, archive=None, offset=0, offset_data=0, size=0):
+verbose = 1
+
+def insert(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
     (path, name) = os.path.split(filename)
     s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', name).group(0)
     datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
@@ -47,7 +49,8 @@ def insert(filename, archive=None, offset=0, offset_data=0, size=0):
     else:
         # File is stored in plain sight
         x = File(name=name, path=path, date=datestr)
-    print(f'{mode} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
+    if verbose > 1:
+        print(f'{mode} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
     x.save()
 
 def retrieve(name):
@@ -59,7 +62,8 @@ def retrieve(name):
     return x[0]
 
 def proc_archive(archive):
-    print(f'Processing {archive} ...')
+    if verbose:
+        print(f'Processing {archive} ...')
     with tarfile.open(archive) as aid:
         for info in aid.getmembers():
             insert(info.name, archive=archive, offset=info.offset, offset_data=info.offset_data, size=info.size)
@@ -74,9 +78,18 @@ def folder(folder):
         if os.path.exists(archive):
             proc_archive(archive)
 
+def listfiles(folder):
+    return sorted(glob.glob(os.path.join(folder, '*.xz')))
+
 def xzfolder(folder):
     print(f'xzfolder: {folder}')
-    files = sorted(glob.glob(os.path.join(folder, '*.xz')))
+    files = listfiles(folder)
+    if len(files) == 0:
+        folder = os.path.join(folder, '_original')
+    files = listfiles(folder)
+    if len(files) == 0:
+        print('Unable to continue.')
+        return
     for file in files:
         proc_archive(file)
 
@@ -88,7 +101,7 @@ def main():
 
         Examples:
             dbtool.py
-            dbtool.py -i /data/PX1000/2013/20130520
+            dbtool.py -x /data/PX1000/2013/20130520/_original
             dbtool.py -v
         '''))
     parser.add_argument('sources', type=str, nargs='+',
