@@ -11,6 +11,8 @@ from .models import File
 from common import colorize
 
 def binary(request, name):
+    if name == 'undefined':
+        return HttpResponse(f'Not a valid query.', status=500)
     print(f'archives.binary() name={name}')
     elev = 0.5
     elev_bin = bytearray(struct.pack('f', elev));
@@ -33,8 +35,9 @@ def header(requst, name):
           - YYYYMMDD
 '''
 def count(request, day):
-    show = colorize(day, 'orange')
-    print(f'archives.count() {show}')
+    if day == 'undefined':
+        return HttpResponse(f'Not a valid query.', status=500)
+
     prefix = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
     n = [0 for _ in range(24)]
     for h in range(24):
@@ -55,8 +58,6 @@ def count(request, day):
            - YYYYMMDD
 '''
 def list(request, hour):
-    show = colorize(hour, 'orange')
-    print(f'archives.list() {show}')
     if hour == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
 
@@ -82,9 +83,6 @@ def list(request, hour):
     return response
 
 def load(request, name):
-    show = colorize(name, 'teal')
-    print(f'archives.load() {show}')
-
     match = File.objects.filter(name=name)
     if len(match):
         match = match[0]
@@ -112,6 +110,3 @@ def load(request, name):
             + bytes(data)
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
-
-def new_func():
-    return 520
