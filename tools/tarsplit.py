@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #
-#  migrate.py
+#  tarsplit.py
 #  Archive Migration Tool
 #
 #  RadarHub
@@ -49,15 +49,17 @@ def split(archive, verbose=0):
         print(f'Creating directory {dest} ...')
         os.makedirs(dest)
     with tarfile.open(archive) as tar:
+        print(f'Reading archive contents ...')
         members = tar.getmembers()
-        files = sorted([m.name for m in members])
+        members = [m for m in members if m.name[:2] != '._']
+        print(f'Generating output archives ...')
+        files = [m.name for m in members]
         zfiles = sorted([file for file in files if '-Z.nc' in file])
-        for file in zfiles[:2]:
+        for file in zfiles:
             parts = os.path.basename(file).split('-')
             prefix = '-'.join(parts[:4])
             friends = [m for m in members if prefix in m.name]
             outfile = os.path.join(path, '_original', f'{prefix}.tar.xz')
-            # print(f'{outfile} :: {friends}')
             if verbose:
                 print(f'outfile = {outfile} {[os.path.basename(f.name) for f in friends]}')
             with tarfile.open(outfile, 'w|xz') as out:
@@ -76,34 +78,29 @@ def split(archive, verbose=0):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='dbtool.py',
+    parser = argparse.ArgumentParser(prog='tarsplit.py',
         formatter_class=argparse.RawTextHelpFormatter,
         description=textwrap.dedent('''\
-        Archive Migration Tool
+        Tar Archive Split Tool
 
         Examples:
-            migrate.py
-            migrate.py -o /mnt/data/PX1000/2013/20130520/20130520.tgz
-            migrate.py -v
+            tarsplit.py /mnt/data/PX1000/2013/20130520/20130520.tgz
+            tarsplit.py -v /mnt/data/PX1000/2013/20130520/20130520.tgz
         '''))
     parser.add_argument('sources', metavar='sources', type=str, nargs='+',
         help='sources to process')
-    parser.add_argument('-s', dest='split', action='store_true', default=False,
-        help='splits a large archive into smaller .tar.xz files')
-    parser.add_argument('-d', dest='dirs', action='append', help='insert a folder')
+    #parser.add_argument('-d', dest='dirs', action='append', help='insert a folder')
     parser.add_argument('-n', dest='run', action='store_false', default=True,
         help='no true execution, just a dry run')
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
     args = parser.parse_args()
 
-    if args.split:
-        print('Split mode')
-        for dir in args.sources:
-            split(dir, args.verbose)
+    for dir in args.sources:
+        split(dir, args.verbose)
 
-    if args.dirs:
-        compress(args.dir, args.verbose, args.run)
+    # if args.dirs:
+    #     compress(args.dir, args.verbose, args.run)
 
 if __name__ == '__main__':
     main()

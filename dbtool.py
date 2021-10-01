@@ -32,8 +32,10 @@ def insert(filename, archive=None, offset=0, offset_data=0, size=0):
     (path, name) = os.path.split(filename)
     s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', name).group(0)
     datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+    mode = 'N'
     if File.objects.filter(name=name):
-        print(f'File {name} exists. Updating ...')
+        #print(f'File {name} exists. Updating ...')
+        mode = 'U'
         x = File.objects.filter(name=name)[0]
         x.path = archive
         x.size = size
@@ -45,7 +47,7 @@ def insert(filename, archive=None, offset=0, offset_data=0, size=0):
     else:
         # File is stored in plain sight
         x = File(name=name, path=path, date=datestr)
-    print(f'{x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
+    print(f'{mode} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
     x.save()
 
 def retrieve(name):
@@ -60,8 +62,7 @@ def proc_archive(archive):
     print(f'Processing {archive} ...')
     with tarfile.open(archive) as aid:
         for info in aid.getmembers():
-            # print(f'{info.name} {info.offset} {info.size}')
-            insert(info.name, archive=archive, size=info.size, offset=info.offset, offset_data=info.offset_data)
+            insert(info.name, archive=archive, offset=info.offset, offset_data=info.offset_data, size=info.size)
 
 def folder(folder):
     if os.path.exists('_original'):
@@ -90,7 +91,8 @@ def main():
             dbtool.py -i /data/PX1000/2013/20130520
             dbtool.py -v
         '''))
-    parser.add_argument('source', nargs='+', help='sources')
+    parser.add_argument('sources', type=str, nargs='+',
+        help='sources to process')
     parser.add_argument('-x', dest='xz', action='store_true', help='insert a folder with xz archives')
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
@@ -114,7 +116,7 @@ def main():
     
     if args.xz:
         print('Processing a folder with .tar.xz archives')
-        for folder in args.source:
+        for folder in args.sources:
             xzfolder(folder)
 
 if __name__ == '__main__':

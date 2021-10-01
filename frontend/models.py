@@ -57,6 +57,7 @@ class File(models.Model):
 
     def getData(self):
         if any([ext in self.path for ext in ['tgz', 'tar.xz']]):
+            print(f'models.File.getData() {self.path}')
             with tarfile.open(self.path) as aid:
                 info = tarfile.TarInfo(self.name)
                 info.size = self.size
