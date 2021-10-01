@@ -158,7 +158,6 @@ class Product extends GLView {
       type: "uint16",
       data: this.props.sweep.elements,
     });
-    console.log(this.assets);
     this.assets.time = this.props.sweep.time;
     if (this.assets.colormap) this.assets.complete = true;
     if (this.props.debug)

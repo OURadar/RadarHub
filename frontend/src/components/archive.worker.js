@@ -102,7 +102,7 @@ function list(day) {
 }
 
 function load(name) {
-  const url = `/data/load/${name}`;
+  const url = `/data/load/${name}/`;
   console.log(`Background fetching ${url}`);
   fetch(url)
     .then((response) => {
@@ -112,7 +112,7 @@ function load(name) {
             ...createSweep(name),
             ...sweepParser.parse(new Uint8Array(buffer)),
           });
-          console.log(sweep);
+          // console.log(sweep);
           self.postMessage({ type: "load", payload: sweep });
         });
       else {
