@@ -12,6 +12,7 @@
 
 import os
 import re
+import sys
 import glob
 import django
 import pprint
@@ -19,7 +20,7 @@ import tarfile
 import argparse
 import textwrap
 
-from common import colorize
+from multiprocessing import Pool
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
@@ -51,6 +52,7 @@ def insert(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
         x = File(name=name, path=path, date=datestr)
     if verbose > 1:
         print(f'{mode} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
+        sys.stdout.flush()
     x.save()
 
 def retrieve(name):
@@ -68,16 +70,6 @@ def proc_archive(archive):
         for info in aid.getmembers():
             insert(info.name, archive=archive, offset=info.offset, offset_data=info.offset_data, size=info.size)
 
-def folder(folder):
-    if os.path.exists('_original'):
-        print('Listing _original ...')
-    else:
-        basename = os.path.basename(folder)
-        print(f'basename = {basename}')
-        archive = os.path.join(folder, f'{basename}.tgz')
-        if os.path.exists(archive):
-            proc_archive(archive)
-
 def listfiles(folder):
     return sorted(glob.glob(os.path.join(folder, '*.xz')))
 
@@ -90,8 +82,8 @@ def xzfolder(folder):
     if len(files) == 0:
         print('Unable to continue.')
         return
-    for file in files:
-        proc_archive(file)
+    with Pool() as pool:
+        pool.map(proc_archive, files)
 
 def main():
     parser = argparse.ArgumentParser(prog='dbtool.py',
@@ -111,22 +103,9 @@ def main():
         help='increases verbosity')
     args = parser.parse_args()
 
+    global verbose
+    verbose = args.verbose
 
-    # insert('/data/px1000/2021/20210520/_original/PX-20210520-161145-E4.0.tar.xz')
-
-    # files = sorted(glob.glob('/mnt/data/PX1000/2013/20130520/_original/PX*'))
-    # for file in files:
-    #     print(file)
-    #     insert(file)
-    # pp.pprint(files[0])
-
-    # print(f'args.insert = {args.insert}')
-    # for path in args.insert:
-    #     if os.path.isdir(path):
-    #         folder(path)
-    #     elif 'tgz' in path:
-    #         proc_archive(path)
-    
     if args.xz:
         print('Processing a folder with .tar.xz archives')
         for folder in args.sources:
