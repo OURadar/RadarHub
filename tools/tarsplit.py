@@ -10,6 +10,7 @@
 #  Copyright (c) 2021 Boonleng Cheong.
 #
 
+import multiprocessing
 import os
 import re
 import glob
@@ -18,7 +19,7 @@ import tarfile
 import textwrap
 import argparse
 
-from multiprocessing import Pool
+import multiprocessing
 
 def compress(dirs, verbose=0, run=False):
     timeSearch = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
@@ -98,10 +99,11 @@ def split(archive, args):
             infiles.append(friends)
             outfiles.append(outfile)
 
-    with Pool() as pool:
+    with multiprocessing.Pool(args.count) as pool:
+        parameters = zip(outfiles, infiles, [archive] * len(outfiles))
         if not args.run:
-            return pool.map(simreadwrite, zip(outfiles, infiles, [archive] * len(outfiles)))
-        pool.map(readwrite, zip(outfiles, infiles, [archive] * len(outfiles)))
+            return pool.map(simreadwrite, parameters)
+        pool.map(readwrite, parameters)
 
 #
 
@@ -117,6 +119,8 @@ def main():
         '''))
     parser.add_argument('sources', metavar='sources', type=str, nargs='+',
         help='sources to process')
+    parser.add_argument('-c', dest='count', default=None,
+        help='cores to use')
     parser.add_argument('-d', dest='dest', default=None,
         help='destination of the split files')
     parser.add_argument('-n', dest='run', action='store_false', default=True,
@@ -124,6 +128,9 @@ def main():
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
     args = parser.parse_args()
+
+    if args.count:
+        args.count = int(args.count)
 
     for archive in args.sources:
         split(archive, args)
