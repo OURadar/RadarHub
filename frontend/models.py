@@ -72,3 +72,15 @@ class File(models.Model):
         
             with open(fullpath, 'rb') as fid:
                 return self.read(fid)
+
+class Day(models.Model):
+    date = models.DateField()
+    count = models.PositiveIntegerField(default=0)
+    duration = models.PositiveIntegerField(default=0)
+    blue = models.PositiveIntegerField(default=0)
+    green = models.PositiveIntegerField(default=0)
+    orange = models.PositiveIntegerField(default=0)
+    red = models.PositiveIntegerField(default=0)
+
+    def __repr__(self):
+        return f'date = {self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
