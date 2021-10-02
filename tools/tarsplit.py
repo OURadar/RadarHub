@@ -45,10 +45,9 @@ def compress(dirs, verbose=0, run=False):
                 print('run')
 
 def readwrite(params):
-    outfile = params[0]
-    infiles = params[1]
-    archive = params[2]
-    print(f'{outfile} {[os.path.basename(m.name) for m in infiles]} {archive}')
+    (outfile, infiles, archive) = params
+    ii = ', '.join(os.path.basename(m.name) for m in infiles)
+    print(f'{outfile} {ii} {archive}')
     with tarfile.open(archive) as source:
         with tarfile.open(outfile, 'w|xz') as out:
             for file in infiles:
