@@ -47,7 +47,7 @@ def compress(dirs, verbose=0, run=False):
 def readwrite(params):
     (outfile, infiles, archive) = params
     ii = ', '.join(os.path.basename(m.name) for m in infiles)
-    print(f'{outfile} {ii} {archive}')
+    print(f'{outfile} :: {ii}')
     with tarfile.open(archive) as source:
         with tarfile.open(outfile, 'w|xz') as out:
             for file in infiles:
@@ -63,13 +63,24 @@ def readwrite(params):
                 info.gid = file.gid
                 out.addfile(info, fid)
 
+def simreadwrite(params):
+    (outfile, infiles, _) = params
+    ii = ', '.join(os.path.basename(m.name) for m in infiles)
+    time.sleep(0.01)
+    print(f'{outfile} :: {ii}', flush=True)
+
 def split(archive, args):
     print(f'Splitting {archive} into .tar.xz files ...')
-    (path, name) = os.path.split(archive)
-    dest = os.path.join(path, '_original')
+    if args.dest is None:
+        path = os.path.dirname(archive)
+        dest = os.path.join(path, '_original')
+    else:
+        dest = args.dest
+
     if not os.path.exists(dest):
         print(f'Creating directory {dest} ...')
         os.makedirs(dest)
+
     with tarfile.open(archive) as tar:
         print(f'Reading archive contents ...')
         members = tar.getmembers()
@@ -83,22 +94,21 @@ def split(archive, args):
             parts = os.path.basename(file).split('-')
             prefix = '-'.join(parts[:4])
             friends = [m for m in members if prefix in m.name]
-            outfile = os.path.join(path, '_original', f'{prefix}.tar.xz')
+            outfile = os.path.join(dest, f'{prefix}.tar.xz')
             infiles.append(friends)
             outfiles.append(outfile)
-    if not args.run:
-        for line in zip(outfiles, infiles):
-            i = ', '.join(os.path.basename(m.name) for m in line[1])
-            print(f'{line[0]} :: {i}')
-        return
+
     with Pool() as pool:
+        if not args.run:
+            return pool.map(simreadwrite, zip(outfiles, infiles, [archive] * len(outfiles)))
         pool.map(readwrite, zip(outfiles, infiles, [archive] * len(outfiles)))
 
+#
 
 def main():
     parser = argparse.ArgumentParser(prog='tarsplit.py',
         formatter_class=argparse.RawTextHelpFormatter,
-        description=textwrap.dedent('''\
+        description=textwrap.dedent('''
         Tar Archive Split Tool
 
         Examples:
@@ -107,7 +117,8 @@ def main():
         '''))
     parser.add_argument('sources', metavar='sources', type=str, nargs='+',
         help='sources to process')
-    #parser.add_argument('-d', dest='dirs', action='append', help='insert a folder')
+    parser.add_argument('-d', dest='dest', default=None,
+        help='destination of the split files')
     parser.add_argument('-n', dest='run', action='store_false', default=True,
         help='no true execution, just a dry run')
     parser.add_argument('-v', dest='verbose', default=0, action='count',
