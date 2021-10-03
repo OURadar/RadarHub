@@ -24,14 +24,10 @@ verbose = 0
 def compress(dir, args):
     print(f'Compressing .nc files in {dir} ...')
     os.chdir(dir)
-    if args.dest is None:
-        dest = '_original'
-    else:
-        dest = args.dest
 
-    if not os.path.exists(dest):
-        print(f'Creating directory {dest} ...')
-        os.makedirs(dest)
+    if not os.path.exists(args.dest):
+        print(f'Creating directory {args.dest} ...')
+        os.makedirs(args.dest)
 
     files = sorted(glob.glob('[A-Z]*.nc'))
     zfiles = [file for file in files if '-Z.nc' in file]
@@ -42,7 +38,7 @@ def compress(dir, args):
         parts = basename.split('-')
         prefix = '-'.join(parts[:4])
         friends = [file for file in files if prefix in file]
-        outfile = os.path.join(dest, f'{prefix}.tar.xz')
+        outfile = os.path.join(args.dest, f'{prefix}.tar.xz')
         infiles.append(friends)
         outfiles.append(outfile) 
    
@@ -60,7 +56,11 @@ def compress(dir, args):
 
     d = time.time() - d
 
-    m = np.mean(results)
+    if args.run:
+        m = np.mean(results)
+    else:
+        m = 0
+
     print(f'Compression time: {d:.2f}s   Average: {m:.2f}s   Files: {len(results):,d}', flush=True)
 
 def syswrite(params):
@@ -155,15 +155,10 @@ def simreadwrite(params):
 
 def split(archive, args):
     print(f'Splitting {archive} into .tar.xz files ...')
-    if args.dest is None:
-        path = os.path.dirname(archive)
-        dest = os.path.join(path, '_original')
-    else:
-        dest = args.dest
 
-    if not os.path.exists(dest):
-        print(f'Creating directory {dest} ...')
-        os.makedirs(dest)
+    if not os.path.exists(args.dest):
+        print(f'Creating directory {args.dest} ...')
+        os.makedirs(args.dest)
 
     with tarfile.open(archive) as tar:
         print(f'Reading archive contents ...')
@@ -178,7 +173,7 @@ def split(archive, args):
             parts = os.path.basename(file).split('-')
             prefix = '-'.join(parts[:4])
             friends = [m for m in members if prefix in m.name]
-            outfile = os.path.join(dest, f'{prefix}.tar.xz')
+            outfile = os.path.join(args.dest, f'{prefix}.tar.xz')
             infiles.append(friends)
             outfiles.append(outfile)
 
@@ -262,11 +257,18 @@ def main():
     global verbose
     verbose = args.verbose
 
+    dest = args.dest
+
     if args.extracted:
         compress(os.path.expanduser('~/Downloads/_extracted'), args)
     else:
         for archive in args.sources:
             d = time.time()
+            if dest is None:
+                path = os.path.dirname(archive)
+                args.dest = os.path.join(path, '_original')
+            if verbose:
+                print(f'{archive} -> {args.dest}')
             split2(archive, args)
             d = time.time() - d
             print(f'Total elapsed time: {d:,.1f}s')
