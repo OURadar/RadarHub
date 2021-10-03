@@ -47,8 +47,7 @@ def compress(dirs, verbose=0, run=False):
 
 def readwrite(params):
     (outfile, infiles, archive) = params
-    ii = ', '.join(os.path.basename(m.name) for m in infiles)
-    print(f'{outfile} :: {ii}')
+    d = time.time()
     with tarfile.open(archive) as source:
         with tarfile.open(outfile, 'w|xz') as out:
             for file in infiles:
@@ -63,6 +62,10 @@ def readwrite(params):
                 info.uid = file.uid
                 info.gid = file.gid
                 out.addfile(info, fid)
+    d = time.time() - d
+    ii = ' '.join(os.path.basename(m.name) for m in infiles)
+    outfile = outfile.replace(os.path.expanduser('~'), '~')
+    print(f'{outfile} :: {ii} :: {d:.2f}s')
 
 def simreadwrite(params):
     (outfile, infiles, _) = params
@@ -120,7 +123,7 @@ def main():
     parser.add_argument('sources', metavar='sources', type=str, nargs='+',
         help='sources to process')
     parser.add_argument('-c', dest='count', default=None,
-        help='cores to use')
+        help='cores to use, in fraction (< 1.0) or explicity count')
     parser.add_argument('-d', dest='dest', default=None,
         help='destination of the split files')
     parser.add_argument('-n', dest='run', action='store_false', default=True,
@@ -130,7 +133,12 @@ def main():
     args = parser.parse_args()
 
     if args.count:
-        args.count = int(args.count)
+        f = float(args.count)
+        if f < 1.0:
+            args.count = int(multiprocessing.cpu_count() * f)
+        else:
+            args.count = int(f)
+        print(f'Using {args.count} threads ...')
 
     for archive in args.sources:
         split(archive, args)
