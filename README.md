@@ -33,8 +33,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [x] 0.3 Some button actions to backhaul (7/29/2021)
 - [x] 0.4 Migrate data module to an external websocket client (8/9/2021)
 - [x] 0.5 3D view for radar products with map overlay (9/13/2021)
-- [ ] 0.6 SQLite / radar products to 3D view
-- [ ] 0.7 General page template + stylesheets
+- [ ] 0.6 SQLite / product catalog / products to 3D view
+- [ ] 0.7 Page template, UI materials, mobile version
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Landing page, radar selection, etc.
 - [ ] 1.0 RadarKit communicates with RadarHub
