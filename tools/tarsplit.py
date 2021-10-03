@@ -4,6 +4,11 @@
 #  tarsplit.py
 #  Archive Migration Tool
 #
+#  This tool is meant for migrating datasets that were
+#  collected prior to 2015 before a permanent data structure
+#  was created for reduced storage and suitable for real-time
+#  retrieval
+#
 #  RadarHub
 #
 #  Created by Boonleng Cheong
@@ -89,7 +94,9 @@ def write(params):
     with tarfile.open(outfile, 'w|xz') as out:
         for file in infiles:
             info = tarfile.TarInfo(file)
+            # info.mode = int('644', 8)
             info.size = os.path.getsize(file)
+            info.mtime = time.mktime(time.strptime('-'.join(file.split('-')[1:3]), '%Y%m%d-%H%M%S'))
             with open(file, 'rb') as fid:
                 out.addfile(info, fid)
 
@@ -183,10 +190,10 @@ def split(archive, args):
             return pool.map(simreadwrite, parameters)
         pool.map(readwrite, parameters)
 
-def split2(archive, args):
+def extract(archive, args):
     print(f'Splitting {archive} into .tar.xz files ...')
 
-    folder = os.path.expanduser('~/Downloads/_extracted')
+    folder = os.path.expanduser('~/Downloads/_tarsplit_extracted')
     if os.path.exists(folder):
         print(f'{folder} already exists')
         os.system(f'rm -rf {folder}')
@@ -214,8 +221,11 @@ def split2(archive, args):
 
     print(f'Extraction time: {d:.2f}s', flush=True)
 
-    compress(folder, args)
+    return folder
 
+def split2(archive, args):
+    folder = extract(archive, args)
+    compress(folder, args)
     os.system(f'rm -rf {folder}')
 
 #
@@ -236,7 +246,7 @@ def main():
         help='cores to use, in fraction (< 1.0) or explicity count')
     parser.add_argument('-d', dest='dest', default=None,
         help='destination of the split files')
-    parser.add_argument('-e', dest='extracted', default=None,
+    parser.add_argument('-e', dest='existing', action='store_true', default=False,
         help='use existing extracted folder')    
     parser.add_argument('-n', dest='run', action='store_false', default=True,
         help='no true execution, just a dry run')
@@ -244,6 +254,8 @@ def main():
         help='use system call tar with --strip-components')
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
+    parser.add_argument('-x', dest='extractonly', action='store_true', default=False,
+        help='extract only')
     args = parser.parse_args()
 
     if args.count:
@@ -259,8 +271,10 @@ def main():
 
     dest = args.dest
 
-    if args.extracted:
-        compress(os.path.expanduser('~/Downloads/_extracted'), args)
+    if args.existing:
+        compress(args.sources[0], args)
+    elif args.extractonly:
+        extract(args.sources[0], args)
     else:
         for archive in args.sources:
             d = time.time()
