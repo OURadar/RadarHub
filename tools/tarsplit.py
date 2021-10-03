@@ -12,7 +12,6 @@
 
 import multiprocessing
 import os
-import re
 import glob
 import time
 import tarfile
@@ -21,29 +20,61 @@ import argparse
 
 import multiprocessing
 
-def compress(dirs, verbose=0, run=False):
-    timeSearch = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
-    for dir in dirs:
-        if verbose:
-            print(f'Processing {dir} ...')
-        os.chdir(dir)
-        files = sorted(glob.glob(os.path.join('*Z.nc')))
-        for file in files:
-            basename = os.path.basename(file)
-            elements = basename.split('-')
-            radar = elements[0]
-            scan = elements[3]
-            timestr = timeSearch.search(basename).group(0)
-            pattern = f'{radar}-{timestr}-{scan}-*.nc'
-            files = sorted(glob.glob(pattern))
-            # files = [os.path.basename(file) for file in files]
-            # print(f'{pattern}  {files}')
-            members = ' '.join(files)
-            command = f'tar -cJf {radar}-{timestr}-{scan}.tar.xz {members}'
-            print(command)
-            if run:
-                # os.system(command)
-                print('run')
+def compress(dir, args):
+    print(f'Compressing .nc files in {dir} ...')
+    os.chdir(dir)
+    if args.dest is None:
+        dest = '_original'
+    else:
+        dest = args.dest
+
+    if not os.path.exists(dest):
+        print(f'Creating directory {dest} ...')
+        os.makedirs(dest)
+
+    files = sorted(glob.glob('[A-Z]*.nc'))
+    zfiles = [file for file in files if '-Z.nc' in file]
+    infiles = []
+    outfiles = []
+    for file in zfiles:
+        basename = os.path.basename(file)
+        parts = basename.split('-')
+        prefix = '-'.join(parts[:4])
+        friends = [file for file in files if prefix in file]
+        outfile = os.path.join(dest, f'{prefix}.tar.xz')
+        infiles.append(friends)
+        outfiles.append(outfile)
+
+        # command = f'tar -cJf {prefix}.tar.xz {friends}'
+        # print(command)
+    
+    with multiprocessing.Pool(args.count) as pool:
+        parameters = zip(outfiles, infiles)
+        if not args.run:
+            return pool.map(simwrite, parameters)
+        pool.map(write, parameters)
+
+def write(params):
+    (outfile, infiles) = params
+    d = time.time()
+    with tarfile.open(outfile, 'w|xz') as out:
+        for file in infiles:
+            # fid = open(file, 'rb')
+            info = tarfile.TarInfo(file)
+            info.size = os.path.getsize(file)
+            with open(file, 'rb') as fid:
+                out.addfile(info, fid)
+    d = time.time() - d
+    ii = ' '.join(os.path.basename(m) for m in infiles)
+    outfile = outfile.replace(os.path.expanduser('~'), '~')
+    print(f'{outfile} :: {ii} :: {d:.2f}s', flush=True)
+
+def simwrite(params):
+    (outfile, infiles) = params
+    ii = ' '.join(os.path.basename(m) for m in infiles)
+    time.sleep(0.01)
+    outfile = outfile.replace(os.path.expanduser('~'), '~')
+    print(f'{outfile} :: {ii}', flush=True)
 
 def readwrite(params):
     (outfile, infiles, archive) = params
@@ -69,7 +100,7 @@ def readwrite(params):
 
 def simreadwrite(params):
     (outfile, infiles, _) = params
-    ii = ', '.join(os.path.basename(m.name) for m in infiles)
+    ii = ' '.join(os.path.basename(m.name) for m in infiles)
     time.sleep(0.01)
     print(f'{outfile} :: {ii}', flush=True)
 
@@ -140,8 +171,11 @@ def main():
             args.count = int(f)
         print(f'Using {args.count} threads ...')
 
-    for archive in args.sources:
-        split(archive, args)
+    # for archive in args.sources:
+    #     split(archive, args)
+
+    for dir in args.sources:
+        compress(dir, args)
 
     # if args.dirs:
     #     compress(args.dir, args.verbose, args.run)
