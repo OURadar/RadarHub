@@ -197,14 +197,14 @@ def split2(archive, args):
     print(f'Extracting archive contents to {folder} ...')
     if args.run:
         if args.system:
-            v ='v' if args.verbose > 1 else ''
+            v ='v' if args.verbose else ''
             os.system(f'tar -x{v}f {archive} -C {folder} --strip-components 1')
         else:
             with tarfile.open(archive) as tar:
                 members = tar.getmembers()
                 for member in members:
                     outfile = os.path.join(folder, os.path.basename(member.name))
-                    if args.verbose > 1:
+                    if args.verbose:
                         print(f'x {outfile}')
                     fid = tar.extractfile(member)
                     with open(outfile, 'wb') as out:
@@ -267,8 +267,7 @@ def main():
             if dest is None:
                 path = os.path.dirname(archive)
                 args.dest = os.path.join(path, '_original')
-            if verbose:
-                print(f'{archive} -> {args.dest}')
+            print(f'{archive} -> {args.dest}')
             split2(archive, args)
             d = time.time() - d
             print(f'Total elapsed time: {d:,.1f}s')
