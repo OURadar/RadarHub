@@ -10,15 +10,14 @@
 #  Copyright (c) 2021 Boonleng Cheong.
 #
 
-import multiprocessing
 import os
 import glob
 import time
 import tarfile
 import textwrap
 import argparse
-
 import multiprocessing
+import numpy as np
 
 def compress(dir, args):
     print(f'Compressing .nc files in {dir} ...')
@@ -43,31 +42,59 @@ def compress(dir, args):
         friends = [file for file in files if prefix in file]
         outfile = os.path.join(dest, f'{prefix}.tar.xz')
         infiles.append(friends)
-        outfiles.append(outfile)
+        outfiles.append(outfile) 
+   
+    d = time.time()
 
-        # command = f'tar -cJf {prefix}.tar.xz {friends}'
-        # print(command)
-    
+    parameters = zip(outfiles, infiles)
     with multiprocessing.Pool(args.count) as pool:
-        parameters = zip(outfiles, infiles)
         if not args.run:
-            return pool.map(simwrite, parameters)
-        pool.map(write, parameters)
+            results = pool.map(simwrite, parameters)
+        else:
+            if args.system:
+                results = pool.map(syswrite, parameters)
+            else:
+                results = pool.map(write, parameters)
+
+    d = time.time() - d
+
+    print(f'{len(results)} {np.mean(results)}')
+    print(f'Total elapsed time: {d:.2f}s', flush=True)
+
+def syswrite(params):
+    (outfile, infiles) = params
+
+    d = time.time()
+
+    sources = ' '.join(infiles)
+    command = f'tar -cJf {outfile} {sources}'
+    os.system(command)
+
+    d = time.time() - d
+
+    ii = ' '.join(os.path.basename(m) for m in infiles)
+    outfile = outfile.replace(os.path.expanduser('~'), '~')
+    print(f'{outfile} :: {ii} :: {d:.2f}s', flush=True)
+    return d
 
 def write(params):
     (outfile, infiles) = params
+
     d = time.time()
+
     with tarfile.open(outfile, 'w|xz') as out:
         for file in infiles:
-            # fid = open(file, 'rb')
             info = tarfile.TarInfo(file)
             info.size = os.path.getsize(file)
             with open(file, 'rb') as fid:
                 out.addfile(info, fid)
+
     d = time.time() - d
+
     ii = ' '.join(os.path.basename(m) for m in infiles)
     outfile = outfile.replace(os.path.expanduser('~'), '~')
     print(f'{outfile} :: {ii} :: {d:.2f}s', flush=True)
+    return d
 
 def simwrite(params):
     (outfile, infiles) = params
@@ -75,6 +102,7 @@ def simwrite(params):
     time.sleep(0.01)
     outfile = outfile.replace(os.path.expanduser('~'), '~')
     print(f'{outfile} :: {ii}', flush=True)
+    return 0.01
 
 def readwrite(params):
     (outfile, infiles, archive) = params
@@ -139,6 +167,40 @@ def split(archive, args):
             return pool.map(simreadwrite, parameters)
         pool.map(readwrite, parameters)
 
+def split2(archive, args):
+    print(f'Splitting {archive} into .tar.xz files ...')
+
+    folder = os.path.expanduser('~/Downloads/_extracted')
+    if os.path.exists(folder):
+        print(f'{folder} already exists')
+        os.system(f'rm -rf {folder}')
+    os.makedirs(folder)
+
+    d = time.time()
+
+    print(f'Extracting archive contents to {folder} ...')
+    if args.system:
+        v ='v' if args.verbose > 1 else ''
+        os.system(f'tar -x{v}f {archive} -C {folder} --strip-components 1')
+    else:
+        with tarfile.open(archive) as tar:
+            members = tar.getmembers()
+            for member in members:
+                outfile = os.path.join(folder, os.path.basename(member.name))
+                if args.verbose > 1:
+                    print(f'x {outfile}')
+                fid = tar.extractfile(member)
+                with open(outfile, 'wb') as out:
+                    out.write(fid.read())
+
+    d = time.time() - d
+
+    print(f'Total elapsed time: {d:.2f}s', flush=True)
+
+    compress(folder, args)
+
+    os.system(f'rm -rf {folder}')
+
 #
 
 def main():
@@ -157,8 +219,12 @@ def main():
         help='cores to use, in fraction (< 1.0) or explicity count')
     parser.add_argument('-d', dest='dest', default=None,
         help='destination of the split files')
+    parser.add_argument('-e', dest='extracted', default=None,
+        help='use existing extracted folder')    
     parser.add_argument('-n', dest='run', action='store_false', default=True,
         help='no true execution, just a dry run')
+    parser.add_argument('-s', dest='system', action='store_true', default=False,
+        help='use system call tar with --strip-components')
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
     args = parser.parse_args()
@@ -174,11 +240,13 @@ def main():
     # for archive in args.sources:
     #     split(archive, args)
 
-    for dir in args.sources:
-        compress(dir, args)
+    if args.extracted:
+        compress(os.path.expanduser('~/Downloads/_extracted'), args)
+    else:
+        for archive in args.sources:
+            split2(archive, args)
 
-    # if args.dirs:
-    #     compress(args.dir, args.verbose, args.run)
+
 
 if __name__ == '__main__':
     main()
