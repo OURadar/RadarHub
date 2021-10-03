@@ -227,6 +227,7 @@ def split2(archive, args):
     folder = extract(archive, args)
     compress(folder, args)
     os.system(f'rm -rf {folder}')
+    os.system(f'mv {archive} {archive}.tarsplit')
 
 #
 
