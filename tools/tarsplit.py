@@ -200,19 +200,20 @@ def split2(archive, args):
     d = time.time()
 
     print(f'Extracting archive contents to {folder} ...')
-    if args.system:
-        v ='v' if args.verbose > 1 else ''
-        os.system(f'tar -x{v}f {archive} -C {folder} --strip-components 1')
-    else:
-        with tarfile.open(archive) as tar:
-            members = tar.getmembers()
-            for member in members:
-                outfile = os.path.join(folder, os.path.basename(member.name))
-                if args.verbose > 1:
-                    print(f'x {outfile}')
-                fid = tar.extractfile(member)
-                with open(outfile, 'wb') as out:
-                    out.write(fid.read())
+    if args.run:
+        if args.system:
+            v ='v' if args.verbose > 1 else ''
+            os.system(f'tar -x{v}f {archive} -C {folder} --strip-components 1')
+        else:
+            with tarfile.open(archive) as tar:
+                members = tar.getmembers()
+                for member in members:
+                    outfile = os.path.join(folder, os.path.basename(member.name))
+                    if args.verbose > 1:
+                        print(f'x {outfile}')
+                    fid = tar.extractfile(member)
+                    with open(outfile, 'wb') as out:
+                        out.write(fid.read())
 
     d = time.time() - d
 
@@ -260,7 +261,7 @@ def main():
 
     global verbose
     verbose = args.verbose
-    
+
     if args.extracted:
         compress(os.path.expanduser('~/Downloads/_extracted'), args)
     else:
