@@ -19,6 +19,8 @@ import argparse
 import multiprocessing
 import numpy as np
 
+verbose = 0
+
 def compress(dir, args):
     print(f'Compressing .nc files in {dir} ...')
     os.chdir(dir)
@@ -58,8 +60,8 @@ def compress(dir, args):
 
     d = time.time() - d
 
-    print(f'{len(results)} {np.mean(results)}')
-    print(f'Total elapsed time: {d:.2f}s', flush=True)
+    m = np.mean(results)
+    print(f'Compression time: {d:.2f}s   Average: {m:.2f}s   Files: {len(results):,d}', flush=True)
 
 def syswrite(params):
     (outfile, infiles) = params
@@ -72,9 +74,11 @@ def syswrite(params):
 
     d = time.time() - d
 
-    ii = ' '.join(os.path.basename(m) for m in infiles)
-    outfile = outfile.replace(os.path.expanduser('~'), '~')
-    print(f'{outfile} :: {ii} :: {d:.2f}s', flush=True)
+    if verbose:
+        ii = ' '.join(os.path.basename(m) for m in infiles)
+        outfile = outfile.replace(os.path.expanduser('~'), '~')
+        print(f'{outfile} :: {ii} :: {d:.2f}s', flush=True)
+
     return d
 
 def write(params):
@@ -91,22 +95,29 @@ def write(params):
 
     d = time.time() - d
 
-    ii = ' '.join(os.path.basename(m) for m in infiles)
-    outfile = outfile.replace(os.path.expanduser('~'), '~')
-    print(f'{outfile} :: {ii} :: {d:.2f}s', flush=True)
+    if verbose:
+        ii = ' '.join(os.path.basename(m) for m in infiles)
+        outfile = outfile.replace(os.path.expanduser('~'), '~')
+        print(f'{outfile} :: {ii} :: {d:.2f}s', flush=True)
+
     return d
 
 def simwrite(params):
     (outfile, infiles) = params
-    ii = ' '.join(os.path.basename(m) for m in infiles)
     time.sleep(0.01)
-    outfile = outfile.replace(os.path.expanduser('~'), '~')
-    print(f'{outfile} :: {ii}', flush=True)
+
+    if verbose:
+        ii = ' '.join(os.path.basename(m) for m in infiles)
+        outfile = outfile.replace(os.path.expanduser('~'), '~')
+        print(f'{outfile} :: {ii}', flush=True)
+
     return 0.01
 
 def readwrite(params):
     (outfile, infiles, archive) = params
+
     d = time.time()
+
     with tarfile.open(archive) as source:
         with tarfile.open(outfile, 'w|xz') as out:
             for file in infiles:
@@ -121,16 +132,26 @@ def readwrite(params):
                 info.uid = file.uid
                 info.gid = file.gid
                 out.addfile(info, fid)
+
     d = time.time() - d
-    ii = ' '.join(os.path.basename(m.name) for m in infiles)
-    outfile = outfile.replace(os.path.expanduser('~'), '~')
-    print(f'{outfile} :: {ii} :: {d:.2f}s')
+
+    if verbose:
+        ii = ' '.join(os.path.basename(m.name) for m in infiles)
+        outfile = outfile.replace(os.path.expanduser('~'), '~')
+        print(f'{outfile} :: {ii} :: {d:.2f}s')
+
+    return d
 
 def simreadwrite(params):
     (outfile, infiles, _) = params
-    ii = ' '.join(os.path.basename(m.name) for m in infiles)
+
     time.sleep(0.01)
-    print(f'{outfile} :: {ii}', flush=True)
+
+    if verbose:
+        ii = ' '.join(os.path.basename(m.name) for m in infiles)
+        print(f'{outfile} :: {ii}', flush=True)
+
+    return 0.01
 
 def split(archive, args):
     print(f'Splitting {archive} into .tar.xz files ...')
@@ -195,7 +216,7 @@ def split2(archive, args):
 
     d = time.time() - d
 
-    print(f'Total elapsed time: {d:.2f}s', flush=True)
+    print(f'Extraction time: {d:.2f}s', flush=True)
 
     compress(folder, args)
 
@@ -237,16 +258,19 @@ def main():
             args.count = int(f)
         print(f'Using {args.count} threads ...')
 
-    # for archive in args.sources:
-    #     split(archive, args)
-
+    global verbose
+    verbose = args.verbose
+    
     if args.extracted:
         compress(os.path.expanduser('~/Downloads/_extracted'), args)
     else:
         for archive in args.sources:
+            d = time.time()
             split2(archive, args)
+            d = time.time() - d
+            print(f'Total elapsed time: {d:,.1f}s')
 
-
+#
 
 if __name__ == '__main__':
     main()
