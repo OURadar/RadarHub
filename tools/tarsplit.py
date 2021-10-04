@@ -32,7 +32,10 @@ def now():
 
 def compress(dir, args):
     print(f'{now()} : Compressing .nc files in {dir} ...')
+    cwd = os.getcwd()
     os.chdir(dir)
+
+    d = time.time()
 
     if not os.path.exists(args.dest):
         if args.verbose:
@@ -51,8 +54,6 @@ def compress(dir, args):
         outfile = os.path.join(args.dest, f'{prefix}.tar.xz')
         infiles.append(friends)
         outfiles.append(outfile) 
-   
-    d = time.time()
 
     parameters = zip(outfiles, infiles)
     with multiprocessing.Pool(args.count) as pool:
@@ -65,6 +66,8 @@ def compress(dir, args):
                 results = pool.map(write, parameters)
 
     d = time.time() - d
+
+    os.chdir(cwd)
 
     if args.run:
         m = np.mean(results)
