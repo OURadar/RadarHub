@@ -24,14 +24,19 @@ import argparse
 import multiprocessing
 import numpy as np
 
-verbose = 0
+# Static debug flag for debugging only
+debug = 0
+
+def now():
+    return time.strftime('%H:%M:%S', time.localtime())
 
 def compress(dir, args):
-    print(f'Compressing .nc files in {dir} ...')
+    print(f'{now()} : Compressing .nc files in {dir} ...')
     os.chdir(dir)
 
     if not os.path.exists(args.dest):
-        print(f'Creating directory {args.dest} ...')
+        if args.verbose:
+            print(f'{now()} : Creating directory {args.dest} ...')
         os.makedirs(args.dest)
 
     files = sorted(glob.glob('[A-Z]*.nc'))
@@ -64,9 +69,9 @@ def compress(dir, args):
     if args.run:
         m = np.mean(results)
     else:
-        m = 0
+        m = 0.1
 
-    print(f'Compression time: {d:.2f}s   Average: {m:.2f}s   Files: {len(results):,d}', flush=True)
+    print(f'{now()} : Compression time: {d:.2f}s   Average: {m:.2f}s   Files: {len(results):,d}', flush=True)
 
 def syswrite(params):
     (outfile, infiles) = params
@@ -79,10 +84,10 @@ def syswrite(params):
 
     d = time.time() - d
 
-    if verbose:
+    if debug:
         ii = ' '.join(os.path.basename(m) for m in infiles)
         outfile = outfile.replace(os.path.expanduser('~'), '~')
-        print(f'{outfile} :: {ii} :: {d:.2f}s', flush=True)
+        print(f'{now()} : {outfile} :: {ii} :: {d:.2f}s', flush=True)
 
     return d
 
@@ -102,10 +107,10 @@ def write(params):
 
     d = time.time() - d
 
-    if verbose:
+    if debug:
         ii = ' '.join(os.path.basename(m) for m in infiles)
         outfile = outfile.replace(os.path.expanduser('~'), '~')
-        print(f'{outfile} :: {ii} :: {d:.2f}s', flush=True)
+        print(f'{now()} : {outfile} :: {ii} :: {d:.2f}s', flush=True)
 
     return d
 
@@ -113,10 +118,10 @@ def simwrite(params):
     (outfile, infiles) = params
     time.sleep(0.01)
 
-    if verbose:
+    if debug:
         ii = ' '.join(os.path.basename(m) for m in infiles)
         outfile = outfile.replace(os.path.expanduser('~'), '~')
-        print(f'{outfile} :: {ii}', flush=True)
+        print(f'{now()} : {outfile} :: {ii}', flush=True)
 
     return 0.01
 
@@ -142,10 +147,10 @@ def readwrite(params):
 
     d = time.time() - d
 
-    if verbose:
+    if debug:
         ii = ' '.join(os.path.basename(m.name) for m in infiles)
         outfile = outfile.replace(os.path.expanduser('~'), '~')
-        print(f'{outfile} :: {ii} :: {d:.2f}s')
+        print(f'{now()} : {outfile} :: {ii} :: {d:.2f}s')
 
     return d
 
@@ -154,24 +159,25 @@ def simreadwrite(params):
 
     time.sleep(0.01)
 
-    if verbose:
+    if debug:
         ii = ' '.join(os.path.basename(m.name) for m in infiles)
-        print(f'{outfile} :: {ii}', flush=True)
+        print(f'{now()} : {outfile} :: {ii}', flush=True)
 
     return 0.01
 
-def split(archive, args):
+def splitV1(archive, args):
     print(f'Splitting {archive} into .tar.xz files ...')
 
     if not os.path.exists(args.dest):
-        print(f'Creating directory {args.dest} ...')
+        if args.verbose:
+            print(f'{now()} : Creating directory {args.dest} ...')
         os.makedirs(args.dest)
 
     with tarfile.open(archive) as tar:
-        print(f'Reading archive contents ...')
+        print(f'{now()} : Reading archive contents ...')
         members = tar.getmembers()
         members = [m for m in members if os.path.basename(m.name)[:2] != '._']
-        print(f'Generating output archives ...')
+        print(f'{now()} : Generating output archives ...')
         files = [m.name for m in members]
         zfiles = sorted([file for file in files if '-Z.nc' in file])
         infiles = []
@@ -191,17 +197,17 @@ def split(archive, args):
         pool.map(readwrite, parameters)
 
 def extract(archive, args):
-    print(f'Splitting {archive} into .tar.xz files ...')
+    print(f'{now()} : Splitting {archive} into .tar.xz files ...')
 
     folder = os.path.expanduser('~/Downloads/_tarsplit_extracted')
     if os.path.exists(folder):
-        print(f'{folder} already exists')
+        print(f'{now()} : {folder} already exists')
         os.system(f'rm -rf {folder}')
     os.makedirs(folder)
 
     d = time.time()
 
-    print(f'Extracting archive contents to {folder} ...')
+    print(f'{now()} : Extracting archive contents to {folder} ...')
     if args.run:
         if args.system:
             v ='v' if args.verbose else ''
@@ -219,11 +225,11 @@ def extract(archive, args):
 
     d = time.time() - d
 
-    print(f'Extraction time: {d:.2f}s', flush=True)
+    print(f'{now()} : Extraction time: {d:.2f}s', flush=True)
 
     return folder
 
-def split2(archive, args):
+def split(archive, args):
     folder = extract(archive, args)
     compress(folder, args)
     os.system(f'rm -rf {folder}')
@@ -265,10 +271,7 @@ def main():
             args.count = int(multiprocessing.cpu_count() * f)
         else:
             args.count = int(f)
-        print(f'Using {args.count} threads ...')
-
-    global verbose
-    verbose = args.verbose
+        print(f'{now()} : Using {args.count} threads ...')
 
     dest = args.dest
 
@@ -283,9 +286,9 @@ def main():
                 path = os.path.dirname(archive)
                 args.dest = os.path.join(path, '_original')
             print(f'{archive} -> {args.dest}')
-            split2(archive, args)
+            split(archive, args)
             d = time.time() - d
-            print(f'Total elapsed time: {d:,.1f}s')
+            print(f'{now()} : Total elapsed time: {d:,.1f}s')
 
 #
 
