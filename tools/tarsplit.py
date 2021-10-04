@@ -285,7 +285,7 @@ def main():
             if dest is None:
                 path = os.path.dirname(archive)
                 args.dest = os.path.join(path, '_original')
-            print(f'{archive} -> {args.dest}')
+            print(f'{now()} : {archive} -> {args.dest}')
             split(archive, args)
             d = time.time() - d
             print(f'{now()} : Total elapsed time: {d:,.1f}s')
