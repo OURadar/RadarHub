@@ -3,6 +3,7 @@ import tarfile
 import numpy as np
 from netCDF4 import Dataset
 from django.db import models
+from django.core.validators import int_list_validator
 
 # Create your models here.
 class File(models.Model):
@@ -81,6 +82,7 @@ class Day(models.Model):
     green = models.PositiveIntegerField(default=0)
     orange = models.PositiveIntegerField(default=0)
     red = models.PositiveIntegerField(default=0)
+    hourly_count = models.CharField(max_length=80, validators=int_list_validator)
 
     def __repr__(self):
         return f'date = {self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
