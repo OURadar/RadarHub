@@ -44,9 +44,13 @@ def count(request, day):
     #     dateRange = [f'{prefix} {h:02d}:00Z', f'{prefix} {h:02d}:59Z']
     #     matches = File.objects.filter(name__contains='-Z', date__range=dateRange)
     #     n[h] = len(matches)
+
+    n = [0 for _ in range(24)]
     date = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
-    d = Day.objects.filter(date=date)[0]
-    n = [int(n) for n in d[0].hourly_count.split(',')]
+    d = Day.objects.filter(date=date)
+    if d:
+        d = d[0]
+        n = [int(n) for n in d.hourly_count.split(',')]
     data = {
         'count': n
     }
