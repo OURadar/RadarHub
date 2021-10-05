@@ -33,14 +33,16 @@ def now():
 def compress(dir, args):
     print(f'{now()} : Compressing .nc files in {dir} ...')
     cwd = os.getcwd()
-    os.chdir(dir)
 
     d = time.time()
 
-    if not os.path.exists(args.dest):
-        if args.verbose:
-            print(f'{now()} : Creating directory {args.dest} ...')
-        os.makedirs(args.dest)
+    if os.path.exists(args.dest):
+        os.rename(args.dest, args.dest.replace("_original", "_original_old"))
+    if args.verbose:
+        print(f'{now()} : Creating directory {args.dest} ...')
+    os.makedirs(args.dest)
+
+    os.chdir(dir)
 
     files = sorted(glob.glob('[A-Z]*.nc'))
     zfiles = [file for file in files if '-Z.nc' in file]
@@ -65,9 +67,9 @@ def compress(dir, args):
             else:
                 results = pool.map(write, parameters)
 
-    d = time.time() - d
-
     os.chdir(cwd)
+
+    d = time.time() - d
 
     if args.run:
         m = np.mean(results)
