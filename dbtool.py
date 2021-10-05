@@ -87,17 +87,16 @@ def xzfolder(folder):
         pool.map(proc_archive, files)
 
 def daycount(folder):
-    print(f'daytable: {folder}')
+    print(f'daycount: {folder}')
     files = listfiles(folder)
     if len(files) == 0:
         print('Unable to continue.')
         return
-    s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]', folder).group(0)
+    s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', folder).group(0)
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
     mode = 'N'
     if Day.objects.filter(date=date):
-        print(f'Day {date} exists. Updating ...')
         mode = 'U'
         d = Day.objects.filter(date=date)[0]
     else:
@@ -107,7 +106,7 @@ def daycount(folder):
     counts = [0] * 24
     for k in range(24):
         dateRange = [f'{date} {k:02d}:00Z', f'{date} {k:02d}:59Z']
-        counts[k] = len(File.objects.filter(date__range=dateRange))
+        counts[k] = len(File.objects.filter(name__contains='-Z.nc', date__range=dateRange))
         total += counts[k]
 
     d.count = total
@@ -116,7 +115,7 @@ def daycount(folder):
     d.save()
 
     if verbose > 1:
-        print(f'{mode} {d.date} :: {d.duration} :: {d.hourly_count}')
+        print(f'{mode} {d.date} :: {d.duration:,d} :: {d.hourly_count}')
         sys.stdout.flush()
 
 #
