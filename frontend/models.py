@@ -82,7 +82,8 @@ class Day(models.Model):
     green = models.PositiveIntegerField(default=0)
     orange = models.PositiveIntegerField(default=0)
     red = models.PositiveIntegerField(default=0)
-    hourly_count = models.CharField(max_length=80, validators=int_list_validator)
+    hourly_count = models.CharField(default='0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0',
+        max_length=120, validators=[int_list_validator])
 
     def __repr__(self):
         return f'date = {self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
