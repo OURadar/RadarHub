@@ -27,7 +27,7 @@ django.setup()
 
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
-from frontend.models import File
+from frontend.models import File, Day
 
 verbose = 1
 
@@ -71,19 +71,55 @@ def proc_archive(archive):
             insert(info.name, archive=archive, offset=info.offset, offset_data=info.offset_data, size=info.size)
 
 def listfiles(folder):
-    return sorted(glob.glob(os.path.join(folder, '*.xz')))
+    files = sorted(glob.glob(os.path.join(folder, '*.xz')))
+    if len(files) == 0:
+        folder = os.path.join(folder, '_original')
+        files = sorted(glob.glob(os.path.join(folder, '*.xz')))
+    return files
 
 def xzfolder(folder):
     print(f'xzfolder: {folder}')
-    files = listfiles(folder)
-    if len(files) == 0:
-        folder = os.path.join(folder, '_original')
     files = listfiles(folder)
     if len(files) == 0:
         print('Unable to continue.')
         return
     with Pool() as pool:
         pool.map(proc_archive, files)
+
+def daycount(folder):
+    print(f'daytable: {folder}')
+    files = listfiles(folder)
+    if len(files) == 0:
+        print('Unable to continue.')
+        return
+    s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]', folder).group(0)
+    date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
+
+    mode = 'N'
+    if Day.objects.filter(date=date):
+        print(f'Day {date} exists. Updating ...')
+        mode = 'U'
+        d = Day.objects.filter(date=date)[0]
+    else:
+        d = Day(date=date)
+
+    total = 0
+    counts = [0] * 24
+    for k in range(24):
+        dateRange = [f'{date} {k:02d}:00Z', f'{date} {k:02d}:59Z']
+        counts[k] = len(File.objects.filter(date__range=dateRange))
+        total += counts[k]
+
+    d.count = total
+    d.duration = d.count * 20
+    d.hourly_count = ','.join([str(c) for c in counts])
+    d.save()
+
+    if verbose > 1:
+        print(f'{mode} {d.date} :: {d.duration} :: {d.hourly_count}')
+        sys.stdout.flush()
+
+#
 
 def main():
     parser = argparse.ArgumentParser(prog='dbtool.py',
@@ -98,7 +134,8 @@ def main():
         '''))
     parser.add_argument('sources', type=str, nargs='+',
         help='sources to process')
-    parser.add_argument('-x', dest='xz', action='store_true', help='insert a folder with xz archives')
+    parser.add_argument('-d', dest='day', action='store_true', help='builds Day table')
+    parser.add_argument('-x', dest='xz', action='store_true', help='inserts a folder with xz archives')
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
     args = parser.parse_args()
@@ -110,6 +147,11 @@ def main():
         print('Processing a folder with .tar.xz archives')
         for folder in args.sources:
             xzfolder(folder)
+
+    if args.day:
+        print('Building Day table ...')
+        for folder in args.sources:
+            daycount(folder)
 
 if __name__ == '__main__':
     main()
