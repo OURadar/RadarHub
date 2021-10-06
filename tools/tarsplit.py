@@ -264,6 +264,8 @@ def main():
         help='no true execution, just a dry run')
     parser.add_argument('-s', dest='system', action='store_true', default=False,
         help='use system call tar with --strip-components')
+    parser.add_argument('-t', dest='transcode', action='store_true', default=False,
+        help='transcode to .tar.xz')
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
     parser.add_argument('-x', dest='extractonly', action='store_true', default=False,
@@ -284,6 +286,23 @@ def main():
         compress(args.sources[0], args)
     elif args.extractonly:
         extract(args.sources[0], args)
+    elif args.transcode:
+        for day in args.sources:
+            archives = glob.glob(os.path.join(day, '*.tgz'))
+            if len(archives) == 0:
+                folder = os.path.join(day, '_original')
+                if os.path.exists(folder):
+                    os.rename(folder, os.path.join(day, '_original_tgz'))
+                archives = glob.glob(os.path.join(day, '_original_tgz', '*.tgz'))
+            if len(archives) == 0:
+                print('Nothing to transform')
+                return
+            args.dest = os.path.join(day, '_original')
+            for archive in archives:
+                folder = extract(archive, args)
+                compress(folder, args)
+                os.system(f'rm -rf {folder}')
+                os.system(f'mv {archive} {archive}.tarsplit')
     else:
         for archive in args.sources:
             d = time.time()
