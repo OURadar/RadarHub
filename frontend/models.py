@@ -13,6 +13,9 @@ class File(models.Model):
     size = models.PositiveIntegerField(0)
     offset = models.PositiveIntegerField(default=0)
     offset_data = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        indexes = [models.Index(fields=['date', ]), ]
     
     def __repr__(self):
         return f'name = {self.name}   path = {self.getFullpath()}'

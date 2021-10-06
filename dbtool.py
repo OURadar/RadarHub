@@ -53,7 +53,8 @@ def insert(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
     if verbose > 1:
         print(f'{mode} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
         sys.stdout.flush()
-    x.save()
+    # x.save()
+    return x
 
 def retrieve(name):
     x = File.objects.filter(name=name)
@@ -67,8 +68,11 @@ def proc_archive(archive):
     if verbose:
         print(f'Processing {archive} ...')
     with tarfile.open(archive) as aid:
+        xx = []
         for info in aid.getmembers():
-            insert(info.name, archive=archive, offset=info.offset, offset_data=info.offset_data, size=info.size)
+            x = insert(info.name, archive=archive, offset=info.offset, offset_data=info.offset_data, size=info.size)
+            xx.append(x)
+    return xx
 
 def listfiles(folder):
     files = sorted(glob.glob(os.path.join(folder, '*.xz')))
@@ -84,7 +88,11 @@ def xzfolder(folder):
         print('Unable to continue.')
         return
     with Pool() as pool:
-        pool.map(proc_archive, files)
+        results = pool.map(proc_archive, files)
+    for xx in results:
+        for x in xx:
+            print(f'{x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
+            result.save()
 
 def daycount(folder):
     print(f'daycount: {folder}')
