@@ -7,7 +7,7 @@ from django.http import HttpResponse
 # from django.utils.dateparse import parse_datetime
 # from django.utils import timezone
 
-from .models import File
+from .models import File, Day
 from common import colorize
 
 def binary(request, name):
@@ -38,12 +38,13 @@ def count(request, day):
     if day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
 
-    prefix = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
     n = [0 for _ in range(24)]
-    for h in range(24):
-        dateRange = [f'{prefix} {h:02d}:00Z', f'{prefix} {h:02d}:59Z']
-        matches = File.objects.filter(name__contains='-Z', date__range=dateRange)
-        n[h] = len(matches)
+    date = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
+    print(date)
+    d = Day.objects.filter(date=date)
+    if d:
+        d = d[0]
+        n = [int(n) for n in d.hourly_count.split(',')]
     data = {
         'count': n
     }
