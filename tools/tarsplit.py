@@ -240,6 +240,30 @@ def split(archive, args):
     os.system(f'rm -rf {folder}')
     os.system(f'mv {archive} {archive}.tarsplit')
 
+def transcode(params):
+    (archive, dest) = params
+    outfile = os.path.join(dest, os.path.basename(archive).replace('tgz', 'tar.xz'))
+    print(f'{archive} -> {outfile}')
+    with tarfile.open(archive) as source:
+        with tarfile.open(outfile, 'w|xz') as out:
+            for file in source.getmembers():
+                fid = source.extractfile(file)
+                info = tarfile.TarInfo(os.path.basename(file.name))
+                info.size = file.size
+                info.mode = file.mode
+                info.type = file.type
+                info.mtime = file.mtime
+                info.uname = file.uname
+                info.gname = file.gname
+                info.uid = file.uid
+                info.gid = file.gid
+                out.addfile(info, fid)
+
+def simtranscode(params):
+    (archive, dest) = params
+    outfile = os.path.join(dest, os.path.basename(archive).replace('tgz', 'tar.xz'))
+    print(f'{archive} -> {outfile}')
+
 #
 
 def main():
@@ -288,21 +312,27 @@ def main():
         extract(args.sources[0], args)
     elif args.transcode:
         for day in args.sources:
-            archives = glob.glob(os.path.join(day, '*.tgz'))
+            src_folder = os.path.join(day, '_original_tgz')
+            dst_folder = os.path.join(day, '_original')
+            if os.path.exists(src_folder) and os.path.exists(dst_folder):
+                print('Processed before')
+                continue
+            if os.path.exists(dst_folder) and not os.path.exists(src_folder):
+                os.rename(dst_folder, src_folder)
+                os.makedirs(dst_folder)
+            archives = glob.glob(os.path.join(src_folder, '*.tgz'))
             if len(archives) == 0:
-                folder = os.path.join(day, '_original')
-                if os.path.exists(folder):
-                    os.rename(folder, os.path.join(day, '_original_tgz'))
-                archives = glob.glob(os.path.join(day, '_original_tgz', '*.tgz'))
-            if len(archives) == 0:
-                print('Nothing to transform')
-                return
-            args.dest = os.path.join(day, '_original')
-            for archive in archives:
-                folder = extract(archive, args)
-                compress(folder, args)
-                os.system(f'rm -rf {folder}')
-                os.system(f'mv {archive} {archive}.tarsplit')
+                print('Nothing to transcode')
+                continue
+            dest = os.path.join(day, '_original')
+            if not os.path.exists(dest):
+                os.makedirs(dest)
+            with multiprocessing.Pool(args.count) as pool:
+                parameters = zip(archives, [dest] * len(archives))
+                if not args.run:
+                    return pool.map(simtranscode, parameters)
+                pool.map(transcode, parameters)
+
     else:
         for archive in args.sources:
             d = time.time()
