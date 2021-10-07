@@ -29,9 +29,9 @@ pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
 from frontend.models import File, Day
 
-verbose = 1
+verbose = 2
 
-def insert(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
+def entry(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
     (path, name) = os.path.split(filename)
     s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', name).group(0)
     datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
@@ -50,11 +50,9 @@ def insert(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
     else:
         # File is stored in plain sight
         x = File(name=name, path=path, date=datestr)
-    if verbose > 1:
-        print(f'{mode} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
-        sys.stdout.flush()
-    # x.save()
-    return x
+    # print(f'{mode} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
+    # sys.stdout.flush()
+    return x, mode
 
 def retrieve(name):
     x = File.objects.filter(name=name)
@@ -69,10 +67,12 @@ def proc_archive(archive):
         print(f'Processing {archive} ...')
     with tarfile.open(archive) as aid:
         xx = []
+        mm = []
         for info in aid.getmembers():
-            x = insert(info.name, archive=archive, offset=info.offset, offset_data=info.offset_data, size=info.size)
+            x, m = entry(info.name, archive=archive, offset=info.offset, offset_data=info.offset_data, size=info.size)
             xx.append(x)
-    return xx
+            mm.append(m)
+    return xx, mm
 
 def listfiles(folder):
     files = sorted(glob.glob(os.path.join(folder, '*.xz')))
@@ -83,24 +83,23 @@ def listfiles(folder):
 
 def xzfolder(folder):
     print(f'xzfolder: {folder}')
-    files = listfiles(folder)
-    if len(files) == 0:
+    archives = listfiles(folder)
+    if len(archives) == 0:
         print('Unable to continue.')
         return
     with Pool() as pool:
-        results = pool.map(proc_archive, files)
-    for xx in results:
-        for x in xx:
-            print(f'{x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
-            result.save()
+        results = pool.map(proc_archive, archives)
+    for result in results:
+        (xx, mm) = result
+        for k in range(len(xx)):
+            x = xx[k]
+            m = mm[k]
+            print(f'{m} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
+            x.save()
 
-def daycount(folder):
-    print(f'daycount: {folder}')
-    files = listfiles(folder)
-    if len(files) == 0:
-        print('Unable to continue.')
-        return
-    s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', folder).group(0)
+def daycount(day):
+    print(f'daycount: {day}')
+    s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day).group(0)
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
     mode = 'N'
@@ -136,7 +135,8 @@ def main():
 
         Examples:
             dbtool.py
-            dbtool.py -x /data/PX1000/2013/20130520/_original
+            dbtool.py -x /data/PX1000/2013/20130520
+            dbtool.py -d /data/PX1000/2013/20130520
             dbtool.py -v
         '''))
     parser.add_argument('sources', type=str, nargs='+',
@@ -157,8 +157,8 @@ def main():
 
     if args.day:
         print('Building Day table ...')
-        for folder in args.sources:
-            daycount(folder)
+        for day in args.sources:
+            daycount(day)
 
 if __name__ == '__main__':
     main()

@@ -30,6 +30,32 @@ def header(requst, name):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
+
+'''
+    day - a string in the forms of
+          - YYYYMM
+'''
+def month(request, day):
+    if day == 'undefined':
+        return HttpResponse(f'Not a valid query.', status=500)
+    y = int(day[0:4])
+    m = int(day[4:6])
+    entries = Day.objects.filter(date__year=y, date__month=m)
+    s = time.mktime(time.strptime(day, '%Y%m'))
+    m += 1
+    if m == 13:
+        m = 1
+        day = str(int(day[:4]) + 1)
+    e = time.mktime(time.strptime(f'{day[:4]}{m:02d}', '%Y%m'))
+    array = {}
+    for t in np.arange(s, e, 86400):
+        date = time.strftime('%Y-%m-%d', time.localtime(t))
+        entry = entries.filter(date=date)
+        array[date] = entry[0].count if entry else 0
+    payload = json.dumps(array)
+    response = HttpResponse(payload, content_type='application/json')
+    return response
+
 '''
     day - a string in the forms of
           - YYYYMMDD
@@ -40,7 +66,6 @@ def count(request, day):
 
     n = [0 for _ in range(24)]
     date = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
-    print(date)
     d = Day.objects.filter(date=date)
     if d:
         d = d[0]
