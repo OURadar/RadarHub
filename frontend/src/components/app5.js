@@ -10,13 +10,13 @@
 import React, { Component } from "react";
 import Split from "split.js";
 import { ThemeProvider } from "@mui/material/styles";
+import { colorDict, makeTheme } from "./theme";
 import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
 import { Product } from "./product";
-import { colorDict, makeTheme } from "./theme";
 import { TopBar } from "./topbar";
 import { Ingest } from "./ingest";
 

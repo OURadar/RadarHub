@@ -1,5 +1,5 @@
 //
-//  App6.js
+//  app6.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong
@@ -8,7 +8,7 @@
 import React, { Component } from "react";
 import Split from "split.js";
 import { ThemeProvider } from "@mui/material/styles";
-import { makeTheme, colorDict } from "./theme";
+import { colorDict, makeTheme } from "./theme";
 import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { Browser } from "./browser";
