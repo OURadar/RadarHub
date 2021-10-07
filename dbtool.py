@@ -29,7 +29,7 @@ pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
 from frontend.models import File, Day
 
-verbose = 2
+debug = False
 
 def entry(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
     (path, name) = os.path.split(filename)
@@ -50,8 +50,9 @@ def entry(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
     else:
         # File is stored in plain sight
         x = File(name=name, path=path, date=datestr)
-    # print(f'{mode} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
-    # sys.stdout.flush()
+    if verbose:
+        print(f'{mode} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
+        sys.stdout.flush()
     return x, mode
 
 def retrieve(name):
@@ -63,13 +64,16 @@ def retrieve(name):
     return x[0]
 
 def proc_archive(archive):
-    if verbose:
-        print(f'Processing {archive} ...')
+    print(f'Processing {archive} ...')
     with tarfile.open(archive) as aid:
         xx = []
         mm = []
         for info in aid.getmembers():
-            x, m = entry(info.name, archive=archive, offset=info.offset, offset_data=info.offset_data, size=info.size)
+            x, m = entry(info.name,
+                archive=archive,
+                offset=info.offset,
+                offset_data=info.offset_data,
+                size=info.size)
             xx.append(x)
             mm.append(m)
     return xx, mm
@@ -91,10 +95,11 @@ def xzfolder(folder):
         results = pool.map(proc_archive, archives)
     for result in results:
         (xx, mm) = result
+        print(xx[0].name)
         for k in range(len(xx)):
             x = xx[k]
             m = mm[k]
-            print(f'{m} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
+            # print(f'{m} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
             x.save()
 
 def daycount(day):
@@ -121,10 +126,8 @@ def daycount(day):
     d.hourly_count = ','.join([str(c) for c in counts])
     d.save()
 
-    if verbose > 1:
-        print(f'{mode} {d.date} :: {d.duration:,d} :: {d.hourly_count}')
-        sys.stdout.flush()
-
+    print(f'{mode} {d.date} :: {d.duration:,d} :: {d.hourly_count}')
+ 
 #
 
 def main():
@@ -147,8 +150,8 @@ def main():
         help='increases verbosity')
     args = parser.parse_args()
 
-    global verbose
-    verbose = args.verbose
+    global debug
+    debug = args.verbose > 1
 
     if args.xz:
         print('Processing a folder with .tar.xz archives')

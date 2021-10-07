@@ -21,7 +21,6 @@ const Item = memo(({ data, index, style }) => {
       key={index}
       onClick={() => loadItem(item, index)}
       style={{ ...style, overflow: "hidden", textOverflow: "ellipsis" }}
-      variant="file"
       selected={selected}
     >
       {item}
