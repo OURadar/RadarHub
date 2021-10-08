@@ -103,7 +103,6 @@ def xzfolder(folder):
             x.save()
 
 def daycount(day):
-    print(f'daycount: {day}')
     s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day).group(0)
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 

@@ -27,5 +27,11 @@
     "type_traits": "c",
     "*.tcc": "c",
     "cstring": "c"
+  },
+  "files.watcherExclude": {
+    "**/screenlog.*": true
+  },
+  "search.exclude": {
+    "**/screenlog.*": true
   }
 }

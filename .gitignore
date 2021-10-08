@@ -9,6 +9,7 @@ objects
 others
 *.xcodeproj
 *.a
+screenlog.*
 
 # Programs, etc.
 .DS_Store
@@ -18,3 +19,4 @@ reporter/simple
 reporter/secret
 reporter/data
 reporter/dgen
+

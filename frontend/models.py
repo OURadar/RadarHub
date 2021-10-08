@@ -18,7 +18,7 @@ class File(models.Model):
         indexes = [models.Index(fields=['date', ]), ]
     
     def __repr__(self):
-        return f'name = {self.name}   path = {self.getFullpath()}'
+        return f'{self.name} @ {self.path}'
 
     def getFullpath(self, search=True):
         path = os.path.join(self.path, self.name)
@@ -36,11 +36,11 @@ class File(models.Model):
 
     def read(self, fid):
         with Dataset('dummy', mode='r', memory=fid.read()) as nc:
-            type = nc.getncattr('TypeName')
+            name = nc.getncattr('TypeName')
             elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
             azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
             gatewidth = np.array(nc.variables['GateWidth'][:], dtype=np.float32)
-            values = np.array(nc.variables[type][:], dtype=np.float32)
+            values = np.array(nc.variables[name][:], dtype=np.float32)
             values[values < -90] = np.nan
             longitude = nc.getncattr('Longitude')
             latitude = nc.getncattr('Latitude')
@@ -89,4 +89,4 @@ class Day(models.Model):
         max_length=120, validators=[int_list_validator])
 
     def __repr__(self):
-        return f'date = {self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
+        return f'{self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
