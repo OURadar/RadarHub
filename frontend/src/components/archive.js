@@ -12,6 +12,7 @@ class Archive {
       day: "",
       date: new Date("2013-05-20T12:00"),
       count: new Array(24).fill(0),
+      month: {},
       files: [],
       sweep: null,
       index: -1,
@@ -35,6 +36,8 @@ class Archive {
         this.message = "";
       } else if (type == "count") {
         this.data.count = payload;
+      } else if (type == "month") {
+        this.data.month = payload;
       } else if (type == "reset") {
         this.showMessage(payload);
         this.data.sweep = null;
@@ -44,6 +47,7 @@ class Archive {
     };
 
     this.showMessage = this.showMessage.bind(this);
+    this.month = this.month.bind(this);
     this.count = this.count.bind(this);
     this.list = this.list.bind(this);
     this.load = this.load.bind(this);
@@ -61,6 +65,13 @@ class Archive {
     }, duration);
   }
 
+  // Expect day = 201305
+  month(day) {
+    this.worker.postMessage({ task: "month", day: day });
+    this.onupdate(this.tic++);
+  }
+
+  // Expect day = 20130520
   count(day) {
     this.data.day = day;
     const y = day.slice(0, 4);
@@ -72,6 +83,7 @@ class Archive {
     this.onupdate(this.tic++);
   }
 
+  // Expect time = 20130520-1900
   list(time) {
     this.message = `Listing ${time} ...`;
     const day = time.slice(0, 8);

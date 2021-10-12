@@ -17,6 +17,8 @@ self.onmessage = ({ data: { task, name, day, time } }) => {
     list(time);
   } else if (task == "count") {
     count(day);
+  } else if (task == "month") {
+    month(day);
   } else if (task == "dummy") {
     dummy();
   }
@@ -61,6 +63,25 @@ function createSweep(name = "dummy") {
     azimuths: [0.0, 15.0, 30.0, 45.0, 60.0],
     values: [32, 77, 30, 10, 20, 15, 50, 60, 50, 80, 90, 100],
   };
+}
+
+function month(day) {
+  console.log(`%carchive.worker.month() ${day}`, "color: lightseagreen");
+  const url = `/data/month/${day}/`;
+  fetch(url)
+    .then((response) => {
+      if (response.status == 200)
+        response.json().then((buffer) => {
+          self.postMessage({ type: "month", payload: buffer });
+        });
+      else
+        response.text().then((error) => {
+          self.postMessage({ type: "message", payload: error });
+        });
+    })
+    .catch((error) => {
+      console.log(`Unexpected error ${error}`);
+    });
 }
 
 function count(day) {

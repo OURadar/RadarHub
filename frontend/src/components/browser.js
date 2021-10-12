@@ -3,11 +3,13 @@ import memoize from "memoize-one";
 import { FixedSizeList, areEqual } from "react-window";
 
 import Box from "@mui/material/Box";
+import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import DatePicker from "@mui/lab/DatePicker";
+import PickersDay from "@mui/lab/PickersDay";
 
 import { SectionHeader } from "./section-header";
 
@@ -115,6 +117,10 @@ function Browser(props) {
     setHourButtons(newButtons);
   }, [day, hour, count]);
 
+  React.useEffect(() => {
+    setMonth(date);
+  }, []);
+
   const setDayHour = (newDay, newHour) => {
     setDay(newDay);
     setHour(newHour);
@@ -129,10 +135,10 @@ function Browser(props) {
 
   const setMonth = (newMonth) => {
     let tmp = newMonth.toISOString();
-    let yyyymmdd = tmp.slice(0, 4) + tmp.slice(5, 7) + tmp.slice(8, 10);
-    console.log(`setMonth ${yyyymmdd}`)
-
-  }
+    let yyyymm = tmp.slice(0, 4) + tmp.slice(5, 7);
+    console.log(`setMonth ${yyyymm}`);
+    props.archive.month(yyyymm);
+  };
 
   return (
     <div className="fill">
@@ -143,12 +149,29 @@ function Browser(props) {
             label="Date"
             value={day}
             onMonthChange={(newMonth) => {
-              setMonth(newMonth)
+              setMonth(newMonth);
             }}
             onChange={(newDay) => {
               setDayHour(newDay, hour);
             }}
             renderInput={(params) => <TextField {...params} />}
+            renderDay={(day, _value, DayComponentProps) => {
+              let key = day.toISOString().slice(0, 10);
+              const isSelected =
+                key in props.archive.data.month &&
+                props.archive.data.month[key] > 0;
+              return (
+                <Badge
+                  key={key}
+                  color="primary"
+                  overlap="circular"
+                  badgeContent={isSelected ? "" : undefined}
+                  variant={isSelected ? "dot" : undefined}
+                >
+                  <PickersDay {...DayComponentProps} />
+                </Badge>
+              );
+            }}
           />
         </LocalizationProvider>
       </div>
