@@ -127,6 +127,13 @@ function Browser(props) {
 
   // console.log(`files.length = ${files.length}   index = ${index}`);
 
+  const setMonth = (newMonth) => {
+    let tmp = newMonth.toISOString();
+    let yyyymmdd = tmp.slice(0, 4) + tmp.slice(5, 7) + tmp.slice(8, 10);
+    console.log(`setMonth ${yyyymmdd}`)
+
+  }
+
   return (
     <div className="fill">
       <SectionHeader name="archive" />
@@ -135,6 +142,9 @@ function Browser(props) {
           <DatePicker
             label="Date"
             value={day}
+            onMonthChange={(newMonth) => {
+              setMonth(newMonth)
+            }}
             onChange={(newDay) => {
               setDayHour(newDay, hour);
             }}
