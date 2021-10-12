@@ -96,6 +96,14 @@ function Browser(props) {
 
   React.useEffect(() => {
     const newButtons = Array(24);
+    if (count[hour] == 0) {
+      let best = count.findIndex((x) => x > 0);
+      if (best >= 0) {
+        console.log(`Hour ${hour} has no data, choosing ${best} ...`);
+        setDayHour(day, best);
+      }
+    }
+
     for (let k = 0; k < 24; k++) {
       const hourString = k.toString().padStart(2, "0") + ":00";
       const selected = count[k] > 0 && k == hour;
@@ -118,7 +126,7 @@ function Browser(props) {
   }, [day, hour, count]);
 
   React.useEffect(() => {
-    setMonth(date);
+    getMonthTable(date);
   }, []);
 
   const setDayHour = (newDay, newHour) => {
@@ -133,10 +141,9 @@ function Browser(props) {
 
   // console.log(`files.length = ${files.length}   index = ${index}`);
 
-  const setMonth = (newMonth) => {
+  const getMonthTable = (newMonth) => {
     let tmp = newMonth.toISOString();
     let yyyymm = tmp.slice(0, 4) + tmp.slice(5, 7);
-    console.log(`setMonth ${yyyymm}`);
     props.archive.month(yyyymm);
   };
 
@@ -149,7 +156,7 @@ function Browser(props) {
             label="Date"
             value={day}
             onMonthChange={(newMonth) => {
-              setMonth(newMonth);
+              getMonthTable(newMonth);
             }}
             onChange={(newDay) => {
               setDayHour(newDay, hour);
@@ -157,7 +164,7 @@ function Browser(props) {
             renderInput={(params) => <TextField {...params} />}
             renderDay={(day, _value, DayComponentProps) => {
               let key = day.toISOString().slice(0, 10);
-              const isSelected =
+              const hasData =
                 key in props.archive.data.month &&
                 props.archive.data.month[key] > 0;
               return (
@@ -165,8 +172,7 @@ function Browser(props) {
                   key={key}
                   color="primary"
                   overlap="circular"
-                  badgeContent={isSelected ? "" : undefined}
-                  variant={isSelected ? "dot" : undefined}
+                  variant={hasData ? "dot" : undefined}
                 >
                   <PickersDay {...DayComponentProps} />
                 </Badge>
