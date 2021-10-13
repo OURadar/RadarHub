@@ -44,6 +44,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [ ] - Display frequency spectrum alongside scope view
 - [ ] - Show online users
 - [ ] - High-DPI support
+- [ ] - Cache sweeps using LRU algorithm
 
 # Important Topics
 
