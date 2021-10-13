@@ -58,11 +58,11 @@ const createFileButtons = (list, index, load) => {
 
 function Browser(props) {
   const count = props.archive?.data.hourlyCount || new Array(24).fill(0);
-  const files = props.archive?.data.files || [];
+  const files = props.archive?.data.fileList || [];
   const index = props.archive?.data.index || -1;
 
-  const [day, setDay] = React.useState(new Date("2013-05-20"));
-  const [hour, setHour] = React.useState(props.hour);
+  const [day, setDay] = React.useState();
+  const [hour, setHour] = React.useState();
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
 
@@ -125,18 +125,20 @@ function Browser(props) {
   }, [day, hour, count]);
 
   React.useEffect(() => {
-    getMonthTable(day);
+    getMonthTable(new Date("2013-05-20"));
+    setDayHour(new Date("2013-05-20"), 19)
   }, []);
 
   const setDayHour = (newDay, newHour) => {
     let tmp = newDay.toISOString();
-    let yyyymmdd = tmp.slice(0, 4) + tmp.slice(5, 7) + tmp.slice(8, 10);
+    let ymd = tmp.slice(0, 4) + tmp.slice(5, 7) + tmp.slice(8, 10);
     let hh = newHour.toString().padStart(2, "0");
-    // console.log(`calling archive.list() ... ${yyyymmdd}-${hh}00`);
     if (day != newDay) {
-      props.archive.count(yyymmdd)
+      props.archive.count(ymd)
     }
-    props.archive.list(`${yyyymmdd}-${hh}00`);
+    if (day != newDay || hour != newHour) {
+      props.archive.list(`${ymd}-${hh}00`);
+    }
     setDay(newDay);
     setHour(newHour);
   };

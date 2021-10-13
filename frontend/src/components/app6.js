@@ -64,9 +64,6 @@ class App extends Component {
         expandToMin: true,
       });
     }
-
-    // this.archive.count("20130520");
-    this.archive.list("20130520-1900");
   }
 
   render() {
@@ -103,7 +100,7 @@ class App extends Component {
             </div>
           </div>
           <div id="right">
-            <Browser archive={this.archive} hour={19} />
+            <Browser archive={this.archive} />
           </div>
         </div>
       </ThemeProvider>

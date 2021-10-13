@@ -9,12 +9,12 @@ class Archive {
   constructor() {
     this.radar = "archive";
     this.data = {
-      day: "",
       hourlyCount: new Array(24).fill(0),
       hourlyCountUpdating: false,
       dailyAvailability: {},
       dailyAvailabilityUpdating: false,
-      files: [],
+      fileList: [],
+      fileListUpdating: true,
       index: -1,
       sweep: null,
     };
@@ -32,7 +32,8 @@ class Archive {
         this.data.sweep = payload;
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
-        this.data.files = payload;
+        this.data.fileList = payload;
+        this.data.fileListUpdating = false;
         this.data.index = -1;
         this.message = "";
       } else if (type == "count") {
@@ -78,18 +79,13 @@ class Archive {
   // Expect day = 20130520
   count(day) {
     this.data.hourlyCountUpdating = true;
-    // this.data.day = day;
     this.worker.postMessage({ task: "count", day: day });
     this.onupdate(this.tic++);
   }
 
   // Expect time = 20130520-1900
   list(time) {
-    this.message = `Listing ${time} ...`;
-    // const day = time.slice(0, 8);
-    // if (this.data.day != day) {
-    //   this.count(day);
-    // }
+    this.data.fileListUpdating = true;
     this.worker.postMessage({ task: "list", time: time });
     this.onupdate(this.tic++);
   }
