@@ -57,12 +57,11 @@ const createFileButtons = (list, index, load) => {
 };
 
 function Browser(props) {
-  const date = props.archive?.data.date || new Date("2013-05-20T12:00");
-  const count = props.archive?.data.count || new Array(24).fill(0);
+  const count = props.archive?.data.hourlyCount || new Array(24).fill(0);
   const files = props.archive?.data.files || [];
   const index = props.archive?.data.index || -1;
 
-  const [day, setDay] = React.useState(date);
+  const [day, setDay] = React.useState(new Date("2013-05-20"));
   const [hour, setHour] = React.useState(props.hour);
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
@@ -126,17 +125,20 @@ function Browser(props) {
   }, [day, hour, count]);
 
   React.useEffect(() => {
-    getMonthTable(date);
+    getMonthTable(day);
   }, []);
 
   const setDayHour = (newDay, newHour) => {
-    setDay(newDay);
-    setHour(newHour);
     let tmp = newDay.toISOString();
     let yyyymmdd = tmp.slice(0, 4) + tmp.slice(5, 7) + tmp.slice(8, 10);
     let hh = newHour.toString().padStart(2, "0");
     // console.log(`calling archive.list() ... ${yyyymmdd}-${hh}00`);
+    if (day != newDay) {
+      props.archive.count(yyymmdd)
+    }
     props.archive.list(`${yyyymmdd}-${hh}00`);
+    setDay(newDay);
+    setHour(newHour);
   };
 
   // console.log(`files.length = ${files.length}   index = ${index}`);
@@ -165,8 +167,8 @@ function Browser(props) {
             renderDay={(day, _value, DayComponentProps) => {
               let key = day.toISOString().slice(0, 10);
               const hasData =
-                key in props.archive.data.month &&
-                props.archive.data.month[key] > 0;
+                key in props.archive.data.dailyAvailability &&
+                props.archive.data.dailyAvailability[key] > 0;
               return (
                 <Badge
                   key={key}

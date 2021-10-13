@@ -10,12 +10,13 @@ class Archive {
     this.radar = "archive";
     this.data = {
       day: "",
-      date: new Date("2013-05-20T12:00"),
-      count: new Array(24).fill(0),
-      month: {},
+      hourlyCount: new Array(24).fill(0),
+      hourlyCountUpdating: false,
+      dailyAvailability: {},
+      dailyAvailabilityUpdating: false,
       files: [],
-      sweep: null,
       index: -1,
+      sweep: null,
     };
     this.tic = 0;
     this.timer = null;
@@ -35,9 +36,11 @@ class Archive {
         this.data.index = -1;
         this.message = "";
       } else if (type == "count") {
-        this.data.count = payload;
+        this.data.hourlyCount = payload;
+        this.data.hourlyCountUpdating = false;
       } else if (type == "month") {
-        this.data.month = payload;
+        this.data.dailyAvailability = payload;
+        this.data.dailyAvailabilityUpdating = false;
       } else if (type == "reset") {
         this.showMessage(payload);
         this.data.sweep = null;
@@ -67,18 +70,15 @@ class Archive {
 
   // Expect day = 201305
   month(day) {
+    this.data.dailyAvailabilityUpdating = true;
     this.worker.postMessage({ task: "month", day: day });
     this.onupdate(this.tic++);
   }
 
   // Expect day = 20130520
   count(day) {
-    this.data.day = day;
-    const y = day.slice(0, 4);
-    const m = day.slice(4, 6);
-    const d = day.slice(6, 8);
-    const isoDateString = `${y}-${m}-${d}T12:00`;
-    this.data.date = new Date(isoDateString);
+    this.data.hourlyCountUpdating = true;
+    // this.data.day = day;
     this.worker.postMessage({ task: "count", day: day });
     this.onupdate(this.tic++);
   }
@@ -86,10 +86,10 @@ class Archive {
   // Expect time = 20130520-1900
   list(time) {
     this.message = `Listing ${time} ...`;
-    const day = time.slice(0, 8);
-    if (this.data.day != day) {
-      this.count(day);
-    }
+    // const day = time.slice(0, 8);
+    // if (this.data.day != day) {
+    //   this.count(day);
+    // }
     this.worker.postMessage({ task: "list", time: time });
     this.onupdate(this.tic++);
   }
