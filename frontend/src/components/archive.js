@@ -14,6 +14,7 @@ class Archive {
       dailyAvailability: {},
       dailyAvailabilityUpdating: false,
       fileList: [],
+      fileListGrouped: {},
       fileListUpdating: true,
       index: -1,
       sweep: null,
@@ -32,7 +33,8 @@ class Archive {
         this.data.sweep = payload;
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
-        this.data.fileList = payload;
+        this.data.fileList = payload.list;
+        this.data.fileListGrouped = payload.groups;
         this.data.fileListUpdating = false;
         this.data.index = -1;
         this.message = "";
