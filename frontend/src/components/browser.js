@@ -125,8 +125,9 @@ function Browser(props) {
   }, [day, hour, count]);
 
   React.useEffect(() => {
-    getMonthTable(new Date("2013-05-20"));
-    setDayHour(new Date("2013-05-20"), 19)
+    let initialDay = new Date("2013/05/20");
+    getMonthTable(initialDay);
+    setDayHour(initialDay, 19);
   }, []);
 
   const setDayHour = (newDay, newHour) => {
@@ -134,7 +135,7 @@ function Browser(props) {
     let ymd = tmp.slice(0, 4) + tmp.slice(5, 7) + tmp.slice(8, 10);
     let hh = newHour.toString().padStart(2, "0");
     if (day != newDay) {
-      props.archive.count(ymd)
+      props.archive.count(ymd);
     }
     if (day != newDay || hour != newHour) {
       props.archive.list(`${ymd}-${hh}00`);

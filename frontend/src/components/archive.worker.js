@@ -110,6 +110,16 @@ function list(day) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
+          let scans = {};
+          buffer.list.forEach((file) => {
+            let elements = file.split("-");
+            let scan = elements[3];
+            if (!(scan in scans)) {
+              scans[scan] = [];
+            }
+            scans[scan].push(file);
+          });
+          console.log(scans);
           self.postMessage({ type: "list", payload: buffer.list });
         });
       else
