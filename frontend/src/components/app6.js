@@ -9,13 +9,12 @@ import React, { Component } from "react";
 import Split from "split.js";
 import { ThemeProvider } from "@mui/material/styles";
 import { colorDict, makeTheme } from "./theme";
-import { detectMob } from "./common";
+import { detectMob, clamp } from "./common";
 import { SectionHeader } from "./section-header";
 import { Browser } from "./browser";
 import { Product } from "./product";
 import { TopBar } from "./topbar";
 import { Archive } from "./archive";
-import { elements } from "./earth-grid";
 
 class App extends Component {
   constructor(props) {
@@ -60,10 +59,11 @@ class App extends Component {
     if (!this.isMobile) {
       var w = localStorage.getItem("split-archive-w");
       if (w) {
-        w = JSON.parse(w);
+        w = clamp(parseFloat(JSON.parse(w)), 300, window.innerWidth - 400);
       } else {
         w = 300;
       }
+      console.log(`w = ${w}`);
       let v = (w / window.innerWidth) * 100;
       Split(["#left", "#right"], {
         sizes: [100 - v, v],
@@ -82,7 +82,8 @@ class App extends Component {
           }
         },
         onDragEnd: (_sizes) => {
-          localStorage.setItem("split-archive-w", JSON.stringify(w.toFixed(1)));
+          w = parseFloat(w).toFixed(1);
+          localStorage.setItem("split-archive-w", JSON.stringify(w));
         },
       });
     }
