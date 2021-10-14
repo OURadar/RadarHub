@@ -15,6 +15,7 @@ import { Browser } from "./browser";
 import { Product } from "./product";
 import { TopBar } from "./topbar";
 import { Archive } from "./archive";
+import { elements } from "./earth-grid";
 
 class App extends Component {
   constructor(props) {
@@ -57,11 +58,32 @@ class App extends Component {
         }
       });
     if (!this.isMobile) {
-      const w = (300 / window.innerWidth) * 100;
+      var w = localStorage.getItem("split-archive-w");
+      if (w) {
+        w = JSON.parse(w);
+      } else {
+        w = 300;
+      }
+      let v = (w / window.innerWidth) * 100;
       Split(["#left", "#right"], {
-        sizes: [100 - w, w],
+        sizes: [100 - v, v],
         minSize: [400, 300],
         expandToMin: true,
+        elementStyle: (_dimension, elementSize, _gutterSize, index) => {
+          if (index == 0)
+            return {
+              width: `calc(100% - ${w}px)`,
+            };
+          else {
+            w = (window.innerWidth * elementSize) / 100;
+            return {
+              width: `${w}px`,
+            };
+          }
+        },
+        onDragEnd: (_sizes) => {
+          localStorage.setItem("split-archive-w", JSON.stringify(w.toFixed(1)));
+        },
       });
     }
   }
