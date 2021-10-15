@@ -63,7 +63,6 @@ class App extends Component {
       } else {
         w = 300;
       }
-      console.log(`w = ${w}`);
       let v = (w / window.innerWidth) * 100;
       Split(["#left", "#right"], {
         sizes: [100 - v, v],

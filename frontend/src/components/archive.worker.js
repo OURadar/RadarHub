@@ -113,11 +113,11 @@ function list(day) {
           let groups = {};
           buffer.list.forEach((file) => {
             let elements = file.split("-");
-            let scantype = elements[3];
-            if (!(scantype in groups)) {
-              groups[scantype] = [];
+            let scanType = elements[3];
+            if (!(scanType in groups)) {
+              groups[scanType] = [];
             }
-            groups[scantype].push(file);
+            groups[scanType].push(file);
           });
           console.log(groups);
           self.postMessage({
