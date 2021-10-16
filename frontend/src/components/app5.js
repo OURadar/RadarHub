@@ -11,7 +11,7 @@ import React, { Component } from "react";
 import Split from "split.js";
 import { ThemeProvider } from "@mui/material/styles";
 import { colorDict, makeTheme } from "./theme";
-import { detectMob } from "./common";
+import { detectMob, clamp } from "./common";
 import { SectionHeader } from "./section-header";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
@@ -59,11 +59,34 @@ class App extends Component {
         }
       });
     if (!this.isMobile) {
-      const w = 40;
+      // const w = 40;
+      var w = localStorage.getItem("split-live-w");
+      if (w) {
+        w = clamp(parseFloat(JSON.parse(w)), 300, window.innerWidth - 400);
+      } else {
+        w = 300;
+      }
+      let v = (w / window.innerWidth) * 100;
       Split(["#left", "#right"], {
-        sizes: [100 - w, w],
+        sizes: [100 - v, v],
         minSize: [400, 500],
         expandToMin: true,
+        elementStyle: (_dimension, elementSize, _gutterSize, index) => {
+          if (index == 0)
+            return {
+              width: `calc(100% - ${w}px)`,
+            };
+          else {
+            w = (window.innerWidth * elementSize) / 100;
+            return {
+              width: `${w}px`,
+            };
+          }
+        },
+        onDragEnd: (_sizes) => {
+          w = parseFloat(w).toFixed(1);
+          localStorage.setItem("split-live-w", JSON.stringify(w));
+        },
       });
     }
     // Preload something before we start to connect and draw
