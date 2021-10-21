@@ -41,10 +41,11 @@ class Text {
     this.load = this.load.bind(this);
     this.makeBuffer = this.makeBuffer.bind(this);
 
-    const o = document.getElementById("test");
-    if (o) {
-      if (debug) o.appendChild(this.canvas);
-      else o.style.display = "none";
+    if (debug) {
+      const o = document.getElementById("test");
+      if (o) {
+        o.appendChild(this.canvas);
+      }
     }
   }
 

@@ -13,6 +13,7 @@ import { theme, colorDict } from "./theme";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 import { Archive } from "./archive";
+import { Product } from "./product";
 
 class App extends Component {
   constructor(props) {
@@ -57,7 +58,7 @@ class App extends Component {
       <ThemeProvider theme={theme}>
         <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
-        <GLView
+        <Product
           sweep={this.archive.data.sweep}
           colors={this.state.colors}
           debug={true}

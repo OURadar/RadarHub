@@ -13,6 +13,7 @@ class Annotation {
     this.canvas = document.createElement("canvas");
     this.canvas.width = 500;
     this.canvas.height = 500;
+    this.context = this.canvas.getContext("2d");
     this.stroke = 3.5 * this.scale * this.ratio;
     this.busy = false;
     this.context.font = "14px LabelFont";
@@ -27,13 +28,11 @@ class Annotation {
     this.load = this.load.bind(this);
     this.makeBuffer = this.makeBuffer.bind(this);
 
-    const o = document.getElementById("test");
-    if (o) {
-      if (debug) o.appendChild(this.canvas);
-      else o.style.display = "none";
+    if (debug) {
+      const o = document.getElementById("test");
+      o.appendChild(this.canvas);
+      console.log("Annotation()");
     }
-
-    console.log("Annotation()");
   }
 
   async load(configs, colors) {
@@ -59,9 +58,9 @@ class Annotation {
 
     const label = "Hello";
     context.font = "14px LabelFont";
-    context.strokeStyle = "#000000";
-    context.fillStyle = "#888888";
-    context.strokeStyle(label, 100, 100);
+    context.strokeStyle = "#ffffff";
+    context.fillStyle = "#000000";
+    context.strokeText(label, 100, 100);
     context.fillText(label, 100, 100);
 
     let image = context.getImageData(0, 0, 500, 500);
@@ -75,3 +74,5 @@ class Annotation {
     return buffer;
   }
 }
+
+export { Annotation };

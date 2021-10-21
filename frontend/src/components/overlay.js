@@ -7,6 +7,7 @@
 
 import { Polygon } from "./polygon";
 import { Text } from "./text";
+import { Annotation } from "./annotation";
 import { clamp, deg2rad } from "./common";
 import { mat4, vec4 } from "gl-matrix";
 
@@ -39,6 +40,8 @@ class Overlay {
     this.worker = new Worker(url);
     this.worker.onmessage = this.handleMessage;
     this.workerReady = false;
+
+    this.annotationEngine.makeBuffer();
 
     this.tic = 0;
   }
