@@ -19,7 +19,6 @@ import { deg, earthRadius } from "./common";
 class Text {
   constructor(debug = false) {
     this.debug = debug;
-    // this.ratio = 2.2;
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
     this.scale = this.ratio > 1 ? 1 : 1.2;
     this.canvas = document.createElement("canvas");
@@ -50,8 +49,8 @@ class Text {
   }
 
   async load(configs, colors) {
-    if (this.busy > 2) {
-      console.log("Calling Text.load() too frequent.");
+    if (this.busy) {
+      console.log("Text.load() is busy.");
       return;
     }
     if (configs === undefined) {
@@ -154,7 +153,7 @@ class Text {
         if (v > height - f - 2 * q) {
           // Wrap this context, save the image data, clean up the canvas
           const ph = Math.ceil(v - 1);
-          const piece = this.context.getImageData(0, 0, width, ph);
+          const piece = context.getImageData(0, 0, width, ph);
           if (originOffset) {
             //scratch.data = [...scratch.data, ...piece.data];
             const carr = scratch.data;

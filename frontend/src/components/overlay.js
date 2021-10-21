@@ -30,6 +30,7 @@ class Overlay {
 
     this.polyEngine = new Polygon();
     this.textEngine = new Text();
+    this.annotationEngine = new Annotation();
 
     this.handleMessage = this.handleMessage.bind(this);
 
