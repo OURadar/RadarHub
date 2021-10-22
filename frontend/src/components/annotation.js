@@ -60,10 +60,24 @@ class Annotation {
     context.font = "14px LabelFont";
     context.strokeStyle = "#ffffff";
     context.fillStyle = "#000000";
-    context.strokeText(label, 100, 100);
-    context.fillText(label, 100, 100);
+    context.strokeText(label, 50, 50);
+    context.fillText(label, 50, 50);
 
-    let image = context.getImageData(0, 0, 500, 500);
+    context.lineWidth = 2;
+    context.strokeStyle = "red";
+    context.strokeRect(
+      0.5 * context.lineWidth,
+      0.5 * context.lineWidth,
+      this.canvas.width - context.lineWidth,
+      this.canvas.height - context.lineWidth
+    );
+
+    let image = context.getImageData(
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height
+    );
 
     const buffer = {
       image: image,
