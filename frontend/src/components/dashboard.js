@@ -31,38 +31,40 @@ class Dashboard {
     if (debug) {
       const o = document.getElementById("test");
       o.appendChild(this.canvas);
-      console.log("Annotation()");
     }
   }
 
   async load(configs, colors) {
     if (this.busy) {
-      console.log("Text.load() is busy.");
+      console.log("Dashboard.load() is busy.");
       return;
     }
     if (configs === undefined) {
       console.log("Input undefined.");
       return;
     }
-    // Compute colorbar tics, label text, etc.
-    let texts = [];
-    let points = [];
-    let assets = [];
-    for (const config of configs) {
-    }
 
-    return this.makeBuffer(assets);
+    console.log("Dashboard.config()", configs);
+    // Compute colorbar tics, label text, etc.
+    // let texts = [];
+    // let points = [];
+    // let assets = [];
+    // for (const config of configs) {
+    // }
+
+    return this.makeBuffer(configs, colors);
   }
 
-  async makeBuffer(assets) {
+  async makeBuffer(configs, colors) {
     const context = this.context;
     context.lineWidth = this.stroke;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const label = "Hello";
-    context.font = "14px LabelFont";
-    context.strokeStyle = "#ffffff";
-    context.fillStyle = "#000000";
+    console.log(`config.title = ${configs.title}   ${colors.label.face}`);
+    const label = configs.title;
+    context.font = "28px LabelFont";
+    context.strokeStyle = colors.label.stroke;
+    context.fillStyle = colors.label.face;
     context.strokeText(label, 50, 50);
     context.fillText(label, 50, 50);
 

@@ -133,11 +133,10 @@ class Overlay {
       this.viewParameters[0] = 0;
       if (k == 2) {
         // load the labels after the rings and grid are loaded
+        this.loadDashboard();
         this.loadLabels();
       }
     }
-
-    this.loadDashboard();
   }
 
   loadLabels() {
@@ -249,7 +248,7 @@ class Overlay {
         this.colors
       )
       .then((buffer) => {
-        this.annotation = {
+        this.dashboard = {
           bound: [buffer.image.width, buffer.image.height],
           texture: this.regl.texture({
             height: buffer.image.height,
@@ -260,7 +259,7 @@ class Overlay {
             premultiplyAlpha: true,
           }),
         };
-        console.log(this.annotation);
+        console.log(this.dashboard);
       });
   }
 
