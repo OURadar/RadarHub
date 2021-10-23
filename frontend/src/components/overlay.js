@@ -7,7 +7,7 @@
 
 import { Polygon } from "./polygon";
 import { Text } from "./text";
-import { Annotation } from "./annotation";
+import { Dashboard } from "./dashboard";
 import { clamp, deg2rad } from "./common";
 import { mat4, vec4 } from "gl-matrix";
 
@@ -31,7 +31,7 @@ class Overlay {
 
     this.polyEngine = new Polygon();
     this.textEngine = new Text();
-    this.annotationEngine = new Annotation();
+    this.dashEngine = new Dashboard();
 
     this.handleMessage = this.handleMessage.bind(this);
 
@@ -41,14 +41,12 @@ class Overlay {
     this.worker.onmessage = this.handleMessage;
     this.workerReady = false;
 
-    this.annotationEngine.makeBuffer();
-
     this.tic = 0;
   }
 
   handleMessage({ data: { type, payload } }) {
     if (type == "opacity") {
-      this.texture.targetOpacity = payload;
+      this.cities.targetOpacity = payload;
     } else if (type == "init") {
       if (payload == "ready") this.workerReady = true;
     }
@@ -135,29 +133,14 @@ class Overlay {
       this.viewParameters[0] = 0;
       if (k == 2) {
         // load the labels after the rings and grid are loaded
-        this.updateLabels();
+        this.loadLabels();
       }
     }
+
+    this.loadDashboard();
   }
 
-  updateColors(colors) {
-    this.colors = colors;
-    this.texture?.opacity.fill(0);
-    // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
-    this.layers[0].color = colors.grid;
-    this.layers[1].color = colors.ring;
-    this.layers[2].color = colors.street;
-    this.layers[3].color = colors.county;
-    this.layers[4].color = colors.county;
-    this.layers[5].color = colors.state;
-    this.layers[6].color = colors.state;
-    this.layers.forEach((layer) => {
-      layer.quad[2] = colors.tint;
-    });
-    this.updateLabels();
-  }
-
-  updateLabels() {
+  loadLabels() {
     this.textEngine
       .load(
         [
@@ -209,7 +192,7 @@ class Overlay {
         this.colors
       )
       .then((buffer) => {
-        this.texture = {
+        this.cities = {
           bound: [buffer.image.width, buffer.image.height],
           texture: this.regl.texture({
             height: buffer.image.height,
@@ -253,6 +236,51 @@ class Overlay {
       });
   }
 
+  loadDashboard() {
+    this.dashEngine
+      .load(
+        {
+          product: "Reflectivity",
+          colormap: 1,
+          ticks: [1, 2, 3, 4],
+          symbol: "Z",
+          title: "2013/05/20 19:00 UTC",
+        },
+        this.colors
+      )
+      .then((buffer) => {
+        this.annotation = {
+          bound: [buffer.image.width, buffer.image.height],
+          texture: this.regl.texture({
+            height: buffer.image.height,
+            width: buffer.image.width,
+            data: buffer.image.data,
+            min: "linear",
+            mag: "linear",
+            premultiplyAlpha: true,
+          }),
+        };
+        console.log(this.annotation);
+      });
+  }
+
+  updateColors(colors) {
+    this.colors = colors;
+    this.cities?.opacity.fill(0);
+    // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
+    this.layers[0].color = colors.grid;
+    this.layers[1].color = colors.ring;
+    this.layers[2].color = colors.street;
+    this.layers[3].color = colors.county;
+    this.layers[4].color = colors.county;
+    this.layers[5].color = colors.state;
+    this.layers[6].color = colors.state;
+    this.layers.forEach((layer) => {
+      layer.quad[2] = colors.tint;
+    });
+    this.loadLabels();
+  }
+
   getDrawables() {
     const viewParameters = [
       this.geometry.fov,
@@ -284,7 +312,7 @@ class Overlay {
       }
 
       // const t1 = window.performance.now();
-      if (this.texture) {
+      if (this.cities) {
         if (this.worker)
           this.worker.postMessage({
             type: "revise",
@@ -358,17 +386,17 @@ class Overlay {
       );
     }
 
-    if (this.texture) {
-      for (let k = 0, l = this.texture.opacity.length; k < l; k++) {
+    if (this.cities) {
+      for (let k = 0, l = this.cities.opacity.length; k < l; k++) {
         let o =
-          this.texture.opacity[k] +
-          (this.texture.targetOpacity[k] ? 0.05 : -0.05);
+          this.cities.opacity[k] +
+          (this.cities.targetOpacity[k] ? 0.05 : -0.05);
         if (o > 1.0) o = 1.0;
-        this.texture.opacity[k] = o < 0.0 ? 0.0 : o;
+        this.cities.opacity[k] = o < 0.0 ? 0.0 : o;
       }
 
       shapes.text = {
-        ...this.texture,
+        ...this.cities,
         projection: this.geometry.viewprojection,
         viewport: this.geometry.viewport,
       };
@@ -383,9 +411,9 @@ class Overlay {
     let rectangles = [];
     let visibility = [];
     let s = 1.0 / this.textEngine.scale;
-    for (let k = 0; k < this.texture.count; k++) {
-      const point = [...this.texture.raw.points[k], 1.0];
-      const spread = this.texture.raw.spreads[k];
+    for (let k = 0; k < this.cities.count; k++) {
+      const point = [...this.cities.raw.points[k], 1.0];
+      const spread = this.cities.raw.spreads[k];
       const t = vec4.transformMat4([], point, this.geometry.viewprojection);
       const x = t[0] / t[3];
       const y = t[1] / t[3];
@@ -420,7 +448,7 @@ class Overlay {
       }
       visibility[k] = v;
     });
-    this.texture.targetOpacity = visibility;
+    this.cities.targetOpacity = visibility;
     this.busy = false;
   }
 }

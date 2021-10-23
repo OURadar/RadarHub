@@ -1,11 +1,11 @@
 //
-//  annotation.js
+//  dashboard.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong
 //
 
-class Annotation {
+class Dashboard {
   constructor(debug = true) {
     this.debug = debug;
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
@@ -44,11 +44,14 @@ class Annotation {
       console.log("Input undefined.");
       return;
     }
+    // Compute colorbar tics, label text, etc.
     let texts = [];
     let points = [];
-    let allLabels = [];
+    let assets = [];
     for (const config of configs) {
     }
+
+    return this.makeBuffer(assets);
   }
 
   async makeBuffer(assets) {
@@ -83,10 +86,9 @@ class Annotation {
       image: image,
       scale: this.scale,
     };
-    console.log("Annotation");
     this.busy = false;
     return buffer;
   }
 }
 
-export { Annotation };
+export { Dashboard };
