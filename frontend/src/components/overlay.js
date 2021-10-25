@@ -7,7 +7,6 @@
 
 import { Polygon } from "./polygon";
 import { Text } from "./text";
-import { Dashboard } from "./dashboard";
 import { clamp, deg2rad } from "./common";
 import { mat4, vec4 } from "gl-matrix";
 
@@ -31,7 +30,6 @@ class Overlay {
 
     this.polyEngine = new Polygon();
     this.textEngine = new Text();
-    this.dashEngine = new Dashboard();
 
     this.handleMessage = this.handleMessage.bind(this);
 
@@ -133,7 +131,7 @@ class Overlay {
       this.viewParameters[0] = 0;
       if (k == 2) {
         // load the labels after the rings and grid are loaded
-        this.loadDashboard();
+        // this.loadDashboard();
         this.loadLabels();
       }
     }
@@ -232,34 +230,6 @@ class Overlay {
               extents: buffer.extents,
             },
           });
-      });
-  }
-
-  loadDashboard() {
-    this.dashEngine
-      .load(
-        {
-          product: "Reflectivity",
-          colormap: 1,
-          ticks: [1, 2, 3, 4],
-          symbol: "Z",
-          title: "2013/05/20 19:00 UTC",
-        },
-        this.colors
-      )
-      .then((buffer) => {
-        this.dashboard = {
-          bound: [buffer.image.width, buffer.image.height],
-          texture: this.regl.texture({
-            height: buffer.image.height,
-            width: buffer.image.width,
-            data: buffer.image.data,
-            min: "linear",
-            mag: "linear",
-            premultiplyAlpha: true,
-          }),
-        };
-        console.log(this.dashboard);
       });
   }
 

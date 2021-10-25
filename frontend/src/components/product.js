@@ -8,6 +8,7 @@
 import * as common from "./common";
 import { GLView } from "./glview";
 import { Overlay } from "./overlay";
+import { Dashboard } from "./dashboard";
 
 //
 // Use as <Product data={input} />
@@ -19,6 +20,7 @@ class Product extends GLView {
   constructor(props) {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
+    this.dashboard = new Dashboard();
     this.offset = (Date.now() % 86400000) / 5000;
     this.state = {
       ...this.state,
@@ -51,6 +53,7 @@ class Product extends GLView {
       });
       this.assets.index = 0.5 / this.assets.colormap.height;
       if (this.assets.data != null) this.assets.complete = true;
+      this.loadDashboard();
     });
 
     window.addEventListener("keyup", (e) => {
@@ -70,6 +73,34 @@ class Product extends GLView {
     ...super.defaultProps,
     sweep: null,
   };
+
+  loadDashboard() {
+    this.dashboard
+      .load(
+        {
+          product: "Reflectivity",
+          colormap: this.assets.colormap,
+          ticks: [1, 2, 3, 4],
+          symbol: "Z",
+          title: "2013/05/20 19:00 UTC",
+        },
+        this.props.colors
+      )
+      .then((buffer) => {
+        this.dashboardTexture = {
+          bound: [buffer.image.width, buffer.image.height],
+          texture: this.regl.texture({
+            height: buffer.image.height,
+            width: buffer.image.width,
+            data: buffer.image.data,
+            min: "linear",
+            mag: "linear",
+            premultiplyAlpha: true,
+          }),
+        };
+        console.log(this.dashboardTexture);
+      });
+  }
 
   toggleSpin() {
     this.setState((state) => {
