@@ -127,6 +127,56 @@ export function sprite(regl) {
   });
 }
 
+//  A simple 2D artist to draw a rectangle
+export function rect2(regl) {
+  const position = regl.buffer([
+    [-0.5, -0.5],
+    [+0.5, -0.5],
+    [+0.5, +0.5],
+    [-0.5, -0.5],
+    [+0.5, +0.5],
+    [-0.5, +0.5],
+  ]);
+  const origin = regl.buffer([
+    [0.0, 0.0],
+    [1.0, 0.0],
+    [1.0, 1.0],
+    [0.0, 0.0],
+    [1.0, 1.0],
+    [0.0, 1.0],
+  ]);
+  return regl({
+    vert: `
+    precision highp float;
+    uniform mat4 projection;
+    attribute vec2 position;
+    attribute vec2 origin;
+    varying vec2 uv;
+    void main() {
+      gl_Position = projection * vec4(position, 0, 1);
+      uv = origin;
+    }`,
+
+    frag: `
+      precision highp float;
+      uniform sample2D texture;
+      varying vec2 uv;
+      void main() {
+        gl_FragColor = texture2D(texture, uv);
+      }`,
+
+    uniforms: {
+      projection: regl.prop("projection"),
+      texture: regl.prop("texture"),
+    },
+
+    attributes: {
+      position: position,
+      origin: origin,
+    },
+  });
+}
+
 //  A simple 3D artist with basic shaders
 export function basic3(regl) {
   return regl({
