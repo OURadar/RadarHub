@@ -95,6 +95,7 @@ class Product extends GLView {
             data: buffer.image.data,
             min: "linear",
             mag: "linear",
+            flipY: true,
             premultiplyAlpha: true,
           }),
         };
@@ -235,7 +236,7 @@ class Product extends GLView {
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);
-    if (this.dashboardTexture.texture) {
+    if (this.dashboardTexture) {
       this.michelangelo({
         projection: this.geometry.orthoprojection,
         viewport: this.geometry.viewport,

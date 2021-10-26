@@ -133,12 +133,12 @@ export function rect2(regl) {
     usage: "static",
     type: "float",
     data: [
-      [-0.5, -0.5],
-      [+0.5, -0.5],
-      [+0.5, +0.5],
-      [-0.5, -0.5],
-      [+0.5, +0.5],
-      [-0.5, +0.5],
+      [-1.0, -1.0],
+      [+1.0, -1.0],
+      [+1.0, +1.0],
+      [-1.0, -1.0],
+      [+1.0, +1.0],
+      [-1.0, +1.0],
     ],
   });
   const origins = regl.buffer({
@@ -170,7 +170,7 @@ export function rect2(regl) {
       uniform sampler2D texture;
       varying vec2 uv;
       void main() {
-        gl_FragColor = vec4(1.0, 0.5, 0.5, 1.0);
+        gl_FragColor = texture2D(texture, uv);
       }`,
 
     uniforms: {
@@ -185,6 +185,14 @@ export function rect2(regl) {
 
     viewport: regl.prop("viewport"),
     count: 6,
+
+    blend: {
+      enable: true,
+      func: {
+        src: "src alpha",
+        dst: "one minus src alpha",
+      },
+    },
   });
 }
 

@@ -161,13 +161,15 @@ class GLView extends Component {
     const geo = this.geometry;
     const w = this.canvas.width;
     const h = this.canvas.height;
+    const ww = w / 1000;
+    const hh = h / 1000;
     geo.aspect = w / h;
     geo.satPosition = common.rad.coord2point(...geo.satCoordinate);
     geo.view = mat4.lookAt([], geo.satPosition, [0, 0, 0], [0, 1, 0]);
     geo.modelview = mat4.multiply([], geo.view, geo.model);
     geo.projection = mat4.perspective([], geo.fov, geo.aspect, 100, 30000.0);
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
-    geo.orthoprojection = mat4.ortho([], -w, w, -h, h, -1, 1);
+    geo.orthoprojection = mat4.ortho([], -ww, ww, -hh, hh, 0, 10000);
     geo.viewport.width = w;
     geo.viewport.height = h;
     geo.message = "geo";

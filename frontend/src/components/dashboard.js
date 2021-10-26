@@ -11,8 +11,8 @@ class Dashboard {
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
     this.scale = this.ratio > 1 ? 1 : 1.2;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 500;
-    this.canvas.height = 500;
+    this.canvas.width = 1000;
+    this.canvas.height = 1000;
     this.context = this.canvas.getContext("2d");
     this.stroke = 3.5 * this.scale * this.ratio;
     this.busy = false;
@@ -30,7 +30,7 @@ class Dashboard {
 
     if (debug) {
       const o = document.getElementById("test");
-      o.appendChild(this.canvas);
+      if (o) o.appendChild(this.canvas);
     }
   }
 
