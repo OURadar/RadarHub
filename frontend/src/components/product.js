@@ -223,8 +223,8 @@ class Product extends GLView {
         modelview: this.geometry.modelview,
         viewport: this.geometry.viewport,
         colormap: this.assets.colormap,
-        data: this.assets.data,
         index: this.assets.index,
+        data: this.assets.data,
         // points: this.props.sweep.points,
         // origins: this.props.sweep.origins,
         // elements: this.props.sweep.elements,
@@ -235,12 +235,13 @@ class Product extends GLView {
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);
-    if (this.dashboardTexture.texture)
+    if (this.dashboardTexture.texture) {
       this.michelangelo({
-        projection: this.geometry.projection,
+        projection: this.geometry.orthoprojection,
         viewport: this.geometry.viewport,
         texture: this.dashboardTexture.texture,
       });
+    }
     if (this.state.spin && !this.gesture.panInProgress) {
       this.updateViewPoint();
     }

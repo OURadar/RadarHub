@@ -129,22 +129,30 @@ export function sprite(regl) {
 
 //  A simple 2D artist to draw a rectangle
 export function rect2(regl) {
-  const position = regl.buffer([
-    [-0.5, -0.5],
-    [+0.5, -0.5],
-    [+0.5, +0.5],
-    [-0.5, -0.5],
-    [+0.5, +0.5],
-    [-0.5, +0.5],
-  ]);
-  const origin = regl.buffer([
-    [0.0, 0.0],
-    [1.0, 0.0],
-    [1.0, 1.0],
-    [0.0, 0.0],
-    [1.0, 1.0],
-    [0.0, 1.0],
-  ]);
+  const positions = regl.buffer({
+    usage: "static",
+    type: "float",
+    data: [
+      [-0.5, -0.5],
+      [+0.5, -0.5],
+      [+0.5, +0.5],
+      [-0.5, -0.5],
+      [+0.5, +0.5],
+      [-0.5, +0.5],
+    ],
+  });
+  const origins = regl.buffer({
+    usage: "static",
+    type: "float",
+    data: [
+      [0.0, 0.0],
+      [1.0, 0.0],
+      [1.0, 1.0],
+      [0.0, 0.0],
+      [1.0, 1.0],
+      [0.0, 1.0],
+    ],
+  });
   return regl({
     vert: `
       precision highp float;
@@ -153,7 +161,7 @@ export function rect2(regl) {
       attribute vec2 origin;
       varying vec2 uv;
       void main() {
-        gl_Position = vec4(position, 0, 1);
+        gl_Position = projection * vec4(position, 0, 1);
         uv = origin;
       }`,
 
@@ -162,7 +170,7 @@ export function rect2(regl) {
       uniform sampler2D texture;
       varying vec2 uv;
       void main() {
-        gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);
+        gl_FragColor = vec4(1.0, 0.5, 0.5, 1.0);
       }`,
 
     uniforms: {
@@ -171,12 +179,12 @@ export function rect2(regl) {
     },
 
     attributes: {
-      position: position,
-      origin: origin,
+      position: positions,
+      origin: origins,
     },
 
     viewport: regl.prop("viewport"),
-    count: 2,
+    count: 6,
   });
 }
 

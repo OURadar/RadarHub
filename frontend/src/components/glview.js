@@ -89,6 +89,7 @@ class GLView extends Component {
       projection: mat4.create(),
       modelview: model,
       viewprojection: mat4.create(),
+      orthoprojection: mat4.create(),
       viewport: { x: 0, y: 0, width: 1, height: 1 },
       needsUpdate: true,
       message: "geo",
@@ -166,6 +167,7 @@ class GLView extends Component {
     geo.modelview = mat4.multiply([], geo.view, geo.model);
     geo.projection = mat4.perspective([], geo.fov, geo.aspect, 100, 30000.0);
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
+    geo.orthoprojection = mat4.ortho([], -w, w, -h, h, -1, 1);
     geo.viewport.width = w;
     geo.viewport.height = h;
     geo.message = "geo";
