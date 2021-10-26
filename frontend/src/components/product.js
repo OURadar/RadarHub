@@ -235,6 +235,12 @@ class Product extends GLView {
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);
+    if (this.dashboardTexture.texture)
+      this.michelangelo({
+        projection: this.geometry.projection,
+        viewport: this.geometry.viewport,
+        texture: this.dashboardTexture.texture,
+      });
     if (this.state.spin && !this.gesture.panInProgress) {
       this.updateViewPoint();
     }
