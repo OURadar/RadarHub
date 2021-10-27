@@ -17,11 +17,11 @@ import glob
 import time
 import django
 import pprint
+import shutil
 import tarfile
 import argparse
 import textwrap
-
-from multiprocessing import Pool, Queue, Process, Value, Lock
+import multiprocessing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
@@ -64,9 +64,10 @@ def retrieve(name):
         print(f'There are more than one match. Choosing the first one.')
     return x[0]
 
-def proc_archive(archive):
-    print(f'Processing {archive} ...')
-    with tarfile.open(archive) as aid:
+def proc_archive(archive, ramfile=None):
+    file = ramfile if ramfile else archive
+    print(f'Processing {archive} {file} ...')
+    with tarfile.open(file) as aid:
         xx = []
         mm = []
         for info in aid.getmembers():
@@ -92,7 +93,7 @@ def xzfolder(folder):
     if len(archives) == 0:
         print('Unable to continue.')
         return
-    with Pool() as pool:
+    with multiprocessing.Pool() as pool:
         results = pool.map(proc_archive, archives)
     for result in results:
         (xx, mm) = result
@@ -105,44 +106,54 @@ def xzfolder(folder):
 
 def process_arhives(id, run, lock, queue, out):
     while run.value == 1:
-        archive = None
+        task = None
         
         lock.acquire()
         if not queue.empty():
-            archive = queue.get()
+            task = queue.get()
         lock.release()
 
-        if archive:
-            print(f'{id}: {archive}')
+        if task:
+            archive = task['archive']
+            ramfile = task['ramfile']
+            print(f'{id}: {archive} {ramfile}')
             # Original path and ramdisk path
             # Process the ramdisk path
             # Make an entry to database. Use entry() with archive, offset, offset_data, size
             # Remove the file from ramdisk
-            result = {'archive': archive, 'offset': 0, 'offset_data': 1000, 'size': 1000}
-            out.put(result)
+
+            xx, mm = proc_archive(archive, ramfile)
+            os.remove(ramfile)
+            out.put(xx)
 
         time.sleep(0.1)
 
 
 def xzfolder2(folder):
     print(f'xzfolder: {folder}')
-    task_queue = Queue()
-    db_queue = Queue()
-    lock = Lock()
-    run = Value('i', 1)
-    archives = listfiles(folder)[:20]
+    task_queue = multiprocessing.Queue()
+    db_queue = multiprocessing.Queue()
+    lock = multiprocessing.Lock()
+    run = multiprocessing.Value('i', 1)
+    archives = listfiles(folder)[:32]
     if len(archives) == 0:
         print('Unable to continue.')
         return
     processes = []
-    for n in range(4):
-        p = Process(target=process_arhives, args=(n, run, lock, task_queue, db_queue))
+    for n in range(multiprocessing.cpu_count()):
+        p = multiprocessing.Process(target=process_arhives, args=(n, run, lock, task_queue, db_queue))
         processes.append(p)
         p.start()
 
     for archive in archives:
         # Copy to ramdisk first, the queue the work after the file is copied
-        task_queue.put(archive)
+        basename = os.path.basename(archive)
+        ramfile = f'/mnt/ramdisk/{basename}'
+        print(archive, ramfile)
+        shutil.copy(archive, ramfile)
+        task_queue.put({'archive': archive, 'ramfile': ramfile})
+        while task_queue.qsize() > 32:
+            time.sleep(0.1)
 
     while db_queue.qsize() < len(archives):
         time.sleep(0.1)
@@ -156,6 +167,7 @@ def xzfolder2(folder):
     while not db_queue.empty():
         result = db_queue.get()
         print(result)
+        # save, order?
 
 def daycount(day):
     s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day).group(0)
