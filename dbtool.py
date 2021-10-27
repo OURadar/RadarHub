@@ -66,7 +66,7 @@ def retrieve(name):
 
 def proc_archive(archive, ramfile=None):
     file = ramfile if ramfile else archive
-    print(f'Processing {archive} {file} ...')
+    # print(f'Processing {archive} {file} ...')
     with tarfile.open(file) as aid:
         xx = []
         mm = []
@@ -116,7 +116,7 @@ def process_arhives(id, run, lock, queue, out):
         if task:
             archive = task['archive']
             ramfile = task['ramfile']
-            print(f'{id}: {archive} {ramfile}')
+            print(f'{id:02d}: {archive} {ramfile}')
             # Original path and ramdisk path
             # Process the ramdisk path
             # Make an entry to database. Use entry() with archive, offset, offset_data, size
@@ -124,9 +124,11 @@ def process_arhives(id, run, lock, queue, out):
 
             xx, mm = proc_archive(archive, ramfile)
             os.remove(ramfile)
-            out.put(xx)
+            out.put({'name': os.path.basename(archive), 'xx': xx, 'mm': mm})
 
         time.sleep(0.1)
+
+    print(f'{id} done')
 
 
 def xzfolder2(folder):
@@ -149,25 +151,33 @@ def xzfolder2(folder):
         # Copy to ramdisk first, the queue the work after the file is copied
         basename = os.path.basename(archive)
         ramfile = f'/mnt/ramdisk/{basename}'
-        print(archive, ramfile)
+        # print(archive, ramfile)
         shutil.copy(archive, ramfile)
         task_queue.put({'archive': archive, 'ramfile': ramfile})
-        while task_queue.qsize() > 32:
+        while task_queue.qsize() > 20:
             time.sleep(0.1)
 
     while db_queue.qsize() < len(archives):
         time.sleep(0.1)
     
-    print('all done')
     run.value = 0;
+    print('queued done')
 
     for p in processes:
         p.join()
 
+    print('processes joined')
+
     while not db_queue.empty():
-        result = db_queue.get()
-        print(result)
-        # save, order?
+        archive = db_queue.get()
+        print(archive['name'])
+        xx = archive['xx']
+        mm = archive['mm']
+        for k in range(len(xx)):
+            x = xx[k]
+            m = mm[k]
+            print(m, x.name)
+            # save, order?
 
 def daycount(day):
     s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day).group(0)
