@@ -14,13 +14,14 @@ import os
 import re
 import sys
 import glob
+import time
 import django
 import pprint
 import tarfile
 import argparse
 import textwrap
 
-from multiprocessing import Pool
+from multiprocessing import Pool, Queue, Process, Value, Lock
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
@@ -102,6 +103,60 @@ def xzfolder(folder):
             # print(f'{m} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
             x.save()
 
+def process_arhives(id, run, lock, queue, out):
+    while run.value == 1:
+        archive = None
+        
+        lock.acquire()
+        if not queue.empty():
+            archive = queue.get()
+        lock.release()
+
+        if archive:
+            print(f'{id}: {archive}')
+            # Original path and ramdisk path
+            # Process the ramdisk path
+            # Make an entry to database. Use entry() with archive, offset, offset_data, size
+            # Remove the file from ramdisk
+            result = {'archive': archive, 'offset': 0, 'offset_data': 1000, 'size': 1000}
+            out.put(result)
+
+        time.sleep(0.1)
+
+
+def xzfolder2(folder):
+    print(f'xzfolder: {folder}')
+    task_queue = Queue()
+    db_queue = Queue()
+    lock = Lock()
+    run = Value('i', 1)
+    archives = listfiles(folder)[:20]
+    if len(archives) == 0:
+        print('Unable to continue.')
+        return
+    processes = []
+    for n in range(4):
+        p = Process(target=process_arhives, args=(n, run, lock, task_queue, db_queue))
+        processes.append(p)
+        p.start()
+
+    for archive in archives:
+        # Copy to ramdisk first, the queue the work after the file is copied
+        task_queue.put(archive)
+
+    while db_queue.qsize() < len(archives):
+        time.sleep(0.1)
+    
+    print('all done')
+    run.value = 0;
+
+    for p in processes:
+        p.join()
+
+    while not db_queue.empty():
+        result = db_queue.get()
+        print(result)
+
 def daycount(day):
     s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day).group(0)
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
@@ -155,7 +210,7 @@ def main():
     if args.xz:
         print('Processing a folder with .tar.xz archives')
         for folder in args.sources:
-            xzfolder(folder)
+            xzfolder2(folder)
 
     if args.day:
         print('Building Day table ...')
