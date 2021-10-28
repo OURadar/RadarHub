@@ -117,13 +117,11 @@ def process_arhives(id, run, lock, queue, out):
             archive = task['archive']
             ramfile = task['ramfile']
             print(f'{id:02d}: {archive} {ramfile}')
-            # xx, mm = proc_archive(archive, ramfile)
             xx = []
             with tarfile.open(archive) as tar:
                 for info in tar.getmembers():
-                    xx.append([info.name, info.offset, info.offset_data, info.size])
+                    xx.append([info.name, info.offset, info.offset_data, info.size, archive])
             os.remove(ramfile)
-            # out.put({'name': os.path.basename(archive), 'xx': xx, 'mm': mm})
             out.put({'name': os.path.basename(archive), 'xx': xx})
         else:
             time.sleep(0.1)
@@ -134,18 +132,26 @@ def process_arhives(id, run, lock, queue, out):
 
 def xzfolder2(folder):
     print(f'xzfolder: {folder}')
+
+    s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
+    prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
+    date_range = [f'{prefix} 00:00Z', f'{prefix} 00:59Z']    
+    print(f'date_range = {date_range}')
+
     task_queue = multiprocessing.Queue()
     db_queue = multiprocessing.Queue()
     lock = multiprocessing.Lock()
     run = multiprocessing.Value('i', 1)
-    archives = listfiles(folder)[:12]
+    archives = listfiles(folder)
     if len(archives) == 0:
         print('Unable to continue.')
         return
 
-    # count = multiprocessing.cpu_count()
-    count = 4
+    count = multiprocessing.cpu_count()
+    e = time.time()
 
+    keys = []
+    output = {}
     processes = []
     for n in range(count):
         p = multiprocessing.Process(target=process_arhives, args=(n, run, lock, task_queue, db_queue))
@@ -156,46 +162,55 @@ def xzfolder2(folder):
         # Copy to ramdisk first, the queue the work after the file is copied
         basename = os.path.basename(archive)
         ramfile = f'/mnt/ramdisk/{basename}'
-        # print(archive, ramfile)
         shutil.copy(archive, ramfile)
         task_queue.put({'archive': archive, 'ramfile': ramfile})
         while task_queue.qsize() > 2 * count:
             time.sleep(0.1)
-
-    print(f'output size: {db_queue.qsize()} / {len(archives)}')
-    while db_queue.qsize() < len(archives):
-        print(f'output size: {db_queue.qsize()} / {len(archives)}')
-        time.sleep(0.5)
+        while not db_queue.empty():
+            out = db_queue.get()
+            key = out['name']
+            keys.append(key)
+            output[key] = out
     
     run.value = 0;
-    print('queued done')
-
     for p in processes:
         p.join()
 
-    print('processes joined')
-    return
+    while not db_queue.empty():
+        out = db_queue.get()
+        key = out['name']
+        keys.append(key)
+        output[key] = out
+
+    entries = File.objects.filter(date__range=date_range)
 
     # Consolidating results
-    keys = []
-    output = {}
-    while not db_queue.empty():
-        archive = db_queue.get()
-        key = archive['name']
-        keys.append(key)
-        output[key] = archive
-
     for key in sorted(keys):
-        print(key)
-        archive = output[key]
-        xx = archive['xx']
-        mm = archive['mm']
-        for k in range(len(xx)):
-            x = xx[k]
-            m = mm[k]
+        xx = output[key]['xx']
+        for pp in xx:
+            mode = 'N'
+            # Each entry has [info.name, info.offset, info.offset_data, info.size, archive]
+            (name, offset, offset_data, size, archive) = pp
+            s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', archive).group(0)
+            datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+            if entries.filter(name=name):
+                mode = 'U'
+                x = entries.filter(name=name)[0]
+                x.path = archive
+                x.size = size
+                x.offset = offset
+                x.offset_data = offset_data
+            else:
+                x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
             if debug:
-                print(f' - {m} {x.name}')
+                print(f' - {mode} : {name} {offset} {offset_data} {size} {archive}')
             x.save()
+
+        print(f'{mode} {key}')
+
+    e = time.time() - e
+    a = e / len(archives)
+    print(f'Elapsed time = {e:.2f} sec ({a:.2f} s / file)')
 
 def daycount(day):
     s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day).group(0)
