@@ -117,18 +117,19 @@ def process_arhives(id, run, lock, queue, out):
             archive = task['archive']
             ramfile = task['ramfile']
             print(f'{id:02d}: {archive} {ramfile}')
-            # Original path and ramdisk path
-            # Process the ramdisk path
-            # Make an entry to database. Use entry() with archive, offset, offset_data, size
-            # Remove the file from ramdisk
-
-            xx, mm = proc_archive(archive, ramfile)
+            # xx, mm = proc_archive(archive, ramfile)
+            xx = []
+            with tarfile.open(archive) as tar:
+                for info in tar.getmembers():
+                    xx.append([info.name, info.offset, info.offset_data, info.size])
             os.remove(ramfile)
-            out.put({'name': os.path.basename(archive), 'xx': xx, 'mm': mm})
-
-        time.sleep(0.1)
+            # out.put({'name': os.path.basename(archive), 'xx': xx, 'mm': mm})
+            out.put({'name': os.path.basename(archive), 'xx': xx})
+        else:
+            time.sleep(0.1)
 
     print(f'{id} done')
+    return
 
 
 def xzfolder2(folder):
@@ -137,12 +138,16 @@ def xzfolder2(folder):
     db_queue = multiprocessing.Queue()
     lock = multiprocessing.Lock()
     run = multiprocessing.Value('i', 1)
-    archives = listfiles(folder)[:32]
+    archives = listfiles(folder)[:12]
     if len(archives) == 0:
         print('Unable to continue.')
         return
+
+    # count = multiprocessing.cpu_count()
+    count = 4
+
     processes = []
-    for n in range(multiprocessing.cpu_count()):
+    for n in range(count):
         p = multiprocessing.Process(target=process_arhives, args=(n, run, lock, task_queue, db_queue))
         processes.append(p)
         p.start()
@@ -154,11 +159,13 @@ def xzfolder2(folder):
         # print(archive, ramfile)
         shutil.copy(archive, ramfile)
         task_queue.put({'archive': archive, 'ramfile': ramfile})
-        while task_queue.qsize() > 20:
+        while task_queue.qsize() > 2 * count:
             time.sleep(0.1)
 
+    print(f'output size: {db_queue.qsize()} / {len(archives)}')
     while db_queue.qsize() < len(archives):
-        time.sleep(0.1)
+        print(f'output size: {db_queue.qsize()} / {len(archives)}')
+        time.sleep(0.5)
     
     run.value = 0;
     print('queued done')
@@ -167,17 +174,28 @@ def xzfolder2(folder):
         p.join()
 
     print('processes joined')
+    return
 
+    # Consolidating results
+    keys = []
+    output = {}
     while not db_queue.empty():
         archive = db_queue.get()
-        print(archive['name'])
+        key = archive['name']
+        keys.append(key)
+        output[key] = archive
+
+    for key in sorted(keys):
+        print(key)
+        archive = output[key]
         xx = archive['xx']
         mm = archive['mm']
         for k in range(len(xx)):
             x = xx[k]
             m = mm[k]
-            print(m, x.name)
-            # save, order?
+            if debug:
+                print(f' - {m} {x.name}')
+            x.save()
 
 def daycount(day):
     s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day).group(0)
