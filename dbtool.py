@@ -213,7 +213,15 @@ def xzfolder2(folder):
     print(f'Elapsed time = {e:.2f} sec ({a:.2f} s / file)')
 
 def daycount(day):
-    s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day).group(0)
+    if '/' in day:
+        s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day)
+    else:
+        s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', day)
+    if s:
+        s = s.group(0)
+    else:
+        print('Unble to determine the date')
+        return
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
     mode = 'N'
