@@ -9,7 +9,7 @@ import * as common from "./common";
 import { GLView } from "./glview";
 import { Overlay } from "./overlay";
 import { Dashboard } from "./dashboard";
-
+import { quat } from "gl-matrix";
 //
 // Use as <Product data={input} />
 //
@@ -93,8 +93,8 @@ class Product extends GLView {
             height: buffer.image.height,
             width: buffer.image.width,
             data: buffer.image.data,
-            min: "nearest",
-            mag: "nearest",
+            min: "linear",
+            mag: "linear",
             flipY: true,
             premultiplyAlpha: true,
           }),

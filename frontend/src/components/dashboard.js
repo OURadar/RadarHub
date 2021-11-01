@@ -85,14 +85,19 @@ class Dashboard {
     context.strokeStyle = colors.label.face;
     for (let k = 0; k < 5; k++) {
       const y = originY + 0.5 * context.lineWidth - k * 50;
-      console.log(`y = ${y}`);
+      // console.log(`y = ${y}`);
       context.beginPath();
       context.moveTo(originX - 5, y);
       context.lineTo(originX, y);
       context.closePath();
       context.stroke();
     }
-    context.strokeRect(originX, originY - height, width, height);
+    context.strokeRect(
+      originX + 0.5 * context.lineWidth,
+      originY + 0.5 * context.lineWidth - height,
+      width,
+      height
+    );
 
     let image = context.getImageData(
       0,
