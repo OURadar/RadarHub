@@ -33,6 +33,7 @@ class Product extends GLView {
     this.assets = {
       time: 0,
       index: 0,
+      palette: null,
       colormap: null,
       data: null,
       points: null,
@@ -44,6 +45,7 @@ class Product extends GLView {
     var image = new Image();
     image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
+      this.assets.palette = image;
       this.assets.colormap = this.regl.texture({
         data: image,
         flipY: true,
@@ -78,9 +80,16 @@ class Product extends GLView {
     this.dashboard
       .load(
         {
-          product: "Reflectivity",
+          index: this.assets.index,
+          palette: this.assets.palette,
           colormap: this.assets.colormap,
-          ticks: [1, 2, 3, 4],
+          product: "Reflectivity",
+          ticks: [
+            { pos: 32, text: "1.0" },
+            { pos: 64, text: "2.0" },
+            { pos: 128, text: "3.0" },
+            { pos: 192, text: "4.0" },
+          ],
           symbol: "Z",
           title: "2013/05/20 19:00 UTC",
         },

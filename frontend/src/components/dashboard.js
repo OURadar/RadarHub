@@ -79,14 +79,22 @@ class Dashboard {
 
     this.context.font = "14px LabelFont";
 
+    console.log(configs);
+
     const width = 20;
     const height = 256;
     const originX = 100;
     const originY = 400;
     context.lineWidth = 1;
     context.strokeStyle = colors.label.face;
-    for (let k = 0; k < 6; k++) {
-      const y = originY + 0.5 * context.lineWidth - k * 50;
+    const ticks = [
+      { pos: 32, text: "1.0" },
+      { pos: 64, text: "2.0" },
+      { pos: 128, text: "3.0" },
+      { pos: 192, text: "4.0" },
+    ];
+    ticks.forEach((tick) => {
+      const y = originY + 0.5 * context.lineWidth - tick.pos;
       // console.log(`y = ${y}`);
       context.beginPath();
       context.moveTo(originX - 5, y);
@@ -94,13 +102,12 @@ class Dashboard {
       context.closePath();
       context.stroke();
 
-      let text = k.toFixed(1);
-      let meas = this.context.measureText(text);
-      let xx = originX - meas.width - 15;
+      let meas = this.context.measureText(tick.text);
+      let xx = originX - meas.width - 14;
       let yy = y + 0.5 * meas.actualBoundingBoxAscent;
-      context.strokeText(text, xx, yy);
-      context.fillText(text, xx, yy);
-    }
+      context.strokeText(tick.text, xx, yy);
+      context.fillText(tick.text, xx, yy);
+    });
     context.strokeRect(
       originX + 0.5 * context.lineWidth,
       originY + 0.5 * context.lineWidth - height,
