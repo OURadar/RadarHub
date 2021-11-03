@@ -16,7 +16,7 @@ class Dashboard {
     this.context = this.canvas.getContext("2d");
     this.stroke = 3.5 * this.scale * this.ratio;
     this.busy = false;
-    this.context.font = "14px LabelFont";
+    this.context.font = "12px LabelFont";
     let meas = this.context.measureText("bitcoin");
     this.initWidth = meas.width;
     this.hasDetails =
@@ -69,7 +69,7 @@ class Dashboard {
     context.fillText(label, 50, 50);
 
     context.lineWidth = 2;
-    context.strokeStyle = "red";
+    context.strokeStyle = "rgba(255, 160, 0, 0.7)";
     context.strokeRect(
       0.5 * context.lineWidth,
       0.5 * context.lineWidth,
@@ -77,13 +77,15 @@ class Dashboard {
       this.canvas.height - context.lineWidth
     );
 
+    this.context.font = "14px LabelFont";
+
     const width = 20;
     const height = 256;
     const originX = 100;
     const originY = 400;
     context.lineWidth = 1;
     context.strokeStyle = colors.label.face;
-    for (let k = 0; k < 5; k++) {
+    for (let k = 0; k < 6; k++) {
       const y = originY + 0.5 * context.lineWidth - k * 50;
       // console.log(`y = ${y}`);
       context.beginPath();
@@ -91,6 +93,13 @@ class Dashboard {
       context.lineTo(originX, y);
       context.closePath();
       context.stroke();
+
+      let text = k.toFixed(1);
+      let meas = this.context.measureText(text);
+      let xx = originX - meas.width - 15;
+      let yy = y + 0.5 * meas.actualBoundingBoxAscent;
+      context.strokeText(text, xx, yy);
+      context.fillText(text, xx, yy);
     }
     context.strokeRect(
       originX + 0.5 * context.lineWidth,
