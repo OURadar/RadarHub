@@ -79,21 +79,15 @@ class Dashboard {
 
     this.context.font = "14px LabelFont";
 
-    console.log(configs);
+    console.log(configs.palette);
 
     const width = 20;
     const height = 256;
-    const originX = 100;
-    const originY = 400;
+    const originX = 300;
+    const originY = 500;
     context.lineWidth = 1;
     context.strokeStyle = colors.label.face;
-    const ticks = [
-      { pos: 32, text: "1.0" },
-      { pos: 64, text: "2.0" },
-      { pos: 128, text: "3.0" },
-      { pos: 192, text: "4.0" },
-    ];
-    ticks.forEach((tick) => {
+    configs.ticks.forEach((tick) => {
       const y = originY + 0.5 * context.lineWidth - tick.pos;
       // console.log(`y = ${y}`);
       context.beginPath();
@@ -108,11 +102,23 @@ class Dashboard {
       context.strokeText(tick.text, xx, yy);
       context.fillText(tick.text, xx, yy);
     });
+    context.translate(originX, originY);
+    context.rotate(-Math.PI / 2);
+    context.drawImage(configs.palette, 0, 5, 256, 1, 0, 0, height, width);
     context.strokeRect(
-      originX + 0.5 * context.lineWidth,
-      originY + 0.5 * context.lineWidth - height,
-      width,
-      height
+      -1.5 * context.lineWidth,
+      -1.5 * context.lineWidth,
+      height + 3,
+      width + 3
+    );
+
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.strokeStyle = "white";
+    context.strokeRect(
+      originX - 0.5 * context.lineWidth,
+      originY - 0.5 * context.lineWidth - height,
+      width + 1,
+      height + 1
     );
 
     let image = context.getImageData(

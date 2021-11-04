@@ -86,9 +86,9 @@ class Product extends GLView {
           product: "Reflectivity",
           ticks: [
             { pos: 32, text: "1.0" },
-            { pos: 64, text: "2.0" },
-            { pos: 128, text: "3.0" },
-            { pos: 192, text: "4.0" },
+            { pos: 96, text: "2.0" },
+            { pos: 160, text: "3.0" },
+            { pos: 224, text: "4.0" },
           ],
           symbol: "Z",
           title: "2013/05/20 19:00 UTC",
