@@ -61,12 +61,11 @@ class Dashboard {
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     console.log(`config.title = ${configs.title}   ${colors.label.face}`);
-    const label = configs.title;
     context.font = "28px LabelFont";
     context.strokeStyle = colors.label.stroke;
     context.fillStyle = colors.label.face;
-    context.strokeText(label, 50, 50);
-    context.fillText(label, 50, 50);
+    context.strokeText(configs.title, 50, 50);
+    context.fillText(configs.title, 50, 50);
 
     context.lineWidth = 2;
     context.strokeStyle = "rgba(255, 160, 0, 0.7)";
@@ -83,25 +82,31 @@ class Dashboard {
 
     const width = 20;
     const height = 256;
-    const originX = 300;
-    const originY = 500;
-    context.lineWidth = 1;
-    context.strokeStyle = colors.label.face;
+    const originX = this.canvas.width - 100;
+    const originY = this.canvas.height - 100;
     configs.ticks.forEach((tick) => {
-      const y = originY + 0.5 * context.lineWidth - tick.pos;
       // console.log(`y = ${y}`);
+      context.lineWidth = 1;
+      context.strokeStyle = colors.label.face;
+      const y = originY + 0.5 * context.lineWidth - tick.pos;
       context.beginPath();
       context.moveTo(originX - 5, y);
       context.lineTo(originX, y);
       context.closePath();
       context.stroke();
 
+      context.lineWidth = this.stroke;
       let meas = this.context.measureText(tick.text);
       let xx = originX - meas.width - 14;
       let yy = y + 0.5 * meas.actualBoundingBoxAscent;
+      context.strokeStyle = colors.label.stroke;
+      context.fillStyle = colors.label.face;
       context.strokeText(tick.text, xx, yy);
       context.fillText(tick.text, xx, yy);
     });
+
+    context.lineWidth = 1;
+    context.strokeStyle = colors.label.face;
     context.translate(originX, originY);
     context.rotate(-Math.PI / 2);
     context.drawImage(configs.palette, 0, 5, 256, 1, 0, 0, height, width);
