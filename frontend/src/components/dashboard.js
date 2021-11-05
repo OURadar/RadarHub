@@ -83,15 +83,16 @@ class Dashboard {
     console.log(configs.palette);
 
     // Colorbar dimension: 20 x 255
+    const scale = 1;
     const width = 20;
-    const height = 255 * 2;
+    const height = 255 * scale;
     const originX = this.canvas.width - 80;
     const originY = this.canvas.height - 100;
-    configs.ticks.forEach((tick) => {
+    configs.style.ticks.forEach((tick) => {
       // console.log(`y = ${y}`);
       context.lineWidth = 1;
       context.strokeStyle = colors.label.face;
-      const y = originY + 0.5 * context.lineWidth - tick.pos;
+      const y = originY + 0.5 * context.lineWidth - tick.pos * scale;
       context.beginPath();
       context.moveTo(originX - 5, y);
       context.lineTo(originX, y);
@@ -114,7 +115,17 @@ class Dashboard {
     context.translate(originX, originY);
     context.rotate(-Math.PI / 2);
     context.imageSmoothingEnabled = false;
-    context.drawImage(configs.palette, 1, 5, 255, 1, 0, 0, height, width);
+    context.drawImage(
+      configs.palette,
+      1,
+      configs.style.index,
+      255,
+      1,
+      0,
+      0,
+      height,
+      width
+    );
     context.strokeRect(
       -1.5 * context.lineWidth,
       -1.5 * context.lineWidth,

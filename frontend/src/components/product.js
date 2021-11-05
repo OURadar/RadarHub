@@ -31,6 +31,21 @@ class Product extends GLView {
     };
 
     this.labelFaceColor = this.props.colors.label.face;
+    this.styles = {
+      Z: {
+        index: 5,
+        ticks: [
+          { pos: 14, text: "-25" },
+          { pos: 44, text: "-10" },
+          { pos: 74, text: "5" },
+          { pos: 104, text: "20" },
+          { pos: 134, text: "35" },
+          { pos: 164, text: "50" },
+          { pos: 194, text: "65" },
+          { pos: 224, text: "80" },
+        ],
+      },
+    };
 
     this.assets = {
       time: 0,
@@ -78,20 +93,13 @@ class Product extends GLView {
     sweep: null,
   };
 
-  loadDashboard() {
+  loadDashboard(symbol = "Z") {
     this.dashboard
       .load(
         {
-          index: this.assets.index,
           palette: this.assets.palette,
-          colormap: this.assets.colormap,
+          style: this.styles[symbol],
           product: "Reflectivity",
-          ticks: [
-            { pos: 32, text: "1.0" },
-            { pos: 96, text: "2.0" },
-            { pos: 160, text: "3.0" },
-            { pos: 224, text: "4.0" },
-          ],
           symbol: "Z",
           title: "2013/05/20 19:00 UTC",
         },
