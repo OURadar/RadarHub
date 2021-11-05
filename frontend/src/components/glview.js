@@ -89,8 +89,9 @@ class GLView extends Component {
       projection: mat4.create(),
       modelview: model,
       viewprojection: mat4.create(),
-      orthoprojection: mat4.create(),
+      orthoprojection: mat4.ortho([], 0, 1, 0, 1, 0, 1),
       viewport: { x: 0, y: 0, width: 1, height: 1 },
+      dashport: { x: 0, y: 0, width: 1, height: 1 },
       needsUpdate: true,
       message: "geo",
     };
@@ -167,11 +168,7 @@ class GLView extends Component {
     geo.modelview = mat4.multiply([], geo.view, geo.model);
     geo.projection = mat4.perspective([], geo.fov, geo.aspect, 100, 30000.0);
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
-    const ww = w / 1000;
-    const hh = h / 1000;
-    const ox = Math.floor((w - 1000) / 2) / 1000;
-    const oy = Math.floor((h - 1000) / 2) / 1000;
-    geo.orthoprojection = mat4.ortho([], -ox, -ox + ww, -oy, -oy + hh, 0, 10);
+    geo.dashport.x = w - geo.dashport.width;
     geo.viewport.width = w;
     geo.viewport.height = h;
     geo.message = "geo";

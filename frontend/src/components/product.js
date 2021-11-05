@@ -21,6 +21,8 @@ class Product extends GLView {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
     this.dashboard = new Dashboard();
+    this.geometry.dashport.width = this.dashboard.canvas.width;
+    this.geometry.dashport.height = this.dashboard.canvas.height;
     this.offset = (Date.now() % 86400000) / 5000;
     this.state = {
       ...this.state,
@@ -248,7 +250,7 @@ class Product extends GLView {
     if (this.dashboardTexture) {
       this.michelangelo({
         projection: this.geometry.orthoprojection,
-        viewport: this.geometry.viewport,
+        viewport: this.geometry.dashport,
         texture: this.dashboardTexture.texture,
       });
     }
