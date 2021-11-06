@@ -98,9 +98,9 @@ class Product extends GLView {
       .load(
         {
           palette: this.assets.palette,
+          product: "Reflectivity (dBZ)",
           style: this.styles[symbol],
-          product: "Reflectivity",
-          symbol: "Z",
+          symbol: symbol,
           title: "2013/05/20 19:00 UTC",
         },
         this.props.colors

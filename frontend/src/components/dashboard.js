@@ -6,15 +6,14 @@
 //
 
 class Dashboard {
-  constructor(debug = true) {
+  constructor(debug = false) {
     this.debug = debug;
-    this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
-    this.scale = this.ratio > 1 ? 1 : 1.2;
+    this.scale = window.devicePixelRatio > 1 ? 2 : 1;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 500;
-    this.canvas.height = 800;
+    this.canvas.width = 500 * this.scale;
+    this.canvas.height = 1000 * this.scale;
     this.context = this.canvas.getContext("2d");
-    this.stroke = 3.5 * this.scale * this.ratio;
+    this.stroke = 3.5 * this.scale;
     this.busy = false;
     this.context.font = "12px LabelFont";
     let meas = this.context.measureText("bitcoin");
@@ -56,52 +55,57 @@ class Dashboard {
   }
 
   async makeBuffer(configs, colors) {
+    const scale = this.scale;
     const context = this.context;
     context.lineWidth = this.stroke;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    context.font = "28px LabelFont";
-    const meas = context.measureText(configs.title);
-    const x = this.canvas.width - meas.width - 50;
+    context.font = `${32 * scale}px LabelFont`;
+    let meas = context.measureText(configs.title);
+    let x = this.canvas.width - meas.width - 50 * scale;
+    let y = this.canvas.height - meas.actualBoundingBoxDescent - 50 * scale;
     console.log(`config.title = ${configs.title}   ${colors.label.face}`);
     context.strokeStyle = colors.label.stroke;
     context.fillStyle = colors.label.face;
-    context.strokeText(configs.title, x, this.canvas.height - 50);
-    context.fillText(configs.title, x, this.canvas.height - 50);
+    context.strokeText(configs.title, x, y);
+    context.fillText(configs.title, x, y);
 
-    context.lineWidth = 2;
-    context.strokeStyle = "rgba(255, 160, 0, 0.7)";
-    context.strokeRect(
-      0.5 * context.lineWidth,
-      0.5 * context.lineWidth,
-      this.canvas.width - context.lineWidth,
-      this.canvas.height - context.lineWidth
-    );
+    if (this.debug) {
+      context.lineWidth = 2 * scale;
+      context.strokeStyle = "rgba(255, 160, 0, 0.7)";
+      context.strokeRect(
+        0.5 * context.lineWidth,
+        0.5 * context.lineWidth,
+        this.canvas.width - context.lineWidth,
+        this.canvas.height - context.lineWidth
+      );
+    }
 
-    this.context.font = "14px LabelFont";
-
-    console.log(configs.palette);
+    // console.log(configs.palette);
 
     // Colorbar dimension: 20 x 255
-    const scale = 1;
-    const width = 20;
-    const height = 255 * scale;
-    const originX = this.canvas.width - 80;
-    const originY = this.canvas.height - 100;
+    const pull = 1.5;
+    const width = Math.round(20 * scale);
+    const height = Math.round(255 * scale * pull);
+    const originX = Math.round(this.canvas.width - 120 * scale);
+    const originY = Math.round(this.canvas.height - 150 * scale);
+    const tickOffset = (pull - 1) * scale;
+    context.translate(originX, originY);
+    context.font = `${14 * scale}px LabelFont`;
     configs.style.ticks.forEach((tick) => {
       // console.log(`y = ${y}`);
-      context.lineWidth = 1;
+      context.lineWidth = scale;
       context.strokeStyle = colors.label.face;
-      const y = originY + 0.5 * context.lineWidth - tick.pos * scale;
+      y = 0.5 * context.lineWidth - tick.pos * scale * pull + tickOffset;
       context.beginPath();
-      context.moveTo(originX - 5, y);
-      context.lineTo(originX, y);
+      context.moveTo(22 * scale, y);
+      context.lineTo(27 * scale, y);
       context.closePath();
       context.stroke();
 
       context.lineWidth = this.stroke;
       let meas = this.context.measureText(tick.text);
-      let xx = originX - meas.width - 14;
+      let xx = 34 * scale;
       let yy = y + 0.5 * meas.actualBoundingBoxAscent;
       context.strokeStyle = colors.label.stroke;
       context.fillStyle = colors.label.face;
@@ -110,9 +114,9 @@ class Dashboard {
     });
 
     // Colorbar shades. The first shade is transparent.
-    context.lineWidth = 1;
+    console.log(`scale = ${scale}`);
+    context.lineWidth = scale;
     context.strokeStyle = colors.label.face;
-    context.translate(originX, originY);
     context.rotate(-Math.PI / 2);
     context.imageSmoothingEnabled = false;
     context.drawImage(
@@ -129,17 +133,27 @@ class Dashboard {
     context.strokeRect(
       -1.5 * context.lineWidth,
       -1.5 * context.lineWidth,
-      height + 3,
-      width + 3
+      height + 3 * scale,
+      width + 3 * scale
     );
 
+    context.font = `${20 * scale}px LabelFont`;
+    context.lineWidth = this.stroke;
+    meas = this.context.measureText(configs.product);
+    x = 0.5 * (height - meas.width);
+    context.strokeStyle = colors.label.stroke;
+    context.fillStyle = colors.label.face;
+    context.strokeText(configs.product, x, -18 * scale);
+    context.fillText(configs.product, x, -18 * scale);
+
     context.setTransform(1, 0, 0, 1, 0, 0);
+    context.lineWidth = scale;
     context.strokeStyle = "white";
     context.strokeRect(
       originX - 0.5 * context.lineWidth,
       originY - 0.5 * context.lineWidth - height,
-      width + 1,
-      height + 1
+      width + scale,
+      height + scale
     );
 
     let image = context.getImageData(
