@@ -33,7 +33,7 @@ class Product extends GLView {
     this.labelFaceColor = this.props.colors.label.face;
     this.styles = {
       Z: {
-        index: 5,
+        index: 0,
         ticks: [
           { pos: 14, text: "-25" },
           { pos: 44, text: "-10" },

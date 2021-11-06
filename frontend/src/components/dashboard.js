@@ -91,15 +91,17 @@ class Dashboard {
     const originY = Math.round(this.canvas.height - 150 * scale);
     const tickOffset = (pull - 1) * scale;
     context.translate(originX, originY);
-    context.font = `${14 * scale}px LabelFont`;
+    context.font = `${16 * scale}px LabelFont`;
     configs.style.ticks.forEach((tick) => {
       // console.log(`y = ${y}`);
       context.lineWidth = scale;
       context.strokeStyle = colors.label.face;
-      y = 0.5 * context.lineWidth - tick.pos * scale * pull + tickOffset;
+      y =
+        0.5 * context.lineWidth -
+        Math.floor(tick.pos * scale * pull + tickOffset);
       context.beginPath();
-      context.moveTo(22 * scale, y);
-      context.lineTo(27 * scale, y);
+      context.moveTo(22.5 * scale, y);
+      context.lineTo(27.5 * scale, y);
       context.closePath();
       context.stroke();
 
