@@ -161,7 +161,6 @@ class Product extends GLView {
         let text = v.toFixed(0);
         ticks.push({ pos: pos, text: text });
       }
-      console.log(ticks);
       return {
         name: "Reflectivity (dBZ)",
         ticks: ticks,
@@ -193,7 +192,6 @@ class Product extends GLView {
             premultiplyAlpha: true,
           }),
         };
-        console.log(this.dashboardTexture);
       });
   }
 
