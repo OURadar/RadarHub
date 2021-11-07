@@ -36,6 +36,7 @@ class Product extends GLView {
       index: 0,
       palette: null,
       colormap: null,
+      lastStyle: null,
       data: null,
       points: null,
       origins: null,
@@ -47,6 +48,9 @@ class Product extends GLView {
     image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
       this.assets.palette = image;
+      if (this.assets.colormap) {
+        this.assets.colormap.destroy();
+      }
       this.assets.colormap = this.regl.texture({
         data: image,
         flipY: true,
@@ -64,10 +68,12 @@ class Product extends GLView {
         this.toggleSpin();
       } else if (e.key == "c") {
         const h = this.assets.colormap.height;
-        const m = h - 1;
-        this.assets.index =
-          this.assets.index > m / h ? 0.5 / h : this.assets.index + 1.0 / h;
-        console.log(`this.textures.index = ${this.assets.index}`);
+        let i = Math.round(this.assets.index * h - 0.5);
+        i = i >= h - 1 ? 0 : i + 1;
+        this.assets.index = (i + 0.5) / h;
+        const styles = ["Z", "V", "W", "D", "P", "R"];
+        this.loadDashboard(styles[i]);
+        console.log(`this.textures.index = ${this.assets.index}   h = ${h}`);
       }
     });
   }
@@ -169,7 +175,14 @@ class Product extends GLView {
     }
   }
 
-  loadDashboard(symbol = "Z") {
+  loadDashboard(symbol = null) {
+    if (symbol == null) {
+      if (this.assets.lastStyle == null) {
+        symbol = "Z";
+      } else {
+        symbol = this.assets.lastStyle;
+      }
+    }
     this.dashboard
       .load(
         {
@@ -193,6 +206,7 @@ class Product extends GLView {
           }),
         };
       });
+    this.assets.lastStyle = symbol;
   }
 
   toggleSpin() {
@@ -300,6 +314,7 @@ class Product extends GLView {
     if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
+      this.loadDashboard();
     }
     if (
       (this.props.sweep === null && this.assets.data !== null) ||

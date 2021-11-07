@@ -42,6 +42,14 @@ class Dashboard {
       console.log("Input undefined.");
       return;
     }
+    if (this.tic++ == 0) {
+      console.log(`this.tic = ${this.tic}`);
+      return fetch("/static/blob/helveticaneue/HelveticaNeueMed.ttf").then(
+        () => {
+          return this.makeBuffer(configs, colors);
+        }
+      );
+    }
     return this.makeBuffer(configs, colors);
   }
 
@@ -49,7 +57,7 @@ class Dashboard {
     const context = this.context;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    for (let x = 1; x < 4; x++) {
+    for (let x = 1; x < 3; x++) {
       context.filter = `blur(${x * 8}px)`;
       this.draw(configs, {
         blank: true,
@@ -59,7 +67,7 @@ class Dashboard {
       });
     }
 
-    context.filter = "blur(0)";
+    context.filter = "none";
     this.draw(configs, {
       blank: false,
       face: colors.label.face,
@@ -113,13 +121,13 @@ class Dashboard {
     const width = Math.round(20 * scale);
     const originX = Math.round(this.canvas.width - 120 * scale);
     const originY = Math.round(this.canvas.height - 150 * scale);
-    const tickOffset = (yscale - 1) * scale;
+    const tickOffset = yscale - 1;
     context.translate(originX, originY);
     context.font = `${16 * scale}px LabelFont`;
     configs.style.ticks.forEach((tick) => {
-      // console.log(`y = ${y}`);
-      y = 0.5 * scale - (tick.pos - 1) * yscale + tickOffset;
+      y = 0.5 * scale - tick.pos * yscale + tickOffset;
       context.strokeStyle = theme.face;
+      // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
       if (theme.blank) {
         context.lineWidth = theme.width;
         context.strokeRect(22 * scale, y - scale * 0.5, 5 * scale, scale);
