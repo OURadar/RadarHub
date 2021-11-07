@@ -124,7 +124,7 @@ def rgmapf(count=16):
     ]
     return fleximap(count, xp, cp)
 
-def vmap(count=256):
+def vmap(count=64):
     if count < 32 or count % 2:
         print('Count should be an even number greater or equal to 32\n');
         count = 32
@@ -160,8 +160,11 @@ def vmap(count=256):
         [1.00, 0.45, 0.25, 1.0],                # Dark Orange
         [0.30, 0.00, 0.00, 1.0]                 # Dark Brown
     ]
-    rgb = fleximap(count, xp, cp)
-    return rgb
+    rgba = fleximap(count, xp, cp)
+    if (256 % count) == 0:
+        n = 256 / count
+        rgba = np.repeat(np.expand_dims(rgba, axis=1), n, axis=1).reshape(256, 4)
+    return rgba
 
 def wmap(s=4):
     if s % 2:

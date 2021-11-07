@@ -31,22 +31,6 @@ class Product extends GLView {
     };
 
     this.labelFaceColor = this.props.colors.label.face;
-    this.styles = {
-      Z: {
-        index: 0,
-        ticks: [
-          { pos: 14, text: "-25" },
-          { pos: 44, text: "-10" },
-          { pos: 74, text: "5" },
-          { pos: 104, text: "20" },
-          { pos: 134, text: "35" },
-          { pos: 164, text: "50" },
-          { pos: 194, text: "65" },
-          { pos: 224, text: "80" },
-        ],
-      },
-    };
-
     this.assets = {
       time: 0,
       index: 0,
@@ -93,15 +77,106 @@ class Product extends GLView {
     sweep: null,
   };
 
+  makeStyle(symbol = "Z") {
+    let ticks = [];
+    if (symbol == "R") {
+      // # Special case, values are mapped to indices
+      // sticklabels = np.array([0.73, 0.83, 0.93, 0.96, 0.99, 1.02, 1.05])
+      // sticks = rho2ind(sticklabels)
+      const vv = [0.73, 0.83, 0.93, 0.96, 0.99, 1.02, 1.05];
+      vv.forEach((v) => {
+        let pos = rho2ind(v);
+        let text = v.toFixed(2);
+        ticks.push({ pos: pos, text: text });
+      });
+      return {
+        name: "RhoHV (unitless)",
+        ticks: ticks,
+        index: 5,
+      };
+    } else if (symbol == "P") {
+      // slim = (-180.0, +180.0)
+      // sticklabels = np.arange(-135, 151, 45)
+      // sticks = sticklabels * 128.0 / 180.0 + 128.0
+      for (let v = -135; v < 151; v += 45) {
+        let pos = (v * 128.0) / 180.0 + 128.0;
+        let text = v.toFixed(0);
+        ticks.push({ pos: pos, text: text });
+      }
+      return {
+        name: "PhiDP (degrees)",
+        ticks: ticks,
+        index: 4,
+      };
+    } else if (symbol == "D") {
+      // slim = (-10.0, +15.6)
+      // sticklabels = np.arange(-9, 15, 3)
+      // sticks = sticklabels * 10.0 + 100.0
+      for (let v = -9; v < 15; v += 3) {
+        let pos = v * 10.0 + 100.0;
+        let text = v.toFixed(0);
+        ticks.push({ pos: pos, text: text });
+      }
+      return {
+        name: "ZDR (dB)",
+        ticks: ticks,
+        index: 3,
+      };
+    } else if (symbol == "W") {
+      // # I realize there is an offset of 1 but okay
+      // slim = (0, 12.80)
+      // sticklabels = np.arange(0, 13, 2)
+      // sticks = sticklabels * 20.0
+      for (let v = 2; v < 13; v += 2) {
+        let pos = v * 20;
+        let text = v.toFixed(0);
+        ticks.push({ pos: pos, text: text });
+      }
+      return {
+        name: "Spectrum Width (m/s)",
+        ticks: ticks,
+        index: 2,
+      };
+    } else if (symbol == "V") {
+      // slim = (-64, +64.0)
+      // sticklabels = np.arange(-60, 61, 15)
+      // sticks = sticklabels * 128.0 / 64.0 + 128.0
+      for (let v = -60; v < 61; v += 15) {
+        let pos = v * 2.0 + 128.0;
+        let text = v.toFixed(0);
+        ticks.push({ pos: pos, text: text });
+      }
+      return {
+        name: "Velocity (m/s)",
+        ticks: ticks,
+        index: 1,
+      };
+    } else {
+      // slim = (-32.0, +96.0)
+      // sticklabels = np.arange(-25, 81, 15)
+      // sticks = sticklabels * 2.0 + 64.0
+      let ticks = [];
+      for (let v = -25; v < 81; v += 15) {
+        let pos = v * 2.0 + 64.0;
+        let text = v.toFixed(0);
+        ticks.push({ pos: pos, text: text });
+      }
+      console.log(ticks);
+      return {
+        name: "Reflectivity (dBZ)",
+        ticks: ticks,
+        index: 0,
+      };
+    }
+  }
+
   loadDashboard(symbol = "Z") {
     this.dashboard
       .load(
         {
           palette: this.assets.palette,
-          product: "Reflectivity (dBZ)",
-          style: this.styles[symbol],
-          symbol: symbol,
-          title: "2013/05/20 19:00 UTC",
+          style: this.makeStyle(symbol),
+          time: "2013/05/20 19:00 UTC",
         },
         this.props.colors
       )
@@ -300,6 +375,12 @@ class Product extends GLView {
       this.fitToData();
     }
   }
+}
+
+function rho2ind(value) {
+  if (value > 0.93) return Math.round(value * 1000.0 - 824.0);
+  if (value > 0.7) return Math.round(value * 300.0 - 173.0);
+  return Math.round(value * 52.8751);
 }
 
 export { Product };
