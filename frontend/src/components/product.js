@@ -8,7 +8,7 @@
 import * as common from "./common";
 import { GLView } from "./glview";
 import { Overlay } from "./overlay";
-import { Dashboard } from "./dashboard";
+import { Colorbar } from "./colorbar";
 import { quat } from "gl-matrix";
 //
 // Use as <Product data={input} />
@@ -20,9 +20,9 @@ class Product extends GLView {
   constructor(props) {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
-    this.dashboard = new Dashboard();
-    this.geometry.dashport.width = this.dashboard.canvas.width;
-    this.geometry.dashport.height = this.dashboard.canvas.height;
+    this.colorbar = new Colorbar();
+    this.geometry.dashport.width = this.colorbar.canvas.width;
+    this.geometry.dashport.height = this.colorbar.canvas.height;
     this.offset = (Date.now() % 86400000) / 5000;
     this.state = {
       ...this.state,
@@ -182,7 +182,7 @@ class Product extends GLView {
         symbol = this.assets.lastStyle;
       }
     }
-    this.dashboard
+    this.colorbar
       .load(
         {
           palette: this.assets.palette,
