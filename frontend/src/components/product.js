@@ -53,7 +53,6 @@ class Product extends GLView {
       }
       this.assets.colormap = this.regl.texture({
         data: image,
-        flipY: true,
         wrapS: "clamp",
         wrapT: "clamp",
         premultiplyAlpha: true,
