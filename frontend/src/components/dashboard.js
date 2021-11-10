@@ -17,9 +17,9 @@ class Dashboard {
     var image = new Image();
     image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
-      this.assets.palette = image;
-      if (this.assets.colormap) {
-        this.assets.colormap.destroy();
+      this.palette = image;
+      if (this.colormap) {
+        this.colormap.destroy();
       }
       this.assets.colormap = this.regl.texture({
         data: image,
