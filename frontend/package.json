@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "0.6",
+  "version": "0.6.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -28,7 +28,7 @@
     "@emotion/styled": "^11.3.0",
     "@mui/icons-material": "^5.0.1",
     "@mui/lab": "^5.0.0-alpha.48",
-    "@mui/material": "^5.0.1",
+    "@mui/material": "^5.1.0",
     "@mui/styles": "^5.0.1",
     "binary-parser": "^1.9.2",
     "date-fns": "^2.24.0",
