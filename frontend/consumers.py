@@ -211,4 +211,3 @@ class User(AsyncWebsocketConsumer):
 
     async def messageUser(self, event):
         await self.send(bytes_data=event['message'])
-

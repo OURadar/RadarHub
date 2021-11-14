@@ -33,5 +33,8 @@
   },
   "search.exclude": {
     "**/screenlog.*": true
+  },
+  "files.exclude": {
+    "**/db.sqlite3*": true
   }
 }
