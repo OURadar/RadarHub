@@ -1,3 +1,4 @@
+import re
 import json
 import time
 import struct
@@ -9,6 +10,8 @@ from django.http import HttpResponse
 
 from .models import File, Day
 from common import colorize
+
+timeFinder = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
 def binary(request, name):
     if name == 'undefined':
@@ -109,7 +112,10 @@ def list(request, hour):
     return response
 
 def load(request, name):
-    match = File.objects.filter(name=name)
+    # Database is indexed by date so we extract the time first for quicker search
+    s = timeFinder.search(name)[0]
+    s = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+    match = File.objects.filter(date=s).filter(name=name)
     if len(match):
         match = match[0]
     else:

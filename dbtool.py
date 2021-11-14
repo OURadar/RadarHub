@@ -26,7 +26,7 @@ import multiprocessing
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
-pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
+pp = pprint.PrettyPrinter(indent=1, depth=1, width=90, sort_dicts=False)
 
 from frontend.models import File, Day
 
@@ -121,8 +121,8 @@ def process_arhives(id, run, lock, queue, out):
             with tarfile.open(archive) as tar:
                 for info in tar.getmembers():
                     xx.append([info.name, info.offset, info.offset_data, info.size, archive])
-            os.remove(ramfile)
             out.put({'name': os.path.basename(archive), 'xx': xx})
+            os.remove(ramfile)
         else:
             time.sleep(0.1)
 
@@ -135,7 +135,7 @@ def xzfolder2(folder):
 
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
     prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
-    date_range = [f'{prefix} 00:00Z', f'{prefix} 00:59Z']    
+    date_range = [f'{prefix} 00:00Z', f'{prefix} 23:59Z']
     print(f'date_range = {date_range}')
 
     task_queue = multiprocessing.Queue()
@@ -172,6 +172,8 @@ def xzfolder2(folder):
             keys.append(key)
             output[key] = out
     
+    while task_queue.qsize() > 0:
+        time.sleep(0.1)
     run.value = 0;
     for p in processes:
         p.join()
@@ -187,15 +189,16 @@ def xzfolder2(folder):
     # Consolidating results
     for key in sorted(keys):
         xx = output[key]['xx']
-        for pp in xx:
+        for yy in xx:
             mode = 'N'
             # Each entry has [info.name, info.offset, info.offset_data, info.size, archive]
-            (name, offset, offset_data, size, archive) = pp
+            (name, offset, offset_data, size, archive) = yy
             s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', archive).group(0)
             datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
-            if entries.filter(name=name):
+            x = entries.filter(name=name)
+            if x:
                 mode = 'U'
-                x = entries.filter(name=name)[0]
+                x = x[0]
                 x.path = archive
                 x.size = size
                 x.offset = offset
@@ -244,7 +247,20 @@ def daycount(day):
     d.save()
 
     print(f'{mode} {d.date} :: {d.duration:,d} :: {d.hourly_count}')
- 
+
+def getSweepSummary(timestr):
+    print(f'timestr = {timestr}')
+    t = time.strptime(timestr, '%Y%m%d-%H%M%S')
+    t = time.strftime('%Y-%m-%d %H:%M:%SZ', t)
+    o = File.objects.filter(date=t).filter(name__contains='-Z.nc')
+    if o:
+        o = o[0]
+    else:
+        print('Time stamp not found')
+    print(o.__repr__())
+    sweep = o.getData()
+    pp.pprint(sweep)
+
 #
 
 def main():
@@ -259,9 +275,11 @@ def main():
             dbtool.py -d /data/PX1000/2013/20130520
             dbtool.py -v
         '''))
-    parser.add_argument('sources', type=str, nargs='+',
+    parser.add_argument('sources', type=str, nargs='*',
         help='sources to process')
     parser.add_argument('-d', dest='day', action='store_true', help='builds Day table')
+    parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
+    parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep')    
     parser.add_argument('-x', dest='xz', action='store_true', help='inserts a folder with xz archives')
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
@@ -269,6 +287,17 @@ def main():
 
     global debug
     debug = args.verbose > 1
+
+    if args.last:
+        print('Retrieving the last entry ...')
+        o = File.objects.last()
+        print(o.__repr__())
+        return
+
+    if args.sweep:
+        e = time.time()
+        for timestr in args.sources:
+            getSweepSummary(timestr)
 
     if args.xz:
         print('Processing a folder with .tar.xz archives')
