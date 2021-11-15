@@ -87,8 +87,8 @@ def listfiles(folder):
         files = sorted(glob.glob(os.path.join(folder, '*.xz')))
     return files
 
-def xzfolder(folder):
-    print(f'xzfolder: {folder}')
+def xzfolderV1(folder):
+    print(f'xzfolderV1: {folder}')
     archives = listfiles(folder)
     if len(archives) == 0:
         print('Unable to continue.')
@@ -130,7 +130,7 @@ def process_arhives(id, run, lock, queue, out):
     return
 
 
-def xzfolder2(folder):
+def xzfolder(folder):
     print(f'xzfolder: {folder}')
 
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
@@ -215,6 +215,10 @@ def xzfolder2(folder):
     a = e / len(archives)
     print(f'Elapsed time = {e:.2f} sec ({a:.2f} s / file)')
 
+'''
+    day - could either be a day string YYYYMMDD or a folder with the last
+          part as day, e.g., /mnt/data/.../YYYYMMDD
+'''
 def daycount(day):
     if '/' in day:
         s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day)
@@ -302,7 +306,8 @@ def main():
     if args.xz:
         print('Processing a folder with .tar.xz archives')
         for folder in args.sources:
-            xzfolder2(folder)
+            xzfolder(folder)
+            daycount(folder)
 
     if args.day:
         print('Building Day table ...')
