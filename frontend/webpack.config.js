@@ -34,14 +34,8 @@ module.exports = {
     rules: [
       {
         test: /\.worker\.js$/,
-        use: [
-          {
-            loader: "babel-loader",
-            options: {
-              presets: ["@babel/preset-env"],
-            },
-          },
-        ],
+        exclude: /node_modules/,
+        use: "babel-loader",
       },
       {
         test: /\.(js|jsx)$/,

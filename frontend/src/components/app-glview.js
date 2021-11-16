@@ -6,14 +6,14 @@
 //
 
 import React, { Component } from "react";
-import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import { detectMob } from "./common";
 import { SectionHeader } from "./section-header";
 import { theme, colorDict } from "./theme";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 import { Archive } from "./archive";
-import { Product } from "./product";
+// import { Product } from "./product";
 
 class App extends Component {
   constructor(props) {
@@ -22,10 +22,10 @@ class App extends Component {
       colors: colorDict(),
     };
     this.isMobile = detectMob();
-    this.archive = new Archive();
-    this.archive.onupdate = (_dontcare) => {
-      this.forceUpdate();
-    };
+    // this.archive = new Archive();
+    // this.archive.onupdate = (_dontcare) => {
+    //   this.forceUpdate();
+    // };
     console.log(props);
   }
 
@@ -58,7 +58,7 @@ class App extends Component {
       <ThemeProvider theme={theme}>
         <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
-        <Product
+        <GLView
           sweep={this.archive.data.sweep}
           colors={this.state.colors}
           debug={true}
