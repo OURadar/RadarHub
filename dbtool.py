@@ -276,7 +276,11 @@ def main():
         Examples:
             dbtool.py
             dbtool.py -x /data/PX1000/2013/20130520
+            dbtool.py -x /data/PX1000/2013/201305*
             dbtool.py -d /data/PX1000/2013/20130520
+            dbtool.py -d /data/PX1000/2013/2013*
+            dbtool.py -d 20130520
+            dbtool.py -s 20130520-191000
             dbtool.py -v
         '''))
     parser.add_argument('sources', type=str, nargs='*',
