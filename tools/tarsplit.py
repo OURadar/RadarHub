@@ -254,27 +254,31 @@ def extractdays(args):
 
         count = 0
         for archive in archives:
-            if args.system:
-                cmd = f'tar -xf {archive} -C {destination}'
-                if args.verbose:
-                    print(f'{now()} : {cmd}')
-                if args.run:
-                    os.system(cmd)
-            else:
-                if args.verbose:
-                    print(f'{now()} : {archive}')
-                ramfile = f'/mnt/ramdisk/{basename}'
-                shutil.copy(archive, ramfile)
-                with tarfile.open(ramfile) as tar:
-                    members = tar.getmembers()
-                    for member in members:
-                        outfile = os.path.join(destination, os.path.basename(member.name))
-                        if args.verbose > 1:
-                            print(f'{now()} : {outfile}')
-                        with tar.extractfile(member) as fid:
-                            with open(outfile, 'wb') as out:
-                                out.write(fid.read())
-                os.remove(ramfile)
+            basename = os.path.basename(archive)
+            ramfile = f'/mnt/ramdisk/{basename}'
+            outfile = os.path.join(destination, basename.replace('tar.xz', 'tar'))
+            shutil.copy(archive, ramfile)
+            if args.verbose:
+                print(f'{now()} : {archive} -> {ramfile}')
+                print(f'{now()} : {outfile}')
+            if args.run:
+                with tarfile.open(ramfile) as source:
+                    with tarfile.open(outfile, 'w') as out:
+                        for file in source.getmembers():
+                            fid = source.extractfile(file)
+                            info = tarfile.TarInfo(os.path.basename(file.name))
+                            info.size = file.size
+                            info.mode = file.mode
+                            info.type = file.type
+                            info.mtime = file.mtime
+                            info.uname = file.uname
+                            info.gname = file.gname
+                            info.uid = file.uid
+                            info.gid = file.gid
+                            out.addfile(info, fid)
+                            if args.verbose > 1:
+                                print(f'{now()} : {file}')
+            os.remove(ramfile)
             count += 1
 
         d = time.time() - d
