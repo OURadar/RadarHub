@@ -18,6 +18,7 @@
 import os
 import glob
 import time
+import shutil
 import tarfile
 import textwrap
 import argparse
@@ -242,7 +243,7 @@ def extract(archive, args):
 
 def extractdays(args):
     for day in args.sources:
-        print(f'{day}')
+        print(f'{now()} : {day}')
         archives = glob.glob(f'{day}/_original/*.tar.xz')
         destination = f'{day}/_extracted'
 
@@ -251,7 +252,8 @@ def extractdays(args):
 
         d = time.time()
 
-        for archive in archives[:3]:
+        count = 0
+        for archive in archives:
             if args.system:
                 cmd = f'tar -xf {archive} -C {destination}'
                 if args.verbose:
@@ -261,7 +263,9 @@ def extractdays(args):
             else:
                 if args.verbose:
                     print(f'{now()} : {archive}')
-                with tarfile.open(archive) as tar:
+                ramfile = f'/mnt/ramdisk/{basename}'
+                shutil.copy(archive, ramfile)
+                with tarfile.open(ramfile) as tar:
                     members = tar.getmembers()
                     for member in members:
                         outfile = os.path.join(destination, os.path.basename(member.name))
@@ -270,10 +274,12 @@ def extractdays(args):
                         with tar.extractfile(member) as fid:
                             with open(outfile, 'wb') as out:
                                 out.write(fid.read())
+                os.remove(ramfile)
+            count += 1
 
         d = time.time() - d
 
-        print(f'{now()} : Extraction time: {d:.2f}s', flush=True)
+        print(f'{now()} : Extraction time: {d:.2f}s   count: {count}', flush=True)
 
 
 def split(archive, args):
