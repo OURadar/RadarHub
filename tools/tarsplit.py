@@ -207,8 +207,10 @@ def extract(archive, args):
     folder = os.path.expanduser('~/Downloads/_tarsplit_extracted')
     if os.path.exists(folder):
         print(f'{now()} : {folder} already exists')
-        os.system(f'rm -rf {folder}')
-    os.makedirs(folder)
+        if args.run:
+            os.system(f'rm -rf {folder}')
+    if args.run:
+        os.makedirs(folder)
 
     d = time.time()
 
@@ -216,7 +218,11 @@ def extract(archive, args):
     if args.run:
         if args.system:
             v ='v' if args.verbose else ''
-            os.system(f'tar -x{v}f {archive} -C {folder} --strip-components 1')
+            cmd = f'tar -x{v}f {archive} -C {folder} --strip-components 1'
+            if args.run:
+                os.system(cmd)
+            else:
+                print(cmd)
         else:
             with tarfile.open(archive) as tar:
                 members = tar.getmembers()
@@ -233,6 +239,42 @@ def extract(archive, args):
     print(f'{now()} : Extraction time: {d:.2f}s', flush=True)
 
     return folder
+
+def extractdays(args):
+    for day in args.sources:
+        print(f'{day}')
+        archives = glob.glob(f'{day}/_original/*.tar.xz')
+        destination = f'{day}/_extracted'
+
+        if not os.path.exists(destination):
+            os.makedirs(destination)
+
+        d = time.time()
+
+        for archive in archives[:3]:
+            if args.system:
+                cmd = f'tar -xf {archive} -C {destination}'
+                if args.verbose:
+                    print(f'{now()} : {cmd}')
+                if args.run:
+                    os.system(cmd)
+            else:
+                if args.verbose:
+                    print(f'{now()} : {archive}')
+                with tarfile.open(archive) as tar:
+                    members = tar.getmembers()
+                    for member in members:
+                        outfile = os.path.join(destination, os.path.basename(member.name))
+                        if args.verbose > 1:
+                            print(f'{now()} : {outfile}')
+                        with tar.extractfile(member) as fid:
+                            with open(outfile, 'wb') as out:
+                                out.write(fid.read())
+
+        d = time.time() - d
+
+        print(f'{now()} : Extraction time: {d:.2f}s', flush=True)
+
 
 def split(archive, args):
     folder = extract(archive, args)
@@ -294,6 +336,8 @@ def main():
         help='increases verbosity')
     parser.add_argument('-x', dest='extractonly', action='store_true', default=False,
         help='extract only')
+    parser.add_argument('--xdays', action='store_true', default=False,
+        help='extract days')
     args = parser.parse_args()
 
     if args.count:
@@ -309,7 +353,10 @@ def main():
     if args.existing:
         compress(args.sources[0], args)
     elif args.extractonly:
-        extract(args.sources[0], args)
+        for source in args.sources:
+            extract(source, args)
+    elif args.xdays:
+        extractdays(args)
     elif args.transcode:
         for day in args.sources:
             src_folder = os.path.join(day, '_original_tgz')
