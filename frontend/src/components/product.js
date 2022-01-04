@@ -174,7 +174,7 @@ class Product extends GLView {
     }
   }
 
-  loadDashboard(symbol = null) {
+  loadDashboard(symbol = null, time = "2013/05/20 19:00 UTC") {
     if (symbol == null) {
       if (this.assets.lastStyle == null) {
         symbol = "Z";
@@ -187,7 +187,7 @@ class Product extends GLView {
         {
           palette: this.assets.palette,
           style: this.makeStyle(symbol),
-          time: "2013/05/20 19:00 UTC",
+          time: time,
         },
         this.props.colors
       )
@@ -319,6 +319,8 @@ class Product extends GLView {
       (this.props.sweep === null && this.assets.data !== null) ||
       (this.props.sweep !== null && this.assets.time != this.props.sweep.time)
     ) {
+      console.log('new sweep')
+      console.log(this.props.sweep)
       this.updateData();
     }
     this.regl.clear({

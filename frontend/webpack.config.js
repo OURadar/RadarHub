@@ -54,4 +54,21 @@ module.exports = {
   optimization: {
     minimize: true,
   },
+  watchOptions: {
+    ignored: '**/node_modules',
+  },
 };
+
+//
+// If webpack display messages like this
+//
+//     Watchpack Error (watcher): Error: ENOSPC: System limit for number of file watchers reached
+//
+// Add the following line to /etc/sysctl.conf
+//
+//     fs.inotify.max_user_watches=524288
+//
+// Then, run
+//
+//     sudo sysctl -p
+//
