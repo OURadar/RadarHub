@@ -286,9 +286,9 @@ def main():
     parser.add_argument('sources', type=str, nargs='*',
         help='sources to process')
     parser.add_argument('-d', dest='day', action='store_true', help='builds Day table')
+    parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder with xz archives')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep')    
-    parser.add_argument('-x', dest='xz', action='store_true', help='inserts a folder with xz archives')
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
     args = parser.parse_args()
@@ -307,8 +307,15 @@ def main():
         for timestr in args.sources:
             getSweepSummary(timestr)
 
-    if args.xz:
-        print('Processing a folder with .tar.xz archives')
+    if args.insert:
+        print('Inserting a folder with .tar.xz archives')
+        if '*' in args.sources:
+            print('Expanding asterisk ...')
+            args.sources = glob.glob(args.sources)
+            if len(args.sources) == 0:
+                print('No match')
+                return
+            print(args.sources)
         for folder in args.sources:
             xzfolder(folder)
             daycount(folder)
