@@ -54,6 +54,8 @@ function createSweep(name = "dummy") {
     na: 4,
     nr: 3,
     time: 9,
+    timeString: '1970/01/01 00:00:00 UTC',
+    symbol: 'U',
     isRHI: false,
     scanElevation: 4.0,
     scanAzimuth: 0.0,
@@ -147,6 +149,18 @@ function load(name) {
             ...sweepParser.parse(new Uint8Array(buffer)),
           });
           // console.log(sweep);
+          let components = sweep.name.split('-')
+          let ymd = components[1]
+          let hms = components[2]
+          sweep.timeString = ymd.substring(0, 4) + '/'
+                      + ymd.substring(4, 6) + '/'
+                      + ymd.substring(6, 8) + ' '
+                      + hms.substring(0, 2) + ':'
+                      + hms.substring(2, 4) + ':'
+                      + hms.substring(4, 6) + ' UTC'
+          sweep.symbol = components[4].split('.')[0]
+          console.log(`timeString = ${sweep.timeString}   symbol = ${sweep.symbol}`)
+      
           self.postMessage({ type: "load", payload: sweep });
         });
       else {
