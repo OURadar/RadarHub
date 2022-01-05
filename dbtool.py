@@ -308,7 +308,7 @@ def main():
             getSweepSummary(timestr)
 
     if args.insert:
-        print('Inserting a folder with .tar.xz archives')
+        print('Inserting folders with .tar.xz archives')
         if '*' in args.sources:
             print('Expanding asterisk ...')
             args.sources = glob.glob(args.sources)
