@@ -125,7 +125,8 @@ function Browser(props) {
   }, [day, hour, count]);
 
   React.useEffect(() => {
-    let initialDay = new Date("2013/05/20");
+    // let initialDay = new Date("2013/05/20");
+    let initialDay = new Date("2019/09/23");
     getMonthTable(initialDay);
     setDayHour(initialDay, 19);
   }, []);
@@ -161,9 +162,11 @@ function Browser(props) {
             label="Date"
             value={day}
             onMonthChange={(newMonth) => {
+              console.log('onMonthChange()')
               getMonthTable(newMonth);
             }}
             onChange={(newDay) => {
+              console.log('onChange()')
               setDayHour(newDay, hour);
             }}
             renderInput={(params) => <TextField {...params} />}

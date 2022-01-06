@@ -47,16 +47,12 @@ class GLView extends Component {
         bottom: 0,
         left: 0,
       },
-      origin: {
-        longitude: -97.422413,
-        latitude: 35.25527,
-      },
     };
     this.state = {
       tic: 0,
       message: "glView",
     };
-    const origin = this.constants.origin;
+    const origin = this.props.origin;
     const satCoordinate = vec3.fromValues(
       common.deg2rad(origin.longitude),
       common.deg2rad(origin.latitude),
@@ -130,7 +126,11 @@ class GLView extends Component {
     colors: theme.colorDict(),
     linewidth: 1.4,
     textureScale: 1.0,
-  };
+    origin: {
+      longitude: -97.422413,
+      latitude: 35.25527,
+    },
+};
 
   componentDidMount() {
     this.mount.appendChild(this.canvas);

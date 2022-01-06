@@ -274,6 +274,8 @@ class Product extends GLView {
       return;
     }
     // Could update this.geometry.origin
+    console.log(`lon/lat = ${this.props.sweep.longitude}, ${this.props.sweep.latitude}`)
+
     this.assets.data = this.regl.texture({
       shape: [this.props.sweep.nr, this.props.sweep.na],
       data: this.props.sweep.values,
