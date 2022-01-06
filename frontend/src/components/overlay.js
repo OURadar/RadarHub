@@ -30,6 +30,8 @@ class Overlay {
 
     this.polyEngine = new Polygon();
     this.textEngine = new Text();
+    this.layers = [];
+    this.cities = null;
 
     this.handleMessage = this.handleMessage.bind(this);
 
@@ -108,28 +110,30 @@ class Overlay {
       },
     ];
 
-    this.layers = [];
     for (let k = 0; k < overlays.length; k++) {
       const overlay = overlays[k];
-      const buffer = await this.polyEngine.load(overlay.file, this.geometry);
-      this.layers[k] = {
-        name: buffer.name,
-        points: this.regl.buffer({
-          usage: "static",
-          type: "float",
-          data: buffer.data,
-        }),
-        count: buffer.count,
-        color: overlay.color,
-        limits: overlay.limits,
-        weight: overlay.weight,
-        linewidth: 1.0,
-        opacity: k < 2 ? 1.0 : 0.0,
-        targetOpacity: k < 2 ? 1.0 : 0.0,
-        quad: [overlay.fixed, 0, this.colors.tint, 0],
-      };
+      if (this.layers[k] === undefined || overlay.file.includes('@')) {
+        console.log(`<Overlay> loading ${overlay.file} ...`)
+        const buffer = await this.polyEngine.load(overlay.file, this.geometry);
+        this.layers[k] = {
+          name: buffer.name,
+          points: this.regl.buffer({
+            usage: "static",
+            type: "float",
+            data: buffer.data,
+          }),
+          count: buffer.count,
+          color: overlay.color,
+          limits: overlay.limits,
+          weight: overlay.weight,
+          linewidth: 1.0,
+          opacity: k < 2 ? 1.0 : 0.0,
+          targetOpacity: k < 2 ? 1.0 : 0.0,
+          quad: [overlay.fixed, 0, this.colors.tint, 0],
+        };  
+      }
       this.viewParameters[0] = 0;
-      if (k == 2) {
+      if (k == 2 && this.cities == null) {
         // load the labels after the rings and grid are loaded
         // this.loadDashboard();
         this.loadLabels();
@@ -431,7 +435,7 @@ class Overlay {
  *      |      +--------+------+
  *      |      |        |      |
  *      +------+--------+      |
- *   1[0, 1]   |               |
+ *   1[0, 1]   |               |
  *             +---------------+
  *          2[0, 1]
  *
