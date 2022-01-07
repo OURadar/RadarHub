@@ -126,14 +126,16 @@ function Browser(props) {
 
   React.useEffect(() => {
     // let initialDay = new Date("2013/05/20");
-    let initialDay = new Date("2019/09/23");
+    // let initialDay = new Date("2018/02/14");
+    // let initialDay = new Date("2018/08/10");
+    let initialDay = new Date("2022/01/02");
     let initialHour = 21;
     getMonthTable(initialDay);
     setDayHour(initialDay, initialHour);
   }, []);
 
   const setDayHour = (newDay, newHour) => {
-    console.log(`newDay = ${newDay}`);
+    //console.log(`newDay = ${newDay}`);
     let tmp = newDay.toISOString();
     let y = parseInt(tmp.slice(0, 4));
     if (y < 2012) {
@@ -142,7 +144,6 @@ function Browser(props) {
     }
     let ymd = tmp.slice(0, 10).replace(/-/g, "");
     let hh = newHour.toString().padStart(2, "0");
-    console.log(`ymd = ${ymd}`);
     if (day != newDay) {
       props.archive.count(ymd);
     }
@@ -169,9 +170,11 @@ function Browser(props) {
           <DatePicker
             label="Date"
             value={day}
-            onMonthChange={(newMonth) => {
-              console.log("onMonthChange()");
-              getMonthTable(newMonth);
+            onYearChange={(newDay) => {
+              getMonthTable(newDay);
+            }}
+            onMonthChange={(newDay) => {
+              getMonthTable(newDay);
             }}
             onChange={(newDay) => {
               if (newDay === null || newDay == "Invalid Date") {
