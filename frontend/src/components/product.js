@@ -9,7 +9,7 @@ import * as common from "./common";
 import { GLView } from "./glview";
 import { Overlay } from "./overlay";
 import { Colorbar } from "./colorbar";
-import { quat } from "gl-matrix";
+import { mat4, vec3, quat } from "gl-matrix";
 //
 // Use as <Product data={input} />
 //
@@ -247,7 +247,7 @@ class Product extends GLView {
 
   componentDidMount() {
     super.componentDidMount();
-    this.overlay.load(this.props.colors);
+    this.overlay.load();
     if (this.props.profileGL) {
       const createStatsWidget = require("regl-stats-widget");
       const drawCalls = [
@@ -274,7 +274,39 @@ class Product extends GLView {
       return;
     }
     // Could update this.geometry.origin
-    console.log(`lon/lat = ${this.props.sweep.longitude}, ${this.props.sweep.latitude}`)
+    const viewOrigin = this.geometry.origin;
+    const origin = {
+      longitude: this.props.sweep.longitude,
+      latitude: this.props.sweep.latitude,
+    };
+    if (
+      Math.abs(viewOrigin.longitude - origin.longitude) > 0.001 ||
+      Math.abs(viewOrigin.latitude - origin.latitude) > 0.001
+    ) {
+      const satCoordinate = vec3.fromValues(
+        common.deg2rad(origin.longitude),
+        common.deg2rad(origin.latitude),
+        2.0 * common.earthRadius
+      );
+      const satPosition = common.rad.coord2point(satCoordinate);
+      console.log(`New lon/lat = ${origin.longitude}, ${origin.latitude}`);
+      let model = mat4.create();
+      model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
+      model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
+      model = mat4.translate([], model, [0, 0, common.earthRadius]);
+      this.overlay.geometry.origin = origin;
+      this.overlay.geometry.satCoordinate = satCoordinate;
+      this.overlay.geometry.satPosition = satPosition;
+      this.overlay.geometry.satQuaternion = quat.fromEuler(
+        [],
+        -origin.latitude,
+        origin.longitude,
+        0
+      );
+      this.overlay.geometry.model = model;
+      this.overlay.geometry.needsUpdate = true;
+      this.overlay.load();
+    }
 
     this.assets.data = this.regl.texture({
       shape: [this.props.sweep.nr, this.props.sweep.na],

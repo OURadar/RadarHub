@@ -36,5 +36,7 @@
   },
   "files.exclude": {
     "**/db.sqlite3*": true
-  }
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

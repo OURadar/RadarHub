@@ -127,8 +127,9 @@ function Browser(props) {
   React.useEffect(() => {
     // let initialDay = new Date("2013/05/20");
     let initialDay = new Date("2019/09/23");
+    let initialHour = 21;
     getMonthTable(initialDay);
-    setDayHour(initialDay, 19);
+    setDayHour(initialDay, initialHour);
   }, []);
 
   const setDayHour = (newDay, newHour) => {

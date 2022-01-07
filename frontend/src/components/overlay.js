@@ -52,18 +52,25 @@ class Overlay {
     }
   }
 
-  async load(colors) {
-    this.colors = colors;
-
+  async load() {
     const ratio = this.ratio > 1 ? 0.8 * this.ratio : this.ratio;
 
     // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
+    //
+    // file: filename / built-in name
+    // color: an array of [r, g, b, a]
+    // limits: linewidth limits
+    // weight: linewidth scaling weight
+    // origin: depends on origin / filter by origin
+    // fixed: fixed to color (else use surface normal in fragment shader)
+    //
     const overlays = [
       {
         file: "@grid",
         color: this.colors.grid,
         limits: [1.0, 1.5 * ratio],
         weight: 0.4 * ratio,
+        origin: false,
         fixed: true,
       },
       {
@@ -71,6 +78,7 @@ class Overlay {
         color: this.colors.ring,
         limits: [0.8, 2.0 * ratio],
         weight: 0.4 * ratio,
+        origin: true,
         fixed: true,
       },
       {
@@ -78,6 +86,7 @@ class Overlay {
         color: this.colors.street,
         limits: [0.5, 2.5 * ratio],
         weight: 0.4 * ratio,
+        origin: true,
         fixed: false,
       },
       {
@@ -85,6 +94,7 @@ class Overlay {
         color: this.colors.county,
         limits: [0.5, 2.0 * ratio],
         weight: 0.4 * ratio,
+        origin: true,
         fixed: false,
       },
       {
@@ -92,6 +102,7 @@ class Overlay {
         color: this.colors.county,
         limits: [0.5, 2.0 * ratio],
         weight: 0.4 * ratio,
+        origin: false,
         fixed: false,
       },
       {
@@ -99,6 +110,7 @@ class Overlay {
         color: this.colors.state,
         limits: [1.3, 5.0 * ratio],
         weight: 0.9 * ratio,
+        origin: false,
         fixed: false,
       },
       {
@@ -106,14 +118,14 @@ class Overlay {
         color: this.colors.state,
         limits: [1.3, 5.0 * ratio],
         weight: 1.7 * ratio,
+        origin: false,
         fixed: false,
       },
     ];
 
     for (let k = 0; k < overlays.length; k++) {
       const overlay = overlays[k];
-      if (this.layers[k] === undefined || overlay.file.includes('@')) {
-        console.log(`<Overlay> loading ${overlay.file} ...`)
+      if (this.layers[k] === undefined || overlay.origin) {
         const buffer = await this.polyEngine.load(overlay.file, this.geometry);
         this.layers[k] = {
           name: buffer.name,
@@ -130,10 +142,10 @@ class Overlay {
           opacity: k < 2 ? 1.0 : 0.0,
           targetOpacity: k < 2 ? 1.0 : 0.0,
           quad: [overlay.fixed, 0, this.colors.tint, 0],
-        };  
+        };
       }
       this.viewParameters[0] = 0;
-      if (k == 2 && this.cities == null) {
+      if (k == 2) {
         // load the labels after the rings and grid are loaded
         // this.loadDashboard();
         this.loadLabels();
