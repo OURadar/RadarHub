@@ -133,9 +133,16 @@ function Browser(props) {
   }, []);
 
   const setDayHour = (newDay, newHour) => {
+    console.log(`newDay = ${newDay}`);
     let tmp = newDay.toISOString();
-    let ymd = tmp.slice(0, 4) + tmp.slice(5, 7) + tmp.slice(8, 10);
+    let y = parseInt(tmp.slice(0, 4));
+    if (y < 2012) {
+      console.log("No data prior to 2013");
+      return;
+    }
+    let ymd = tmp.slice(0, 10).replace(/-/g, "");
     let hh = newHour.toString().padStart(2, "0");
+    console.log(`ymd = ${ymd}`);
     if (day != newDay) {
       props.archive.count(ymd);
     }
@@ -163,11 +170,13 @@ function Browser(props) {
             label="Date"
             value={day}
             onMonthChange={(newMonth) => {
-              console.log('onMonthChange()')
+              console.log("onMonthChange()");
               getMonthTable(newMonth);
             }}
             onChange={(newDay) => {
-              console.log('onChange()')
+              if (newDay === null || newDay == "Invalid Date") {
+                return;
+              }
               setDayHour(newDay, hour);
             }}
             renderInput={(params) => <TextField {...params} />}
