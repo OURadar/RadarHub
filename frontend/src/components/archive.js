@@ -25,7 +25,7 @@ class Archive {
     this.response = "";
     this.onupdate = (_data) => {};
 
-    this.worker = new Worker("/static/frontend/archive.js");
+    this.worker = new Worker("/static/frontend/archive.js?v=1");
     this.worker.onmessage = ({ data: { type, payload } }) => {
       if (type == "message") {
         this.showMessage(payload, 2500);
