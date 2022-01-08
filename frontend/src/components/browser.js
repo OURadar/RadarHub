@@ -125,14 +125,6 @@ function Browser(props) {
   }, [day, hour, count]);
 
   React.useEffect(() => {
-    // let initialDay = new Date("2013/05/20");
-    // let initialDay = new Date("2018/02/14");
-    // let initialDay = new Date("2018/08/10");
-    // let initialDay = new Date("2022/01/02");
-    // let initialHour = 21;
-    // getMonthTable(initialDay);
-    // setDayHour(initialDay, initialHour);
-
     fetch("/data/date/")
       .then((response) => {
         if (response.status == 200)
@@ -145,13 +137,14 @@ function Browser(props) {
         else {
           console.log(response);
           let initialDay = new Date("2022/01/02");
-          let initialHour = 21;
           getMonthTable(initialDay);
-          setDayHour(initialDay, initialHour);
+          setDayHour(initialDay, 21);
         }
       })
       .catch((error) => {
         console.log(`Unexpected error ${error}`);
+        getMonthTable(initialDay);
+        setDayHour(initialDay, 19);
       });
   }, []);
 
