@@ -130,22 +130,29 @@ def process_arhives(id, run, lock, queue, out):
     return
 
 
-def xzfolder(folder):
+def xzfolder(folder, hour=0):
     print(f'xzfolder: {folder}')
 
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
     prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
-    date_range = [f'{prefix} 00:00Z', f'{prefix} 23:59Z']
+    date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59Z']
     print(f'date_range = {date_range}')
 
     task_queue = multiprocessing.Queue()
     db_queue = multiprocessing.Queue()
     lock = multiprocessing.Lock()
     run = multiprocessing.Value('i', 1)
-    archives = listfiles(folder)
-    if len(archives) == 0:
+    raw_archives = listfiles(folder)
+    if len(raw_archives) == 0:
         print('Unable to continue.')
         return
+
+    archives = []
+    for archive in raw_archives:
+        basename = os.path.basename(archive)
+        file_hour = int(basename.split('-')[2][0:2])
+        if file_hour >= hour:
+            archives.append(archive)
 
     count = multiprocessing.cpu_count()
     e = time.time()
@@ -197,17 +204,21 @@ def xzfolder(folder):
             datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
             x = entries.filter(name=name)
             if x:
-                mode = 'U'
                 x = x[0]
-                x.path = archive
-                x.size = size
-                x.offset = offset
-                x.offset_data = offset_data
+                if x.path != archive or x.size != size or x.offset != offset or x.offset_data != offset_data:
+                    mode = 'U'
+                    x.path = archive
+                    x.size = size
+                    x.offset = offset
+                    x.offset_data = offset_data
+                else:
+                    mode = 'I'
             else:
                 x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
             if debug:
                 print(f' - {mode} : {name} {offset} {offset_data} {size} {archive}')
-            x.save()
+            if mode == 'N' or mode == 'U':
+                x.save()
 
         print(f'{mode} {key}')
 
@@ -285,6 +296,7 @@ def main():
         '''))
     parser.add_argument('sources', type=str, nargs='*',
         help='sources to process')
+    parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
     parser.add_argument('-d', dest='day', action='store_true', help='builds Day table')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder with xz archives')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
@@ -317,7 +329,7 @@ def main():
                 return
             print(args.sources)
         for folder in args.sources:
-            xzfolder(folder)
+            xzfolder(folder, hour=args.hour)
             daycount(folder)
 
     if args.day:
