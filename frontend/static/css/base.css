@@ -2,13 +2,6 @@
 General style sheet
 Copyright Boonleng Cheong
 */
-body,
-html {
-  /* System Fonts as used by GitHub */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  overflow-x: hidden;
-}
 
 /* Some common colors */
 :root {
@@ -92,9 +85,17 @@ html {
   src: url("../blob/helveticaneue/HelveticaNeueMed.ttf") format("truetype");
 }
 
+body,
+html {
+  /* System Fonts as used by GitHub */
+  background-color: var(--system-background);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  overflow-x: hidden;
+}
+
 body {
   color: var(--system-foreground);
-  background-color: var(--system-background);
   margin: 0;
 }
 
