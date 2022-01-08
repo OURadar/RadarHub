@@ -52,6 +52,18 @@ class GLView extends Component {
       tic: 0,
       message: "glView",
     };
+    var savedOrigin = localStorage.getItem("glview-origin");
+    if (savedOrigin) {
+      savedOrigin = JSON.parse(savedOrigin);
+    }
+    if (savedOrigin) {
+      if (savedOrigin.longitude < -180.0 || savedOrigin.longitude > +180.0) {
+        savedOrigin = false;
+      }
+      if (savedOrigin.latitude > +90.0 || savedOrigin.latitude < -90.0) {
+        savedOrigin = false;
+      }
+    }
     // Key elements of geometry:
     //  - origin = the radar (lon, lat) in degrees
     //  - satCoordinate = (lon-rad, lat-rad, alt-km) of satellite
@@ -62,7 +74,7 @@ class GLView extends Component {
     //  - model = model matrix for product, rings, radar-relative drawings
     //  - view = view matrix derived from satPosition
     //  - projection = projection matrix to GL view
-    const origin = this.props.origin;
+    const origin = savedOrigin ? savedOrigin : this.props.origin;
     const satCoordinate = vec3.fromValues(
       common.deg2rad(origin.longitude),
       common.deg2rad(origin.latitude),

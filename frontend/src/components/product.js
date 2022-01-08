@@ -187,7 +187,7 @@ class Product extends GLView {
         {
           palette: this.assets.palette,
           style: this.makeStyle(symbol),
-          time: sweep ? sweep.timeString : "1970/01/01 00:00:00 UTC",
+          time: sweep ? sweep.timeString : "-",
         },
         this.props.colors
       )
@@ -290,6 +290,7 @@ class Product extends GLView {
       );
       const satPosition = common.rad.coord2point(satCoordinate);
       console.log(`New lon/lat = ${origin.longitude}, ${origin.latitude}`);
+      localStorage.setItem("glview-origin", JSON.stringify(origin));
       let model = mat4.create();
       model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
       model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
