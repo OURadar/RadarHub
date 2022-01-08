@@ -12,6 +12,7 @@ urlpatterns = [
     path('data/count/<str:day>/', archives.count, name='data-json'),
     path('data/list/<str:hour>/', archives.list, name='data-json'),
     path('data/load/<str:name>/', archives.load, name='data-binary'),
+    path('data/date/', archives.date, name='data-json'),
     path('archive/', views.archive, name='archive'),
     path('<str:radar>/', views.radar, name='radar'),
     path('', views.archive, name='archive'),

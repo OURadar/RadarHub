@@ -151,12 +151,12 @@ function load(name) {
           // console.log(sweep);
           let components = sweep.name.split("-");
           sweep.timeString =
-            `${components[1].substring(0, 4)}/` +
-            `${components[1].substring(4, 6)}/` +
-            `${components[1].substring(6, 8)} ` +
-            `${components[2].substring(0, 2)}:` +
-            `${components[2].substring(2, 4)}:` +
-            `${components[2].substring(4, 6)} UTC`;
+            `${components[1].slice(0, 4)}/` +
+            `${components[1].slice(4, 6)}/` +
+            `${components[1].slice(6, 8)} ` +
+            `${components[2].slice(0, 2)}:` +
+            `${components[2].slice(2, 4)}:` +
+            `${components[2].slice(4, 6)} UTC`;
           sweep.symbol = components[4].split(".")[0];
           //console.log(`timeString = ${sweep.timeString}   symbol = ${sweep.symbol}`)
 

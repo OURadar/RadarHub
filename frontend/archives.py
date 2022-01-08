@@ -142,3 +142,19 @@ def load(request, name):
             + bytes(data)
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
+
+def date(request):
+    print('fetching latest date ...')
+    file = File.objects.last()
+    components = file.name.split('-')
+    ymd = components[1]
+    hms = components[2]
+    hour = int(hms[0:2])
+    data = {
+        'dateString': f'{ymd}-{hour:02d}00',
+        'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+        'hour': hour,
+    }
+    payload = json.dumps(data)
+    response = HttpResponse(payload, content_type='application/json')
+    return response
