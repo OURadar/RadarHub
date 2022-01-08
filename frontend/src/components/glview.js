@@ -52,6 +52,16 @@ class GLView extends Component {
       tic: 0,
       message: "glView",
     };
+    // Key elements of geometry:
+    //  - origin = the radar (lon, lat) in degrees
+    //  - satCoordinate = (lon-rad, lat-rad, alt-km) of satellite
+    //  - satPosition = (x, y, z) of satellite
+    //  - satQuaternion = quaternion represent of satellite orientation
+    //  - satI = sub-quaternion y-axis only, plane I
+    //  - satQ = sub-quaternion y-axis only, plane Q
+    //  - model = model matrix for product, rings, radar-relative drawings
+    //  - view = view matrix derived from satPosition
+    //  - projection = projection matrix to GL view
     const origin = this.props.origin;
     const satCoordinate = vec3.fromValues(
       common.deg2rad(origin.longitude),
@@ -59,13 +69,6 @@ class GLView extends Component {
       2.0 * common.earthRadius
     );
     const satPosition = common.rad.coord2point(satCoordinate);
-    // satCoordinate = (lon-rad, lat-rad, alt-km) of satellite
-    // satPosition = (x, y, z) of satellite
-    // satQuaternion = quaternion represent of satellite orientation
-    // satI = sub-quaternion y-axis only, plane I
-    // satQ = sub-quaternion y-axis only, plane Q
-    // model = model matrix for product, rings, radar-relative drawings
-    // view = view matrix derived from satPosition
     let model = mat4.create();
     model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
     model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
@@ -130,7 +133,7 @@ class GLView extends Component {
       longitude: -97.422413,
       latitude: 35.25527,
     },
-};
+  };
 
   componentDidMount() {
     this.mount.appendChild(this.canvas);
