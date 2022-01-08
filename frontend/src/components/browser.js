@@ -143,6 +143,10 @@ function Browser(props) {
       })
       .catch((error) => {
         console.log(`Unexpected error ${error}`);
+        let initialDay = new Date("2013/05/20");
+        // let initialDay = new Date("2018/02/14");
+        // let initialDay = new Date("2018/08/10");
+        // let initialDay = new Date("2022/01/02");
         getMonthTable(initialDay);
         setDayHour(initialDay, 19);
       });
