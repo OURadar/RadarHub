@@ -45,7 +45,7 @@ const createFileButtons = (list, index, load) => {
       <Button
         key={k}
         variant="file"
-        onClick={() => load(file, k)}
+        onClick={() => load(k)}
         style={{ height: 36, overflow: "hidden", textOverflow: "ellipsis" }}
         selected={selected}
       >
@@ -59,7 +59,7 @@ const createFileButtons = (list, index, load) => {
 function Browser(props) {
   const count = props.archive?.data.hourlyCount || new Array(24).fill(0);
   const files = props.archive?.data.fileList || [];
-  const index = props.archive?.data.index || -1;
+  const index = props.archive?.data.index;
 
   const [day, setDay] = React.useState();
   const [hour, setHour] = React.useState();
@@ -170,9 +170,10 @@ function Browser(props) {
     }
     setDay(newDay);
     setHour(newHour);
+    console.log(
+      `files.length = ${files.length}   index = ${index}   hour = ${hour}`
+    );
   };
-
-  // console.log(`files.length = ${files.length}   index = ${index}`);
 
   const getMonthTable = (newMonth) => {
     let tmp = newMonth.toISOString();

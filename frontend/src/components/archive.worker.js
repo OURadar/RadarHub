@@ -112,19 +112,29 @@ function list(day) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          let groups = {};
-          buffer.list.forEach((file) => {
+          let groupedList = {};
+          buffer.list.forEach((file, index) => {
             let elements = file.split("-");
             let scanType = elements[3];
-            if (!(scanType in groups)) {
-              groups[scanType] = [];
+            if (!(scanType in groupedList)) {
+              groupedList[scanType] = [];
             }
-            groups[scanType].push(file);
+            groupedList[scanType].push({ file: file, index: index });
           });
-          console.log(groups);
+          console.log(groupedList);
+          let firstIndex = buffer.list.length > 0 ? 0 : -1;
+          let scanType = "E4.0";
+          if (scanType in groupedList) {
+            firstIndex = groupedList[scanType][0].index;
+          }
+          console.log(`autoIndex = ${firstIndex}`);
           self.postMessage({
             type: "list",
-            payload: { list: buffer.list, groups: groups },
+            payload: {
+              list: buffer.list,
+              groups: groupedList,
+              autoIndex: firstIndex,
+            },
           });
         });
       else

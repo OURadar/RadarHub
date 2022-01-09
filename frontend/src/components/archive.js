@@ -23,7 +23,9 @@ class Archive {
     this.timer = null;
     this.message = "";
     this.response = "";
-    this.onupdate = (_data) => {};
+    this.onupdate = (_tic) => {};
+
+    this.autoLoad = true;
 
     this.worker = new Worker("/static/frontend/archive.js?v=1");
     this.worker.onmessage = ({ data: { type, payload } }) => {
@@ -38,6 +40,9 @@ class Archive {
         this.data.fileListUpdating = false;
         this.data.index = -1;
         this.message = "";
+        if (this.autoLoad) {
+          this.load(payload.autoIndex);
+        }
       } else if (type == "count") {
         this.data.hourlyCount = payload;
         this.data.hourlyCountUpdating = false;
@@ -92,7 +97,12 @@ class Archive {
     this.onupdate(this.tic++);
   }
 
-  load(name, index = -1) {
+  load(index = -1) {
+    if (index < 0 || index > this.data.fileList.length - 1) {
+      console.log(`archive.load() index = ${index} is out of range.`);
+      return;
+    }
+    let name = this.data.fileList[index];
     this.data.index = index;
     this.message = `Loading ${name} ...`;
     this.worker.postMessage({ task: "load", name: name });
