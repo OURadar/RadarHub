@@ -28,7 +28,7 @@ class Archive {
 
     this.autoLoad = true;
 
-    this.worker = new Worker("/static/frontend/archive.js?v=1");
+    this.worker = new Worker("/static/frontend/archive.js?v=1.1");
     this.worker.onmessage = ({ data: { type, payload } }) => {
       if (type == "message") {
         this.showMessage(payload, 2500);

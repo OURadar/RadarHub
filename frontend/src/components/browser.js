@@ -64,50 +64,44 @@ function Browser(props) {
   const [day, setDay] = React.useState();
   const [hour, setHour] = React.useState();
   const [hourButtons, setHourButtons] = React.useState([]);
-  // const [fileBrowser, setFileBrowser] = React.useState([]);
+  const [fileBrowser, setFileBrowser] = React.useState([]);
 
-  const listRef = React.createRef();
-
-  const scrollToIndex = () => {
-    console.log(listRef);
-    console.log(`Scroll list to index ${index}`);
-    listRef.current.scrollToItem(index);
+  const setElements = (elements) => {
+    if (
+      elements == null ||
+      elements.children == null ||
+      elements.children.length == 0 ||
+      index < 0
+    )
+      return;
+    elements.children[index].scrollIntoView();
   };
 
   React.useEffect(() => {
-    // const newFileBrowser = props.useMemo ? (
-    //   <Box
-    //     sx={{
-    //       width: "100%",
-    //       height: 600,
-    //       backgroundColor: "var(--system-background)",
-    //     }}
-    //   >
-    //     <FixedSizeList
-    //       height={600}
-    //       itemSize={32}
-    //       itemCount={files.length}
-    //       itemData={createFileList(files, index, props.archive.load)}
-    //       overscanCount={5}
-    //       ref={listRef}
-    //     >
-    //       {Item}
-    //     </FixedSizeList>
-    //   </Box>
-    // ) : (
-    //   <div className="filesContainer" ref={listRef}>
-    //     {createFileButtons(files, index, props.archive.load)}
-    //   </div>
-    // );
-    // setFileBrowser(newFileBrowser);
-    console.log(
-      `loadCountSinceList = ${props.archive.data.loadCountSinceList}   autoLoad = ${props.archive.autoLoad}`
+    const newFileBrowser = props.useMemo ? (
+      <Box
+        sx={{
+          width: "100%",
+          height: 600,
+          backgroundColor: "var(--system-background)",
+        }}
+      >
+        <FixedSizeList
+          height={600}
+          itemSize={32}
+          itemCount={files.length}
+          itemData={createFileList(files, index, props.archive.load)}
+          overscanCount={5}
+        >
+          {Item}
+        </FixedSizeList>
+      </Box>
+    ) : (
+      <div className="filesContainer" ref={setElements}>
+        {createFileButtons(files, index, props.archive.load)}
+      </div>
     );
-    if (props.archive.autoLoad && props.archive.data.loadCountSinceList == 1) {
-      setTimeout(() => {
-        scrollToIndex();
-      }, 1000);
-    }
+    setFileBrowser(newFileBrowser);
   }, [files, index]);
 
   React.useEffect(() => {
@@ -240,31 +234,7 @@ function Browser(props) {
       </div>
       <div className="hoursContainer">{hourButtons}</div>
       <SectionHeader name="files" />
-      {props.useMemo ? (
-        <Box
-          sx={{
-            width: "100%",
-            height: 600,
-            backgroundColor: "var(--system-background)",
-          }}
-        >
-          <FixedSizeList
-            height={600}
-            itemSize={32}
-            itemCount={files.length}
-            itemData={createFileList(files, index, props.archive.load)}
-            overscanCount={5}
-            ref={listRef}
-          >
-            {Item}
-          </FixedSizeList>
-        </Box>
-      ) : (
-        <div className="filesContainer" ref={listRef}>
-          {createFileButtons(files, index, props.archive.load)}
-        </div>
-      )}
-      ;
+      {fileBrowser}
     </div>
   );
 }

@@ -127,7 +127,6 @@ function list(day) {
           if (scanType in groupedList) {
             latestIndex = groupedList[scanType].slice(-1)[0].index;
           }
-          console.log(`autoIndex = ${latestIndex}`);
           self.postMessage({
             type: "list",
             payload: {
