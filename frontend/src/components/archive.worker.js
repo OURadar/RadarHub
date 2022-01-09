@@ -122,18 +122,18 @@ function list(day) {
             groupedList[scanType].push({ file: file, index: index });
           });
           console.log(groupedList);
-          let firstIndex = buffer.list.length > 0 ? 0 : -1;
+          let latestIndex = buffer.list.length ? buffer.list.length - 1 : -1;
           let scanType = "E4.0";
           if (scanType in groupedList) {
-            firstIndex = groupedList[scanType][0].index;
+            latestIndex = groupedList[scanType].slice(-1)[0].index;
           }
-          console.log(`autoIndex = ${firstIndex}`);
+          console.log(`autoIndex = ${latestIndex}`);
           self.postMessage({
             type: "list",
             payload: {
               list: buffer.list,
               groups: groupedList,
-              autoIndex: firstIndex,
+              autoIndex: latestIndex,
             },
           });
         });

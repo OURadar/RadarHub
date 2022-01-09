@@ -16,6 +16,7 @@ class Archive {
       fileList: [],
       fileListGrouped: {},
       fileListUpdating: true,
+      loadCountSinceList: 0,
       index: -1,
       sweep: null,
     };
@@ -93,6 +94,7 @@ class Archive {
   // Expect time = 20130520-1900
   list(time) {
     this.data.fileListUpdating = true;
+    this.data.loadCountSinceList = 0;
     this.worker.postMessage({ task: "list", time: time });
     this.onupdate(this.tic++);
   }
@@ -104,6 +106,7 @@ class Archive {
     }
     let name = this.data.fileList[index];
     this.data.index = index;
+    this.data.loadCountSinceList += 1;
     this.message = `Loading ${name} ...`;
     this.worker.postMessage({ task: "load", name: name });
     this.onupdate(this.tic++);
