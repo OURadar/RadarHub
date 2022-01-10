@@ -126,13 +126,7 @@ class Overlay {
     for (let k = 0; k < overlays.length; k++) {
       const overlay = overlays[k];
       if (this.layers[k] === undefined || overlay.origin) {
-        if (this.layers[k]) {
-          this.layers[k].opacity = 0;
-        }
         const buffer = await this.polyEngine.load(overlay.file, this.geometry);
-        if (this.layers[k]) {
-          this.layers[k].points.destroy();
-        }
         this.layers[k] = {
           name: buffer.name,
           points: this.regl.buffer({
@@ -211,7 +205,6 @@ class Overlay {
         this.colors
       )
       .then((buffer) => {
-        let oldCities = this.cities;
         this.cities = {
           bound: [buffer.image.width, buffer.image.height],
           texture: this.regl.texture({
@@ -253,14 +246,6 @@ class Overlay {
               extents: buffer.extents,
             },
           });
-        }
-        if (oldCities.texture) {
-          console.log("removing old cities assets");
-          cities.texture.destroy();
-          cities.points.destroy();
-          cities.origins.destroy();
-          cities.spreads.destroy();
-          cities.opacity.fill(0);
         }
       });
   }
@@ -451,6 +436,25 @@ class Overlay {
     });
     this.cities.targetOpacity = visibility;
     this.busy = false;
+  }
+
+  purge() {
+    let layers = this.layers;
+    let cities = this.cities;
+    this.layers = [];
+    setTimeout(() => {
+      layers.forEach((layer) => {
+        if (layer.points) {
+          layer.points.destroy();
+        }
+      });
+      if (cities.texture) {
+        cities.texture.destroy();
+        cities.points.destroy();
+        cities.origins.destroy();
+        cities.spreads.destroy();
+      }
+    }, 100);
   }
 }
 

@@ -295,17 +295,18 @@ class Product extends GLView {
       model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
       model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
       model = mat4.translate([], model, [0, 0, common.earthRadius]);
-      this.overlay.geometry.origin = origin;
-      this.overlay.geometry.satCoordinate = satCoordinate;
-      this.overlay.geometry.satPosition = satPosition;
-      this.overlay.geometry.satQuaternion = quat.fromEuler(
+      this.geometry.origin = origin;
+      this.geometry.satCoordinate = satCoordinate;
+      this.geometry.satPosition = satPosition;
+      this.geometry.satQuaternion = quat.fromEuler(
         [],
         -origin.latitude,
         origin.longitude,
         0
       );
-      this.overlay.geometry.model = model;
-      this.overlay.geometry.needsUpdate = true;
+      this.geometry.model = model;
+      this.geometry.needsUpdate = true;
+      this.overlay.purge();
       this.overlay.load();
     }
 
