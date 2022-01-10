@@ -34,6 +34,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [x] 0.4 Migrate data module to an external websocket client (8/9/2021)
 - [x] 0.5 3D view for radar products with map overlay (9/13/2021)
 - [x] 0.6 SQLite / product catalog / products to 3D view (11/12/2021)
+  - [x] 0.6.1 Removed most hard-wired parameters (1/7/2022)
+  - [x] 0.6.2 Auto-select latest day, hour and file (1/14/2022)
 - [ ] 0.7 Page template, UI materials, mobile version
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Landing page, radar selection, etc.
@@ -45,6 +47,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [ ] - Show online users
 - [ ] - High-DPI support
 - [ ] - Cache sweeps using LRU algorithm
+- [ ] - Download files
 
 # Important Topics
 
