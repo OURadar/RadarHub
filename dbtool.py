@@ -15,6 +15,7 @@ import re
 import sys
 import glob
 import time
+import tqdm
 import django
 import pprint
 import shutil
@@ -104,7 +105,7 @@ def xzfolderV1(folder):
             # print(f'{m} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
             x.save()
 
-def process_arhives(id, run, lock, queue, out):
+def process_arhives(id, run, lock, queue, out, verbose=0):
     while run.value == 1:
         task = None
         
@@ -116,7 +117,8 @@ def process_arhives(id, run, lock, queue, out):
         if task:
             archive = task['archive']
             ramfile = task['ramfile']
-            print(f'{id:02d}: {archive} {ramfile}')
+            if verbose:
+                print(f'{id:02d}: {archive} {ramfile}')
             xx = []
             with tarfile.open(archive) as tar:
                 for info in tar.getmembers():
@@ -126,7 +128,9 @@ def process_arhives(id, run, lock, queue, out):
         else:
             time.sleep(0.1)
 
-    print(f'{id} done')
+    if verbose:
+        print(f'{id} done')
+
     return
 
 
@@ -165,7 +169,7 @@ def xzfolder(folder, hour=0):
         processes.append(p)
         p.start()
 
-    for archive in archives:
+    for archive in tqdm.tqdm(archives):
         # Copy to ramdisk first, the queue the work after the file is copied
         basename = os.path.basename(archive)
         ramfile = f'/mnt/ramdisk/{basename}'
@@ -194,14 +198,13 @@ def xzfolder(folder, hour=0):
     entries = File.objects.filter(date__range=date_range)
 
     # Consolidating results
-    for key in sorted(keys):
+    pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
+    for key in tqdm.tqdm(sorted(keys)):
         xx = output[key]['xx']
         for yy in xx:
             mode = 'N'
             # Each entry has [info.name, info.offset, info.offset_data, info.size, archive]
             (name, offset, offset_data, size, archive) = yy
-            s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', archive).group(0)
-            datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
             x = entries.filter(name=name)
             if x:
                 x = x[0]
@@ -214,13 +217,13 @@ def xzfolder(folder, hour=0):
                 else:
                     mode = 'I'
             else:
+                s = pattern.search(archive).group(0)
+                datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
                 x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
-            if debug:
-                print(f' - {mode} : {name} {offset} {offset_data} {size} {archive}')
+            # if debug:
+            #     print(f' - {mode} : {name} {offset} {offset_data} {size} {archive}')
             if mode == 'N' or mode == 'U':
                 x.save()
-
-        print(f'{mode} {key}')
 
     e = time.time() - e
     a = e / len(archives)

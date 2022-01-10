@@ -72,8 +72,9 @@ function Browser(props) {
       elements.children == null ||
       elements.children.length == 0 ||
       index < 0
-    )
+    ) {
       return;
+    }
     elements.children[index].scrollIntoView();
   };
 

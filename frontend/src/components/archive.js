@@ -39,6 +39,7 @@ class Archive {
         this.data.fileList = payload.list;
         this.data.fileListGrouped = payload.groups;
         this.data.fileListUpdating = false;
+        this.data.loadCountSinceList = 0;
         this.data.index = -1;
         this.message = "";
         if (this.autoLoad) {
@@ -94,7 +95,6 @@ class Archive {
   // Expect time = 20130520-1900
   list(time) {
     this.data.fileListUpdating = true;
-    this.data.loadCountSinceList = 0;
     this.worker.postMessage({ task: "list", time: time });
     this.onupdate(this.tic++);
   }
