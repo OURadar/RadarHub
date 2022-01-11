@@ -32,6 +32,7 @@ class Overlay {
     this.textEngine = new Text();
     this.layers = [];
     this.cities = null;
+    this.loaded = false;
 
     this.handleMessage = this.handleMessage.bind(this);
 
@@ -40,6 +41,8 @@ class Overlay {
     this.worker = new Worker(url);
     this.worker.onmessage = this.handleMessage;
     this.workerReady = false;
+
+    this.onload = () => {};
 
     this.tic = 0;
   }
@@ -151,6 +154,8 @@ class Overlay {
         this.loadLabels();
       }
     }
+    this.loaded = true;
+    this.onload();
   }
 
   loadLabels() {
@@ -439,9 +444,11 @@ class Overlay {
   }
 
   purge() {
-    let layers = this.layers;
-    let cities = this.cities;
+    const layers = this.layers;
+    const cities = this.cities;
     this.layers = [];
+    this.cities = null;
+    this.loaded = false;
     setTimeout(() => {
       layers.forEach((layer) => {
         if (layer.points) {
@@ -454,7 +461,7 @@ class Overlay {
         cities.origins.destroy();
         cities.spreads.destroy();
       }
-    }, 100);
+    }, 250);
   }
 }
 

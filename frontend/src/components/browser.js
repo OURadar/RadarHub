@@ -75,7 +75,9 @@ function Browser(props) {
     ) {
       return;
     }
-    elements.children[index].scrollIntoView();
+    if (props.archive.data.index == props.archive.data.autoIndex) {
+      elements.children[index].scrollIntoView();
+    }
   };
 
   React.useEffect(() => {

@@ -30,13 +30,28 @@ class App extends Component {
     this.archive.onupdate = (_dontcare) => {
       this.forceUpdate();
     };
-    console.log(props);
+    this.archive.onlist = (index) => {
+      if (!props.autoLoad || index == -1) {
+        return;
+      }
+      if (this.overlayLoaded) {
+        this.archive.load(index);
+      } else {
+        this.pendingLoadIndex = index;
+      }
+    };
+    //console.log(props);
+    this.overlayLoaded = false;
+    this.pendingLoadIndex = -1;
+
+    this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
   }
 
   static defaultProps = {
     radar: "archive",
     debug: false,
     profileGL: false,
+    autoLoad: true,
   };
 
   componentDidMount() {
@@ -101,6 +116,7 @@ class App extends Component {
             debug={this.props.debug}
             showStats={true}
             profileGL={this.props.profileGL}
+            onOverlayLoaded={this.handleOverlayLoaded}
           />
         </ThemeProvider>
         // </StyledEngineProvider>
@@ -118,6 +134,7 @@ class App extends Component {
                 debug={this.props.debug}
                 showStats={true}
                 profileGL={this.props.profileGL}
+                onOverlayLoaded={this.handleOverlayLoaded}
               />
             </div>
           </div>
@@ -127,6 +144,15 @@ class App extends Component {
         </div>
       </ThemeProvider>
     );
+  }
+
+  handleOverlayLoaded() {
+    console.log("App6.handleOverlayLoaded()");
+    this.overlayLoaded = true;
+    if (this.pendingLoadIndex > -1) {
+      this.archive.load(this.pendingLoadIndex);
+      this.pendingLoadIndex = -1;
+    }
   }
 }
 

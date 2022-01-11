@@ -75,11 +75,14 @@ class Product extends GLView {
         console.log(`this.textures.index = ${this.assets.index}   h = ${h}`);
       }
     });
+
+    this.overlay.onload = props.onOverlayLoaded;
   }
 
   static defaultProps = {
     ...super.defaultProps,
     sweep: null,
+    onOverlayLoaded: () => {},
   };
 
   makeStyle(symbol = "Z") {

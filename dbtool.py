@@ -139,7 +139,7 @@ def xzfolder(folder, hour=0):
 
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
     prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
-    date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59Z']
+    date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59:59.99Z']
     print(f'date_range = {date_range}')
 
     task_queue = multiprocessing.Queue()
@@ -266,7 +266,7 @@ def daycount(day):
 
     print(f'{mode} {d.date} :: {d.duration:,d} :: {d.hourly_count}')
 
-def getSweepSummary(timestr):
+def show_sweep_summary(timestr):
     print(f'timestr = {timestr}')
     t = time.strptime(timestr, '%Y%m%d-%H%M%S')
     t = time.strftime('%Y-%m-%d %H:%M:%SZ', t)
@@ -278,6 +278,24 @@ def getSweepSummary(timestr):
     print(o.__repr__())
     sweep = o.getData()
     pp.pprint(sweep)
+
+def remove_duplicates(folder):
+    print(f'remove_duplicates: {folder}')
+    s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
+    e = time.localtime(time.mktime(time.strptime(s[:8], '%Y%m%d')) + 86400)
+    day0 = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
+    day1 = time.strftime('%Y-%m-%d', e)
+    date_range = [f'{day0} 00:00Z', f'{day1} 00:00Z']
+    print(f'date_range = {date_range}')
+
+    entries = File.objects.filter(date__range=date_range)
+
+    for entry in tqdm.tqdm(entries):
+        x = entries.filter(name=entry.name)
+        if len(x) > 1:
+            print(f'{entry.name} has {len(x)} entries')
+            x = x[len(x) - 1]
+            x.delete()
 
 #
 
@@ -303,6 +321,7 @@ def main():
     parser.add_argument('-d', dest='day', action='store_true', help='builds Day table')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder with xz archives')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
+    parser.add_argument('--remove-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep')    
     parser.add_argument('-v', dest='verbose', default=0, action='count',
         help='increases verbosity')
@@ -310,6 +329,14 @@ def main():
 
     global debug
     debug = args.verbose > 1
+
+    if '*' in args.sources:
+        print('Expanding asterisk ...')
+        args.sources = glob.glob(args.sources)
+        if len(args.sources) == 0:
+            print('No match')
+            return
+        print(args.sources)
 
     if args.last:
         print('Retrieving the last entry ...')
@@ -320,17 +347,10 @@ def main():
     if args.sweep:
         e = time.time()
         for timestr in args.sources:
-            getSweepSummary(timestr)
+            show_sweep_summary(timestr)
 
     if args.insert:
         print('Inserting folders with .tar.xz archives')
-        if '*' in args.sources:
-            print('Expanding asterisk ...')
-            args.sources = glob.glob(args.sources)
-            if len(args.sources) == 0:
-                print('No match')
-                return
-            print(args.sources)
         for folder in args.sources:
             xzfolder(folder, hour=args.hour)
             daycount(folder)
@@ -339,6 +359,11 @@ def main():
         print('Building Day table ...')
         for day in args.sources:
             daycount(day)
+
+    if args.remove_duplicates:
+        print('Checking for duplicates ...')
+        for folder in args.sources:
+            remove_duplicates(folder)
 
 if __name__ == '__main__':
     main()

@@ -17,6 +17,7 @@ class Archive {
       fileListGrouped: {},
       fileListUpdating: true,
       loadCountSinceList: 0,
+      autoIndex: -1,
       index: -1,
       sweep: null,
     };
@@ -24,9 +25,8 @@ class Archive {
     this.timer = null;
     this.message = "";
     this.response = "";
-    this.onupdate = (_tic) => {};
-
-    this.autoLoad = true;
+    this.onupdate = () => {};
+    this.onlist = () => {};
 
     this.worker = new Worker("/static/frontend/archive.js?v=1.1");
     this.worker.onmessage = ({ data: { type, payload } }) => {
@@ -38,13 +38,12 @@ class Archive {
       } else if (type == "list") {
         this.data.fileList = payload.list;
         this.data.fileListGrouped = payload.groups;
+        this.data.autoIndex = payload.autoIndex;
         this.data.fileListUpdating = false;
         this.data.loadCountSinceList = 0;
         this.data.index = -1;
         this.message = "";
-        if (this.autoLoad) {
-          this.load(payload.autoIndex);
-        }
+        this.onlist(payload.autoIndex);
       } else if (type == "count") {
         this.data.hourlyCount = payload;
         this.data.hourlyCountUpdating = false;
