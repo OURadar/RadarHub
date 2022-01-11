@@ -62,20 +62,6 @@ class Product extends GLView {
       this.loadDashboard();
     });
 
-    window.addEventListener("keyup", (e) => {
-      if (e.key == "s") {
-        this.toggleSpin();
-      } else if (e.key == "c") {
-        const h = this.assets.colormap.height;
-        let i = Math.round(this.assets.index * h - 0.5);
-        i = i >= h - 1 ? 0 : i + 1;
-        this.assets.index = (i + 0.5) / h;
-        const styles = ["Z", "V", "W", "D", "P", "R"];
-        this.loadDashboard(styles[i]);
-        console.log(`this.textures.index = ${this.assets.index}   h = ${h}`);
-      }
-    });
-
     this.overlay.onload = props.onOverlayLoaded;
   }
 
