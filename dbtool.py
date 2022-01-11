@@ -279,7 +279,7 @@ def show_sweep_summary(timestr):
     sweep = o.getData()
     pp.pprint(sweep)
 
-def remove_duplicates(folder):
+def remove_duplicates(folder, verbose=0):
     print(f'remove_duplicates: {folder}')
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
     e = time.localtime(time.mktime(time.strptime(s[:8], '%Y%m%d')) + 86400)
@@ -294,8 +294,10 @@ def remove_duplicates(folder):
         x = entries.filter(name=entry.name)
         if len(x) > 1:
             print(f'{entry.name} has {len(x)} entries')
-            x = x[len(x) - 1]
-            x.delete()
+            for o in x:
+                if verbose:
+                    print(o.__repr__())
+                o.delete()
 
 #
 
@@ -307,10 +309,8 @@ def main():
 
         Examples:
             dbtool.py
-            dbtool.py -x /data/PX1000/2013/20130520
-            dbtool.py -x /data/PX1000/2013/201305*
-            dbtool.py -d /data/PX1000/2013/20130520
-            dbtool.py -d /data/PX1000/2013/2013*
+            dbtool.py -i /data/PX1000/2013/20130520
+            dbtool.py -i /data/PX1000/2013/201305*
             dbtool.py -d 20130520
             dbtool.py -s 20130520-191000
             dbtool.py -v
