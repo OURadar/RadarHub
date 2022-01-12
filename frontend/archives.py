@@ -82,28 +82,31 @@ def count(request, day):
 
 '''
     hour - a string in the forms of
-           - YYYYMMDD-HHMM
-           - YYYYMMDD-HH
-           - YYYYMMDD
+        - YYYYMMDD-HHMM-S
+        - YYYYMMDD-HHMM
+        - YYYYMMDD-HH-S
+        - YYYYMMDD-HH
+        - YYYYMMDD-S
+        - YYYYMMDD
 '''
 def list(request, hour):
     if hour == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
 
-    if len(hour) == 13:
-        s = time.strptime(hour, '%Y%m%d-%H%M')
-        e = time.localtime(time.mktime(s) + 3600)
-        ss = time.strftime('%Y-%m-%d %H:%MZ', s)
-        ee = time.strftime('%Y-%m-%d %H:%MZ', e)
-        dateRange = [ss, ee]
-    elif len(hour) == 11:
-        prefix = time.strftime('%Y-%m-%d %H', time.strptime(hour, '%Y%m%d-%H'))
-        dateRange = [f'{prefix}:00Z', f'{prefix}:59Z']
-    elif len(hour) == 8:
-        prefix = time.strftime('%Y-%m-%d', time.strptime(hour, '%Y%m%d'))
-        dateRange = [f'{prefix} 00:00Z', f'{prefix} 00:59Z']
+    c = hour.split('-');
+    if len(c) == 1:
+        c[1] = '0000'
+    elif len(c[1]) == 2:
+        c[1] = f'{c[1]}00'
+    symbol = c[2] if len(c) == 3 else 'Z'
+    t = '-'.join(c[:2])
+    s = time.strptime(t, '%Y%m%d-%H%M')
+    e = time.localtime(time.mktime(s) + 3599)
+    ss = time.strftime('%Y-%m-%d %H:%M:%SZ', s)
+    ee = time.strftime('%Y-%m-%d %H:%M:%SZ', e)
+    dateRange = [ss, ee]
 
-    matches = File.objects.filter(name__contains='-Z.nc', date__range=dateRange)[:500]
+    matches = File.objects.filter(name__contains=f'-{symbol}.nc', date__range=dateRange)[:500]
     data = {
         'list': [o.name for o in matches]
     }
