@@ -81,16 +81,16 @@ def proc_archive(archive, ramfile=None):
             mm.append(m)
     return xx, mm
 
-def listfiles(folder):
+def list_files(folder):
     files = sorted(glob.glob(os.path.join(folder, '*.xz')))
     if len(files) == 0:
         folder = os.path.join(folder, '_original')
         files = sorted(glob.glob(os.path.join(folder, '*.xz')))
     return files
 
-def xzfolderV1(folder):
-    print(f'xzfolderV1: {folder}')
-    archives = listfiles(folder)
+def xzfolder_v1(folder):
+    print(f'xzfolder_v1: {folder}')
+    archives = list_files(folder)
     if len(archives) == 0:
         print('Unable to continue.')
         return
@@ -146,7 +146,7 @@ def xzfolder(folder, hour=0):
     db_queue = multiprocessing.Queue()
     lock = multiprocessing.Lock()
     run = multiprocessing.Value('i', 1)
-    raw_archives = listfiles(folder)
+    raw_archives = list_files(folder)
     if len(raw_archives) == 0:
         print('Unable to continue.')
         return
@@ -323,8 +323,7 @@ def main():
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
     parser.add_argument('--remove-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep')    
-    parser.add_argument('-v', dest='verbose', default=0, action='count',
-        help='increases verbosity')
+    parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
     global debug
