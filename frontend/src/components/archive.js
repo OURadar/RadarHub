@@ -110,6 +110,20 @@ class Archive {
     this.worker.postMessage({ task: "load", name: name });
     this.onupdate(this.tic++);
   }
+
+  cycle(symbol = "Z") {
+    if (this.data.index == -1 || this.data.fileList.length == 0) {
+      console.log("No file list just yet");
+      return;
+    }
+    let name = this.data.fileList[this.data.index];
+    let components = name.split("-");
+    components[4] = `${symbol}.nc`;
+    name = components.join("-");
+    console.log(name);
+    this.worker.postMessage({ task: "load", name: name });
+    this.onupdate(this.tic++);
+  }
 }
 
 export { Archive };

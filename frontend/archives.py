@@ -135,7 +135,20 @@ def load(request, name):
     head = struct.pack('hhhhddddffff', *sweep['values'].shape, 0, 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
         sweep['sweepElevation'], 0.0, 0.0, gatewidth)
-    data = np.array(sweep['values'] * 2 + 64, dtype=np.uint8)
+    symbol = sweep['symbol']
+    print(f'symbol = {symbol}')
+    if symbol == 'Z':
+        data = np.array(sweep['values'] * 2 + 64, dtype=np.uint8)
+    elif symbol == 'V':
+        data = np.array(sweep['values'] * 2 + 128, dtype=np.uint8)
+    elif symbol == 'W':
+        data = np.array(sweep['values'] * 20, dtype=np.uint8)
+    elif symbol == 'D':
+        data = np.array(sweep['values'] * 10 + 100, dtype=np.uint8)
+    elif symbol == 'P':
+        data = np.array(sweep['values'] * 128 / 180 + 128, dtype=np.uint8)
+    else:
+        data = np.array(sweep['values'], dtype=np.uint8)
     payload = bytes(head) \
             + bytes(sweep['elevations']) \
             + bytes(sweep['azimuths']) \

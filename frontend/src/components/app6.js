@@ -47,18 +47,12 @@ class App extends Component {
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
 
     window.addEventListener("keyup", (e) => {
-      // if (e.key == "s") {
-      //   this.toggleSpin();
-      // } else if (e.key == "c") {
-      //   const h = this.assets.colormap.height;
-      //   let i = Math.round(this.assets.index * h - 0.5);
-      //   i = i >= h - 1 ? 0 : i + 1;
-      //   this.assets.index = (i + 0.5) / h;
-      //   const styles = ["Z", "V", "W", "D", "P", "R"];
-      //   this.loadDashboard(styles[i]);
-      //   console.log(`this.textures.index = ${this.assets.index}   h = ${h}`);
-      // }
       console.log(`keyup: ${e.key}`);
+      let symbol = e.key.toUpperCase();
+      const styles = ["Z", "V", "W", "D", "P", "R"];
+      if (styles.indexOf(symbol) != -1) {
+        this.archive.cycle(symbol);
+      }
     });
   }
 

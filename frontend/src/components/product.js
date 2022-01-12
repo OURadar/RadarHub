@@ -34,9 +34,10 @@ class Product extends GLView {
     this.assets = {
       time: 0,
       index: 0,
+      symbol: null,
       palette: null,
       colormap: null,
-      lastStyle: null,
+      style: null,
       data: null,
       points: null,
       origins: null,
@@ -163,19 +164,21 @@ class Product extends GLView {
     }
   }
 
-  loadDashboard(sweep = null, symbol = null) {
-    if (symbol == null) {
-      if (this.assets.lastStyle == null) {
-        symbol = "Z";
-      } else {
-        symbol = this.assets.lastStyle;
-      }
+  loadDashboard(sweep = null) {
+    let c = sweep.name.split("-");
+    let symbol = c[4].split(".")[0];
+    console.log(`symbol = ${symbol}`);
+    if (symbol == this.assets.symbol) {
+      return;
     }
+    this.assets.style = this.makeStyle(symbol);
+    this.assets.index =
+      (this.assets.style.index + 0.5) / this.assets.colormap.height;
     this.colorbar
       .load(
         {
           palette: this.assets.palette,
-          style: this.makeStyle(symbol),
+          style: this.assets.style,
           time: sweep ? sweep.timeString : "-",
         },
         this.props.colors
@@ -194,7 +197,7 @@ class Product extends GLView {
           }),
         };
       });
-    this.assets.lastStyle = symbol;
+    this.assets.symbol = symbol;
   }
 
   toggleSpin() {
@@ -342,10 +345,13 @@ class Product extends GLView {
     }
     if (
       (this.props.sweep === null && this.assets.data !== null) ||
-      (this.props.sweep !== null && this.assets.time != this.props.sweep.time)
+      (this.props.sweep !== null &&
+        (this.assets.time != this.props.sweep.time ||
+          this.assets.symbol != this.props.sweep.symbol))
     ) {
       this.updateData();
       this.loadDashboard(this.props.sweep);
+      console.log("loadDashboard()");
     }
     this.regl.clear({
       color: this.props.colors.glview,
