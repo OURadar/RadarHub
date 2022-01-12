@@ -165,11 +165,13 @@ class Product extends GLView {
   }
 
   loadDashboard(sweep = null) {
-    let c = sweep.name.split("-");
-    let symbol = c[4].split(".")[0];
-    console.log(`symbol = ${symbol}`);
-    if (symbol == this.assets.symbol) {
-      return;
+    let symbol = "Z";
+    if (sweep) {
+      let c = sweep.name.split("-");
+      symbol = c[4].split(".")[0];
+      if (symbol == this.assets.symbol) {
+        return;
+      }
     }
     this.assets.style = this.makeStyle(symbol);
     this.assets.index =
@@ -351,7 +353,6 @@ class Product extends GLView {
     ) {
       this.updateData();
       this.loadDashboard(this.props.sweep);
-      console.log("loadDashboard()");
     }
     this.regl.clear({
       color: this.props.colors.glview,

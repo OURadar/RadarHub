@@ -20,6 +20,7 @@ class Archive {
       autoIndex: -1,
       index: -1,
       sweep: null,
+      symbol: "Z",
     };
     this.tic = 0;
     this.timer = null;
@@ -98,16 +99,31 @@ class Archive {
     this.onupdate(this.tic++);
   }
 
-  load(index = -1) {
+  load(arg) {
+    if (Number.isInteger(arg)) {
+      this.loadByIndex(arg);
+    } else {
+      this.loadByName(arg);
+    }
+  }
+
+  loadByIndex(index = -1) {
     if (index < 0 || index > this.data.fileList.length - 1) {
       console.log(`archive.load() index = ${index} is out of range.`);
       return;
     }
     let name = this.data.fileList[index];
+    let components = name.split("-");
+    components[4] = `${this.data.symbol}.nc`;
+    name = components.join("-");
     this.data.index = index;
-    this.data.loadCountSinceList += 1;
+    this.loadByName(name);
+  }
+
+  loadByName(name = "PX-20130520-195944-E2.6-Z.nc") {
     this.message = `Loading ${name} ...`;
     this.worker.postMessage({ task: "load", name: name });
+    this.data.loadCountSinceList += 1;
     this.onupdate(this.tic++);
   }
 
@@ -116,13 +132,12 @@ class Archive {
       console.log("No file list just yet");
       return;
     }
-    let name = this.data.fileList[this.data.index];
-    let components = name.split("-");
-    components[4] = `${symbol}.nc`;
-    name = components.join("-");
-    console.log(name);
-    this.worker.postMessage({ task: "load", name: name });
-    this.onupdate(this.tic++);
+    if (symbol == this.data.symbol) {
+      console.log("No change in symbol");
+      return;
+    }
+    this.data.symbol = symbol;
+    this.loadByIndex(this.data.index);
   }
 }
 

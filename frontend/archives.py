@@ -136,7 +136,6 @@ def load(request, name):
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
         sweep['sweepElevation'], 0.0, 0.0, gatewidth)
     symbol = sweep['symbol']
-    print(f'symbol = {symbol}')
     if symbol == 'Z':
         data = np.array(sweep['values'] * 2 + 64, dtype=np.uint8)
     elif symbol == 'V':
