@@ -10,11 +10,11 @@
 import { Parser } from "binary-parser";
 import { deg2rad, clamp } from "./common";
 
-self.onmessage = ({ data: { task, name, day, time } }) => {
+self.onmessage = ({ data: { task, name, day, time, symbol } }) => {
   if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(time);
+    list(time, symbol);
   } else if (task == "count") {
     count(day);
   } else if (task == "month") {
@@ -105,9 +105,12 @@ function count(day) {
     });
 }
 
-function list(day) {
-  console.log(`%carchive.worker.list() ${day}`, "color: lightseagreen");
-  const url = `/data/list/${day}/`;
+function list(day, symbol) {
+  console.log(
+    `%carchive.worker.list() ${day} ${symbol}`,
+    "color: lightseagreen"
+  );
+  const url = `/data/list/${day}-${symbol}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)

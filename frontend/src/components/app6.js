@@ -51,7 +51,7 @@ class App extends Component {
       let symbol = e.key.toUpperCase();
       const styles = ["Z", "V", "W", "D", "P", "R"];
       if (styles.indexOf(symbol) != -1) {
-        this.archive.cycle(symbol);
+        this.archive.switch(symbol);
       }
     });
   }

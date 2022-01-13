@@ -13,10 +13,12 @@ class Archive {
       hourlyCountUpdating: false,
       dailyAvailability: {},
       dailyAvailabilityUpdating: false,
+      listDateTime: "20130520-1900",
       fileList: [],
       fileListGrouped: {},
       fileListUpdating: true,
       loadCountSinceList: 0,
+      resetLoadCount: true,
       autoIndex: -1,
       index: -1,
       sweep: null,
@@ -29,7 +31,7 @@ class Archive {
     this.onupdate = () => {};
     this.onlist = () => {};
 
-    this.worker = new Worker("/static/frontend/archive.js?v=1.1");
+    this.worker = new Worker("/static/frontend/archive.js?v=annie");
     this.worker.onmessage = ({ data: { type, payload } }) => {
       if (type == "message") {
         this.showMessage(payload, 2500);
@@ -41,10 +43,15 @@ class Archive {
         this.data.fileListGrouped = payload.groups;
         this.data.autoIndex = payload.autoIndex;
         this.data.fileListUpdating = false;
-        this.data.loadCountSinceList = 0;
-        this.data.index = -1;
+        if (this.data.resetLoadCount) {
+          this.data.loadCountSinceList = 0;
+          this.data.index = -1;
+          this.onlist(payload.autoIndex);
+        } else {
+          this.data.resetLoadCount = true;
+          this.onlist(this.data.index);
+        }
         this.message = "";
-        this.onlist(payload.autoIndex);
       } else if (type == "count") {
         this.data.hourlyCount = payload;
         this.data.hourlyCountUpdating = false;
@@ -94,8 +101,10 @@ class Archive {
 
   // Expect time = 20130520-1900
   list(time) {
+    let symbol = this.data.symbol;
+    this.data.listDateTime = time;
     this.data.fileListUpdating = true;
-    this.worker.postMessage({ task: "list", time: time });
+    this.worker.postMessage({ task: "list", time: time, symbol: symbol });
     this.onupdate(this.tic++);
   }
 
@@ -127,7 +136,7 @@ class Archive {
     this.onupdate(this.tic++);
   }
 
-  cycle(symbol = "Z") {
+  switch(symbol = "Z") {
     if (this.data.index == -1 || this.data.fileList.length == 0) {
       console.log("No file list just yet");
       return;
@@ -137,7 +146,8 @@ class Archive {
       return;
     }
     this.data.symbol = symbol;
-    this.loadByIndex(this.data.index);
+    this.data.resetLoadCount = false;
+    this.list(this.data.listDateTime);
   }
 }
 

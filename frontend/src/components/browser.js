@@ -75,7 +75,11 @@ function Browser(props) {
     ) {
       return;
     }
-    if (props.archive.data.index == props.archive.data.autoIndex) {
+    console.log(
+      `setElements ${props.archive.data.loadCountSinceList} ${index}`
+    );
+    if (props.archive.data.loadCountSinceList == 1) {
+      console.log(`Scroll ${index} into view`);
       elements.children[index].scrollIntoView();
     }
   };
