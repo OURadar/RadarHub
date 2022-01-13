@@ -47,7 +47,7 @@ class App extends Component {
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
 
     window.addEventListener("keyup", (e) => {
-      console.log(`keyup: ${e.key}`);
+      //console.log(`keyup: ${e.key}`);
       let symbol = e.key.toUpperCase();
       const styles = ["Z", "V", "W", "D", "P", "R"];
       if (styles.indexOf(symbol) != -1) {

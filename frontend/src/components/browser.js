@@ -75,11 +75,11 @@ function Browser(props) {
     ) {
       return;
     }
-    console.log(
-      `setElements ${props.archive.data.loadCountSinceList} ${index}`
-    );
+    // console.log(
+    //   `setElements ${props.archive.data.loadCountSinceList} ${index}`
+    // );
     if (props.archive.data.loadCountSinceList == 1) {
-      console.log(`Scroll ${index} into view`);
+      console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
     }
   };
@@ -156,7 +156,7 @@ function Browser(props) {
           console.log(response);
           let initialDay = new Date("2022/01/02");
           getMonthTable(initialDay);
-          setDayHour(initialDay, 21);
+          setDayHour(initialDay, 2);
         }
       })
       .catch((error) => {

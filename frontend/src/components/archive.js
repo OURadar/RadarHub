@@ -51,7 +51,6 @@ class Archive {
           this.data.resetLoadCount = true;
           this.onlist(this.data.index);
         }
-        this.message = "";
       } else if (type == "count") {
         this.data.hourlyCount = payload;
         this.data.hourlyCountUpdating = false;
@@ -121,12 +120,8 @@ class Archive {
       console.log(`archive.load() index = ${index} is out of range.`);
       return;
     }
-    let name = this.data.fileList[index];
-    let components = name.split("-");
-    components[4] = `${this.data.symbol}.nc`;
-    name = components.join("-");
     this.data.index = index;
-    this.loadByName(name);
+    this.loadByName(this.data.fileList[index]);
   }
 
   loadByName(name = "PX-20130520-195944-E2.6-Z.nc") {

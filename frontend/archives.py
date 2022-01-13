@@ -140,20 +140,22 @@ def load(request, name):
         sweep['sweepElevation'], 0.0, 0.0, gatewidth)
     symbol = sweep['symbol']
     if symbol == 'Z':
-        values = np.clip(sweep['values'] * 2 + 64, 0, 255)
+        values = sweep['values'] * 2.0 + 64.0
     elif symbol == 'V':
-        values = np.clip(sweep['values'] * 2 + 128, 0, 255)
+        values = sweep['values'] * 2.0 + 128.0
     elif symbol == 'W':
-        values = np.clip(sweep['values'] * 20, 0, 255)
+        values = sweep['values'] * 20.0
     elif symbol == 'D':
-        values = np.clip(sweep['values'] * 10 + 100, 0, 255)
+        values = sweep['values'] * 10.0 + 100.0
     elif symbol == 'P':
-        values = np.clip(sweep['values'] * 128 / np.pi + 128, 0, 255)
+        values = sweep['values'] * 128.0 / np.pi + 128.0
     elif symbol == 'R':
-        values = np.clip(rho2ind(sweep['values']), 0, 255)
+        values = rho2ind(sweep['values'])
     else:
-        values = np.clip(sweep['values'], 0, 255)
-    data = np.array(values, dtype=np.uint8)
+        values = sweep['values']
+    # Map to closest integer, 0 is transparent, 1+ is finite.
+    # np.nan will be converted to 0 during np.float -> np.uint8
+    data = np.array(np.clip(np.round(values), 1.0, 255.0), dtype=np.uint8)
     payload = bytes(head) \
             + bytes(sweep['elevations']) \
             + bytes(sweep['azimuths']) \
@@ -168,10 +170,15 @@ def date(request):
     ymd = components[1]
     hms = components[2]
     hour = int(hms[0:2])
+    # data = {
+    #     'dateString': f'{ymd}-{hour:02d}00',
+    #     'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+    #     'hour': hour,
+    # }
     data = {
-        'dateString': f'{ymd}-{hour:02d}00',
-        'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
-        'hour': hour,
+        'dateString': '20220102-0200',
+        'dayISOString': '2022/01/02',
+        'hour': 2,
     }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
