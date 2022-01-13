@@ -140,17 +140,20 @@ def load(request, name):
         sweep['sweepElevation'], 0.0, 0.0, gatewidth)
     symbol = sweep['symbol']
     if symbol == 'Z':
-        data = np.array(sweep['values'] * 2 + 64, dtype=np.uint8)
+        values = np.clip(sweep['values'] * 2 + 64, 0, 255)
     elif symbol == 'V':
-        data = np.array(sweep['values'] * 2 + 128, dtype=np.uint8)
+        values = np.clip(sweep['values'] * 2 + 128, 0, 255)
     elif symbol == 'W':
-        data = np.array(sweep['values'] * 20, dtype=np.uint8)
+        values = np.clip(sweep['values'] * 20, 0, 255)
     elif symbol == 'D':
-        data = np.array(sweep['values'] * 10 + 100, dtype=np.uint8)
+        values = np.clip(sweep['values'] * 10 + 100, 0, 255)
     elif symbol == 'P':
-        data = np.array(sweep['values'] * 128 / 180 + 128, dtype=np.uint8)
+        values = np.clip(sweep['values'] * 128 / np.pi + 128, 0, 255)
+    elif symbol == 'R':
+        values = np.clip(rho2ind(sweep['values']), 0, 255)
     else:
-        data = np.array(sweep['values'], dtype=np.uint8)
+        values = np.clip(sweep['values'], 0, 255)
+    data = np.array(values, dtype=np.uint8)
     payload = bytes(head) \
             + bytes(sweep['elevations']) \
             + bytes(sweep['azimuths']) \
@@ -173,3 +176,11 @@ def date(request):
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response
+
+def rho2ind(values):
+    m3 = values > 0.93
+    m2 = np.logical_and(values > 0.7, ~m3)
+    index = values * 52.8751
+    index[m2] = values[m2] * 300.0 - 173.0
+    index[m3] = values[m3] * 1000.0 - 824.0
+    return index
