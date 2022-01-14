@@ -15,6 +15,7 @@ import re
 import sys
 import glob
 import time
+import tqdm
 import django
 import pprint
 import shutil
@@ -80,16 +81,16 @@ def proc_archive(archive, ramfile=None):
             mm.append(m)
     return xx, mm
 
-def listfiles(folder):
+def list_files(folder):
     files = sorted(glob.glob(os.path.join(folder, '*.xz')))
     if len(files) == 0:
         folder = os.path.join(folder, '_original')
         files = sorted(glob.glob(os.path.join(folder, '*.xz')))
     return files
 
-def xzfolderV1(folder):
-    print(f'xzfolderV1: {folder}')
-    archives = listfiles(folder)
+def xzfolder_v1(folder):
+    print(f'xzfolder_v1: {folder}')
+    archives = list_files(folder)
     if len(archives) == 0:
         print('Unable to continue.')
         return
@@ -104,7 +105,7 @@ def xzfolderV1(folder):
             # print(f'{m} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
             x.save()
 
-def process_arhives(id, run, lock, queue, out):
+def process_arhives(id, run, lock, queue, out, verbose=0):
     while run.value == 1:
         task = None
         
@@ -116,7 +117,8 @@ def process_arhives(id, run, lock, queue, out):
         if task:
             archive = task['archive']
             ramfile = task['ramfile']
-            print(f'{id:02d}: {archive} {ramfile}')
+            if verbose:
+                print(f'{id:02d}: {archive} {ramfile}')
             xx = []
             with tarfile.open(archive) as tar:
                 for info in tar.getmembers():
@@ -126,7 +128,9 @@ def process_arhives(id, run, lock, queue, out):
         else:
             time.sleep(0.1)
 
-    print(f'{id} done')
+    if verbose:
+        print(f'{id} done')
+
     return
 
 
@@ -135,14 +139,14 @@ def xzfolder(folder, hour=0):
 
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
     prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
-    date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59Z']
+    date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59:59.99Z']
     print(f'date_range = {date_range}')
 
     task_queue = multiprocessing.Queue()
     db_queue = multiprocessing.Queue()
     lock = multiprocessing.Lock()
     run = multiprocessing.Value('i', 1)
-    raw_archives = listfiles(folder)
+    raw_archives = list_files(folder)
     if len(raw_archives) == 0:
         print('Unable to continue.')
         return
@@ -165,7 +169,7 @@ def xzfolder(folder, hour=0):
         processes.append(p)
         p.start()
 
-    for archive in archives:
+    for archive in tqdm.tqdm(archives):
         # Copy to ramdisk first, the queue the work after the file is copied
         basename = os.path.basename(archive)
         ramfile = f'/mnt/ramdisk/{basename}'
@@ -194,14 +198,13 @@ def xzfolder(folder, hour=0):
     entries = File.objects.filter(date__range=date_range)
 
     # Consolidating results
-    for key in sorted(keys):
+    pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
+    for key in tqdm.tqdm(sorted(keys)):
         xx = output[key]['xx']
         for yy in xx:
             mode = 'N'
             # Each entry has [info.name, info.offset, info.offset_data, info.size, archive]
             (name, offset, offset_data, size, archive) = yy
-            s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', archive).group(0)
-            datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
             x = entries.filter(name=name)
             if x:
                 x = x[0]
@@ -214,13 +217,13 @@ def xzfolder(folder, hour=0):
                 else:
                     mode = 'I'
             else:
+                s = pattern.search(archive).group(0)
+                datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
                 x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
-            if debug:
-                print(f' - {mode} : {name} {offset} {offset_data} {size} {archive}')
+            # if debug:
+            #     print(f' - {mode} : {name} {offset} {offset_data} {size} {archive}')
             if mode == 'N' or mode == 'U':
                 x.save()
-
-        print(f'{mode} {key}')
 
     e = time.time() - e
     a = e / len(archives)
@@ -263,7 +266,7 @@ def daycount(day):
 
     print(f'{mode} {d.date} :: {d.duration:,d} :: {d.hourly_count}')
 
-def getSweepSummary(timestr):
+def show_sweep_summary(timestr):
     print(f'timestr = {timestr}')
     t = time.strptime(timestr, '%Y%m%d-%H%M%S')
     t = time.strftime('%Y-%m-%d %H:%M:%SZ', t)
@@ -276,6 +279,26 @@ def getSweepSummary(timestr):
     sweep = o.getData()
     pp.pprint(sweep)
 
+def remove_duplicates(folder, verbose=0):
+    print(f'remove_duplicates: {folder}')
+    s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
+    e = time.localtime(time.mktime(time.strptime(s[:8], '%Y%m%d')) + 86400)
+    day0 = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
+    day1 = time.strftime('%Y-%m-%d', e)
+    date_range = [f'{day0} 00:00Z', f'{day1} 00:00Z']
+    print(f'date_range = {date_range}')
+
+    entries = File.objects.filter(date__range=date_range)
+
+    for entry in tqdm.tqdm(entries):
+        x = entries.filter(name=entry.name)
+        if len(x) > 1:
+            print(f'{entry.name} has {len(x)} entries')
+            for o in x:
+                if verbose:
+                    print(o.__repr__())
+                o.delete()
+
 #
 
 def main():
@@ -286,10 +309,8 @@ def main():
 
         Examples:
             dbtool.py
-            dbtool.py -x /data/PX1000/2013/20130520
-            dbtool.py -x /data/PX1000/2013/201305*
-            dbtool.py -d /data/PX1000/2013/20130520
-            dbtool.py -d /data/PX1000/2013/2013*
+            dbtool.py -i /data/PX1000/2013/20130520
+            dbtool.py -i /data/PX1000/2013/201305*
             dbtool.py -d 20130520
             dbtool.py -s 20130520-191000
             dbtool.py -v
@@ -300,13 +321,21 @@ def main():
     parser.add_argument('-d', dest='day', action='store_true', help='builds Day table')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder with xz archives')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
+    parser.add_argument('--remove-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep')    
-    parser.add_argument('-v', dest='verbose', default=0, action='count',
-        help='increases verbosity')
+    parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
     global debug
     debug = args.verbose > 1
+
+    if '*' in args.sources:
+        print('Expanding asterisk ...')
+        args.sources = glob.glob(args.sources)
+        if len(args.sources) == 0:
+            print('No match')
+            return
+        print(args.sources)
 
     if args.last:
         print('Retrieving the last entry ...')
@@ -317,17 +346,10 @@ def main():
     if args.sweep:
         e = time.time()
         for timestr in args.sources:
-            getSweepSummary(timestr)
+            show_sweep_summary(timestr)
 
     if args.insert:
         print('Inserting folders with .tar.xz archives')
-        if '*' in args.sources:
-            print('Expanding asterisk ...')
-            args.sources = glob.glob(args.sources)
-            if len(args.sources) == 0:
-                print('No match')
-                return
-            print(args.sources)
         for folder in args.sources:
             xzfolder(folder, hour=args.hour)
             daycount(folder)
@@ -336,6 +358,11 @@ def main():
         print('Building Day table ...')
         for day in args.sources:
             daycount(day)
+
+    if args.remove_duplicates:
+        print('Checking for duplicates ...')
+        for folder in args.sources:
+            remove_duplicates(folder)
 
 if __name__ == '__main__':
     main()

@@ -10,11 +10,11 @@
 import { Parser } from "binary-parser";
 import { deg2rad, clamp } from "./common";
 
-self.onmessage = ({ data: { task, name, day, time } }) => {
+self.onmessage = ({ data: { task, name, day, time, symbol } }) => {
   if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(time);
+    list(time, symbol);
   } else if (task == "count") {
     count(day);
   } else if (task == "month") {
@@ -105,9 +105,12 @@ function count(day) {
     });
 }
 
-function list(day) {
-  console.log(`%carchive.worker.list() ${day}`, "color: lightseagreen");
-  const url = `/data/list/${day}/`;
+function list(day, symbol) {
+  console.log(
+    `%carchive.worker.list() ${day} ${symbol}`,
+    "color: lightseagreen"
+  );
+  const url = `/data/list/${day}-${symbol}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -122,18 +125,17 @@ function list(day) {
             groupedList[scanType].push({ file: file, index: index });
           });
           console.log(groupedList);
-          let firstIndex = buffer.list.length > 0 ? 0 : -1;
+          let latestIndex = buffer.list.length ? buffer.list.length - 1 : -1;
           let scanType = "E4.0";
           if (scanType in groupedList) {
-            firstIndex = groupedList[scanType][0].index;
+            latestIndex = groupedList[scanType].slice(-1)[0].index;
           }
-          console.log(`autoIndex = ${firstIndex}`);
           self.postMessage({
             type: "list",
             payload: {
               list: buffer.list,
               groups: groupedList,
-              autoIndex: firstIndex,
+              autoIndex: latestIndex,
             },
           });
         });

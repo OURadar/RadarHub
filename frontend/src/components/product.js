@@ -34,9 +34,10 @@ class Product extends GLView {
     this.assets = {
       time: 0,
       index: 0,
+      symbol: null,
       palette: null,
       colormap: null,
-      lastStyle: null,
+      style: null,
       data: null,
       points: null,
       origins: null,
@@ -62,24 +63,13 @@ class Product extends GLView {
       this.loadDashboard();
     });
 
-    window.addEventListener("keyup", (e) => {
-      if (e.key == "s") {
-        this.toggleSpin();
-      } else if (e.key == "c") {
-        const h = this.assets.colormap.height;
-        let i = Math.round(this.assets.index * h - 0.5);
-        i = i >= h - 1 ? 0 : i + 1;
-        this.assets.index = (i + 0.5) / h;
-        const styles = ["Z", "V", "W", "D", "P", "R"];
-        this.loadDashboard(styles[i]);
-        console.log(`this.textures.index = ${this.assets.index}   h = ${h}`);
-      }
-    });
+    this.overlay.onload = props.onOverlayLoaded;
   }
 
   static defaultProps = {
     ...super.defaultProps,
     sweep: null,
+    onOverlayLoaded: () => {},
   };
 
   makeStyle(symbol = "Z") {
@@ -174,19 +164,23 @@ class Product extends GLView {
     }
   }
 
-  loadDashboard(sweep = null, symbol = null) {
-    if (symbol == null) {
-      if (this.assets.lastStyle == null) {
-        symbol = "Z";
-      } else {
-        symbol = this.assets.lastStyle;
+  loadDashboard(sweep = null) {
+    let symbol = "Z";
+    if (sweep) {
+      let c = sweep.name.split("-");
+      symbol = c[4].split(".")[0];
+      if (symbol == this.assets.symbol) {
+        return;
       }
     }
+    this.assets.style = this.makeStyle(symbol);
+    this.assets.index =
+      (this.assets.style.index + 0.5) / this.assets.colormap.height;
     this.colorbar
       .load(
         {
           palette: this.assets.palette,
-          style: this.makeStyle(symbol),
+          style: this.assets.style,
           time: sweep ? sweep.timeString : "-",
         },
         this.props.colors
@@ -205,7 +199,7 @@ class Product extends GLView {
           }),
         };
       });
-    this.assets.lastStyle = symbol;
+    this.assets.symbol = symbol;
   }
 
   toggleSpin() {
@@ -295,17 +289,18 @@ class Product extends GLView {
       model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
       model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
       model = mat4.translate([], model, [0, 0, common.earthRadius]);
-      this.overlay.geometry.origin = origin;
-      this.overlay.geometry.satCoordinate = satCoordinate;
-      this.overlay.geometry.satPosition = satPosition;
-      this.overlay.geometry.satQuaternion = quat.fromEuler(
+      this.geometry.origin = origin;
+      this.geometry.satCoordinate = satCoordinate;
+      this.geometry.satPosition = satPosition;
+      this.geometry.satQuaternion = quat.fromEuler(
         [],
         -origin.latitude,
         origin.longitude,
         0
       );
-      this.overlay.geometry.model = model;
-      this.overlay.geometry.needsUpdate = true;
+      this.geometry.model = model;
+      this.geometry.needsUpdate = true;
+      this.overlay.purge();
       this.overlay.load();
     }
 
@@ -352,7 +347,9 @@ class Product extends GLView {
     }
     if (
       (this.props.sweep === null && this.assets.data !== null) ||
-      (this.props.sweep !== null && this.assets.time != this.props.sweep.time)
+      (this.props.sweep !== null &&
+        (this.assets.time != this.props.sweep.time ||
+          this.assets.symbol != this.props.sweep.symbol))
     ) {
       this.updateData();
       this.loadDashboard(this.props.sweep);

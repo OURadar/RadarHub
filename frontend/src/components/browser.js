@@ -66,6 +66,24 @@ function Browser(props) {
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
 
+  const setElements = (elements) => {
+    if (
+      elements == null ||
+      elements.children == null ||
+      elements.children.length == 0 ||
+      index < 0
+    ) {
+      return;
+    }
+    // console.log(
+    //   `setElements ${props.archive.data.loadCountSinceList} ${index}`
+    // );
+    if (props.archive.data.loadCountSinceList == 1) {
+      console.log(`Scroll row ${index} into view`);
+      elements.children[index].scrollIntoView();
+    }
+  };
+
   React.useEffect(() => {
     const newFileBrowser = props.useMemo ? (
       <Box
@@ -86,7 +104,7 @@ function Browser(props) {
         </FixedSizeList>
       </Box>
     ) : (
-      <div className="filesContainer">
+      <div className="filesContainer" ref={setElements}>
         {createFileButtons(files, index, props.archive.load)}
       </div>
     );
@@ -127,18 +145,18 @@ function Browser(props) {
   React.useEffect(() => {
     fetch("/data/date/")
       .then((response) => {
-        if (response.status == 200)
+        if (response.status == 200) {
           response.json().then((buffer) => {
             let initialDay = new Date(buffer.dayISOString);
             let initialHour = buffer.hour;
             getMonthTable(initialDay);
             setDayHour(initialDay, initialHour);
           });
-        else {
+        } else {
           console.log(response);
           let initialDay = new Date("2022/01/02");
           getMonthTable(initialDay);
-          setDayHour(initialDay, 21);
+          setDayHour(initialDay, 2);
         }
       })
       .catch((error) => {

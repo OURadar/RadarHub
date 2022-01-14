@@ -82,28 +82,31 @@ def count(request, day):
 
 '''
     hour - a string in the forms of
-           - YYYYMMDD-HHMM
-           - YYYYMMDD-HH
-           - YYYYMMDD
+        - YYYYMMDD-HHMM-S
+        - YYYYMMDD-HHMM
+        - YYYYMMDD-HH-S
+        - YYYYMMDD-HH
+        - YYYYMMDD-S
+        - YYYYMMDD
 '''
 def list(request, hour):
     if hour == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
 
-    if len(hour) == 13:
-        s = time.strptime(hour, '%Y%m%d-%H%M')
-        e = time.localtime(time.mktime(s) + 3600)
-        ss = time.strftime('%Y-%m-%d %H:%MZ', s)
-        ee = time.strftime('%Y-%m-%d %H:%MZ', e)
-        dateRange = [ss, ee]
-    elif len(hour) == 11:
-        prefix = time.strftime('%Y-%m-%d %H', time.strptime(hour, '%Y%m%d-%H'))
-        dateRange = [f'{prefix}:00Z', f'{prefix}:59Z']
-    elif len(hour) == 8:
-        prefix = time.strftime('%Y-%m-%d', time.strptime(hour, '%Y%m%d'))
-        dateRange = [f'{prefix} 00:00Z', f'{prefix} 00:59Z']
+    c = hour.split('-');
+    if len(c) == 1:
+        c[1] = '0000'
+    elif len(c[1]) == 2:
+        c[1] = f'{c[1]}00'
+    symbol = c[2] if len(c) == 3 else 'Z'
+    t = '-'.join(c[:2])
+    s = time.strptime(t, '%Y%m%d-%H%M')
+    e = time.localtime(time.mktime(s) + 3599)
+    ss = time.strftime('%Y-%m-%d %H:%M:%SZ', s)
+    ee = time.strftime('%Y-%m-%d %H:%M:%SZ', e)
+    dateRange = [ss, ee]
 
-    matches = File.objects.filter(name__contains='-Z.nc', date__range=dateRange)[:500]
+    matches = File.objects.filter(name__contains=f'-{symbol}.nc', date__range=dateRange)[:500]
     data = {
         'list': [o.name for o in matches]
     }
@@ -135,7 +138,24 @@ def load(request, name):
     head = struct.pack('hhhhddddffff', *sweep['values'].shape, 0, 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
         sweep['sweepElevation'], 0.0, 0.0, gatewidth)
-    data = np.array(sweep['values'] * 2 + 64, dtype=np.uint8)
+    symbol = sweep['symbol']
+    if symbol == 'Z':
+        values = sweep['values'] * 2.0 + 64.0
+    elif symbol == 'V':
+        values = sweep['values'] * 2.0 + 128.0
+    elif symbol == 'W':
+        values = sweep['values'] * 20.0
+    elif symbol == 'D':
+        values = sweep['values'] * 10.0 + 100.0
+    elif symbol == 'P':
+        values = sweep['values'] * 128.0 / np.pi + 128.0
+    elif symbol == 'R':
+        values = rho2ind(sweep['values'])
+    else:
+        values = sweep['values']
+    # Map to closest integer, 0 is transparent, 1+ is finite.
+    # np.nan will be converted to 0 during np.float -> np.uint8
+    data = np.array(np.clip(np.round(values), 1.0, 255.0), dtype=np.uint8)
     payload = bytes(head) \
             + bytes(sweep['elevations']) \
             + bytes(sweep['azimuths']) \
@@ -150,11 +170,24 @@ def date(request):
     ymd = components[1]
     hms = components[2]
     hour = int(hms[0:2])
+    # data = {
+    #     'dateString': f'{ymd}-{hour:02d}00',
+    #     'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+    #     'hour': hour,
+    # }
     data = {
-        'dateString': f'{ymd}-{hour:02d}00',
-        'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
-        'hour': hour,
+        'dateString': '20220102-0200',
+        'dayISOString': '2022/01/02',
+        'hour': 2,
     }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response
+
+def rho2ind(values):
+    m3 = values > 0.93
+    m2 = np.logical_and(values > 0.7, ~m3)
+    index = values * 52.8751
+    index[m2] = values[m2] * 300.0 - 173.0
+    index[m3] = values[m3] * 1000.0 - 824.0
+    return index
