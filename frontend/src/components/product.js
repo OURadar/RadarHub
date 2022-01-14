@@ -169,11 +169,11 @@ class Product extends GLView {
     if (sweep) {
       let c = sweep.name.split("-");
       symbol = c[4].split(".")[0];
-      if (symbol == this.assets.symbol) {
-        return;
+      if (this.assets.symbol != symbol) {
+        this.assets.symbol = symbol;
+        this.assets.style = this.makeStyle(symbol);
       }
     }
-    this.assets.style = this.makeStyle(symbol);
     this.assets.index =
       (this.assets.style.index + 0.5) / this.assets.colormap.height;
     this.colorbar
@@ -186,6 +186,7 @@ class Product extends GLView {
         this.props.colors
       )
       .then((buffer) => {
+        this.dashboardTexture?.texture.destroy();
         this.dashboardTexture = {
           bound: [buffer.image.width, buffer.image.height],
           texture: this.regl.texture({
@@ -199,7 +200,6 @@ class Product extends GLView {
           }),
         };
       });
-    this.assets.symbol = symbol;
   }
 
   toggleSpin() {

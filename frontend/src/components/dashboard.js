@@ -18,9 +18,6 @@ class Dashboard {
     image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
       this.palette = image;
-      if (this.colormap) {
-        this.colormap.destroy();
-      }
       this.assets.colormap = this.regl.texture({
         data: image,
         wrapS: "clamp",
@@ -29,21 +26,8 @@ class Dashboard {
       });
       this.assets.index = 0.5 / this.assets.colormap.height;
       if (this.assets.data != null) this.assets.complete = true;
-      this.load(this.colors)
     });
     this.colorbar = new Colorbar();
-  }
-
-  async load(colors) {
-    this.colors = colors;
-
-    const configs = {
-      palette: this.assets.palette,
-      style: this.makeStyle(symbol),
-      time: "2013/05/20 19:00 UTC",
-    }
-    // Things
-    const buffer = await this.colorbar.load()
   }
 }
 
