@@ -240,6 +240,22 @@ sudo supervisorctl start all
 
 A convenient script `restart.sh` is included to restart all services in a proper sequence in order to prevent channels getting full.
 
+## Install Node.js and npm from the Ubuntu Repository
+
+Run the following commands:
+
+```shell
+sudo apt update
+sudo apt install nodejs npm
+```
+
+After that, install Node.js and npm from NodeSource using the following commands:
+
+```shell
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+sudo apt install nodejs
+```
+
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
 [node.js]: https://nodejs.org
