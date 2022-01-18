@@ -197,17 +197,13 @@ def xzfolder(folder, hour=0):
 
     entries = File.objects.filter(date__range=date_range)
 
-    # Consolidating results
-    pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
-    for key in tqdm.tqdm(sorted(keys)):
-        xx = output[key]['xx']
+    def handle_data(xx):
         for yy in xx:
             mode = 'N'
-            # Each entry has [info.name, info.offset, info.offset_data, info.size, archive]
             (name, offset, offset_data, size, archive) = yy
-            x = entries.filter(name=name)
-            if x:
-                x = x[0]
+            n = entries.filter(name=name)
+            if n:
+                x = n[0]
                 if x.path != archive or x.size != size or x.offset != offset or x.offset_data != offset_data:
                     mode = 'U'
                     x.path = archive
@@ -224,6 +220,12 @@ def xzfolder(folder, hour=0):
             #     print(f' - {mode} : {name} {offset} {offset_data} {size} {archive}')
             if mode == 'N' or mode == 'U':
                 x.save()
+
+    # Consolidating results
+    pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
+    for key in tqdm.tqdm(sorted(keys)):
+        xx = output[key]['xx']
+        handle_data(xx)
 
     e = time.time() - e
     a = e / len(archives)
