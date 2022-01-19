@@ -197,7 +197,9 @@ def xzfolder(folder, hour=0):
 
     entries = File.objects.filter(date__range=date_range)
 
-    def handle_data(xx):
+    pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
+
+    def handle_data(xx, use_date_search=True):
         for yy in xx:
             mode = 'N'
             (name, offset, offset_data, size, archive) = yy
@@ -213,16 +215,23 @@ def xzfolder(folder, hour=0):
                 else:
                     mode = 'I'
             else:
-                s = pattern.search(archive).group(0)
-                datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+                # print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
+                if use_date_search:
+                    s = pattern.search(archive).group(0)
+                    datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+                else:
+                    c = name.split('-')
+                    d = c[1]
+                    t = c[2]
+                    datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
                 x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
+                # print(x.name)
             # if debug:
             #     print(f' - {mode} : {name} {offset} {offset_data} {size} {archive}')
             if mode == 'N' or mode == 'U':
                 x.save()
 
     # Consolidating results
-    pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
     for key in tqdm.tqdm(sorted(keys)):
         xx = output[key]['xx']
         handle_data(xx)
