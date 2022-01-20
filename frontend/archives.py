@@ -170,16 +170,16 @@ def date(request):
     ymd = components[1]
     hms = components[2]
     hour = int(hms[0:2])
-    # data = {
-    #     'dateString': f'{ymd}-{hour:02d}00',
-    #     'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
-    #     'hour': hour,
-    # }
     data = {
-        'dateString': '20220102-0200',
-        'dayISOString': '2022/01/02',
-        'hour': 2,
+        'dateString': f'{ymd}-{hour:02d}00',
+        'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+        'hour': hour,
     }
+    # data = {
+    #     'dateString': '20220102-0200',
+    #     'dayISOString': '2022/01/02',
+    #     'hour': 2,
+    # }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response
