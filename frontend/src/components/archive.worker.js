@@ -110,7 +110,7 @@ function list(day, symbol) {
     `%carchive.worker.list() ${day} ${symbol}`,
     "color: lightseagreen"
   );
-  const url = `/data/list/${day}-${symbol}/`;
+  const url = `/data/list/raxpol/${day}-${symbol}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)

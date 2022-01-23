@@ -8,12 +8,15 @@ def radar(request, radar):
     obj = {'radar': radar, 'a': 1, 'b': 2}
     return render(request, 'frontend/index.html', {'params': obj})
 
-def archive_radar(request, radar, profileGL):
+def archive_radar_profile(request, radar, profileGL):
     obj = {'radar': radar, 'profileGL': profileGL}
     return render(request, 'frontend/dev.html', {'params': obj})
 
+def archive_radar(request, radar):
+    return archive_radar_profile(request, radar, False)
+
 def archive(request):
-    return archive_radar(request, "demo", False)
+    return archive_radar_profile(request, "demo", False)
 
 def archive_profile(request):
-    return archive_radar(request, "demo", True)
+    return archive_radar_profile(request, "demo", True)

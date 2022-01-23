@@ -89,13 +89,13 @@ def count(request, day):
         - YYYYMMDD-S
         - YYYYMMDD
 '''
-def list(request, hour):
-    if hour == 'undefined':
+def list(request, radar, hour):
+    if radar == 'undefined' or hour == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
 
     c = hour.split('-');
     if len(c) == 1:
-        c[1] = '0000'
+        c.append('0000')
     elif len(c[1]) == 2:
         c[1] = f'{c[1]}00'
     symbol = c[2] if len(c) == 3 else 'Z'
@@ -105,8 +105,9 @@ def list(request, hour):
     ss = time.strftime('%Y-%m-%d %H:%M:%SZ', s)
     ee = time.strftime('%Y-%m-%d %H:%M:%SZ', e)
     dateRange = [ss, ee]
-
-    matches = File.objects.filter(name__contains=f'-{symbol}.nc', date__range=dateRange)[:500]
+    prefix = 'PX-' if radar == 'px1000' else 'RAXPOL-'
+    matches = File.objects.filter(name__contains=f'-{symbol}.nc', date__range=dateRange)
+    matches = matches.filter(name__contains=prefix)
     data = {
         'list': [o.name for o in matches]
     }

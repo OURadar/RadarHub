@@ -40,7 +40,7 @@ class App extends Component {
         this.pendingLoadIndex = index;
       }
     };
-    //console.log(props);
+    console.log(props);
     this.overlayLoaded = false;
     this.pendingLoadIndex = -1;
 
