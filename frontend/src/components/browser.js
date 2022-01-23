@@ -61,6 +61,7 @@ function Browser(props) {
   const files = props.archive?.data.fileList || [];
   const index = props.archive?.data.index;
 
+  const [radar, setRadar] = React.useState(props.radar);
   const [day, setDay] = React.useState();
   const [hour, setHour] = React.useState();
   const [hourButtons, setHourButtons] = React.useState([]);
@@ -181,10 +182,10 @@ function Browser(props) {
     let ymd = tmp.slice(0, 10).replace(/-/g, "");
     let hh = newHour.toString().padStart(2, "0");
     if (day != newDay) {
-      props.archive.count(ymd);
+      props.archive.count(radar, ymd);
     }
     if (day != newDay || hour != newHour) {
-      props.archive.list(`${ymd}-${hh}00`);
+      props.archive.list(radar, `${ymd}-${hh}00`);
     }
     setDay(newDay);
     setHour(newHour);
@@ -196,7 +197,7 @@ function Browser(props) {
   const getMonthTable = (newMonth) => {
     let tmp = newMonth.toISOString();
     let yyyymm = tmp.slice(0, 4) + tmp.slice(5, 7);
-    props.archive.month(yyyymm);
+    props.archive.month(radar, yyyymm);
   };
 
   return (

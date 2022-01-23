@@ -34,17 +34,31 @@ def header(requst, name):
     return response
 
 
+def radar2prefix(radar):
+    radarDict = {
+        'px1000': 'PX-',
+        'raxpol': 'RAXPOL-',
+        'px10k': 'PX10K-',
+        'horus': 'HORUS-',
+    }
+    return radarDict[radar] if radar in radarDict else 'XX-'
+
 '''
+    radar - a string of the radar name
+          - e.g., px1000, raxpol, or px10k
+
     day - a string in the forms of
           - YYYYMM
 '''
-def month(request, day):
+def month(request, radar, day):
     if day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
+    print(f'archive.month()   radar = {radar}   day = {day}')
     y = int(day[0:4])
     m = int(day[4:6])
-    entries = Day.objects.filter(date__year=y, date__month=m)
-    s = time.mktime(time.strptime(day, '%Y%m'))
+    prefix = radar2prefix(radar)
+    entries = Day.objects.filter(date__year=y, date__month=m, name=prefix)
+    s = time.mktime(time.strptime(day[:6], '%Y%m'))
     m += 1
     if m == 13:
         m = 1
@@ -60,10 +74,13 @@ def month(request, day):
     return response
 
 '''
+    radar - a string of the radar name
+          - e.g., px1000, raxpol, or px10k
+
     day - a string in the forms of
           - YYYYMMDD
 '''
-def count(request, day):
+def count(request, radar, day):
     if day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
 
@@ -81,6 +98,9 @@ def count(request, day):
     return response
 
 '''
+    radar - a string of the radar name
+          - e.g., px1000, raxpol, or px10k
+
     hour - a string in the forms of
         - YYYYMMDD-HHMM-S
         - YYYYMMDD-HHMM
@@ -105,8 +125,8 @@ def list(request, radar, hour):
     ss = time.strftime('%Y-%m-%d %H:%M:%SZ', s)
     ee = time.strftime('%Y-%m-%d %H:%M:%SZ', e)
     dateRange = [ss, ee]
-    prefix = 'PX-' if radar == 'px1000' else 'RAXPOL-'
-    matches = File.objects.filter(name__contains=f'-{symbol}.nc', date__range=dateRange)
+    prefix = radar2prefix(radar)
+    matches = File.objects.filter(date__range=dateRange, name__contains=f'-{symbol}.nc')
     matches = matches.filter(name__contains=prefix)
     data = {
         'list': [o.name for o in matches]

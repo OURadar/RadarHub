@@ -57,7 +57,7 @@ class App extends Component {
   }
 
   static defaultProps = {
-    radar: "archive",
+    radar: "px1000",
     debug: false,
     profileGL: false,
     autoLoad: true,
@@ -148,7 +148,7 @@ class App extends Component {
             </div>
           </div>
           <div id="right">
-            <Browser archive={this.archive} />
+            <Browser archive={this.archive} radar={this.props.radar} />
           </div>
         </div>
       </ThemeProvider>
