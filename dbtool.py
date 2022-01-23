@@ -258,7 +258,7 @@ def daycount(day, name='PX-'):
         return
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
-    print(f'Building Day table for {name} ...')
+    print(f'Building Day table for {date} / {name} ...')
 
     mode = 'N'
     d = Day.objects.filter(date=date, name=name)
@@ -277,7 +277,7 @@ def daycount(day, name='PX-'):
         counts[k] = len(matches)
         total += counts[k]
 
-    if mode == 'N' and total > 0:
+    if total > 0:
         d.count = total
         d.duration = d.count * 20
         d.hourly_count = ','.join([str(c) for c in counts])

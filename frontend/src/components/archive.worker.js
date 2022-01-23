@@ -116,7 +116,6 @@ function list(radar, day, symbol) {
     `%carchive.worker.list() ${radar} ${day} ${symbol}`,
     "color: lightseagreen"
   );
-  // const url = `/data/list/${radar}/${day}-${symbol}/`;
   const url = `/data/list/${radar}/${day}-${symbol}/`;
   fetch(url)
     .then((response) => {

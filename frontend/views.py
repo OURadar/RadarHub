@@ -16,7 +16,7 @@ def archive_radar(request, radar):
     return archive_radar_profile(request, radar, False)
 
 def archive_profile(request):
-    return archive_radar_profile(request, "demo", True)
+    return archive_radar_profile(request, "px1000", True)
 
 def archive(request):
-    return archive_radar_profile(request, "raxpol", False)
+    return archive_radar_profile(request, "px1000", False)

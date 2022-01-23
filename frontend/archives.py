@@ -86,7 +86,8 @@ def count(request, radar, day):
 
     n = [0 for _ in range(24)]
     date = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
-    d = Day.objects.filter(date=date)
+    prefix = radar2prefix(radar)
+    d = Day.objects.filter(date=date, name=prefix)
     if d:
         d = d[0]
         n = [int(n) for n in d.hourly_count.split(',')]
@@ -184,23 +185,23 @@ def load(request, name):
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
-def date(request):
+def date(request, radar):
     print('fetching latest date ...')
     file = File.objects.last()
     components = file.name.split('-')
     ymd = components[1]
     hms = components[2]
     hour = int(hms[0:2])
-    data = {
-        'dateString': f'{ymd}-{hour:02d}00',
-        'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
-        'hour': hour,
-    }
     # data = {
-    #     'dateString': '20220102-0200',
-    #     'dayISOString': '2022/01/02',
-    #     'hour': 2,
+    #     'dateString': f'{ymd}-{hour:02d}00',
+    #     'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+    #     'hour': hour,
     # }
+    data = {
+        'dateString': '20220102-0200',
+        'dayISOString': '2022/01/02',
+        'hour': 2,
+    }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response

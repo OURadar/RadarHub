@@ -31,7 +31,7 @@ class Archive {
     this.onupdate = () => {};
     this.onlist = () => {};
 
-    this.worker = new Worker("/static/frontend/archive.js?v=mikasa");
+    this.worker = new Worker("/static/frontend/archive.js?name=levi");
     this.worker.onmessage = ({ data: { type, payload } }) => {
       if (type == "message") {
         this.showMessage(payload, 2500);
