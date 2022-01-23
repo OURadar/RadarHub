@@ -148,7 +148,7 @@ def xzfolder(folder, hour=0):
     run = multiprocessing.Value('i', 1)
     raw_archives = list_files(folder)
     if len(raw_archives) == 0:
-        print('Unable to continue.')
+        print('No files. Unable to continue.')
         return
 
     archives = []
@@ -235,6 +235,8 @@ def xzfolder(folder, hour=0):
     for key in tqdm.tqdm(sorted(keys)):
         xx = output[key]['xx']
         handle_data(xx)
+
+    daycount(folder)
 
     e = time.time() - e
     a = e / len(archives)
@@ -377,7 +379,6 @@ def main():
         print('Inserting folders with .tar.xz archives')
         for folder in args.sources:
             xzfolder(folder, hour=args.hour)
-            daycount(folder)
 
     if args.day:
         for day in args.sources:

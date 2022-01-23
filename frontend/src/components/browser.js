@@ -77,10 +77,10 @@ function Browser(props) {
       return;
     }
     // console.log(
-    //   `setElements ${props.archive.data.loadCountSinceList} ${index}`
+    //   `Browser.setElements() ${props.archive.data.loadCountSinceList} ${index}`
     // );
     if (props.archive.data.loadCountSinceList == 1) {
-      console.log(`Scroll row ${index} into view`);
+      // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
     }
   };
@@ -189,9 +189,9 @@ function Browser(props) {
     }
     setDay(newDay);
     setHour(newHour);
-    console.log(
-      `files.length = ${files.length}   index = ${index}   hour = ${hour}`
-    );
+    // console.log(
+    //   `Browser.setDayHour() files.length = ${files.length}   index = ${index}   hour = ${hour}`
+    // );
   };
 
   const getMonthTable = (newMonth) => {
