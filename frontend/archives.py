@@ -199,15 +199,18 @@ def load(request, name, verbose=1):
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
-def date(request, radar):
+def date(request, radar, verbose=1):
     if radar == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    print(f'archive.date() radar = {radar}')
+    if verbose:
+        show = colorize('archive.date()', 'green')
+        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+        print(show)
     prefix = radar2prefix(radar)
-    file = File.objects.filter(name__contains=prefix).last()
-    components = file.name.split('-')
-    ymd = components[1]
-    hms = components[2]
+    file = File.objects.filter(name__contains=prefix).latest('date')
+    parts = file.name.split('-')
+    ymd = parts[1]
+    hms = parts[2]
     hour = int(hms[0:2])
     data = {
         'dateString': f'{ymd}-{hour:02d}00',

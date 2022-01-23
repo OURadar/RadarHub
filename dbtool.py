@@ -169,6 +169,8 @@ def xzfolder(folder, hour=0):
         processes.append(p)
         p.start()
 
+    # Extracting parameters of the archives
+    print('Pass 1 / 2 - Scanning archives ...')
     for archive in tqdm.tqdm(archives):
         # Copy to ramdisk first, the queue the work after the file is copied
         basename = os.path.basename(archive)
@@ -232,6 +234,7 @@ def xzfolder(folder, hour=0):
                 x.save()
 
     # Consolidating results
+    print('Pass 2 / 2 - Inserting entries into the database ...')
     for key in tqdm.tqdm(sorted(keys)):
         xx = output[key]['xx']
         handle_data(xx)
@@ -340,6 +343,7 @@ def main():
             dbtool.py -d 20130520
             dbtool.py -s 20130520-191000
             dbtool.py -v
+            dbtool.py --prefix PX- --latest
         '''))
     parser.add_argument('sources', type=str, nargs='*',
         help='sources to process')
@@ -347,6 +351,7 @@ def main():
     parser.add_argument('-d', dest='day', action='store_true', help='builds Day table')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder with xz archives')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
+    parser.add_argument('--latest', action='store_true', help='shows the latest entry to the database, requires --prefix')
     parser.add_argument('--remove-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
     parser.add_argument('--prefix', help='specify the prefix to process')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep')    
@@ -364,6 +369,15 @@ def main():
             return
         print(args.sources)
 
+    if args.latest:
+        if not args.prefix:
+            print('This method requires --prefix')
+            return
+        print(f'Retrieving the latest entry with prefix {args.prefix} ...')
+        o = File.objects.filter(name__contains=args.prefix).latest('date')
+        print(o.__repr__())
+        return
+
     if args.last:
         print('Retrieving the last entry ...')
         o = File.objects.last()
@@ -376,7 +390,7 @@ def main():
             show_sweep_summary(timestr)
 
     if args.insert:
-        print('Inserting folders with .tar.xz archives')
+        print('Inserting folder(s) with .tar.xz archives')
         for folder in args.sources:
             xzfolder(folder, hour=args.hour)
 
