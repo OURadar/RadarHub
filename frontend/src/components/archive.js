@@ -6,8 +6,8 @@
 //
 
 class Archive {
-  constructor() {
-    this.radar = "px1000";
+  constructor(radar) {
+    this.radar = radar;
     this.data = {
       hourlyCount: new Array(24).fill(0),
       hourlyCountUpdating: false,

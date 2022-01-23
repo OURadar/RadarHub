@@ -26,7 +26,7 @@ class App extends Component {
       time: new Date("2013-05-20T19:00"),
     };
     this.isMobile = detectMob();
-    this.archive = new Archive();
+    this.archive = new Archive(props.radar);
     this.archive.onupdate = (_dontcare) => {
       this.forceUpdate();
     };
@@ -40,7 +40,7 @@ class App extends Component {
         this.pendingLoadIndex = index;
       }
     };
-    console.log(props);
+    // console.log(props);
     this.overlayLoaded = false;
     this.pendingLoadIndex = -1;
 
