@@ -33,8 +33,8 @@ class Product extends GLView {
     this.labelFaceColor = this.props.colors.label.face;
     this.assets = {
       time: 0,
-      index: 0,
-      symbol: null,
+      index: 0.5 / 6,
+      symbol: "Z",
       palette: null,
       colormap: null,
       style: null,
@@ -62,7 +62,6 @@ class Product extends GLView {
       if (this.assets.data != null) this.assets.complete = true;
       this.loadDashboard();
     });
-
     this.overlay.onload = props.onOverlayLoaded;
   }
 
@@ -165,16 +164,13 @@ class Product extends GLView {
   }
 
   loadDashboard(sweep = null) {
-    let symbol = "Z";
-    if (sweep) {
-      let c = sweep.name.split("-");
-      symbol = c[4].split(".")[0];
-      if (this.assets.symbol != symbol) {
-        this.assets.symbol = symbol;
-        this.assets.style = this.makeStyle(symbol);
-        this.assets.index =
-          (this.assets.style.index + 0.5) / this.assets.colormap.height;
-      }
+    if (sweep && this.assets.symbol != sweep.symbol) {
+      this.assets.symbol = sweep.symbol;
+    }
+    this.assets.style = this.makeStyle(this.assets.symbol);
+    if (this.assets.colormap) {
+      this.assets.index =
+        (this.assets.style.index + 0.5) / this.assets.colormap.height;
     }
     this.colorbar
       .load(
