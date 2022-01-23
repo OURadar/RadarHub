@@ -172,10 +172,10 @@ class Product extends GLView {
       if (this.assets.symbol != symbol) {
         this.assets.symbol = symbol;
         this.assets.style = this.makeStyle(symbol);
+        this.assets.index =
+          (this.assets.style.index + 0.5) / this.assets.colormap.height;
       }
     }
-    this.assets.index =
-      (this.assets.style.index + 0.5) / this.assets.colormap.height;
     this.colorbar
       .load(
         {

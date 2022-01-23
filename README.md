@@ -36,6 +36,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [x] 0.6 SQLite / product catalog / products to 3D view (11/12/2021)
   - [x] 0.6.1 Removed most hard-wired parameters (1/7/2022)
   - [x] 0.6.2 Auto-select latest day, hour and file (1/15/2022)
+  - [ ] 0.6.3 Added support for multiple radars (1/31/2022)
 - [ ] 0.7 Page template, UI materials, mobile version
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Landing page, radar selection, etc.

@@ -7,7 +7,7 @@
 
 class Archive {
   constructor() {
-    this.radar = "archive";
+    this.radar = "px1000";
     this.data = {
       hourlyCount: new Array(24).fill(0),
       hourlyCountUpdating: false,
@@ -31,7 +31,7 @@ class Archive {
     this.onupdate = () => {};
     this.onlist = () => {};
 
-    this.worker = new Worker("/static/frontend/archive.js?v=eren");
+    this.worker = new Worker("/static/frontend/archive.js?name=levi");
     this.worker.onmessage = ({ data: { type, payload } }) => {
       if (type == "message") {
         this.showMessage(payload, 2500);
@@ -84,26 +84,32 @@ class Archive {
     }, duration);
   }
 
-  // Expect day = 201305
-  month(day) {
+  // Expect radar = px1000, day = 201305
+  month(radar, day) {
     this.data.dailyAvailabilityUpdating = true;
-    this.worker.postMessage({ task: "month", day: day });
+    this.worker.postMessage({ task: "month", name: radar, day: day });
     this.onupdate(this.tic++);
   }
 
-  // Expect day = 20130520
-  count(day) {
+  // Expect radar = raxpol, day = 20130520
+  count(radar, day) {
     this.data.hourlyCountUpdating = true;
-    this.worker.postMessage({ task: "count", day: day });
+    this.worker.postMessage({ task: "count", name: radar, day: day });
     this.onupdate(this.tic++);
   }
 
-  // Expect time = 20130520-1900
-  list(time) {
+  // Expect radar = horus, time = 20130520-1900
+  list(radar, time) {
     let symbol = this.data.symbol;
+    this.radar = radar;
     this.data.listDateTime = time;
     this.data.fileListUpdating = true;
-    this.worker.postMessage({ task: "list", time: time, symbol: symbol });
+    this.worker.postMessage({
+      task: "list",
+      name: radar,
+      time: time,
+      symbol: symbol,
+    });
     this.onupdate(this.tic++);
   }
 
@@ -142,7 +148,7 @@ class Archive {
     }
     this.data.symbol = symbol;
     this.data.resetLoadCount = false;
-    this.list(this.data.listDateTime);
+    this.list(this.radar, this.data.listDateTime);
   }
 }
 

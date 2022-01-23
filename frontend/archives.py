@@ -16,7 +16,8 @@ timeFinder = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5]
 def binary(request, name):
     if name == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    print(f'archives.binary() name={name}')
+    show = colorize(name, 'orange')
+    print(f'archives.binary() name = {show}')
     elev = 0.5
     elev_bin = bytearray(struct.pack('f', elev));
     payload = elev_bin + b'\x00\x01\x02\x00\x00\x00\xfd\xfe\xff'
@@ -27,24 +28,42 @@ def binary(request, name):
 
 def header(requst, name):
     show = colorize(name, 'orange')
-    print(f'archives.header() {show}')
+    print(f'archives.header() name = {show}')
     data = {'elev': 0.5, 'count': 2000}
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
 
+def radar2prefix(radar):
+    radarDict = {
+        'px1000': 'PX-',
+        'raxpol': 'RAXPOL-',
+        'px10k': 'PX10K-',
+        'horus': 'HORUS-',
+    }
+    return radarDict[radar] if radar in radarDict else 'XX-'
+
 '''
+    radar - a string of the radar name
+          - e.g., px1000, raxpol, or px10k
+
     day - a string in the forms of
           - YYYYMM
 '''
-def month(request, day):
-    if day == 'undefined':
-        return HttpResponse(f'Not a valid query.', status=500)
+def month(request, radar, day, verbose=1):
+    if radar == 'undefined' or day == 'undefined':
+        return HttpResponse(f'Not a valid query.', status=500)    
+    if verbose:
+        show = colorize('archive.month()', 'green')
+        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+        show += ' / ' + colorize('day', 'orange') + ' = ' + colorize(day, 'yellow')
+        print(show)
     y = int(day[0:4])
     m = int(day[4:6])
-    entries = Day.objects.filter(date__year=y, date__month=m)
-    s = time.mktime(time.strptime(day, '%Y%m'))
+    prefix = radar2prefix(radar)
+    entries = Day.objects.filter(date__year=y, date__month=m, name=prefix)
+    s = time.mktime(time.strptime(day[:6], '%Y%m'))
     m += 1
     if m == 13:
         m = 1
@@ -60,16 +79,24 @@ def month(request, day):
     return response
 
 '''
+    radar - a string of the radar name
+          - e.g., px1000, raxpol, or px10k
+
     day - a string in the forms of
           - YYYYMMDD
 '''
-def count(request, day):
-    if day == 'undefined':
+def count(request, radar, day, verbose=1):
+    if radar == 'undefined' or day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-
+    if verbose:
+        show = colorize('archive.count()', 'green')
+        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+        show += ' / ' + colorize('day', 'orange') + ' = ' + colorize(day, 'yellow')
+        print(show)
     n = [0 for _ in range(24)]
     date = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
-    d = Day.objects.filter(date=date)
+    prefix = radar2prefix(radar)
+    d = Day.objects.filter(date=date, name=prefix)
     if d:
         d = d[0]
         n = [int(n) for n in d.hourly_count.split(',')]
@@ -81,6 +108,9 @@ def count(request, day):
     return response
 
 '''
+    radar - a string of the radar name
+          - e.g., px1000, raxpol, or px10k
+
     hour - a string in the forms of
         - YYYYMMDD-HHMM-S
         - YYYYMMDD-HHMM
@@ -89,13 +119,13 @@ def count(request, day):
         - YYYYMMDD-S
         - YYYYMMDD
 '''
-def list(request, hour):
-    if hour == 'undefined':
+def list(request, radar, hour):
+    if radar == 'undefined' or hour == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
 
     c = hour.split('-');
     if len(c) == 1:
-        c[1] = '0000'
+        c.append('0000')
     elif len(c[1]) == 2:
         c[1] = f'{c[1]}00'
     symbol = c[2] if len(c) == 3 else 'Z'
@@ -105,8 +135,9 @@ def list(request, hour):
     ss = time.strftime('%Y-%m-%d %H:%M:%SZ', s)
     ee = time.strftime('%Y-%m-%d %H:%M:%SZ', e)
     dateRange = [ss, ee]
-
-    matches = File.objects.filter(name__contains=f'-{symbol}.nc', date__range=dateRange)[:500]
+    prefix = radar2prefix(radar)
+    matches = File.objects.filter(date__range=dateRange, name__contains=f'-{symbol}.nc')
+    matches = matches.filter(name__contains=prefix)
     data = {
         'list': [o.name for o in matches]
     }
@@ -114,7 +145,7 @@ def list(request, hour):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
-def load(request, name):
+def load(request, name, verbose=1):
     # Database is indexed by date so we extract the time first for quicker search
     s = timeFinder.search(name)[0]
     s = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
@@ -123,6 +154,11 @@ def load(request, name):
         match = match[0]
     else:
         return HttpResponse(f'No match of {name} in database', status=202)
+
+    if verbose:
+        show = colorize('archive.load()', 'green')
+        show += ' ' + colorize('name', 'orange') + ' = ' + colorize(name, 'yellow')
+        print(show)
 
     sweep = match.getData()
 
@@ -163,23 +199,29 @@ def load(request, name):
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
-def date(request):
-    print('fetching latest date ...')
-    file = File.objects.last()
-    components = file.name.split('-')
-    ymd = components[1]
-    hms = components[2]
+def date(request, radar, verbose=1):
+    if radar == 'undefined':
+        return HttpResponse(f'Not a valid query.', status=500)
+    if verbose:
+        show = colorize('archive.date()', 'green')
+        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+        print(show)
+    prefix = radar2prefix(radar)
+    file = File.objects.filter(name__contains=prefix).latest('date')
+    parts = file.name.split('-')
+    ymd = parts[1]
+    hms = parts[2]
     hour = int(hms[0:2])
-    # data = {
-    #     'dateString': f'{ymd}-{hour:02d}00',
-    #     'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
-    #     'hour': hour,
-    # }
     data = {
-        'dateString': '20220102-0200',
-        'dayISOString': '2022/01/02',
-        'hour': 2,
+        'dateString': f'{ymd}-{hour:02d}00',
+        'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+        'hour': hour,
     }
+    # data = {
+    #     'dateString': '20220102-0200',
+    #     'dayISOString': '2022/01/02',
+    #     'hour': 2,
+    # }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response

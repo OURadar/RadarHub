@@ -40,7 +40,7 @@ class App extends Component {
         this.pendingLoadIndex = index;
       }
     };
-    //console.log(props);
+    console.log(props);
     this.overlayLoaded = false;
     this.pendingLoadIndex = -1;
 
@@ -57,7 +57,7 @@ class App extends Component {
   }
 
   static defaultProps = {
-    radar: "archive",
+    radar: "raxpol",
     debug: false,
     profileGL: false,
     autoLoad: true,
@@ -83,14 +83,14 @@ class App extends Component {
     if (!this.isMobile) {
       var w = localStorage.getItem("split-archive-w");
       if (w) {
-        w = clamp(parseFloat(JSON.parse(w)), 300, window.innerWidth - 400);
+        w = clamp(parseFloat(JSON.parse(w)), 310, window.innerWidth - 400);
       } else {
-        w = 300;
+        w = 310;
       }
       let v = (w / window.innerWidth) * 100;
       Split(["#left", "#right"], {
         sizes: [100 - v, v],
-        minSize: [400, 300],
+        minSize: [400, 310],
         expandToMin: true,
         elementStyle: (_dimension, elementSize, _gutterSize, index) => {
           if (index == 0)
@@ -148,7 +148,7 @@ class App extends Component {
             </div>
           </div>
           <div id="right">
-            <Browser archive={this.archive} />
+            <Browser archive={this.archive} radar={this.props.radar} />
           </div>
         </div>
       </ThemeProvider>

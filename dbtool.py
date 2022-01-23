@@ -148,7 +148,7 @@ def xzfolder(folder, hour=0):
     run = multiprocessing.Value('i', 1)
     raw_archives = list_files(folder)
     if len(raw_archives) == 0:
-        print('Unable to continue.')
+        print('No files. Unable to continue.')
         return
 
     archives = []
@@ -169,6 +169,8 @@ def xzfolder(folder, hour=0):
         processes.append(p)
         p.start()
 
+    # Extracting parameters of the archives
+    print('Pass 1 / 2 - Scanning archives ...')
     for archive in tqdm.tqdm(archives):
         # Copy to ramdisk first, the queue the work after the file is copied
         basename = os.path.basename(archive)
@@ -232,9 +234,12 @@ def xzfolder(folder, hour=0):
                 x.save()
 
     # Consolidating results
+    print('Pass 2 / 2 - Inserting entries into the database ...')
     for key in tqdm.tqdm(sorted(keys)):
         xx = output[key]['xx']
         handle_data(xx)
+
+    daycount(folder)
 
     e = time.time() - e
     a = e / len(archives)
@@ -244,9 +249,11 @@ def xzfolder(folder, hour=0):
     day - could either be a day string YYYYMMDD or a folder with the last
           part as day, e.g., /mnt/data/.../YYYYMMDD
 '''
-def daycount(day):
+def daycount(day, name='PX-'):
     if '/' in day:
         s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day)
+        file = os.path.basename(list_files(day)[0])
+        name = file.split('-')[0] + '-'
     else:
         s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', day)
     if s:
@@ -256,24 +263,35 @@ def daycount(day):
         return
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
+    print(f'Building Day table for {date} / {name} ...')
+
     mode = 'N'
-    if Day.objects.filter(date=date):
+    d = Day.objects.filter(date=date, name=name)
+    if d:
         mode = 'U'
-        d = Day.objects.filter(date=date)[0]
+        d = d[0]
     else:
-        d = Day(date=date)
+        d = Day(date=date, name=name)
 
     total = 0
     counts = [0] * 24
     for k in range(24):
         dateRange = [f'{date} {k:02d}:00Z', f'{date} {k:02d}:59Z']
-        counts[k] = len(File.objects.filter(name__contains='-Z.nc', date__range=dateRange))
+        matches = File.objects.filter(name__contains='-Z.nc', date__range=dateRange)
+        matches = matches.filter(name__contains=name)
+        counts[k] = len(matches)
         total += counts[k]
 
-    d.count = total
-    d.duration = d.count * 20
-    d.hourly_count = ','.join([str(c) for c in counts])
-    d.save()
+    if total > 0:
+        d.count = total
+        d.duration = d.count * 20
+        d.hourly_count = ','.join([str(c) for c in counts])
+        d.save()
+    elif mode == 'U' and total == 0:
+        mode = 'D'
+        d.delete()
+    else:
+        mode = 'I'
 
     print(f'{mode} {d.date} :: {d.duration:,d} :: {d.hourly_count}')
 
@@ -325,6 +343,7 @@ def main():
             dbtool.py -d 20130520
             dbtool.py -s 20130520-191000
             dbtool.py -v
+            dbtool.py --prefix PX- --latest
         '''))
     parser.add_argument('sources', type=str, nargs='*',
         help='sources to process')
@@ -332,7 +351,9 @@ def main():
     parser.add_argument('-d', dest='day', action='store_true', help='builds Day table')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder with xz archives')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
+    parser.add_argument('--latest', action='store_true', help='shows the latest entry to the database, requires --prefix')
     parser.add_argument('--remove-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
+    parser.add_argument('--prefix', help='specify the prefix to process')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep')    
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
@@ -348,6 +369,15 @@ def main():
             return
         print(args.sources)
 
+    if args.latest:
+        if not args.prefix:
+            print('This method requires --prefix')
+            return
+        print(f'Retrieving the latest entry with prefix {args.prefix} ...')
+        o = File.objects.filter(name__contains=args.prefix).latest('date')
+        print(o.__repr__())
+        return
+
     if args.last:
         print('Retrieving the last entry ...')
         o = File.objects.last()
@@ -360,15 +390,13 @@ def main():
             show_sweep_summary(timestr)
 
     if args.insert:
-        print('Inserting folders with .tar.xz archives')
+        print('Inserting folder(s) with .tar.xz archives')
         for folder in args.sources:
             xzfolder(folder, hour=args.hour)
-            daycount(folder)
 
     if args.day:
-        print('Building Day table ...')
         for day in args.sources:
-            daycount(day)
+            daycount(day, name=args.prefix)
 
     if args.remove_duplicates:
         print('Checking for duplicates ...')

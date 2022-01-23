@@ -14,11 +14,11 @@ self.onmessage = ({ data: { task, name, day, time, symbol } }) => {
   if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(time, symbol);
+    list(name, time, symbol);
   } else if (task == "count") {
-    count(day);
+    count(name, day);
   } else if (task == "month") {
-    month(day);
+    month(name, day);
   } else if (task == "dummy") {
     dummy();
   }
@@ -67,9 +67,12 @@ function createSweep(name = "dummy") {
   };
 }
 
-function month(day) {
-  console.log(`%carchive.worker.month() ${day}`, "color: lightseagreen");
-  const url = `/data/month/${day}/`;
+function month(radar, day) {
+  console.log(
+    `%carchive.worker.month() ${radar} ${day}`,
+    "color: lightseagreen"
+  );
+  const url = `/data/month/${radar}/${day}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -86,9 +89,12 @@ function month(day) {
     });
 }
 
-function count(day) {
-  console.log(`%carchive.worker.count() ${day}`, "color: lightseagreen");
-  const url = `/data/count/${day}/`;
+function count(radar, day) {
+  console.log(
+    `%carchive.worker.count() ${radar} ${day}`,
+    "color: lightseagreen"
+  );
+  const url = `/data/count/${radar}/${day}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -105,12 +111,12 @@ function count(day) {
     });
 }
 
-function list(day, symbol) {
+function list(radar, day, symbol) {
   console.log(
-    `%carchive.worker.list() ${day} ${symbol}`,
+    `%carchive.worker.list() ${radar} ${day} ${symbol}`,
     "color: lightseagreen"
   );
-  const url = `/data/list/${day}-${symbol}/`;
+  const url = `/data/list/${radar}/${day}-${symbol}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
