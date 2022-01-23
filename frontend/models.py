@@ -79,6 +79,7 @@ class File(models.Model):
 
 class Day(models.Model):
     date = models.DateField()
+    name = models.CharField(max_length=8, default='PX-')
     count = models.PositiveIntegerField(default=0)
     duration = models.PositiveIntegerField(default=0)
     blue = models.PositiveIntegerField(default=0)
