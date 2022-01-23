@@ -12,6 +12,7 @@ import DatePicker from "@mui/lab/DatePicker";
 import PickersDay from "@mui/lab/PickersDay";
 
 import { SectionHeader } from "./section-header";
+import { getMonth } from "date-fns";
 
 const Item = memo(({ data, index, style }) => {
   const { list, selectedIndex, loadItem } = data;
@@ -212,13 +213,18 @@ function Browser(props) {
               getMonthTable(newDay);
             }}
             onMonthChange={(newDay) => {
-              getMonthTable(newDay);
+              if (day != newDay) {
+                getMonthTable(newDay);
+              }
             }}
             onChange={(newDay) => {
               if (newDay === null || newDay == "Invalid Date") {
                 return;
               }
               setDayHour(newDay, hour);
+            }}
+            onOpen={() => {
+              getMonthTable(day);
             }}
             renderInput={(params) => <TextField {...params} />}
             renderDay={(day, _value, DayComponentProps) => {
