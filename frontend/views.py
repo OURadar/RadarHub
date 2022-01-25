@@ -8,9 +8,14 @@ from .archives import location
 def index(request):
     return render(request, 'frontend/nothing.html')
 
-def radar(request, radar):
+#
+
+def control_radar(request, radar):
     obj = {'radar': radar, 'a': 1, 'b': 2}
     return render(request, 'frontend/index.html', {'params': obj})
+
+def control(request):
+    return control_radar(request, "demo")
 
 #
 

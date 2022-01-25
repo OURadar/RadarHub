@@ -2,12 +2,12 @@ const path = require("path");
 
 module.exports = {
   entry: {
-    main: {
+    index: {
       import: "./src/index.js",
       dependOn: "shared",
     },
-    dev: {
-      import: "./src/dev.js",
+    main: {
+      import: "./src/main.js",
       dependOn: "shared",
     },
     shared: [
@@ -55,7 +55,7 @@ module.exports = {
     minimize: true,
   },
   watchOptions: {
-    ignored: '**/node_modules',
+    ignored: "**/node_modules",
   },
 };
 
