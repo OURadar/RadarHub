@@ -6,7 +6,7 @@ from . import views
 urlpatterns = [
     path('profile/', views.archive_profile, name='archive'),
     path('control/', views.control, name='control'),
-    path('control/<str:radar>/', views.control, name='control-radar'),
+    path('control/<str:radar>/', views.control_radar, name='control-radar'),
     path('archive/<str:radar>/', views.archive_radar, name='archive-radar'),
     path('data/list/<str:radar>/<str:hour>/', archives.list, name='data-list-json'),
     path('data/header/<str:name>/', archives.header, name='data-header'),

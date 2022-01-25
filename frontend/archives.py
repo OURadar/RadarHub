@@ -51,7 +51,7 @@ def radar2prefix(radar):
         'px10k': 'PX10K-',
         'horus': 'HORUS-',
     }
-    return radarDict[radar] if radar in radarDict else 'XX-'
+    return radarDict[radar] if radar in radarDict else None
 
 '''
     radar - a string of the radar name
@@ -215,6 +215,8 @@ def load(request, name, verbose=0):
 
 def _date(radar, verbose=1):
     prefix = radar2prefix(radar)
+    if prefix is None:
+        return None, None
     day = Day.objects.filter(name=prefix).latest('date')
     ymd = day.date.strftime('%Y%m%d')
     if verbose:
@@ -253,16 +255,23 @@ def rho2ind(values):
     return index
 
 def updateLocation(radar, verbose=1):
+    global origins
     if verbose:
         show = colorize('archive.updateLocation()', 'green')
         show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
         print(show)
     ymd, hour = _date(radar)
+    if ymd is None:
+        origins[radar] = {
+          'longitude': -97.422413,
+          'latitude': 35.25527,
+        }
+        print(origins)
+        return
     hour = f'{ymd}-{hour:02d}00'
     name = _list(radar, hour)[-1]
     file = File.objects.filter(name=name).last()
     data = file.getData()
-    global origins
     origins[radar] = {
         'longitude': float(data['longitude']),
         'latitude': float(data['latitude'])

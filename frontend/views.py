@@ -11,7 +11,11 @@ def index(request):
 #
 
 def control_radar(request, radar):
-    obj = {'radar': radar, 'a': 1, 'b': 2}
+    show = colorize('control_radar()', 'green')
+    show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+    print(show)
+    origin = location(radar)
+    obj = {'radar': radar, 'origin': origin, 'a': 1, 'b': 2}
     return render(request, 'frontend/index.html', {'params': obj})
 
 def control(request):
@@ -30,7 +34,7 @@ def archive_radar_profile(request, radar, profileGL):
     show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
     print(show)
     origin = location(radar)
-    obj = {'radar': radar, 'profileGL': profileGL, 'origin': origin}
+    obj = {'radar': radar, 'origin': origin, 'profileGL': profileGL}
     return render(request, 'frontend/archive.html', {'params': obj})
 
 def archive_radar(request, radar):
