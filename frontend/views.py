@@ -1,8 +1,8 @@
 from django.shortcuts import render
 
 from common import colorize
-
 from .archives import location
+
 
 # Create your views here.
 def index(request):

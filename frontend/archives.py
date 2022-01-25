@@ -1,6 +1,7 @@
 import re
 import json
 import time
+import pprint
 import struct
 import numpy as np
 from django.http import HttpResponse
@@ -19,6 +20,8 @@ origins = {
     'px10k': None,
     'pair': None
 }
+
+pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
 def binary(request, name):
     if name == 'undefined':
@@ -253,7 +256,6 @@ def updateLocation(radar, verbose=1):
         'longitude': float(data['longitude']),
         'latitude': float(data['latitude'])
     }
-    print(origins)
     return
 
 def location(radar, verbose=1):
@@ -268,4 +270,8 @@ def location(radar, verbose=1):
 #
 
 updateLocation('px1000', verbose=0)
-updateLocation('raxpol', verbose=1)
+updateLocation('raxpol', verbose=0)
+
+show = colorize('archives.py', 'green')
+print(show)
+pp.pprint(origins)
