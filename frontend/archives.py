@@ -216,7 +216,15 @@ def date(request, radar, verbose=1):
         show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
         print(show)
     prefix = radar2prefix(radar)
+    if verbose:
+        show = colorize('archive.date()', 'green')
+        show += ' ' + colorize('prefix', 'orange') + ' = ' + colorize(prefix, 'yellow')
+        print(show)
     file = File.objects.filter(name__contains=prefix).latest('date')
+    if verbose:
+        show = colorize('archive.date()', 'green')
+        show += ' ' + colorize('file', 'orange') + ' = ' + colorize(file.name, 'yellow')
+        print(show)
     parts = file.name.split('-')
     ymd = parts[1]
     hms = parts[2]
@@ -269,9 +277,9 @@ def location(radar, verbose=1):
 
 #
 
-updateLocation('px1000', verbose=0)
-updateLocation('raxpol', verbose=0)
+# updateLocation('px1000', verbose=0)
+# updateLocation('raxpol', verbose=0)
 
-show = colorize('archives.py', 'green')
-print(show)
-pp.pprint(origins)
+# show = colorize('archives.py', 'green')
+# print(show)
+# pp.pprint(origins)
