@@ -31,13 +31,12 @@ class App extends Component {
       this.forceUpdate();
     };
     this.archive.onlist = (index) => {
-      if (!props.autoLoad || index == -1) {
-        return;
-      }
-      if (this.overlayLoaded) {
-        this.archive.load(index);
-      } else {
-        this.pendingLoadIndex = index;
+      if (props.autoLoad && index > -1) {
+        if (this.overlayLoaded) {
+          this.archive.load(index);
+        } else {
+          this.pendingLoadIndex = index;
+        }
       }
     };
     // console.log(props);
@@ -161,7 +160,9 @@ class App extends Component {
   }
 
   handleOverlayLoaded() {
-    console.log("App6.handleOverlayLoaded()");
+    console.log(
+      `App6.handleOverlayLoaded()  pendingLoadIndex = ${this.pendingLoadIndex}`
+    );
     this.overlayLoaded = true;
     if (this.pendingLoadIndex > -1) {
       this.archive.load(this.pendingLoadIndex);
