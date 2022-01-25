@@ -14,10 +14,7 @@ from common import colorize
 timeFinder = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
 origins = {
-    'px1000': {
-        'longitude': -97.5228271484375,
-        'latitude': 34.985626220703125
-    },
+    'px1000': None,
     'raxpol': None,
     'px10k': None,
     'pair': None
@@ -243,7 +240,11 @@ def rho2ind(values):
     index[m3] = values[m3] * 1000.0 - 824.0
     return index
 
-def updateLocation(radar):
+def updateLocation(radar, verbose=1):
+    if verbose:
+        show = colorize('archive.updateLocation()', 'green')
+        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+        print(show)
     prefix = radar2prefix(radar)
     file = File.objects.filter(name__contains=prefix).latest('date')
     data = file.getData()
@@ -263,3 +264,8 @@ def location(radar, verbose=1):
             print(show)
         updateLocation(radar)
     return origins[radar]
+
+#
+
+updateLocation('px1000', verbose=0)
+updateLocation('raxpol', verbose=1)
