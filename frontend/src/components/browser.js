@@ -145,7 +145,6 @@ function Browser(props) {
   }, [day, hour, count]);
 
   React.useEffect(() => {
-    console.log(`fetching the latest date of ${radar} ...`);
     fetch(`/data/date/${radar}/`)
       .then((response) => {
         if (response.status == 200) {

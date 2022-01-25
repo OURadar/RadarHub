@@ -33,8 +33,6 @@
       rel="apple-touch-icon"
     />
 
-    {% comment %}
-
     <link
       rel="shortcut icon"
       type="image/png"
@@ -55,7 +53,7 @@
       href="{% static 'css/mobile.css' %}"
     />
 
-    {% endcomment %}
+    {% comment %}
 
     <link
       rel="stylesheet"
@@ -75,7 +73,7 @@
       href="{% static 'css/desktop.css' %}?r={% now 'U' %}"
     />
 
-    {{ params|json_script:"params" }}
+    {% endcomment %} {{ params|json_script:"params" }}
     <title>RadarHub</title>
   </head>
   <body>

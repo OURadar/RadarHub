@@ -159,7 +159,7 @@ def list(request, radar, hour):
 '''
     name - filename
 '''
-def load(request, name, verbose=1):
+def load(request, name, verbose=0):
     # Database is indexed by date so we extract the time first for quicker search
     s = timeFinder.search(name)[0]
     s = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
