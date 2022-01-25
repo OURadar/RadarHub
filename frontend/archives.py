@@ -128,10 +128,7 @@ def count(request, radar, day, verbose=1):
         - YYYYMMDD-S
         - YYYYMMDD
 '''
-def list(request, radar, hour):
-    if radar == 'undefined' or hour == 'undefined':
-        return HttpResponse(f'Not a valid query.', status=500)
-
+def _list(radar, hour):
     c = hour.split('-');
     if len(c) == 1:
         c.append('0000')
@@ -147,13 +144,21 @@ def list(request, radar, hour):
     prefix = radar2prefix(radar)
     matches = File.objects.filter(date__range=dateRange, name__contains=f'-{symbol}.nc')
     matches = matches.filter(name__contains=prefix)
+    return [o.name for o in matches]
+
+def list(request, radar, hour):
+    if radar == 'undefined' or hour == 'undefined':
+        return HttpResponse(f'Not a valid query.', status=500)
     data = {
-        'list': [o.name for o in matches]
+        'list': _list(radar, hour)
     }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
+'''
+    name - filename
+'''
 def load(request, name, verbose=1):
     # Database is indexed by date so we extract the time first for quicker search
     s = timeFinder.search(name)[0]
@@ -208,39 +213,23 @@ def load(request, name, verbose=1):
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
-def date(request, radar, verbose=1):
-    if radar == 'undefined':
-        return HttpResponse(f'Not a valid query.', status=500)
+def _date(radar, verbose=1):
+    prefix = radar2prefix(radar)
+    day = Day.objects.filter(name=prefix).latest('date')
+    ymd = day.date.strftime('%Y%m%d')
     if verbose:
         show = colorize('archive.date()', 'green')
         show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+        show += ' / ' + colorize('prefix', 'orange') + ' = ' + colorize(prefix, 'yellow')
+        show += ' / ' + colorize('day', 'orange') + ' = ' + colorize(ymd, 'yellow')
         print(show)
-    prefix = radar2prefix(radar)
-    if verbose:
-        show = colorize('archive.date()', 'green')
-        show += ' ' + colorize('prefix', 'orange') + ' = ' + colorize(prefix, 'yellow')
-        print(show)
-    # file = File.objects.filter(name__contains=prefix).latest('date')
-    # if verbose:
-    #     show = colorize('archive.date()', 'green')
-    #     show += ' ' + colorize('file', 'orange') + ' = ' + colorize(file.name, 'yellow')
-    #     print(show)
-    # parts = file.name.split('-')
-    # ymd = parts[1]
-    # hms = parts[2]
-    # hour = int(hms[0:2])
-    # data = {
-    #     'dateString': f'{ymd}-{hour:02d}00',
-    #     'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
-    #     'hour': hour,
-    # }
-    day = Day.objects.filter(name=prefix).latest('date')
-    if verbose:
-        show = colorize('archive.date()', 'green')
-        show += ' ' + colorize('day', 'orange') + ' = ' + colorize(day.name, 'yellow')
-        print(show)
-    ymd = day.date.strftime('%Y%m%d')
     hour = max([k for k, e in enumerate(day.hourly_count.split(',')) if e != '0'])
+    return ymd, hour
+
+def date(request, radar, verbose=1):
+    if radar == 'undefined':
+        return HttpResponse(f'Not a valid query.', status=500)
+    ymd, hour = _date(radar, verbose)
     data = {
         'dateString': f'{ymd}-{hour:02d}00',
         'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
@@ -268,8 +257,10 @@ def updateLocation(radar, verbose=1):
         show = colorize('archive.updateLocation()', 'green')
         show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
         print(show)
-    prefix = radar2prefix(radar)
-    file = File.objects.filter(name__contains=prefix).latest('date')
+    ymd, hour = _date(radar)
+    hour = f'{ymd}-{hour:02d}00'
+    name = _list(radar, hour)[-1]
+    file = File.objects.filter(name=name).last()
     data = file.getData()
     global origins
     origins[radar] = {
