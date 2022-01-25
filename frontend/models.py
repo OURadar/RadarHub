@@ -15,8 +15,9 @@ class File(models.Model):
     offset_data = models.PositiveIntegerField(default=0)
 
     class Meta:
-        indexes = [models.Index(fields=['date', ]), ]
-    
+        indexes = [models.Index(fields=['date', ]),
+                   models.Index(fields=['name', ])]
+
     def __repr__(self):
         return f'{self.name} @ {self.path}'
 
@@ -88,6 +89,10 @@ class Day(models.Model):
     red = models.PositiveIntegerField(default=0)
     hourly_count = models.CharField(default='0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0',
         max_length=120, validators=[int_list_validator])
+
+    class Meta:
+        indexes = [models.Index(fields=['date', ]),
+                   models.Index(fields=['name', ])]
 
     def __repr__(self):
         return f'{self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'

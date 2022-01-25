@@ -220,15 +220,27 @@ def date(request, radar, verbose=1):
         show = colorize('archive.date()', 'green')
         show += ' ' + colorize('prefix', 'orange') + ' = ' + colorize(prefix, 'yellow')
         print(show)
-    file = File.objects.filter(name__contains=prefix).latest('date')
+    # file = File.objects.filter(name__contains=prefix).latest('date')
+    # if verbose:
+    #     show = colorize('archive.date()', 'green')
+    #     show += ' ' + colorize('file', 'orange') + ' = ' + colorize(file.name, 'yellow')
+    #     print(show)
+    # parts = file.name.split('-')
+    # ymd = parts[1]
+    # hms = parts[2]
+    # hour = int(hms[0:2])
+    # data = {
+    #     'dateString': f'{ymd}-{hour:02d}00',
+    #     'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+    #     'hour': hour,
+    # }
+    day = Day.objects.filter(name=prefix).latest('date')
     if verbose:
         show = colorize('archive.date()', 'green')
-        show += ' ' + colorize('file', 'orange') + ' = ' + colorize(file.name, 'yellow')
+        show += ' ' + colorize('day', 'orange') + ' = ' + colorize(day.name, 'yellow')
         print(show)
-    parts = file.name.split('-')
-    ymd = parts[1]
-    hms = parts[2]
-    hour = int(hms[0:2])
+    ymd = day.date.strftime('%Y%m%d')
+    hour = max([k for k, e in enumerate(day.hourly_count.split(',')) if e != '0'])
     data = {
         'dateString': f'{ymd}-{hour:02d}00',
         'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
