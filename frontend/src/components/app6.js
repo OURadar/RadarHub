@@ -57,7 +57,11 @@ class App extends Component {
   }
 
   static defaultProps = {
-    radar: "raxpol",
+    radar: "radar",
+    origin: {
+      longitude: -97.422413,
+      latitude: 35.25527,
+    },
     debug: false,
     profileGL: false,
     autoLoad: true,
@@ -138,6 +142,7 @@ class App extends Component {
             <div>
               <SectionHeader name="product" isMobile={false} />
               <Product
+                origin={this.props.origin}
                 sweep={this.archive.data.sweep}
                 colors={this.state.colors}
                 debug={this.props.debug}

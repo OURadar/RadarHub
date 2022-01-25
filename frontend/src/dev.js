@@ -8,4 +8,7 @@ import App from "./components/app6";
 const text = document.getElementById("params").textContent;
 const params = JSON.parse(text);
 
+// console.log("dev.js");
+// console.log(params);
+
 ReactDOM.render(<App {...params} />, document.getElementById("app"));

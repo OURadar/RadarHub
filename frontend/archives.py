@@ -13,6 +13,16 @@ from common import colorize
 
 timeFinder = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
+origins = {
+    'px1000': {
+        'longitude': -97.5228271484375,
+        'latitude': 34.985626220703125
+    },
+    'raxpol': None,
+    'px10k': None,
+    'pair': None
+}
+
 def binary(request, name):
     if name == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
@@ -33,7 +43,6 @@ def header(requst, name):
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response
-
 
 def radar2prefix(radar):
     radarDict = {
@@ -233,3 +242,24 @@ def rho2ind(values):
     index[m2] = values[m2] * 300.0 - 173.0
     index[m3] = values[m3] * 1000.0 - 824.0
     return index
+
+def updateLocation(radar):
+    prefix = radar2prefix(radar)
+    file = File.objects.filter(name__contains=prefix).latest('date')
+    data = file.getData()
+    global origins
+    origins[radar] = {
+        'longitude': float(data['longitude']),
+        'latitude': float(data['latitude'])
+    }
+    print(origins)
+    return
+
+def location(radar, verbose=1):
+    if radar not in origins or origins[radar] is None:
+        if verbose:
+            show = colorize('archive.location()', 'green')
+            show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+            print(show)
+        updateLocation(radar)
+    return origins[radar]
