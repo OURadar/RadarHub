@@ -17,6 +17,6 @@ urlpatterns = [
     path('archive/', views.archive, name='archive'),
     # path('<str:radar>/', views.archive_radar, name='archive'),
     # path('<str:radar>/', views.radar, name='radar'),
-    path('', views.archive, name='archive'),
-    # path('', views.index, name='index'),
+    # path('', views.archive, name='archive'),
+    path('', views.index, name='index'),
 ]

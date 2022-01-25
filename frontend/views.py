@@ -6,16 +6,15 @@ from .archives import location
 
 # Create your views here.
 def index(request):
-    return radar(request, radar='demo')
+    return render(request, 'frontend/nothing.html')
 
 def radar(request, radar):
     obj = {'radar': radar, 'a': 1, 'b': 2}
     return render(request, 'frontend/index.html', {'params': obj})
 
+#
+
 def archive_radar_profile(request, radar, profileGL):
-    #
-    # Could get a default location for a specified radar
-    #
     if radar == 'favicon.ico':
         show = colorize('archive_radar_profile()', 'red')
         show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
@@ -27,7 +26,7 @@ def archive_radar_profile(request, radar, profileGL):
     print(show)
     origin = location(radar)
     obj = {'radar': radar, 'profileGL': profileGL, 'origin': origin}
-    return render(request, 'frontend/dev.html', {'params': obj})
+    return render(request, 'frontend/archive.html', {'params': obj})
 
 def archive_radar(request, radar):
     return archive_radar_profile(request, radar, False)
