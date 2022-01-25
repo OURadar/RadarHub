@@ -254,44 +254,32 @@ def rho2ind(values):
     index[m3] = values[m3] * 1000.0 - 824.0
     return index
 
-def updateLocation(radar, verbose=1):
-    global origins
+def location(radar, verbose=1):
     if verbose:
-        show = colorize('archive.updateLocation()', 'green')
+        show = colorize('archive.location()', 'green')
         show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
         print(show)
+    global origins
     ymd, hour = _date(radar)
+    if hour:
+        hour = f'{ymd}-{hour:02d}00'
     if ymd is None:
         origins[radar] = {
           'longitude': -97.422413,
           'latitude': 35.25527,
+          'last': '20220125'
         }
-        print(origins)
-        return
-    hour = f'{ymd}-{hour:02d}00'
-    name = _list(radar, hour)[-1]
-    file = File.objects.filter(name=name).last()
-    data = file.getData()
-    origins[radar] = {
-        'longitude': float(data['longitude']),
-        'latitude': float(data['latitude'])
-    }
-    return
-
-def location(radar, verbose=1):
-    if radar not in origins or origins[radar] is None:
-        if verbose:
-            show = colorize('archive.location()', 'green')
-            show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
-            print(show)
-        updateLocation(radar)
+    elif radar not in origins or origins[radar] is None or origins[radar]['last'] != hour:
+        name = _list(radar, hour)[-1]
+        file = File.objects.filter(name=name).last()
+        data = file.getData()
+        origins[radar] = {
+            'longitude': float(data['longitude']),
+            'latitude': float(data['latitude']),
+            'last': hour
+        }
+    if verbose:
+        show = colorize('archive.location()', 'green')
+        print(show)
+        pp.pprint(origins)
     return origins[radar]
-
-#
-
-# updateLocation('px1000', verbose=0)
-# updateLocation('raxpol', verbose=0)
-
-# show = colorize('archives.py', 'green')
-# print(show)
-# pp.pprint(origins)
