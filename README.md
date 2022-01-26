@@ -257,6 +257,25 @@ curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install nodejs
 ```
 
+# PostgreSQL
+
+Create a user `radarhub` and database `radarhub` on [PostgreSQL]:
+
+```text
+postgres=# create user radarhub;
+postgres-# create database radarhub;
+postgres-# alter role radarhub with password 'ARRCuser#1';
+postgres-# grant all privileges on database radarhub to radarhub;
+postgres-# alter database radarhub owner to radarhub;
+```
+
+Also, configure [PostgreSQL] to be accessible through network by adding/modifying the following lines to the configuration file `/etc/postgresql/12/main/postgresql.conf`:
+
+```text
+listen_addresses = '*'
+```
+
+
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
 [node.js]: https://nodejs.org
@@ -266,3 +285,4 @@ sudo apt install nodejs
 [redis]: https://redis.io
 [nginx]: https://www.nginx.com
 [supervisor]: http://supervisord.org
+[PostgreSQL]: https://www.postgresql.org
