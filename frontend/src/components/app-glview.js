@@ -1,5 +1,5 @@
 //
-//  AppGLView.js
+//  app-glview.js - GLView Development
 //  RadarHub
 //
 //  Created by Boonleng Cheong

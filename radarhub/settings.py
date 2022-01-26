@@ -26,6 +26,11 @@ if os.path.exists(BASE_DIR / 'secret-key'):
     with open(BASE_DIR / 'secret-key') as fid:
         SECRET_KEY = fid.read().strip()
 
+DB_PASSWORD = 'password'
+if os.path.exists(BASE_DIR / 'db-password'):
+    with open(BASE_DIR / 'db-password') as fid:
+        DB_PASSWORD = fid.read().strip()
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
@@ -82,13 +87,26 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+# Database migrated to PostgreSQL
+# https://medium.com/djangotube/django-sqlite-to-postgresql-database-migration-e3c1f76711e1
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'radarhub',
+        'USER' : 'radarhub',
+        'PASSWORD' : DB_PASSWORD,
+        'HOST' : '10.197.14.38',
+        'PORT' : '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

@@ -1,5 +1,5 @@
 //
-//  app.js
+//  app1.js - Scope
 //  RadarHub
 //
 //  Created by Boonleng Cheong
