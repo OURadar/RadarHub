@@ -74,7 +74,7 @@ class File(models.Model):
             fullpath = self.getFullpath()
             if fullpath is None:
                 return None
-        
+
             with open(fullpath, 'rb') as fid:
                 return self.read(fid)
 
@@ -96,3 +96,6 @@ class Day(models.Model):
 
     def __repr__(self):
         return f'{self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
+
+    def show(self):
+        return f'{self.date} :: {self.name} :: {self.hourly_count}'

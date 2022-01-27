@@ -27,12 +27,10 @@ import multiprocessing
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
-pp = pprint.PrettyPrinter(indent=1, depth=1, width=90, sort_dicts=False)
+pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 
 from frontend.models import File, Day
-from common import colorize
-
-debug = False
+from common import colorize, show_variable
 
 def entry(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
     (path, name) = os.path.split(filename)
@@ -137,7 +135,11 @@ def process_arhives(id, run, lock, queue, out, verbose=0):
 
 def xzfolder(folder, hour=0, check_db=True, verbose=0):
     if verbose:
-        print(f'xzfolder() {folder}')
+        show = colorize('xzfolder()', 'green')
+        show += '   ' + show_variable('folder', folder)
+        show += '   ' + show_variable('hour', hour)
+        show += '   ' + show_variable('check_db', check_db)
+        print(show)
 
     basename = os.path.basename(folder)
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', basename)
@@ -148,11 +150,9 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         return
 
     if not check_db:
-        if verbose:
-            print('Checking a few things for quick mode ...')
         files = list_files(folder)
         prefix = os.path.basename(files[0]).split('-')[0] + '-'
-        d = check_day(s, name=prefix, verbose=verbose)
+        d = check_day(s, name=prefix, verbose=0)
         if d:
             print(f'WARNING: There are already {d.count:,d} entries.')
             print(f'WARNING: Quick insert can result in duplicates.')
@@ -164,7 +164,10 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
     prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
     date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59:59.99Z']
     if verbose:
-        print(f'date_range = {date_range}')
+        # print(f'date_range = {date_range}')
+        show = colorize('date_range', 'orange') + colorize(' = ', 'red')
+        show += '[' + colorize(date__range[0], 'yellow') + ', ' + colorize(date__range[0], 'yellow') + ']'
+        print(show)
 
     task_queue = multiprocessing.Queue()
     db_queue = multiprocessing.Queue()
@@ -223,84 +226,92 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
 
     print('Pass 2 / 2 - Inserting entries into the database ...')
 
-    if not check_db:
+    # Consolidating results
+    keys = sorted(keys)
+
+    if check_db:
         entries = File.objects.filter(date__range=date_range)
         pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
-    def handle_data(xx, use_re_pattern=False, check_db=check_db):
-        for yy in xx:
-            mode = 'N'
-            (name, offset, offset_data, size, archive) = yy
-            if check_db:
-                n = entries.filter(name=name)
-            else:
-                n = False
-            if n:
-                x = n[0]
-                if x.path != archive or x.size != size or x.offset != offset or x.offset_data != offset_data:
-                    mode = 'U'
-                    x.path = archive
-                    x.size = size
-                    x.offset = offset
-                    x.offset_data = offset_data
+        def handle_data(xx, use_re_pattern=False, check_db=check_db):
+            for yy in xx:
+                mode = 'N'
+                (name, offset, offset_data, size, archive) = yy
+                if check_db:
+                    n = entries.filter(name=name)
                 else:
-                    mode = 'I'
-            else:
-                # print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
-                if use_re_pattern:
-                    s = pattern.search(archive).group(0)
-                    datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+                    n = False
+                if n:
+                    x = n[0]
+                    if x.path != archive or x.size != size or x.offset != offset or x.offset_data != offset_data:
+                        mode = 'U'
+                        x.path = archive
+                        x.size = size
+                        x.offset = offset
+                        x.offset_data = offset_data
+                    else:
+                        mode = 'I'
                 else:
-                    c = name.split('-')
-                    d = c[1]
-                    t = c[2]
-                    datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
-                x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
-                # print(x.name)
-            # if debug:
-            #     print(f' - {mode} : {name} {offset} {offset_data} {size} {archive}')
-            if mode == 'N' or mode == 'U':
-                x.save()
-
-    def sweep_files(xx):
-        files = []
-        for yy in xx:
-            (name, offset, offset_data, size, archive) = yy
-            c = name.split('-')
-            d = c[1]
-            t = c[2]
-            datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
-            x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
-            files.append(x)
-        return files
-
-    # Consolidating results
-    keys = sorted(keys)
-    if check_db:
+                    # print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
+                    if use_re_pattern:
+                        s = pattern.search(archive).group(0)
+                        datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+                    else:
+                        c = name.split('-')
+                        d = c[1]
+                        t = c[2]
+                        datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
+                    x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
+                    # print(x.name)
+                if mode == 'N' or mode == 'U':
+                    x.save()
+        
         for key in tqdm.tqdm(keys):
             xx = output[key]['xx']
             handle_data(xx)
     else:
+        def sweep_files(xx):
+            files = []
+            for yy in xx:
+                (name, offset, offset_data, size, archive) = yy
+                c = name.split('-')
+                d = c[1]
+                t = c[2]
+                datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
+                x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
+                files.append(x)
+            return files
+
         t = time.time()
         array_of_files = [sweep_files(output[key]['xx']) for key in keys]
         files = [s for symbols in array_of_files for s in symbols]
         File.objects.bulk_create(files)
         t = time.time() - t
         a = len(files) / t
-        print(f'Bulk create took {t:.2f} sec ({a:,.0f} files / sec)')
+        print(f'Bulk create {t:.2f} sec ({a:,.0f} files / sec)')
 
     # Make a Day entry
     build_day(folder)
 
     e = time.time() - e
     a = len(archives) / e
-    print(f'Total elapsed time = {e:.2f} sec ({a:,.0f} files / sec)')
+    show = colorize(f'{e:.2f}', 'teal')
+    print(f'Total elapsed time = {show} sec ({a:,.0f} files / sec)')
 
 '''
     day - could either be a day string YYYYMMDD or a folder with the last
           part as day, e.g., /mnt/data/.../YYYYMMDD
 '''
 def build_day(day, name='PX-', verbose=0):
+    if verbose:
+        show = colorize('build_day()', 'green')
+        show += '   ' + show_variable('name', name)
+        print(show)
+
+    if name is None:
+        print('Name cannot be None')
+        return
+
     if '/' in day:
         s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day)
         file = os.path.basename(list_files(day)[0])
@@ -310,11 +321,10 @@ def build_day(day, name='PX-', verbose=0):
     if s:
         s = s.group(0)
     else:
-        print('Unble to determine the date')
+        print(f'Error. Unble to determine the date from {day}')
         return
-    date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
-    print(f'Building Day table for {date} / {name} ...')
+    date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
     mode = 'N'
     d = Day.objects.filter(date=date, name=name)
@@ -323,7 +333,6 @@ def build_day(day, name='PX-', verbose=0):
         d = d[0]
     else:
         d = Day(date=date, name=name)
-
 
     total = 0
     counts = [0] * 24
@@ -345,31 +354,36 @@ def build_day(day, name='PX-', verbose=0):
     else:
         mode = 'I'
 
-    print(f'{mode} {d.date} :: {d.duration:,d} :: {d.hourly_count}')
+    print(f'{mode} {d.show()}')
 
-def check_day(day, name='PX-', verbose=0):
+def check_day(day, name=None, verbose=0):
     if verbose:
         show = colorize('check_day()', 'green')
-        show += ' ' + colorize('day', 'orange') + ' = ' + colorize(day, 'yellow')
-        show += ' / ' + colorize('name', 'orange') + ' = ' + colorize(name, 'yellow')
+        show += '   ' + show_variable('day', day)
+        show += '   ' + show_variable('name', name)
         print(show)
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(day))
     if s:
         s = s.group(0)
     else:
         print(f'Unable to parse date string from input = {day}')
-        return 0
+        return None
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
-    d = Day.objects.filter(name=name, date=date)
-    if len(d) and verbose:
-        d = d[0]
-        print(f'C {d.date} :: {d.duration:,d} :: {d.hourly_count}')
+    if name:
+        dd = Day.objects.filter(name=name, date=date)
     else:
-        d = None
-    return d
+        dd = Day.objects.filter(date=date)
+    if len(dd):
+        for d in dd:
+            print(f'R {d.show()}')
+    else:
+        return None
+    return dd
 
 def show_sweep_summary(timestr):
-    print(f'timestr = {timestr}')
+    show = colorize('show_sweep_summary()', 'green')
+    show += '   ' + show_variable('timestr', timestr)
+    print(show)
     t = time.strptime(timestr, '%Y%m%d-%H%M%S')
     t = time.strftime('%Y-%m-%d %H:%M:%SZ', t)
     o = File.objects.filter(date=t).filter(name__contains='-Z.nc')
@@ -377,12 +391,16 @@ def show_sweep_summary(timestr):
         o = o[0]
     else:
         print('Time stamp not found')
+        return
     print(o.__repr__())
     sweep = o.getData()
     pp.pprint(sweep)
 
 def remove_duplicates(folder, verbose=0):
-    print(f'remove_duplicates: {folder}')
+    if verbose:
+        show = colorize('remove_duplicates()', 'green')
+        show += '   ' + show_variable('folder', folder)
+        print(show)
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
     e = time.localtime(time.mktime(time.strptime(s[:8], '%Y%m%d')) + 86400)
     day0 = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
@@ -399,7 +417,7 @@ def remove_duplicates(folder, verbose=0):
             for o in x:
                 if verbose:
                     print(o.__repr__())
-                o.delete()
+                # o.delete()
 
 #
 
@@ -416,6 +434,7 @@ def main():
             dbtool.py -d 20130520
             dbtool.py -s 20130520-191000
             dbtool.py -v
+            dbtool.py --latest
             dbtool.py --prefix PX- --latest
         '''))
     parser.add_argument('sources', type=str, nargs='*',
@@ -428,13 +447,10 @@ def main():
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
     parser.add_argument('--latest', action='store_true', help='shows the latest entry to the database, requires --prefix')
     parser.add_argument('--remove-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
-    parser.add_argument('--prefix', default='PX-', help='specify the radar prefix to process')
+    parser.add_argument('--prefix', help='specify the radar prefix to process')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep shows a summary')
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
-
-    global debug
-    debug = args.verbose > 1
 
     if '*' in args.sources:
         print('Expanding asterisk ...')
@@ -445,8 +461,12 @@ def main():
         print(args.sources)
 
     if args.latest:
-        print(f'Retrieving the latest entry with prefix {args.prefix} ...')
-        o = File.objects.filter(name__contains=args.prefix).latest('date')
+        show = show_variable('prefix', args.prefix)
+        print(f'Retrieving the latest entry ... {show} ...')
+        if args.prefix is None:
+            o = File.objects.latest('date')
+        else:
+            o = File.objects.filter(name__contains=args.prefix).latest('date')
         print(o.__repr__())
         return
 
@@ -464,11 +484,23 @@ def main():
     if args.insert:
         print('Inserting folder(s) with .tar.xz archives')
         for folder in args.sources:
+            print('===')
             xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
     elif args.quick_insert:
         print('Quick inserting folder(s) with .tar.xz archives')
         for folder in args.sources:
+            print('===')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
+
+    if args.remove_duplicates:
+        print('Checking for duplicates ...')
+        for folder in args.sources:
+            remove_duplicates(folder)
+
+    # The rest of the functions use args.prefix = 'PX-' if not specified
+
+    if args.prefix is None:
+        args.prefix = 'PX-'
 
     if args.day:
         for day in args.sources:
@@ -476,12 +508,9 @@ def main():
 
     if args.check_day:
         for day in args.sources:
-            check_day(day, name=args.prefix, verbose=args.verbose)
-
-    if args.remove_duplicates:
-        print('Checking for duplicates ...')
-        for folder in args.sources:
-            remove_duplicates(folder)
+            d = check_day(day, name=args.prefix, verbose=args.verbose)
+            if d is None:
+                print(f'Nothing for {day}')
 
 if __name__ == '__main__':
     main()
