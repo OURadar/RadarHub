@@ -134,7 +134,7 @@ def process_arhives(id, run, lock, queue, out, verbose=0):
     return
 
 
-def xzfolder(folder, hour=0):
+def xzfolder(folder, hour=0, check_db=True):
     print(f'xzfolder: {folder}')
 
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
@@ -203,11 +203,14 @@ def xzfolder(folder, hour=0):
 
     pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
-    def handle_data(xx, use_date_search=False):
+    def handle_data(xx, use_re_pattern=False, check_db=check_db):
         for yy in xx:
             mode = 'N'
             (name, offset, offset_data, size, archive) = yy
-            n = entries.filter(name=name)
+            if check_db:
+                n = entries.filter(name=name)
+            else:
+                n = False
             if n:
                 x = n[0]
                 if x.path != archive or x.size != size or x.offset != offset or x.offset_data != offset_data:
@@ -220,7 +223,7 @@ def xzfolder(folder, hour=0):
                     mode = 'I'
             else:
                 # print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
-                if use_date_search:
+                if use_re_pattern:
                     s = pattern.search(archive).group(0)
                     datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
                 else:
@@ -350,13 +353,16 @@ def main():
     parser.add_argument('sources', type=str, nargs='*',
         help='sources to process')
     parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
-    parser.add_argument('-d', dest='day', action='store_true', help='builds Day table')
-    parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder with xz archives')
+    parser.add_argument('-d', dest='day', action='store_true', help='builds a Day table of the day')
+    parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
+    parser.add_argument('-j', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
     parser.add_argument('--latest', action='store_true', help='shows the latest entry to the database, requires --prefix')
     parser.add_argument('--remove-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
-    parser.add_argument('--prefix', help='specify the prefix to process')
-    parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep')    
+    parser.add_argument('--prefix', help='specify the radar prefix to process')
+    parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep shows a summary')
+    parser.add_argument('--skip-check-db', dest='check_db', action='store_false', default=True, help='skips checking database')
+
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
@@ -394,7 +400,11 @@ def main():
     if args.insert:
         print('Inserting folder(s) with .tar.xz archives')
         for folder in args.sources:
-            xzfolder(folder, hour=args.hour)
+            xzfolder(folder, hour=args.hour, check_db=True)
+    elif args.quick_insert:
+        print('Inserting folder(s) with .tar.xz archives without check')
+        for folder in args.sources:
+            xzfolder(folder, hour=args.hour, check_db=False)
 
     if args.day:
         for day in args.sources:
