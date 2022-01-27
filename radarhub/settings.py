@@ -26,11 +26,6 @@ if os.path.exists(BASE_DIR / 'secret-key'):
     with open(BASE_DIR / 'secret-key') as fid:
         SECRET_KEY = fid.read().strip()
 
-DB_PASSWORD = 'password'
-if os.path.exists(BASE_DIR / 'db-password'):
-    with open(BASE_DIR / 'db-password') as fid:
-        DB_PASSWORD = fid.read().strip()
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
@@ -97,14 +92,23 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Database migrated to PostgreSQL
 # https://medium.com/djangotube/django-sqlite-to-postgresql-database-migration-e3c1f76711e1
 
+DB_USERNAME = 'guest'
+DB_PASSWORD = 'radarhub'
+if os.path.exists(BASE_DIR / 'db-password'):
+    with open(BASE_DIR / 'db-password') as fid:
+        DB_USERNAME = 'radarhub'
+        DB_PASSWORD = fid.read().strip()
+
+print(f'DB_USERNAME = {DB_USERNAME}   DB_PASSWORD = {DB_PASSWORD}')
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'radarhub',
-        'USER' : 'radarhub',
-        'PASSWORD' : DB_PASSWORD,
-        'HOST' : '10.197.14.38',
-        'PORT' : '5432',
+        'USER': DB_USERNAME,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': '10.197.14.38',
+        'PORT': '5432',
     }
 }
 

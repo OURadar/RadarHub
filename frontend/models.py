@@ -7,7 +7,7 @@ from django.core.validators import int_list_validator
 
 # Create your models here.
 class File(models.Model):
-    name = models.CharField(max_length=32)
+    name = models.CharField(max_length=48)
     path = models.CharField(max_length=256)
     date = models.DateTimeField()
     size = models.PositiveIntegerField(0)

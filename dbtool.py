@@ -197,11 +197,13 @@ def xzfolder(folder, hour=0):
         keys.append(key)
         output[key] = out
 
+    print('Pass 2 / 2 - Inserting entries into the database ...')
+
     entries = File.objects.filter(date__range=date_range)
 
     pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
-    def handle_data(xx, use_date_search=True):
+    def handle_data(xx, use_date_search=False):
         for yy in xx:
             mode = 'N'
             (name, offset, offset_data, size, archive) = yy
@@ -234,11 +236,11 @@ def xzfolder(folder, hour=0):
                 x.save()
 
     # Consolidating results
-    print('Pass 2 / 2 - Inserting entries into the database ...')
     for key in tqdm.tqdm(sorted(keys)):
         xx = output[key]['xx']
         handle_data(xx)
 
+    # Make a Day entry
     daycount(folder)
 
     e = time.time() - e

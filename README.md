@@ -271,10 +271,23 @@ postgres-# alter database radarhub owner to radarhub;
 
 Also, configure [PostgreSQL] to be accessible through network by adding/modifying the following lines to the configuration file `/etc/postgresql/12/main/postgresql.conf`:
 
-```text
+```conf
 listen_addresses = '*'
 ```
 
+### Some Useful Commands
+
+```sql
+SELECT
+    table_name,
+    column_name,
+    data_type,
+    character_maximum_length
+FROM
+    information_schema.columns
+WHERE
+    table_name = 'frontend_file';
+```
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
@@ -285,4 +298,4 @@ listen_addresses = '*'
 [redis]: https://redis.io
 [nginx]: https://www.nginx.com
 [supervisor]: http://supervisord.org
-[PostgreSQL]: https://www.postgresql.org
+[postgresql]: https://www.postgresql.org
