@@ -149,14 +149,19 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         print('Error in re.search()')
         return
 
+    raw_archives = list_files(folder)
+    if len(raw_archives) == 0:
+        print('No files. Unable to continue.')
+        return
+
     if not check_db:
-        files = list_files(folder)
-        prefix = os.path.basename(files[0]).split('-')[0] + '-'
-        d = check_day(s, name=prefix, verbose=0)
+        name = os.path.basename(raw_archives[0]).split('-')[0] + '-'
+        d = check_day(s, name=name, verbose=0)
         if d:
+            d = d[0]
             print(f'WARNING: There are already {d.count:,d} entries.')
-            print(f'WARNING: Quick insert can result in duplicates.')
-            ans = input('Do you want to continue (y/[n])? ')
+            print(f'WARNING: Quick insert will result in duplicates. Try -i instead.')
+            ans = input('Do you still want to continue (y/[n])? ')
             if not ans == 'y':
                 print('Whew. Nothing happend.')
                 return
@@ -173,10 +178,6 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
     db_queue = multiprocessing.Queue()
     lock = multiprocessing.Lock()
     run = multiprocessing.Value('i', 1)
-    raw_archives = list_files(folder)
-    if len(raw_archives) == 0:
-        print('No files. Unable to continue.')
-        return
 
     archives = []
     for archive in raw_archives:

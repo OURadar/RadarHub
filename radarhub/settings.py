@@ -13,6 +13,12 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 
+from common import show_variable
+
+# My additional parameters
+VERBOSE = 1
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,8 +35,8 @@ if os.path.exists(BASE_DIR / 'secret-key'):
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
-# print(f'\033[38;5;15mSECRET_KEY = {SECRET_KEY}\033[m')
-print(f'\033[38;5;15mDEBUG = {DEBUG}\033[m')
+if VERBOSE:
+    print(show_variable('DEBUG', DEBUG))
 
 ALLOWED_HOSTS = ['*']
 
@@ -99,7 +105,10 @@ if os.path.exists(BASE_DIR / 'db-password'):
         DB_USERNAME = 'radarhub'
         DB_PASSWORD = fid.read().strip()
 
-print(f'DB_USERNAME = {DB_USERNAME}   DB_PASSWORD = {DB_PASSWORD}')
+if VERBOSE:
+    show = show_variable('DB_USERNAME', DB_USERNAME)
+    show += '   ' + show_variable('DB_PASSWORD', DB_PASSWORD)
+    print(show)
 
 DATABASES = {
     'default': {
