@@ -30,6 +30,7 @@ django.setup()
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=90, sort_dicts=False)
 
 from frontend.models import File, Day
+from common import colorize
 
 debug = False
 
@@ -199,9 +200,9 @@ def xzfolder(folder, hour=0, check_db=True):
 
     print('Pass 2 / 2 - Inserting entries into the database ...')
 
-    entries = File.objects.filter(date__range=date_range)
-
-    pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
+    if not check_db:
+        entries = File.objects.filter(date__range=date_range)
+        pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
     def handle_data(xx, use_re_pattern=False, check_db=check_db):
         for yy in xx:
@@ -238,17 +239,39 @@ def xzfolder(folder, hour=0, check_db=True):
             if mode == 'N' or mode == 'U':
                 x.save()
 
+    def sweep_files(xx):
+        files = []
+        for yy in xx:
+            (name, offset, offset_data, size, archive) = yy
+            c = name.split('-')
+            d = c[1]
+            t = c[2]
+            datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
+            x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
+            files.append(x)
+        return files
+
     # Consolidating results
-    for key in tqdm.tqdm(sorted(keys)):
-        xx = output[key]['xx']
-        handle_data(xx)
+    keys = sorted(keys)
+    if check_db:
+        for key in tqdm.tqdm(keys):
+            xx = output[key]['xx']
+            handle_data(xx)
+    else:
+        t = time.time()
+        array_of_files = [sweep_files(output[key]['xx']) for key in keys]
+        files = [s for symbols in array_of_files for s in symbols]
+        File.objects.bulk_create(files)
+        t = time.time() - t
+        a = len(files) / t
+        print(f'Bulk create took {t:.2f} sec ({a:,.0f} files / sec)')
 
     # Make a Day entry
     daycount(folder)
 
     e = time.time() - e
-    a = e / len(archives)
-    print(f'Elapsed time = {e:.2f} sec ({a:.2f} s / file)')
+    a = len(archives) / e
+    print(f'Total elapsed time = {e:.2f} sec ({a:,.0f} files / sec)')
 
 '''
     day - could either be a day string YYYYMMDD or a folder with the last
@@ -361,7 +384,6 @@ def main():
     parser.add_argument('--remove-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
     parser.add_argument('--prefix', help='specify the radar prefix to process')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep shows a summary')
-    parser.add_argument('--skip-check-db', dest='check_db', action='store_false', default=True, help='skips checking database')
 
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
@@ -402,7 +424,7 @@ def main():
         for folder in args.sources:
             xzfolder(folder, hour=args.hour, check_db=True)
     elif args.quick_insert:
-        print('Inserting folder(s) with .tar.xz archives without check')
+        print('Quick inserting folder(s) with .tar.xz archives')
         for folder in args.sources:
             xzfolder(folder, hour=args.hour, check_db=False)
 
