@@ -135,13 +135,36 @@ def process_arhives(id, run, lock, queue, out, verbose=0):
     return
 
 
-def xzfolder(folder, hour=0, check_db=True):
-    print(f'xzfolder: {folder}')
+def xzfolder(folder, hour=0, check_db=True, verbose=0):
+    if verbose:
+        print(f'xzfolder() {folder}')
 
-    s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
+    basename = os.path.basename(folder)
+    s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', basename)
+    if s:
+        s = s[0]
+    else:
+        print('Error in re.search()')
+        return
+
+    if not check_db:
+        if verbose:
+            print('Checking a few things for quick mode ...')
+        files = list_files(folder)
+        prefix = os.path.basename(files[0]).split('-')[0] + '-'
+        d = check_day(s, name=prefix, verbose=verbose)
+        if d:
+            print(f'WARNING: There are already {d.count:,d} entries.')
+            print(f'WARNING: Quick insert can result in duplicates.')
+            ans = input('Do you want to continue (y/[n])? ')
+            if not ans == 'y':
+                print('Whew. Nothing happend.')
+                return
+
     prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
     date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59:59.99Z']
-    print(f'date_range = {date_range}')
+    if verbose:
+        print(f'date_range = {date_range}')
 
     task_queue = multiprocessing.Queue()
     db_queue = multiprocessing.Queue()
@@ -267,7 +290,7 @@ def xzfolder(folder, hour=0, check_db=True):
         print(f'Bulk create took {t:.2f} sec ({a:,.0f} files / sec)')
 
     # Make a Day entry
-    daycount(folder)
+    build_day(folder)
 
     e = time.time() - e
     a = len(archives) / e
@@ -277,7 +300,7 @@ def xzfolder(folder, hour=0, check_db=True):
     day - could either be a day string YYYYMMDD or a folder with the last
           part as day, e.g., /mnt/data/.../YYYYMMDD
 '''
-def daycount(day, name='PX-'):
+def build_day(day, name='PX-', verbose=0):
     if '/' in day:
         s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day)
         file = os.path.basename(list_files(day)[0])
@@ -301,11 +324,12 @@ def daycount(day, name='PX-'):
     else:
         d = Day(date=date, name=name)
 
+
     total = 0
     counts = [0] * 24
     for k in range(24):
-        dateRange = [f'{date} {k:02d}:00Z', f'{date} {k:02d}:59Z']
-        matches = File.objects.filter(name__contains='-Z.nc', date__range=dateRange)
+        date_range = [f'{date} {k:02d}:00Z', f'{date} {k:02d}:59Z']
+        matches = File.objects.filter(name__contains='-Z.nc', date__range=date_range)
         matches = matches.filter(name__contains=name)
         counts[k] = len(matches)
         total += counts[k]
@@ -322,6 +346,27 @@ def daycount(day, name='PX-'):
         mode = 'I'
 
     print(f'{mode} {d.date} :: {d.duration:,d} :: {d.hourly_count}')
+
+def check_day(day, name='PX-', verbose=0):
+    if verbose:
+        show = colorize('check_day()', 'green')
+        show += ' ' + colorize('day', 'orange') + ' = ' + colorize(day, 'yellow')
+        show += ' / ' + colorize('name', 'orange') + ' = ' + colorize(name, 'yellow')
+        print(show)
+    s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(day))
+    if s:
+        s = s.group(0)
+    else:
+        print(f'Unable to parse date string from input = {day}')
+        return 0
+    date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
+    d = Day.objects.filter(name=name, date=date)
+    if len(d) and verbose:
+        d = d[0]
+        print(f'C {d.date} :: {d.duration:,d} :: {d.hourly_count}')
+    else:
+        d = None
+    return d
 
 def show_sweep_summary(timestr):
     print(f'timestr = {timestr}')
@@ -376,15 +421,15 @@ def main():
     parser.add_argument('sources', type=str, nargs='*',
         help='sources to process')
     parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
+    parser.add_argument('-c', dest='check_day', action='store_true', help='checks a Day table of the day')
     parser.add_argument('-d', dest='day', action='store_true', help='builds a Day table of the day')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-j', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
     parser.add_argument('--latest', action='store_true', help='shows the latest entry to the database, requires --prefix')
     parser.add_argument('--remove-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
-    parser.add_argument('--prefix', help='specify the radar prefix to process')
+    parser.add_argument('--prefix', default='PX-', help='specify the radar prefix to process')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep shows a summary')
-
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
@@ -400,9 +445,6 @@ def main():
         print(args.sources)
 
     if args.latest:
-        if not args.prefix:
-            print('This method requires --prefix')
-            return
         print(f'Retrieving the latest entry with prefix {args.prefix} ...')
         o = File.objects.filter(name__contains=args.prefix).latest('date')
         print(o.__repr__())
@@ -422,15 +464,19 @@ def main():
     if args.insert:
         print('Inserting folder(s) with .tar.xz archives')
         for folder in args.sources:
-            xzfolder(folder, hour=args.hour, check_db=True)
+            xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
     elif args.quick_insert:
         print('Quick inserting folder(s) with .tar.xz archives')
         for folder in args.sources:
-            xzfolder(folder, hour=args.hour, check_db=False)
+            xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
 
     if args.day:
         for day in args.sources:
-            daycount(day, name=args.prefix)
+            build_day(day, name=args.prefix, verbose=args.verbose)
+
+    if args.check_day:
+        for day in args.sources:
+            check_day(day, name=args.prefix, verbose=args.verbose)
 
     if args.remove_duplicates:
         print('Checking for duplicates ...')
