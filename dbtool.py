@@ -234,14 +234,11 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         entries = File.objects.filter(date__range=date_range)
         pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
-        def handle_data(xx, use_re_pattern=False, check_db=check_db):
+        def handle_data(xx, use_re_pattern=False):
+            files = []
             for yy in xx:
-                mode = 'N'
                 (name, offset, offset_data, size, archive) = yy
-                if check_db:
-                    n = entries.filter(name=name)
-                else:
-                    n = False
+                n = entries.filter(name=name)
                 if n:
                     x = n[0]
                     if x.path != archive or x.size != size or x.offset != offset or x.offset_data != offset_data:
@@ -253,7 +250,7 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
                     else:
                         mode = 'I'
                 else:
-                    # print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
+                    mode = 'N'
                     if use_re_pattern:
                         s = pattern.search(archive).group(0)
                         datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
@@ -263,13 +260,25 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
                         t = c[2]
                         datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
                     x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
-                    # print(x.name)
+                print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
                 if mode == 'N' or mode == 'U':
                     x.save()
+                files.append(x)
+            return files
         
-        for key in tqdm.tqdm(keys):
-            xx = output[key]['xx']
-            handle_data(xx)
+        # for key in tqdm.tqdm(keys):
+        #     xx = output[key]['xx']
+        #     handle_data(xx)
+
+        # Wish there is a bulk update-create in one
+        # t = time.time()
+        # array_of_files = [handle_data(output[key]['xx']) for key in keys]
+        # files = [s for symbols in array_of_files for s in symbols]
+        # File.objects.bulk_update(files)
+        # t = time.time() - t
+        # a = len(files) / t
+        # print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)')
+
     else:
         def sweep_files(xx):
             files = []
