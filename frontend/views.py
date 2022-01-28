@@ -32,6 +32,7 @@ def archive_radar_profile(request, radar, profileGL):
 
     show = colorize('archive_radar_profile()', 'green')
     show += '   ' + show_variable('radar', radar)
+    show += '   ' + show_variable('profileGL', profileGL)
     print(show)
     origin = location(radar)
     obj = {'radar': radar, 'origin': origin, 'profileGL': profileGL}

@@ -66,8 +66,8 @@ def month(request, radar, day, verbose=settings.VERBOSE):
         return HttpResponse(f'Not a valid query.', status=500)    
     if verbose:
         show = colorize('archive.month()', 'green')
-        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
-        show += ' / ' + colorize('day', 'orange') + ' = ' + colorize(day, 'yellow')
+        show += '   ' + show_variable('radar', radar)
+        show += '   ' + show_variable('day', day)
         print(show)
     y = int(day[0:4])
     m = int(day[4:6])
@@ -100,8 +100,8 @@ def count(request, radar, day, verbose=settings.VERBOSE):
         return HttpResponse(f'Not a valid query.', status=500)
     if verbose:
         show = colorize('archive.count()', 'green')
-        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
-        show += ' / ' + colorize('day', 'orange') + ' = ' + colorize(day, 'yellow')
+        show += '   ' + show_variable('radar', radar)
+        show += '   ' + show_variable('day', day)
         print(show)
     n = [0 for _ in range(24)]
     date = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
@@ -121,7 +121,7 @@ def count(request, radar, day, verbose=settings.VERBOSE):
     radar - a string of the radar name
           - e.g., px1000, raxpol, or px10k
 
-    hour - a string in the forms of
+    hour_prod - a string with day, hour, and product symbol in the forms of
         - YYYYMMDD-HHMM-S
         - YYYYMMDD-HHMM
         - YYYYMMDD-HH-S
@@ -129,8 +129,8 @@ def count(request, radar, day, verbose=settings.VERBOSE):
         - YYYYMMDD-S
         - YYYYMMDD
 '''
-def _list(radar, hour):
-    c = hour.split('-');
+def _list(radar, hour_prod):
+    c = hour_prod.split('-');
     if len(c) == 1:
         c.append('0000')
     elif len(c[1]) == 2:
@@ -141,20 +141,20 @@ def _list(radar, hour):
     e = time.localtime(time.mktime(s) + 3599)
     ss = time.strftime('%Y-%m-%d %H:%M:%SZ', s)
     ee = time.strftime('%Y-%m-%d %H:%M:%SZ', e)
-    dateRange = [ss, ee]
+    date_range = [ss, ee]
     prefix = radar2prefix(radar)
-    matches = File.objects.filter(date__range=dateRange, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
+    matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     return [o.name for o in matches]
 
-def list(request, radar, hour, verbose=1):
+def list(request, radar, hour_prod, verbose=settings.VERBOSE):
     if verbose:
-        show = colorize('archive.count()', 'green')
-        show += ' ' + show_variable('hour', hour)
+        show = colorize('archive.list()', 'green')
+        show += '   ' + show_variable('hour_prod', hour_prod)
         print(show)
-    if radar == 'undefined' or hour == 'undefined':
+    if radar == 'undefined' or hour_prod == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
     data = {
-        'list': _list(radar, hour)
+        'list': _list(radar, hour_prod)
     }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -225,9 +225,9 @@ def _date(radar, verbose=settings.VERBOSE):
     ymd = day.date.strftime('%Y%m%d')
     if verbose:
         show = colorize('archive.date()', 'green')
-        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
-        show += ' / ' + colorize('prefix', 'orange') + ' = ' + colorize(prefix, 'yellow')
-        show += ' / ' + colorize('day', 'orange') + ' = ' + colorize(ymd, 'yellow')
+        show += '   ' + show_variable('radar', radar)
+        show += '   ' + show_variable('prefix', prefix)
+        show += '   ' + show_variable('day', ymd)
         print(show)
     hour = max([k for k, e in enumerate(day.hourly_count.split(',')) if e != '0'])
     return ymd, hour
@@ -285,7 +285,6 @@ def location(radar, verbose=settings.VERBOSE):
                 'last': ymd_hm
             }
     if verbose:
-        show = colorize('archive.location()', 'green')
-        print(show)
+        print(colorize('archive.location()', 'green'))
         pp.pprint(origins)
     return origins[radar]
