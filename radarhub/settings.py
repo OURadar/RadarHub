@@ -16,7 +16,7 @@ from pathlib import Path
 from common import show_variable
 
 # My additional parameters
-VERBOSE = 1
+VERBOSE = 0
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

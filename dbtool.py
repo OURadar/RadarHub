@@ -397,24 +397,34 @@ def show_sweep_summary(timestr):
     sweep = o.getData()
     pp.pprint(sweep)
 
-def find_duplicates(folder, remove=False, verbose=0):
+def find_duplicates(folder, prefix=None, remove=False, verbose=0):
     if verbose:
         show = colorize('find_duplicates()', 'green')
         show += '   ' + show_variable('folder', folder)
         show += '   ' + show_variable('remove', remove)
         print(show)
+
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
     e = time.localtime(time.mktime(time.strptime(s[:8], '%Y%m%d')) + 86400)
     day0 = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
     day1 = time.strftime('%Y-%m-%d', e)
     date_range = [f'{day0} 00:00Z', f'{day1} 00:00Z']
+
     if verbose:
         show = colorize('date_range', 'orange') + colorize(' = ', 'red')
         show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
         print(show)
 
-    entries = File.objects.filter(date__range=date_range)
+    if prefix:
+        entries = File.objects.filter(date__range=date_range, name__contains=prefix)
+    else:
+        entries = File.objects.filter(date__range=date_range)
+
     names = [file.name for file in entries]
+
+    if len(names) == 0:
+        print('No match')
+        return
 
     count = 0;
     for name in tqdm.tqdm(names):
@@ -434,7 +444,7 @@ def find_duplicates(folder, remove=False, verbose=0):
 
 #
 
-def main():
+def dbtool_main():
     parser = argparse.ArgumentParser(prog='dbtool.py',
         formatter_class=argparse.RawTextHelpFormatter,
         description=textwrap.dedent('''\
@@ -452,29 +462,28 @@ def main():
             dbtool.py -v --find-duplicates 20220127
             dbtool.py -v --find-duplicates --remove 20220127
         '''))
-    parser.add_argument('sources', type=str, nargs='*',
-        help='sources to process')
+    parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
     parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
     parser.add_argument('-c', dest='check_day', action='store_true', help='checks a Day table of the day')
     parser.add_argument('-d', dest='day', action='store_true', help='builds a Day table of the day')
-    parser.add_argument('--find-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
+    parser.add_argument('-f', '--find-duplicates', action='store_true', help='finds duplicate entries in the database')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
-    parser.add_argument('-j', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
+    parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
-    parser.add_argument('--latest', action='store_true', help='shows the latest entry to the database, requires --prefix')
+    parser.add_argument('--latest', action='store_true', help='shows the latest entry, requires --prefix')
     parser.add_argument('--prefix', help='sets the radar prefix to process')
-    parser.add_argument('--remove', action='store_true', help='removes duplicates when combined with --find-duplicates')
+    parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep shows a summary')
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
-    if '*' in args.sources:
+    if '*' in args.source:
         print('Expanding asterisk ...')
-        args.sources = glob.glob(args.sources)
-        if len(args.sources) == 0:
+        args.source = glob.glob(args.source)
+        if len(args.source) == 0:
             print('No match')
             return
-        print(args.sources)
+        print(args.source)
 
     if args.latest:
         show = show_variable('prefix', args.prefix)
@@ -494,24 +503,24 @@ def main():
 
     if args.sweep:
         e = time.time()
-        for timestr in args.sources:
+        for timestr in args.source:
             show_sweep_summary(timestr)
 
     if args.insert:
         print('Inserting folder(s) with .tar.xz archives')
-        for folder in args.sources:
+        for folder in args.source:
             print('===')
             xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
     elif args.quick_insert:
         print('Quick inserting folder(s) with .tar.xz archives')
-        for folder in args.sources:
+        for folder in args.source:
             print('===')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
 
     if args.find_duplicates:
         print(f'Finding duplicates ...')
-        for folder in args.sources:
-            find_duplicates(folder, remove=args.remove, verbose=args.verbose)
+        for folder in args.source:
+            find_duplicates(folder, prefix=args.prefix, remove=args.remove, verbose=args.verbose)
 
     # The rest of the functions use args.prefix = 'PX-' if not specified
 
@@ -519,14 +528,14 @@ def main():
         args.prefix = 'PX-'
 
     if args.day:
-        for day in args.sources:
+        for day in args.source:
             build_day(day, name=args.prefix, verbose=args.verbose)
 
     if args.check_day:
-        for day in args.sources:
+        for day in args.source:
             d = check_day(day, name=args.prefix, verbose=args.verbose)
             if d is None:
                 print(f'Nothing for {day}')
 
 if __name__ == '__main__':
-    main()
+    dbtool_main()
