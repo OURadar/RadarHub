@@ -171,7 +171,7 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
     if verbose:
         # print(f'date_range = {date_range}')
         show = colorize('date_range', 'orange') + colorize(' = ', 'red')
-        show += '[' + colorize(date__range[0], 'yellow') + ', ' + colorize(date__range[0], 'yellow') + ']'
+        show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
         print(show)
 
     task_queue = multiprocessing.Queue()
@@ -397,28 +397,40 @@ def show_sweep_summary(timestr):
     sweep = o.getData()
     pp.pprint(sweep)
 
-def remove_duplicates(folder, verbose=0):
+def find_duplicates(folder, remove=False, verbose=0):
     if verbose:
-        show = colorize('remove_duplicates()', 'green')
+        show = colorize('find_duplicates()', 'green')
         show += '   ' + show_variable('folder', folder)
+        show += '   ' + show_variable('remove', remove)
         print(show)
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
     e = time.localtime(time.mktime(time.strptime(s[:8], '%Y%m%d')) + 86400)
     day0 = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
     day1 = time.strftime('%Y-%m-%d', e)
     date_range = [f'{day0} 00:00Z', f'{day1} 00:00Z']
-    print(f'date_range = {date_range}')
+    if verbose:
+        show = colorize('date_range', 'orange') + colorize(' = ', 'red')
+        show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
+        print(show)
 
     entries = File.objects.filter(date__range=date_range)
+    names = [file.name for file in entries]
 
-    for entry in tqdm.tqdm(entries):
-        x = entries.filter(name=entry.name)
-        if len(x) > 1:
-            print(f'{entry.name} has {len(x)} entries')
-            for o in x:
-                if verbose:
-                    print(o.__repr__())
-                # o.delete()
+    count = 0;
+    for name in tqdm.tqdm(names):
+        if names.count(name) == 1:
+            continue
+        x = entries.filter(name=name)
+        print(f'{name} has {len(x)} entries')
+        for o in x[1:]:
+            if verbose > 1:
+                print(o.__repr__())
+            if remove:
+                count += 1
+                o.delete()
+
+    if count:
+        print(f'Removed {count} files')
 
 #
 
@@ -434,21 +446,24 @@ def main():
             dbtool.py -i /data/PX1000/2013/201305*
             dbtool.py -d 20130520
             dbtool.py -s 20130520-191000
-            dbtool.py -v
-            dbtool.py --latest
+            dbtool.py --last
             dbtool.py --prefix PX- --latest
+            dbtool.py -c 20220127
+            dbtool.py -v --find-duplicates 20220127
+            dbtool.py -v --find-duplicates --remove 20220127
         '''))
     parser.add_argument('sources', type=str, nargs='*',
         help='sources to process')
     parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
     parser.add_argument('-c', dest='check_day', action='store_true', help='checks a Day table of the day')
     parser.add_argument('-d', dest='day', action='store_true', help='builds a Day table of the day')
+    parser.add_argument('--find-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-j', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
     parser.add_argument('--latest', action='store_true', help='shows the latest entry to the database, requires --prefix')
-    parser.add_argument('--remove-duplicates', action='store_true', help='finds and removes duplicate entries in the database')
-    parser.add_argument('--prefix', help='specify the radar prefix to process')
+    parser.add_argument('--prefix', help='sets the radar prefix to process')
+    parser.add_argument('--remove', action='store_true', help='removes duplicates when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep shows a summary')
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
@@ -493,10 +508,10 @@ def main():
             print('===')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
 
-    if args.remove_duplicates:
-        print('Checking for duplicates ...')
+    if args.find_duplicates:
+        print(f'Finding duplicates ...')
         for folder in args.sources:
-            remove_duplicates(folder)
+            find_duplicates(folder, remove=args.remove, verbose=args.verbose)
 
     # The rest of the functions use args.prefix = 'PX-' if not specified
 
