@@ -4,8 +4,19 @@ import numpy as np
 from netCDF4 import Dataset
 from django.db import models
 from django.core.validators import int_list_validator
+from django.conf import settings
 
 # Create your models here.
+
+'''
+File
+ - name = filename of the sweep, e.g., PX-20130520-191000-E2.6-Z.nc
+ - path = absolute path of the data, e.g., /mnt/data/PX1000/2013/20130520/_original/PX-20130520-191000-E2.6.tar.xz
+ - date = date in database native format (UTC)
+ - size = size of the .nc file (from tarinfo)
+ - offset = offset of the .nc file (from tarinfo)
+ - offset_data = offset_data of the .nc file (from tarinfo)
+'''
 class File(models.Model):
     name = models.CharField(max_length=48)
     path = models.CharField(max_length=256)
@@ -62,7 +73,8 @@ class File(models.Model):
 
     def getData(self):
         if any([ext in self.path for ext in ['tgz', 'tar.xz']]):
-            print(f'models.File.getData() {self.path}')
+            if settings.VERBOSE:
+                print(f'models.File.getData() {self.path}')
             with tarfile.open(self.path) as aid:
                 info = tarfile.TarInfo(self.name)
                 info.size = self.size
@@ -78,6 +90,18 @@ class File(models.Model):
             with open(fullpath, 'rb') as fid:
                 return self.read(fid)
 
+'''
+Day
+ - date = date in database native format (UTC)
+ - name = name of the dataset, e.g., PX-
+ - count = number of volumes
+ - duration = estimated collection time, assuming each volume takes 20s
+ - blue = for future
+ - green = for future
+ - orange = for future
+ - red = for future
+ - hourly_count = number of volumes of each hour
+'''
 class Day(models.Model):
     date = models.DateField()
     name = models.CharField(max_length=8, default='PX-')

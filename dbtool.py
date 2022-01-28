@@ -339,8 +339,7 @@ def build_day(day, name='PX-', verbose=0):
     counts = [0] * 24
     for k in range(24):
         date_range = [f'{date} {k:02d}:00Z', f'{date} {k:02d}:59Z']
-        matches = File.objects.filter(name__contains='-Z.nc', date__range=date_range)
-        matches = matches.filter(name__contains=name)
+        matches = File.objects.filter(name__startswith=name, name__endswith='-Z.nc', date__range=date_range)
         counts[k] = len(matches)
         total += counts[k]
 
@@ -387,7 +386,7 @@ def show_sweep_summary(timestr):
     print(show)
     t = time.strptime(timestr, '%Y%m%d-%H%M%S')
     t = time.strftime('%Y-%m-%d %H:%M:%SZ', t)
-    o = File.objects.filter(date=t).filter(name__contains='-Z.nc')
+    o = File.objects.filter(date=t).filter(name__endswith='-Z.nc')
     if o:
         o = o[0]
     else:
@@ -416,7 +415,7 @@ def find_duplicates(folder, prefix=None, remove=False, verbose=0):
         print(show)
 
     if prefix:
-        entries = File.objects.filter(date__range=date_range, name__contains=prefix)
+        entries = File.objects.filter(date__range=date_range, name__startswith=prefix)
     else:
         entries = File.objects.filter(date__range=date_range)
 
@@ -491,7 +490,7 @@ def dbtool_main():
         if args.prefix is None:
             o = File.objects.latest('date')
         else:
-            o = File.objects.filter(name__contains=args.prefix).latest('date')
+            o = File.objects.filter(name__startswith=args.prefix).latest('date')
         print(o.__repr__())
         return
 
