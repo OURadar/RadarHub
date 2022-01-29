@@ -209,10 +209,10 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             basename = os.path.basename(archive)
             if os.path.exists('/mnt/ramdisk'):
                 ramfile = f'/mnt/ramdisk/{basename}'
-                shutil.copy(archive, ramfile)
-                task_queue.put({'archive': archive, 'ramfile': ramfile})
             else:
-                task_queue.put({'archive': archive, 'ramfile': archive})
+                ramfile = f'{basename}'
+            shutil.copy(archive, ramfile)            
+            task_queue.put({'archive': archive, 'ramfile': ramfile})
             while task_queue.qsize() > 2 * count:
                 time.sleep(0.1)
             while not db_queue.empty():
@@ -251,7 +251,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         entries = File.objects.filter(date__range=date_range)
         pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
-        def handle_data(xx, use_re_pattern=False, save=False):
+        def __handle_data__(xx, use_re_pattern=False, save=False):
             files = []
             for yy in xx:
                 (name, offset, offset_data, size, archive) = yy
@@ -288,7 +288,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         if use_bulk_update:
             t = time.time()
             print('Gathering entries ...')
-            array_of_files = [handle_data(output[key]['xx']) for key in keys]
+            array_of_files = [__handle_data__(output[key]['xx'], save=False) for key in keys]
             files = [s for symbols in array_of_files for s in symbols]
             print('Updating database ...')
             File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'], batch_size=1000)
@@ -298,9 +298,9 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         else:
             for key in tqdm.tqdm(keys):
                 xx = output[key]['xx']
-                handle_data(xx, save=True)
+                __handle_data__(xx, save=True)
     else:
-        def sweep_files(xx):
+        def __sweep_files__(xx):
             files = []
             for yy in xx:
                 (name, offset, offset_data, size, archive) = yy
@@ -314,7 +314,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
 
         t = time.time()
         print('Gathering entries ...')
-        array_of_files = [sweep_files(output[key]['xx']) for key in keys]
+        array_of_files = [__sweep_files__(output[key]['xx']) for key in keys]
         files = [s for symbols in array_of_files for s in symbols]
         print('Updating database ...')
         File.objects.bulk_create(files)
@@ -472,6 +472,20 @@ def find_duplicates(folder, prefix=None, remove=False, verbose=0):
     if count:
         print(f'Removed {count} files')
 
+def check_latest():
+    show = colorize('check_latest()', 'green')
+    print(show)
+    for name in ['PX-', 'PX10K-', 'RAXPOL-']:
+        day = Day.objects.filter(name=name).latest('date')
+        ymd = day.date.strftime('%Y-%m-%d')
+        hour = max([k for k, e in enumerate(day.hourly_count.split(',')) if e != '0'])
+        day_hour = f'{ymd} {hour:02d}'
+        date_range = [f'{day_hour}:00:00Z', f'{day_hour}:59:59.9Z']
+        file = File.objects.filter(name__startswith=name, date__range=date_range).latest('date')
+        show = show_variable('date_range[0]', date_range[0])
+        show += '   ' + show_variable('name', file.name)
+        print(show)
+
 #
 
 def dbtool_main():
@@ -503,6 +517,7 @@ def dbtool_main():
     parser.add_argument('--latest', action='store_true', help='shows the latest entry, requires --prefix')
     parser.add_argument('--prefix', help='sets the radar prefix to process')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
+    parser.add_argument('-r', dest='radar', action='store_true', help='checks radars')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep shows a summary')
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
@@ -516,13 +531,7 @@ def dbtool_main():
         print(args.source)
 
     if args.latest:
-        show = show_variable('prefix', args.prefix)
-        print(f'Retrieving the latest entry ... {show} ...')
-        if args.prefix is None:
-            o = File.objects.latest('date')
-        else:
-            o = File.objects.filter(name__startswith=args.prefix).latest('date')
-        print(o.__repr__())
+        check_latest()
         return
 
     if args.last:
@@ -535,22 +544,26 @@ def dbtool_main():
         e = time.time()
         for timestr in args.source:
             show_sweep_summary(timestr)
+        return
 
     if args.insert:
         print('Inserting folder(s) with .tar.xz archives')
         for folder in args.source:
             print(f'===\n{folder}')
             xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
+        return
     elif args.quick_insert:
         print('Quick inserting folder(s) with .tar.xz archives')
         for folder in args.source:
             print(f'===\n{folder}')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
+        return
 
     if args.find_duplicates:
         print(f'Finding duplicates ...')
         for folder in args.source:
             find_duplicates(folder, prefix=args.prefix, remove=args.remove, verbose=args.verbose)
+        return
 
     # The rest of the functions use args.prefix = 'PX-' if not specified
 
@@ -560,12 +573,16 @@ def dbtool_main():
     if args.day:
         for day in args.source:
             build_day(day, name=args.prefix, verbose=args.verbose)
+        return
 
     if args.check_day:
         for day in args.source:
             d = check_day(day, name=args.prefix, verbose=args.verbose)
             if d is None:
                 print(f'Nothing for {day}')
+        return
+
+###
 
 if __name__ == '__main__':
     dbtool_main()
