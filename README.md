@@ -70,7 +70,7 @@ In the Python space, a parser is made to retrieve everythin in the C header to a
 
 In the Javascript space, the definition is passed to the frontend upon a successful connection, the data ingest `frontend/src/components/ingest.js` expects keys like `Control`, `Health`, `Scope`, etc., which nicely maps to the enum names in the C and Python spaces.
 
-# Developing
+# Software Requirements
 
 Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. The very first thing to do right after cloning the repository is to install the Python requirements and node dependencies, which can be accomplished as:
 
@@ -80,6 +80,78 @@ python install -r requirements.txt
 cd frontend
 npm install
 ```
+
+## Node.js, npm, and PostgreSQL
+
+On Ubuntu, run the following commands:
+
+```shell
+sudo apt update
+sudo apt install nodejs npm postgresql
+```
+
+After that, install Node.js and npm from NodeSource using the following commands:
+
+```shell
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+sudo apt install nodejs
+```
+
+On macOS, install postgresql through brew:
+
+```shell
+brew install nodejs npm postgresql
+```
+
+## PostgreSQL Setup
+
+Create a user `radarhub` and database `radarhub` on [PostgreSQL]:
+
+```text
+postgres=# create user radarhub;
+postgres-# create database radarhub;
+postgres-# alter role radarhub with password 'ARRCuser#1';
+postgres-# grant all privileges on database radarhub to radarhub;
+postgres-# alter database radarhub owner to radarhub;
+```
+
+Also, configure [PostgreSQL] to be accessible through network by adding/modifying the following lines to the configuration file `/etc/postgresql/12/main/postgresql.conf`:
+
+```conf
+listen_addresses = '*'
+```
+
+### Some Useful SQL Commands
+
+To login remotely, use:
+
+```shell
+psql -h dwv05 -U radarhub
+```
+
+Once in the `psql` terminal,
+
+```sql
+SELECT
+    column_name,
+    data_type,
+    character_maximum_length
+FROM
+    information_schema.columns
+WHERE
+    table_name = 'frontend_file';
+
+SELECT
+    column_name,
+    data_type,
+    character_maximum_length
+FROM
+    information_schema.columns
+WHERE
+    table_name = 'frontend_day';
+```
+
+# Developing
 
 Be sure to have [redis] going for the [channels] module every time you reboot the machine.
 
@@ -240,66 +312,6 @@ sudo supervisorctl start all
 ```
 
 A convenient script `restart.sh` is included to restart all services in a proper sequence in order to prevent channels getting full.
-
-## Install Node.js and npm from the Ubuntu Repository
-
-Run the following commands:
-
-```shell
-sudo apt update
-sudo apt install nodejs npm
-```
-
-After that, install Node.js and npm from NodeSource using the following commands:
-
-```shell
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-sudo apt install nodejs
-```
-
-# PostgreSQL
-
-On macOS, install postgresql through brew:
-
-```shell
-brew install postgresql
-```
-
-On linux, install through apt
-
-```shell
-apt install postgresql
-```
-
-Create a user `radarhub` and database `radarhub` on [PostgreSQL]:
-
-```text
-postgres=# create user radarhub;
-postgres-# create database radarhub;
-postgres-# alter role radarhub with password 'ARRCuser#1';
-postgres-# grant all privileges on database radarhub to radarhub;
-postgres-# alter database radarhub owner to radarhub;
-```
-
-Also, configure [PostgreSQL] to be accessible through network by adding/modifying the following lines to the configuration file `/etc/postgresql/12/main/postgresql.conf`:
-
-```conf
-listen_addresses = '*'
-```
-
-### Some Useful Commands
-
-```sql
-SELECT
-    table_name,
-    column_name,
-    data_type,
-    character_maximum_length
-FROM
-    information_schema.columns
-WHERE
-    table_name = 'frontend_file';
-```
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
