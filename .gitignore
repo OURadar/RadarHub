@@ -5,6 +5,7 @@ build
 frontend/static/frontend
 frontend/static/maps
 frontend/dist
+frontend/migrations/*.py
 objects
 others
 *.xcodeproj
