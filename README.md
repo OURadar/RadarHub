@@ -259,6 +259,18 @@ sudo apt install nodejs
 
 # PostgreSQL
 
+On macOS, install postgresql through brew:
+
+```shell
+brew install postgresql
+```
+
+On linux, install through apt
+
+```shell
+apt install postgresql
+```
+
 Create a user `radarhub` and database `radarhub` on [PostgreSQL]:
 
 ```text

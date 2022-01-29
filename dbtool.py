@@ -141,17 +141,18 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         show += '   ' + show_variable('check_db', check_db)
         print(show)
 
+    use_mp = 'linux' in sys.platform
     basename = os.path.basename(folder)
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', basename)
     if s:
         s = s[0]
     else:
-        print('Error in re.search()')
+        print(f'Error searching YYYYMMDD in folder name {basename}')
         return
 
     raw_archives = list_files(folder)
     if len(raw_archives) == 0:
-        print('No files. Unable to continue.')
+        print(f'No files in {folder}. Unable to continue.')
         return
 
     if not check_db:
@@ -169,15 +170,9 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
     prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
     date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59:59.99Z']
     if verbose:
-        # print(f'date_range = {date_range}')
         show = colorize('date_range', 'orange') + colorize(' = ', 'red')
         show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
         print(show)
-
-    task_queue = multiprocessing.Queue()
-    db_queue = multiprocessing.Queue()
-    lock = multiprocessing.Lock()
-    run = multiprocessing.Value('i', 1)
 
     archives = []
     for archive in raw_archives:
@@ -186,44 +181,67 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         if file_hour >= hour:
             archives.append(archive)
 
-    count = multiprocessing.cpu_count()
-    e = time.time()
-
+    print(archives)
+    
     keys = []
     output = {}
-    processes = []
-    for n in range(count):
-        p = multiprocessing.Process(target=process_arhives, args=(n, run, lock, task_queue, db_queue))
-        processes.append(p)
-        p.start()
 
     # Extracting parameters of the archives
     print('Pass 1 / 2 - Scanning archives ...')
-    for archive in tqdm.tqdm(archives):
-        # Copy to ramdisk first, the queue the work after the file is copied
-        basename = os.path.basename(archive)
-        ramfile = f'/mnt/ramdisk/{basename}'
-        shutil.copy(archive, ramfile)
-        task_queue.put({'archive': archive, 'ramfile': ramfile})
-        while task_queue.qsize() > 2 * count:
+
+    e = time.time()
+
+    if use_mp:
+        task_queue = multiprocessing.Queue()
+        db_queue = multiprocessing.Queue()
+        lock = multiprocessing.Lock()
+        run = multiprocessing.Value('i', 1)
+
+        count = multiprocessing.cpu_count()
+
+        processes = []
+        for n in range(count):
+            p = multiprocessing.Process(target=process_arhives, args=(n, run, lock, task_queue, db_queue))
+            processes.append(p)
+            p.start()
+
+        for archive in tqdm.tqdm(archives):
+            # Copy to ramdisk first, the queue the work after the file is copied
+            basename = os.path.basename(archive)
+            if os.path.exists('/mnt/ramdisk'):
+                ramfile = f'/mnt/ramdisk/{basename}'
+                shutil.copy(archive, ramfile)
+                task_queue.put({'archive': archive, 'ramfile': ramfile})
+            else:
+                task_queue.put({'archive': archive, 'ramfile': archive})
+            while task_queue.qsize() > 2 * count:
+                time.sleep(0.1)
+            while not db_queue.empty():
+                out = db_queue.get()
+                key = out['name']
+                keys.append(key)
+                output[key] = out
+        
+        while task_queue.qsize() > 0:
             time.sleep(0.1)
+        run.value = 0;
+        for p in processes:
+            p.join()
+
         while not db_queue.empty():
             out = db_queue.get()
             key = out['name']
             keys.append(key)
             output[key] = out
-    
-    while task_queue.qsize() > 0:
-        time.sleep(0.1)
-    run.value = 0;
-    for p in processes:
-        p.join()
-
-    while not db_queue.empty():
-        out = db_queue.get()
-        key = out['name']
-        keys.append(key)
-        output[key] = out
+    else:
+        for archive in tqdm.tqdm(archives):
+            xx = []
+            with tarfile.open(archive) as tar:
+                for info in tar.getmembers():
+                    xx.append([info.name, info.offset, info.offset_data, info.size, archive])
+            key = os.path.basename(archive)
+            keys.append(key)
+            output[key] = {'name': key, 'xx': xx}
 
     print('Pass 2 / 2 - Inserting entries into the database ...')
 
@@ -259,10 +277,9 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
                         d = c[1]
                         t = c[2]
                         datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
-                    x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
-                print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
-                if mode == 'N' or mode == 'U':
-                    x.save()
+                    x = File.objects.create(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
+                if verbose > 1:
+                    print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
                 files.append(x)
             return files
         
@@ -271,13 +288,13 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         #     handle_data(xx)
 
         # Wish there is a bulk update-create in one
-        # t = time.time()
-        # array_of_files = [handle_data(output[key]['xx']) for key in keys]
-        # files = [s for symbols in array_of_files for s in symbols]
-        # File.objects.bulk_update(files)
-        # t = time.time() - t
-        # a = len(files) / t
-        # print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)')
+        t = time.time()
+        array_of_files = [handle_data(output[key]['xx']) for key in keys]
+        files = [s for symbols in array_of_files for s in symbols]
+        File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'])
+        t = time.time() - t
+        a = len(files) / t
+        print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)')
 
     else:
         def sweep_files(xx):
@@ -288,7 +305,7 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
                 d = c[1]
                 t = c[2]
                 datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
-                x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
+                x = File.objects.File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
                 files.append(x)
             return files
 
