@@ -180,8 +180,6 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         file_hour = int(basename.split('-')[2][0:2])
         if file_hour >= hour:
             archives.append(archive)
-
-    print(archives)
     
     keys = []
     output = {}

@@ -88,38 +88,38 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 
 # Database migrated to PostgreSQL
 # https://medium.com/djangotube/django-sqlite-to-postgresql-database-migration-e3c1f76711e1
 
-# DB_USERNAME = 'guest'
-# DB_PASSWORD = 'radarhub'
-# if os.path.exists(BASE_DIR / 'db-password'):
-#     with open(BASE_DIR / 'db-password') as fid:
-#         DB_USERNAME = 'radarhub'
-#         DB_PASSWORD = fid.read().strip()
+DB_USERNAME = 'guest'
+DB_PASSWORD = 'radarhub'
+if os.path.exists(BASE_DIR / 'db-password'):
+    with open(BASE_DIR / 'db-password') as fid:
+        DB_USERNAME = 'radarhub'
+        DB_PASSWORD = fid.read().strip()
 
-# if VERBOSE:
-#     show = show_variable('DB_USERNAME', DB_USERNAME)
-#     show += '   ' + show_variable('DB_PASSWORD', DB_PASSWORD)
-#     print(show)
+if VERBOSE:
+    show = show_variable('DB_USERNAME', DB_USERNAME)
+    show += '   ' + show_variable('DB_PASSWORD', DB_PASSWORD)
+    print(show)
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'radarhub',
-#         'USER': DB_USERNAME,
-#         'PASSWORD': DB_PASSWORD,
-#         'HOST': '10.197.14.38',
-#         'PORT': '5432',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'radarhub',
+        'USER': DB_USERNAME,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': '10.197.14.38',
+        'PORT': '5432',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
