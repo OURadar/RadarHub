@@ -133,12 +133,13 @@ def process_arhives(id, run, lock, queue, out, verbose=0):
     return
 
 
-def xzfolder(folder, hour=0, check_db=True, verbose=0):
+def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     if verbose:
         show = colorize('xzfolder()', 'green')
         show += '   ' + show_variable('folder', folder)
         show += '   ' + show_variable('hour', hour)
         show += '   ' + show_variable('check_db', check_db)
+        show += '   ' + show_variable('use_bulk_update', use_bulk_update)
         print(show)
 
     use_mp = 'linux' in sys.platform
@@ -180,7 +181,7 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         file_hour = int(basename.split('-')[2][0:2])
         if file_hour >= hour:
             archives.append(archive)
-    
+
     keys = []
     output = {}
 
@@ -219,7 +220,7 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
                 key = out['name']
                 keys.append(key)
                 output[key] = out
-        
+
         while task_queue.qsize() > 0:
             time.sleep(0.1)
         run.value = 0;
@@ -250,7 +251,7 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         entries = File.objects.filter(date__range=date_range)
         pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
-        def handle_data(xx, use_re_pattern=False):
+        def handle_data(xx, use_re_pattern=False, save=False):
             files = []
             for yy in xx:
                 (name, offset, offset_data, size, archive) = yy
@@ -278,22 +279,26 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
                     x = File.objects.create(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
                 if verbose > 1:
                     print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
-                files.append(x)
+                if mode != 'I':
+                    if save:
+                        x.save()
+                    files.append(x)
             return files
-        
-        # for key in tqdm.tqdm(keys):
-        #     xx = output[key]['xx']
-        #     handle_data(xx)
 
-        # Wish there is a bulk update-create in one
-        t = time.time()
-        array_of_files = [handle_data(output[key]['xx']) for key in keys]
-        files = [s for symbols in array_of_files for s in symbols]
-        File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'])
-        t = time.time() - t
-        a = len(files) / t
-        print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)')
-
+        if use_bulk_update:
+            t = time.time()
+            print('Gathering entries ...')
+            array_of_files = [handle_data(output[key]['xx']) for key in keys]
+            files = [s for symbols in array_of_files for s in symbols]
+            print('Updating database ...')
+            File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'], batch_size=1000)
+            t = time.time() - t
+            a = len(files) / t
+            print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)')
+        else:
+            for key in tqdm.tqdm(keys):
+                xx = output[key]['xx']
+                handle_data(xx, save=True)
     else:
         def sweep_files(xx):
             files = []
@@ -303,13 +308,15 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
                 d = c[1]
                 t = c[2]
                 datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
-                x = File.objects.File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
+                x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
                 files.append(x)
             return files
 
         t = time.time()
+        print('Gathering entries ...')
         array_of_files = [sweep_files(output[key]['xx']) for key in keys]
         files = [s for symbols in array_of_files for s in symbols]
+        print('Updating database ...')
         File.objects.bulk_create(files)
         t = time.time() - t
         a = len(files) / t
@@ -532,12 +539,12 @@ def dbtool_main():
     if args.insert:
         print('Inserting folder(s) with .tar.xz archives')
         for folder in args.source:
-            print('===')
+            print(f'===\n{folder}')
             xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
     elif args.quick_insert:
         print('Quick inserting folder(s) with .tar.xz archives')
         for folder in args.source:
-            print('===')
+            print(f'===\n{folder}')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
 
     if args.find_duplicates:
