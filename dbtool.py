@@ -32,6 +32,9 @@ pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 from frontend.models import File, Day
 from common import colorize, show_variable
 
+'''
+    (Deprecated)
+'''
 def entry(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
     (path, name) = os.path.split(filename)
     s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', name).group(0)
@@ -56,14 +59,9 @@ def entry(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
         sys.stdout.flush()
     return x, mode
 
-def retrieve(name):
-    x = File.objects.filter(name=name)
-    if len(x) == 0:
-        return None
-    if len(x) > 1:
-        print(f'There are more than one match. Choosing the first one.')
-    return x[0]
-
+'''
+    (Deprecated)
+'''
 def proc_archive(archive, ramfile=None):
     file = ramfile if ramfile else archive
     # print(f'Processing {archive} {file} ...')
@@ -80,13 +78,10 @@ def proc_archive(archive, ramfile=None):
             mm.append(m)
     return xx, mm
 
-def list_files(folder):
-    files = sorted(glob.glob(os.path.join(folder, '*.xz')))
-    if len(files) == 0:
-        folder = os.path.join(folder, '_original')
-        files = sorted(glob.glob(os.path.join(folder, '*.xz')))
-    return files
-
+'''
+    (Deprecated)
+    First revision of xzfolder, only kept here for simple illustration
+'''
 def xzfolder_v1(folder):
     print(f'xzfolder_v1: {folder}')
     archives = list_files(folder)
@@ -104,6 +99,9 @@ def xzfolder_v1(folder):
             # print(f'{m} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
             x.save()
 
+'''
+    (Deprecated)
+'''
 def process_arhives(id, run, lock, queue, out, verbose=0):
     while run.value == 1:
         task = None
@@ -132,7 +130,27 @@ def process_arhives(id, run, lock, queue, out, verbose=0):
 
     return
 
+'''
+    List .xz files in a folder
 
+    folder - path to list, e.g., /mnt/data/PX1000/2022/20220128
+'''
+def list_files(folder):
+    files = sorted(glob.glob(os.path.join(folder, '*.xz')))
+    if len(files) == 0:
+        folder = os.path.join(folder, '_original')
+        files = sorted(glob.glob(os.path.join(folder, '*.xz')))
+    return files
+
+'''
+    Insert a folder with .tar.xz archives to the database
+
+             folder - path to insert, e.g., /mnt/data/PX1000/2022/20220128
+               hour - start hour to examine
+           check_db - check the database for existence (update or create)
+    use_bulk_update - use django's bulk update/create functions
+            verbose - verbosity level, e.g., 0, 1, or 2
+'''
 def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     if verbose:
         show = colorize('xzfolder()', 'green')
@@ -331,8 +349,10 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     print(f'Total elapsed time = {show} sec ({a:,.0f} files / sec)')
 
 '''
+    Build an entry to the Day table
+
     day - could either be a day string YYYYMMDD or a folder with the last
-          part as day, e.g., /mnt/data/.../YYYYMMDD
+          part as day, e.g., /mnt/data/PX1000/2022/20220128
 '''
 def build_day(day, name='PX-', verbose=0):
     if verbose:
@@ -387,6 +407,12 @@ def build_day(day, name='PX-', verbose=0):
 
     print(f'{mode} {d.show()}')
 
+'''
+    Check an entry from the Day table
+
+    day - could either be a day string YYYYMMDD or a folder with the last
+          part as day, e.g., /mnt/data/PX1000/2022/20220128
+'''
 def check_day(day, name=None, verbose=0):
     if verbose:
         show = colorize('check_day()', 'green')
@@ -411,6 +437,11 @@ def check_day(day, name=None, verbose=0):
         return None
     return dd
 
+'''
+    Poor function, don't use
+
+    timestr - time string in YYYYMMDD-hhmm, e.g., '20130520-191000'
+'''
 def show_sweep_summary(timestr):
     show = colorize('show_sweep_summary()', 'green')
     show += '   ' + show_variable('timestr', timestr)
@@ -427,6 +458,14 @@ def show_sweep_summary(timestr):
     sweep = o.getData()
     pp.pprint(sweep)
 
+'''
+    Finds duplicate entries
+
+     folder - path with YYYYMMDD, e.g., '/mnt/data/PX1000/2022/20220117', '20220127
+     prefix - prefix of the file names, e.g., 'PX10K-', 'PX-', 'RAXPOL-'
+     remove - remove entries > 1 if set to True
+    verbose - verbosity level, e.g., 0, 1, or 2
+'''
 def find_duplicates(folder, prefix=None, remove=False, verbose=0):
     if verbose:
         show = colorize('find_duplicates()', 'green')
@@ -472,17 +511,17 @@ def find_duplicates(folder, prefix=None, remove=False, verbose=0):
     if count:
         print(f'Removed {count} files')
 
+'''
+    Check for latest entries from each radar
+'''
 def check_latest():
     show = colorize('check_latest()', 'green')
     print(show)
     for name in ['PX-', 'PX10K-', 'RAXPOL-']:
         day = Day.objects.filter(name=name).latest('date')
-        ymd = day.date.strftime('%Y-%m-%d')
-        hour = max([k for k, e in enumerate(day.hourly_count.split(',')) if e != '0'])
-        day_hour = f'{ymd} {hour:02d}'
-        date_range = [f'{day_hour}:00:00Z', f'{day_hour}:59:59.9Z']
-        file = File.objects.filter(name__startswith=name, date__range=date_range).latest('date')
-        show = show_variable('date_range[0]', date_range[0])
+        last = day.last_date_range()
+        file = File.objects.filter(name__startswith=name, date__range=last).latest('date')
+        show = show_variable('last[0]', last[0])
         show += '   ' + show_variable('name', file.name)
         print(show)
 
@@ -513,11 +552,10 @@ def dbtool_main():
     parser.add_argument('-f', '--find-duplicates', action='store_true', help='finds duplicate entries in the database')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
+    parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
-    parser.add_argument('--latest', action='store_true', help='shows the latest entry, requires --prefix')
     parser.add_argument('--prefix', help='sets the radar prefix to process')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
-    parser.add_argument('-r', dest='radar', action='store_true', help='checks radars')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep shows a summary')
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
@@ -581,6 +619,8 @@ def dbtool_main():
             if d is None:
                 print(f'Nothing for {day}')
         return
+
+    print("Don't want anything?")
 
 ###
 

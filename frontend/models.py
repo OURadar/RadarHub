@@ -10,12 +10,17 @@ from django.conf import settings
 
 '''
 File
+
  - name = filename of the sweep, e.g., PX-20130520-191000-E2.6-Z.nc
  - path = absolute path of the data, e.g., /mnt/data/PX1000/2013/20130520/_original/PX-20130520-191000-E2.6.tar.xz
  - date = date in database native format (UTC)
  - size = size of the .nc file (from tarinfo)
  - offset = offset of the .nc file (from tarinfo)
  - offset_data = offset_data of the .nc file (from tarinfo)
+
+ - getFullPath() - returns full path of the archive that contains the file
+ - getData() - reads from a plain path or a .tar / .tar.xz archive using read()
+ - read() - reads from a file object, returns a dictionary with the data
 '''
 class File(models.Model):
     name = models.CharField(max_length=48)
@@ -46,6 +51,25 @@ class File(models.Model):
             return path
         return None
 
+    def getData(self):
+        if any([ext in self.path for ext in ['tgz', 'tar.xz']]):
+            if settings.VERBOSE:
+                print(f'models.File.getData() {self.path}')
+            with tarfile.open(self.path) as aid:
+                info = tarfile.TarInfo(self.name)
+                info.size = self.size
+                info.offset = self.offset
+                info.offset_data = self.offset_data
+                with aid.extractfile(info) as fid:
+                    return self.read(fid)
+        else:
+            fullpath = self.getFullpath()
+            if fullpath is None:
+                return None
+
+            with open(fullpath, 'rb') as fid:
+                return self.read(fid)
+
     def read(self, fid):
         with Dataset('dummy', mode='r', memory=fid.read()) as nc:
             name = nc.getncattr('TypeName')
@@ -71,27 +95,9 @@ class File(models.Model):
                 'values': values
             }
 
-    def getData(self):
-        if any([ext in self.path for ext in ['tgz', 'tar.xz']]):
-            if settings.VERBOSE:
-                print(f'models.File.getData() {self.path}')
-            with tarfile.open(self.path) as aid:
-                info = tarfile.TarInfo(self.name)
-                info.size = self.size
-                info.offset = self.offset
-                info.offset_data = self.offset_data
-                with aid.extractfile(info) as fid:
-                    return self.read(fid)
-        else:
-            fullpath = self.getFullpath()
-            if fullpath is None:
-                return None
-
-            with open(fullpath, 'rb') as fid:
-                return self.read(fid)
-
 '''
 Day
+
  - date = date in database native format (UTC)
  - name = name of the dataset, e.g., PX-
  - count = number of volumes
@@ -101,6 +107,11 @@ Day
  - orange = for future
  - red = for future
  - hourly_count = number of volumes of each hour
+
+ - show() - shows a few instance variables
+ - first_hour() - returns the first hour with data (int)
+ - last_hour() - returns the last hour with data (int)
+ - last_date_range() - returns the last hour as range, e.g., ['2022-01-21 00:00:00Z', '2022-01-21 00:59:59.9Z]
 '''
 class Day(models.Model):
     date = models.DateField()
@@ -123,3 +134,15 @@ class Day(models.Model):
 
     def show(self):
         return f'{self.date} :: {self.name} :: {self.hourly_count}'
+
+    def first_hour(self):
+        return min([k for k, e in enumerate(self.hourly_count.split(',')) if e != '0'])
+
+    def last_hour(self):
+        return max([k for k, e in enumerate(self.hourly_count.split(',')) if e != '0'])
+
+    def last_date_range(self):
+        day = self.date.strftime('%Y-%m-%d')
+        hour = self.last_hour()
+        day_hour = f'{day} {hour:02d}'
+        return [f'{day_hour}:00:00Z', f'{day_hour}:59:59.9Z']
