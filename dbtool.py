@@ -354,19 +354,23 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     day - could either be a day string YYYYMMDD or a folder with the last
           part as day, e.g., /mnt/data/PX1000/2022/20220128
 '''
-def build_day(day, name='PX-', verbose=0):
+def build_day(day, name=None, verbose=0):
     if verbose:
         show = colorize('build_day()', 'green')
         show += '   ' + show_variable('name', name)
         print(show)
 
-    if name is None:
-        print('Name cannot be None')
+    if name is None and '/' not in day:
+        print('Unable to determine name')
         return
 
     if '/' in day:
         s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day)
-        file = os.path.basename(list_files(day)[0])
+        files = list_files(day)
+        if len(files) == 0:
+            print(f'No files in {day}')
+            return
+        file = os.path.basename(files[0])
         name = file.split('-')[0] + '-'
     else:
         s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', day)
@@ -389,9 +393,9 @@ def build_day(day, name='PX-', verbose=0):
     total = 0
     counts = [0] * 24
     for k in range(24):
-        date_range = [f'{date} {k:02d}:00Z', f'{date} {k:02d}:59Z']
+        date_range = [f'{date} {k:02d}:00:00Z', f'{date} {k:02d}:59:59.9Z']
         matches = File.objects.filter(name__startswith=name, name__endswith='-Z.nc', date__range=date_range)
-        counts[k] = len(matches)
+        counts[k] = matches.count()
         total += counts[k]
 
     if total > 0:
@@ -603,15 +607,15 @@ def dbtool_main():
             find_duplicates(folder, prefix=args.prefix, remove=args.remove, verbose=args.verbose)
         return
 
-    # The rest of the functions use args.prefix = 'PX-' if not specified
-
-    if args.prefix is None:
-        args.prefix = 'PX-'
-
     if args.day:
         for day in args.source:
             build_day(day, name=args.prefix, verbose=args.verbose)
         return
+
+    # The rest of the functions use args.prefix = 'PX-' if not specified
+
+    if args.prefix is None:
+        args.prefix = 'PX-'
 
     if args.check_day:
         for day in args.source:
