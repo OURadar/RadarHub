@@ -32,6 +32,9 @@ pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 from frontend.models import File, Day
 from common import colorize, show_variable
 
+'''
+    (Deprecated)
+'''
 def entry(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
     (path, name) = os.path.split(filename)
     s = re.search(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]', name).group(0)
@@ -56,14 +59,9 @@ def entry(filename, archive=None, offset=0, offset_data=0, size=0, verbose=0):
         sys.stdout.flush()
     return x, mode
 
-def retrieve(name):
-    x = File.objects.filter(name=name)
-    if len(x) == 0:
-        return None
-    if len(x) > 1:
-        print(f'There are more than one match. Choosing the first one.')
-    return x[0]
-
+'''
+    (Deprecated)
+'''
 def proc_archive(archive, ramfile=None):
     file = ramfile if ramfile else archive
     # print(f'Processing {archive} {file} ...')
@@ -80,13 +78,10 @@ def proc_archive(archive, ramfile=None):
             mm.append(m)
     return xx, mm
 
-def list_files(folder):
-    files = sorted(glob.glob(os.path.join(folder, '*.xz')))
-    if len(files) == 0:
-        folder = os.path.join(folder, '_original')
-        files = sorted(glob.glob(os.path.join(folder, '*.xz')))
-    return files
-
+'''
+    (Deprecated)
+    First revision of xzfolder, only kept here for simple illustration
+'''
 def xzfolder_v1(folder):
     print(f'xzfolder_v1: {folder}')
     archives = list_files(folder)
@@ -104,6 +99,9 @@ def xzfolder_v1(folder):
             # print(f'{m} {x.name} :: {x.path} :: {x.date} :: {x.size} :: {x.offset} :: {x.offset_data}')
             x.save()
 
+'''
+    (Deprecated)
+'''
 def process_arhives(id, run, lock, queue, out, verbose=0):
     while run.value == 1:
         task = None
@@ -132,26 +130,48 @@ def process_arhives(id, run, lock, queue, out, verbose=0):
 
     return
 
+'''
+    List .xz files in a folder
 
-def xzfolder(folder, hour=0, check_db=True, verbose=0):
+    folder - path to list, e.g., /mnt/data/PX1000/2022/20220128
+'''
+def list_files(folder):
+    files = sorted(glob.glob(os.path.join(folder, '*.xz')))
+    if len(files) == 0:
+        folder = os.path.join(folder, '_original')
+        files = sorted(glob.glob(os.path.join(folder, '*.xz')))
+    return files
+
+'''
+    Insert a folder with .tar.xz archives to the database
+
+             folder - path to insert, e.g., /mnt/data/PX1000/2022/20220128
+               hour - start hour to examine
+           check_db - check the database for existence (update or create)
+    use_bulk_update - use django's bulk update/create functions
+            verbose - verbosity level, e.g., 0, 1, or 2
+'''
+def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     if verbose:
         show = colorize('xzfolder()', 'green')
         show += '   ' + show_variable('folder', folder)
         show += '   ' + show_variable('hour', hour)
         show += '   ' + show_variable('check_db', check_db)
+        show += '   ' + show_variable('use_bulk_update', use_bulk_update)
         print(show)
 
+    use_mp = 'linux' in sys.platform
     basename = os.path.basename(folder)
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', basename)
     if s:
         s = s[0]
     else:
-        print('Error in re.search()')
+        print(f'Error searching YYYYMMDD in folder name {basename}')
         return
 
     raw_archives = list_files(folder)
     if len(raw_archives) == 0:
-        print('No files. Unable to continue.')
+        print(f'No files in {folder}. Unable to continue.')
         return
 
     if not check_db:
@@ -169,15 +189,9 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
     prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
     date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59:59.99Z']
     if verbose:
-        # print(f'date_range = {date_range}')
         show = colorize('date_range', 'orange') + colorize(' = ', 'red')
         show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
         print(show)
-
-    task_queue = multiprocessing.Queue()
-    db_queue = multiprocessing.Queue()
-    lock = multiprocessing.Lock()
-    run = multiprocessing.Value('i', 1)
 
     archives = []
     for archive in raw_archives:
@@ -186,44 +200,65 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         if file_hour >= hour:
             archives.append(archive)
 
-    count = multiprocessing.cpu_count()
-    e = time.time()
-
     keys = []
     output = {}
-    processes = []
-    for n in range(count):
-        p = multiprocessing.Process(target=process_arhives, args=(n, run, lock, task_queue, db_queue))
-        processes.append(p)
-        p.start()
 
     # Extracting parameters of the archives
     print('Pass 1 / 2 - Scanning archives ...')
-    for archive in tqdm.tqdm(archives):
-        # Copy to ramdisk first, the queue the work after the file is copied
-        basename = os.path.basename(archive)
-        ramfile = f'/mnt/ramdisk/{basename}'
-        shutil.copy(archive, ramfile)
-        task_queue.put({'archive': archive, 'ramfile': ramfile})
-        while task_queue.qsize() > 2 * count:
+
+    e = time.time()
+
+    if use_mp:
+        task_queue = multiprocessing.Queue()
+        db_queue = multiprocessing.Queue()
+        lock = multiprocessing.Lock()
+        run = multiprocessing.Value('i', 1)
+
+        count = multiprocessing.cpu_count()
+
+        processes = []
+        for n in range(count):
+            p = multiprocessing.Process(target=process_arhives, args=(n, run, lock, task_queue, db_queue))
+            processes.append(p)
+            p.start()
+
+        for archive in tqdm.tqdm(archives):
+            # Copy to ramdisk first, the queue the work after the file is copied
+            basename = os.path.basename(archive)
+            if os.path.exists('/mnt/ramdisk'):
+                ramfile = f'/mnt/ramdisk/{basename}'
+            else:
+                ramfile = f'{basename}'
+            shutil.copy(archive, ramfile)            
+            task_queue.put({'archive': archive, 'ramfile': ramfile})
+            while task_queue.qsize() > 2 * count:
+                time.sleep(0.1)
+            while not db_queue.empty():
+                out = db_queue.get()
+                key = out['name']
+                keys.append(key)
+                output[key] = out
+
+        while task_queue.qsize() > 0:
             time.sleep(0.1)
+        run.value = 0;
+        for p in processes:
+            p.join()
+
         while not db_queue.empty():
             out = db_queue.get()
             key = out['name']
             keys.append(key)
             output[key] = out
-    
-    while task_queue.qsize() > 0:
-        time.sleep(0.1)
-    run.value = 0;
-    for p in processes:
-        p.join()
-
-    while not db_queue.empty():
-        out = db_queue.get()
-        key = out['name']
-        keys.append(key)
-        output[key] = out
+    else:
+        for archive in tqdm.tqdm(archives):
+            xx = []
+            with tarfile.open(archive) as tar:
+                for info in tar.getmembers():
+                    xx.append([info.name, info.offset, info.offset_data, info.size, archive])
+            key = os.path.basename(archive)
+            keys.append(key)
+            output[key] = {'name': key, 'xx': xx}
 
     print('Pass 2 / 2 - Inserting entries into the database ...')
 
@@ -234,14 +269,11 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
         entries = File.objects.filter(date__range=date_range)
         pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
-        def handle_data(xx, use_re_pattern=False, check_db=check_db):
+        def __handle_data__(xx, use_re_pattern=False, save=False):
+            files = []
             for yy in xx:
-                mode = 'N'
                 (name, offset, offset_data, size, archive) = yy
-                if check_db:
-                    n = entries.filter(name=name)
-                else:
-                    n = False
+                n = entries.filter(name=name)
                 if n:
                     x = n[0]
                     if x.path != archive or x.size != size or x.offset != offset or x.offset_data != offset_data:
@@ -253,7 +285,7 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
                     else:
                         mode = 'I'
                 else:
-                    # print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
+                    mode = 'N'
                     if use_re_pattern:
                         s = pattern.search(archive).group(0)
                         datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
@@ -262,16 +294,31 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
                         d = c[1]
                         t = c[2]
                         datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
-                    x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
-                    # print(x.name)
-                if mode == 'N' or mode == 'U':
-                    x.save()
-        
-        for key in tqdm.tqdm(keys):
-            xx = output[key]['xx']
-            handle_data(xx)
+                    x = File.objects.create(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
+                if verbose > 1:
+                    print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
+                if mode != 'I':
+                    if save:
+                        x.save()
+                    files.append(x)
+            return files
+
+        if use_bulk_update:
+            t = time.time()
+            print('Gathering entries ...')
+            array_of_files = [__handle_data__(output[key]['xx'], save=False) for key in keys]
+            files = [s for symbols in array_of_files for s in symbols]
+            print('Updating database ...')
+            File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'], batch_size=1000)
+            t = time.time() - t
+            a = len(files) / t
+            print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)')
+        else:
+            for key in tqdm.tqdm(keys):
+                xx = output[key]['xx']
+                __handle_data__(xx, save=True)
     else:
-        def sweep_files(xx):
+        def __sweep_files__(xx):
             files = []
             for yy in xx:
                 (name, offset, offset_data, size, archive) = yy
@@ -284,8 +331,10 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
             return files
 
         t = time.time()
-        array_of_files = [sweep_files(output[key]['xx']) for key in keys]
+        print('Gathering entries ...')
+        array_of_files = [__sweep_files__(output[key]['xx']) for key in keys]
         files = [s for symbols in array_of_files for s in symbols]
+        print('Updating database ...')
         File.objects.bulk_create(files)
         t = time.time() - t
         a = len(files) / t
@@ -300,8 +349,10 @@ def xzfolder(folder, hour=0, check_db=True, verbose=0):
     print(f'Total elapsed time = {show} sec ({a:,.0f} files / sec)')
 
 '''
+    Build an entry to the Day table
+
     day - could either be a day string YYYYMMDD or a folder with the last
-          part as day, e.g., /mnt/data/.../YYYYMMDD
+          part as day, e.g., /mnt/data/PX1000/2022/20220128
 '''
 def build_day(day, name='PX-', verbose=0):
     if verbose:
@@ -356,6 +407,12 @@ def build_day(day, name='PX-', verbose=0):
 
     print(f'{mode} {d.show()}')
 
+'''
+    Check an entry from the Day table
+
+    day - could either be a day string YYYYMMDD or a folder with the last
+          part as day, e.g., /mnt/data/PX1000/2022/20220128
+'''
 def check_day(day, name=None, verbose=0):
     if verbose:
         show = colorize('check_day()', 'green')
@@ -380,6 +437,11 @@ def check_day(day, name=None, verbose=0):
         return None
     return dd
 
+'''
+    Poor function, don't use
+
+    timestr - time string in YYYYMMDD-hhmm, e.g., '20130520-191000'
+'''
 def show_sweep_summary(timestr):
     show = colorize('show_sweep_summary()', 'green')
     show += '   ' + show_variable('timestr', timestr)
@@ -396,6 +458,14 @@ def show_sweep_summary(timestr):
     sweep = o.getData()
     pp.pprint(sweep)
 
+'''
+    Finds duplicate entries
+
+     folder - path with YYYYMMDD, e.g., '/mnt/data/PX1000/2022/20220117', '20220127
+     prefix - prefix of the file names, e.g., 'PX10K-', 'PX-', 'RAXPOL-'
+     remove - remove entries > 1 if set to True
+    verbose - verbosity level, e.g., 0, 1, or 2
+'''
 def find_duplicates(folder, prefix=None, remove=False, verbose=0):
     if verbose:
         show = colorize('find_duplicates()', 'green')
@@ -441,6 +511,20 @@ def find_duplicates(folder, prefix=None, remove=False, verbose=0):
     if count:
         print(f'Removed {count} files')
 
+'''
+    Check for latest entries from each radar
+'''
+def check_latest():
+    show = colorize('check_latest()', 'green')
+    print(show)
+    for name in ['PX-', 'PX10K-', 'RAXPOL-']:
+        day = Day.objects.filter(name=name).latest('date')
+        last = day.last_date_range()
+        file = File.objects.filter(name__startswith=name, date__range=last).latest('date')
+        show = show_variable('last[0]', last[0])
+        show += '   ' + show_variable('name', file.name)
+        print(show)
+
 #
 
 def dbtool_main():
@@ -468,8 +552,8 @@ def dbtool_main():
     parser.add_argument('-f', '--find-duplicates', action='store_true', help='finds duplicate entries in the database')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
+    parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
-    parser.add_argument('--latest', action='store_true', help='shows the latest entry, requires --prefix')
     parser.add_argument('--prefix', help='sets the radar prefix to process')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep shows a summary')
@@ -485,13 +569,7 @@ def dbtool_main():
         print(args.source)
 
     if args.latest:
-        show = show_variable('prefix', args.prefix)
-        print(f'Retrieving the latest entry ... {show} ...')
-        if args.prefix is None:
-            o = File.objects.latest('date')
-        else:
-            o = File.objects.filter(name__startswith=args.prefix).latest('date')
-        print(o.__repr__())
+        check_latest()
         return
 
     if args.last:
@@ -504,22 +582,26 @@ def dbtool_main():
         e = time.time()
         for timestr in args.source:
             show_sweep_summary(timestr)
+        return
 
     if args.insert:
         print('Inserting folder(s) with .tar.xz archives')
         for folder in args.source:
-            print('===')
+            print(f'===\n{folder}')
             xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
+        return
     elif args.quick_insert:
         print('Quick inserting folder(s) with .tar.xz archives')
         for folder in args.source:
-            print('===')
+            print(f'===\n{folder}')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
+        return
 
     if args.find_duplicates:
         print(f'Finding duplicates ...')
         for folder in args.source:
             find_duplicates(folder, prefix=args.prefix, remove=args.remove, verbose=args.verbose)
+        return
 
     # The rest of the functions use args.prefix = 'PX-' if not specified
 
@@ -529,12 +611,18 @@ def dbtool_main():
     if args.day:
         for day in args.source:
             build_day(day, name=args.prefix, verbose=args.verbose)
+        return
 
     if args.check_day:
         for day in args.source:
             d = check_day(day, name=args.prefix, verbose=args.verbose)
             if d is None:
                 print(f'Nothing for {day}')
+        return
+
+    print("Don't want anything?")
+
+###
 
 if __name__ == '__main__':
     dbtool_main()
