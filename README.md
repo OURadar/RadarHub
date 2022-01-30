@@ -44,11 +44,11 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 
 ## Post Version 1.0
 
-- [ ] - Display frequency spectrum alongside scope view
-- [ ] - Show online users
-- [ ] - High-DPI support
-- [ ] - Cache sweeps using LRU algorithm
-- [ ] - Download files
+- [ ] Display frequency spectrum alongside scope view
+- [ ] Show online users
+- [ ] High-DPI support
+- [ ] Cache sweeps using LRU algorithm
+- [ ] Download files
 
 # Important Topics
 
@@ -90,17 +90,18 @@ sudo apt update
 sudo apt install nodejs npm postgresql
 ```
 
+On macOS, run the following commands:
+
+```shell
+brew update
+brew install nidejs npm postgresql
+```
+
 After that, install Node.js and npm from NodeSource using the following commands:
 
 ```shell
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install nodejs
-```
-
-On macOS, install postgresql through brew:
-
-```shell
-brew install nodejs npm postgresql
 ```
 
 ## PostgreSQL Setup
