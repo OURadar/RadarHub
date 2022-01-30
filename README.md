@@ -50,7 +50,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [ ] Cache sweeps using LRU algorithm
 - [ ] Download files
 
-# Important Topics
+# A Few Important Things
 
 Here are some assumptions that developers should be aware of.
 
@@ -104,7 +104,7 @@ curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install nodejs
 ```
 
-## PostgreSQL Setup
+## Configure PostgreSQL
 
 Create a user `radarhub` and database `radarhub` on [PostgreSQL]:
 
@@ -122,7 +122,7 @@ Also, configure [PostgreSQL] to be accessible through network by adding/modifyin
 listen_addresses = '*'
 ```
 
-### Some Useful SQL Commands
+## Some Useful SQL Commands
 
 To login remotely, use:
 
