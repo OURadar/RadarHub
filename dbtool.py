@@ -100,7 +100,7 @@ def xzfolder_v1(folder):
             x.save()
 
 '''
-    (Deprecated)
+    Process an archive from the queue
 '''
 def process_arhives(id, run, lock, queue, out, verbose=0):
     while run.value == 1:
@@ -341,7 +341,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         print(f'Bulk create {t:.2f} sec ({a:,.0f} files / sec)')
 
     # Make a Day entry
-    build_day(folder)
+    build_day(folder, verbose=verbose)
 
     e = time.time() - e
     a = len(archives) / e
@@ -362,14 +362,14 @@ def build_day(day, name=None, verbose=0):
 
     if name is None and '/' not in day:
         print('Unable to determine name')
-        return
+        return None
 
     if '/' in day:
         s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day)
         files = list_files(day)
         if len(files) == 0:
             print(f'No files in {day}')
-            return
+            return None
         file = os.path.basename(files[0])
         name = file.split('-')[0] + '-'
     else:
@@ -378,7 +378,7 @@ def build_day(day, name=None, verbose=0):
         s = s.group(0)
     else:
         print(f'Error. Unble to determine the date from {day}')
-        return
+        return None
 
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
@@ -406,10 +406,14 @@ def build_day(day, name=None, verbose=0):
     elif mode == 'U' and total == 0:
         mode = 'D'
         d.delete()
+        d = None
     else:
         mode = 'I'
 
-    print(f'{mode} {d.show()}')
+    if verbose:
+        print(f'{mode} {d.show()}')
+
+    return d, mode
 
 '''
     Check an entry from the Day table

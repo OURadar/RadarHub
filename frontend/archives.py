@@ -11,7 +11,7 @@ from django.conf import settings
 # from django.utils import timezone
 
 from .models import File, Day
-from common import colorize, show_variable
+from common import colorize, show_variable, radar2prefix
 
 timeFinder = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
@@ -44,15 +44,6 @@ def header(requst, name):
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response
-
-def radar2prefix(radar):
-    radarDict = {
-        'px1000': 'PX-',
-        'raxpol': 'RAXPOL-',
-        'px10k': 'PX10K-',
-        'horus': 'HORUS-',
-    }
-    return radarDict[radar] if radar in radarDict else None
 
 '''
     radar - a string of the radar name
