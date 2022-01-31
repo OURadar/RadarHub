@@ -1,8 +1,6 @@
 //
-//  app5.js
+//  app5.js - Control Interface
 //  RadarHub
-//
-//  Milestone 5 was a big one
 //
 //  Created by Boonleng Cheong
 //

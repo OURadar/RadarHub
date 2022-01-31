@@ -5,12 +5,13 @@ import pprint
 import struct
 import numpy as np
 from django.http import HttpResponse
+from django.conf import settings
 
 # from django.utils.dateparse import parse_datetime
 # from django.utils import timezone
 
 from .models import File, Day
-from common import colorize
+from common import colorize, show_variable, radar2prefix
 
 timeFinder = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
@@ -44,15 +45,6 @@ def header(requst, name):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
-def radar2prefix(radar):
-    radarDict = {
-        'px1000': 'PX-',
-        'raxpol': 'RAXPOL-',
-        'px10k': 'PX10K-',
-        'horus': 'HORUS-',
-    }
-    return radarDict[radar] if radar in radarDict else None
-
 '''
     radar - a string of the radar name
           - e.g., px1000, raxpol, or px10k
@@ -60,13 +52,13 @@ def radar2prefix(radar):
     day - a string in the forms of
           - YYYYMM
 '''
-def month(request, radar, day, verbose=1):
+def month(request, radar, day, verbose=settings.VERBOSE):
     if radar == 'undefined' or day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)    
     if verbose:
         show = colorize('archive.month()', 'green')
-        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
-        show += ' / ' + colorize('day', 'orange') + ' = ' + colorize(day, 'yellow')
+        show += '   ' + show_variable('radar', radar)
+        show += '   ' + show_variable('day', day)
         print(show)
     y = int(day[0:4])
     m = int(day[4:6])
@@ -94,13 +86,13 @@ def month(request, radar, day, verbose=1):
     day - a string in the forms of
           - YYYYMMDD
 '''
-def count(request, radar, day, verbose=1):
+def count(request, radar, day, verbose=settings.VERBOSE):
     if radar == 'undefined' or day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
     if verbose:
         show = colorize('archive.count()', 'green')
-        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
-        show += ' / ' + colorize('day', 'orange') + ' = ' + colorize(day, 'yellow')
+        show += '   ' + show_variable('radar', radar)
+        show += '   ' + show_variable('day', day)
         print(show)
     n = [0 for _ in range(24)]
     date = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
@@ -120,7 +112,7 @@ def count(request, radar, day, verbose=1):
     radar - a string of the radar name
           - e.g., px1000, raxpol, or px10k
 
-    hour - a string in the forms of
+    hour_prod - a string with day, hour, and product symbol in the forms of
         - YYYYMMDD-HHMM-S
         - YYYYMMDD-HHMM
         - YYYYMMDD-HH-S
@@ -128,8 +120,8 @@ def count(request, radar, day, verbose=1):
         - YYYYMMDD-S
         - YYYYMMDD
 '''
-def _list(radar, hour):
-    c = hour.split('-');
+def _list(radar, hour_prod):
+    c = hour_prod.split('-');
     if len(c) == 1:
         c.append('0000')
     elif len(c[1]) == 2:
@@ -140,17 +132,20 @@ def _list(radar, hour):
     e = time.localtime(time.mktime(s) + 3599)
     ss = time.strftime('%Y-%m-%d %H:%M:%SZ', s)
     ee = time.strftime('%Y-%m-%d %H:%M:%SZ', e)
-    dateRange = [ss, ee]
+    date_range = [ss, ee]
     prefix = radar2prefix(radar)
-    matches = File.objects.filter(date__range=dateRange, name__contains=f'-{symbol}.nc')
-    matches = matches.filter(name__contains=prefix)
+    matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     return [o.name for o in matches]
 
-def list(request, radar, hour):
-    if radar == 'undefined' or hour == 'undefined':
+def list(request, radar, hour_prod, verbose=settings.VERBOSE):
+    if verbose:
+        show = colorize('archive.list()', 'green')
+        show += '   ' + show_variable('hour_prod', hour_prod)
+        print(show)
+    if radar == 'undefined' or hour_prod == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
     data = {
-        'list': _list(radar, hour)
+        'list': _list(radar, hour_prod)
     }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -159,7 +154,7 @@ def list(request, radar, hour):
 '''
     name - filename
 '''
-def load(request, name, verbose=0):
+def load(request, name, verbose=settings.VERBOSE):
     # Database is indexed by date so we extract the time first for quicker search
     s = timeFinder.search(name)[0]
     s = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
@@ -213,7 +208,7 @@ def load(request, name, verbose=0):
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
-def _date(radar, verbose=1):
+def _date(radar, verbose=settings.VERBOSE):
     prefix = radar2prefix(radar)
     if prefix is None:
         return None, None
@@ -221,27 +216,29 @@ def _date(radar, verbose=1):
     ymd = day.date.strftime('%Y%m%d')
     if verbose:
         show = colorize('archive.date()', 'green')
-        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
-        show += ' / ' + colorize('prefix', 'orange') + ' = ' + colorize(prefix, 'yellow')
-        show += ' / ' + colorize('day', 'orange') + ' = ' + colorize(ymd, 'yellow')
+        show += '   ' + show_variable('radar', radar)
+        show += '   ' + show_variable('prefix', prefix)
+        show += '   ' + show_variable('day', ymd)
         print(show)
     hour = max([k for k, e in enumerate(day.hourly_count.split(',')) if e != '0'])
     return ymd, hour
 
-def date(request, radar, verbose=1):
+def date(request, radar, verbose=settings.VERBOSE):
     if radar == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    ymd, hour = _date(radar, verbose)
-    data = {
-        'dateString': f'{ymd}-{hour:02d}00',
-        'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
-        'hour': hour,
-    }
-    # data = {
-    #     'dateString': '20220102-0200',
-    #     'dayISOString': '2022/01/02',
-    #     'hour': 2,
-    # }
+    ymd, hour = _date(radar, verbose=verbose)
+    if ymd is None:
+        data = {
+            'dateString': '19700101-0000',
+            'dayISOString': '1970/01/01',
+            'hour': 0,
+        }
+    else:
+        data = {
+            'dateString': f'{ymd}-{hour:02d}00',
+            'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+            'hour': hour,
+        }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response
@@ -254,32 +251,31 @@ def rho2ind(values):
     index[m3] = values[m3] * 1000.0 - 824.0
     return index
 
-def location(radar, verbose=1):
+def location(radar, verbose=settings.VERBOSE):
     if verbose:
         show = colorize('archive.location()', 'green')
-        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+        show += '   ' + show_variable('radar', radar)
         print(show)
     global origins
     ymd, hour = _date(radar)
-    if hour:
-        hour = f'{ymd}-{hour:02d}00'
     if ymd is None:
         origins[radar] = {
           'longitude': -97.422413,
           'latitude': 35.25527,
           'last': '20220125'
         }
-    elif radar not in origins or origins[radar] is None or origins[radar]['last'] != hour:
-        name = _list(radar, hour)[-1]
-        file = File.objects.filter(name=name).last()
-        data = file.getData()
-        origins[radar] = {
-            'longitude': float(data['longitude']),
-            'latitude': float(data['latitude']),
-            'last': hour
-        }
+    else:
+        ymd_hm = f'{ymd}-{hour:02d}00'
+        if radar not in origins or origins[radar] is None or origins[radar]['last'] != ymd_hm:
+            name = _list(radar, ymd_hm)[-1]
+            file = File.objects.filter(name=name).first()
+            data = file.getData()
+            origins[radar] = {
+                'longitude': float(data['longitude']),
+                'latitude': float(data['latitude']),
+                'last': ymd_hm
+            }
     if verbose:
-        show = colorize('archive.location()', 'green')
-        print(show)
+        print(colorize('archive.location()', 'green'))
         pp.pprint(origins)
     return origins[radar]

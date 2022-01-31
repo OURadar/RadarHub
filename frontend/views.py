@@ -1,6 +1,6 @@
 from django.shortcuts import render
 
-from common import colorize
+from common import colorize, show_variable
 from .archives import location
 
 
@@ -12,7 +12,7 @@ def index(request):
 
 def control_radar(request, radar):
     show = colorize('control_radar()', 'green')
-    show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+    show += '   ' + show_variable('radar', radar)
     print(show)
     origin = location(radar)
     obj = {'radar': radar, 'origin': origin, 'a': 1, 'b': 2}
@@ -26,12 +26,13 @@ def control(request):
 def archive_radar_profile(request, radar, profileGL):
     if radar == 'favicon.ico':
         show = colorize('archive_radar_profile()', 'red')
-        show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+        show += '   ' + show_variable('radar', radar)
         print(show)
         return render(request, 'static/images/favicon.ico')
 
     show = colorize('archive_radar_profile()', 'green')
-    show += ' ' + colorize('radar', 'orange') + ' = ' + colorize(radar, 'yellow')
+    show += '   ' + show_variable('radar', radar)
+    show += '   ' + show_variable('profileGL', profileGL)
     print(show)
     origin = location(radar)
     obj = {'radar': radar, 'origin': origin, 'profileGL': profileGL}

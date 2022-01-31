@@ -7,3 +7,4 @@ pyparsing
 websocket_client
 netCDF4
 tqdm
+psycopg2
