@@ -36,19 +36,26 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [x] 0.6 SQLite / product catalog / products to 3D view (11/12/2021)
   - [x] 0.6.1 Removed most hard-wired parameters (1/7/2022)
   - [x] 0.6.2 Auto-select latest day, hour and file (1/15/2022)
-  - [ ] 0.6.3 Added support for multiple radars (1/31/2022)
-- [ ] 0.7 Page template, UI materials, mobile version
-- [ ] 0.8 Authentication + user priviledges
-- [ ] 0.9 Landing page, radar selection, etc.
-- [ ] 1.0 RadarKit communicates with RadarHub
+  - [x] 0.6.3 Added support for multiple radars (1/30/2022)
+  - [ ] 0.6.4 Migrated to PostgreSQL (2/5/2022)
+- [ ] 0.7 RadarKit communicates with RadarHub
+- [ ] 0.8 Page template, UI materials, mobile version
+- [ ] 0.9 Authentication + user priviledges
+- [ ] 1.0 Landing page, radar selection, etc.
 
 ## Post Version 1.0
 
-- [ ] - Display frequency spectrum alongside scope view
-- [ ] - Show online users
-- [ ] - High-DPI support
-- [ ] - Cache sweeps using LRU algorithm
-- [ ] - Download files
+- [ ] GLView: need an abstraction layer for colorbar, title, etc.
+- [ ] GLView: need a streaming buffer for radial-by-radial updates
+- [ ] GLView: need a new camera transformation that is radar centric
+- [ ] Overlay: need an array of arrays of text to reduce texture updates
+- [ ] Overlay: need a new version of overlay.worker
+- [ ] Display frequency spectrum alongside scope view
+- [ ] Show online users
+- [ ] High-DPI support
+- [ ] Cache sweeps using the LRU algorithm
+- [ ] Let users download files
+- [ ] Local/remote state
 
 # Important Topics
 
@@ -72,7 +79,7 @@ In the Javascript space, the definition is passed to the frontend upon a success
 
 # Developing
 
-Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. The very first thing to do right after cloning the repository is to install the Python requirements and node dependencies, which can be accomplished as:
+Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. The very first thing to do right after cloning the repository is to install the [python] requirements and [nodejs] dependencies using [npm], which can be accomplished as:
 
 ```shell
 python install -r requirements.txt
@@ -259,10 +266,11 @@ sudo apt install nodejs
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
-[node.js]: https://nodejs.org
-[react]: https://reactjs.org
-[python]: https://www.python.org
 [docker]: https://www.docker.com
-[redis]: https://redis.io
+[nodejs]: https://nodejs.org
+[npm]: https://www.npmjs.com
 [nginx]: https://www.nginx.com
+[python]: https://www.python.org
+[react]: https://reactjs.org
+[redis]: https://redis.io
 [supervisor]: http://supervisord.org
