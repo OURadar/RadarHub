@@ -133,7 +133,9 @@ class Day(models.Model):
         return f'{self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
 
     def show(self):
-        return f'{self.date} :: {self.name} :: {self.hourly_count}'
+        show = self.date.strftime('%Y%m%d')
+        show = f'{self.name}{show}'
+        return f'{show} {self.hourly_count}'
 
     def first_hour(self):
         return min([k for k, e in enumerate(self.hourly_count.split(',')) if e != '0'])

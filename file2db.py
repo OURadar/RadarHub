@@ -57,8 +57,7 @@ def signalHandler(sig, frame):
     keepReading = False
     # Print a return line for cosmetic
     print('\r')
-    # logger.info('SIGINT received, finishing up ...')
-    print('SIGINT received, finishing up ...')
+    logger.info('SIGINT received, finishing up ...')
 
 def proper(file, root='/mnt/data'):
     basename = os.path.basename(file)
@@ -73,10 +72,9 @@ def proper(file, root='/mnt/data'):
     dayTree = f'{d[0:4]}/{d}'
     return f'{root}/{sub}/{dayTree}/_original/{basename}'
 
-def catchup(file, root='/mnt/data', verbose=1):
-    if verbose:
-        print(colorize('catchup()', 'green'))
-        print(show_variable('file', file))
+def catchup(file, root='/mnt/data'):
+    logger.info(colorize('catchup()', 'green'))
+    logger.info(show_variable('file', file))
     basename = os.path.basename(file)
     c = basename.split('-')
     d, t = c[1], c[2]
@@ -96,8 +94,8 @@ def catchup(file, root='/mnt/data', verbose=1):
     while date <= filedate:
         dayTree = date.strftime('%Y/%Y%m%d')
         dayFolder = f'{folder}/{dayTree}'
-        print(show_variable('folder', dayFolder) + '   ' + show_variable('hour', hour))
-        dbtool.xzfolder(dayFolder, hour)
+        logger.info(show_variable('folder', dayFolder) + '   ' + show_variable('hour', hour))
+        dbtool.xzfolder(dayFolder, hour, verbose=0)
         date += datetime.timedelta(days=1)
         hour = 0
 
@@ -138,8 +136,7 @@ def listen(host='10.197.14.59'):
         try:
             sock.connect((host, 9000))
         except:
-            # logger.info('FIFOShare server not available')
-            print('FIFOShare server not available')
+            logger.info('fifoshare server not available')
             k = 5
             while k > 0:
                 # logger.debug('Try again in {} second{} ... '.format(k, 's' if k > 1 else ''), end='\r')
@@ -149,8 +146,7 @@ def listen(host='10.197.14.59'):
                 k -= 1
             continue
         sock.setblocking(0)
-        # logger.info('FIFOShare connection established')
-        print('FIFOShare connection established')
+        logger.info('fifoshare connection established')
 
         day = time.localtime(time.time()).tm_mday
         localMemory = b''
@@ -159,7 +155,7 @@ def listen(host='10.197.14.59'):
             # Start a new log if the day has changed
             if day != time.localtime(time.time()).tm_mday:
                 day = time.localtime(time.time()).tm_mday
-                # logger.setLogPrefix('fiforead')
+                logger.refresh()
 
             # Check if the socket is ready to read
             readyToRead, _, selectError = select.select([sock], [], [sock], 0.1)
@@ -170,14 +166,13 @@ def listen(host='10.197.14.59'):
             elif readyToRead:
                 try:
                     r = sock.recv(1024)
-                    # logger.debug('recv() -> {}'.format(r))
-                    # print('recv() -> {}'.format(r))
+                    logger.debug('recv() -> {}'.format(r))
                 except:
-                    # logger.warning('Connection interrupted.')
+                    logger.warning('Connection interrupted.')
                     print('Connection interrupted.')
                     break
                 if not r:
-                    # logger.debug('Connection closed.')
+                    logger.debug('Connection closed.')
                     print('Connection closed.')
                     break;
             else:
@@ -187,8 +182,7 @@ def listen(host='10.197.14.59'):
             localMemory += r
             files = localMemory.decode('ascii').split('\n')
             localMemory = files[-1].encode('utf')
-            # logger.debug('files = {}'.format(files))
-            # print(f'files = {files}')
+            logger.debug('files = {}'.format(files))
 
             for file in files[:-1]:
                 # At this point, the filename is considered good
@@ -225,22 +219,19 @@ def file2db():
             logger.setLevel(dailylog.logging.DEBUG)
         logger.showLogOnScreen()
 
-    # if args.v > 1:
-    #     showDebugMessages()
-    # elif args.v:
-    #     showInfoMessages()
-
     # Catch kill signals to exit gracefully
     signal.signal(signal.SIGINT, signalHandler)
     signal.signal(signal.SIGTERM, signalHandler)
 
+    # Log an entry
+    logger.info('--- Started ---')
+
+    # Populate the default host if not specified
     if args.host is None:
         args.host = '10.197.14.59'
     logger.info(show_variable('host', args.host))
 
-    # Log an entry
-    logger.info('--- Started ---')
-
+    # Now we listen
     listen(args.host)
 
     # Log an entry
