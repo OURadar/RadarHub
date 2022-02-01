@@ -29,6 +29,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
 import dbtool
+import dailylog
 
 from frontend.models import File, Day
 from common import colorize, show_variable
@@ -49,6 +50,7 @@ radars = {
     }
 }
 pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
+logger = dailylog.Logger('file2db')
 
 def signalHandler(sig, frame):
     global keepReading
@@ -66,7 +68,7 @@ def proper(file, root='/mnt/data'):
     if prefix in radars:
         sub = radars[prefix]['folder']
     else:
-        print(f'Radar {prefix} not recognized.')
+        logger.warning(f'Radar {prefix} not recognized.')
         return None
     dayTree = f'{d[0:4]}/{d}'
     return f'{root}/{sub}/{dayTree}/_original/{basename}'
@@ -86,7 +88,7 @@ def catchup(file, root='/mnt/data', verbose=1):
         sub = radars[prefix]['folder']
         folder = f'{root}/{sub}'
     else:
-        print(f'Radar {prefix} not recognized.')
+        logger.warning(f'Radar {prefix} not recognized.')
         return
 
     date = day.date
@@ -101,7 +103,7 @@ def catchup(file, root='/mnt/data', verbose=1):
 
 def process(file):
     global radars
-    print(colorize(file, 'teal'))
+    logger.info(colorize(file, 'teal'))
     basename = os.path.basename(file)
     c = basename.split('-')
     prefix = c[0] + '-'
@@ -117,15 +119,15 @@ def process(file):
         for info in tar.getmembers():
             file = File.objects.filter(name=info.name)
             if file:
-                print(file)
+                logger.debug(file)
             else:
-                print(f'N {info.name}')
+                logger.debug(f'N {info.name}')
                 datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
                 file = File(name=info.name, path=archive, date=datestr, size=info.size, offset=info.offset, offset_data=info.offset_data)
                 file.save()
 
     day, mode = dbtool.build_day(s[:8], name=prefix, verbose=0)
-    print(f'{mode} {day.show()}')
+    logger.info(f'{mode} {day.show()}')
 
 def listen(host='10.197.14.59'):
     global keepReading
@@ -218,7 +220,10 @@ def file2db():
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
-    logfile = 'fiforead.log'
+    if args.verbose:
+        if args.verbose > 1:
+            logger.setLevel(dailylog.logging.DEBUG)
+        logger.showLogOnScreen()
 
     # if args.v > 1:
     #     showDebugMessages()
@@ -231,15 +236,17 @@ def file2db():
 
     if args.host is None:
         args.host = '10.197.14.59'
-    print(show_variable('host', args.host))
+    logger.info(show_variable('host', args.host))
 
     # Log an entry
-    print('--- Started ---')
+    logger.info('--- Started ---')
 
     listen(args.host)
 
     # Log an entry
-    print('--- Finished ---')
+    logger.info('--- Finished ---')
+
+###
 
 if __name__ == '__main__':
     file2db()
