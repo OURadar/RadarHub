@@ -33,7 +33,7 @@ import dbtool
 import dailylog
 
 from frontend.models import File, Day
-from common import colorize, show_variable
+from common import colorize, color_name_value
 
 keepReading = True
 radars = {
@@ -75,7 +75,7 @@ def proper(file, root='/mnt/data'):
 
 def catchup(file, root='/mnt/data'):
     logger.info(colorize('catchup()', 'green'))
-    logger.info(show_variable('file', file))
+    logger.info(color_name_value('file', file))
     basename = os.path.basename(file)
     c = basename.split('-')
     d, t = c[1], c[2]
@@ -95,7 +95,7 @@ def catchup(file, root='/mnt/data'):
     while date <= filedate:
         dayTree = date.strftime('%Y/%Y%m%d')
         dayFolder = f'{folder}/{dayTree}'
-        logger.info(show_variable('folder', dayFolder) + '   ' + show_variable('hour', hour))
+        logger.info(color_name_value('folder', dayFolder) + '   ' + color_name_value('hour', hour))
         dbtool.xzfolder(dayFolder, hour, verbose=0)
         date += datetime.timedelta(days=1)
         hour = 0
@@ -131,14 +131,14 @@ def process(file):
     day, mode = dbtool.build_day(s[:8], name=prefix, verbose=0)
     logger.info(f'{mode} {day.show()}')
 
-def listen(host='10.197.14.59'):
+def listen(host='10.197.14.59', port=9000):
     global keepReading
     keepReading = True
     while keepReading:
         # Open a socket to connect FIFOShare
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            sock.connect((host, 9000))
+            sock.connect((host, port))
         except:
             logger.info('fifoshare server not available')
             k = 5
@@ -214,7 +214,7 @@ def file2db():
     # Populate the default host if not specified
     if args.host is None:
         args.host = '10.197.14.59'
-    logger.info(show_variable('host', args.host))
+    logger.info(color_name_value('host', args.host))
 
     if args.verbose:
         if args.verbose > 1:

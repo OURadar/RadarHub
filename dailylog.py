@@ -2,7 +2,6 @@ import os
 import time
 import logging
 
-home = os.path.expanduser('~/log')
 logging.Formatter.converter = time.localtime
 formatter = logging.Formatter('%(asctime)s : %(message)s', datefmt='%H:%M:%S')
 
@@ -51,7 +50,7 @@ class Logger(logging.Logger):
 
 if __name__ == '__main__':
 
-    logger = DailyLogger('radarhub')
+    logger = DailyLogger('dailylog')
 
     # logger.setLevel(logging.DEBUG)
     # logger.showLogOnScreen()

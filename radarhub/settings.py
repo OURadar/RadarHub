@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 
-from common import show_variable
+from common import color_name_value
 
 # My additional parameters
 VERBOSE = 0
@@ -36,7 +36,7 @@ if os.path.exists(BASE_DIR / 'secret-key'):
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
 if VERBOSE:
-    print(show_variable('DEBUG', DEBUG))
+    print(color_name_value('DEBUG', DEBUG))
 
 ALLOWED_HOSTS = ['*']
 
@@ -106,8 +106,8 @@ if os.path.exists(BASE_DIR / 'db-password'):
         DB_PASSWORD = fid.read().strip()
 
 if VERBOSE:
-    show = show_variable('DB_USERNAME', DB_USERNAME)
-    show += '   ' + show_variable('DB_PASSWORD', DB_PASSWORD)
+    show = color_name_value('DB_USERNAME', DB_USERNAME)
+    show += '   ' + color_name_value('DB_PASSWORD', DB_PASSWORD)
     print(show)
 
 DATABASES = {

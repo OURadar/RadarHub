@@ -11,7 +11,7 @@ from django.conf import settings
 # from django.utils import timezone
 
 from .models import File, Day
-from common import colorize, show_variable, radar2prefix
+from common import colorize, color_name_value, radar_prefix
 
 timeFinder = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
@@ -57,12 +57,12 @@ def month(request, radar, day, verbose=settings.VERBOSE):
         return HttpResponse(f'Not a valid query.', status=500)    
     if verbose:
         show = colorize('archive.month()', 'green')
-        show += '   ' + show_variable('radar', radar)
-        show += '   ' + show_variable('day', day)
+        show += '   ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('day', day)
         print(show)
     y = int(day[0:4])
     m = int(day[4:6])
-    prefix = radar2prefix(radar)
+    prefix = radar_prefix(radar)
     entries = Day.objects.filter(date__year=y, date__month=m, name=prefix)
     s = time.mktime(time.strptime(day[:6], '%Y%m'))
     m += 1
@@ -91,12 +91,12 @@ def count(request, radar, day, verbose=settings.VERBOSE):
         return HttpResponse(f'Not a valid query.', status=500)
     if verbose:
         show = colorize('archive.count()', 'green')
-        show += '   ' + show_variable('radar', radar)
-        show += '   ' + show_variable('day', day)
+        show += '   ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('day', day)
         print(show)
     n = [0 for _ in range(24)]
     date = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
-    prefix = radar2prefix(radar)
+    prefix = radar_prefix(radar)
     d = Day.objects.filter(date=date, name=prefix)
     if d:
         d = d[0]
@@ -133,14 +133,14 @@ def _list(radar, hour_prod):
     ss = time.strftime('%Y-%m-%d %H:%M:%SZ', s)
     ee = time.strftime('%Y-%m-%d %H:%M:%SZ', e)
     date_range = [ss, ee]
-    prefix = radar2prefix(radar)
+    prefix = radar_prefix(radar)
     matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     return [o.name for o in matches]
 
 def list(request, radar, hour_prod, verbose=settings.VERBOSE):
     if verbose:
         show = colorize('archive.list()', 'green')
-        show += '   ' + show_variable('hour_prod', hour_prod)
+        show += '   ' + color_name_value('hour_prod', hour_prod)
         print(show)
     if radar == 'undefined' or hour_prod == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
@@ -209,16 +209,16 @@ def load(request, name, verbose=settings.VERBOSE):
     return response
 
 def _date(radar, verbose=settings.VERBOSE):
-    prefix = radar2prefix(radar)
+    prefix = radar_prefix(radar)
     if prefix is None:
         return None, None
     day = Day.objects.filter(name=prefix).latest('date')
     ymd = day.date.strftime('%Y%m%d')
     if verbose:
         show = colorize('archive.date()', 'green')
-        show += '   ' + show_variable('radar', radar)
-        show += '   ' + show_variable('prefix', prefix)
-        show += '   ' + show_variable('day', ymd)
+        show += '   ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('prefix', prefix)
+        show += '   ' + color_name_value('day', ymd)
         print(show)
     hour = max([k for k, e in enumerate(day.hourly_count.split(',')) if e != '0'])
     return ymd, hour
@@ -254,7 +254,7 @@ def rho2ind(values):
 def location(radar, verbose=settings.VERBOSE):
     if verbose:
         show = colorize('archive.location()', 'green')
-        show += '   ' + show_variable('radar', radar)
+        show += '   ' + color_name_value('radar', radar)
         print(show)
     global origins
     ymd, hour = _date(radar)

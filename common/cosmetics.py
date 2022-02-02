@@ -9,6 +9,7 @@ colors = {
     'orange': 214,
     'yellow': 227,
     'green': 118,
+    'mint': 43,
     'teal': 87,
     'cyan': 14,
     'blue': 33,
@@ -34,7 +35,7 @@ def hex2rgba(strs):
         b = int(str[4:6], 16) / 255
         print(f'[{r:.3f}, {g:.3f}, {b:.3f}, 1.0]')
 
-def show_variable(name, value):
+def color_name_value(name, value):
     show = colorize(name, 'orange')
     show += colorize(' = ', 'red')
     show += colorize(value, 'yellow' if isinstance(value, str) else 'purple')
