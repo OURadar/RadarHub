@@ -2,10 +2,8 @@ import os
 import time
 import logging
 
-logging.Formatter.converter = time.gmtime
-
 home = os.path.expanduser('~/log')
-# logger = logging.getLogger('radarhub')
+logging.Formatter.converter = time.localtime
 formatter = logging.Formatter('%(asctime)s : %(message)s', datefmt='%H:%M:%S')
 
 class Logger(logging.Logger):

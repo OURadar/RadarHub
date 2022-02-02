@@ -24,6 +24,7 @@ import tarfile
 import argparse
 import datetime
 import textwrap
+import setproctitle
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
@@ -105,7 +106,10 @@ def process(file):
     basename = os.path.basename(file)
     c = basename.split('-')
     prefix = c[0] + '-'
-    if prefix in radars and radars[prefix]['count'] == 0:
+    if prefix not in radars:
+        logger.info(f'{basename} skipped')
+        return
+    if radars[prefix]['count'] == 0:
         catchup(file)
     radars[prefix]['count'] += 1
 
@@ -161,7 +165,7 @@ def listen(host='10.197.14.59'):
             readyToRead, _, selectError = select.select([sock], [], [sock], 0.1)
             if selectError:
                 # logger.warning('Error in select() {}'.format(selectError))
-                print(f'Error in select() {selectError}')
+                logger.error(f'Error in select() {selectError}')
                 break
             elif readyToRead:
                 try:
@@ -169,11 +173,11 @@ def listen(host='10.197.14.59'):
                     logger.debug('recv() -> {}'.format(r))
                 except:
                     logger.warning('Connection interrupted.')
-                    print('Connection interrupted.')
+                    logger.error('Connection interrupted.')
                     break
                 if not r:
                     logger.debug('Connection closed.')
-                    print('Connection closed.')
+                    logger.info('Connection closed.')
                     break;
             else:
                 continue
@@ -225,6 +229,7 @@ def file2db():
 
     # Log an entry
     logger.info('--- Started ---')
+    logger.info(f'Using timezone {time.tzname}')
 
     # Populate the default host if not specified
     if args.host is None:
@@ -240,4 +245,5 @@ def file2db():
 ###
 
 if __name__ == '__main__':
+    setproctitle.setproctitle(os.path.basename(sys.argv[0]))
     file2db()
