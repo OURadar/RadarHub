@@ -18,8 +18,14 @@ colors = {
 }
 
 def colorize(text, color='white'):
-    num = colors[color] if color in colors else 15
-    return f'\033[38;5;{num}m{text}\033[m'
+
+    if isinstance(color, int):
+        return f'\033[38;5;{color}m{text}\033[m'
+    elif color in colors:
+        num = colors[color]
+        return f'\033[38;5;{num}m{text}\033[m'
+    else:
+        return text
 
 def hex2rgba(strs):
     for str in strs:

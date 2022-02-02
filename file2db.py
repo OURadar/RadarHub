@@ -102,7 +102,7 @@ def catchup(file, root='/mnt/data'):
 
 def process(file):
     global radars
-    logger.info(colorize(file, 'teal'))
+    logger.info(colorize(file, 43))
     basename = os.path.basename(file)
     c = basename.split('-')
     prefix = c[0] + '-'
@@ -152,15 +152,10 @@ def listen(host='10.197.14.59'):
         sock.setblocking(0)
         logger.info('fifoshare connection established')
 
-        day = time.localtime(time.time()).tm_mday
+        # day = time.localtime(time.time()).tm_mday
         localMemory = b''
 
         while keepReading:
-            # Start a new log if the day has changed
-            if day != time.localtime(time.time()).tm_mday:
-                day = time.localtime(time.time()).tm_mday
-                logger.refresh()
-
             # Check if the socket is ready to read
             readyToRead, _, selectError = select.select([sock], [], [sock], 0.1)
             if selectError:
@@ -173,11 +168,9 @@ def listen(host='10.197.14.59'):
                     logger.debug('recv() -> {}'.format(r))
                 except:
                     logger.warning('Connection interrupted.')
-                    logger.error('Connection interrupted.')
                     break
                 if not r:
                     logger.debug('Connection closed.')
-                    logger.info('Connection closed.')
                     break;
             else:
                 continue
@@ -199,9 +192,9 @@ def listen(host='10.197.14.59'):
         sock.close()
         print('FIFOShare connection terminated')
         if keepReading:
-            k = 5
-            while k > 0:
-                time.sleep(1.0)
+            k = 50
+            while k > 0 and keepReading:
+                time.sleep(0.1)
                 k -= 1
 
 def file2db():
@@ -218,6 +211,11 @@ def file2db():
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
+    # Populate the default host if not specified
+    if args.host is None:
+        args.host = '10.197.14.59'
+    logger.info(show_variable('host', args.host))
+
     if args.verbose:
         if args.verbose > 1:
             logger.setLevel(dailylog.logging.DEBUG)
@@ -227,19 +225,11 @@ def file2db():
     signal.signal(signal.SIGINT, signalHandler)
     signal.signal(signal.SIGTERM, signalHandler)
 
-    # Log an entry
     logger.info('--- Started ---')
     logger.info(f'Using timezone {time.tzname}')
 
-    # Populate the default host if not specified
-    if args.host is None:
-        args.host = '10.197.14.59'
-    logger.info(show_variable('host', args.host))
-
-    # Now we listen
     listen(args.host)
 
-    # Log an entry
     logger.info('--- Finished ---')
 
 ###
