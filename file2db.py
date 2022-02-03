@@ -78,9 +78,9 @@ def catchup(file, root='/mnt/data'):
     logger.info(color_name_value('file', file))
     basename = os.path.basename(file)
     c = basename.split('-')
-    d, t = c[1], c[2]
+    d = c[1]
     prefix = c[0] + '-'
-    datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
+    # datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
     day = Day.objects.filter(name=prefix).latest('date')
     hour = day.last_hour()
     if prefix in radars:
@@ -115,8 +115,8 @@ def process(file):
 
     archive = proper(file)
     s = pattern.search(archive).group(0)
-    date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
+    k = 0
     with tarfile.open(archive) as tar:
         for info in tar.getmembers():
             file = File.objects.filter(name=info.name)
@@ -127,9 +127,11 @@ def process(file):
                 datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
                 file = File(name=info.name, path=archive, date=datestr, size=info.size, offset=info.offset, offset_data=info.offset_data)
                 file.save()
+                k += 1
 
-    day, mode = dbtool.build_day(s[:8], name=prefix, verbose=0)
-    logger.info(f'{mode} {day.show()}')
+    if k > 0:
+        day, mode = dbtool.build_day(s[:8], name=prefix, verbose=0)
+        logger.info(f'{mode} {day.show()}')
 
 def listen(host='10.197.14.59', port=9000):
     global keepReading
