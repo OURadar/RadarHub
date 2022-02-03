@@ -113,17 +113,23 @@ sudo apt install nodejs
 
 ## Configure PostgreSQL
 
-Create a user `radarhub` and database `radarhub` on [PostgreSQL]:
+Create a database `radarhub`, and users `radarhub` and `guest` on [PostgreSQL]:
 
 ```text
-postgres=# create user radarhub;
-postgres-# create database radarhub;
-postgres-# alter role radarhub with password 'ARRCuser#1';
-postgres-# grant all privileges on database radarhub to radarhub;
-postgres-# alter database radarhub owner to radarhub;
+postgres-# CREATE DATABASE radarhub;
+postgres=#
+postgres=# CREATE USER radarhub;
+postgres-# ALTER ROLE guest WITH PASSWORD '_password_';
+postgres-# GRANT ALL PRIVILEDGES ON DATABASE radarhub TO radarhub;
+postgres-# ALTER DATABASE radarhub OWNER TO radarhub;
+postgres=#
+postgres=# CREATE USER guest;
+postgres-# ALTER ROLE guest WITH PASSWORD '_password_';
+postgres-# GRANT CONNECT ON DATABASE radarhub TO guest;
+postgres-# GRANT SELECT ON radarhub TO guest;
 ```
 
-Also, configure [PostgreSQL] to be accessible through network by adding/modifying the following lines to the configuration file `/etc/postgresql/12/main/postgresql.conf`:
+Also, configure [PostgreSQL] to be accessible through network by adding/modifying the following lines in the configuration file `/etc/postgresql/12/main/postgresql.conf`:
 
 ```conf
 listen_addresses = '*'
@@ -137,26 +143,14 @@ To login remotely, use:
 psql -h dwv05 -U radarhub
 ```
 
-Once in the `psql` terminal,
+Once in the `psql` terminal, some of these could be useful:
 
 ```sql
-SELECT
-    column_name,
-    data_type,
-    character_maximum_length
-FROM
-    information_schema.columns
-WHERE
-    table_name = 'frontend_file';
-
-SELECT
-    column_name,
-    data_type,
-    character_maximum_length
-FROM
-    information_schema.columns
-WHERE
-    table_name = 'frontend_day';
+\d
+\du
+\dt
+SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_file';
+SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
 ```
 
 # Developing
