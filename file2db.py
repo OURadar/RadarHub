@@ -24,14 +24,16 @@ import tarfile
 import argparse
 import datetime
 import textwrap
+import setproctitle
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
 import dbtool
+import dailylog
 
 from frontend.models import File, Day
-from common import colorize, show_variable
+from common import colorize, color_name_value
 
 keepReading = True
 radars = {
@@ -49,14 +51,14 @@ radars = {
     }
 }
 pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
+logger = dailylog.Logger('file2db')
 
 def signalHandler(sig, frame):
     global keepReading
     keepReading = False
     # Print a return line for cosmetic
     print('\r')
-    # logger.info('SIGINT received, finishing up ...')
-    print('SIGINT received, finishing up ...')
+    logger.info('SIGINT received, finishing up ...')
 
 def proper(file, root='/mnt/data'):
     basename = os.path.basename(file)
@@ -66,27 +68,26 @@ def proper(file, root='/mnt/data'):
     if prefix in radars:
         sub = radars[prefix]['folder']
     else:
-        print(f'Radar {prefix} not recognized.')
+        logger.warning(f'Radar {prefix} not recognized.')
         return None
     dayTree = f'{d[0:4]}/{d}'
     return f'{root}/{sub}/{dayTree}/_original/{basename}'
 
-def catchup(file, root='/mnt/data', verbose=1):
-    if verbose:
-        print(colorize('catchup()', 'green'))
-        print(show_variable('file', file))
+def catchup(file, root='/mnt/data'):
+    logger.info(colorize('catchup()', 'green'))
+    logger.info(color_name_value('file', file))
     basename = os.path.basename(file)
     c = basename.split('-')
-    d, t = c[1], c[2]
+    d = c[1]
     prefix = c[0] + '-'
-    datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
+    # datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
     day = Day.objects.filter(name=prefix).latest('date')
     hour = day.last_hour()
     if prefix in radars:
         sub = radars[prefix]['folder']
         folder = f'{root}/{sub}'
     else:
-        print(f'Radar {prefix} not recognized.')
+        logger.warning(f'Radar {prefix} not recognized.')
         return
 
     date = day.date
@@ -94,50 +95,54 @@ def catchup(file, root='/mnt/data', verbose=1):
     while date <= filedate:
         dayTree = date.strftime('%Y/%Y%m%d')
         dayFolder = f'{folder}/{dayTree}'
-        print(show_variable('folder', dayFolder) + '   ' + show_variable('hour', hour))
-        dbtool.xzfolder(dayFolder, hour)
+        logger.info(color_name_value('folder', dayFolder) + '   ' + color_name_value('hour', hour))
+        dbtool.xzfolder(dayFolder, hour, verbose=0)
         date += datetime.timedelta(days=1)
         hour = 0
 
 def process(file):
     global radars
-    print(colorize(file, 'teal'))
+    logger.info(colorize(file, 43))
     basename = os.path.basename(file)
     c = basename.split('-')
     prefix = c[0] + '-'
-    if prefix in radars and radars[prefix]['count'] == 0:
+    if prefix not in radars:
+        logger.info(f'{basename} skipped')
+        return
+    if radars[prefix]['count'] == 0:
         catchup(file)
     radars[prefix]['count'] += 1
 
     archive = proper(file)
     s = pattern.search(archive).group(0)
-    date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
+    k = 0
     with tarfile.open(archive) as tar:
         for info in tar.getmembers():
             file = File.objects.filter(name=info.name)
             if file:
-                print(file)
+                logger.debug(file)
             else:
-                print(f'N {info.name}')
+                logger.debug(f'N {info.name}')
                 datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
                 file = File(name=info.name, path=archive, date=datestr, size=info.size, offset=info.offset, offset_data=info.offset_data)
                 file.save()
+                k += 1
 
-    day, mode = dbtool.build_day(s[:8], name=prefix, verbose=0)
-    print(f'{mode} {day.show()}')
+    if k > 0:
+        day, mode = dbtool.build_day(s[:8], name=prefix, verbose=0)
+        logger.info(f'{mode} {day.show()}')
 
-def listen(host='10.197.14.59'):
+def listen(host='10.197.14.59', port=9000):
     global keepReading
     keepReading = True
     while keepReading:
         # Open a socket to connect FIFOShare
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            sock.connect((host, 9000))
+            sock.connect((host, port))
         except:
-            # logger.info('FIFOShare server not available')
-            print('FIFOShare server not available')
+            logger.info('fifoshare server not available')
             k = 5
             while k > 0:
                 # logger.debug('Try again in {} second{} ... '.format(k, 's' if k > 1 else ''), end='\r')
@@ -147,36 +152,27 @@ def listen(host='10.197.14.59'):
                 k -= 1
             continue
         sock.setblocking(0)
-        # logger.info('FIFOShare connection established')
-        print('FIFOShare connection established')
+        logger.info('fifoshare connection established')
 
-        day = time.localtime(time.time()).tm_mday
+        # day = time.localtime(time.time()).tm_mday
         localMemory = b''
 
         while keepReading:
-            # Start a new log if the day has changed
-            if day != time.localtime(time.time()).tm_mday:
-                day = time.localtime(time.time()).tm_mday
-                # logger.setLogPrefix('fiforead')
-
             # Check if the socket is ready to read
             readyToRead, _, selectError = select.select([sock], [], [sock], 0.1)
             if selectError:
                 # logger.warning('Error in select() {}'.format(selectError))
-                print(f'Error in select() {selectError}')
+                logger.error(f'Error in select() {selectError}')
                 break
             elif readyToRead:
                 try:
                     r = sock.recv(1024)
-                    # logger.debug('recv() -> {}'.format(r))
-                    # print('recv() -> {}'.format(r))
+                    logger.debug('recv() -> {}'.format(r))
                 except:
-                    # logger.warning('Connection interrupted.')
-                    print('Connection interrupted.')
+                    logger.warning('Connection interrupted.')
                     break
                 if not r:
-                    # logger.debug('Connection closed.')
-                    print('Connection closed.')
+                    logger.debug('Connection closed.')
                     break;
             else:
                 continue
@@ -185,8 +181,7 @@ def listen(host='10.197.14.59'):
             localMemory += r
             files = localMemory.decode('ascii').split('\n')
             localMemory = files[-1].encode('utf')
-            # logger.debug('files = {}'.format(files))
-            # print(f'files = {files}')
+            logger.debug('files = {}'.format(files))
 
             for file in files[:-1]:
                 # At this point, the filename is considered good
@@ -199,9 +194,9 @@ def listen(host='10.197.14.59'):
         sock.close()
         print('FIFOShare connection terminated')
         if keepReading:
-            k = 5
-            while k > 0:
-                time.sleep(1.0)
+            k = 50
+            while k > 0 and keepReading:
+                time.sleep(0.1)
                 k -= 1
 
 def file2db():
@@ -215,31 +210,33 @@ def file2db():
             file2db.py -v 10.197.14.59
         '''))
     parser.add_argument('host', type=str, nargs='?', help='host to connect')
+    parser.add_argument('-p', dest='port', default=9000, help='sets the port (default = 9000)')
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
-    logfile = 'fiforead.log'
+    # Populate the default host if not specified
+    if args.host is None:
+        args.host = '10.197.14.59'
+    logger.info(color_name_value('host', args.host))
 
-    # if args.v > 1:
-    #     showDebugMessages()
-    # elif args.v:
-    #     showInfoMessages()
+    if args.verbose:
+        if args.verbose > 1:
+            logger.setLevel(dailylog.logging.DEBUG)
+        logger.showLogOnScreen()
 
     # Catch kill signals to exit gracefully
     signal.signal(signal.SIGINT, signalHandler)
     signal.signal(signal.SIGTERM, signalHandler)
 
-    if args.host is None:
-        args.host = '10.197.14.59'
-    print(show_variable('host', args.host))
+    logger.info('--- Started ---')
+    logger.info(f'Using timezone {time.tzname}')
 
-    # Log an entry
-    print('--- Started ---')
+    listen(args.host, port=args.port)
 
-    listen(args.host)
+    logger.info('--- Finished ---')
 
-    # Log an entry
-    print('--- Finished ---')
+###
 
 if __name__ == '__main__':
+    setproctitle.setproctitle(os.path.basename(sys.argv[0]))
     file2db()

@@ -30,7 +30,7 @@ django.setup()
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 
 from frontend.models import File, Day
-from common import colorize, show_variable
+from common import colorize, color_name_value
 
 '''
     (Deprecated)
@@ -154,10 +154,10 @@ def list_files(folder):
 def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     if verbose:
         show = colorize('xzfolder()', 'green')
-        show += '   ' + show_variable('folder', folder)
-        show += '   ' + show_variable('hour', hour)
-        show += '   ' + show_variable('check_db', check_db)
-        show += '   ' + show_variable('use_bulk_update', use_bulk_update)
+        show += '   ' + color_name_value('folder', folder)
+        show += '   ' + color_name_value('hour', hour)
+        show += '   ' + color_name_value('check_db', check_db)
+        show += '   ' + color_name_value('use_bulk_update', use_bulk_update)
         print(show)
 
     use_mp = 'linux' in sys.platform
@@ -357,7 +357,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
 def build_day(day, name=None, verbose=0):
     if verbose:
         show = colorize('build_day()', 'green')
-        show += '   ' + show_variable('name', name)
+        show += '   ' + color_name_value('name', name)
         print(show)
 
     if name is None and '/' not in day:
@@ -424,8 +424,8 @@ def build_day(day, name=None, verbose=0):
 def check_day(day, name=None, verbose=0):
     if verbose:
         show = colorize('check_day()', 'green')
-        show += '   ' + show_variable('day', day)
-        show += '   ' + show_variable('name', name)
+        show += '   ' + color_name_value('day', day)
+        show += '   ' + color_name_value('name', name)
         print(show)
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(day))
     if s:
@@ -452,7 +452,7 @@ def check_day(day, name=None, verbose=0):
 '''
 def show_sweep_summary(timestr):
     show = colorize('show_sweep_summary()', 'green')
-    show += '   ' + show_variable('timestr', timestr)
+    show += '   ' + color_name_value('timestr', timestr)
     print(show)
     t = time.strptime(timestr, '%Y%m%d-%H%M%S')
     t = time.strftime('%Y-%m-%d %H:%M:%SZ', t)
@@ -477,8 +477,8 @@ def show_sweep_summary(timestr):
 def find_duplicates(folder, prefix=None, remove=False, verbose=0):
     if verbose:
         show = colorize('find_duplicates()', 'green')
-        show += '   ' + show_variable('folder', folder)
-        show += '   ' + show_variable('remove', remove)
+        show += '   ' + color_name_value('folder', folder)
+        show += '   ' + color_name_value('remove', remove)
         print(show)
 
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
@@ -529,8 +529,8 @@ def check_latest():
         day = Day.objects.filter(name=name).latest('date')
         last = day.last_date_range()
         file = File.objects.filter(name__startswith=name, date__range=last).latest('date')
-        show = show_variable('last[0]', last[0])
-        show += '   ' + show_variable('name', file.name)
+        show = color_name_value('last[0]', last[0])
+        show += '   ' + color_name_value('name', file.name)
         print(show)
 
 #

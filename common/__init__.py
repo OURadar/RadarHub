@@ -1,6 +1,6 @@
 from .cosmetics import *
 
-def radar2prefix(radar):
+def radar_prefix(radar):
     radarDict = {
         'px1000': 'PX-',
         'raxpol': 'RAXPOL-',

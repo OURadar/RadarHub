@@ -75,7 +75,6 @@ class File(models.Model):
             name = nc.getncattr('TypeName')
             elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
             azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
-            gatewidth = np.array(nc.variables['GateWidth'][:], dtype=np.float32)
             values = np.array(nc.variables[name][:], dtype=np.float32)
             values[values < -90] = np.nan
             longitude = nc.getncattr('Longitude')
@@ -89,7 +88,6 @@ class File(models.Model):
                 'latitude': latitude,
                 'sweepTime': sweepTime,
                 'sweepElevation': sweepElevation,
-                'gatewidth': gatewidth,
                 'elevations': elevations,
                 'azimuths': azimuths,
                 'values': values
@@ -133,7 +131,9 @@ class Day(models.Model):
         return f'{self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
 
     def show(self):
-        return f'{self.date} :: {self.name} :: {self.hourly_count}'
+        show = self.date.strftime('%Y%m%d') if self.date else '00000000'
+        show = f'{self.name}{show}'
+        return f'{show} {self.hourly_count}'
 
     def first_hour(self):
         return min([k for k, e in enumerate(self.hourly_count.split(',')) if e != '0'])
@@ -142,6 +142,8 @@ class Day(models.Model):
         return max([k for k, e in enumerate(self.hourly_count.split(',')) if e != '0'])
 
     def last_date_range(self):
+        if self.date is None:
+            return None
         day = self.date.strftime('%Y-%m-%d')
         hour = self.last_hour()
         day_hour = f'{day} {hour:02d}'
