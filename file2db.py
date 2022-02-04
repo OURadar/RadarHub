@@ -116,18 +116,25 @@ def process(file):
     archive = proper(file)
     s = pattern.search(archive).group(0)
 
-    k = 0
-    with tarfile.open(archive) as tar:
-        for info in tar.getmembers():
-            file = File.objects.filter(name=info.name)
-            if file:
-                logger.debug(file)
-            else:
-                logger.debug(f'N {info.name}')
-                datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
-                file = File(name=info.name, path=archive, date=datestr, size=info.size, offset=info.offset, offset_data=info.offset_data)
-                file.save()
-                k += 1
+    j, k = 0, 0
+    while j < 3:
+        try:
+            with tarfile.open(archive) as tar:
+                for info in tar.getmembers():
+                    file = File.objects.filter(name=info.name)
+                    if file:
+                        logger.debug(file)
+                    else:
+                        logger.debug(f'N {info.name}')
+                        datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+                        file = File(name=info.name, path=archive, date=datestr, size=info.size, offset=info.offset, offset_data=info.offset_data)
+                        file.save()
+                        k += 1
+            break
+        except:
+            logger.warning(f'Failed opening file {archive}   j = {j}')
+            time.sleep(1.0)
+            j += 1
 
     if k > 0:
         day, mode = dbtool.build_day(s[:8], name=prefix, verbose=0)
