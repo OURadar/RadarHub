@@ -218,6 +218,7 @@ def file2db():
         '''))
     parser.add_argument('host', type=str, nargs='?', help='host to connect')
     parser.add_argument('-p', dest='port', default=9000, help='sets the port (default = 9000)')
+    parser.add_argument('-t', dest='test', action='store_true', help='runs a test')
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
@@ -231,7 +232,11 @@ def file2db():
             logger.setLevel(dailylog.logging.DEBUG)
         logger.showLogOnScreen()
 
-    # Catch kill signals to exit gracefully
+    if args.test:
+        print('testing corrupted archive ...')
+        return
+	
+	# Catch kill signals to exit gracefully
     signal.signal(signal.SIGINT, signalHandler)
     signal.signal(signal.SIGTERM, signalHandler)
 
