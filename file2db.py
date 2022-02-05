@@ -48,6 +48,10 @@ radars = {
     'PX10K-': {
         'folder': 'PX10k',
         'count': 0
+    },
+    'bad-': {
+        'folder': 'Test',
+        'count': 0
     }
 }
 pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
@@ -81,6 +85,8 @@ def catchup(file, root='/mnt/data'):
     d = c[1]
     prefix = c[0] + '-'
     # datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
+    if not Day.objects.filter(name=prefix).exists():
+        return
     day = Day.objects.filter(name=prefix).latest('date')
     hour = day.last_hour()
     if prefix in radars:
@@ -113,7 +119,10 @@ def process(file):
         catchup(file)
     radars[prefix]['count'] += 1
 
-    archive = proper(file)
+    if not os.path.exists(file):
+        archive = proper(file)
+    else:
+        archive = file
     s = pattern.search(archive).group(0)
 
     j, k = 0, 0
@@ -139,6 +148,8 @@ def process(file):
     if k > 0:
         day, mode = dbtool.build_day(s[:8], name=prefix, verbose=0)
         logger.info(f'{mode} {day.show()}')
+    else:
+        logger.warning(f'Unable to handle {archive}')
 
 def listen(host='10.197.14.59', port=9000):
     global keepReading
@@ -234,6 +245,7 @@ def file2db():
 
     if args.test:
         print('testing corrupted archive ...')
+        process('bad-20220205-100000-E4.0.tar.xz')
         return
 	
 	# Catch kill signals to exit gracefully
