@@ -271,6 +271,10 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
 
         def __handle_data__(xx, use_re_pattern=False, save=False):
             files = []
+            count_create = 0;
+            count_update = 0;
+            count_ignore = 0;
+
             for yy in xx:
                 (name, offset, offset_data, size, archive) = yy
                 n = entries.filter(name=name)
@@ -282,8 +286,10 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                         x.size = size
                         x.offset = offset
                         x.offset_data = offset_data
+                        count_update += 1
                     else:
                         mode = 'I'
+                        count_ignore += 1
                 else:
                     mode = 'N'
                     if use_re_pattern:
@@ -301,22 +307,34 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                     if save:
                         x.save()
                     files.append(x)
-            return files
+            return files, count_create, count_update, count_ignore
 
+        count_create = 0;
+        count_update = 0;
+        count_ignore = 0;
         if use_bulk_update:
             t = time.time()
             print('Gathering entries ...')
-            array_of_files = [__handle_data__(output[key]['xx'], save=False) for key in keys]
+            array_of_files = []
+            for key in keys:
+                files, cc, cu, ci = __handle_data__(output[key]['xx'])
+                array_of_files.append(files)
+                count_create += cc;
+                count_update += cu;
+                count_ignore += ci;
             files = [s for symbols in array_of_files for s in symbols]
             print('Updating database ...')
             File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'], batch_size=1000)
             t = time.time() - t
             a = len(files) / t
-            print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)')
+            print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
         else:
             for key in tqdm.tqdm(keys):
                 xx = output[key]['xx']
-                __handle_data__(xx, save=True)
+                files, cc, cu, ci = __handle_data__(xx, save=True)
+                count_create += cc;
+                count_update += cu;
+                count_ignore += ci;
     else:
         def __sweep_files__(xx):
             files = []
