@@ -37,7 +37,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.6.1 Removed most hard-wired parameters (1/7/2022)
   - [x] 0.6.2 Auto-select latest day, hour and file (1/15/2022)
   - [x] 0.6.3 Added support for multiple radars (1/30/2022)
-  - [ ] 0.6.4 Migrated to PostgreSQL (2/5/2022)
+  - [x] 0.6.4 Migrated to PostgreSQL (2/5/2022)
 - [ ] 0.7 RadarKit communicates with RadarHub
 - [ ] 0.8 Page template, UI materials, mobile version
 - [ ] 0.9 Authentication + user priviledges
@@ -82,7 +82,7 @@ In the Javascript space, the definition is passed to the frontend upon a success
 Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. The very first thing to do right after cloning the repository is to install the [python] requirements and [nodejs] dependencies using [npm], which can be accomplished as:
 
 ```shell
-python install -r requirements.txt
+python -m pip install -r requirements.txt 
 
 cd frontend
 npm install
@@ -108,10 +108,17 @@ After that, install Node.js and npm from NodeSource using the following commands
 
 ```shell
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-sudo apt install nodejs
+sudo apt install -y nodejs
 ```
 
 ## Configure PostgreSQL
+
+Switch to user `postgres` and run `psql` using the following commands:
+
+```shell
+sudo -i -u postgres
+psql
+```
 
 Create a database `radarhub`, and users `radarhub` and `guest` on [PostgreSQL]:
 
@@ -119,8 +126,8 @@ Create a database `radarhub`, and users `radarhub` and `guest` on [PostgreSQL]:
 postgres-# CREATE DATABASE radarhub;
 postgres=#
 postgres=# CREATE USER radarhub;
-postgres-# ALTER ROLE guest WITH PASSWORD '_password_';
-postgres-# GRANT ALL PRIVILEDGES ON DATABASE radarhub TO radarhub;
+postgres-# ALTER ROLE radarhub WITH PASSWORD '_password_';
+postgres-# GRANT ALL PRIVILEGES ON DATABASE radarhub TO radarhub;
 postgres-# ALTER DATABASE radarhub OWNER TO radarhub;
 postgres=#
 postgres=# CREATE USER guest;
