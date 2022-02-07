@@ -79,14 +79,7 @@ In the Javascript space, the definition is passed to the frontend upon a success
 
 # Software Requirements
 
-Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. The very first thing to do right after cloning the repository is to install the [python] requirements and [nodejs] dependencies using [npm], which can be accomplished as:
-
-```shell
-python -m pip install -r requirements.txt 
-
-cd frontend
-npm install
-```
+Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. Before setting the [Django] project, install some of the software.
 
 ## Node.js, npm, and PostgreSQL
 
@@ -94,21 +87,40 @@ On Ubuntu, run the following commands:
 
 ```shell
 sudo apt update
-sudo apt install nodejs npm postgresql
+sudo apt install nodejs npm libpq-dev postgresql
 ```
 
 On macOS, run the following commands:
 
 ```shell
 brew update
-brew install nidejs npm postgresql
+brew install nidejs npm libpq-dev postgresql
 ```
 
-After that, install Node.js and npm from NodeSource using the following commands:
+Install the Python requirements as:
+
+```shell
+python -m pip install -r requirements.txt 
+```
+
+Install [nodejs] and [npm] from NodeSource using the following commands:
 
 ```shell
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install -y nodejs
+```
+
+Now you should be ready to clone the repository:
+
+```shell
+git clone https://git.arrc.ou.edu/radar/radarhub.git
+```
+
+Install the [nodejs] dependencies using [npm], which can be accomplished as:
+
+```shell
+cd frontend
+npm install
 ```
 
 ## Configure PostgreSQL
@@ -126,12 +138,12 @@ Create a database `radarhub`, and users `radarhub` and `guest` on [PostgreSQL]:
 postgres-# CREATE DATABASE radarhub;
 postgres=#
 postgres=# CREATE USER radarhub;
-postgres-# ALTER ROLE radarhub WITH PASSWORD '_password_';
+postgres-# ALTER ROLE radarhub WITH PASSWORD '_radarhub_password_';
 postgres-# GRANT ALL PRIVILEGES ON DATABASE radarhub TO radarhub;
 postgres-# ALTER DATABASE radarhub OWNER TO radarhub;
 postgres=#
 postgres=# CREATE USER guest;
-postgres-# ALTER ROLE guest WITH PASSWORD '_password_';
+postgres-# ALTER ROLE guest WITH PASSWORD '_guest_password_';
 postgres-# GRANT CONNECT ON DATABASE radarhub TO guest;
 postgres-# GRANT SELECT ON radarhub TO guest;
 ```
@@ -158,6 +170,33 @@ Once in the `psql` terminal, some of these could be useful:
 \dt
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_file';
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
+```
+
+Back to the [Django] project, create a plain text file named `db-password` and put the `_radarhub_password_` you used in setting up the [postgresql] database in the text. The root folder of the radarhub project should look like this:
+
+```shell
+drwxrwxr-x 4 radarhub radarhub 4.0K Feb  7 21:36 backhaul/
+drwxrwxr-x 3 radarhub radarhub 4.0K Feb  7 21:36 common/
+drwxrwxr-x 8 radarhub radarhub 4.0K Feb  7 21:36 frontend/
+drwxrwxr-x 3 radarhub radarhub 4.0K Feb  7 21:36 radarhub/
+drwxrwxr-x 4 radarhub radarhub 4.0K Feb  7 21:36 reporter/
+drwxrwxr-x 2 radarhub radarhub 4.0K Feb  7 21:36 tools/
+-rw-rw-r-- 1 radarhub radarhub 1.9K Feb  7 21:36 dailylog.py
+-rw-rw-r-- 1 radarhub radarhub   11 Feb  7 21:48 db-password
+-rwxrwxr-x 1 radarhub radarhub  21K Feb  7 21:36 dbtool.py*
+-rwxrwxr-x 1 radarhub radarhub 7.5K Feb  7 21:36 file2db.py*
+-rwxrwxr-x 1 radarhub radarhub  703 Aug 15 00:03 manage.py*
+-rw-rw-r-- 1 radarhub radarhub  11K Feb  7 21:36 README.md
+-rw-rw-r-- 1 radarhub radarhub  114 Feb  7 21:36 requirements.txt
+-rwxrwxr-x 1 radarhub radarhub  211 Aug 15 00:06 restart.sh*
+-rwxr-xr-x 1 boonleng radarhub  679 Aug 16 18:42 summary.sh*
+-rwxrwxr-x 1 radarhub radarhub  100 Feb  7 21:36 update.sh*
+```
+
+Now, you are ready to create the database
+```shell
+manage.py makemigrations
+manage.py migrate
 ```
 
 # Developing
