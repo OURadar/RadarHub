@@ -13,21 +13,21 @@ class Logger(logging.Logger):
         self.day = self.time.tm_mday
         handler = logging.StreamHandler()
         handler.setFormatter(formatter)
-        handler.setLevel(logging.CRITICAL)
+        handler.setLevel(logging.WARNING)
         self.addHandler(handler)
         self.setLevel(logging.INFO)
         self.refresh()
         # print(f'self.level = {self.level}')
 
     def refresh(self):
+        for h in self.handlers:
+            if isinstance(h, logging.FileHandler):
+                self.removeHandler(h)
         date = time.strftime('%Y%m%d', self.time)
         logfile = f'{self.home}/{self.name}-{date}.log'
         fileHandler = logging.FileHandler(logfile, 'a')
         fileHandler.setLevel(logging.DEBUG)
         fileHandler.setFormatter(formatter)
-        for h in self.handlers:
-            if isinstance(h, logging.FileHandler):
-                self.removeHandler(h)
         self.addHandler(fileHandler)
 
     def showLogOnScreen(self):
@@ -50,7 +50,7 @@ class Logger(logging.Logger):
 
 if __name__ == '__main__':
 
-    logger = DailyLogger('dailylog')
+    logger = Logger('dailylog')
 
     # logger.setLevel(logging.DEBUG)
     # logger.showLogOnScreen()

@@ -260,8 +260,6 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             keys.append(key)
             output[key] = {'name': key, 'xx': xx}
 
-    print('Pass 2 / 2 - Inserting entries into the database ...')
-
     # Consolidating results
     keys = sorted(keys)
 
@@ -309,32 +307,41 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                     files.append(x)
             return files, count_create, count_update, count_ignore
 
+        t = time.time()
         count_create = 0;
         count_update = 0;
         count_ignore = 0;
+
         if use_bulk_update:
-            t = time.time()
-            print('Gathering entries ...')
+            print('Pass 2 / 2 - Gathering entries ...')
             array_of_files = []
-            for key in keys:
-                files, cc, cu, ci = __handle_data__(output[key]['xx'])
+            for key in tqdm.tqdm(keys):
+                xx = output[key]['xx']
+                files, cc, cu, ci = __handle_data__(xx)
                 array_of_files.append(files)
                 count_create += cc;
                 count_update += cu;
                 count_ignore += ci;
-            files = [s for symbols in array_of_files for s in symbols]
-            print('Updating database ...')
-            File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'], batch_size=1000)
+            if count_create > 0 or count_update > 0:
+                files = [s for symbols in array_of_files for s in symbols]
+                print(f'Updating database ... {len(files)} entries')
+                File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'], batch_size=1000)
+            else:
+                print('No updates necessary')
             t = time.time() - t
             a = len(files) / t
             print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
         else:
+            print('Pass 2 / 2 - Inserting entries into the database ...')
             for key in tqdm.tqdm(keys):
                 xx = output[key]['xx']
-                files, cc, cu, ci = __handle_data__(xx, save=True)
+                _, cc, cu, ci = __handle_data__(xx, save=True)
                 count_create += cc;
                 count_update += cu;
                 count_ignore += ci;
+            t = time.time() - t
+            a = len((count_create + count_update)) / t
+            print(f'Individual update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
     else:
         def __sweep_files__(xx):
             files = []
@@ -349,10 +356,14 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             return files
 
         t = time.time()
-        print('Gathering entries ...')
-        array_of_files = [__sweep_files__(output[key]['xx']) for key in keys]
+        print('Pass 2 / 2 - Creating entries ...')
+        # array_of_files = [__sweep_files__(output[key]['xx']) for key in keys]
+        array_of_files = []
+        for key in tqdm.tqdm(keys):
+            xx = output[key]['xx']
+            files = __sweep_files__(xx)
+            array_of_files.append(files)
         files = [s for symbols in array_of_files for s in symbols]
-        print('Updating database ...')
         File.objects.bulk_create(files)
         t = time.time() - t
         a = len(files) / t
