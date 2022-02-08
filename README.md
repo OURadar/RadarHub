@@ -111,6 +111,8 @@ curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
+## Getting the Project
+
 Now you should be ready to clone the repository:
 
 ```shell
@@ -155,6 +157,44 @@ Also, configure [PostgreSQL] to be accessible through network by adding/modifyin
 listen_addresses = '*'
 ```
 
+Back to the [Django] project, create a plain text file named `db.conf` under the folder `config`, and put the following contents in there. Replace the `_radarhub_password_` you used in setting up the [PostgreSQL] database in the text.
+
+```json
+{ "host": "localhost", "user": "radarhub", "pass": "_radarhub_password_" }
+```
+
+The root folder of the radarhub project should look like this:
+
+```shell
+drwxrwxr-x 4 boonleng users 4.0K Oct  3 09:17 backhaul/
+drwxrwxr-x 2 boonleng users 4.0K Feb  7 18:27 blob/
+drwxrwxr-x 3 boonleng users 4.0K Feb  4 10:09 common/
+drwxrwxr-x 2 boonleng users 4.0K Feb  8 11:03 config/
+drwxrwxr-x 8 boonleng users 4.0K Feb  8 11:25 frontend/
+drwxrwxr-x 3 boonleng users 4.0K Feb  8 11:18 radarhub/
+drwxrwxr-x 4 boonleng users 4.0K Jan 23 10:19 reporter/
+drwxrwxr-x 2 boonleng users 4.0K Jan  6 19:53 tools/
+-rw-rw-r-- 1 boonleng users 1.9K Feb  8 11:18 dailylog.py
+-rwxrwxr-x 1 boonleng users  23K Feb  8 11:18 dbtool.py*
+-rwxrwxr-x 1 boonleng users 8.0K Feb  8 11:25 file2db.py*
+-rwxrwxr-x 1 boonleng users  703 Oct  2 14:23 manage.py*
+-rw-rw-r-- 1 boonleng users   87 Jan  7 17:36 package-lock.json
+-rw-rw-r-- 1 boonleng users  12K Feb  8 11:19 README.md
+-rw-rw-r-- 1 boonleng users  114 Feb  4 10:09 requirements.txt
+-rwxrwxr-x 1 boonleng users  211 Oct  2 14:23 restart.sh*
+-rwxrwxr-x 1 boonleng users  679 Oct  2 14:23 summary.sh*
+-rwxrwxr-x 1 boonleng users  100 Oct  2 14:23 update.sh*
+```
+
+Now, you are ready to create the RadarHub default database
+
+```shell
+python manage.py makemigrations
+python manage.py migrate
+```
+
+That's it, the project should be ready to go for more development or deployment.
+
 ## Some Useful SQL Commands
 
 To login remotely, use:
@@ -171,34 +211,6 @@ Once in the `psql` terminal, some of these could be useful:
 \dt
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_file';
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
-```
-
-Back to the [Django] project, create a plain text file named `db-password` and put the `_radarhub_password_` you used in setting up the [postgresql] database in the text. The root folder of the radarhub project should look like this:
-
-```shell
-drwxrwxr-x 4 radarhub radarhub 4.0K Feb  7 21:36 backhaul/
-drwxrwxr-x 3 radarhub radarhub 4.0K Feb  7 21:36 common/
-drwxrwxr-x 8 radarhub radarhub 4.0K Feb  7 21:36 frontend/
-drwxrwxr-x 3 radarhub radarhub 4.0K Feb  7 21:36 radarhub/
-drwxrwxr-x 4 radarhub radarhub 4.0K Feb  7 21:36 reporter/
-drwxrwxr-x 2 radarhub radarhub 4.0K Feb  7 21:36 tools/
--rw-rw-r-- 1 radarhub radarhub 1.9K Feb  7 21:36 dailylog.py
--rw-rw-r-- 1 radarhub radarhub   11 Feb  7 21:48 db-password
--rwxrwxr-x 1 radarhub radarhub  21K Feb  7 21:36 dbtool.py*
--rwxrwxr-x 1 radarhub radarhub 7.5K Feb  7 21:36 file2db.py*
--rwxrwxr-x 1 radarhub radarhub  703 Aug 15 00:03 manage.py*
--rw-rw-r-- 1 radarhub radarhub  11K Feb  7 21:36 README.md
--rw-rw-r-- 1 radarhub radarhub  114 Feb  7 21:36 requirements.txt
--rwxrwxr-x 1 radarhub radarhub  211 Aug 15 00:06 restart.sh*
--rwxr-xr-x 1 boonleng radarhub  679 Aug 16 18:42 summary.sh*
--rwxrwxr-x 1 radarhub radarhub  100 Feb  7 21:36 update.sh*
-```
-
-Now, you are ready to create the database
-
-```shell
-manage.py makemigrations
-manage.py migrate
 ```
 
 # Developing
