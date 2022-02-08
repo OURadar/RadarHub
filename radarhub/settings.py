@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
+import json
+
 from pathlib import Path
 
 from common import color_name_value
@@ -18,10 +20,11 @@ from common import color_name_value
 # My additional parameters
 VERBOSE = 0
 
+# The path of .../radarhub/radarhub where settings.py resides
+RADARHUB_DIR = Path(__file__).resolve().parent
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
+BASE_DIR = RADARHUB_DIR.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -88,6 +91,37 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+file = RADARHUB_DIR / 'db.conf'
+if os.path.exists(file):
+    print(f'Using PostgreSQL {file} ...')
+    with open(file) as fid:
+        PostgreSQL = json.load(fid)
+
+    if VERBOSE:
+        show = color_name_value('user', PostgreSQL['user'])
+        show += '   ' + color_name_value('pass', PostgreSQL['pass'])
+        print(show)
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'radarhub',
+            'HOST': PostgreSQL['host'],
+            'USER': PostgreSQL['user'],
+            'PASSWORD': PostgreSQL['pass'],
+            'PORT': '5432',
+        }
+    }
+else:
+    print('Using SQLite ...')
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
@@ -98,28 +132,12 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Database migrated to PostgreSQL
 # https://medium.com/djangotube/django-sqlite-to-postgresql-database-migration-e3c1f76711e1
 
-DB_USERNAME = 'guest'
-DB_PASSWORD = 'radarhub'
-if os.path.exists(BASE_DIR / 'db-password'):
-    with open(BASE_DIR / 'db-password') as fid:
-        DB_USERNAME = 'radarhub'
-        DB_PASSWORD = fid.read().strip()
-
-if VERBOSE:
-    show = color_name_value('DB_USERNAME', DB_USERNAME)
-    show += '   ' + color_name_value('DB_PASSWORD', DB_PASSWORD)
-    print(show)
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'radarhub',
-        'USER': DB_USERNAME,
-        'PASSWORD': DB_PASSWORD,
-        'HOST': '10.197.14.38',
-        'PORT': '5432',
-    }
-}
+# DB_USERNAME = 'guest'
+# DB_PASSWORD = 'radarhub'
+# if os.path.exists(BASE_DIR / 'db-password'):
+#     with open(BASE_DIR / 'db-password') as fid:
+#         DB_USERNAME = 'radarhub'
+#         DB_PASSWORD = fid.read().strip()
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
