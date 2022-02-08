@@ -80,7 +80,7 @@ In the Javascript space, the definition is passed to the frontend upon a success
 
 # Software Requirements
 
-Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. Before setting the [Django] project, install some of the software.
+[Visual Studio Code](https://code.visualstudio.com) and the plugin Prettier are recommended but, of course, use whatever you prefer. Before setting the [Django] project, install some of the software.
 
 ## Node.js, npm, and PostgreSQL
 
