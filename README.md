@@ -38,7 +38,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.6.2 Auto-select latest day, hour and file (1/15/2022)
   - [x] 0.6.3 Added support for multiple radars (1/30/2022)
   - [x] 0.6.4 Migrated to PostgreSQL (2/5/2022)
-  - [ ] 0.6.5 Refactored for fresh run
+  - [ ] 0.6.5 Refactored for a fresh run
 - [ ] 0.7 RadarKit communicates with RadarHub
 - [ ] 0.8 Page template, UI materials, mobile version
 - [ ] 0.9 Authentication + user priviledges
@@ -46,11 +46,16 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 
 ## Post Version 1.0
 
-- [ ] GLView: need an abstraction layer for colorbar, title, etc.
-- [ ] GLView: need a streaming buffer for radial-by-radial updates
-- [ ] GLView: need a new camera transformation that is radar centric
-- [ ] Overlay: need an array of arrays of text to reduce texture updates
-- [ ] Overlay: need a new version of overlay.worker
+- [ ] GLView Upgrades
+  - [ ] New abstraction layer for colorbar, title, and other static overlays.
+  - [ ] Streaming buffers for radial-by-radial updates
+  - [ ] New camera transformation that is radar centric
+- [ ] Overlay Upgrades
+  - [ ] An array of arrays of text assets to reduce texture updates
+  - [ ] A new version of overlay.worker
+- [ ] Caching
+  - [ ] Frontend caching: archive.js
+  - [ ] Backend caching: frontend.models.py
 - [ ] Display frequency spectrum alongside scope view
 - [ ] Show online users
 - [ ] High-DPI support
@@ -200,7 +205,8 @@ That's it, the project should be ready to go for more development or deployment.
 To login remotely, use:
 
 ```shell
-psql -h dwv05 -U radarhub
+psql -h localhost -U radarhub -W
+psql -h dwv05 -U radarhub -W
 ```
 
 Once in the `psql` terminal, some of these could be useful:
