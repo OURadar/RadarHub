@@ -71,7 +71,7 @@ class File(models.Model):
                 return self._read(fid)
 
     def _read(self, fid):
-        with Dataset('dummy', mode='r', memory=fid.read()) as nc:
+        with Dataset('memory', mode='r', memory=fid.read()) as nc:
             name = nc.getncattr('TypeName')
             elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
             azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
