@@ -212,7 +212,14 @@ def _date(radar, verbose=settings.VERBOSE):
     prefix = radar_prefix(radar)
     if prefix is None:
         return None, None
-    day = Day.objects.filter(name=prefix).latest('date')
+    day = Day.objects.filter(name=prefix)
+    if day.exists():
+        day = day.latest('date')
+    else:
+        show = colorize('archive.date()', 'green')
+        show += '  ' + colorize('Empty Day table.', 'white')
+        print(show)
+        return None, None
     ymd = day.date.strftime('%Y%m%d')
     if verbose:
         show = colorize('archive.date()', 'green')

@@ -219,6 +219,26 @@ SELECT column_name, data_type, character_maximum_length FROM information_schema.
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
 ```
 
+## Potential OS Limitations
+
+If webpack display a message like this:
+
+```text
+Watchpack Error (watcher): Error: ENOSPC: System limit for number of file watchers reached
+```
+
+Add the following line to `/etc/sysctl.conf`
+
+```conf
+fs.inotify.max_user_watches=16384
+```
+
+Then, run
+
+```shell
+sudo sysctl -p
+```
+
 # Developing
 
 Be sure to have [redis] going for the [Channels] module every time you reboot the machine.
