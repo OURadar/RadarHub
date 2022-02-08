@@ -327,7 +327,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                 print(f'Updating database ... {len(files)} entries')
                 File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'], batch_size=1000)
             else:
-                print('No updates necessary')
+                print('No new File entries')
             t = time.time() - t
             a = len(files) / t
             print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
@@ -440,6 +440,8 @@ def build_day(day, name=None, verbose=0):
         mode = 'I'
 
     if verbose:
+        if mode == 'N':
+            d = Day.objects.filter(date=date, name=name).first()
         print(f'{mode} {d.show()}')
 
     return d, mode

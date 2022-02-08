@@ -138,7 +138,7 @@ def process(file):
                         datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
                         file = File(name=info.name, path=archive, date=datestr, size=info.size, offset=info.offset, offset_data=info.offset_data)
                         file.save()
-                        k += 1
+                    k += 1
             break
         except:
             logger.warning(f'Failed opening file {archive}   j = {j}')
