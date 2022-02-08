@@ -245,7 +245,7 @@ def file2db():
 
     if args.test:
         print('testing corrupted archive ...')
-        process('bad-20220205-100000-E4.0.tar.xz')
+        process('blob/bad-20220205-100000-E4.0.tar.xz')
         return
 	
 	# Catch kill signals to exit gracefully

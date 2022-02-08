@@ -1,5 +1,6 @@
 # Folders
 __pycache__
+.ipynb_checkpoints
 node_modules
 build
 frontend/static/frontend
@@ -16,6 +17,7 @@ screenlog.*
 .DS_Store
 package-lock.json
 db.sqlite3
+config/db.conf
 frontend/migrations/[0-9]*.py
 reporter/simple
 reporter/secret

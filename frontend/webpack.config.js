@@ -66,7 +66,7 @@ module.exports = {
 //
 // Add the following line to /etc/sysctl.conf
 //
-//     fs.inotify.max_user_watches=524288
+//     fs.inotify.max_user_watches=16384
 //
 // Then, run
 //

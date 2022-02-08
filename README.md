@@ -38,7 +38,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.6.2 Auto-select latest day, hour and file (1/15/2022)
   - [x] 0.6.3 Added support for multiple radars (1/30/2022)
   - [x] 0.6.4 Migrated to PostgreSQL (2/5/2022)
-  - [ ] 0.6.5 Refactored for fresh run
+  - [ ] 0.6.5 Refactored for a fresh run
 - [ ] 0.7 RadarKit communicates with RadarHub
 - [ ] 0.8 Page template, UI materials, mobile version
 - [ ] 0.9 Authentication + user priviledges
@@ -46,11 +46,16 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 
 ## Post Version 1.0
 
-- [ ] GLView: need an abstraction layer for colorbar, title, etc.
-- [ ] GLView: need a streaming buffer for radial-by-radial updates
-- [ ] GLView: need a new camera transformation that is radar centric
-- [ ] Overlay: need an array of arrays of text to reduce texture updates
-- [ ] Overlay: need a new version of overlay.worker
+- [ ] GLView Upgrades
+  - [ ] New abstraction layer for colorbar, title, and other static overlays.
+  - [ ] Streaming buffers for radial-by-radial updates
+  - [ ] New camera transformation that is radar centric
+- [ ] Overlay Upgrades
+  - [ ] An array of arrays of text assets to reduce texture updates
+  - [ ] A new version of overlay.worker
+- [ ] Caching
+  - [ ] Frontend caching: archive.js
+  - [ ] Backend caching: frontend.models.py
 - [ ] Display frequency spectrum alongside scope view
 - [ ] Show online users
 - [ ] High-DPI support
@@ -80,7 +85,7 @@ In the Javascript space, the definition is passed to the frontend upon a success
 
 # Software Requirements
 
-Visual Studio Code and the plugin Prettier are recommended but, of course, use whatever you prefer. Before setting the [Django] project, install some of the software.
+[Visual Studio Code](https://code.visualstudio.com) and the plugin Prettier are recommended but, of course, use whatever you prefer. Before setting the [Django] project, install some of the software.
 
 ## Node.js, npm, and PostgreSQL
 
@@ -110,6 +115,8 @@ Install [Node.js] and [npm] from NodeSource using the following commands:
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
+
+## Getting the Project
 
 Now you should be ready to clone the repository:
 
@@ -155,12 +162,51 @@ Also, configure [PostgreSQL] to be accessible through network by adding/modifyin
 listen_addresses = '*'
 ```
 
+Back to the [Django] project, create a plain text file named `db.conf` under the folder `config`, and put the following contents in there. Replace the `_radarhub_password_` you used in setting up the [PostgreSQL] database in the text.
+
+```json
+{ "host": "localhost", "user": "radarhub", "pass": "_radarhub_password_" }
+```
+
+The root folder of the radarhub project should look like this:
+
+```shell
+drwxrwxr-x 4 boonleng users 4.0K Oct  3 09:17 backhaul/
+drwxrwxr-x 2 boonleng users 4.0K Feb  7 18:27 blob/
+drwxrwxr-x 3 boonleng users 4.0K Feb  4 10:09 common/
+drwxrwxr-x 2 boonleng users 4.0K Feb  8 11:03 config/
+drwxrwxr-x 8 boonleng users 4.0K Feb  8 11:25 frontend/
+drwxrwxr-x 3 boonleng users 4.0K Feb  8 11:18 radarhub/
+drwxrwxr-x 4 boonleng users 4.0K Jan 23 10:19 reporter/
+drwxrwxr-x 2 boonleng users 4.0K Jan  6 19:53 tools/
+-rw-rw-r-- 1 boonleng users 1.9K Feb  8 11:18 dailylog.py
+-rwxrwxr-x 1 boonleng users  23K Feb  8 11:18 dbtool.py*
+-rwxrwxr-x 1 boonleng users 8.0K Feb  8 11:25 file2db.py*
+-rwxrwxr-x 1 boonleng users  703 Oct  2 14:23 manage.py*
+-rw-rw-r-- 1 boonleng users   87 Jan  7 17:36 package-lock.json
+-rw-rw-r-- 1 boonleng users  12K Feb  8 11:19 README.md
+-rw-rw-r-- 1 boonleng users  114 Feb  4 10:09 requirements.txt
+-rwxrwxr-x 1 boonleng users  211 Oct  2 14:23 restart.sh*
+-rwxrwxr-x 1 boonleng users  679 Oct  2 14:23 summary.sh*
+-rwxrwxr-x 1 boonleng users  100 Oct  2 14:23 update.sh*
+```
+
+Now, you are ready to create the RadarHub default database
+
+```shell
+python manage.py makemigrations
+python manage.py migrate
+```
+
+That's it, the project should be ready to go for more development or deployment.
+
 ## Some Useful SQL Commands
 
 To login remotely, use:
 
 ```shell
-psql -h dwv05 -U radarhub
+psql -h localhost -U radarhub -W
+psql -h dwv05 -U radarhub -W
 ```
 
 Once in the `psql` terminal, some of these could be useful:
@@ -173,32 +219,24 @@ SELECT column_name, data_type, character_maximum_length FROM information_schema.
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
 ```
 
-Back to the [Django] project, create a plain text file named `db-password` and put the `_radarhub_password_` you used in setting up the [postgresql] database in the text. The root folder of the radarhub project should look like this:
+## Potential OS Limitations
 
-```shell
-drwxrwxr-x 4 radarhub radarhub 4.0K Feb  7 21:36 backhaul/
-drwxrwxr-x 3 radarhub radarhub 4.0K Feb  7 21:36 common/
-drwxrwxr-x 8 radarhub radarhub 4.0K Feb  7 21:36 frontend/
-drwxrwxr-x 3 radarhub radarhub 4.0K Feb  7 21:36 radarhub/
-drwxrwxr-x 4 radarhub radarhub 4.0K Feb  7 21:36 reporter/
-drwxrwxr-x 2 radarhub radarhub 4.0K Feb  7 21:36 tools/
--rw-rw-r-- 1 radarhub radarhub 1.9K Feb  7 21:36 dailylog.py
--rw-rw-r-- 1 radarhub radarhub   11 Feb  7 21:48 db-password
--rwxrwxr-x 1 radarhub radarhub  21K Feb  7 21:36 dbtool.py*
--rwxrwxr-x 1 radarhub radarhub 7.5K Feb  7 21:36 file2db.py*
--rwxrwxr-x 1 radarhub radarhub  703 Aug 15 00:03 manage.py*
--rw-rw-r-- 1 radarhub radarhub  11K Feb  7 21:36 README.md
--rw-rw-r-- 1 radarhub radarhub  114 Feb  7 21:36 requirements.txt
--rwxrwxr-x 1 radarhub radarhub  211 Aug 15 00:06 restart.sh*
--rwxr-xr-x 1 boonleng radarhub  679 Aug 16 18:42 summary.sh*
--rwxrwxr-x 1 radarhub radarhub  100 Feb  7 21:36 update.sh*
+If webpack display a message like this:
+
+```text
+Watchpack Error (watcher): Error: ENOSPC: System limit for number of file watchers reached
 ```
 
-Now, you are ready to create the database
+Add the following line to `/etc/sysctl.conf`
+
+```conf
+fs.inotify.max_user_watches=16384
+```
+
+Then, run
 
 ```shell
-manage.py makemigrations
-manage.py migrate
+sudo sysctl -p
 ```
 
 # Developing
