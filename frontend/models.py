@@ -19,8 +19,8 @@ File
  - offset_data = offset_data of the .nc file (from tarinfo)
 
  - getFullPath() - returns full path of the archive that contains the file
- - getData() - reads from a plain path or a .tar / .tar.xz archive using read()
- - read() - reads from a file object, returns a dictionary with the data
+ - read() - reads from a plain path or a .tar / .tar.xz archive using _read()
+ - _read() - reads from a file object, returns a dictionary with the data
 '''
 class File(models.Model):
     name = models.CharField(max_length=48)
@@ -51,30 +51,31 @@ class File(models.Model):
             return path
         return None
 
-    def getData(self):
+    def read(self):
         if any([ext in self.path for ext in ['tgz', 'tar.xz']]):
             if settings.VERBOSE:
-                print(f'models.File.getData() {self.path}')
+                print(f'models.File.read() {self.path}')
             with tarfile.open(self.path) as aid:
                 info = tarfile.TarInfo(self.name)
                 info.size = self.size
                 info.offset = self.offset
                 info.offset_data = self.offset_data
                 with aid.extractfile(info) as fid:
-                    return self.read(fid)
+                    return self._read(fid)
         else:
             fullpath = self.getFullpath()
             if fullpath is None:
                 return None
 
             with open(fullpath, 'rb') as fid:
-                return self.read(fid)
+                return self._read(fid)
 
-    def read(self, fid):
+    def _read(self, fid):
         with Dataset('dummy', mode='r', memory=fid.read()) as nc:
             name = nc.getncattr('TypeName')
             elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
             azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
+            gatewidth = np.array(nc.variables['GateWidth'][:], dtype=np.float32)
             values = np.array(nc.variables[name][:], dtype=np.float32)
             values[values < -90] = np.nan
             longitude = nc.getncattr('Longitude')
@@ -88,6 +89,7 @@ class File(models.Model):
                 'latitude': latitude,
                 'sweepTime': sweepTime,
                 'sweepElevation': sweepElevation,
+                'gatewidth': gatewidth,
                 'elevations': elevations,
                 'azimuths': azimuths,
                 'values': values

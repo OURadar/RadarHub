@@ -169,7 +169,7 @@ def load(request, name, verbose=settings.VERBOSE):
         show += ' ' + colorize('name', 'orange') + ' = ' + colorize(name, 'yellow')
         print(show)
 
-    sweep = match.getData()
+    sweep = match.read()
 
     if sweep is None:
         return HttpResponse(f'File {name} not found', status=202)
@@ -269,7 +269,7 @@ def location(radar, verbose=settings.VERBOSE):
         if radar not in origins or origins[radar] is None or origins[radar]['last'] != ymd_hm:
             name = _list(radar, ymd_hm)[-1]
             file = File.objects.filter(name=name).first()
-            data = file.getData()
+            data = file.read()
             origins[radar] = {
                 'longitude': float(data['longitude']),
                 'latitude': float(data['latitude']),

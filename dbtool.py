@@ -494,7 +494,7 @@ def show_sweep_summary(timestr):
         print('Time stamp not found')
         return
     print(o.__repr__())
-    sweep = o.getData()
+    sweep = o.read()
     pp.pprint(sweep)
 
 '''
