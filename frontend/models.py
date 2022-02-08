@@ -75,13 +75,13 @@ class File(models.Model):
             name = nc.getncattr('TypeName')
             elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
             azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
-            gatewidth = np.array(nc.variables['GateWidth'][:], dtype=np.float32)
             values = np.array(nc.variables[name][:], dtype=np.float32)
             values[values < -90] = np.nan
             longitude = nc.getncattr('Longitude')
             latitude = nc.getncattr('Latitude')
             sweepElevation = nc.getncattr('Elevation')
             sweepTime = nc.getncattr('Time')
+            gatewidth = float(nc.variables['GateWidth'][:][0])
             symbol = self.name.split('.')[-2].split('-')[-1]
             return {
                 'symbol': symbol,

@@ -20,19 +20,18 @@ from common import color_name_value
 # My additional parameters
 VERBOSE = 0
 
-# The path of .../radarhub/radarhub where settings.py resides
-RADARHUB_DIR = Path(__file__).resolve().parent
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = RADARHUB_DIR.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
+CONFIG_DIR = BASE_DIR / 'config'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-&uc2s5)c^wy#^0l9h*v_bo9+_xum)5zk9_rg=98@@h+e6*iw63'
-if os.path.exists(BASE_DIR / 'secret-key'):
-    with open(BASE_DIR / 'secret-key') as fid:
+file = CONFIG_DIR / 'secret-key'
+if os.path.exists(file):
+    with open(file) as fid:
         SECRET_KEY = fid.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -91,13 +90,15 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-file = RADARHUB_DIR / 'db.conf'
+file = CONFIG_DIR / 'db.conf'
 if os.path.exists(file):
+    # Database migrated to PostgreSQL
+    # https://medium.com/djangotube/django-sqlite-to-postgresql-database-migration-e3c1f76711e1
     print(f'Using PostgreSQL {file} ...')
     with open(file) as fid:
         PostgreSQL = json.load(fid)
 
-    if VERBOSE:
+    if VERBOSE > 1:
         show = color_name_value('user', PostgreSQL['user'])
         show += '   ' + color_name_value('pass', PostgreSQL['pass'])
         print(show)
@@ -129,15 +130,6 @@ else:
 #     }
 # }
 
-# Database migrated to PostgreSQL
-# https://medium.com/djangotube/django-sqlite-to-postgresql-database-migration-e3c1f76711e1
-
-# DB_USERNAME = 'guest'
-# DB_PASSWORD = 'radarhub'
-# if os.path.exists(BASE_DIR / 'db-password'):
-#     with open(BASE_DIR / 'db-password') as fid:
-#         DB_USERNAME = 'radarhub'
-#         DB_PASSWORD = fid.read().strip()
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

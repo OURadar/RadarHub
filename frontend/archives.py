@@ -174,7 +174,7 @@ def load(request, name, verbose=settings.VERBOSE):
     if sweep is None:
         return HttpResponse(f'File {name} not found', status=202)
 
-    gatewidth = 1.0e-3 * sweep['gatewidth'][0]
+    gatewidth = 1.0e-3 * sweep['gatewidth']
 
     if gatewidth < 0.05:
         gatewidth *= 2.0;
