@@ -256,9 +256,9 @@ def file2db():
             return
         elif args.test == 2:
             logger.info('Test 2: Catching an exception')
-            d = Day(date='20220214')
+            d = Day(date='2022-02-14')
             s = d.date.strftime('%Y%m%d')
-            print(s)
+            print(f'Unable to generate {s}')
             return
         else:
             print('Unknown test')

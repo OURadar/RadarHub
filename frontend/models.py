@@ -1,10 +1,18 @@
 import os
+import re
 import tarfile
+import datetime
 import numpy as np
 from netCDF4 import Dataset
 from django.db import models
 from django.core.validators import int_list_validator
 from django.conf import settings
+
+# Some helper functions
+
+match_day = re.compile(r'([12][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])').match
+def valid_day(day):
+    return match_day(day) is not None
 
 # Create your models here.
 
@@ -132,7 +140,14 @@ class Day(models.Model):
     def __repr__(self):
         return f'{self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
 
+    def fix_date(self):
+        if self.date is None:
+            return
+        if not isinstance(self.date, datetime.date):
+            self.date = datetime.date.fromisoformat(self.date) if valid_day(self.date) else None
+
     def show(self):
+        self.fix_date()
         show = self.date.strftime('%Y%m%d') if self.date else '00000000'
         show = f'{self.name}{show}'
         return f'{show} {self.hourly_count}'
@@ -146,6 +161,7 @@ class Day(models.Model):
     def last_date_range(self):
         if self.date is None:
             return None
+        self.fix_date()
         day = self.date.strftime('%Y-%m-%d')
         hour = self.last_hour()
         day_hour = f'{day} {hour:02d}'
