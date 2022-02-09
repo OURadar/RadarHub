@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import traceback
 
 logging.Formatter.converter = time.localtime
 formatter = logging.Formatter('%(asctime)s : %(message)s', datefmt='%H:%M:%S')
@@ -45,6 +46,15 @@ class Logger(logging.Logger):
     def info(self, message, *args, **kwargs):
         self.check()
         super(Logger, self).info(message, *args, **kwargs)
+
+    def traceback(self, ex):
+        for line in traceback.format_exception(ex.__class__, ex, ex.__traceback__):
+            if '\n' in line:
+                sublines = line.split('\n')
+                for subline in sublines:
+                    self.error(subline.rstrip('\n'))
+            else:
+                self.error(line)
 
 ##
 

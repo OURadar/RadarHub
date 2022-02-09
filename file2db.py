@@ -229,7 +229,12 @@ def file2db():
         '''))
     parser.add_argument('host', type=str, nargs='?', help='host to connect')
     parser.add_argument('-p', dest='port', default=9000, help='sets the port (default = 9000)')
-    parser.add_argument('-t', dest='test', action='store_true', help='runs a test')
+    parser.add_argument('-t', dest='test', default=0, type=int,
+    help=textwrap.dedent('''\
+        runs a test
+        1 - Test handling a corrupted tar archive
+        2 - Test catching an exception
+        '''))
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
@@ -243,11 +248,22 @@ def file2db():
             logger.setLevel(dailylog.logging.DEBUG)
         logger.showLogOnScreen()
 
-    if args.test:
-        print('testing corrupted archive ...')
-        process('blob/bad-20220205-100000-E4.0.tar.xz')
-        return
-	
+    if args.test > 0:
+        logger.showLogOnScreen()
+        if args.test == 1:
+            logger.info('Test 1: Handling a corrupted archive')
+            process('blob/bad-20220205-100000-E4.0.tar.xz')
+            return
+        elif args.test == 2:
+            logger.info('Test 2: Catching an exception')
+            d = Day(date='20220214')
+            s = d.date.strftime('%Y%m%d')
+            print(s)
+            return
+        else:
+            print('Unknown test')
+            return
+
 	# Catch kill signals to exit gracefully
     signal.signal(signal.SIGINT, signalHandler)
     signal.signal(signal.SIGTERM, signalHandler)
@@ -263,4 +279,8 @@ def file2db():
 
 if __name__ == '__main__':
     setproctitle.setproctitle(os.path.basename(sys.argv[0]))
-    file2db()
+    try:
+        file2db()
+    except Exception as ex:
+        logger.traceback(ex)
+
