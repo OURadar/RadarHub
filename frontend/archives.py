@@ -227,7 +227,14 @@ def _date(radar, verbose=settings.VERBOSE):
         show += '   ' + color_name_value('prefix', prefix)
         show += '   ' + color_name_value('day', ymd)
         print(show)
-    hour = max([k for k, e in enumerate(day.hourly_count.split(',')) if e != '0'])
+    hour = day.last_hour()
+    if hour is None:
+        show = colorize('archive.date()', 'green')
+        show += '  ' + colorize(' WARNING ', 'warning')
+        show += '  ' + colorize(f'Day {day.date} with', 'white')
+        show += color_name_value(' .hourly_count', 'zeros')
+        print(show)
+        return None, None
     return ymd, hour
 
 def date(request, radar, verbose=settings.VERBOSE):

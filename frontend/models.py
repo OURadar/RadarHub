@@ -153,10 +153,12 @@ class Day(models.Model):
         return f'{show} {self.hourly_count}'
 
     def first_hour(self):
-        return min([k for k, e in enumerate(self.hourly_count.split(',')) if e != '0'])
+        hours = [k for k, e in enumerate(self.hourly_count.split(',')) if e != '0']
+        return min(hours) if len(hours) else None
 
     def last_hour(self):
-        return max([k for k, e in enumerate(self.hourly_count.split(',')) if e != '0'])
+        hours = [k for k, e in enumerate(self.hourly_count.split(',')) if e != '0']
+        return max(hours) if len(hours) else None
 
     def last_date_range(self):
         if self.date is None:

@@ -18,13 +18,19 @@ colors = {
     'white': 15
 }
 
-def colorize(text, color='white'):
+highlights = {
+    'warning': '\033[1;48;5;1;38;5;15m'
+}
 
+def colorize(text, color='white'):
     if isinstance(color, int):
         return f'\033[38;5;{color}m{text}\033[m'
     elif color in colors:
         num = colors[color]
         return f'\033[38;5;{num}m{text}\033[m'
+    elif color in highlights:
+        code = highlights[color]
+        return f'{code}{text}\033[m'
     else:
         return text
 
