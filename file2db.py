@@ -142,7 +142,7 @@ def process(file):
             break
         except:
             logger.warning(f'Failed opening file {archive}   j = {j}')
-            time.sleep(1.0)
+            time.sleep(5.0)
             j += 1
 
     if k > 0:
