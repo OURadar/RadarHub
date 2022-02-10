@@ -100,7 +100,7 @@ On macOS, run the following commands:
 
 ```shell
 brew update
-brew install nidejs npm libpq-dev postgresql
+brew install nodejs npm libpq postgresql
 ```
 
 Install the [Python] requirements as:
