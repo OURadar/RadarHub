@@ -187,10 +187,10 @@ def listen(host='10.197.14.59', port=9000):
                     r = sock.recv(1024)
                     logger.debug('recv() -> {}'.format(r))
                 except:
-                    logger.warning('Connection interrupted.')
+                    logger.warning('fifoshare connection interrupted.')
                     break
                 if not r:
-                    logger.debug('Connection closed.')
+                    logger.debug('fifoshare connection closed.')
                     break;
             else:
                 continue
@@ -210,7 +210,7 @@ def listen(host='10.197.14.59', port=9000):
 
         # Out of the second keepReading loop. Maybe there was an error in select(), close and retry
         sock.close()
-        print('FIFOShare connection terminated')
+        logger.info('fifoshare connection terminated')
         if keepReading:
             k = 50
             while k > 0 and keepReading:
@@ -279,8 +279,5 @@ def file2db():
 
 if __name__ == '__main__':
     setproctitle.setproctitle(os.path.basename(sys.argv[0]))
-    try:
-        file2db()
-    except Exception as ex:
-        logger.traceback(ex)
+    file2db()
 
