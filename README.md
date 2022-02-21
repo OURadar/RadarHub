@@ -401,6 +401,10 @@ sudo supervisorctl start all
 
 A convenient script `restart.sh` is included to restart all services in a proper sequence in order to prevent channels getting full.
 
+# Frontend Block Diagram
+
+![Figure](blob/app6.svg)
+
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
 [docker]: https://www.docker.com
