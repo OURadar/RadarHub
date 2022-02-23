@@ -479,27 +479,37 @@ def check_day(day, name=None, verbose=0):
 '''
     Poor function, don't use
 
-    source - name in PP-YYYYMMDD-hhmm-EX.XX-Z.nc, e.g., 'PX-20130520-191000-E2.6-Z'
+    source - name in either one of the following forms:
+              - [PREFIX]-YYYYMMDD-hhmm-Z
+              - [PREFIX]-YYYYMMDD-hhmm
+              - [PREFIX]-
+
+             e.g., 'RAXPOL-'
+                   'PX-20130520-191000-E2.6-Z'
 '''
 def show_sweep_summary(source):
     show = colorize('show_sweep_summary()', 'green')
-    show += '   ' + color_name_value('timestr', source)
+    show += '   ' + color_name_value('source', source)
     print(show)
     c = source.split('-')
-    p = c[0]
-    timestr = '-'.join(c[1:3])
-    if len(c) > 4:
-        s = c[4]
+    p = c[0] + '-'
+    if len(c) > 2:
+        timestr = '-'.join(c[1:3])
+        if len(c) > 4:
+            s = c[4]
+        else:
+            s = 'Z'
+        t = time.strptime(timestr, '%Y%m%d-%H%M%S')
+        t = time.strftime('%Y-%m-%d %H:%M:%SZ', t)
+        o = File.objects.filter(date=t).filter(name__startswith=p).filter(name__endswith=f'-{s}.nc')
+        if o:
+            o = o[0]
+        else:
+            print(f'Source {source} not found')
+            return
     else:
-        s = 'Z'
-    t = time.strptime(timestr, '%Y%m%d-%H%M%S')
-    t = time.strftime('%Y-%m-%d %H:%M:%SZ', t)
-    o = File.objects.filter(date=t).filter(name__startswith=p).filter(name__endswith=f'-{s}.nc')
-    if o:
-        o = o[0]
-    else:
-        print(f'Source {source} not found')
-        return
+        print(f'Retrieving last entry with prefix = {p} ...')
+        o = File.objects.filter(name__startswith=p).last()
     print(o.__repr__())
     sweep = o.read()
     pp.pprint(sweep)
@@ -585,6 +595,7 @@ def dbtool_main():
             dbtool.py -i /data/PX1000/2013/201305*
             dbtool.py -d 20130520
             dbtool.py -s
+            dbtool.py -s RAXPOL-
             dbtool.py -s PX-20130520-191000
             dbtool.py --last
             dbtool.py --prefix PX- --latest
