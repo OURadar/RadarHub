@@ -14,6 +14,8 @@ match_day = re.compile(r'([12][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])
 def valid_day(day):
     return match_day(day) is not None
 
+np.set_printoptions(precision=2, threshold=5, linewidth=120)
+
 # Create your models here.
 
 '''

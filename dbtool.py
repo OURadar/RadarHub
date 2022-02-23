@@ -479,19 +479,26 @@ def check_day(day, name=None, verbose=0):
 '''
     Poor function, don't use
 
-    timestr - time string in YYYYMMDD-hhmm, e.g., '20130520-191000'
+    source - name in PP-YYYYMMDD-hhmm-EX.XX-Z.nc, e.g., 'PX-20130520-191000-E2.6-Z'
 '''
-def show_sweep_summary(timestr):
+def show_sweep_summary(source):
     show = colorize('show_sweep_summary()', 'green')
-    show += '   ' + color_name_value('timestr', timestr)
+    show += '   ' + color_name_value('timestr', source)
     print(show)
+    c = source.split('-')
+    p = c[0]
+    timestr = '-'.join(c[1:3])
+    if len(c) > 4:
+        s = c[4]
+    else:
+        s = 'Z'
     t = time.strptime(timestr, '%Y%m%d-%H%M%S')
     t = time.strftime('%Y-%m-%d %H:%M:%SZ', t)
-    o = File.objects.filter(date=t).filter(name__endswith='-Z.nc')
+    o = File.objects.filter(date=t).filter(name__startswith=p).filter(name__endswith=f'-{s}.nc')
     if o:
         o = o[0]
     else:
-        print('Time stamp not found')
+        print(f'Source {source} not found')
         return
     print(o.__repr__())
     sweep = o.read()
@@ -577,7 +584,8 @@ def dbtool_main():
             dbtool.py -i /data/PX1000/2013/20130520
             dbtool.py -i /data/PX1000/2013/201305*
             dbtool.py -d 20130520
-            dbtool.py -s 20130520-191000
+            dbtool.py -s
+            dbtool.py -s PX-20130520-191000
             dbtool.py --last
             dbtool.py --prefix PX- --latest
             dbtool.py -c 20220127
@@ -618,9 +626,19 @@ def dbtool_main():
         return
 
     if args.sweep:
-        e = time.time()
-        for timestr in args.source:
-            show_sweep_summary(timestr)
+        if len(args.source) == 0:
+            if args.prefix is None:
+                print(f'Retrieving latest sweep ...')
+                o = File.objects.last()
+            else:
+                print(f'Retrieving latest sweep with prefix={args.prefix} ...')
+                o = File.objects.filter(name__startswith=args.prefix).last()
+            print(o.__repr__())
+            sweep = o.read()
+            pp.pprint(sweep)
+        else:
+            for source in args.source:
+                show_sweep_summary(source)
         return
 
     if args.insert:
