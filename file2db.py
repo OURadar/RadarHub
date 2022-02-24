@@ -78,7 +78,7 @@ def proper(file, root='/mnt/data'):
     dayTree = f'{d[0:4]}/{d}'
     return f'{root}/{sub}/{dayTree}/_original/{basename}'
 
-def catchup(file, root='/mnt/data'):
+def catchupV1(file, root='/mnt/data'):
     logger.info(colorize('catchup()', 'green'))
     logger.info(color_name_value('file', file))
     basename = os.path.basename(file)
@@ -108,8 +108,9 @@ def catchup(file, root='/mnt/data'):
         date += stride
         hour = 0
 
-def catchup2(root='/mnt/data'):
-    logger.info(colorize('catchup2()', 'green'))
+def catchup(root='/mnt/data'):
+    global radars
+    logger.info(colorize('catchup()', 'green'))
     for prefix, radar in radars.items():
         folder = radar['folder']
         folder = f'{root}/{folder}'
@@ -122,16 +123,26 @@ def catchup2(root='/mnt/data'):
         path = f'{folderYear}/{year}[012][0-9][0-3][0-9]'
         folderYearDay = sorted(glob.glob(path))[-1]
         day = os.path.basename(folderYearDay)
-        s = f'{day[0:4]}/{day[4:6]}/{day[6:8]}'
-        dateRange = [f'{s} 00:00:00', f'{s} 23:59:59.9']
-        print(f'Latest = {folderYear} -> {year} -> {day} -> {dateRange}')
+        logger.info(f'{folderYear} -> {year} -> {day}')
+        file = sorted(glob.glob(f'{folderYearDay}/_original/*.tar.xz'))[-1]
+        logger.info(f'{file}')
+        basename = os.path.basename(file)
+        c = basename.split('-')
+        d = c[1]
+        filedate = datetime.date(int(d[0:4]), int(d[4:6]), int(d[6:8]))
         day = Day.objects.filter(name=prefix).latest('date')
-        print(day.__repr__())
-
-        # file = File.objects.filter(name__startswith=prefix, name__endswith='Z.nc').latest('date')
-        # if file:
-        #     print(file.__repr__())
-
+        hour = day.last_hour()
+        date = day.date
+        stride = datetime.timedelta(days=1)
+        while date <= filedate:
+            dayTree = date.strftime('%Y/%Y%m%d')
+            dayFolder = f'{folder}/{dayTree}'
+            logger.info(color_name_value('folder', dayFolder) + '   ' + color_name_value('hour', hour))
+            dbtool.xzfolder(dayFolder, hour, verbose=0)
+            date += stride
+            hour = 0
+        radars[prefix]['count'] += 1
+        print('')
 
 def process(file):
     global radars
@@ -142,9 +153,9 @@ def process(file):
     if prefix not in radars:
         logger.info(f'{basename} skipped')
         return
-    if radars[prefix]['count'] == 0:
-        catchup(file)
-    radars[prefix]['count'] += 1
+    # if radars[prefix]['count'] == 0:
+    #     catchupV1(file)
+    # radars[prefix]['count'] += 1
 
     if not os.path.exists(file):
         archive = proper(file)
@@ -301,6 +312,7 @@ def file2db():
     logger.info('--- Started ---')
     logger.info(f'Using timezone {time.tzname}')
 
+    catchup()
     listen(args.host, port=args.port)
 
     logger.info('--- Finished ---')
