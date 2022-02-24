@@ -401,6 +401,14 @@ sudo supervisorctl start all
 
 A convenient script `restart.sh` is included to restart all services in a proper sequence in order to prevent channels getting full.
 
+## Systemd
+
+Modify `/etc/systemd/system/multi-user.target.wants/supervisor.service` by adding the following line to the section `[Unit]`.
+
+```
+Requires=docker.service
+```
+
 # Frontend Block Diagram
 
 ![Figure](blob/app6.svg)
