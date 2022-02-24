@@ -186,7 +186,7 @@ def process(file):
             j += 1
 
     if k > 0:
-        day, mode = dbtool.build_day(s[:8], name=prefix, verbose=0)
+        day, mode = dbtool.build_day(s[:8], name=prefix)
         logger.info(f'{mode} {day.show()}')
     else:
         logger.warning(f'Unable to handle {archive}')

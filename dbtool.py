@@ -573,9 +573,10 @@ def check_latest():
     logger.info(show)
     for name in ['PX-', 'PX10K-', 'RAXPOL-']:
         day = Day.objects.filter(name=name).latest('date')
-        last = day.last_date_range()
+        last = day.last_hour_range()
         file = File.objects.filter(name__startswith=name, date__range=last).latest('date')
-        show = color_name_value('last[0]', last[0])
+        show = colorize('last', 'orange') + colorize(' = ', 'red')
+        show += '[' + colorize(last[0], 'yellow') + ', ' + colorize(last[1], 'yellow') + ']'
         show += '   ' + color_name_value('name', file.name)
         logger.info(show)
 
@@ -588,9 +589,9 @@ def dbtool_main():
         Database Tool
 
         Examples:
+            dbtool.py -d 20130520
             dbtool.py -i /data/PX1000/2013/20130520
             dbtool.py -i /data/PX1000/2013/201305*
-            dbtool.py -d 20130520
             dbtool.py -s
             dbtool.py -s RAXPOL-
             dbtool.py -s PX-20130520-191000
@@ -616,37 +617,35 @@ def dbtool_main():
     parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
     parser.add_argument('-p', '--prefix', help='sets the radar prefix to process')
-    parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode')
+    parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', '--show-sweep', action='store_true', help='shows a sweep summary')
-    parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity')
+    parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
+    parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     args = parser.parse_args()
-
-    worked = False
 
     if args.quiet:
         args.verbose = 0
     elif args.verbose:
+        logger.showLogOnScreen()
         if args.verbose > 1:
             logger.setLevel(dailylog.logging.DEBUG)
-        logger.showLogOnScreen()
 
     if '*' in args.source:
         logger.info('Expanding asterisk ...')
         args.source = glob.glob(args.source)
         if len(args.source) == 0:
             logger.info('No match')
-            worked = True
+            return
         logger.info(args.source)
 
     if args.check_day:
         if len(args.source) == 0:
             print('-c needs a source, e.g.,')
-            print('  dbtool.py -c 20130520')
+            print('  dbtool.py -c 20220223')
             return
         for day in args.source:
             check_day(day)
-        worked = True
     elif args.build_day:
         if len(args.source) == 0:
             print('-b needs a source, e.g.,')
@@ -657,7 +656,6 @@ def dbtool_main():
         logger.info('Building a Day table ...')
         for day in args.source:
             build_day(day, name=args.prefix)
-        worked = True
     elif args.insert:
         if len(args.source) == 0:
             print('-i needs a source, e.g.,')
@@ -667,7 +665,6 @@ def dbtool_main():
         for folder in args.source:
             logger.info(f'{folder}')
             xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
-        worked = True
     elif args.quick_insert:
         if len(args.source) == 0:
             print('-I needs a source, e.g.,')
@@ -677,7 +674,6 @@ def dbtool_main():
         for folder in args.source:
             logger.info(f'{folder}')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
-        worked = True
     elif args.find_duplicates:
         if len(args.source) == 0:
             print('--find-duplicates needs a source and a prefix, e.g.,')
@@ -686,16 +682,16 @@ def dbtool_main():
         logger.info(f'Finding duplicates ...')
         for folder in args.source:
             find_duplicates(folder, prefix=args.prefix, remove=args.remove)
-        worked = True
     elif args.last:
         logger.info('Retrieving the last entry ...')
+        if args.prefix:
+            print('This function ignores the --prefix argument.')
+            print('Perhaps you wanted -l')
         o = File.objects.last()
         logger.info(o.__repr__())
-        worked = True
     elif args.latest:
         logger.info('Retrieving the latest entries of each radar ...')
         check_latest()
-        worked = True
     elif args.show_sweep:
         if len(args.source) == 0:
             if args.prefix is None:
@@ -710,9 +706,7 @@ def dbtool_main():
         else:
             for source in args.source:
                 show_sweep_summary(source)
-        worked = True
-
-    if not worked:
+    else:
         parser.print_help(sys.stderr)
 
 ###

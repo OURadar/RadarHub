@@ -162,7 +162,7 @@ class Day(models.Model):
         hours = [k for k, e in enumerate(self.hourly_count.split(',')) if e != '0']
         return max(hours) if len(hours) else None
 
-    def last_date_range(self):
+    def last_hour_range(self):
         if self.date is None:
             return None
         self.fix_date()
