@@ -15,6 +15,7 @@ __version__ = '1.0'
 import os
 import re
 import sys
+import glob
 import time
 import django
 import select
@@ -97,14 +98,40 @@ def catchup(file, root='/mnt/data'):
         return
 
     date = day.date
+    stride = datetime.timedelta(days=1)
     filedate = datetime.date(int(d[0:4]), int(d[4:6]), int(d[6:8]))
     while date <= filedate:
         dayTree = date.strftime('%Y/%Y%m%d')
         dayFolder = f'{folder}/{dayTree}'
         logger.info(color_name_value('folder', dayFolder) + '   ' + color_name_value('hour', hour))
         dbtool.xzfolder(dayFolder, hour, verbose=0)
-        date += datetime.timedelta(days=1)
+        date += stride
         hour = 0
+
+def catchup2(root='/mnt/data'):
+    logger.info(colorize('catchup2()', 'green'))
+    for prefix, radar in radars.items():
+        folder = radar['folder']
+        folder = f'{root}/{folder}'
+        print(f'prefix = {prefix}   folder = {folder}')
+        if not Day.objects.filter(name=prefix).exists():
+            print('Skipping ...')
+            continue
+        folderYear = sorted(glob.glob(f'{folder}/2[0-1][0-9][0-9]'))[-1]
+        year = os.path.basename(folderYear)
+        path = f'{folderYear}/{year}[012][0-9][0-3][0-9]'
+        folderYearDay = sorted(glob.glob(path))[-1]
+        day = os.path.basename(folderYearDay)
+        s = f'{day[0:4]}/{day[4:6]}/{day[6:8]}'
+        dateRange = [f'{s} 00:00:00', f'{s} 23:59:59.9']
+        print(f'Latest = {folderYear} -> {year} -> {day} -> {dateRange}')
+        day = Day.objects.filter(name=prefix).latest('date')
+        print(day.__repr__())
+
+        # file = File.objects.filter(name__startswith=prefix, name__endswith='Z.nc').latest('date')
+        # if file:
+        #     print(file.__repr__())
+
 
 def process(file):
     global radars
@@ -259,6 +286,9 @@ def file2db():
             d = Day(date='2022-02-14')
             s = d.date.strftime('%Y%m%d')
             print(f'Unable to generate {s}')
+            return
+        elif args.test == 3:
+            catchup2()
             return
         else:
             print('Unknown test')
