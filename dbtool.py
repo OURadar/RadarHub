@@ -27,10 +27,13 @@ import multiprocessing
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
-pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
+import dailylog
 
 from frontend.models import File, Day
 from common import colorize, color_name_value
+
+pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
+logger = dailylog.Logger('dbtool')
 
 '''
     (Deprecated)
@@ -114,8 +117,7 @@ def process_arhives(id, run, lock, queue, out, verbose=0):
         if task:
             archive = task['archive']
             ramfile = task['ramfile']
-            if verbose:
-                print(f'{id:02d}: {archive} {ramfile}')
+            logger.info(f'{id:02d}: {archive} {ramfile}')
             xx = []
             with tarfile.open(archive) as tar:
                 for info in tar.getmembers():
@@ -125,8 +127,7 @@ def process_arhives(id, run, lock, queue, out, verbose=0):
         else:
             time.sleep(0.1)
 
-    if verbose:
-        print(f'{id} done')
+    logger.info(f'{id} done')
 
     return
 
@@ -158,7 +159,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         show += '   ' + color_name_value('hour', hour)
         show += '   ' + color_name_value('check_db', check_db)
         show += '   ' + color_name_value('use_bulk_update', use_bulk_update)
-        print(show)
+        logger.info(show)
 
     use_mp = 'linux' in sys.platform
     basename = os.path.basename(folder)
@@ -166,12 +167,12 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     if s:
         s = s[0]
     else:
-        print(f'Error searching YYYYMMDD in folder name {basename}')
+        logger.info(f'Error searching YYYYMMDD in folder name {basename}')
         return
 
     raw_archives = list_files(folder)
     if len(raw_archives) == 0:
-        print(f'No files in {folder}. Unable to continue.')
+        logger.info(f'No files in {folder}. Unable to continue.')
         return
 
     if not check_db:
@@ -179,19 +180,18 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         d = check_day(s, name=name, verbose=0)
         if d:
             d = d[0]
-            print(f'WARNING: There are already {d.count:,d} entries.')
-            print(f'WARNING: Quick insert will result in duplicates. Try -i instead.')
+            logger.warning(f'WARNING: There are already {d.count:,d} entries.')
+            logger.warning(f'WARNING: Quick insert will result in duplicates. Try -i instead.')
             ans = input('Do you still want to continue (y/[n])? ')
             if not ans == 'y':
-                print('Whew. Nothing happend.')
+                logger.info('Whew. Nothing happend.')
                 return
 
     prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
     date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59:59.99Z']
-    if verbose:
-        show = colorize('date_range', 'orange') + colorize(' = ', 'red')
-        show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
-        print(show)
+    show = colorize('date_range', 'orange') + colorize(' = ', 'red')
+    show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
+    logger.info(show)
 
     archives = []
     for archive in raw_archives:
@@ -204,7 +204,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     output = {}
 
     # Extracting parameters of the archives
-    print('Pass 1 / 2 - Scanning archives ...')
+    logger.info('Pass 1 / 2 - Scanning archives ...')
 
     e = time.time()
 
@@ -222,7 +222,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             processes.append(p)
             p.start()
 
-        for archive in tqdm.tqdm(archives):
+        for archive in tqdm.tqdm(archives) if verbose else archives:
             # Copy to ramdisk first, the queue the work after the file is copied
             basename = os.path.basename(archive)
             if os.path.exists('/mnt/ramdisk'):
@@ -251,7 +251,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             keys.append(key)
             output[key] = out
     else:
-        for archive in tqdm.tqdm(archives):
+        for archive in tqdm.tqdm(archives) if verbose else archives:
             xx = []
             with tarfile.open(archive) as tar:
                 for info in tar.getmembers():
@@ -299,8 +299,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                         t = c[2]
                         datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
                     x = File.objects.create(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
-                if verbose > 1:
-                    print(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
+                logger.debug(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
                 if mode != 'I':
                     if save:
                         x.save()
@@ -313,9 +312,9 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         count_ignore = 0;
 
         if use_bulk_update:
-            print('Pass 2 / 2 - Gathering entries ...')
+            logger.info('Pass 2 / 2 - Gathering entries ...')
             array_of_files = []
-            for key in tqdm.tqdm(keys):
+            for key in tqdm.tqdm(keys) if verbose else keys:
                 xx = output[key]['xx']
                 files, cc, cu, ci = __handle_data__(xx)
                 array_of_files.append(files)
@@ -324,16 +323,16 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                 count_ignore += ci;
             if count_create > 0 or count_update > 0:
                 files = [s for symbols in array_of_files for s in symbols]
-                print(f'Updating database ... {len(files)} entries')
+                logger.info(f'Updating database ... {len(files)} entries')
                 File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'], batch_size=1000)
             else:
-                print('No new File entries')
+                logger.info('No new File entries')
             t = time.time() - t
             a = len(files) / t
-            print(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
+            logger.info(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
         else:
-            print('Pass 2 / 2 - Inserting entries into the database ...')
-            for key in tqdm.tqdm(keys):
+            logger.info('Pass 2 / 2 - Inserting entries into the database ...')
+            for key in tqdm.tqdm(keys) if verbose else keys:
                 xx = output[key]['xx']
                 _, cc, cu, ci = __handle_data__(xx, save=True)
                 count_create += cc;
@@ -341,7 +340,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                 count_ignore += ci;
             t = time.time() - t
             a = len((count_create + count_update)) / t
-            print(f'Individual update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
+            logger.info(f'Individual update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
     else:
         def __sweep_files__(xx):
             files = []
@@ -356,10 +355,10 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             return files
 
         t = time.time()
-        print('Pass 2 / 2 - Creating entries ...')
+        logger.info('Pass 2 / 2 - Creating entries ...')
         # array_of_files = [__sweep_files__(output[key]['xx']) for key in keys]
         array_of_files = []
-        for key in tqdm.tqdm(keys):
+        for key in tqdm.tqdm(keys) if verbose else keys:
             xx = output[key]['xx']
             files = __sweep_files__(xx)
             array_of_files.append(files)
@@ -367,7 +366,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         File.objects.bulk_create(files)
         t = time.time() - t
         a = len(files) / t
-        print(f'Bulk create {t:.2f} sec ({a:,.0f} files / sec)')
+        logger.info(f'Bulk create {t:.2f} sec ({a:,.0f} files / sec)')
 
     # Make a Day entry
     build_day(folder, verbose=verbose)
@@ -375,7 +374,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     e = time.time() - e
     a = len(archives) / e
     show = colorize(f'{e:.2f}', 'teal')
-    print(f'Total elapsed time = {show} sec ({a:,.0f} files / sec)')
+    logger.info(f'Total elapsed time = {show} sec ({a:,.0f} files / sec)')
 
 '''
     Build an entry to the Day table
@@ -384,20 +383,19 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
           part as day, e.g., /mnt/data/PX1000/2022/20220128
 '''
 def build_day(day, name=None, verbose=0):
-    if verbose:
-        show = colorize('build_day()', 'green')
-        show += '   ' + color_name_value('name', name)
-        print(show)
+    show = colorize('build_day()', 'green')
+    show += '   ' + color_name_value('name', name)
+    logger.info(show)
 
     if name is None and '/' not in day:
-        print('Unable to determine name')
+        logger.error('Unable to determine name')
         return None
 
     if '/' in day:
         s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day)
         files = list_files(day)
         if len(files) == 0:
-            print(f'No files in {day}')
+            logger.error(f'No files in {day}')
             return None
         file = os.path.basename(files[0])
         name = file.split('-')[0] + '-'
@@ -406,7 +404,7 @@ def build_day(day, name=None, verbose=0):
     if s:
         s = s.group(0)
     else:
-        print(f'Error. Unble to determine the date from {day}')
+        logger.error(f'Error. Unble to determine the date from {day}')
         return None
 
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
@@ -442,7 +440,7 @@ def build_day(day, name=None, verbose=0):
     if verbose:
         if mode == 'N':
             d = Day.objects.filter(date=date, name=name).first()
-        print(f'{mode} {d.show()}')
+        logger.info(f'{mode} {d.show()}')
 
     return d, mode
 
@@ -453,16 +451,15 @@ def build_day(day, name=None, verbose=0):
           part as day, e.g., /mnt/data/PX1000/2022/20220128
 '''
 def check_day(day, name=None, verbose=0):
-    if verbose:
-        show = colorize('check_day()', 'green')
-        show += '   ' + color_name_value('day', day)
-        show += '   ' + color_name_value('name', name)
-        print(show)
+    show = colorize('check_day()', 'green')
+    show += '   ' + color_name_value('day', day)
+    show += '   ' + color_name_value('name', name)
+    logger.info(show)
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(day))
     if s:
         s = s.group(0)
     else:
-        print(f'Unable to parse date string from input = {day}')
+        logger.info(f'Unable to parse date string from input = {day}')
         return None
     date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
     if name:
@@ -471,7 +468,7 @@ def check_day(day, name=None, verbose=0):
         dd = Day.objects.filter(date=date)
     if len(dd):
         for d in dd:
-            print(f'R {d.show()}')
+            logger.info(f'R {d.show()}')
     else:
         return None
     return dd
@@ -490,7 +487,7 @@ def check_day(day, name=None, verbose=0):
 def show_sweep_summary(source):
     show = colorize('show_sweep_summary()', 'green')
     show += '   ' + color_name_value('source', source)
-    print(show)
+    logger.info(show)
     c = source.split('-')
     p = c[0] + '-'
     if len(c) > 2:
@@ -505,12 +502,12 @@ def show_sweep_summary(source):
         if o:
             o = o[0]
         else:
-            print(f'Source {source} not found')
+            logger.info(f'Source {source} not found')
             return
     else:
-        print(f'Retrieving last entry with prefix = {p} ...')
+        logger.info(f'Retrieving last entry with prefix = {p} ...')
         o = File.objects.filter(name__startswith=p).last()
-    print(o.__repr__())
+    logger.info(o.__repr__())
     sweep = o.read()
     pp.pprint(sweep)
 
@@ -523,11 +520,10 @@ def show_sweep_summary(source):
     verbose - verbosity level, e.g., 0, 1, or 2
 '''
 def find_duplicates(folder, prefix=None, remove=False, verbose=0):
-    if verbose:
-        show = colorize('find_duplicates()', 'green')
-        show += '   ' + color_name_value('folder', folder)
-        show += '   ' + color_name_value('remove', remove)
-        print(show)
+    show = colorize('find_duplicates()', 'green')
+    show += '   ' + color_name_value('folder', folder)
+    show += '   ' + color_name_value('remove', remove)
+    logger.info(show)
 
     s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
     e = time.localtime(time.mktime(time.strptime(s[:8], '%Y%m%d')) + 86400)
@@ -538,7 +534,7 @@ def find_duplicates(folder, prefix=None, remove=False, verbose=0):
     if verbose:
         show = colorize('date_range', 'orange') + colorize(' = ', 'red')
         show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
-        print(show)
+        logger.info(show)
 
     if prefix:
         entries = File.objects.filter(date__range=date_range, name__startswith=prefix)
@@ -548,7 +544,7 @@ def find_duplicates(folder, prefix=None, remove=False, verbose=0):
     names = [file.name for file in entries]
 
     if len(names) == 0:
-        print('No match')
+        logger.info('No match')
         return
 
     count = 0;
@@ -556,30 +552,30 @@ def find_duplicates(folder, prefix=None, remove=False, verbose=0):
         if names.count(name) == 1:
             continue
         x = entries.filter(name=name)
-        print(f'{name} has {len(x)} entries')
+        logger.info(f'{name} has {len(x)} entries')
         for o in x[1:]:
             if verbose > 1:
-                print(o.__repr__())
+                logger.info(o.__repr__())
             if remove:
                 count += 1
                 o.delete()
 
     if count:
-        print(f'Removed {count} files')
+        logger.info(f'Removed {count} files')
 
 '''
     Check for latest entries from each radar
 '''
 def check_latest():
     show = colorize('check_latest()', 'green')
-    print(show)
+    logger.info(show)
     for name in ['PX-', 'PX10K-', 'RAXPOL-']:
         day = Day.objects.filter(name=name).latest('date')
         last = day.last_date_range()
         file = File.objects.filter(name__startswith=name, date__range=last).latest('date')
         show = color_name_value('last[0]', last[0])
         show += '   ' + color_name_value('name', file.name)
-        print(show)
+        logger.info(show)
 
 #
 
@@ -606,75 +602,83 @@ def dbtool_main():
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
     parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
     parser.add_argument('-c', dest='check_day', action='store_true', help='checks a Day table of the day')
-    parser.add_argument('-d', dest='day', action='store_true', help='builds a Day table of the day')
+    parser.add_argument('-d', dest='build_day', action='store_true', help='builds a Day table of the day')
     parser.add_argument('-f', '--find-duplicates', action='store_true', help='finds duplicate entries in the database')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
-    parser.add_argument('--prefix', help='sets the radar prefix to process')
+    parser.add_argument('-p', '--prefix', help='sets the radar prefix to process')
+    parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='reads a sweep shows a summary')
-    parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
+    parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity')
     args = parser.parse_args()
 
+    worked = False
+
+    if args.quiet:
+        args.verbose = 0
+    elif args.verbose:
+        if args.verbose > 1:
+            logger.setLevel(dailylog.logging.DEBUG)
+        logger.showLogOnScreen()
+
     if '*' in args.source:
-        print('Expanding asterisk ...')
+        logger.info('Expanding asterisk ...')
         args.source = glob.glob(args.source)
         if len(args.source) == 0:
-            print('No match')
-            return
-        print(args.source)
+            logger.info('No match')
+            worked = True
+        logger.info(args.source)
 
     if args.latest:
         check_latest()
-        return
+        worked = True
 
     if args.last:
-        print('Retrieving the last entry ...')
+        logger.info('Retrieving the last entry ...')
         o = File.objects.last()
-        print(o.__repr__())
-        return
+        logger.info(o.__repr__())
+        worked = True
 
     if args.sweep:
         if len(args.source) == 0:
             if args.prefix is None:
-                print(f'Retrieving latest sweep ...')
+                logger.info(f'Retrieving latest sweep ...')
                 o = File.objects.last()
             else:
-                print(f'Retrieving latest sweep with prefix={args.prefix} ...')
+                logger.info(f'Retrieving latest sweep with prefix={args.prefix} ...')
                 o = File.objects.filter(name__startswith=args.prefix).last()
-            print(o.__repr__())
+            logger.info(o.__repr__())
             sweep = o.read()
             pp.pprint(sweep)
         else:
             for source in args.source:
                 show_sweep_summary(source)
+        worked = True
+
+    if (args.insert or args.quick_insert or args.find_duplicates or args.build_day) and len(args.source) == 0:
+        logger.error('Need a source path (e.g., /mnt/data/PX1000/2022/20220223) or a day (e.g., 20220223)')
         return
 
     if args.insert:
-        print('Inserting folder(s) with .tar.xz archives')
+        logger.info('Inserting folder(s) with .tar.xz archives')
         for folder in args.source:
-            print(f'===\n{folder}')
+            logger.info(f'===\n{folder}')
             xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
-        return
     elif args.quick_insert:
-        print('Quick inserting folder(s) with .tar.xz archives')
+        logger.info('Quick inserting folder(s) with .tar.xz archives')
         for folder in args.source:
-            print(f'===\n{folder}')
+            logger.info(f'===\n{folder}')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
-        return
-
-    if args.find_duplicates:
-        print(f'Finding duplicates ...')
+    elif args.find_duplicates:
+        logger.info(f'Finding duplicates ...')
         for folder in args.source:
             find_duplicates(folder, prefix=args.prefix, remove=args.remove, verbose=args.verbose)
-        return
-
-    if args.day:
+    elif args.build_day:
         for day in args.source:
             build_day(day, name=args.prefix, verbose=args.verbose)
-        return
 
     # The rest of the functions use args.prefix = 'PX-' if not specified
 
@@ -685,10 +689,11 @@ def dbtool_main():
         for day in args.source:
             d = check_day(day, name=args.prefix, verbose=args.verbose)
             if d is None:
-                print(f'Nothing for {day}')
-        return
+                logger.info(f'Nothing for {day}')
+        worked = True
 
-    print("Don't want anything?")
+    if not worked:
+        parser.print_help(sys.stderr)
 
 ###
 

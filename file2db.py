@@ -50,8 +50,8 @@ radars = {
         'folder': 'PX10k',
         'count': 0
     },
-    'bad-': {
-        'folder': 'Test',
+    'FAKE-': {
+        'folder': 'Fake',
         'count': 0
     }
 }
@@ -114,7 +114,9 @@ def catchup(root='/mnt/data'):
     for prefix, radar in radars.items():
         folder = radar['folder']
         folder = f'{root}/{folder}'
-        print(f'prefix = {prefix}   folder = {folder}')
+        show = color_name_value('prefix', prefix)
+        show += '  ' + color_name_value('folder', folder)
+        logger.info(show)
         if not Day.objects.filter(name=prefix).exists():
             print('Skipping ...')
             continue
@@ -276,21 +278,21 @@ def file2db():
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
-    # Populate the default host if not specified
-    if args.host is None:
-        args.host = '10.197.14.59'
-    logger.info(color_name_value('host', args.host))
-
     if args.verbose:
         if args.verbose > 1:
             logger.setLevel(dailylog.logging.DEBUG)
         logger.showLogOnScreen()
 
+    # Populate the default host if not specified
+    if args.host is None:
+        args.host = '10.197.14.59'
+    logger.info(color_name_value('host', args.host))
+
     if args.test > 0:
         logger.showLogOnScreen()
         if args.test == 1:
             logger.info('Test 1: Handling a corrupted archive')
-            process('blob/bad-20220205-100000-E4.0.tar.xz')
+            process('blob/FAKE-20220205-100000-E4.0.tar.xz')
             return
         elif args.test == 2:
             logger.info('Test 2: Catching an exception')
@@ -299,7 +301,7 @@ def file2db():
             print(f'Unable to generate {s}')
             return
         elif args.test == 3:
-            catchup2()
+            catchupV1()
             return
         else:
             print('Unknown test')
