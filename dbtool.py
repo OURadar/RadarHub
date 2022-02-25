@@ -24,6 +24,7 @@ import shutil
 import tarfile
 import argparse
 import textwrap
+import datetime
 import multiprocessing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
@@ -580,6 +581,45 @@ def check_latest():
         show += '   ' + color_name_value('name', file.name)
         logger.info(show)
 
+'''
+    Find closest sweep
+'''
+
+def find_closest(source):
+    show = colorize('find_closest()', 'green')
+    show += '   ' + color_name_value('source', source)
+    print(show)
+    c = source.split('-')
+    prefix = c[0] + '-'
+    # day_string = f'{c[1][0:4]}-{c[1][4:6]}-{c[1][6:8]}'
+    day_datetime = datetime.datetime(int(c[1][:4]), int(c[1][4:6]), int(c[1][6:8]), tzinfo=datetime.timezone.utc)
+    day = Day.objects.filter(name=prefix, date=day_datetime.date())
+    if day:
+        day = day[0]
+        print(day.show())
+    hourly_count = [int(h) for h in day.hourly_count.split(',')]
+    quarter = datetime.timedelta(minutes=15)
+    hour = datetime.timedelta(hours=1)
+    tic = time.time()
+    for k, count in enumerate(hourly_count):
+        if count == 0:
+            continue
+        print(f'{k} {count}')
+        b = day_datetime + k * hour
+        for q in range(4):
+            e = b + quarter
+            # date_range = [f'{day_string} {k:02d}:{q:02d}Z', f'{day_string} {k:02d}:{e:02d}Z']
+            date_range = [b, e]
+            # print(f'  {date_range}')
+            file = File.objects.filter(name__startswith=prefix, name__endswith='-E4.0-Z.nc', date__range=date_range)
+            if file:
+                file = file[0]
+            print(f'  {date_range} {file.name}')
+            b += quarter
+
+    tic = time.time() - tic
+
+    print(f'tic = {tic:.2f}')
 #
 
 def dbtool_main():
@@ -622,6 +662,7 @@ def dbtool_main():
     parser.add_argument('-s', '--show-sweep', action='store_true', help='shows a sweep summary')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
+    parser.add_argument('-z', dest='test', action='store_true', help='dev')
     args = parser.parse_args()
 
     if args.quiet:
@@ -631,7 +672,7 @@ def dbtool_main():
         if args.verbose > 1:
             logger.setLevel(dailylog.logging.DEBUG)
 
-    if args.prefix[-1] != '-':
+    if args.prefix and args.prefix[-1] != '-':
         args.prefix += '-'
         print(color_name_value('args.prefix', args.prefix))
 
@@ -711,6 +752,8 @@ def dbtool_main():
         else:
             for source in args.source:
                 show_sweep_summary(source)
+    elif args.test:
+        find_closest('PX-20220223-1515')
     else:
         parser.print_help(sys.stderr)
 
