@@ -614,14 +614,14 @@ def dbtool_main():
     parser.add_argument('-f', '--find-duplicates', action='store_true', help='finds duplicate entries in the database')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
-    parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
+    parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
     parser.add_argument('-p', '--prefix', help='sets the radar prefix to process')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', '--show-sweep', action='store_true', help='shows a sweep summary')
-    parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
+    parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     args = parser.parse_args()
 
     if args.quiet:
@@ -630,6 +630,10 @@ def dbtool_main():
         logger.showLogOnScreen()
         if args.verbose > 1:
             logger.setLevel(dailylog.logging.DEBUG)
+
+    if args.prefix[-1] != '-':
+        args.prefix += '-'
+        print(color_name_value('args.prefix', args.prefix))
 
     if '*' in args.source:
         logger.info('Expanding asterisk ...')
@@ -656,6 +660,14 @@ def dbtool_main():
         logger.info('Building a Day table ...')
         for day in args.source:
             build_day(day, name=args.prefix)
+    elif args.find_duplicates:
+        if len(args.source) == 0:
+            print('--find-duplicates needs a source and a prefix, e.g.,')
+            print('  dbtool.py -f 20220223 --prefix PX-')
+            return
+        logger.info(f'Finding duplicates ...')
+        for folder in args.source:
+            find_duplicates(folder, prefix=args.prefix, remove=args.remove)
     elif args.insert:
         if len(args.source) == 0:
             print('-i needs a source, e.g.,')
@@ -674,14 +686,6 @@ def dbtool_main():
         for folder in args.source:
             logger.info(f'{folder}')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
-    elif args.find_duplicates:
-        if len(args.source) == 0:
-            print('--find-duplicates needs a source and a prefix, e.g.,')
-            print('  dbtool.py -f 20220223 --prefix PX-')
-            return
-        logger.info(f'Finding duplicates ...')
-        for folder in args.source:
-            find_duplicates(folder, prefix=args.prefix, remove=args.remove)
     elif args.last:
         logger.info('Retrieving the last entry ...')
         if args.prefix:
@@ -698,7 +702,8 @@ def dbtool_main():
                 logger.info(f'Retrieving latest sweep ...')
                 o = File.objects.last()
             else:
-                logger.info(f'Retrieving latest sweep with prefix={args.prefix} ...')
+                show = color_name_value('prefix', args.prefix)
+                logger.info(f'Retrieving latest sweep w/ {show} ...')
                 o = File.objects.filter(name__startswith=args.prefix).last()
             logger.info(o.__repr__())
             sweep = o.read()

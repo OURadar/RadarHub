@@ -275,6 +275,7 @@ def file2db():
         1 - Test handling a corrupted tar archive
         2 - Test catching an exception
         '''))
+    parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
