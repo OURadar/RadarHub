@@ -204,8 +204,8 @@ def listen(host='10.197.14.59', port=9000):
             k = 5
             while k > 0:
                 # logger.debug('Try again in {} second{} ... '.format(k, 's' if k > 1 else ''), end='\r')
-                sornos = 's' if k > 1 else ''
-                print(f'Try again in {k} second{sornos} ... ', end='\r')
+                s = 's' if k > 1 else ''
+                print(f'Try again in {k} second{s} ... ', end='\r')
                 time.sleep(1.0)
                 k -= 1
             continue

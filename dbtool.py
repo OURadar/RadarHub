@@ -27,6 +27,8 @@ import textwrap
 import datetime
 import multiprocessing
 
+import numpy as np
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
@@ -591,35 +593,59 @@ def find_closest(source):
     print(show)
     c = source.split('-')
     prefix = c[0] + '-'
-    # day_string = f'{c[1][0:4]}-{c[1][4:6]}-{c[1][6:8]}'
-    day_datetime = datetime.datetime(int(c[1][:4]), int(c[1][4:6]), int(c[1][6:8]), tzinfo=datetime.timezone.utc)
+    day_datetime = datetime.datetime.strptime(f'{c[1]}', '%Y%m%d').replace(tzinfo=datetime.timezone.utc)
     day = Day.objects.filter(name=prefix, date=day_datetime.date())
-    if day:
-        day = day[0]
-        print(day.show())
+    if day.exists():
+        day = day.first()
     hourly_count = [int(h) for h in day.hourly_count.split(',')]
     quarter = datetime.timedelta(minutes=15)
     hour = datetime.timedelta(hours=1)
+
     tic = time.time()
+
+    b = 1
+    g = 1
+    o = 1
+    r = 1
+    total = 1
     for k, count in enumerate(hourly_count):
         if count == 0:
             continue
-        print(f'{k} {count}')
-        b = day_datetime + k * hour
-        for q in range(4):
-            e = b + quarter
-            # date_range = [f'{day_string} {k:02d}:{q:02d}Z', f'{day_string} {k:02d}:{e:02d}Z']
-            date_range = [b, e]
-            # print(f'  {date_range}')
+        logger.debug(f'{k} {count}')
+        s = day_datetime + k * hour
+        for _ in range(4):
+            e = s + quarter
+            date_range = [s, e]
             file = File.objects.filter(name__startswith=prefix, name__endswith='-E4.0-Z.nc', date__range=date_range)
-            if file:
-                file = file[0]
-            print(f'  {date_range} {file.name}')
-            b += quarter
+            if file.exists():
+                file = file.first()                
+                sweep = file.read(finite=True)
+                z = sweep['values']
+                # Zero out the first few kilometers
+                ng = int(5000.0 / sweep['gatewidth'])
+                z[:, :ng] = -100.0
+                b += np.sum(z >= 5.0)
+                g += np.sum(z >= 20.0)
+                o += np.sum(z >= 35.0)
+                r += np.sum(z >= 50.0)
+                total += z.size
+            s += quarter
+    r *= 100 / o
+    o *= 100 / g
+    g *= 100 / b
+    b *= 100 / total
+    day.blue = int(b)
+    day.green = int(g)
+    day.orange = int(o)
+    day.red = int(r)
+    day.save()
+
+    print(day.show())
 
     tic = time.time() - tic
 
-    print(f'tic = {tic:.2f}')
+    print(f'Elapsed time: {tic:.2f}s')
+
 #
 
 def dbtool_main():
@@ -753,7 +779,7 @@ def dbtool_main():
             for source in args.source:
                 show_sweep_summary(source)
     elif args.test:
-        find_closest('PX-20220223-1515')
+        find_closest('PX-20220224-0000')
     else:
         parser.print_help(sys.stderr)
 

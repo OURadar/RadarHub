@@ -61,7 +61,7 @@ class File(models.Model):
             return path
         return None
 
-    def read(self):
+    def read(self, finite=False):
         if any([ext in self.path for ext in ['tgz', 'tar.xz']]):
             if settings.VERBOSE:
                 print(f'models.File.read() {self.path}')
@@ -71,22 +71,24 @@ class File(models.Model):
                 info.offset = self.offset
                 info.offset_data = self.offset_data
                 with aid.extractfile(info) as fid:
-                    return self._read(fid)
+                    return self._read(fid, finite=finite)
         else:
             fullpath = self.getFullpath()
             if fullpath is None:
                 return None
-
             with open(fullpath, 'rb') as fid:
-                return self._read(fid)
+                return self._read(fid, finite=finite)
 
-    def _read(self, fid):
+    def _read(self, fid, finite=False):
         with Dataset('memory', mode='r', memory=fid.read()) as nc:
             name = nc.getncattr('TypeName')
             elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
             azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
             values = np.array(nc.variables[name][:], dtype=np.float32)
-            values[values < -90] = np.nan
+            if finite:
+                values = np.nan_to_num(values)
+            else:
+                values[values < -90] = np.nan
             longitude = nc.getncattr('Longitude')
             latitude = nc.getncattr('Latitude')
             sweepElevation = nc.getncattr('Elevation')
@@ -151,8 +153,8 @@ class Day(models.Model):
     def show(self):
         self.fix_date()
         show = self.date.strftime('%Y%m%d') if self.date else '00000000'
-        show = f'{self.name}{show}'
-        return f'{show} {self.hourly_count}'
+        show = f'{self.name}{show} {self.hourly_count} {self.blue},{self.green},{self.orange},{self.red}'
+        return show
 
     def first_hour(self):
         hours = [k for k, e in enumerate(self.hourly_count.split(',')) if e != '0']
