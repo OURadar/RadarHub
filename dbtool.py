@@ -191,8 +191,8 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                 logger.info('Whew. Nothing happend.')
                 return
 
-    prefix = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
-    date_range = [f'{prefix} {hour:02d}:00Z', f'{prefix} 23:59:59.99Z']
+    day_string = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
+    date_range = [f'{day_string} {hour:02d}:00Z', f'{day_string} 23:59:59.99Z']
     show = colorize('date_range', 'orange') + colorize(' = ', 'red')
     show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
     logger.info(show)
@@ -255,7 +255,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             keys.append(key)
             output[key] = out
     else:
-        for archive in tqdm.tqdm(archives) if verbose == 1 else archives:
+        for archive in tqdm.tqdm(archives) if verbose else archives:
             xx = []
             with tarfile.open(archive) as tar:
                 for info in tar.getmembers():
@@ -296,13 +296,11 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                     mode = 'N'
                     if use_re_pattern:
                         s = pattern.search(archive).group(0)
-                        datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+                        date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
                     else:
                         c = name.split('-')
-                        d = c[1]
-                        t = c[2]
-                        datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
-                    x = File.objects.create(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
+                        date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+                    x = File.objects.create(name=name, path=archive, date=date, size=size, offset=offset, offset_data=offset_data)
                 logger.debug(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
                 if mode != 'I':
                     if save:
@@ -318,7 +316,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         if use_bulk_update:
             logger.info('Pass 2 / 2 - Gathering entries ...')
             array_of_files = []
-            for key in tqdm.tqdm(keys) if verbose == 1 else keys:
+            for key in tqdm.tqdm(keys) if verbose else keys:
                 xx = output[key]['xx']
                 files, cc, cu, ci = __handle_data__(xx)
                 array_of_files.append(files)
@@ -336,7 +334,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             logger.info(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
         else:
             logger.info('Pass 2 / 2 - Inserting entries into the database ...')
-            for key in tqdm.tqdm(keys) if verbose == 1 else keys:
+            for key in tqdm.tqdm(keys) if verbose else keys:
                 xx = output[key]['xx']
                 _, cc, cu, ci = __handle_data__(xx, save=True)
                 count_create += cc;
@@ -351,21 +349,21 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             for yy in xx:
                 (name, offset, offset_data, size, archive) = yy
                 c = name.split('-')
-                d = c[1]
-                t = c[2]
-                datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
-                x = File(name=name, path=archive, date=datestr, size=size, offset=offset, offset_data=offset_data)
+                date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+                x = File(name=name, path=archive, date=date, size=size, offset=offset, offset_data=offset_data)
                 files.append(x)
             return files
 
         t = time.time()
         logger.info('Pass 2 / 2 - Creating entries ...')
-        # array_of_files = [__sweep_files__(output[key]['xx']) for key in keys]
-        array_of_files = []
-        for key in tqdm.tqdm(keys) if verbose == 1 else keys:
-            xx = output[key]['xx']
-            files = __sweep_files__(xx)
-            array_of_files.append(files)
+        if verbose:
+            array_of_files = []
+            for key in tqdm.tqdm(keys):
+                xx = output[key]['xx']
+                files = __sweep_files__(xx)
+                array_of_files.append(files)
+        else:
+            array_of_files = [__sweep_files__(output[key]['xx']) for key in keys]
         files = [s for symbols in array_of_files for s in symbols]
         File.objects.bulk_create(files)
         t = time.time() - t
@@ -496,14 +494,12 @@ def show_sweep_summary(source):
     c = source.split('-')
     p = c[0] + '-'
     if len(c) > 2:
-        timestr = '-'.join(c[1:3])
         if len(c) > 4:
-            s = c[4]
+            s = c[4].split('.')[0]
         else:
             s = 'Z'
-        t = time.strptime(timestr, '%Y%m%d-%H%M%S')
-        t = time.strftime('%Y-%m-%d %H:%M:%SZ', t)
-        o = File.objects.filter(date=t).filter(name__startswith=p).filter(name__endswith=f'-{s}.nc')
+        date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+        o = File.objects.filter(date=date).filter(name__startswith=p).filter(name__endswith=f'-{s}.nc')
         if o:
             o = o[0]
         else:
