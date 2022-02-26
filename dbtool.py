@@ -613,6 +613,11 @@ def compute_bgor(day):
     stride = datetime.timedelta(minutes=20)
     hour = datetime.timedelta(hours=1)
 
+    files = File.objects.filter(name__startswith=day.name, name__contains='-E', date__range=day.day_range())
+    scans = [file.name.split('-')[3] for file in files]
+    scans = np.unique(scans)
+    scan = 'E4.0' if 'E4.0' in scans else scans[0]
+
     b = 1
     g = 1
     o = 1
@@ -626,7 +631,7 @@ def compute_bgor(day):
         for _ in range(int(hour / stride)):
             e = s + stride
             date_range = [s, e]
-            file = File.objects.filter(name__startswith=day.name, name__endswith='-E4.0-Z.nc', date__range=date_range)
+            file = File.objects.filter(name__startswith=day.name, name__endswith=f'-{scan}-Z.nc', date__range=date_range)
             if file.exists():
                 file = file.first()
                 logger.debug(file.__repr__())
@@ -641,16 +646,11 @@ def compute_bgor(day):
                 r += np.sum(z >= 50.0)
                 total += z.size
             s += stride
-    if total == 1:
-        r = 0
-        o = 0
-        g = 0
-        b = 0
-    else:
-        r *= 1000 / o
-        o *= 1000 / g
-        g *= 1000 / b
-        b *= 1000 / total
+    print(f'total = {total}  b = {b}  g = {g}  o = {o}  r = {r}')
+    r = 1000 * r / o if r > 1 else 0
+    o = 1000 * o / g if o > 1 else 0
+    g = 1000 * g / b if g > 1 else 0
+    b = 1000 * b / total if b > 1 else 0
     day.blue = int(b)
     day.green = int(g)
     day.orange = int(o)
@@ -795,9 +795,9 @@ def dbtool_main():
     elif args.test:
         # day = Day.objects.filter(date='2022-02-22', name='PX-').first()
         logger.setLevel(dailylog.logging.WARNING)
-        days = Day.objects.all()
+        days = Day.objects.filter(name='PX10K-')
         count = days.count()
-        for day in days[count-100:count-3]:
+        for day in days[count-50:count-10]:
             compute_bgor(day)
             day.show()
     else:

@@ -154,9 +154,9 @@ class Day(models.Model):
             return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
         else:
             b = ''
-            for s, d in [(self.blue, 'blue'), (self.green, 'green'), (self.orange, 'orange'), (self.red, 'red')]:
+            for s, c in [(self.blue, 'blue'), (self.green, 'green'), (self.orange, 'orange'), (self.red, 'red')]:
                 i = min(7, int(s * 8 / 500))
-                b += '\033[48;5;238m' + colorize(vbar[i], d)
+                b += '\033[48;5;238m' + colorize(vbar[i], c)
             show = f'{self.name}{date} {self.hourly_count} \033[48;5;236m{b}\033[m'
         return show
 
@@ -177,11 +177,20 @@ class Day(models.Model):
         hours = [k for k, e in enumerate(self.hourly_count.split(',')) if e != '0']
         return max(hours) if len(hours) else None
 
-    def last_hour_range(self):
+    def day_string(self):
         if self.date is None:
             return None
         self.fix_date()
-        day = self.date.strftime('%Y-%m-%d')
+        return self.date.strftime('%Y-%m-%d')
+
+    def last_hour_range(self):
+        day = self.day_string()
         hour = self.last_hour()
         day_hour = f'{day} {hour:02d}'
         return [f'{day_hour}:00:00Z', f'{day_hour}:59:59.9Z']
+
+    def day_range(self):
+        day = self.day_string()
+        first = self.first_hour()
+        last = self.last_hour()
+        return [f'{day} {first:02d}:00Z', f'{day} {last:02d}:59:59.9Z']
