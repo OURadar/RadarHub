@@ -461,7 +461,7 @@ def build_day(source, name=None, bgor=False):
     
     tic = time.time() - tic
 
-    logger.info(f'{mode} {day.show()}')
+    logger.info(f'{mode} {day.__repr__()}')
     logger.info(f'Elapsed time: {tic:.2f}s')
 
     return day, mode
@@ -610,7 +610,7 @@ def compute_bgor(day):
 
     day_datetime = datetime.datetime(day.date.year, day.date.month, day.date.day).replace(tzinfo=datetime.timezone.utc)
     hourly_count = [int(h) for h in day.hourly_count.split(',')]
-    stride = datetime.timedelta(minutes=15)
+    stride = datetime.timedelta(minutes=20)
     hour = datetime.timedelta(hours=1)
 
     b = 1
@@ -629,7 +629,7 @@ def compute_bgor(day):
             file = File.objects.filter(name__startswith=day.name, name__endswith='-E4.0-Z.nc', date__range=date_range)
             if file.exists():
                 file = file.first()
-                logger.debug(file.show())
+                logger.debug(file.__repr__())
                 sweep = file.read(finite=True)
                 z = sweep['values']
                 # Zero out the first few kilometers
@@ -641,10 +641,16 @@ def compute_bgor(day):
                 r += np.sum(z >= 50.0)
                 total += z.size
             s += stride
-    r *= 1000 / o
-    o *= 1000 / g
-    g *= 1000 / b
-    b *= 1000 / total
+    if total == 1:
+        r = 0
+        o = 0
+        g = 0
+        b = 0
+    else:
+        r *= 1000 / o
+        o *= 1000 / g
+        g *= 1000 / b
+        b *= 1000 / total
     day.blue = int(b)
     day.green = int(g)
     day.orange = int(o)
@@ -787,8 +793,13 @@ def dbtool_main():
             for source in args.source:
                 show_sweep_summary(source)
     elif args.test:
-        day = Day.objects.filter(date='2022-02-24', name='PX-').first()
-        compute_bgor(day)
+        # day = Day.objects.filter(date='2022-02-22', name='PX-').first()
+        logger.setLevel(dailylog.logging.WARNING)
+        days = Day.objects.all()
+        count = days.count()
+        for day in days[count-100:count-3]:
+            compute_bgor(day)
+            day.show()
     else:
         parser.print_help(sys.stderr)
 

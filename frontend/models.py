@@ -8,13 +8,16 @@ from django.db import models
 from django.core.validators import int_list_validator
 from django.conf import settings
 
+from common import colorize
+
 # Some helper functions
 
+np.set_printoptions(precision=2, threshold=5, linewidth=120)
 match_day = re.compile(r'([12][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])').match
+vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585', '\U00002586', '\U00002587']
+
 def valid_day(day):
     return match_day(day) is not None
-
-np.set_printoptions(precision=2, threshold=5, linewidth=120)
 
 # Create your models here.
 
@@ -48,7 +51,7 @@ class File(models.Model):
         return f'{self.name} @ {self.path}'
 
     def show(self):
-        return self.__repr__()
+        print(self.__repr__())
 
     def getFullpath(self, search=True):
         path = os.path.join(self.path, self.name)
@@ -144,14 +147,21 @@ class Day(models.Model):
         indexes = [models.Index(fields=['date', ]),
                    models.Index(fields=['name', ])]
 
-    def __repr__(self):
-        return f'{self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
-
-    def show(self):
+    def __repr__(self, long=False):
         self.fix_date()
-        show = self.date.strftime('%Y%m%d') if self.date else '00000000'
-        show = f'{self.name}{show} {self.hourly_count} {self.blue},{self.green},{self.orange},{self.red}'
+        date = self.date.strftime('%Y%m%d') if self.date else '00000000'
+        if long:
+            return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
+        else:
+            b = ''
+            for s, d in [(self.blue, 'blue'), (self.green, 'green'), (self.orange, 'orange'), (self.red, 'red')]:
+                i = min(7, int(s * 8 / 500))
+                b += '\033[48;5;238m' + colorize(vbar[i], d)
+            show = f'{self.name}{date} {self.hourly_count} \033[48;5;236m{b}\033[m'
         return show
+
+    def show(self, numeric=False):
+        print(self.__repr__(numeric))
 
     def fix_date(self):
         if self.date is None:
