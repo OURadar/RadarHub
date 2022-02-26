@@ -13,7 +13,6 @@
 __version__ = '1.0'
 
 import os
-import re
 import sys
 import glob
 import time
@@ -55,7 +54,6 @@ radars = {
         'count': 0
     }
 }
-pattern = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 logger = dailylog.Logger('file2db')
 
 def signalHandler(sig, frame):
@@ -155,15 +153,11 @@ def process(file):
     if prefix not in radars:
         logger.info(f'{basename} skipped')
         return
-    # if radars[prefix]['count'] == 0:
-    #     catchupV1(file)
-    # radars[prefix]['count'] += 1
 
     if not os.path.exists(file):
         archive = proper(file)
     else:
         archive = file
-    s = pattern.search(archive).group(0)
 
     j, k = 0, 0
     while j < 3:
@@ -175,8 +169,8 @@ def process(file):
                         logger.debug(file)
                     else:
                         logger.debug(f'N {info.name}')
-                        datestr = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
-                        file = File(name=info.name, path=archive, date=datestr, size=info.size, offset=info.offset, offset_data=info.offset_data)
+                        date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+                        file = File(name=info.name, path=archive, date=date, size=info.size, offset=info.offset, offset_data=info.offset_data)
                         file.save()
                     k += 1
             break
@@ -186,7 +180,7 @@ def process(file):
             j += 1
 
     if k > 0:
-        day, mode = dbtool.build_day(s[:8], name=prefix)
+        day, mode = dbtool.build_day(c[1], name=prefix)
         logger.info(f'{mode} {day.show()}')
     else:
         logger.warning(f'Unable to handle {archive}')
