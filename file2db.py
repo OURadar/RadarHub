@@ -83,7 +83,6 @@ def catchupV1(file, root='/mnt/data'):
     c = basename.split('-')
     d = c[1]
     prefix = c[0] + '-'
-    # datestr = f'{d[0:4]}-{d[4:6]}-{d[6:8]} {t[0:2]}:{t[2:4]}:{t[4:6]}Z'
     if not Day.objects.filter(name=prefix).exists():
         return
     day = Day.objects.filter(name=prefix).latest('date')
@@ -116,7 +115,7 @@ def catchup(root='/mnt/data'):
         show += '  ' + color_name_value('folder', folder)
         logger.info(show)
         if not Day.objects.filter(name=prefix).exists():
-            print('Skipping ...')
+            logger.info('Skipping ...')
             continue
         folderYear = sorted(glob.glob(f'{folder}/2[0-1][0-9][0-9]'))[-1]
         year = os.path.basename(folderYear)
@@ -142,7 +141,8 @@ def catchup(root='/mnt/data'):
             date += stride
             hour = 0
         radars[prefix]['count'] += 1
-        print('')
+        if logger.level > dailylog.logging.WARNING:
+            print('')
 
 def process(file):
     global radars

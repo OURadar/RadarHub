@@ -47,6 +47,9 @@ class File(models.Model):
     def __repr__(self):
         return f'{self.name} @ {self.path}'
 
+    def show(self):
+        return self.__repr__()
+
     def getFullpath(self, search=True):
         path = os.path.join(self.path, self.name)
         if os.path.exists(path):
@@ -144,17 +147,17 @@ class Day(models.Model):
     def __repr__(self):
         return f'{self.date}   count = {self.count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
 
-    def fix_date(self):
-        if self.date is None:
-            return
-        if not isinstance(self.date, datetime.date):
-            self.date = datetime.date.fromisoformat(self.date) if valid_day(self.date) else None
-
     def show(self):
         self.fix_date()
         show = self.date.strftime('%Y%m%d') if self.date else '00000000'
         show = f'{self.name}{show} {self.hourly_count} {self.blue},{self.green},{self.orange},{self.red}'
         return show
+
+    def fix_date(self):
+        if self.date is None:
+            return
+        if not isinstance(self.date, datetime.date):
+            self.date = datetime.date.fromisoformat(self.date) if valid_day(self.date) else None
 
     def first_hour(self):
         hours = [k for k, e in enumerate(self.hourly_count.split(',')) if e != '0']

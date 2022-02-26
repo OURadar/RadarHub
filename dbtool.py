@@ -381,70 +381,90 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
 '''
     Build an entry to the Day table
 
-    day - could either be a day string YYYYMMDD or a folder with the last
-          part as day, e.g., /mnt/data/PX1000/2022/20220128
+    source - could either be a day string YYYYMMDD or a folder with the last
+             part as day, e.g., /mnt/data/PX1000/2022/20220128
+    bgor - compute the bgor values of the day
 '''
-def build_day(day, name=None):
+def build_day(source, name=None, bgor=False):
     show = colorize('build_day()', 'green')
-    show += '   ' + color_name_value('day', day)
+    show += '   ' + color_name_value('day', source)
     show += '   ' + color_name_value('name', name)
     logger.info(show)
 
-    if name is None and '/' not in day:
+    if name is None and '/' not in source and '-' not in source:
         logger.error('Unable to determine name')
         return None
 
-    if '/' in day:
-        s = re.search(r'(?<=/)20[0-9][0-9][012][0-9][0-3][0-9]', day)
-        files = list_files(day)
+    def _get_name_from_source(name):
+        c = name.split('-')
+        return c[0] + '-', c[1]
+
+    s = None
+    if '/' in source:
+        if source[-1] == '/':
+            source = source[:-1]
+        s = os.path.basename(source)
+        files = list_files(source)
         if len(files) == 0:
-            logger.error(f'No files in {day}')
+            logger.error(f'No files in {source}')
             return None
         file = os.path.basename(files[0])
-        name = file.split('-')[0] + '-'
+        if name is None:
+            name, _ = _get_name_from_source(file)
+    elif '-' in source and name is None:
+        name, s = _get_name_from_source(source)
     else:
-        s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', day)
-    if s:
-        s = s.group(0)
-    else:
-        logger.error(f'Error. Unble to determine the date from {day}')
+        s = source
+
+    if name is None or s is None:
+        logger.error(f'Error. Unble to determine the name/date from {source}')
         return None
 
-    date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
+    tic = time.time()
+
+    day_string = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
 
     mode = 'N'
-    d = Day.objects.filter(date=date, name=name)
-    if d:
+    day = Day.objects.filter(date=day_string, name=name)
+    if day:
         mode = 'U'
-        d = d[0]
+        day = day[0]
     else:
-        d = Day(date=date, name=name)
+        day = Day(date=day_string, name=name)
 
     total = 0
     counts = [0] * 24
     for k in range(24):
-        date_range = [f'{date} {k:02d}:00:00Z', f'{date} {k:02d}:59:59.9Z']
+        date_range = [f'{day_string} {k:02d}:00:00Z', f'{day_string} {k:02d}:59:59.9Z']
         matches = File.objects.filter(name__startswith=name, name__endswith='-Z.nc', date__range=date_range)
         counts[k] = matches.count()
         total += counts[k]
 
     if total > 0:
-        d.count = total
-        d.duration = d.count * 20
-        d.hourly_count = ','.join([str(c) for c in counts])
-        d.save()
+        day.count = total
+        day.duration = day.count * 20
+        day.hourly_count = ','.join([str(c) for c in counts])
+        day.save()
     elif mode == 'U' and total == 0:
         mode = 'D'
-        d.delete()
-        d = None
+        day.delete()
+        day = None
     else:
         mode = 'I'
 
     if mode == 'N':
-        d = Day.objects.filter(date=date, name=name).first()
-    logger.info(f'{mode} {d.show()}')
+        day = Day.objects.filter(date=day_string, name=name).first()
 
-    return d, mode
+
+    if bgor:
+        compute_bgor(day)
+    
+    tic = time.time() - tic
+
+    logger.info(f'{mode} {day.show()}')
+    logger.info(f'Elapsed time: {tic:.2f}s')
+
+    return day, mode
 
 '''
     Check an entry from the Day table
@@ -580,24 +600,18 @@ def check_latest():
         logger.info(show)
 
 '''
-    Find closest sweep
+    Compute BGOR (blue, green, orange, red) ratios
 '''
 
-def find_closest(source):
-    show = colorize('find_closest()', 'green')
-    show += '   ' + color_name_value('source', source)
-    print(show)
-    c = source.split('-')
-    prefix = c[0] + '-'
-    day_datetime = datetime.datetime.strptime(f'{c[1]}', '%Y%m%d').replace(tzinfo=datetime.timezone.utc)
-    day = Day.objects.filter(name=prefix, date=day_datetime.date())
-    if day.exists():
-        day = day.first()
-    hourly_count = [int(h) for h in day.hourly_count.split(',')]
-    quarter = datetime.timedelta(minutes=15)
-    hour = datetime.timedelta(hours=1)
+def compute_bgor(day):
+    show = colorize('compute_bgor()', 'green')
+    show += '   ' + color_name_value('day', day.__repr__())
+    logger.info(show)
 
-    tic = time.time()
+    day_datetime = datetime.datetime(day.date.year, day.date.month, day.date.day).replace(tzinfo=datetime.timezone.utc)
+    hourly_count = [int(h) for h in day.hourly_count.split(',')]
+    stride = datetime.timedelta(minutes=15)
+    hour = datetime.timedelta(hours=1)
 
     b = 1
     g = 1
@@ -609,12 +623,13 @@ def find_closest(source):
             continue
         logger.debug(f'{k} {count}')
         s = day_datetime + k * hour
-        for _ in range(4):
-            e = s + quarter
+        for _ in range(int(hour / stride)):
+            e = s + stride
             date_range = [s, e]
-            file = File.objects.filter(name__startswith=prefix, name__endswith='-E4.0-Z.nc', date__range=date_range)
+            file = File.objects.filter(name__startswith=day.name, name__endswith='-E4.0-Z.nc', date__range=date_range)
             if file.exists():
-                file = file.first()                
+                file = file.first()
+                logger.debug(file.show())
                 sweep = file.read(finite=True)
                 z = sweep['values']
                 # Zero out the first few kilometers
@@ -625,22 +640,16 @@ def find_closest(source):
                 o += np.sum(z >= 35.0)
                 r += np.sum(z >= 50.0)
                 total += z.size
-            s += quarter
-    r *= 100 / o
-    o *= 100 / g
-    g *= 100 / b
-    b *= 100 / total
+            s += stride
+    r *= 1000 / o
+    o *= 1000 / g
+    g *= 1000 / b
+    b *= 1000 / total
     day.blue = int(b)
     day.green = int(g)
     day.orange = int(o)
     day.red = int(r)
     day.save()
-
-    print(day.show())
-
-    tic = time.time() - tic
-
-    print(f'Elapsed time: {tic:.2f}s')
 
 #
 
@@ -651,7 +660,9 @@ def dbtool_main():
         Database Tool
 
         Examples:
-            dbtool.py -d 20130520
+            dbtool.py -d PX-20220226
+            dbtool.py -d --prefix=PX- 20220226
+            dbtool.py -d /data/PX1000/2022/20220226
             dbtool.py -i /data/PX1000/2013/20130520
             dbtool.py -i /data/PX1000/2013/201305*
             dbtool.py -s
@@ -678,6 +689,7 @@ def dbtool_main():
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
     parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
+    parser.add_argument('--no-bgor', dest='bgor', default=True, action='store_false', help='skips computing bgor')
     parser.add_argument('-p', '--prefix', help='sets the radar prefix to process')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
@@ -722,7 +734,7 @@ def dbtool_main():
             return
         logger.info('Building a Day table ...')
         for day in args.source:
-            build_day(day, name=args.prefix)
+            build_day(day, name=args.prefix, bgor=args.bgor)
     elif args.find_duplicates:
         if len(args.source) == 0:
             print('--find-duplicates needs a source and a prefix, e.g.,')
@@ -768,14 +780,15 @@ def dbtool_main():
                 show = color_name_value('prefix', args.prefix)
                 logger.info(f'Retrieving latest sweep w/ {show} ...')
                 o = File.objects.filter(name__startswith=args.prefix).last()
-            logger.info(o.__repr__())
+            logger.info(o.show())
             sweep = o.read()
             pp.pprint(sweep)
         else:
             for source in args.source:
                 show_sweep_summary(source)
     elif args.test:
-        find_closest('PX-20220224-0000')
+        day = Day.objects.filter(date='2022-02-24', name='PX-').first()
+        compute_bgor(day)
     else:
         parser.print_help(sys.stderr)
 
