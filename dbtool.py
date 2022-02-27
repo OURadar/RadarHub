@@ -491,7 +491,7 @@ def check_day(day, names=None):
         dd = Day.objects.filter(name=name, date=date)
         if len(dd):
             for d in dd:
-                logger.info(f'R {d.show()}')
+                logger.info(f'R {d.__repr__()}')
         else:
             logger.info(f'E {name}{day} does not exist')
     return dd
@@ -795,9 +795,9 @@ def dbtool_main():
     elif args.test:
         # day = Day.objects.filter(date='2022-02-22', name='PX-').first()
         logger.setLevel(dailylog.logging.WARNING)
-        days = Day.objects.filter(name='PX10K-')
+        days = Day.objects.filter(name='PX-')
         count = days.count()
-        for day in days[count-50:count-10]:
+        for day in days[count-30:]:
             compute_bgor(day)
             day.show()
     else:
