@@ -387,7 +387,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
 '''
 def build_day(source, name=None, bgor=False):
     show = colorize('build_day()', 'green')
-    show += '   ' + color_name_value('day', source)
+    show += '   ' + color_name_value('source', source)
     show += '   ' + color_name_value('name', name)
     logger.info(show)
 
@@ -605,7 +605,7 @@ def check_latest():
 
 def compute_bgor(day):
     show = colorize('compute_bgor()', 'green')
-    show += '   ' + color_name_value('day', day.__repr__())
+    show += '   ' + color_name_value('day', day.__repr__(short=True))
     logger.info(show)
 
     day_datetime = datetime.datetime(day.date.year, day.date.month, day.date.day).replace(tzinfo=datetime.timezone.utc)
@@ -618,11 +618,11 @@ def compute_bgor(day):
     scans = np.unique(scans)
     scan = 'E4.0' if 'E4.0' in scans else scans[0]
 
-    b = 1
-    g = 1
-    o = 1
-    r = 1
-    total = 1
+    b = 0
+    g = 0
+    o = 0
+    r = 0
+    total = 0
     for k, count in enumerate(hourly_count):
         if count == 0:
             continue
@@ -646,11 +646,12 @@ def compute_bgor(day):
                 r += np.sum(z >= 50.0)
                 total += z.size
             s += stride
-    print(f'total = {total}  b = {b}  g = {g}  o = {o}  r = {r}')
-    r = 1000 * r / o if r > 1 else 0
-    o = 1000 * o / g if o > 1 else 0
-    g = 1000 * g / b if g > 1 else 0
-    b = 1000 * b / total if b > 1 else 0
+    # print(f'total = {total}  b = {b}  g = {g}  o = {o}  r = {r}')
+    r = 1000 * r / o if r else 0
+    o = 1000 * o / g if o else 0
+    g = 1000 * g / b if g else 0
+    b = 1000 * b / total if b else 0
+    # print(f'total = {total}  b = {b}  g = {g}  o = {o}  r = {r}')
     day.blue = int(b)
     day.green = int(g)
     day.orange = int(o)

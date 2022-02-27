@@ -39,15 +39,21 @@ keepReading = True
 radars = {
     'PX-': {
         'folder': 'PX1000',
-        'count': 0
+        'count': 0,
+        'bgor_scan': 'E4.0',
+        'bgor_step': 0,
     },
     'RAXPOL-': {
         'folder': 'RaXPol',
-        'count': 0
+        'count': 0,
+        'bgor_scan': 'E4.0',
+        'bgor_step': 0,
     },
     'PX10K-': {
         'folder': 'PX10k',
-        'count': 0
+        'count': 0,
+        'bgor_scan': 'E4.0',
+        'bgor_step': 0,
     },
     'FAKE-': {
         'folder': 'Fake',
@@ -141,6 +147,9 @@ def catchup(root='/mnt/data'):
             date += stride
             hour = 0
         radars[prefix]['count'] += 1
+        minute = int(c[2][2:4])
+        step = int(minute / 20)
+        radars[prefix]['bgor_step'] = 0 if step == 2 else step + 1
         if logger.level > dailylog.logging.WARNING:
             print('')
 
@@ -180,8 +189,18 @@ def process(file):
             j += 1
 
     if k > 0:
-        day, mode = dbtool.build_day(c[1], name=prefix)
-        logger.info(f'{mode} {day.__repr__()}')
+        bgor = False
+        scan = radars[prefix]['bgor_scan']
+        if c[3].startswith(scan):
+            step = int(date.minute / 20)
+            # target = radars[prefix]['bgor_step']
+            # logger.info(f'{step} {target}')
+            if radars[prefix]['bgor_step'] == step:
+                radars[prefix]['bgor_step'] = 0 if step == 2 else radars[prefix]['bgor_step'] + 1
+                bgor = True
+        day, mode = dbtool.build_day(c[1], name=prefix, bgor=bgor)
+        u = '+' if bgor else ''
+        logger.info(f'{mode} {day.__repr__()}{u}')
     else:
         logger.warning(f'Unable to handle {archive}')
 

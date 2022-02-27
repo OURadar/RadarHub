@@ -147,17 +147,20 @@ class Day(models.Model):
         indexes = [models.Index(fields=['date', ]),
                    models.Index(fields=['name', ])]
 
-    def __repr__(self, long=False):
+    def __repr__(self, long=False, short=False):
         self.fix_date()
         date = self.date.strftime('%Y%m%d') if self.date else '00000000'
-        if long:
+        if short:
+            return self.name + self.date.strftime('%Y%m%d')
+        elif long:
             return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
         else:
-            b = ''
+            b = '\033[48;5;238m'
             for s, c in [(self.blue, 'blue'), (self.green, 'green'), (self.orange, 'orange'), (self.red, 'red')]:
                 i = min(7, int(s * 8 / 500))
-                b += '\033[48;5;238m' + colorize(vbar[i], c)
-            show = f'{self.name}{date} {self.hourly_count} \033[48;5;236m{b}\033[m'
+                b += colorize(vbar[i], c, end='')
+            b += '\033[m'
+            show = f'{self.name}{date} {self.hourly_count} {b}'
         return show
 
     def show(self, numeric=False):
