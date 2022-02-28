@@ -506,7 +506,6 @@ def check_file(source, remove=False):
     else:
         logger.error('Unable to continue')
         pp.pprint(params)
-    date = params['date'].strftime('%Y%m%d')
     for prefix in prefixes:
         files = File.objects.filter(name__startswith=prefix, date__range=params['date_range'])
         count = files.count()
@@ -524,7 +523,7 @@ def check_file(source, remove=False):
                 if remove:
                     file.delete()
         s = 's' if count > 1 else ''
-        logger.info(f'{prefix}{date} has {count} missing file{s}')
+        logger.info(f'{source} has {count} missing file{s}')
 
 '''
     Poor function, don't use
