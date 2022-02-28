@@ -602,7 +602,6 @@ def check_latest():
 '''
     Compute BGOR (blue, green, orange, red) ratios
 '''
-
 def compute_bgor(day):
     show = colorize('compute_bgor()', 'green')
     show += '   ' + color_name_value('day', day.__repr__(short=True))
@@ -614,6 +613,8 @@ def compute_bgor(day):
     hour = datetime.timedelta(hours=1)
 
     files = File.objects.filter(name__startswith=day.name, name__contains='-E', date__range=day.day_range())
+    if files.count() == 0:
+        return
     scans = [file.name.split('-')[3] for file in files]
     scans = np.unique(scans)
     scan = 'E4.0' if 'E4.0' in scans else scans[0]
@@ -659,6 +660,9 @@ def compute_bgor(day):
     day.save()
 
 
+'''
+    Parse prefix, date, datetime, etc. from a source string
+'''
 def params_from_source(source, dig=False):
     file = None
     prefix = None
