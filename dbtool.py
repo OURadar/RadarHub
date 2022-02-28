@@ -467,34 +467,68 @@ def build_day(source, prefix=None, bgor=False):
     return day, mode
 
 '''
-    Check an entry from the Day table
+    Check a Day entry from the database
 
     day - could either be a day string YYYYMMDD or a folder with the last
           part as day, e.g., /mnt/data/PX1000/2022/20220128
 '''
-def check_day(day, names=None):
+def check_day(source):
     show = colorize('check_day()', 'green')
-    show += '   ' + color_name_value('day', day)
+    show += '   ' + color_name_value('source', source)
     logger.info(show)
-    s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(day))
-    if s:
-        s = s.group(0)
+    params = params_from_source(source)
+    if params['prefix'] is None:
+        prefixes = ['PX-', 'PX10K-', 'RAXPOL-']
+    elif isinstance(params['prefix'], str):
+        prefixes = [params['prefix']]
     else:
-        logger.info(f'Unable to parse date string from input = {day}')
-        return None
-    date = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
-    if names is None:
-        names = ['PX-', 'PX10K-', 'RAXPOL-']
-    elif isinstance(names, str):
-        names = [names]
-    for name in names:
+        logger.error('Unable to continue')
+        pp.pprint(params)
+    date = params['date']
+    for name in prefixes:
         dd = Day.objects.filter(name=name, date=date)
         if len(dd):
             for d in dd:
                 logger.info(f'R {d.__repr__()}')
         else:
-            logger.info(f'E {name}{day} does not exist')
+            logger.info(f'E {name}{source} does not exist')
     return dd
+
+'''
+    Check File entries that no longer exists
+
+    source - could either be:
+              - a string with day only, e.g., YYYYMMDD
+              - a string with prefix and day string, e.g., PX-20220127,
+              - a path to the data, e.g., /mnt/data/PX1000/2022/20220127
+
+'''
+def check_file(source, remove=False):
+    show = colorize('check_file()', 'green')
+    show += '   ' + color_name_value('source', source)
+    show += '   ' + color_name_value('remove', remove)
+    logger.info(show)
+    params = params_from_source(source, dig=True)
+    if params['prefix'] is None:
+        prefixes = ['PX-', 'PX10K-', 'RAXPOL-']
+    elif isinstance(params['prefix'], str):
+        prefixes = [params['prefix']]
+    else:
+        logger.error('Unable to continue')
+        pp.pprint(params)
+    for prefix in prefixes:
+        files = File.objects.filter(name__startswith=prefix, date__range=params['date_range'])
+        count = files.count()
+        show = color_name_value('prefix', prefix)
+        show += '  ' + color_name_value('count', count)
+        logger.info(show)
+        if count == 0:
+            continue
+        for file in tqdm.tqdm(files):
+            if not os.path.exists(file.path):
+                file.show()
+                if remove:
+                    file.delete()
 
 '''
     Poor function, don't use
@@ -681,7 +715,7 @@ def params_from_source(source, dig=False):
             folder, file = os.path.split(source)
             day_string = os.path.basename(folder)
         if file:
-            print(f'file = {file}')
+            logger.debug(f'params_from_source() file[0] = {file}')
             c = file.split('-')
             prefix = c[0] + '-'
             time_string = c[1] + c[2]
@@ -689,9 +723,11 @@ def params_from_source(source, dig=False):
                 print(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]}')
                 day_string = c[1]
             source_datetime = datetime.datetime.strptime(time_string, '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
-    else:
+    elif '-' in source:
         prefix, day_string = source.split('-')
         prefix += '-'
+    else:
+        day_string = source
     if day_string:
         source_date = datetime.datetime.strptime(day_string, '%Y%m%d').date()
     start = datetime.datetime(source_date.year, source_date.month, source_date.day).replace(tzinfo=datetime.timezone.utc)
@@ -703,23 +739,6 @@ def params_from_source(source, dig=False):
         'datetime': source_datetime,
         'date_range': date_range
     }
-
-'''
-    Remove File entries that no longer exists
-'''
-def check_file(source, remove=False):
-    show = colorize('check_file()', 'green')
-    show += '   ' + color_name_value('source', source)
-    show += '   ' + color_name_value('remove', remove)
-    logger.info(show)
-    params = params_from_source(source, dig=True)
-    files = File.objects.filter(name__startswith=params['prefix'], date__range=params['date_range'])
-    for file in files:
-        if not os.path.exists(file.path):
-            file.show()
-            if remove:
-                file.delete()
-    return
 
 #
 
@@ -746,9 +765,10 @@ def dbtool_main():
     parser.add_argument('source', type=str, nargs='*',
          help=textwrap.dedent('''\
              source(s) to process, which can be one of the following:
-              - entry (e.g., PX-20220223-192249-E16.0) for --show-sweep')
-              - path (e.g., /mnt/data/PX1000/2022/20220223) for -i, -I, or --find-duplicates')
-              - day (e.g., 20220223) for -c, -d')
+              - file entry (e.g., PX-20220223-192249-E16.0) for --show-sweep
+              - path (e.g., /mnt/data/PX1000/2022/20220223) for -c, -i, -I, or -f
+              - prefix + day (e.g., PX-20220127)
+              - day (e.g., 20220223) for -c, -d
              '''))
     parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
     parser.add_argument('-c', dest='check_day', action='store_true', help='checks entries from the Day table')
