@@ -29,6 +29,8 @@ import multiprocessing
 
 import numpy as np
 
+__prog__ = os.path.basename(sys.argv[0])
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
@@ -469,14 +471,22 @@ def check_day(source):
         logger.error('Unable to continue')
         pp.pprint(params)
     date = params['date']
+    date_range = params['date_range']
+    ddd = []
     for name in prefixes:
-        dd = Day.objects.filter(name=name, date=date)
+        if date:
+            dd = Day.objects.filter(name=name, date=date)
+        elif date_range:
+            dd = Day.objects.filter(name=name, date__range=date_range)
+        else:
+            dd = []
         if len(dd):
             for d in dd:
+                ddd.append(d)
                 logger.info(f'R {d.__repr__()}')
-        else:
-            logger.info(f'E {name}{source} does not exist')
-    return dd
+    if len(ddd) == 0:
+        logger.info(f'E {source} does not exist')
+    return ddd
 
 '''
     Check File entries and verify existence
@@ -553,7 +563,7 @@ def show_sweep_summary(source):
     pp.pprint(sweep)
 
 '''
-    Finds duplicate entries
+    Finds duplicate File entries
 
     source - common source pattern (see params_from_source())
     remove - remove duplicate entries (copy > 1) if set to True
@@ -695,7 +705,25 @@ def params_from_source(source, dig=False):
     date_range = None
     source_date = None
     source_datetime = None
-    if os.path.exists(source):
+    if '*' == source[-1]:
+        if '-' in source:
+            prefix, query = source.split('-')
+            prefix += '-'
+        else:
+            query = source
+        logger.debug(f'prefix = {prefix}   query = {query}')
+        date = query[:-1]
+        if len(date) == 4:
+            year = datetime.datetime.strptime(date, '%Y').date()
+            start = datetime.datetime(year.year, 1, 1).replace(tzinfo=datetime.timezone.utc)
+            end = datetime.datetime(year.year + 1, 1, 1).replace(tzinfo=datetime.timezone.utc)
+            date_range = [start, end]
+        elif len(date) == 6:
+            month = datetime.datetime.strptime(date, '%Y%m').date()
+            start = datetime.datetime(month.year, month.month, 1).replace(tzinfo=datetime.timezone.utc)
+            end = datetime.datetime(month.year, month.month + 1, 1).replace(tzinfo=datetime.timezone.utc)
+            date_range = [start, end]
+    elif os.path.exists(source):
         if os.path.isdir(source):
             if source[-1] == '/':
                 source = source[:-1]
@@ -745,28 +773,29 @@ def params_from_source(source, dig=False):
 #
 
 def dbtool_main():
-    parser = argparse.ArgumentParser(prog='dbtool.py',
+    parser = argparse.ArgumentParser(prog=__prog__,
         formatter_class=argparse.RawTextHelpFormatter,
         description=textwrap.dedent('''\
         Database Tool
 
         Examples:
-            dbtool.py -c 20220127
-            dbtool.py -d PX-20220226
-            dbtool.py -d RAXPOL-20220225
-            dbtool.py -d /mnt/data/PX1000/2022/20220226
-            dbtool.py -i /mnt/data/PX1000/2013/20130520
-            dbtool.py -i /mnt/data/PX1000/2013/201305*
-            dbtool.py -l
-            dbtool.py -l RAXPOL-
-            dbtool.py -l RAXPOL- PX-
-            dbtool.py -s
-            dbtool.py -s RAXPOL-
-            dbtool.py -s PX-20130520-191000
-            dbtool.py -f 20220225
-            dbtool.py -f RAXPOL-20220225
-            dbtool.py -f --remove 20220127
-        '''))
+            _PROG_ -c 20220127
+            _PROG_ -d PX-20220226
+            _PROG_ -d RAXPOL-20220225
+            _PROG_ -d /mnt/data/PX1000/2022/20220226
+            _PROG_ -i /mnt/data/PX1000/2013/20130520
+            _PROG_ -i /mnt/data/PX1000/2013/201305*
+            _PROG_ -l
+            _PROG_ -l RAXPOL-
+            _PROG_ -l RAXPOL- PX-
+            _PROG_ -s
+            _PROG_ -s RAXPOL-
+            _PROG_ -s PX-20130520-191000
+            _PROG_ -f 20220225
+            _PROG_ -f RAXPOL-20220225
+            _PROG_ -f --remove 20220127
+        '''.replace('_PROG_', __prog__)),
+        epilog='Copyright (c) 2021-2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*',
          help=textwrap.dedent('''\
              source(s) to process, which can be one of the following:
@@ -787,7 +816,7 @@ def dbtool_main():
     parser.add_argument('--no-bgor', dest='bgor', default=True, action='store_false', help='skips computing bgor')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
-    parser.add_argument('-s', '--show-sweep', action='store_true', help='shows a sweep summary')
+    parser.add_argument('-s', dest='sweep', action='store_true', help='shows a sweep summary')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('-z', dest='test', action='store_true', help='dev')
@@ -865,7 +894,7 @@ def dbtool_main():
         logger.info(o.__repr__())
     elif args.latest:
         check_latest(args.source)
-    elif args.show_sweep:
+    elif args.sweep:
         if len(args.source) == 0:
             o = File.objects.last()
             logger.info(o.show())
@@ -876,7 +905,7 @@ def dbtool_main():
                 show_sweep_summary(source)
     elif args.test:
         print('A placeholder for test routines')
-        params = params_from_source('PX-')
+        params = params_from_source('RAXPOL-202202*')
         pp.pprint(params)
     else:
         parser.print_help(sys.stderr)
