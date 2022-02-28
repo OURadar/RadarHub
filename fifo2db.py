@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #
-#  file2db.py
+#  fifo2db.py
 #  File to Database
 #
 #  RadarHub
@@ -60,7 +60,7 @@ radars = {
         'count': 0
     }
 }
-logger = dailylog.Logger('file2db')
+logger = dailylog.Logger('fifo2db')
 
 def signalHandler(sig, frame):
     global keepReading
@@ -168,6 +168,8 @@ def process(file):
     else:
         archive = file
 
+    date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+
     j, k = 0, 0
     while j < 3:
         try:
@@ -178,7 +180,6 @@ def process(file):
                         logger.debug(file)
                     else:
                         logger.debug(f'N {info.name}')
-                        date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
                         file = File(name=info.name, path=archive, date=date, size=info.size, offset=info.offset, offset_data=info.offset_data)
                         file.save()
                     k += 1
@@ -198,7 +199,7 @@ def process(file):
             if radars[prefix]['bgor_step'] == step:
                 radars[prefix]['bgor_step'] = 0 if step == 2 else radars[prefix]['bgor_step'] + 1
                 bgor = True
-        day, mode = dbtool.build_day(c[1], name=prefix, bgor=bgor)
+        day, mode = dbtool.build_day(c[1], prefix=prefix, bgor=bgor)
         u = '+' if bgor else ''
         logger.info(f'{mode} {day.__repr__()}{u}')
     else:
@@ -270,15 +271,15 @@ def listen(host='10.197.14.59', port=9000):
                 time.sleep(0.1)
                 k -= 1
 
-def file2db():
-    parser = argparse.ArgumentParser(prog='file2db.py',
+def fifo2db():
+    parser = argparse.ArgumentParser(prog='fifo2db.py',
         formatter_class=argparse.RawTextHelpFormatter,
         description=textwrap.dedent('''\
         File to Database
 
         Examples:
-            file2db.py -v
-            file2db.py -v 10.197.14.59
+            fifo2db.py -v
+            fifo2db.py -v 10.197.14.59
         '''))
     parser.add_argument('host', type=str, nargs='?', help='host to connect')
     parser.add_argument('-p', dest='port', default=9000, help='sets the port (default = 9000)')
@@ -337,5 +338,5 @@ def file2db():
 
 if __name__ == '__main__':
     setproctitle.setproctitle(os.path.basename(sys.argv[0]))
-    file2db()
+    fifo2db()
 
