@@ -496,6 +496,7 @@ def check_file(source, remove=False):
     else:
         logger.error('Unable to continue')
         pp.pprint(params)
+    date = params['date'].strftime('%Y%m%d')
     for prefix in prefixes:
         files = File.objects.filter(name__startswith=prefix, date__range=params['date_range'])
         count = files.count()
@@ -504,11 +505,16 @@ def check_file(source, remove=False):
         logger.info(show)
         if count == 0:
             continue
-        for file in tqdm.tqdm(files):
+        count = 0
+        showbar = logger.streamHandler.level <= dailylog.logging.INFO
+        for file in tqdm.tqdm(files) if showbar else files:
             if not os.path.exists(file.path):
                 file.show()
+                count += 1
                 if remove:
                     file.delete()
+        s = 's' if count > 1 else ''
+        logger.info(f'{prefix}{date} has {count} missing file{s}')
 
 '''
     Poor function, don't use
@@ -773,10 +779,10 @@ def dbtool_main():
     parser.add_argument('-c', dest='check_day', action='store_true', help='checks entries from the Day table')
     parser.add_argument('-C', dest='check_file', action='store_true', help='checks entries from the File table')
     parser.add_argument('-d', dest='build_day', action='store_true', help='builds a Day entry')
-    parser.add_argument('-f', '--find-duplicates', action='store_true', help='finds duplicate File entries in the database')
+    parser.add_argument('-f', dest='find_duplicates', action='store_true', help='finds duplicate File entries in the database')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
-    parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
+    parser.add_argument('--last', action='store_true', help='shows the absolute last entry in the database')
     parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
     parser.add_argument('--no-bgor', dest='bgor', default=True, action='store_false', help='skips computing bgor')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
@@ -823,7 +829,6 @@ def dbtool_main():
             print('  dbtool.py --prefix PX- -b 20220224')
             print('  dbtool.py -b /mnt/data/PX1000/2013/20130520')
             return
-        logger.info('Building a Day table ...')
         for day in args.source:
             build_day(day, bgor=args.bgor)
     elif args.find_duplicates:
@@ -855,11 +860,10 @@ def dbtool_main():
             logger.info(f'{folder}')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
     elif args.last:
-        logger.info('Retrieving the last entry ...')
+        logger.info('Retrieving the absolute last entry ...')
         o = File.objects.last()
         logger.info(o.__repr__())
     elif args.latest:
-        logger.info('Retrieving the latest entries ...')
         check_latest(args.source)
     elif args.show_sweep:
         if len(args.source) == 0:

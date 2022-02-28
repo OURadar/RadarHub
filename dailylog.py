@@ -15,6 +15,7 @@ class Logger(logging.Logger):
         handler = logging.StreamHandler()
         handler.setFormatter(formatter)
         handler.setLevel(logging.WARNING)
+        self.streamHandler = handler
         self.addHandler(handler)
         self.setLevel(logging.INFO)
         self.refresh()
@@ -32,9 +33,7 @@ class Logger(logging.Logger):
         self.addHandler(fileHandler)
 
     def showLogOnScreen(self):
-        for h in self.handlers:
-            if isinstance(h, logging.StreamHandler):
-                h.setLevel(self.level)
+        self.streamHandler.setLevel(self.level)
 
     def check(self):
         self.time = time.localtime(time.time())
