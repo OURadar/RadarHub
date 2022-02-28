@@ -381,57 +381,42 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
 '''
     Build an entry to the Day table
 
-    source - could either be a day string YYYYMMDD or a folder with the last
-             part as day, e.g., /mnt/data/PX1000/2022/20220128
-    prefix - prefix of datafiles, e.g., PX-, RAXPOL-, and PX10K-
+    source - common source pattern (see params_from_source())
     bgor - compute the bgor values of the day
 '''
-def build_day(source, prefix=None, bgor=False):
+def build_day(source, bgor=False):
     show = colorize('build_day()', 'green')
     show += '   ' + color_name_value('source', source)
-    show += '   ' + color_name_value('name', prefix)
     logger.info(show)
+    params = params_from_source(source, dig=True)
+    prefix = params['prefix']
+    date = params['date']
 
-    if prefix is None and '/' not in source and '-' not in source:
-        logger.error('Unable to determine name')
+    if prefix is None:
+        logger.error(f'Error. Unble to determine prefix from {source}')
         return None
 
-    def _prefix_date_from_source(source):
-        c = source.split('-')
-        return c[0] + '-', c[1]
+    if date is None:
+        return None
 
-    s = None
-    if '/' in source:
-        if source[-1] == '/':
-            source = source[:-1]
-        s = os.path.basename(source)
-        files = list_files(source)
-        if len(files) == 0:
-            logger.error(f'No files in {source}')
+    date_range = params['date_range']
+    if date_range:
+        files = File.objects.filter(name__startswith=prefix, date__range=date_range)
+        if files.count() == 0:
+            logger.error(f'Error. No File entries for {date}')
             return None
-        file = os.path.basename(files[0])
-        if prefix is None:
-            prefix, _ = _prefix_date_from_source(file)
-    elif '-' in source and prefix is None:
-        prefix, s = _prefix_date_from_source(source)
-    else:
-        s = source
 
-    if prefix is None or s is None:
-        logger.error(f'Error. Unble to determine the name/date from {source}')
-        return None
+    day_string = date.strftime('%Y-%m-%d')
 
     tic = time.time()
 
-    day_string = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
-
     mode = 'N'
-    day = Day.objects.filter(date=day_string, name=prefix)
+    day = Day.objects.filter(date=date, name=prefix)
     if day:
         mode = 'U'
         day = day[0]
     else:
-        day = Day(date=day_string, name=prefix)
+        day = Day(date=date, name=prefix)
 
     total = 0
     counts = [0] * 24
@@ -469,8 +454,7 @@ def build_day(source, prefix=None, bgor=False):
 '''
     Check a Day entry from the database
 
-    day - could either be a day string YYYYMMDD or a folder with the last
-          part as day, e.g., /mnt/data/PX1000/2022/20220128
+    source - common source pattern (see params_from_source())
 '''
 def check_day(source):
     show = colorize('check_day()', 'green')
@@ -495,13 +479,9 @@ def check_day(source):
     return dd
 
 '''
-    Check File entries that no longer exists
+    Check File entries and verify existence
 
-    source - could either be:
-              - a string with day only, e.g., YYYYMMDD
-              - a string with prefix and day string, e.g., PX-20220127,
-              - a path to the data, e.g., /mnt/data/PX1000/2022/20220127
-
+    source - common source pattern (see params_from_source())
 '''
 def check_file(source, remove=False):
     show = colorize('check_file()', 'green')
@@ -569,22 +549,17 @@ def show_sweep_summary(source):
 '''
     Finds duplicate entries
 
-     folder - path with YYYYMMDD, e.g., '/mnt/data/PX1000/2022/20220117', '20220127
-     prefix - prefix of the file names, e.g., 'PX10K-', 'PX-', 'RAXPOL-'
-     remove - remove entries > 1 if set to True
+    source - common source pattern (see params_from_source())
+    remove - remove duplicate entries (copy > 1) if set to True
 '''
-def find_duplicates(folder, prefix=None, remove=False):
+def find_duplicates(source, remove=False):
     show = colorize('find_duplicates()', 'green')
-    show += '   ' + color_name_value('folder', folder)
-    show += '   ' + color_name_value('prefix', prefix)
+    show += '   ' + color_name_value('source', source)
     show += '   ' + color_name_value('remove', remove)
     logger.info(show)
-
-    s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', os.path.basename(folder)).group(0)
-    e = time.localtime(time.mktime(time.strptime(s[:8], '%Y%m%d')) + 86400)
-    day0 = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
-    day1 = time.strftime('%Y-%m-%d', e)
-    date_range = [f'{day0} 00:00Z', f'{day1} 00:00Z']
+    params = params_from_source(source)
+    prefix = params['prefix']
+    date_range = params['date_range']
 
     show = colorize('date_range', 'orange') + colorize(' = ', 'red')
     show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
@@ -621,10 +596,14 @@ def find_duplicates(folder, prefix=None, remove=False):
 '''
     Check for latest entries from each radar
 '''
-def check_latest():
+def check_latest(source):
     show = colorize('check_latest()', 'green')
     logger.info(show)
-    for name in ['PX-', 'PX10K-', 'RAXPOL-']:
+    if len(source):
+        names = source
+    else:
+        names = ['PX-', 'PX10K-', 'RAXPOL-']
+    for name in names:
         day = Day.objects.filter(name=name).latest('date')
         last = day.last_hour_range()
         file = File.objects.filter(name__startswith=name, date__range=last).latest('date')
@@ -696,10 +675,18 @@ def compute_bgor(day):
 
 '''
     Parse prefix, date, datetime, etc. from a source string
+
+    source - could either be:
+              - a string with day only, e.g., YYYYMMDD
+              - a string with prefix and day string, e.g., PX-20220127,
+              - a path to the data, e.g., /mnt/data/PX1000/2022/20220127
+    dig - dig deeper for the prefix if the source is a folder
 '''
 def params_from_source(source, dig=False):
     file = None
     prefix = None
+    day_string = None
+    date_range = None
     source_date = None
     source_datetime = None
     if os.path.exists(source):
@@ -713,6 +700,10 @@ def params_from_source(source, dig=False):
                     file = os.path.basename(files[0])
         else:
             folder, file = os.path.split(source)
+            if '_original' in folder:
+                folder, _ = os.path.split(folder)
+            else:
+                logger.warning(f'Expected "_original" in source folder {folder}')
             day_string = os.path.basename(folder)
         if file:
             logger.debug(f'params_from_source() file[0] = {file}')
@@ -720,9 +711,14 @@ def params_from_source(source, dig=False):
             prefix = c[0] + '-'
             time_string = c[1] + c[2]
             if day_string != c[1]:
-                print(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]}')
+                print(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]} (*)')
                 day_string = c[1]
             source_datetime = datetime.datetime.strptime(time_string, '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+    elif '/' in source:
+        logger.error(f'Error. Folder {source} does not exist')
+        day_string = re.search(r'(?<=[-/])20[0-9][0-9][012][0-9][0-3][0-9]', source)
+        if day_string:
+            day_string = day_string.group(0)
     elif '-' in source:
         prefix, day_string = source.split('-')
         prefix += '-'
@@ -730,8 +726,8 @@ def params_from_source(source, dig=False):
         day_string = source
     if day_string:
         source_date = datetime.datetime.strptime(day_string, '%Y%m%d').date()
-    start = datetime.datetime(source_date.year, source_date.month, source_date.day).replace(tzinfo=datetime.timezone.utc)
-    date_range = [start, start + datetime.timedelta(days=1)]
+        start = datetime.datetime(source_date.year, source_date.month, source_date.day).replace(tzinfo=datetime.timezone.utc)
+        date_range = [start, start + datetime.timedelta(days=1)]
     return {
         'file': file,
         'prefix': prefix,
@@ -751,36 +747,38 @@ def dbtool_main():
         Examples:
             dbtool.py -c 20220127
             dbtool.py -d PX-20220226
-            dbtool.py -d --prefix=PX- 20220226
-            dbtool.py -d /data/PX1000/2022/20220226
-            dbtool.py -i /data/PX1000/2013/20130520
-            dbtool.py -i /data/PX1000/2013/201305*
+            dbtool.py -d RAXPOL-20220225
+            dbtool.py -d /mnt/data/PX1000/2022/20220226
+            dbtool.py -i /mnt/data/PX1000/2013/20130520
+            dbtool.py -i /mnt/data/PX1000/2013/201305*
             dbtool.py -l
+            dbtool.py -l RAXPOL-
+            dbtool.py -l RAXPOL- PX-
             dbtool.py -s
             dbtool.py -s RAXPOL-
             dbtool.py -s PX-20130520-191000
-            dbtool.py -v --find-duplicates 20220127
-            dbtool.py -v --find-duplicates --remove 20220127
+            dbtool.py -f 20220225
+            dbtool.py -f RAXPOL-20220225
+            dbtool.py -f --remove 20220127
         '''))
     parser.add_argument('source', type=str, nargs='*',
          help=textwrap.dedent('''\
              source(s) to process, which can be one of the following:
               - file entry (e.g., PX-20220223-192249-E16.0) for --show-sweep
               - path (e.g., /mnt/data/PX1000/2022/20220223) for -c, -i, -I, or -f
-              - prefix + day (e.g., PX-20220127)
+              - prefix + day (e.g., RAXPOL-20220225)
               - day (e.g., 20220223) for -c, -d
              '''))
     parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
     parser.add_argument('-c', dest='check_day', action='store_true', help='checks entries from the Day table')
     parser.add_argument('-C', dest='check_file', action='store_true', help='checks entries from the File table')
-    parser.add_argument('-d', dest='build_day', action='store_true', help='builds a Day table')
-    parser.add_argument('-f', '--find-duplicates', action='store_true', help='finds duplicate entries in the database')
+    parser.add_argument('-d', dest='build_day', action='store_true', help='builds a Day entry')
+    parser.add_argument('-f', '--find-duplicates', action='store_true', help='finds duplicate File entries in the database')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('--last', action='store_true', help='shows the last entry to the database')
     parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
     parser.add_argument('--no-bgor', dest='bgor', default=True, action='store_false', help='skips computing bgor')
-    parser.add_argument('-p', '--prefix', help='sets the radar prefix to process')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', '--show-sweep', action='store_true', help='shows a sweep summary')
@@ -795,10 +793,6 @@ def dbtool_main():
         logger.showLogOnScreen()
         if args.verbose > 1:
             logger.setLevel(dailylog.logging.DEBUG)
-
-    if args.prefix and args.prefix[-1] != '-':
-        args.prefix += '-'
-        print(color_name_value('args.prefix', args.prefix))
 
     if '*' in args.source:
         logger.info('Expanding asterisk ...')
@@ -831,7 +825,7 @@ def dbtool_main():
             return
         logger.info('Building a Day table ...')
         for day in args.source:
-            build_day(day, prefix=args.prefix, bgor=args.bgor)
+            build_day(day, bgor=args.bgor)
     elif args.find_duplicates:
         if len(args.source) == 0:
             print('-f needs a source with prefix, e.g.,')
@@ -841,7 +835,7 @@ def dbtool_main():
             return
         logger.info(f'Finding duplicates ...')
         for folder in args.source:
-            find_duplicates(folder, prefix=args.prefix, remove=args.remove)
+            find_duplicates(folder, remove=args.remove)
     elif args.insert:
         if len(args.source) == 0:
             print('-i needs a source, e.g.,')
@@ -862,23 +856,14 @@ def dbtool_main():
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
     elif args.last:
         logger.info('Retrieving the last entry ...')
-        if args.prefix:
-            print('This function ignores the --prefix argument.')
-            print('Perhaps you wanted -l')
         o = File.objects.last()
         logger.info(o.__repr__())
     elif args.latest:
-        logger.info('Retrieving the latest entries of each radar ...')
-        check_latest()
+        logger.info('Retrieving the latest entries ...')
+        check_latest(args.source)
     elif args.show_sweep:
         if len(args.source) == 0:
-            if args.prefix is None:
-                logger.info(f'Retrieving latest sweep ...')
-                o = File.objects.last()
-            else:
-                show = color_name_value('prefix', args.prefix)
-                logger.info(f'Retrieving latest sweep w/ {show} ...')
-                o = File.objects.filter(name__startswith=args.prefix).last()
+            o = File.objects.last()
             logger.info(o.show())
             sweep = o.read()
             pp.pprint(sweep)
@@ -887,6 +872,8 @@ def dbtool_main():
                 show_sweep_summary(source)
     elif args.test:
         print('A placeholder for test routines')
+        params = params_from_source('PX-')
+        pp.pprint(params)
     else:
         parser.print_help(sys.stderr)
 

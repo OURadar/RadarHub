@@ -194,12 +194,12 @@ def process(file):
         scan = radars[prefix]['bgor_scan']
         if c[3].startswith(scan):
             step = int(date.minute / 20)
-            # target = radars[prefix]['bgor_step']
-            # logger.info(f'{step} {target}')
+            target = radars[prefix]['bgor_step']
+            logger.debug(f'{step} vs {target}')
             if radars[prefix]['bgor_step'] == step:
                 radars[prefix]['bgor_step'] = 0 if step == 2 else radars[prefix]['bgor_step'] + 1
                 bgor = True
-        day, mode = dbtool.build_day(c[1], prefix=prefix, bgor=bgor)
+        day, mode = dbtool.build_day(prefix + c[1], bgor=bgor)
         u = '+' if bgor else ''
         logger.info(f'{mode} {day.__repr__()}{u}')
     else:
