@@ -158,14 +158,14 @@ class Day(models.Model):
             counts = ' '.join([f'{n:>3}' for n in self.hourly_count.split(',')])
             b = '\033[48;5;238m'
             for s, c in [(self.blue, 'blue'), (self.green, 'green'), (self.orange, 'orange'), (self.red, 'red')]:
-                i = min(7, int(s * 8 / 500))
+                i = min(7, int(s / 100))
                 b += colorize(vbar[i], c, end='')
             b += '\033[m'
             show = f'{self.name}{date} {counts} {b}'
         return show
 
-    def show(self, numeric=False):
-        print(self.__repr__(numeric))
+    def show(self, long=False, short=False):
+        print(self.__repr__(long=long, short=short))
 
     def fix_date(self):
         if self.date is None:

@@ -476,9 +476,9 @@ def check_day(source):
     ddd = []
     for name in prefixes:
         if date:
-            dd = Day.objects.filter(name=name, date=date)
+            dd = Day.objects.filter(name=name, date=date).order_by('date')
         elif date_range:
-            dd = Day.objects.filter(name=name, date__range=date_range)
+            dd = Day.objects.filter(name=name, date__range=date_range).order_by('date')
         else:
             dd = []
         if len(dd):
@@ -694,7 +694,7 @@ def compute_bgor(day):
 
     source - could either be:
               - a string with day only, e.g., YYYYMMDD
-              - a string with prefix and day string, e.g., PX-20220127,
+              - a string with prefix and day, e.g., PX-20220127,
               - a path to the data, e.g., /mnt/data/PX1000/2022/20220127
     dig - dig deeper for the prefix if the source is a folder
 '''
@@ -715,7 +715,7 @@ def params_from_source(source, dig=False):
         if len(query) == 5:
             y = int(query[0:4])
             start = datetime.datetime(y, 1, 1).replace(tzinfo=datetime.timezone.utc)
-            end = datetime.datetime(y + 1, 1, 1).replace(tzinfo=datetime.timezone.utc)
+            end = datetime.datetime(y, 12, 31).replace(tzinfo=datetime.timezone.utc)
             date_range = [start, end]
         elif len(query) == 7:
             y = int(query[0:4])
@@ -727,6 +727,7 @@ def params_from_source(source, dig=False):
             else:
                 m += 1
             end = datetime.datetime(y, m, 1).replace(tzinfo=datetime.timezone.utc)
+            end -= datetime.timedelta(days=1)
             date_range = [start, end]
     elif os.path.exists(source):
         if os.path.isdir(source):

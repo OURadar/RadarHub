@@ -342,4 +342,3 @@ def fifo2db():
 if __name__ == '__main__':
     setproctitle.setproctitle(os.path.basename(sys.argv[0]))
     fifo2db()
-
