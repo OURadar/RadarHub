@@ -711,16 +711,21 @@ def params_from_source(source, dig=False):
         else:
             query = source
         logger.debug(f'prefix = {prefix}   query = {query}')
-        date = query[:-1]
-        if len(date) == 4:
-            year = datetime.datetime.strptime(date, '%Y').date()
-            start = datetime.datetime(year.year, 1, 1).replace(tzinfo=datetime.timezone.utc)
-            end = datetime.datetime(year.year + 1, 1, 1).replace(tzinfo=datetime.timezone.utc)
+        if len(query) == 5:
+            y = int(query[0:4])
+            start = datetime.datetime(y, 1, 1).replace(tzinfo=datetime.timezone.utc)
+            end = datetime.datetime(y + 1, 1, 1).replace(tzinfo=datetime.timezone.utc)
             date_range = [start, end]
-        elif len(date) == 6:
-            month = datetime.datetime.strptime(date, '%Y%m').date()
-            start = datetime.datetime(month.year, month.month, 1).replace(tzinfo=datetime.timezone.utc)
-            end = datetime.datetime(month.year, month.month + 1, 1).replace(tzinfo=datetime.timezone.utc)
+        elif len(query) == 7:
+            y = int(query[0:4])
+            m = int(query[4:6])
+            start = datetime.datetime(y, m, 1).replace(tzinfo=datetime.timezone.utc)
+            if m == 12:
+                y += 1
+                m = 1
+            else:
+                m += 1
+            end = datetime.datetime(y, m, 1).replace(tzinfo=datetime.timezone.utc)
             date_range = [start, end]
     elif os.path.exists(source):
         if os.path.isdir(source):
