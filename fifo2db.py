@@ -26,6 +26,8 @@ import datetime
 import textwrap
 import setproctitle
 
+__prog__ = os.path.basename(sys.argv[0])
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
@@ -60,7 +62,7 @@ radars = {
         'count': 0
     }
 }
-logger = dailylog.Logger('fifo2db')
+logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__)
 
 def signalHandler(sig, frame):
     global keepReading
@@ -272,15 +274,16 @@ def listen(host='10.197.14.59', port=9000):
                 k -= 1
 
 def fifo2db():
-    parser = argparse.ArgumentParser(prog='fifo2db.py',
+    parser = argparse.ArgumentParser(prog=__prog__,
         formatter_class=argparse.RawTextHelpFormatter,
-        description=textwrap.dedent('''\
-        File to Database
+        description=textwrap.dedent(f'''\
+        FIFO to Database
 
         Examples:
-            fifo2db.py -v
-            fifo2db.py -v 10.197.14.59
-        '''))
+            {__prog__} -v
+            {__prog__} -v 10.197.14.59
+        '''),
+        epilog='Copyright (c) 2021-2022 Boonleng Cheong')
     parser.add_argument('host', type=str, nargs='?', help='host to connect')
     parser.add_argument('-p', dest='port', default=9000, help='sets the port (default = 9000)')
     parser.add_argument('-t', dest='test', default=0, type=int,

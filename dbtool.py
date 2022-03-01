@@ -40,7 +40,7 @@ from frontend.models import File, Day
 from common import colorize, color_name_value
 
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
-logger = dailylog.Logger('dbtool')
+logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__)
 
 '''
     (Deprecated)
@@ -779,26 +779,27 @@ def params_from_source(source, dig=False):
 def dbtool_main():
     parser = argparse.ArgumentParser(prog=__prog__,
         formatter_class=argparse.RawTextHelpFormatter,
-        description=textwrap.dedent('''\
+        description=textwrap.dedent(f'''\
         Database Tool
 
         Examples:
-            _PROG_ -c 20220127
-            _PROG_ -d PX-20220226
-            _PROG_ -d RAXPOL-20220225
-            _PROG_ -d /mnt/data/PX1000/2022/20220226
-            _PROG_ -i /mnt/data/PX1000/2013/20130520
-            _PROG_ -i /mnt/data/PX1000/2013/201305*
-            _PROG_ -l
-            _PROG_ -l RAXPOL-
-            _PROG_ -l RAXPOL- PX-
-            _PROG_ -s
-            _PROG_ -s RAXPOL-
-            _PROG_ -s PX-20130520-191000
-            _PROG_ -f 20220225
-            _PROG_ -f RAXPOL-20220225
-            _PROG_ -f --remove 20220127
-        '''.replace('_PROG_', __prog__)),
+            {__prog__} -c 20220127
+            {__prog__} -c PX-202201*
+            {__prog__} -d PX-20220226
+            {__prog__} -d RAXPOL-20220225
+            {__prog__} -d /mnt/data/PX1000/2022/20220226
+            {__prog__} -i /mnt/data/PX1000/2013/20130520
+            {__prog__} -i /mnt/data/PX1000/2013/201305*
+            {__prog__} -l
+            {__prog__} -l RAXPOL-
+            {__prog__} -l RAXPOL- PX-
+            {__prog__} -s
+            {__prog__} -s RAXPOL-
+            {__prog__} -s PX-20130520-191000
+            {__prog__} -f 20220225
+            {__prog__} -f RAXPOL-20220225
+            {__prog__} -f --remove 20220127
+        '''),
         epilog='Copyright (c) 2021-2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*',
          help=textwrap.dedent('''\
@@ -843,41 +844,55 @@ def dbtool_main():
 
     if args.check_day:
         if len(args.source) == 0:
-            print('-c needs a source, e.g.,')
-            print('  dbtool.py -c 20220223')
+            print(textwrap.dedent(f'''
+                -c needs a source, e.g.,
+
+                { __prog__} -c 20220223
+            '''))
             return
         for day in args.source:
             check_day(day)
     elif args.check_file:
         if len(args.source) == 0:
-            print('-C needs a source, e.g.,')
-            print('  dbtool.py -C RAXPOL-20211006')
+            print(textwrap.dedent(f'''
+                -C needs a source, e.g.,
+
+                { __prog__} -C RAXPOL-20211006
+            '''))
             return
         for source in args.source:
             check_file(source, remove=args.remove)
     elif args.build_day:
         if len(args.source) == 0:
-            print('-b needs a source, e.g.,')
-            print('  dbtool.py -b 20130520')
-            print('  dbtool.py --prefix PX- -b 20220224')
-            print('  dbtool.py -b /mnt/data/PX1000/2013/20130520')
+            print(textwrap.dedent(f'''
+                -d needs a source, e.g.,
+
+                { __prog__} -b 20130520
+                { __prog__} -b PX-20220224
+                { __prog__} -b /mnt/data/PX1000/2022/20220224
+            '''))
             return
         for day in args.source:
             build_day(day, bgor=args.bgor)
     elif args.find_duplicates:
         if len(args.source) == 0:
-            print('-f needs a source with prefix, e.g.,')
-            print('  dbtool.py -f 20220223 --prefix PX-')
-            print('  dbtool.py -f PX-20220223')
-            print('  dbtool.py -f /mnt/data/PX1000/2021/20220223')
+            print(textwrap.dedent(f'''
+                -f needs a source with prefix, e.g.,
+
+                { __prog__} -f PX-20220223
+                { __prog__} -b /mnt/data/PX1000/2022/20220223
+            '''))
             return
         logger.info(f'Finding duplicates ...')
         for folder in args.source:
             find_duplicates(folder, remove=args.remove)
     elif args.insert:
         if len(args.source) == 0:
-            print('-i needs a source, e.g.,')
-            print('  dbtool.py -i /data/PX1000/2013/20130520')
+            print(textwrap.dedent(f'''
+                -i needs a source folder, e.g.,
+
+                { __prog__} -i /mnt/data/PX1000/2022/20220223
+            '''))
             return
         logger.info('Inserting folder(s) with .tar.xz archives')
         for folder in args.source:
@@ -885,8 +900,11 @@ def dbtool_main():
             xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
     elif args.quick_insert:
         if len(args.source) == 0:
-            print('-I needs a source, e.g.,')
-            print('  dbtool.py -i /data/PX1000/2013/20130520')
+            print(textwrap.dedent(f'''
+                -I needs a source folder, e.g.,
+
+                { __prog__} -I /mnt/data/PX1000/2022/20220223
+            '''))
             return
         logger.info('Quick inserting folder(s) with .tar.xz archives')
         for folder in args.source:
