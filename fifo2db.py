@@ -287,11 +287,11 @@ def fifo2db():
     parser.add_argument('host', type=str, nargs='?', help='host to connect')
     parser.add_argument('-p', dest='port', default=9000, help='sets the port (default = 9000)')
     parser.add_argument('-t', dest='test', default=0, type=int,
-    help=textwrap.dedent('''\
-        runs a test
-        1 - Test handling a corrupted tar archive
-        2 - Test catching an exception
-        '''))
+        help=textwrap.dedent('''\
+            runs a test
+            1 - Test handling a corrupted tar archive
+            2 - Test catching an exception
+            '''))
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()

@@ -399,6 +399,7 @@ def build_day(source, bgor=False):
         return None
 
     if date is None:
+        logger.error(f'Error. build_day() needs an exact date.')
         return None
 
     date_range = params['date_range']
