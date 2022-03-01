@@ -110,9 +110,9 @@ def xzfolder_v1(folder):
             x.save()
 
 '''
-    Process an archive from the queue
+    Process archives from the queue
 '''
-def process_arhives(id, run, lock, queue, out):
+def process_archives(id, run, lock, queue, out):
     while run.value == 1:
         task = None
         
@@ -224,12 +224,12 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
 
         processes = []
         for n in range(count):
-            p = multiprocessing.Process(target=process_arhives, args=(n, run, lock, task_queue, db_queue))
+            p = multiprocessing.Process(target=process_archives, args=(n, run, lock, task_queue, db_queue))
             processes.append(p)
             p.start()
 
         for archive in tqdm.tqdm(archives) if verbose else archives:
-            # Copy to ramdisk first, the queue the work after the file is copied
+            # Copy the file to ramdisk and queue the work after the file is copied
             basename = os.path.basename(archive)
             if os.path.exists('/mnt/ramdisk'):
                 ramfile = f'/mnt/ramdisk/{basename}'

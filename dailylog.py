@@ -4,7 +4,8 @@ import logging
 import traceback
 
 logging.Formatter.converter = time.localtime
-formatter = logging.Formatter('%(asctime)s : %(message)s', datefmt='%H:%M:%S')
+
+__version__ = '1.0'
 
 class Logger(logging.Logger):
     def __init__(self, name, home=os.path.expanduser('~/logs')):
@@ -12,8 +13,9 @@ class Logger(logging.Logger):
         self.home = home
         self.time = time.localtime(time.time())
         self.day = self.time.tm_mday
+        self.formatter = logging.Formatter('%(asctime)s : %(message)s', datefmt='%H:%M:%S')
         handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
+        handler.setFormatter(self.formatter)
         handler.setLevel(logging.WARNING)
         self.streamHandler = handler
         self.addHandler(handler)
@@ -29,7 +31,7 @@ class Logger(logging.Logger):
         logfile = f'{self.home}/{self.name}-{date}.log'
         fileHandler = logging.FileHandler(logfile, 'a')
         fileHandler.setLevel(logging.DEBUG)
-        fileHandler.setFormatter(formatter)
+        fileHandler.setFormatter(self.formatter)
         self.addHandler(fileHandler)
 
     def showLogOnScreen(self):
