@@ -38,8 +38,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.6.2 Auto-select latest day, hour and file (1/15/2022)
   - [x] 0.6.3 Added support for multiple radars (1/30/2022)
   - [x] 0.6.4 Migrated to PostgreSQL (2/5/2022)
-  - [x] 0.6.5 Refactored for a fresh run (3/1/2022)
-  - [ ] 0.6.6 Updated database tooling
+  - [x] 0.6.5 Refactored for a fresh run (2/10/2022)
+  - [ ] 0.6.6 Updated database tooling (3/3/2022))
 - [ ] 0.7 RadarKit communicates with RadarHub
 - [ ] 0.8 Page template, UI materials, mobile version
 - [ ] 0.9 Authentication + user priviledges
