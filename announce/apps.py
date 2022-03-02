@@ -5,24 +5,24 @@ import threading
 from django.apps import AppConfig
 from django_eventstream import send_event
 
+worker_started = False
 
 class AnnounceConfig(AppConfig):
-    # default_auto_field = 'django.db.models.BigAutoField'
     name = 'announce'
 
     def ready(self):
         ensure_worker_started()
-
-worker_started = False
 
 
 def ensure_worker_started():
     global worker_started
 
     if worker_started:
+        print(f'worker_started = {worker_started}')
         return
 
     if not is_db_ready():
+        print('database is not ready')
         return
 
     worker_started = True
