@@ -26,12 +26,12 @@ import backhaul.routing
 import django_eventstream
 
 application = ProtocolTypeRouter({
-    # Django's ASGI application to handle traditional HTTP requests
-    # 'http': django_asgi_app,
+    # Use django-eventstream for /events/
+    # The rests go to the ASGI application (normal HTTP requests)
     'http': URLRouter([
         url(r'^events/', AuthMiddlewareStack(
             URLRouter(django_eventstream.routing.urlpatterns)
-        ), {'channels': ['test']}),
+        ), {'channels': ['sse']}),
         url(r'', django_asgi_app),
     ]),
 

@@ -46,16 +46,16 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'channels',
-    'frontend',
-    'backhaul',
-    'django_eventstream',
-    'announce',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_eventstream',
+    'frontend',
+    'backhaul',
+    'announce',
 ]
 
 MIDDLEWARE = [
