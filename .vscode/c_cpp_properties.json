@@ -1,21 +1,18 @@
 {
   "configurations": [
     {
-      "name": "macOS",
+      "name": "macos-gcc-arm64",
       "includePath": [
-        "${workspaceFolder}/**",
-        "/usr/local/include",
-        "/usr/local/opt/openssl@1.1/",
-        "/usr/local/Cellar/openssl@1.1/1.1.1k/include"
+        "${workspaceFolder}/**"
       ],
       "defines": [],
       "macFrameworkPath": [
         "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
       ],
-      "compilerPath": "/usr/bin/clang",
-      "cStandard": "c11",
-      "cppStandard": "c++17",
-      "intelliSenseMode": "clang-x64",
+      "compilerPath": "gcc",
+      "cStandard": "${default}",
+      "cppStandard": "${default}",
+      "intelliSenseMode": "macos-gcc-arm64",
       "compilerArgs": []
     }
   ],

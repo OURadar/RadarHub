@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'frontend',
     'backhaul',
     'django_eventstream',
+    'announce',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
