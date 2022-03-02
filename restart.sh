@@ -1,11 +1,11 @@
 #!/bin/bash
 
 echo "Updating settings ..."
-sudo supervisorctl reread
-sudo supervisorctl update
+supervisorctl reread
+supervisorctl update
 
 echo "Stopping services ..."
-sudo supervisorctl stop all
+supervisorctl stop all
 
 echo "Starting services ..."
-sudo supervisorctl start all
+supervisorctl start all
