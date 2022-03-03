@@ -63,14 +63,10 @@ function connect(newRadar) {
   console.log("Registering event source ...");
   source = new EventSource("/events/");
 
-  source.addEventListener("time", (event) => {
-    console.log(event.data);
-  });
-
-  source.addEventListener("file", (event) => {
+  source.onmessage = (event) => {
     let payload = JSON.parse(event.data);
     console.log(payload);
-  });
+  };
 }
 
 function createSweep(name = "dummy") {

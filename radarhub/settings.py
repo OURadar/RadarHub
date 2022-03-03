@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     'django_eventstream',
     'frontend',
     'backhaul',
-    'announce',
 ]
 
 MIDDLEWARE = [
