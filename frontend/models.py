@@ -7,6 +7,8 @@ from netCDF4 import Dataset
 from django.db import models
 from django.core.validators import int_list_validator
 from django.conf import settings
+# from django.db.models.signals import post_save
+# from django.dispatch import receiver
 
 from common import colorize
 
@@ -112,6 +114,11 @@ class File(models.Model):
                 'azimuths': azimuths,
                 'values': values
             }
+
+# @receiver(post_save, sender=File)
+# def post_save_file(sender, **kwargs):
+#     file = kwargs.get('instance')
+#     print(f'File {file.__repr__()} saved ...')
 
 '''
 Day

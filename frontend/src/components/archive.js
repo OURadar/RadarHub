@@ -70,7 +70,8 @@ class Archive {
       console.log(event.data);
     });
     this.eventSource.addEventListener("file", (event) => {
-      console.log(event.data);
+      let payload = JSON.parse(event.data);
+      console.log(payload);
     });
 
     this.showMessage = this.showMessage.bind(this);

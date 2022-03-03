@@ -1,9 +1,10 @@
+import sys
+import json
 import time
 import datetime
 import threading
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save
 
 from django_eventstream import send_event
 
@@ -14,6 +15,10 @@ worker_started = False
 class AnnounceConfig(AppConfig):
     name = 'announce'
     def ready(self):
+        master = sys.argv[0]
+        if 'fifo2db' in master:
+            return
+
         global worker_started
 
         if worker_started:
@@ -30,17 +35,36 @@ class AnnounceConfig(AppConfig):
         thread.daemon = True
         thread.start()
 
-        from frontend.models import File
-
-        post_save.connect(saveAnnounce, sender=File)
-
 
 def announceWorker():
-    while True:
-        send_event('sse', 'time', datetime.datetime.utcnow().isoformat())
-        send_event('sse', 'message', 'this is a test message')
-        time.sleep(5)
+    from frontend.models import Day, File
+    # print('Announce() connecting post_save ...')
+    # post_save.connect(saveAnnounce, sender=File)
 
+    prefix = 'PX-'
+
+    day = Day.objects.filter(name=prefix).last()
+    hourly_count = day.hourly_count
+    files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
+
+    print('announceWorker() started')
+
+    k = 0
+    while True:
+        if k % 15 == 0:
+            send_event('sse', 'time', datetime.datetime.utcnow().isoformat())
+        day = Day.objects.last()
+        if hourly_count != day.hourly_count:
+            hourly_count = day.hourly_count
+            latest_files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
+            delta = [file for file in latest_files if file not in files]
+            if len(delta):
+                payload = json.dumps([file.name for file in delta])
+                print(payload)
+                send_event('sse', 'file', payload)
+                files = latest_files
+        time.sleep(1)
+        k += 1
 
 def tableExists():
     from django.db import DatabaseError
@@ -53,5 +77,7 @@ def tableExists():
         print('DatabaseError. Need to make the Event table.')
         return False
 
-def saveAnnounce(sender, instance, **kwargs):
-    print(f'saveAnnounce() {sender} {instance}')
+def saveAnnounce(sender, **kwargs):
+    file = kwargs['instance']
+    print(f'saveAnnounce() {file.name}')
+    send_event('sse', 'file', file.name)
