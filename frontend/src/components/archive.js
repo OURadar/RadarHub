@@ -65,6 +65,14 @@ class Archive {
       this.onupdate(this.tic++);
     };
 
+    this.eventSource = new EventSource("/events/");
+    this.eventSource.addEventListener("time", (event) => {
+      console.log(event.data);
+    });
+    this.eventSource.addEventListener("file", (event) => {
+      console.log(event.data);
+    });
+
     this.showMessage = this.showMessage.bind(this);
     this.month = this.month.bind(this);
     this.count = this.count.bind(this);

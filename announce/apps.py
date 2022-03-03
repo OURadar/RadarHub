@@ -3,6 +3,8 @@ import datetime
 import threading
 
 from django.apps import AppConfig
+from django.db.models.signals import post_save
+
 from django_eventstream import send_event
 
 from common import color_name_value
@@ -28,6 +30,10 @@ class AnnounceConfig(AppConfig):
         thread.daemon = True
         thread.start()
 
+        from frontend.models import File
+
+        post_save.connect(saveAnnounce, sender=File)
+
 
 def announceWorker():
     while True:
@@ -46,3 +52,6 @@ def tableExists():
     except DatabaseError:
         print('DatabaseError. Need to make the Event table.')
         return False
+
+def saveAnnounce(sender, instance, **kwargs):
+    print(f'saveAnnounce() {sender} {instance}')
