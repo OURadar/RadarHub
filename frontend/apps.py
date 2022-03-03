@@ -67,7 +67,7 @@ def monitor():
             delta = [file for file in latest_files if file not in files]
             if len(delta):
                 payload = {
-                    'file':  [file.name for file in delta],
+                    'files':  [file.name for file in delta],
                     'hourly_count': [int(c) for c in hourly_count.split(',')],
                     'time': datetime.datetime.utcnow().isoformat()
                 }

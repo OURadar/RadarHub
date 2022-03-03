@@ -12,7 +12,9 @@ import { deg2rad, clamp } from "./common";
 
 let source = null;
 let radar;
-let message = "";
+let rawList;
+let groupedList = {};
+let latestIndex = -1;
 
 const sweepParser = new Parser()
   .endianess("little")
@@ -60,7 +62,6 @@ function connect(newRadar) {
     payload: `Listening for ${radar} ...`,
   });
 
-  console.log("Registering event source ...");
   source = new EventSource("/events/");
 
   source.onmessage = (event) => {
@@ -143,8 +144,9 @@ function list(radar, day, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          let groupedList = {};
-          buffer.list.forEach((file, index) => {
+          rawList = buffer.list;
+          groupedList = {};
+          rawList.forEach((file, index) => {
             let elements = file.split("-");
             let scanType = elements[3];
             if (!(scanType in groupedList)) {
@@ -153,15 +155,16 @@ function list(radar, day, symbol) {
             groupedList[scanType].push({ file: file, index: index });
           });
           console.log(groupedList);
-          let latestIndex = buffer.list.length ? buffer.list.length - 1 : -1;
           let scanType = "E4.0";
           if (scanType in groupedList) {
             latestIndex = groupedList[scanType].slice(-1)[0].index;
+          } else {
+            latestIndex = buffer.list.length ? buffer.list.length - 1 : -1;
           }
           self.postMessage({
             type: "list",
             payload: {
-              list: buffer.list,
+              list: rawList,
               groups: groupedList,
               autoIndex: latestIndex,
             },
