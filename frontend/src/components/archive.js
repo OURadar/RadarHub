@@ -64,15 +64,7 @@ class Archive {
       }
       this.onupdate(this.tic++);
     };
-
-    this.eventSource = new EventSource("/events/");
-    this.eventSource.addEventListener("time", (event) => {
-      console.log(event.data);
-    });
-    this.eventSource.addEventListener("file", (event) => {
-      let payload = JSON.parse(event.data);
-      console.log(payload);
-    });
+    this.worker.postMessage({ task: "connect", name: radar });
 
     this.showMessage = this.showMessage.bind(this);
     this.month = this.month.bind(this);

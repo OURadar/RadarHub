@@ -10,19 +10,9 @@
 import { Parser } from "binary-parser";
 import { deg2rad, clamp } from "./common";
 
-self.onmessage = ({ data: { task, name, day, time, symbol } }) => {
-  if (task == "load") {
-    load(name);
-  } else if (task == "list") {
-    list(name, time, symbol);
-  } else if (task == "count") {
-    count(name, day);
-  } else if (task == "month") {
-    month(name, day);
-  } else if (task == "dummy") {
-    dummy();
-  }
-};
+let source = null;
+let radar;
+let message = "";
 
 const sweepParser = new Parser()
   .endianess("little")
@@ -46,6 +36,42 @@ const sweepParser = new Parser()
       return this.na * this.nr;
     },
   });
+
+self.onmessage = ({ data: { task, name, day, time, symbol } }) => {
+  if (task == "load") {
+    load(name);
+  } else if (task == "list") {
+    list(name, time, symbol);
+  } else if (task == "count") {
+    count(name, day);
+  } else if (task == "month") {
+    month(name, day);
+  } else if (task == "dummy") {
+    dummy();
+  } else if (task == "connect") {
+    connect(name);
+  }
+};
+
+function connect(newRadar) {
+  radar = newRadar;
+  self.postMessage({
+    type: "message",
+    payload: `Listening for ${radar} ...`,
+  });
+
+  console.log("Registering event source ...");
+  source = new EventSource("/events/");
+
+  source.addEventListener("time", (event) => {
+    console.log(event.data);
+  });
+
+  source.addEventListener("file", (event) => {
+    let payload = JSON.parse(event.data);
+    console.log(payload);
+  });
+}
 
 function createSweep(name = "dummy") {
   // Pad an extra azimuth and elevation

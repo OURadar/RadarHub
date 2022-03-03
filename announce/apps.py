@@ -60,7 +60,6 @@ def announceWorker():
             delta = [file for file in latest_files if file not in files]
             if len(delta):
                 payload = json.dumps([file.name for file in delta])
-                print(payload)
                 send_event('sse', 'file', payload)
                 files = latest_files
         time.sleep(1)
