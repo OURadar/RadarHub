@@ -110,6 +110,93 @@ def xzfolder_v1(folder):
             x.save()
 
 '''
+    Parse prefix, date, datetime, etc. from a source string
+
+    source - could either be:
+              - a string with day only, e.g., YYYYMMDD
+              - a string with prefix and day, e.g., PX-20220127,
+              - a path to the data, e.g., /mnt/data/PX1000/2022/20220127
+    dig - dig deeper for the prefix if the source is a folder
+'''
+def params_from_source(source, dig=False):
+    file = None
+    prefix = None
+    day_string = None
+    date_range = None
+    source_date = None
+    source_datetime = None
+    if '*' == source[-1]:
+        if '-' in source:
+            prefix, query = source.split('-')
+            prefix += '-'
+        else:
+            query = source
+        logger.debug(f'prefix = {prefix}   query = {query}')
+        if len(query) == 5:
+            y = int(query[0:4])
+            start = datetime.datetime(y, 1, 1).replace(tzinfo=datetime.timezone.utc)
+            end = datetime.datetime(y, 12, 31).replace(tzinfo=datetime.timezone.utc)
+            date_range = [start, end]
+        elif len(query) == 7:
+            y = int(query[0:4])
+            m = int(query[4:6])
+            start = datetime.datetime(y, m, 1).replace(tzinfo=datetime.timezone.utc)
+            if m == 12:
+                y += 1
+                m = 1
+            else:
+                m += 1
+            end = datetime.datetime(y, m, 1).replace(tzinfo=datetime.timezone.utc)
+            end -= datetime.timedelta(days=1)
+            date_range = [start, end]
+    elif os.path.exists(source):
+        if os.path.isdir(source):
+            if source[-1] == '/':
+                source = source[:-1]
+            folder, day_string = os.path.split(source)
+            if dig:
+                files = glob.glob(f'{source}/_original/*.tar.xz')
+                if len(files):
+                    file = os.path.basename(files[0])
+        else:
+            folder, file = os.path.split(source)
+            if '_original' in folder:
+                folder, _ = os.path.split(folder)
+            else:
+                logger.warning(f'Expected "_original" in source folder {folder}')
+            day_string = os.path.basename(folder)
+        if file:
+            logger.debug(f'params_from_source() file[0] = {file}')
+            c = file.split('-')
+            prefix = c[0] + '-'
+            time_string = c[1] + c[2]
+            if day_string != c[1]:
+                print(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]} (*)')
+                day_string = c[1]
+            source_datetime = datetime.datetime.strptime(time_string, '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+    elif '/' in source:
+        logger.error(f'Error. Folder {source} does not exist')
+        day_string = re.search(r'(?<=[-/])20[0-9][0-9][012][0-9][0-3][0-9]', source)
+        if day_string:
+            day_string = day_string.group(0)
+    elif '-' in source:
+        prefix, day_string = source.split('-')
+        prefix += '-'
+    else:
+        day_string = source
+    if day_string:
+        source_date = datetime.datetime.strptime(day_string, '%Y%m%d').date()
+        start = datetime.datetime(source_date.year, source_date.month, source_date.day).replace(tzinfo=datetime.timezone.utc)
+        date_range = [start, start + datetime.timedelta(days=1)]
+    return {
+        'file': file,
+        'prefix': prefix,
+        'date': source_date,
+        'datetime': source_datetime,
+        'date_range': date_range
+    }
+
+'''
     Process archives from the queue
 '''
 def process_archives(id, run, lock, queue, out):
@@ -157,15 +244,16 @@ def list_files(folder):
                hour - start hour to examine
            check_db - check the database for existence (update or create)
     use_bulk_update - use django's bulk update/create functions
-            verbose - verbosity level, e.g., 0, 1, or 2
+            verbose - verbosity level
 '''
 def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
-    show = colorize('xzfolder()', 'green')
-    show += '   ' + color_name_value('folder', folder)
-    show += '   ' + color_name_value('hour', hour)
-    show += '   ' + color_name_value('check_db', check_db)
-    show += '   ' + color_name_value('use_bulk_update', use_bulk_update)
-    logger.info(show)
+    if verbose:
+        show = colorize('xzfolder()', 'green')
+        show += '   ' + color_name_value('folder', folder)
+        show += '   ' + color_name_value('hour', hour)
+        show += '   ' + color_name_value('check_db', check_db)
+        show += '   ' + color_name_value('use_bulk_update', use_bulk_update)
+        logger.debug(show)
 
     use_mp = 'linux' in sys.platform
     basename = os.path.basename(folder)
@@ -197,7 +285,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     date_range = [f'{day_string} {hour:02d}:00Z', f'{day_string} 23:59:59.99Z']
     show = colorize('date_range', 'orange') + colorize(' = ', 'red')
     show += '[' + colorize(date_range[0], 'yellow') + ', ' + colorize(date_range[1], 'yellow') + ']'
-    logger.info(show)
+    logger.debug(show)
 
     archives = []
     for archive in raw_archives:
@@ -386,10 +474,12 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
     source - common source pattern (see params_from_source())
     bgor - compute the bgor values of the day
 '''
-def build_day(source, bgor=False):
-    show = colorize('build_day()', 'green')
-    show += '   ' + color_name_value('source', source)
-    logger.info(show)
+def build_day(source, bgor=False, verbose=0):
+    if verbose:
+        show = colorize('build_day()', 'green')
+        show += '   ' + color_name_value('source', source)
+        logger.debug(show)
+
     params = params_from_source(source, dig=True)
     prefix = params['prefix']
     date = params['date']
@@ -449,8 +539,9 @@ def build_day(source, bgor=False):
     
     tic = time.time() - tic
 
-    logger.info(f'{mode} {day.__repr__()}')
-    logger.info(f'Elapsed time: {tic:.2f}s')
+    if verbose:
+        logger.debug(f'{mode} {day.__repr__()}')
+        logger.debug(f'Elapsed time: {tic:.2f}s')
 
     return day, mode
 
@@ -525,42 +616,6 @@ def check_file(source, remove=False):
                     file.delete()
         s = 's' if count > 1 else ''
         logger.info(f'{source} has {count} missing file{s}')
-
-'''
-    Poor function, don't use
-
-    source - name in either one of the following forms:
-              - [PREFIX]-YYYYMMDD-hhmm-Z
-              - [PREFIX]-YYYYMMDD-hhmm
-              - [PREFIX]-
-
-             e.g., 'RAXPOL-'
-                   'PX-20130520-191000-E2.6-Z'
-'''
-def show_sweep_summary(source):
-    show = colorize('show_sweep_summary()', 'green')
-    show += '   ' + color_name_value('source', source)
-    logger.info(show)
-    c = source.split('-')
-    p = c[0] + '-'
-    if len(c) > 2:
-        if len(c) > 4:
-            s = c[4].split('.')[0]
-        else:
-            s = 'Z'
-        date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
-        o = File.objects.filter(date=date).filter(name__startswith=p).filter(name__endswith=f'-{s}.nc')
-        if o:
-            o = o[0]
-        else:
-            logger.info(f'Source {source} not found')
-            return
-    else:
-        logger.info(f'Retrieving last entry with prefix = {p} ...')
-        o = File.objects.filter(name__startswith=p).last()
-    logger.info(o.__repr__())
-    sweep = o.read()
-    pp.pprint(sweep)
 
 '''
     Finds duplicate File entries
@@ -690,91 +745,40 @@ def compute_bgor(day):
 
 
 '''
-    Parse prefix, date, datetime, etc. from a source string
+    Show sweep summary
 
-    source - could either be:
-              - a string with day only, e.g., YYYYMMDD
-              - a string with prefix and day, e.g., PX-20220127,
-              - a path to the data, e.g., /mnt/data/PX1000/2022/20220127
-    dig - dig deeper for the prefix if the source is a folder
+    source - name in either one of the following forms:
+              - [PREFIX]-YYYYMMDD-hhmm-Z
+              - [PREFIX]-YYYYMMDD-hhmm
+              - [PREFIX]-
+
+             e.g., 'RAXPOL-'
+                   'PX-20130520-191000-E2.6-Z'
 '''
-def params_from_source(source, dig=False):
-    file = None
-    prefix = None
-    day_string = None
-    date_range = None
-    source_date = None
-    source_datetime = None
-    if '*' == source[-1]:
-        if '-' in source:
-            prefix, query = source.split('-')
-            prefix += '-'
+def show_sweep_summary(source):
+    show = colorize('show_sweep_summary()', 'green')
+    show += '   ' + color_name_value('source', source)
+    logger.info(show)
+    c = source.split('-')
+    p = c[0] + '-'
+    if len(c) > 2:
+        if len(c) > 4:
+            s = c[4].split('.')[0]
         else:
-            query = source
-        logger.debug(f'prefix = {prefix}   query = {query}')
-        if len(query) == 5:
-            y = int(query[0:4])
-            start = datetime.datetime(y, 1, 1).replace(tzinfo=datetime.timezone.utc)
-            end = datetime.datetime(y, 12, 31).replace(tzinfo=datetime.timezone.utc)
-            date_range = [start, end]
-        elif len(query) == 7:
-            y = int(query[0:4])
-            m = int(query[4:6])
-            start = datetime.datetime(y, m, 1).replace(tzinfo=datetime.timezone.utc)
-            if m == 12:
-                y += 1
-                m = 1
-            else:
-                m += 1
-            end = datetime.datetime(y, m, 1).replace(tzinfo=datetime.timezone.utc)
-            end -= datetime.timedelta(days=1)
-            date_range = [start, end]
-    elif os.path.exists(source):
-        if os.path.isdir(source):
-            if source[-1] == '/':
-                source = source[:-1]
-            folder, day_string = os.path.split(source)
-            if dig:
-                files = glob.glob(f'{source}/_original/*.tar.xz')
-                if len(files):
-                    file = os.path.basename(files[0])
+            s = 'Z'
+        date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+        o = File.objects.filter(date=date).filter(name__startswith=p).filter(name__endswith=f'-{s}.nc')
+        if o:
+            o = o[0]
         else:
-            folder, file = os.path.split(source)
-            if '_original' in folder:
-                folder, _ = os.path.split(folder)
-            else:
-                logger.warning(f'Expected "_original" in source folder {folder}')
-            day_string = os.path.basename(folder)
-        if file:
-            logger.debug(f'params_from_source() file[0] = {file}')
-            c = file.split('-')
-            prefix = c[0] + '-'
-            time_string = c[1] + c[2]
-            if day_string != c[1]:
-                print(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]} (*)')
-                day_string = c[1]
-            source_datetime = datetime.datetime.strptime(time_string, '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
-    elif '/' in source:
-        logger.error(f'Error. Folder {source} does not exist')
-        day_string = re.search(r'(?<=[-/])20[0-9][0-9][012][0-9][0-3][0-9]', source)
-        if day_string:
-            day_string = day_string.group(0)
-    elif '-' in source:
-        prefix, day_string = source.split('-')
-        prefix += '-'
+            logger.info(f'Source {source} not found')
+            return
     else:
-        day_string = source
-    if day_string:
-        source_date = datetime.datetime.strptime(day_string, '%Y%m%d').date()
-        start = datetime.datetime(source_date.year, source_date.month, source_date.day).replace(tzinfo=datetime.timezone.utc)
-        date_range = [start, start + datetime.timedelta(days=1)]
-    return {
-        'file': file,
-        'prefix': prefix,
-        'date': source_date,
-        'datetime': source_datetime,
-        'date_range': date_range
-    }
+        logger.info(f'Retrieving last entry with prefix = {p} ...')
+        o = File.objects.filter(name__startswith=p).last()
+    logger.info(o.__repr__())
+    sweep = o.read()
+    pp.pprint(sweep)
 
 #
 
