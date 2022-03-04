@@ -89,13 +89,14 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
+#
+# Migrated 'default' to PostgreSQL
+# https://medium.com/djangotube/django-sqlite-to-postgresql-database-migration-e3c1f76711e1
 file = CONFIG_DIR / 'db.conf'
 if os.path.exists(file):
-    # Database migrated to PostgreSQL
-    # https://medium.com/djangotube/django-sqlite-to-postgresql-database-migration-e3c1f76711e1
     if VERBOSE:
         print(f'Using PostgreSQL {file} ...')
+
     with open(file) as fid:
         PostgreSQL = json.load(fid)
 
@@ -117,20 +118,13 @@ if os.path.exists(file):
 else:
     if VERBOSE:
         print('Using SQLite ...')
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 
 # Password validation
