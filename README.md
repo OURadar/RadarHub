@@ -414,6 +414,14 @@ Requires=docker.service
 
 ![Figure](blob/app6.svg)
 
+# Backend Block Diagram
+
+![Figure](blob/backhaul.svg)
+
+# Sequence of Events
+
+![Figure](blob/events.svg)
+
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
 [docker]: https://www.docker.com
