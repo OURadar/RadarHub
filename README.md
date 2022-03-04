@@ -39,7 +39,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.6.3 Added support for multiple radars (1/30/2022)
   - [x] 0.6.4 Migrated to PostgreSQL (2/5/2022)
   - [x] 0.6.5 Refactored for a fresh run (2/10/2022)
-  - [ ] 0.6.6 Updated database tooling (3/3/2022))
+  - [ ] 0.6.6 Updated database tooling (3/5/2022))
 - [ ] 0.7 RadarKit communicates with RadarHub
 - [ ] 0.8 Page template, UI materials, mobile version
 - [ ] 0.9 Authentication + user priviledges
@@ -419,6 +419,15 @@ Requires=docker.service
 ![Figure](blob/backhaul.svg)
 
 # Sequence of Events
+
+`frontend.consumers.User`
+- message from web UI is always in text form (JSON)
+- message to web UI is always in binary form (bytearray)
+
+`frontend.consumers.Radar`
+- message from radar is always in binary form ([type][payload])
+- message to radar is always in text form (plain text)
+
 
 ![Figure](blob/events.svg)
 
