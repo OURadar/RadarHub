@@ -26,6 +26,14 @@ When a user request is issued, it is first received by the frontend, which check
 
 When a radar joins the RadarHub, it reports its name. Backhaul launches a runloop to collect data streams from the radar. This runloop also sends whatever data stream available from the radar to the group. All users in that group receive the same data stream. This will change in the future for a more controlled fashion but kept simple at the moment for progressing towards the subsequent milestones.
 
+## Frontend Block Diagram
+
+![Figure](blob/app6.svg)
+
+## Backend Block Diagram
+
+![Figure](blob/backhaul.svg)
+
 ## Milestones
 
 - [x] 0.1 Can run
@@ -83,6 +91,20 @@ In the Python space, a parser is made to retrieve everythin in the C header to a
 - ...
 
 In the Javascript space, the definition is passed to the frontend upon a successful connection, the data ingest `frontend/src/components/ingest.js` expects keys like `Control`, `Health`, `Scope`, etc., which nicely maps to the enum names in the C and Python spaces.
+
+## Sequence of Events
+
+`frontend.consumers.User`
+
+- message from web UI is always in text form (JSON)
+- message to web UI is always in binary form (bytearray)
+
+`frontend.consumers.Radar`
+
+- message from radar is always in binary form ([type][payload])
+- message to radar is always in text form (plain text)
+
+![Figure](blob/events.svg)
 
 # Software Requirements
 
@@ -409,27 +431,6 @@ Modify `/etc/systemd/system/multi-user.target.wants/supervisor.service` by addin
 ```
 Requires=docker.service
 ```
-
-# Frontend Block Diagram
-
-![Figure](blob/app6.svg)
-
-# Backend Block Diagram
-
-![Figure](blob/backhaul.svg)
-
-# Sequence of Events
-
-`frontend.consumers.User`
-- message from web UI is always in text form (JSON)
-- message to web UI is always in binary form (bytearray)
-
-`frontend.consumers.Radar`
-- message from radar is always in binary form ([type][payload])
-- message to radar is always in text form (plain text)
-
-
-![Figure](blob/events.svg)
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
