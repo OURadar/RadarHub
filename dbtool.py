@@ -183,7 +183,12 @@ def params_from_source(source, dig=False):
         prefix, day_string = source.split('-')
         prefix += '-'
     else:
-        day_string = source
+        day_string = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', source)
+        if day_string:
+            day_string = source.group(0)
+        else:
+            day_string = None
+            prefix = source + '-'
     if day_string:
         source_date = datetime.datetime.strptime(day_string, '%Y%m%d').date()
         start = datetime.datetime(source_date.year, source_date.month, source_date.day).replace(tzinfo=datetime.timezone.utc)
@@ -671,7 +676,7 @@ def check_latest(source):
     show = colorize('check_latest()', 'green')
     logger.info(show)
     if len(source):
-        names = source
+        names = [params_from_source(name)['prefix'] for name in source]
     else:
         names = ['PX-', 'PX10K-', 'RAXPOL-']
     for name in names:
