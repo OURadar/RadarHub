@@ -27,7 +27,7 @@ class Logger(logging.Logger):
         for h in self.handlers:
             if isinstance(h, logging.FileHandler):
                 self.removeHandler(h)
-        date = time.strftime('%Y%m%d', self.time)
+        date = time.strftime(r'%Y%m%d', self.time)
         logfile = f'{self.home}/{self.name}-{date}.log'
         fileHandler = logging.FileHandler(logfile, 'a')
         fileHandler.setLevel(logging.DEBUG)

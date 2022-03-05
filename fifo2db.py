@@ -2,7 +2,7 @@
 
 #
 #  fifo2db.py
-#  File to Database
+#  File entries from fifoshare to the Database
 #
 #  RadarHub
 #
@@ -106,7 +106,7 @@ def catchupV1(file, root='/mnt/data'):
     stride = datetime.timedelta(days=1)
     filedate = datetime.date(int(d[0:4]), int(d[4:6]), int(d[6:8]))
     while date <= filedate:
-        dayTree = date.strftime('%Y/%Y%m%d')
+        dayTree = date.strftime(r'%Y/%Y%m%d')
         dayFolder = f'{folder}/{dayTree}'
         logger.info(color_name_value('folder', dayFolder) + '   ' + color_name_value('hour', hour))
         dbtool.xzfolder(dayFolder, hour, verbose=0)
@@ -125,7 +125,7 @@ def catchup(root='/mnt/data'):
         if not Day.objects.filter(name=prefix).exists():
             logger.info('Skipping ...')
             continue
-        folderYear = sorted(glob.glob(f'{folder}/2[0-1][0-9][0-9]'))[-1]
+        folderYear = sorted(glob.glob(f'{folder}/20[0-9][0-9]'))[-1]
         year = os.path.basename(folderYear)
         path = f'{folderYear}/{year}[012][0-9][0-3][0-9]'
         folderYearDay = sorted(glob.glob(path))[-1]
@@ -142,7 +142,7 @@ def catchup(root='/mnt/data'):
         date = day.date
         stride = datetime.timedelta(days=1)
         while date <= filedate:
-            dayTree = date.strftime('%Y/%Y%m%d')
+            dayTree = date.strftime(r'%Y/%Y%m%d')
             dayFolder = f'{folder}/{dayTree}'
             logger.info(color_name_value('folder', dayFolder) + '   ' + color_name_value('hour', hour))
             dbtool.xzfolder(dayFolder, hour, verbose=0)
@@ -170,7 +170,7 @@ def process(file):
     else:
         archive = file
 
-    date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+    date = datetime.datetime.strptime(c[1] + c[2], r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
 
     j, k = 0, 0
     while j < 3:
@@ -315,7 +315,7 @@ def fifo2db():
         elif args.test == 2:
             logger.info('Test 2: Catching an exception')
             d = Day(date='2022-02-14')
-            s = d.date.strftime('%Y%m%d')
+            s = d.date.strftime(r'%Y%m%d')
             print(f'Unable to generate {s}')
             return
         elif args.test == 3:

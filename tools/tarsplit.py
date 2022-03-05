@@ -107,7 +107,7 @@ def write(params):
             info = tarfile.TarInfo(file)
             # info.mode = int('644', 8)
             info.size = os.path.getsize(file)
-            info.mtime = time.mktime(time.strptime('-'.join(file.split('-')[1:3]), '%Y%m%d-%H%M%S'))
+            info.mtime = time.mktime(time.strptime('-'.join(file.split('-')[1:3]), r'%Y%m%d-%H%M%S'))
             with open(file, 'rb') as fid:
                 out.addfile(info, fid)
 
