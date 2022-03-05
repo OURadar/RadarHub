@@ -304,10 +304,10 @@ npm run build
 
 ## Docker
 
-The WebSocket component depends on [redis] through [docker]:
+The WebSocket component depends on [redis] through [docker]. Besure it is installed for user `radarhub`.
 
 ```shell
-sudo docker run -d --restart unless-stopped -p 6379:6379 redis
+docker pull redis
 ```
 
 which `redis:5` or `redis:6` can be used for a specific version if preferred.
@@ -369,6 +369,15 @@ ln -s /etc/nginx/sites-available/radarhub /etc/nginx/sites-enabled/
 Configure through the file `/etc/supervisor/conf.d/radarhub.conf` as:
 
 ```conf
+[program:docker]
+user = radarhub
+command = /usr/bin/docker run -p 6379:6379 redis
+autostart = true
+autorestart = true
+stdout_logfile = /home/radarhub/log/redis.log
+redirect_stderr = true
+priority = 1
+
 [fcgi-program:radarhub.frontend]
 user = radarhub
 directory = /home/radarhub/app
@@ -381,7 +390,7 @@ autostart = true
 autorestart = true
 stdout_logfile = /home/radarhub/log/frontend.log
 redirect_stderr = true
-priority = 200
+priority = 2
 
 [program:radarhub.backhaul]
 user = radarhub
@@ -392,13 +401,14 @@ autostart = true
 autorestart = true
 stdout_logfile = /home/radarhub/log/backhaul.log
 redirect_stderr = true
-priority = 100
+priority = 3
 
 [program:radarhub.dgen]
 user = radarhub
 command = /home/radarhub/app/reporter/dgen
 autostart = true
 autorestart = true
+priority = 4
 ```
 
 Create the run directory for socket
