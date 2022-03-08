@@ -65,6 +65,7 @@ class Archive {
       this.onupdate(this.tic++);
     };
     this.worker.postMessage({ task: "connect", name: radar });
+    console.log(this.worker.data);
 
     this.showMessage = this.showMessage.bind(this);
     this.month = this.month.bind(this);

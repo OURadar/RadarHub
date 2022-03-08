@@ -12,8 +12,9 @@ import { deg2rad, clamp } from "./common";
 
 let source = null;
 let radar;
-let rawList;
-let groupedList = {};
+let fileList;
+let fileListGrouped = {};
+let autoIndex = -1;
 let latestIndex = -1;
 
 const sweepParser = new Parser()
@@ -144,28 +145,28 @@ function list(radar, day, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          rawList = buffer.list;
-          groupedList = {};
-          rawList.forEach((file, index) => {
+          fileList = buffer.list;
+          fileListGrouped = {};
+          fileList.forEach((file, index) => {
             let elements = file.split("-");
             let scanType = elements[3];
-            if (!(scanType in groupedList)) {
-              groupedList[scanType] = [];
+            if (!(scanType in fileListGrouped)) {
+              fileListGrouped[scanType] = [];
             }
-            groupedList[scanType].push({ file: file, index: index });
+            fileListGrouped[scanType].push({ file: file, index: index });
           });
-          console.log(groupedList);
+          console.log(fileListGrouped);
           let scanType = "E4.0";
-          if (scanType in groupedList) {
-            latestIndex = groupedList[scanType].slice(-1)[0].index;
+          if (scanType in fileListGrouped) {
+            latestIndex = fileListGrouped[scanType].slice(-1)[0].index;
           } else {
             latestIndex = buffer.list.length ? buffer.list.length - 1 : -1;
           }
           self.postMessage({
             type: "list",
             payload: {
-              list: rawList,
-              groups: groupedList,
+              list: fileList,
+              groups: fileListGrouped,
               autoIndex: latestIndex,
             },
           });

@@ -5,11 +5,12 @@ import datetime
 import threading
 
 from django.apps import AppConfig
-# from django.conf import settings
+from django.conf import settings
 
 from django_eventstream import send_event
 
 from common import color_name_value
+from common.cosmetics import colorize
 
 worker_started = False
 
@@ -38,13 +39,16 @@ class FrontendConfig(AppConfig):
 
         worker_started = True
 
-        thread = threading.Thread(target=monitor)
+        if settings.DEBUG:
+            thread = threading.Thread(target=simulate)
+        else:
+            thread = threading.Thread(target=monitor)
         thread.daemon = True
         thread.start()
 
 def monitor():
     from .models import Day, File
-    # print('Announce() connecting post_save ...')
+    # print('monitor() connecting post_save ...')
     # post_save.connect(announce, sender=File)
 
     prefix = 'PX-'
@@ -53,7 +57,7 @@ def monitor():
     hourly_count = day.hourly_count
     files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
 
-    print('frontend.monitor() started')
+    print('frontend.apps.monitor() started')
 
     tic = 0
     while True:
@@ -75,6 +79,35 @@ def monitor():
                 send_event('sse', 'message', payload)
                 files = latest_files
                 tic = 0
+        time.sleep(1)
+        tic += 1
+
+def simulate():
+    from .models import Day, File
+    show = colorize('frontend.apps.simulate()', 'green')
+    print(f'{show} started')
+
+    prefix = 'PX-'
+    hourly_count = [0 for _ in range(24)]
+
+    tic = 0
+    while True:
+        now = datetime.datetime.utcnow()
+        time_string = now.strftime(r'%Y%m%d-%H%M%S')
+        files = []
+        if tic == 10:
+            for symbol in ['Z', 'V', 'W', 'D', 'P', 'R']:
+                filename = f'{prefix}-{time_string}-E4.0-{symbol}.nc'
+                files.append(filename)
+                hourly_count[now.hour] += 1
+            payload = {
+                'files': files,
+                'hourly_count': hourly_count,
+                'time': now.isoformat()
+            }
+            payload = json.dumps(payload)
+            send_event('sse', 'message', payload)
+            tic = 0
         time.sleep(1)
         tic += 1
 
