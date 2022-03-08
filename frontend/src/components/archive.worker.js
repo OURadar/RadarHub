@@ -17,6 +17,23 @@ let fileListGrouped = {};
 let autoIndex = -1;
 let latestIndex = -1;
 
+let data = {
+  hourlyCount: new Array(24).fill(0),
+  hourlyCountUpdating: false,
+  dailyAvailability: {},
+  dailyAvailabilityUpdating: false,
+  listDateTime: "20130520-1900",
+  fileList: [],
+  fileListGrouped: {},
+  fileListUpdating: true,
+  loadCountSinceList: 0,
+  resetLoadCount: true,
+  autoIndex: -1,
+  index: -1,
+  sweep: null,
+  symbol: "Z",
+};
+
 const sweepParser = new Parser()
   .endianess("little")
   .uint16("na")
@@ -68,6 +85,15 @@ function connect(newRadar) {
   source.onmessage = (event) => {
     let payload = JSON.parse(event.data);
     console.log(payload);
+    // files.forEach((file) => {
+    //   symbol = file.split('-')[4]
+    //   if (symbol == "Z") {
+
+    //   }
+    // })
+    // let file = payload.files[0];
+    // let c = file.split("-");
+    // console.log(c);
   };
 }
 
