@@ -91,7 +91,6 @@ function connect(newRadar) {
 }
 
 function updateListWithFile(file) {
-  let index = data.fileList.length;
   const elements = file.split("-");
   const symbol = elements[4].split(".")[0];
   if (symbol != data.symbol) {
@@ -105,16 +104,30 @@ function updateListWithFile(file) {
     data.fileList = [];
     data.fileListGrouped = {};
     data.listDateTime = listDateTime;
-    index = 0;
   }
   if (!(scan in data.fileListGrouped)) {
     data.fileListGrouped[scan] = [];
   }
+  const index = data.fileList.length;
   const hour = parseInt(listHour);
   data.hourlyCount[hour] += 1;
   data.fileList.push(file);
-  data.fileListGrouped[scan].push(file);
+  data.fileListGrouped[scan].push({ file: file, index: index });
   console.log(data);
+  let targetScan = "E4.0";
+  if (targetScan in data.fileListGrouped) {
+    latestIndex = data.fileListGrouped[targetScan].slice(-1)[0].index;
+  } else {
+    latestIndex = data.fileList.length ? data.fileList.length - 1 : -1;
+  }
+  self.postMessage({
+    type: "list",
+    payload: {
+      list: data.fileList,
+      groups: data.fileListGrouped,
+      autoIndex: latestIndex,
+    },
+  });
 }
 
 function createSweep(name = "dummy") {
