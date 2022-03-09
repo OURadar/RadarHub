@@ -128,6 +128,7 @@ function updateListWithFile(file) {
       autoIndex: latestIndex,
     },
   });
+  self.postMessage({ type: "count", payload: data.hourlyCount });
 }
 
 function createSweep(name = "dummy") {
