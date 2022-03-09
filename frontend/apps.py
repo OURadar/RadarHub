@@ -86,7 +86,7 @@ def simulate():
     show = colorize('frontend.apps.simulate()', 'green')
     print(f'{show} started')
 
-    prefix = 'PX-'
+    prefix = 'PX'
     hourly_count = [0 for _ in range(24)]
 
     tic = 0
@@ -98,7 +98,7 @@ def simulate():
         if tic == 20:
             scan = 'E2.0' if scan == 'E4.0' else 'E4.0'
             for symbol in ['Z', 'V', 'W', 'D', 'P', 'R']:
-                filename = f'{prefix}{time_string}-{scan}-{symbol}.nc'
+                filename = f'{prefix}-{time_string}-{scan}-{symbol}.nc'
                 files.append(filename)
                 hourly_count[now.hour] += 1
             payload = {
