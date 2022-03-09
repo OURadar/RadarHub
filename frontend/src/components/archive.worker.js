@@ -83,18 +83,38 @@ function connect(newRadar) {
   source = new EventSource("/events/");
 
   source.onmessage = (event) => {
-    let payload = JSON.parse(event.data);
-    console.log(payload);
-    // files.forEach((file) => {
-    //   symbol = file.split('-')[4]
-    //   if (symbol == "Z") {
-
-    //   }
-    // })
-    // let file = payload.files[0];
-    // let c = file.split("-");
-    // console.log(c);
+    const payload = JSON.parse(event.data);
+    payload.files.forEach((file) => {
+      updateListWithFile(file);
+    });
   };
+}
+
+function updateListWithFile(file) {
+  let index = data.fileList.length;
+  const elements = file.split("-");
+  const symbol = elements[4].split(".")[0];
+  if (symbol != data.symbol) {
+    return;
+  }
+  const scan = elements[3];
+  const listHour = elements[2].slice(0, 2);
+  const listDateTime = `${elements[1]}-${listHour}00`;
+  console.log(`${listDateTime} ${file} ->  ${scan}`);
+  if (data.listDateTime != listDateTime) {
+    data.fileList = [];
+    data.fileListGrouped = {};
+    data.listDateTime = listDateTime;
+    index = 0;
+  }
+  if (!(scan in data.fileListGrouped)) {
+    data.fileListGrouped[scan] = [];
+  }
+  const hour = parseInt(listHour);
+  data.hourlyCount[hour] += 1;
+  data.fileList.push(file);
+  data.fileListGrouped[scan].push(file);
+  console.log(data);
 }
 
 function createSweep(name = "dummy") {

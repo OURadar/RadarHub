@@ -83,7 +83,6 @@ def monitor():
         tic += 1
 
 def simulate():
-    from .models import Day, File
     show = colorize('frontend.apps.simulate()', 'green')
     print(f'{show} started')
 
@@ -91,13 +90,15 @@ def simulate():
     hourly_count = [0 for _ in range(24)]
 
     tic = 0
+    scan = 'E4.0'
     while True:
         now = datetime.datetime.utcnow()
         time_string = now.strftime(r'%Y%m%d-%H%M%S')
         files = []
-        if tic == 10:
+        if tic == 20:
+            scan = 'E2.0' if scan == 'E4.0' else 'E4.0'
             for symbol in ['Z', 'V', 'W', 'D', 'P', 'R']:
-                filename = f'{prefix}-{time_string}-E4.0-{symbol}.nc'
+                filename = f'{prefix}{time_string}-{scan}-{symbol}.nc'
                 files.append(filename)
                 hourly_count[now.hour] += 1
             payload = {
@@ -105,7 +106,6 @@ def simulate():
                 'hourly_count': hourly_count,
                 'time': now.isoformat()
             }
-            payload = json.dumps(payload)
             send_event('sse', 'message', payload)
             tic = 0
         time.sleep(1)
