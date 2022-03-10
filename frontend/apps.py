@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import time
@@ -23,9 +24,16 @@ worker_started = False
 class FrontendConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'frontend'
+
     def ready(self):
         prog = sys.argv[0]
         if 'fifo2db' in prog:
+            return
+
+        if not tableExists():
+            return
+
+        if os.environ.get('RUN_MAIN', None) is None:
             return
 
         global worker_started
@@ -34,12 +42,9 @@ class FrontendConfig(AppConfig):
             print(f'Already has a worker   {show}')
             return
 
-        if not tableExists():
-            return
-
         worker_started = True
 
-        if settings.DEBUG:
+        if settings.SIMULATE:
             thread = threading.Thread(target=simulate)
         else:
             thread = threading.Thread(target=monitor)
@@ -88,23 +93,26 @@ def simulate():
 
     prefix = 'PX'
     hourly_count = [0 for _ in range(24)]
+    # sweep_time = datetime.datetime.utcnow()
+    sweep_time = datetime.datetime(2022, 3, 10, 23, 58, 12)
 
     tic = 0
-    scan = 'E4.0'
+    scans = ['E2.0', 'E4.0', 'E6.0', 'E8.0', 'E10.0']
     while True:
-        now = datetime.datetime.utcnow()
-        time_string = now.strftime(r'%Y%m%d-%H%M%S')
+        sweep_time += datetime.timedelta(seconds=30)
+        time_string = sweep_time.strftime(r'%Y%m%d-%H%M%S')
         files = []
-        if tic == 20:
-            scan = 'E2.0' if scan == 'E4.0' else 'E4.0'
+        print(time_string)
+        if tic % 5 == 0:
+            scan = scans[tic % len(scans)]
             for symbol in ['Z', 'V', 'W', 'D', 'P', 'R']:
                 filename = f'{prefix}-{time_string}-{scan}-{symbol}.nc'
                 files.append(filename)
-                hourly_count[now.hour] += 1
+                hourly_count[sweep_time.hour] += 1
             payload = {
                 'files': files,
                 'hourly_count': hourly_count,
-                'time': now.isoformat()
+                'time': sweep_time.isoformat()
             }
             send_event('sse', 'message', payload)
             tic = 0
