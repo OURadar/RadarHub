@@ -12,16 +12,9 @@ import { deg2rad, clamp } from "./common";
 
 let source = null;
 let radar;
-// let fileList;
-// let fileListGrouped = {};
-// let autoIndex = -1;
-let latestIndex = -1;
-
 let data = {
-  hourlyCount: new Array(24).fill(0),
-  hourlyCountUpdating: false,
   dailyAvailability: {},
-  dailyAvailabilityUpdating: false,
+  hourlyCount: new Array(24).fill(0),
   listDateTime: "20130520-1900",
   fileList: [],
   fileListGrouped: {},
@@ -114,11 +107,10 @@ function updateListWithFile(file) {
   data.fileListGrouped[scan].push({ file: file, index: index });
   let targetScan = "E4.0";
   if (targetScan in data.fileListGrouped) {
-    latestIndex = data.fileListGrouped[targetScan].slice(-1)[0].index;
+    data.autoIndex = data.fileListGrouped[targetScan].slice(-1)[0].index;
   } else {
-    latestIndex = data.fileList.length ? data.fileList.length - 1 : -1;
+    data.autoIndex = data.fileList.length ? data.fileList.length - 1 : -1;
   }
-  data.latestIndex = latestIndex;
 }
 
 function createSweep(name = "dummy") {
@@ -208,11 +200,12 @@ function list(radar, day, symbol) {
           console.log(data.fileListGrouped);
           let scanType = "E4.0";
           if (scanType in data.fileListGrouped) {
-            latestIndex = data.fileListGrouped[scanType].slice(-1)[0].index;
+            data.autoIndex = data.fileListGrouped[scanType].slice(-1)[0].index;
           } else {
-            latestIndex = data.fileList.length ? data.fileList.length - 1 : -1;
+            data.autoIndex = data.fileList.length
+              ? data.fileList.length - 1
+              : -1;
           }
-          data.autoIndex = latestIndex;
           self.postMessage({
             type: "list",
             payload: data,

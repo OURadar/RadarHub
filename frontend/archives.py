@@ -137,8 +137,8 @@ def _list(radar, hour_prod):
     matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     return [o.name for o in matches]
 
-def list(request, radar, hour_prod, verbose=settings.VERBOSE):
-    if verbose:
+def list(request, radar, hour_prod):
+    if settings.VERBOSE:
         show = colorize('archive.list()', 'green')
         show += '   ' + color_name_value('hour_prod', hour_prod)
         print(show)
@@ -154,22 +154,36 @@ def list(request, radar, hour_prod, verbose=settings.VERBOSE):
 '''
     name - filename
 '''
-def load(request, name, verbose=settings.VERBOSE):
-    # Database is indexed by date so we extract the time first for quicker search
-    s = timeFinder.search(name)[0]
-    s = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
-    match = File.objects.filter(date=s).filter(name=name)
-    if len(match):
-        match = match[0]
-    else:
-        return HttpResponse(f'No match of {name} in database', status=202)
-
-    if verbose:
+def load(request, name):
+    if settings.VERBOSE:
         show = colorize('archive.load()', 'green')
         show += ' ' + colorize('name', 'orange') + ' = ' + colorize(name, 'yellow')
         print(show)
+    if settings.SIMULATE:
+        elements = name.split('-')
+        print(f'Dummy sweep {name}')
+        sweep = {
+            'symbol': elements[4] if len(elements) > 4 else "Z",
+            'longitude': -97.422413,
+            'latitude': 35.25527,
+            'sweepTime': time.mktime(time.strptime(elements[1] + elements[2], r'%Y%m%d%H%M%S')),
+            'sweepElevation': float(elements[3][1:]) if "E" in elements[3] else 4.0,
+            'gatewidth': 60.0,
+            'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=float),
+            'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=float),
+            'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]])
+        }
+    else:
+        # Database is indexed by date so we extract the time first for quicker search
+        s = timeFinder.search(name)[0]
+        date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+        match = File.objects.filter(date=date).filter(name=name)
+        if len(match):
+            match = match[0]
+        else:
+            return HttpResponse(f'No match of {name} in database', status=202)
 
-    sweep = match.read()
+        sweep = match.read()
 
     if sweep is None:
         return HttpResponse(f'File {name} not found', status=202)
@@ -208,7 +222,7 @@ def load(request, name, verbose=settings.VERBOSE):
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
-def _date(radar, verbose=settings.VERBOSE):
+def _date(radar):
     prefix = radar_prefix(radar)
     if prefix is None:
         return None, None
@@ -221,7 +235,7 @@ def _date(radar, verbose=settings.VERBOSE):
         print(show)
         return None, None
     ymd = day.date.strftime('%Y%m%d')
-    if verbose:
+    if settings.VERBOSE:
         show = colorize('archive.date()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('prefix', prefix)
@@ -237,10 +251,10 @@ def _date(radar, verbose=settings.VERBOSE):
         return None, None
     return ymd, hour
 
-def date(request, radar, verbose=settings.VERBOSE):
+def date(request, radar):
     if radar == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    ymd, hour = _date(radar, verbose=verbose)
+    ymd, hour = _date(radar)
     if ymd is None:
         data = {
             'dateString': '19700101-0000',
@@ -265,8 +279,8 @@ def rho2ind(values):
     index[m3] = values[m3] * 1000.0 - 824.0
     return index
 
-def location(radar, verbose=settings.VERBOSE):
-    if verbose:
+def location(radar):
+    if settings.VERBOSE:
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('radar', radar)
         print(show)
@@ -289,7 +303,7 @@ def location(radar, verbose=settings.VERBOSE):
                 'latitude': float(data['latitude']),
                 'last': ymd_hm
             }
-    if verbose:
+    if settings.VERBOSE:
         print(colorize('archive.location()', 'green'))
         pp.pprint(origins)
     return origins[radar]

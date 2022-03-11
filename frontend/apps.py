@@ -120,7 +120,7 @@ def simulate():
             }
             print(f'{time_string}-{scan}  {hourly_count}')
             send_event('sse', 'message', payload)
-        time.sleep(0.2)
+        time.sleep(2.5)
         tic += 1
 
 def tableExists():

@@ -9,22 +9,22 @@ class Archive {
   constructor(radar) {
     this.radar = radar;
     this.data = {
-      hourlyCount: new Array(24).fill(0),
-      hourlyCountUpdating: false,
       dailyAvailability: {},
-      dailyAvailabilityUpdating: false,
+      hourlyCount: new Array(24).fill(0),
       listDateTime: "20130520-1900",
       fileList: [],
       fileListGrouped: {},
       autoIndex: -1,
-      index: -1,
       sweep: null,
       symbol: "Z",
     };
     this.state = {
-      resetLoadCount: true,
+      dailyAvailabilityUpdating: false,
+      hourlyCountUpdating: false,
       fileListUpdating: true,
+      resetLoadCount: true,
       loadCountSinceList: 0,
+      index: -1,
     };
     this.tic = 0;
     this.timer = null;
@@ -43,24 +43,25 @@ class Archive {
       } else if (type == "list") {
         this.data = payload;
         this.state.fileListUpdating = false;
+        console.log(`worker.onmessage() ${this.data.autoIndex}`);
         if (this.state.resetLoadCount) {
           this.state.loadCountSinceList = 0;
-          this.data.index = -1;
+          this.state.index = -1;
           this.onlist(payload.autoIndex);
         } else {
           this.state.resetLoadCount = true;
-          this.onlist(this.data.index);
+          this.onlist(this.state.index);
         }
       } else if (type == "count") {
         this.data.hourlyCount = payload;
         this.data.hourlyCountUpdating = false;
       } else if (type == "month") {
         this.data.dailyAvailability = payload;
-        this.data.dailyAvailabilityUpdating = false;
+        this.state.dailyAvailabilityUpdating = false;
       } else if (type == "reset") {
         this.showMessage(payload);
         this.data.sweep = null;
-        this.data.index = -1;
+        this.state.index = -1;
       }
       this.onupdate(this.tic++);
     };
@@ -88,7 +89,7 @@ class Archive {
 
   // Expect radar = px1000, day = 201305
   month(radar, day) {
-    this.data.dailyAvailabilityUpdating = true;
+    this.state.dailyAvailabilityUpdating = true;
     this.worker.postMessage({ task: "month", name: radar, day: day });
     this.onupdate(this.tic++);
   }
