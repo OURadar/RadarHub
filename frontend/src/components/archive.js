@@ -16,13 +16,15 @@ class Archive {
       listDateTime: "20130520-1900",
       fileList: [],
       fileListGrouped: {},
-      fileListUpdating: true,
-      loadCountSinceList: 0,
-      resetLoadCount: true,
       autoIndex: -1,
       index: -1,
       sweep: null,
       symbol: "Z",
+    };
+    this.state = {
+      resetLoadCount: true,
+      fileListUpdating: true,
+      loadCountSinceList: 0,
     };
     this.tic = 0;
     this.timer = null;
@@ -39,16 +41,14 @@ class Archive {
         this.data.sweep = payload;
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
-        this.data.fileList = payload.list;
-        this.data.fileListGrouped = payload.groups;
-        this.data.autoIndex = payload.autoIndex;
-        this.data.fileListUpdating = false;
-        if (this.data.resetLoadCount) {
-          this.data.loadCountSinceList = 0;
+        this.data = payload;
+        this.state.fileListUpdating = false;
+        if (this.state.resetLoadCount) {
+          this.state.loadCountSinceList = 0;
           this.data.index = -1;
           this.onlist(payload.autoIndex);
         } else {
-          this.data.resetLoadCount = true;
+          this.state.resetLoadCount = true;
           this.onlist(this.data.index);
         }
       } else if (type == "count") {
@@ -65,7 +65,7 @@ class Archive {
       this.onupdate(this.tic++);
     };
     this.worker.postMessage({ task: "connect", name: radar });
-    console.log(this.worker.data);
+    // console.log(this.worker.data);
 
     this.showMessage = this.showMessage.bind(this);
     this.month = this.month.bind(this);
@@ -105,7 +105,7 @@ class Archive {
     let symbol = this.data.symbol;
     this.radar = radar;
     this.data.listDateTime = time;
-    this.data.fileListUpdating = true;
+    this.state.fileListUpdating = true;
     this.worker.postMessage({
       task: "list",
       name: radar,
@@ -135,7 +135,7 @@ class Archive {
   loadByName(name = "PX-20130520-195944-E2.6-Z.nc") {
     this.message = `Loading ${name} ...`;
     this.worker.postMessage({ task: "load", name: name });
-    this.data.loadCountSinceList += 1;
+    this.state.loadCountSinceList++;
     this.onupdate(this.tic++);
   }
 
@@ -149,7 +149,7 @@ class Archive {
       return;
     }
     this.data.symbol = symbol;
-    this.data.resetLoadCount = false;
+    this.state.resetLoadCount = false;
     this.list(this.radar, this.data.listDateTime);
   }
 }

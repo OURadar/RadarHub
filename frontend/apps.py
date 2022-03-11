@@ -94,29 +94,33 @@ def simulate():
     prefix = 'PX'
     hourly_count = [0 for _ in range(24)]
     # sweep_time = datetime.datetime.utcnow()
-    sweep_time = datetime.datetime(2022, 3, 10, 23, 58, 12)
+    sweep_time = datetime.datetime(2022, 3, 10, 23, 50, 12)
+    sweep_day = sweep_time.day
 
     tic = 0
+    block = 1
     scans = ['E2.0', 'E4.0', 'E6.0', 'E8.0', 'E10.0']
     while True:
-        sweep_time += datetime.timedelta(seconds=30)
+        sweep_time += datetime.timedelta(seconds=300)
         time_string = sweep_time.strftime(r'%Y%m%d-%H%M%S')
+        if sweep_day != sweep_time.day:
+            sweep_day = sweep_time.day
+            hourly_count = [0 for _ in range(24)]
         files = []
-        print(time_string)
-        if tic % 5 == 0:
-            scan = scans[tic % len(scans)]
+        if tic % block == 0:
+            scan = scans[int(tic / block) % len(scans)]
             for symbol in ['Z', 'V', 'W', 'D', 'P', 'R']:
                 filename = f'{prefix}-{time_string}-{scan}-{symbol}.nc'
                 files.append(filename)
                 hourly_count[sweep_time.hour] += 1
             payload = {
                 'files': files,
-                'hourly_count': hourly_count,
+                'count': hourly_count,
                 'time': sweep_time.isoformat()
             }
+            print(f'{time_string}-{scan}  {hourly_count}')
             send_event('sse', 'message', payload)
-            tic = 0
-        time.sleep(1)
+        time.sleep(0.2)
         tic += 1
 
 def tableExists():

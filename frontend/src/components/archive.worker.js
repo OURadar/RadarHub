@@ -12,9 +12,9 @@ import { deg2rad, clamp } from "./common";
 
 let source = null;
 let radar;
-let fileList;
-let fileListGrouped = {};
-let autoIndex = -1;
+// let fileList;
+// let fileListGrouped = {};
+// let autoIndex = -1;
 let latestIndex = -1;
 
 let data = {
@@ -26,11 +26,7 @@ let data = {
   fileList: [],
   fileListGrouped: {},
   fileListUpdating: true,
-  loadCountSinceList: 0,
-  resetLoadCount: true,
   autoIndex: -1,
-  index: -1,
-  sweep: null,
   symbol: "Z",
 };
 
@@ -87,6 +83,11 @@ function connect(newRadar) {
     payload.files.forEach((file) => {
       updateListWithFile(file);
     });
+    data.hourlyCount = payload.count;
+    self.postMessage({
+      type: "list",
+      payload: data,
+    });
   };
 }
 
@@ -109,26 +110,15 @@ function updateListWithFile(file) {
     data.fileListGrouped[scan] = [];
   }
   const index = data.fileList.length;
-  const hour = parseInt(listHour);
-  data.hourlyCount[hour] += 1;
   data.fileList.push(file);
   data.fileListGrouped[scan].push({ file: file, index: index });
-  console.log(data);
   let targetScan = "E4.0";
   if (targetScan in data.fileListGrouped) {
     latestIndex = data.fileListGrouped[targetScan].slice(-1)[0].index;
   } else {
     latestIndex = data.fileList.length ? data.fileList.length - 1 : -1;
   }
-  self.postMessage({
-    type: "list",
-    payload: {
-      list: data.fileList,
-      groups: data.fileListGrouped,
-      autoIndex: latestIndex,
-    },
-  });
-  self.postMessage({ type: "count", payload: data.hourlyCount });
+  data.latestIndex = latestIndex;
 }
 
 function createSweep(name = "dummy") {
@@ -205,30 +195,27 @@ function list(radar, day, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          fileList = buffer.list;
-          fileListGrouped = {};
-          fileList.forEach((file, index) => {
+          data.fileList = buffer.list;
+          data.fileListGrouped = {};
+          data.fileList.forEach((file, index) => {
             let elements = file.split("-");
             let scanType = elements[3];
-            if (!(scanType in fileListGrouped)) {
-              fileListGrouped[scanType] = [];
+            if (!(scanType in data.fileListGrouped)) {
+              data.fileListGrouped[scanType] = [];
             }
-            fileListGrouped[scanType].push({ file: file, index: index });
+            data.fileListGrouped[scanType].push({ file: file, index: index });
           });
-          console.log(fileListGrouped);
+          console.log(data.fileListGrouped);
           let scanType = "E4.0";
-          if (scanType in fileListGrouped) {
-            latestIndex = fileListGrouped[scanType].slice(-1)[0].index;
+          if (scanType in data.fileListGrouped) {
+            latestIndex = data.fileListGrouped[scanType].slice(-1)[0].index;
           } else {
-            latestIndex = buffer.list.length ? buffer.list.length - 1 : -1;
+            latestIndex = data.fileList.length ? data.fileList.length - 1 : -1;
           }
+          data.autoIndex = latestIndex;
           self.postMessage({
             type: "list",
-            payload: {
-              list: fileList,
-              groups: fileListGrouped,
-              autoIndex: latestIndex,
-            },
+            payload: data,
           });
         });
       else
