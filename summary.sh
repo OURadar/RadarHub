@@ -19,7 +19,7 @@ fi
 ##############
 
 clear
-check_user_process radarhub python dgen | textout "Processes" seagreen
+check_user_process radarhub python dgen fifoshare fiforead | textout "Processes" seagreen
 echo
 systemctl status supervisor --no-pager
 echo

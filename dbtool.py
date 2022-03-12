@@ -173,7 +173,7 @@ def params_from_source(source, dig=False):
             if day_string != c[1]:
                 print(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]} (*)')
                 day_string = c[1]
-            source_datetime = datetime.datetime.strptime(time_string, '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+            source_datetime = datetime.datetime.strptime(time_string, r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
     elif '/' in source:
         logger.error(f'Error. Folder {source} does not exist')
         day_string = re.search(r'(?<=[-/])20[0-9][0-9][012][0-9][0-3][0-9]', source)
@@ -183,9 +183,14 @@ def params_from_source(source, dig=False):
         prefix, day_string = source.split('-')
         prefix += '-'
     else:
-        day_string = source
+        day_string = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', source)
+        if day_string:
+            day_string = source.group(0)
+        else:
+            day_string = None
+            prefix = source + '-'
     if day_string:
-        source_date = datetime.datetime.strptime(day_string, '%Y%m%d').date()
+        source_date = datetime.datetime.strptime(day_string, r'%Y%m%d').date()
         start = datetime.datetime(source_date.year, source_date.month, source_date.day).replace(tzinfo=datetime.timezone.utc)
         date_range = [start, start + datetime.timedelta(days=1)]
     return {
@@ -389,7 +394,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
                     else:
                         c = name.split('-')
-                        date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+                        date = datetime.datetime.strptime(c[1] + c[2], r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
                     x = File.objects.create(name=name, path=archive, date=date, size=size, offset=offset, offset_data=offset_data)
                 logger.debug(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
                 if mode != 'I':
@@ -439,7 +444,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             for yy in xx:
                 (name, offset, offset_data, size, archive) = yy
                 c = name.split('-')
-                date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+                date = datetime.datetime.strptime(c[1] + c[2], r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
                 x = File(name=name, path=archive, date=date, size=size, offset=offset, offset_data=offset_data)
                 files.append(x)
             return files
@@ -671,7 +676,7 @@ def check_latest(source):
     show = colorize('check_latest()', 'green')
     logger.info(show)
     if len(source):
-        names = source
+        names = [params_from_source(name)['prefix'] for name in source]
     else:
         names = ['PX-', 'PX10K-', 'RAXPOL-']
     for name in names:
@@ -766,7 +771,7 @@ def show_sweep_summary(source):
             s = c[4].split('.')[0]
         else:
             s = 'Z'
-        date = datetime.datetime.strptime(c[1] + c[2], '%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+        date = datetime.datetime.strptime(c[1] + c[2], r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
         o = File.objects.filter(date=date).filter(name__startswith=p).filter(name__endswith=f'-{s}.nc')
         if o:
             o = o[0]

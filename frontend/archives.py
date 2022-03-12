@@ -52,10 +52,10 @@ def header(requst, name):
     day - a string in the forms of
           - YYYYMM
 '''
-def month(request, radar, day, verbose=settings.VERBOSE):
+def month(request, radar, day):
     if radar == 'undefined' or day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)    
-    if verbose:
+    if settings.VERBOSE:
         show = colorize('archive.month()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
@@ -86,16 +86,16 @@ def month(request, radar, day, verbose=settings.VERBOSE):
     day - a string in the forms of
           - YYYYMMDD
 '''
-def count(request, radar, day, verbose=settings.VERBOSE):
+def count(request, radar, day):
     if radar == 'undefined' or day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    if verbose:
+    if settings.VERBOSE:
         show = colorize('archive.count()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         print(show)
     n = [0 for _ in range(24)]
-    date = time.strftime('%Y-%m-%d', time.strptime(day, '%Y%m%d'))
+    date = time.strftime(r'%Y-%m-%d', time.strptime(day, r'%Y%m%d'))
     prefix = radar_prefix(radar)
     d = Day.objects.filter(date=date, name=prefix)
     if d:
@@ -128,7 +128,7 @@ def _list(radar, hour_prod):
         c[1] = f'{c[1]}00'
     symbol = c[2] if len(c) == 3 else 'Z'
     t = '-'.join(c[:2])
-    s = time.strptime(t, '%Y%m%d-%H%M')
+    s = time.strptime(t, r'%Y%m%d-%H%M')
     e = time.localtime(time.mktime(s) + 3599)
     ss = time.strftime('%Y-%m-%d %H:%M:%SZ', s)
     ee = time.strftime('%Y-%m-%d %H:%M:%SZ', e)
@@ -234,7 +234,7 @@ def _date(radar):
         show += '  ' + colorize('Empty Day table.', 'white')
         print(show)
         return None, None
-    ymd = day.date.strftime('%Y%m%d')
+    ymd = day.date.strftime(r'%Y%m%d')
     if settings.VERBOSE:
         show = colorize('archive.date()', 'green')
         show += '   ' + color_name_value('radar', radar)

@@ -92,7 +92,7 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 #
-# Database migrated to PostgreSQL
+# Migrated 'default' to PostgreSQL
 # https://medium.com/djangotube/django-sqlite-to-postgresql-database-migration-e3c1f76711e1
 
 file = CONFIG_DIR / 'db.conf'

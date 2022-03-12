@@ -26,6 +26,14 @@ When a user request is issued, it is first received by the frontend, which check
 
 When a radar joins the RadarHub, it reports its name. Backhaul launches a runloop to collect data streams from the radar. This runloop also sends whatever data stream available from the radar to the group. All users in that group receive the same data stream. This will change in the future for a more controlled fashion but kept simple at the moment for progressing towards the subsequent milestones.
 
+## Frontend Block Diagram
+
+![Figure](blob/app6.svg)
+
+## Backend Block Diagram
+
+![Figure](blob/backhaul.svg)
+
 ## Milestones
 
 - [x] 0.1 Can run
@@ -39,7 +47,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.6.3 Added support for multiple radars (1/30/2022)
   - [x] 0.6.4 Migrated to PostgreSQL (2/5/2022)
   - [x] 0.6.5 Refactored for a fresh run (2/10/2022)
-  - [ ] 0.6.6 Updated database tooling (3/3/2022))
+  - [ ] 0.6.6 Updated database tooling (3/5/2022))
 - [ ] 0.7 RadarKit communicates with RadarHub
 - [ ] 0.8 Page template, UI materials, mobile version
 - [ ] 0.9 Authentication + user priviledges
@@ -84,11 +92,27 @@ In the Python space, a parser is made to retrieve everythin in the C header to a
 
 In the Javascript space, the definition is passed to the frontend upon a successful connection, the data ingest `frontend/src/components/ingest.js` expects keys like `Control`, `Health`, `Scope`, etc., which nicely maps to the enum names in the C and Python spaces.
 
+## Sequence of Events
+
+`frontend.consumers.User`
+
+- message from web UI is always in text form (JSON)
+- message to web UI is always in binary form (bytearray)
+
+`frontend.consumers.Radar`
+
+- message from radar is always in binary form ([type][payload])
+- message to radar is always in text form (plain text)
+
+![Figure](blob/events.svg)
+
 # Software Requirements
 
 [Visual Studio Code](https://code.visualstudio.com) and the plugin Prettier are recommended but, of course, use whatever you prefer. Before setting the [Django] project, install some of the software.
 
 ## Node.js, npm, and PostgreSQL
+
+PostgreSQL is optional if you do not wish to use [PostgreSQL] as your database backend. The repository is setup to look for the [PostgreSQL] configuration under `config/db.conf`. If this file does not exist, RadarHub falls back to using SQLite3. In that case, you may ommit `libpq` and `postgresql` in the following commands, and the section Configure PostgreSQL.
 
 On Ubuntu, run the following commands:
 
@@ -133,6 +157,8 @@ npm install
 ```
 
 ## Configure PostgreSQL
+
+Again, you may skip this section if you do not wish to use [PostgreSQL] as the database backend.
 
 Switch to user `postgres` and run `psql` using the following commands:
 
@@ -282,10 +308,10 @@ npm run build
 
 ## Docker
 
-The WebSocket component depends on [redis] through [docker]:
+The WebSocket component depends on [redis] through [docker]. Besure it is installed for user `radarhub`.
 
 ```shell
-sudo docker run -d --restart unless-stopped -p 6379:6379 redis
+docker pull redis
 ```
 
 which `redis:5` or `redis:6` can be used for a specific version if preferred.
@@ -347,6 +373,15 @@ ln -s /etc/nginx/sites-available/radarhub /etc/nginx/sites-enabled/
 Configure through the file `/etc/supervisor/conf.d/radarhub.conf` as:
 
 ```conf
+[program:docker]
+user = radarhub
+command = /usr/bin/docker run -p 6379:6379 redis
+autostart = true
+autorestart = true
+stdout_logfile = /home/radarhub/log/redis.log
+redirect_stderr = true
+priority = 1
+
 [fcgi-program:radarhub.frontend]
 user = radarhub
 directory = /home/radarhub/app
@@ -359,7 +394,7 @@ autostart = true
 autorestart = true
 stdout_logfile = /home/radarhub/log/frontend.log
 redirect_stderr = true
-priority = 200
+priority = 2
 
 [program:radarhub.backhaul]
 user = radarhub
@@ -370,13 +405,14 @@ autostart = true
 autorestart = true
 stdout_logfile = /home/radarhub/log/backhaul.log
 redirect_stderr = true
-priority = 100
+priority = 3
 
 [program:radarhub.dgen]
 user = radarhub
 command = /home/radarhub/app/reporter/dgen
 autostart = true
 autorestart = true
+priority = 4
 ```
 
 Create the run directory for socket
@@ -409,10 +445,6 @@ Modify `/etc/systemd/system/multi-user.target.wants/supervisor.service` by addin
 ```
 Requires=docker.service
 ```
-
-# Frontend Block Diagram
-
-![Figure](blob/app6.svg)
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
