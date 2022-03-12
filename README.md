@@ -112,6 +112,8 @@ In the Javascript space, the definition is passed to the frontend upon a success
 
 ## Node.js, npm, and PostgreSQL
 
+PostgreSQL is optional if you do not wish to use [PostgreSQL] as your database backend. The repository is setup to look for the [PostgreSQL] configuration under `config/db.conf`. If this file does not exist, RadarHub falls back to using SQLite3. In that case, you may ommit `libpq` and `postgresql` in the following commands, and the section _Configure PostgreSQL_.
+
 On Ubuntu, run the following commands:
 
 ```shell
