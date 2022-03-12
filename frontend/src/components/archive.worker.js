@@ -49,11 +49,11 @@ const sweepParser = new Parser()
     },
   });
 
-self.onmessage = ({ data: { task, name, day, time, symbol } }) => {
+self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
   if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(name, time, symbol);
+    list(name, day, hour, symbol);
   } else if (task == "count") {
     count(name, day);
   } else if (task == "month") {
@@ -165,8 +165,9 @@ function createSweep(name = "dummy") {
 
 function month(radar, day) {
   console.log(
-    `%carchive.worker.month() ${radar} ${day}`,
-    "color: lightseagreen"
+    `%carchive.worker.month()%c ${radar} ${day}`,
+    "color: lightseagreen",
+    "color: inherit"
   );
   const url = `/data/month/${radar}/${day}/`;
   fetch(url)
@@ -188,8 +189,9 @@ function month(radar, day) {
 
 function count(radar, day) {
   console.log(
-    `%carchive.worker.count() ${radar} ${day}`,
-    "color: lightseagreen"
+    `%carchive.worker.count()%c ${radar} ${day}`,
+    "color: lightseagreen",
+    "color: inherit"
   );
   const url = `/data/count/${radar}/${day}/`;
   fetch(url)
@@ -209,18 +211,23 @@ function count(radar, day) {
     });
 }
 
-function list(radar, day, symbol) {
+function list(radar, day, hour, symbol) {
   console.log(
-    `%carchive.worker.list() ${radar} ${day} ${symbol}`,
-    "color: lightseagreen"
+    `%carchive.worker.list()%c ${radar} ${day.toISOString()} ${hour} ${symbol}`,
+    "color: lightseagreen",
+    "color: inherit"
   );
-  const url = `/data/list/${radar}/${day}-${symbol}/`;
+  let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
+  let hourString = hour.toString().padStart(2, "0");
+  let dateTimeString = `${dayString}-${hourString}00`;
+  const url = `/data/list/${radar}/${dateTimeString}-${symbol}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          grid.dateTimeString = `${day}`;
-          grid.hour = parseInt(day.slice(9, 11));
+          grid.dateTimeString = dateTimeString;
+          grid.day = day;
+          grid.hour = hour;
           grid.fileList = buffer.list;
           grid.fileListGrouped = {};
           grid.fileList.forEach((file, index) => {
@@ -255,7 +262,11 @@ function list(radar, day, symbol) {
 
 function load(name) {
   const url = `/data/load/${name}/`;
-  console.log(`Background fetching ${url}`);
+  console.log(
+    `%carchiver.worker.load()%c ${url}`,
+    "color: lightseagreen",
+    "color: inherit"
+  );
   fetch(url)
     .then((response) => {
       if (response.status == 200)

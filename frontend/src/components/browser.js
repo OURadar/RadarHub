@@ -177,7 +177,11 @@ function Browser(props) {
   }, []);
 
   const setDayHour = (newDay, newHour) => {
-    console.log(`setDayHour()   newDay = ${newDay}   newHour = ${newHour}`);
+    console.log(
+      `%cbrowser.setDayHour()%c   newDay = ${newDay}   newHour = ${newHour}`,
+      "color: deeppink",
+      "color: inherit"
+    );
     //console.log(`newDay = ${newDay}`);
     // let tmp = newDay.toISOString();
     // let y = parseInt(tmp.slice(0, 4));
@@ -191,12 +195,7 @@ function Browser(props) {
     //   props.archive.count(radar, ymd);
     // }
     props.archive.count(radar, newDay);
-    // if (day != newDay || hour != newHour) {
-    //   props.archive.list(radar, `${ymd}-${hh}00`);
-    // }
-    if (day != newDay || hour != newHour) {
-      props.archive.list(radar, newDay, newHour);
-    }
+    props.archive.list(radar, newDay, newHour);
     // setDay(newDay);
     // setHour(newHour);
     // console.log(

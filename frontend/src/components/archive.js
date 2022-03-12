@@ -105,18 +105,26 @@ class Archive {
     }, duration);
   }
 
-  // Expect radar = px1000, day = 201305
+  // Expect something like radar = px1000, day = 201305
   month(radar, day) {
     this.state.dailyAvailabilityUpdating = true;
     this.worker.postMessage({ task: "month", name: radar, day: day });
     this.onupdate(this.tic++);
   }
 
-  // Expect radar = raxpol, day = 20130520
+  // Expect something like radar = raxpol, day = Date('2013-05-20')
   count(radar, day) {
-    console.log(`count() day = ${day}`);
+    console.log(
+      `%carchive.count()%c   day = ${day}`,
+      "color: deeppink",
+      "color: inherit"
+    );
     if (this.grid.day == day) {
-      console.log("Same day, early return");
+      console.log(
+        `%carchive.count()%c same day, do nothing`,
+        "color: deeppink",
+        "color: inherit"
+      );
       return;
     }
     let tmp = day.toISOString();
@@ -131,32 +139,29 @@ class Archive {
     this.onupdate(this.tic++);
   }
 
-  // Expect radar = horus, time = 20130520-1900
-  // list(radar, time)
-  // Expect something like:
-  //    radar = px1000, day = Date(), hour = 19
+  // Expect something like radar = px1000, day = Date('2013-05-20'), hour = 19
   list(radar, day, hour) {
-    if (day == this.grid.day && hour == this.grid.hour) {
-      console.log("same day and hour, do nothing");
-      return;
-    }
-    let tmp = day.toISOString();
-    let ymd = tmp.slice(0, 10).replace(/-/g, "");
-    let hh = hour.toString().padStart(2, "0");
-    let time = `${ymd}-${hh}00`;
     console.log(
-      `%carchive.list()%c ${day} ${hour} -> ${time}`,
-      "color: hotpink",
+      `%carchive.list()%c   day = ${day}   hour = ${hour}`,
+      "color: deeppink",
       "color: inherit"
     );
-    let symbol = this.data.symbol;
+    if (day == this.grid.day && hour == this.grid.hour) {
+      console.log(
+        `%carchive.list()%c same day and hour, do nothing`,
+        "color: deeppink",
+        "color: inherit"
+      );
+      return;
+    }
     this.radar = radar;
     this.state.fileListUpdating = true;
     this.worker.postMessage({
       task: "list",
       name: radar,
-      time: time,
-      symbol: symbol,
+      day: day,
+      hour: hour,
+      symbol: this.data.symbol,
     });
     this.onupdate(this.tic++);
   }
