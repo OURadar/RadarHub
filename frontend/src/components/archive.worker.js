@@ -12,16 +12,18 @@ import { deg2rad, clamp } from "./common";
 
 let source = null;
 let radar;
-let data = {
-  hourlyCount: new Array(24).fill(0),
-  listDateTime: "20130520-1900",
-  fileList: [],
+let grid = {
+  hourlyAvailability: new Array(24).fill(0),
+  dateTimeString: "20130520-1900",
   fileListGrouped: {},
-  sweep: null,
-  symbol: "Z",
+  fileList: [],
   index: -1,
   hour: -1,
-  live: true,
+  day: -1,
+};
+let data = {
+  sweep: null,
+  symbol: "Z",
 };
 
 const sweepParser = new Parser()
@@ -82,10 +84,10 @@ function connect(newRadar) {
     payload.files.forEach((file) => {
       updateListWithFile(file);
     });
-    data.hourlyCount = payload.count;
+    grid.hourlyAvailability = payload.count;
     self.postMessage({
       type: "list",
-      payload: data,
+      payload: grid,
     });
   };
 
@@ -110,32 +112,34 @@ function disconnect() {
 function updateListWithFile(file) {
   const elements = file.split("-");
   const symbol = elements[4].split(".")[0];
-  if (symbol != data.symbol) {
+  if (symbol != grid.symbol) {
     return;
   }
   const scan = elements[3];
+  const s = elements[1];
+  const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
   const listHour = elements[2].slice(0, 2);
-  const listDateTime = `${elements[1]}-${listHour}00`;
-  //console.log(`${listDateTime} ${file} ->  ${scan}`);
-  if (data.listDateTime != listDateTime) {
-    data.fileList = [];
-    data.fileListGrouped = {};
-    data.listDateTime = listDateTime;
-    data.hour = parseInt(listHour);
-    console.log(`updateListWithFile()   new hour = ${data.hour}`);
+  const dateTimeString = `${elements[1]}-${listHour}00`;
+  if (grid.dateTimeString != dateTimeString) {
+    grid.fileList = [];
+    grid.fileListGrouped = {};
+    grid.dateTimeString = dateTimeString;
+    grid.hour = parseInt(listHour);
+    grid.day = new Date(day);
+    console.log(`updateListWithFile()   ${day} ${grid.hour}`);
   }
-  if (!(scan in data.fileListGrouped)) {
-    data.fileListGrouped[scan] = [];
+  if (!(scan in grid.fileListGrouped)) {
+    grid.fileListGrouped[scan] = [];
   }
-  const index = data.fileList.length;
-  data.fileList.push(file);
-  data.fileListGrouped[scan].push({ file: file, index: index });
+  const index = grid.fileList.length;
+  grid.fileList.push(file);
+  grid.fileListGrouped[scan].push({ file: file, index: index });
   let targetScan = "E4.0";
-  if (targetScan in data.fileListGrouped) {
-    data.index = data.fileListGrouped[targetScan].slice(-1)[0].index;
+  if (targetScan in grid.fileListGrouped) {
+    grid.index = grid.fileListGrouped[targetScan].slice(-1)[0].index;
   } else {
     // data.index = data.fileList.length ? data.fileList.length - 1 : -1;
-    data.index = -1;
+    grid.index = -1;
   }
 }
 
@@ -169,7 +173,7 @@ function month(radar, day) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          data.dailyAvailability = buffer;
+          grid.dailyAvailability = buffer;
           self.postMessage({ type: "month", payload: buffer });
         });
       else
@@ -192,7 +196,8 @@ function count(radar, day) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          self.postMessage({ type: "count", payload: buffer.count });
+          grid.hourlyAvailability = buffer.count;
+          self.postMessage({ type: "count", payload: grid.hourlyAvailability });
         });
       else
         response.text().then((error) => {
@@ -214,28 +219,28 @@ function list(radar, day, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          data.listDateTime = `${day}`;
-          data.hour = parseInt(day.slice(9, 11));
-          data.fileList = buffer.list;
-          data.fileListGrouped = {};
-          data.fileList.forEach((file, index) => {
+          grid.dateTimeString = `${day}`;
+          grid.hour = parseInt(day.slice(9, 11));
+          grid.fileList = buffer.list;
+          grid.fileListGrouped = {};
+          grid.fileList.forEach((file, index) => {
             let elements = file.split("-");
             let scanType = elements[3];
-            if (!(scanType in data.fileListGrouped)) {
-              data.fileListGrouped[scanType] = [];
+            if (!(scanType in grid.fileListGrouped)) {
+              grid.fileListGrouped[scanType] = [];
             }
-            data.fileListGrouped[scanType].push({ file: file, index: index });
+            grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
-          console.log(data.fileListGrouped);
+          console.log(grid.fileListGrouped);
           let scanType = "E4.0";
-          if (scanType in data.fileListGrouped) {
-            data.index = data.fileListGrouped[scanType].slice(-1)[0].index;
+          if (scanType in grid.fileListGrouped) {
+            grid.index = grid.fileListGrouped[scanType].slice(-1)[0].index;
           } else {
-            data.index = data.fileList.length ? data.fileList.length - 1 : -1;
+            grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
           }
           self.postMessage({
             type: "list",
-            payload: data,
+            payload: grid,
           });
         });
       else

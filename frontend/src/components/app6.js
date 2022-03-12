@@ -132,7 +132,7 @@ class App extends Component {
             sweep={this.archive.data.sweep}
             colors={this.state.colors}
             debug={this.props.debug}
-            showStats={true}
+            showStats={false}
             profileGL={this.props.profileGL}
             onOverlayLoaded={this.handleOverlayLoaded}
           />
@@ -151,7 +151,7 @@ class App extends Component {
                 sweep={this.archive.data.sweep}
                 colors={this.state.colors}
                 debug={this.props.debug}
-                showStats={true}
+                showStats={false}
                 profileGL={this.props.profileGL}
                 onOverlayLoaded={this.handleOverlayLoaded}
               />

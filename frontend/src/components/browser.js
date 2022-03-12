@@ -58,13 +58,14 @@ const createFileButtons = (list, index, load) => {
 };
 
 function Browser(props) {
-  const count = props.archive?.data.hourlyCount || new Array(24).fill(0);
-  const files = props.archive?.data.fileList || [];
-  const hour = props.archive?.data.hour;
-  const index = props.archive?.data.index;
+  const count = props.archive.grid.hourlyAvailability;
+  const files = props.archive.grid.fileList;
+  const day = props.archive.grid.day;
+  const hour = props.archive.grid.hour;
+  const index = props.archive.grid.index;
 
   const [radar, setRadar] = React.useState(props.radar);
-  const [day, setDay] = React.useState();
+  // const [day, setDay] = React.useState();
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
 
@@ -176,22 +177,27 @@ function Browser(props) {
   }, []);
 
   const setDayHour = (newDay, newHour) => {
+    console.log(`setDayHour()   newDay = ${newDay}   newHour = ${newHour}`);
     //console.log(`newDay = ${newDay}`);
-    let tmp = newDay.toISOString();
-    let y = parseInt(tmp.slice(0, 4));
-    if (y < 2012) {
-      console.log("No data prior to 2013");
-      return;
-    }
-    let ymd = tmp.slice(0, 10).replace(/-/g, "");
-    let hh = newHour.toString().padStart(2, "0");
-    if (day != newDay) {
-      props.archive.count(radar, ymd);
-    }
+    // let tmp = newDay.toISOString();
+    // let y = parseInt(tmp.slice(0, 4));
+    // if (y < 2012) {
+    //   console.log("No data prior to 2013");
+    //   return;
+    // }
+    // let ymd = tmp.slice(0, 10).replace(/-/g, "");
+    // let hh = newHour.toString().padStart(2, "0");
+    // if (day != newDay) {
+    //   props.archive.count(radar, ymd);
+    // }
+    props.archive.count(radar, newDay);
+    // if (day != newDay || hour != newHour) {
+    //   props.archive.list(radar, `${ymd}-${hh}00`);
+    // }
     if (day != newDay || hour != newHour) {
-      props.archive.list(radar, `${ymd}-${hh}00`);
+      props.archive.list(radar, newDay, newHour);
     }
-    setDay(newDay);
+    // setDay(newDay);
     // setHour(newHour);
     // console.log(
     //   `Browser.setDayHour() files.length = ${files.length}   index = ${index}   hour = ${hour}`
@@ -233,8 +239,8 @@ function Browser(props) {
             renderDay={(day, _value, DayComponentProps) => {
               let key = day.toISOString().slice(0, 10);
               const hasData =
-                key in props.archive.data.dailyAvailability &&
-                props.archive.data.dailyAvailability[key] > 0;
+                key in props.archive.grid.dailyAvailability &&
+                props.archive.grid.dailyAvailability[key] > 0;
               return (
                 <Badge
                   key={key}
