@@ -20,6 +20,7 @@ let data = {
   sweep: null,
   symbol: "Z",
   index: -1,
+  hour: -1,
   live: true,
 };
 
@@ -117,6 +118,8 @@ function updateListWithFile(file) {
     data.fileList = [];
     data.fileListGrouped = {};
     data.listDateTime = listDateTime;
+    data.hour = parseInt(listHour);
+    console.log(`updateListWithFile()  hour = ${data.hour}`);
   }
   if (!(scan in data.fileListGrouped)) {
     data.fileListGrouped[scan] = [];
@@ -208,6 +211,9 @@ function list(radar, day, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
+          console.log(`list() day = ${day}`);
+          // const listHour = day.split("-")[2].slice(0, 2);
+
           data.listDateTime = `${day}`;
           data.fileList = buffer.list;
           data.fileListGrouped = {};

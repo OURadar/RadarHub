@@ -60,14 +60,16 @@ const createFileButtons = (list, index, load) => {
 function Browser(props) {
   const count = props.archive?.data.hourlyCount || new Array(24).fill(0);
   const files = props.archive?.data.fileList || [];
+  const hour = props.archive?.data.hour;
   const index = props.archive?.data.index;
 
   const [radar, setRadar] = React.useState(props.radar);
   const [day, setDay] = React.useState();
-  const [hour, setHour] = React.useState();
+  // const [hour, setHour] = React.useState();
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
 
+  // console.log(`hour = ${hour}`);
   const setElements = (elements) => {
     if (
       elements == null ||
@@ -189,7 +191,7 @@ function Browser(props) {
       props.archive.list(radar, `${ymd}-${hh}00`);
     }
     setDay(newDay);
-    setHour(newHour);
+    // setHour(newHour);
     // console.log(
     //   `Browser.setDayHour() files.length = ${files.length}   index = ${index}   hour = ${hour}`
     // );

@@ -24,6 +24,7 @@ class App extends Component {
       theme: makeTheme(),
       sweep: null,
       index: -1,
+      hour: -1,
       time: new Date("2013-05-20T19:00"),
     };
     this.isMobile = detectMob();
@@ -31,9 +32,10 @@ class App extends Component {
     this.archive.onupdate = (_dontcare) => {
       this.forceUpdate();
     };
-    this.archive.onlist = (index) => {
+    this.archive.onlist = (hour, index) => {
       if (props.autoLoad && index > -1) {
         if (this.overlayLoaded && this.state.index != index) {
+          this.state.hour = hour;
           this.state.index = index;
           this.archive.load(index);
         } else {
