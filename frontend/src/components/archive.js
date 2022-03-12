@@ -14,17 +14,18 @@ class Archive {
       listDateTime: "20130520-1900",
       fileList: [],
       fileListGrouped: {},
-      autoIndex: -1,
       sweep: null,
       symbol: "Z",
+      index: -1,
     };
     this.state = {
+      liveUpdate: true,
       dailyAvailabilityUpdating: false,
       hourlyCountUpdating: false,
       fileListUpdating: true,
       resetLoadCount: true,
       loadCountSinceList: 0,
-      index: -1,
+      busyLoading: false,
     };
     this.tic = 0;
     this.timer = null;
@@ -39,18 +40,25 @@ class Archive {
         this.showMessage(payload, 2500);
       } else if (type == "load") {
         this.data.sweep = payload;
+        this.state.busyLoading = false;
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
-        this.data = payload;
+        this.data.hourlyCount = payload.hourlyCount;
+        this.data.listDateTime = payload.listDateTime;
+        this.data.fileList = payload.fileList;
+        this.data.fileListGrouped = payload.fileListGrouped;
         this.state.fileListUpdating = false;
-        console.log(`worker.onmessage() ${this.data.autoIndex}`);
+        // console.log(
+        //   `%cworker.onmessage()%c  listDateTime = ${this.data.listDateTime}   index = ${this.data.index}`,
+        //   "color: lightseagreen",
+        //   "color: inherit"
+        // );
         if (this.state.resetLoadCount) {
           this.state.loadCountSinceList = 0;
-          this.state.index = -1;
-          this.onlist(payload.autoIndex);
+          this.onlist(payload.index);
         } else {
           this.state.resetLoadCount = true;
-          this.onlist(this.state.index);
+          this.onlist(this.data.index);
         }
       } else if (type == "count") {
         this.data.hourlyCount = payload;
@@ -61,7 +69,8 @@ class Archive {
       } else if (type == "reset") {
         this.showMessage(payload);
         this.data.sweep = null;
-        this.state.index = -1;
+        this.data.index = -1;
+        this.state.busyLoading = false;
       }
       this.onupdate(this.tic++);
     };
@@ -105,7 +114,6 @@ class Archive {
   list(radar, time) {
     let symbol = this.data.symbol;
     this.radar = radar;
-    this.data.listDateTime = time;
     this.state.fileListUpdating = true;
     this.worker.postMessage({
       task: "list",
@@ -117,6 +125,7 @@ class Archive {
   }
 
   load(arg) {
+    this.state.busyLoading = true;
     if (Number.isInteger(arg)) {
       this.loadByIndex(arg);
     } else {
@@ -152,6 +161,14 @@ class Archive {
     this.data.symbol = symbol;
     this.state.resetLoadCount = false;
     this.list(this.radar, this.data.listDateTime);
+  }
+
+  disableLiveUpdate() {
+    this.worker.postMessage({ task: "disconnect" });
+  }
+
+  toggleLiveUpdate() {
+    this.worker.postMessage({ task: "toggle" });
   }
 }
 

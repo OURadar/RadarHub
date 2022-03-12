@@ -23,6 +23,7 @@ class App extends Component {
       colors: colorDict(),
       theme: makeTheme(),
       sweep: null,
+      index: -1,
       time: new Date("2013-05-20T19:00"),
     };
     this.isMobile = detectMob();
@@ -32,7 +33,8 @@ class App extends Component {
     };
     this.archive.onlist = (index) => {
       if (props.autoLoad && index > -1) {
-        if (this.overlayLoaded) {
+        if (this.overlayLoaded && this.state.index != index) {
+          this.state.index = index;
           this.archive.load(index);
         } else {
           this.pendingLoadIndex = index;
@@ -51,6 +53,8 @@ class App extends Component {
       const styles = ["Z", "V", "W", "D", "P", "R"];
       if (styles.indexOf(symbol) != -1) {
         this.archive.switch(symbol);
+      } else if (symbol == "L") {
+        this.archive.toggleLiveUpdate();
       }
     });
   }

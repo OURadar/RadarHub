@@ -13,14 +13,14 @@ import { deg2rad, clamp } from "./common";
 let source = null;
 let radar;
 let data = {
-  dailyAvailability: {},
   hourlyCount: new Array(24).fill(0),
   listDateTime: "20130520-1900",
   fileList: [],
   fileListGrouped: {},
-  fileListUpdating: true,
-  autoIndex: -1,
+  sweep: null,
   symbol: "Z",
+  index: -1,
+  live: true,
 };
 
 const sweepParser = new Parser()
@@ -59,15 +59,20 @@ self.onmessage = ({ data: { task, name, day, time, symbol } }) => {
     dummy();
   } else if (task == "connect") {
     connect(name);
+  } else if (task == "disconnect") {
+    disconnect();
+  } else if (task == "toggle") {
+    console.log(`source.readyState = ${source.readyState}`);
+    if (source.readyState == 2) {
+      connect(radar);
+    } else {
+      disconnect();
+    }
   }
 };
 
 function connect(newRadar) {
   radar = newRadar;
-  self.postMessage({
-    type: "message",
-    payload: `Listening for ${radar} ...`,
-  });
 
   source = new EventSource("/events/");
 
@@ -82,6 +87,20 @@ function connect(newRadar) {
       payload: data,
     });
   };
+
+  self.postMessage({
+    type: "message",
+    payload: `Listening for ${radar} ...`,
+  });
+}
+
+function disconnect() {
+  console.log("disconnecting live");
+  source.close();
+  self.postMessage({
+    type: "message",
+    payload: `Live update disabled`,
+  });
 }
 
 function updateListWithFile(file) {
@@ -93,7 +112,7 @@ function updateListWithFile(file) {
   const scan = elements[3];
   const listHour = elements[2].slice(0, 2);
   const listDateTime = `${elements[1]}-${listHour}00`;
-  console.log(`${listDateTime} ${file} ->  ${scan}`);
+  //console.log(`${listDateTime} ${file} ->  ${scan}`);
   if (data.listDateTime != listDateTime) {
     data.fileList = [];
     data.fileListGrouped = {};
@@ -107,9 +126,10 @@ function updateListWithFile(file) {
   data.fileListGrouped[scan].push({ file: file, index: index });
   let targetScan = "E4.0";
   if (targetScan in data.fileListGrouped) {
-    data.autoIndex = data.fileListGrouped[targetScan].slice(-1)[0].index;
+    data.index = data.fileListGrouped[targetScan].slice(-1)[0].index;
   } else {
-    data.autoIndex = data.fileList.length ? data.fileList.length - 1 : -1;
+    // data.index = data.fileList.length ? data.fileList.length - 1 : -1;
+    data.index = -1;
   }
 }
 
@@ -143,6 +163,7 @@ function month(radar, day) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
+          data.dailyAvailability = buffer;
           self.postMessage({ type: "month", payload: buffer });
         });
       else
@@ -187,6 +208,7 @@ function list(radar, day, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
+          data.listDateTime = `${day}`;
           data.fileList = buffer.list;
           data.fileListGrouped = {};
           data.fileList.forEach((file, index) => {
@@ -200,11 +222,9 @@ function list(radar, day, symbol) {
           console.log(data.fileListGrouped);
           let scanType = "E4.0";
           if (scanType in data.fileListGrouped) {
-            data.autoIndex = data.fileListGrouped[scanType].slice(-1)[0].index;
+            data.index = data.fileListGrouped[scanType].slice(-1)[0].index;
           } else {
-            data.autoIndex = data.fileList.length
-              ? data.fileList.length - 1
-              : -1;
+            data.index = data.fileList.length ? data.fileList.length - 1 : -1;
           }
           self.postMessage({
             type: "list",
