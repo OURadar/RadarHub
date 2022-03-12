@@ -77,10 +77,9 @@ def monitor():
             if len(delta):
                 payload = {
                     'files':  [file.name for file in delta],
-                    'hourly_count': [int(c) for c in hourly_count.split(',')],
+                    'count': [int(c) for c in hourly_count.split(',')],
                     'time': datetime.datetime.utcnow().isoformat()
                 }
-                payload = json.dumps(payload)
                 send_event('sse', 'message', payload)
                 files = latest_files
                 tic = 0

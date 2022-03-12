@@ -19,7 +19,7 @@ from common import color_name_value
 
 # My additional parameters
 VERBOSE = 0
-SIMULATE = True
+SIMULATE = False
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

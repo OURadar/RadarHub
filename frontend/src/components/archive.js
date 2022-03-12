@@ -147,8 +147,8 @@ class Archive {
 
   loadByName(name = "PX-20130520-195944-E2.6-Z.nc") {
     this.message = `Loading ${name} ...`;
-    this.worker.postMessage({ task: "load", name: name });
     this.state.loadCountSinceList++;
+    this.worker.postMessage({ task: "load", name: name });
     this.onupdate(this.tic++);
   }
 

@@ -96,7 +96,10 @@ function connect(newRadar) {
 }
 
 function disconnect() {
-  console.log("disconnecting live");
+  if (source.readyState == 2) {
+    return;
+  }
+  console.log("Disconnecting live update ...");
   source.close();
   self.postMessage({
     type: "message",
@@ -119,7 +122,7 @@ function updateListWithFile(file) {
     data.fileListGrouped = {};
     data.listDateTime = listDateTime;
     data.hour = parseInt(listHour);
-    console.log(`updateListWithFile()  hour = ${data.hour}`);
+    console.log(`updateListWithFile()   new hour = ${data.hour}`);
   }
   if (!(scan in data.fileListGrouped)) {
     data.fileListGrouped[scan] = [];
@@ -211,10 +214,8 @@ function list(radar, day, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          console.log(`list() day = ${day}`);
-          // const listHour = day.split("-")[2].slice(0, 2);
-
           data.listDateTime = `${day}`;
+          data.hour = parseInt(day.slice(9, 11));
           data.fileList = buffer.list;
           data.fileListGrouped = {};
           data.fileList.forEach((file, index) => {

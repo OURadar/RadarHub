@@ -65,7 +65,6 @@ function Browser(props) {
 
   const [radar, setRadar] = React.useState(props.radar);
   const [day, setDay] = React.useState();
-  // const [hour, setHour] = React.useState();
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
 
@@ -80,11 +79,13 @@ function Browser(props) {
       return;
     }
     // console.log(
-    //   `Browser.setElements() ${props.archive.data.loadCountSinceList} ${index}`
+    //   `Browser.setElements() ${props.archive.state.loadCountSinceList} ${index}`
     // );
-    if (props.archive.data.loadCountSinceList == 1) {
+    if (props.archive.state.loadCountSinceList == 1) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
+    } else if (props.archive.state.loadCountSinceList > 1) {
+      props.archive.disableLiveUpdate();
     }
   };
 
