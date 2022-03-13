@@ -17,13 +17,13 @@ let grid = {
   dateTimeString: "20130520-1900",
   fileListGrouped: {},
   fileList: [],
+  symbol: "Z",
   index: -1,
   hour: -1,
   day: -1,
 };
 let data = {
   sweep: null,
-  symbol: "Z",
 };
 
 const sweepParser = new Parser()
@@ -82,6 +82,11 @@ function connect(newRadar) {
   source.onmessage = (event) => {
     const payload = JSON.parse(event.data);
     payload.files.forEach((file) => {
+      // console.log(
+      //   `%csource.onmessage()%c ${file}`,
+      //   "color: lightseagreen",
+      //   "color: inherit"
+      // );
       updateListWithFile(file);
     });
     grid.hourlyAvailability = payload.count;
@@ -118,6 +123,7 @@ function updateListWithFile(file) {
   const scan = elements[3];
   const s = elements[1];
   const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
+  // console.log(`updateListWithFile() ${file} ${day}`);
   const listHour = elements[2].slice(0, 2);
   const dateTimeString = `${elements[1]}-${listHour}00`;
   if (grid.dateTimeString != dateTimeString) {
@@ -125,8 +131,12 @@ function updateListWithFile(file) {
     grid.fileListGrouped = {};
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
-    grid.day = new Date(day);
-    console.log(`updateListWithFile()   ${day} ${grid.hour}`);
+    grid.day = Date(day);
+    console.log(
+      `%carchive.worker.updateListWithFile()%c   ${day} ${grid.hour}`,
+      "color: lightseagreen",
+      "color: inherit"
+    );
   }
   if (!(scan in grid.fileListGrouped)) {
     grid.fileListGrouped[scan] = [];
@@ -193,11 +203,19 @@ function count(radar, day) {
     "color: lightseagreen",
     "color: inherit"
   );
-  const url = `/data/count/${radar}/${day}/`;
+  let tmp = day.toISOString();
+  let y = parseInt(tmp.slice(0, 4));
+  if (y < 2012) {
+    console.log("No data prior to 2013");
+    return;
+  }
+  let dayString = tmp.slice(0, 10).replace(/-/g, "");
+  const url = `/data/count/${radar}/${dayString}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
+          grid.day = day;
           grid.hourlyAvailability = buffer.count;
           self.postMessage({ type: "count", payload: grid.hourlyAvailability });
         });

@@ -34,6 +34,11 @@ class App extends Component {
     };
     this.archive.onlist = (hour, index) => {
       if (props.autoLoad && index > -1) {
+        // console.log(
+        //   `%capp.archive.onlist()%c ${hour} ${index} ${this.archive.grid.index}`,
+        //   "color: deeppink",
+        //   "color: inherit"
+        // );
         if (this.overlayLoaded && this.state.index != index) {
           this.state.hour = hour;
           this.state.index = index;

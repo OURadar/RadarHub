@@ -55,9 +55,9 @@ class Archive {
         this.grid.fileListGrouped = payload.fileListGrouped;
         this.state.fileListUpdating = false;
         // console.log(
-        //   `%cworker.onmessage()%c  dateTimeString = ${this.data.dateTimeString}`
-        //    + `   hour = ${this.data.hour}   index = ${this.data.index}`,
-        //   "color: lightseagreen",
+        //   `%archive.onmessage()%c  dateTimeString = ${this.grid.dateTimeString}` +
+        //     `   hour = ${this.grid.hour}   index = ${this.grid.index}`,
+        //   "color: deeppink",
         //   "color: inherit"
         // );
         if (this.state.resetLoadCount) {
@@ -127,15 +127,8 @@ class Archive {
       );
       return;
     }
-    let tmp = day.toISOString();
-    let y = parseInt(tmp.slice(0, 4));
-    if (y < 2012) {
-      console.log("No data prior to 2013");
-      return;
-    }
-    let dayString = tmp.slice(0, 10).replace(/-/g, "");
     this.grid.hourlyAvailabilityUpdating = true;
-    this.worker.postMessage({ task: "count", name: radar, day: dayString });
+    this.worker.postMessage({ task: "count", name: radar, day: day });
     this.onupdate(this.tic++);
   }
 
