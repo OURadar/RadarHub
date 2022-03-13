@@ -5,9 +5,11 @@
 //  Created by Boonleng Cheong
 //
 
+import React from "react";
 import * as common from "./common";
 import { GLView } from "./glview";
 import { Overlay } from "./overlay";
+import { Caption } from "./caption";
 import { Colorbar } from "./colorbar";
 import { mat4, vec3, quat } from "gl-matrix";
 //
@@ -247,6 +249,18 @@ class Product extends GLView {
       ];
       this.statsWidget = createStatsWidget(drawCalls);
     }
+    // this.captionBox = document.createElement("div");
+    // this.captionBox.classList.add("captionBox");
+    // this.mount.appendChild(this.captionBox);
+  }
+
+  render() {
+    return (
+      <div>
+        <div className="fullHeight" ref={(x) => (this.mount = x)} />
+        <Caption message="caption" />
+      </div>
+    );
   }
 
   updateData() {

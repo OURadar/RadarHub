@@ -195,12 +195,16 @@ class Day(models.Model):
         return self.date.strftime('%Y-%m-%d')
 
     def last_hour_range(self):
+        if self.date is None:
+            return None
         day = self.day_string()
         hour = self.last_hour()
         day_hour = f'{day} {hour:02d}'
         return [f'{day_hour}:00:00Z', f'{day_hour}:59:59.9Z']
 
     def day_range(self):
+        if self.date is None:
+            return None
         day = self.day_string()
         first = self.first_hour()
         last = self.last_hour()
