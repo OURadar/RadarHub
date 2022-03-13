@@ -7,11 +7,13 @@
 
 import React from "react";
 import * as common from "./common";
+import { mat4, vec3, quat } from "gl-matrix";
+
 import { GLView } from "./glview";
 import { Overlay } from "./overlay";
-import { Caption } from "./caption";
 import { Colorbar } from "./colorbar";
-import { mat4, vec3, quat } from "gl-matrix";
+import { Caption } from "./caption";
+import { Title } from "./title";
 //
 // Use as <Product data={input} />
 //
@@ -249,16 +251,15 @@ class Product extends GLView {
       ];
       this.statsWidget = createStatsWidget(drawCalls);
     }
-    // this.captionBox = document.createElement("div");
-    // this.captionBox.classList.add("captionBox");
-    // this.mount.appendChild(this.captionBox);
   }
 
   render() {
+    const titleString = this.props.sweep?.titleString;
     return (
-      <div>
+      <div className="fullHeight">
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
-        <Caption message="caption" />
+        <Caption string="caption" />
+        <Title string={titleString} />
       </div>
     );
   }

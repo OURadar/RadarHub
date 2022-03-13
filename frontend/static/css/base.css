@@ -359,12 +359,24 @@ h3 {
   overflow-y: scroll;
 }
 
-.captionBox {
+.floatText {
   display: block;
   position: absolute;
+}
+
+#caption {
   color: var(--green);
   font-size: 20px;
   font-weight: 500;
   bottom: 20px;
   left: 20px;
+}
+
+#title {
+  color: var(--system-foreground);
+  font-size: 36px;
+  font-weight: 500;
+  text-align: right;
+  bottom: 20px;
+  right: 20px;
 }

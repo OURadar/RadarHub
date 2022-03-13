@@ -1,6 +1,6 @@
 import React from "react";
 
-function Caption(props) {
+function Title(props) {
   return (
     <div id={props.id} className="floatText">
       {props.string}
@@ -8,9 +8,9 @@ function Caption(props) {
   );
 }
 
-Caption.defaultProps = {
-  id: "caption",
-  string: "caption-string",
+Title.defaultProps = {
+  id: "title",
+  string: "title-string",
 };
 
-export { Caption };
+export { Title };

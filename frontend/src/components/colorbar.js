@@ -105,15 +105,16 @@ class Colorbar {
     const scale = this.scale;
     const context = this.context;
 
-    context.lineWidth = theme.width;
-    context.font = `${32 * scale}px LabelFont`;
-    let meas = context.measureText(configs.time);
-    let x = this.canvas.width - meas.width - 50 * scale;
-    let y = this.canvas.height - meas.actualBoundingBoxDescent - 50 * scale;
-    context.fillStyle = theme.face;
-    context.strokeStyle = theme.stroke;
-    context.strokeText(configs.time, x, y);
-    context.fillText(configs.time, x, y);
+    // TItle
+    // context.lineWidth = theme.width;
+    // context.font = `${32 * scale}px LabelFont`;
+    // let meas = context.measureText(configs.time);
+    // let x = this.canvas.width - meas.width - 50 * scale;
+    // let y = this.canvas.height - meas.actualBoundingBoxDescent - 50 * scale;
+    // context.fillStyle = theme.face;
+    // context.strokeStyle = theme.stroke;
+    // context.strokeText(configs.time, x, y);
+    // context.fillText(configs.time, x, y);
 
     // Colorbar dimension: 20 x 255
     const yscale = Math.round(2.0 * scale);
