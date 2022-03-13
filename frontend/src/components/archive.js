@@ -28,10 +28,10 @@ class Archive {
       hourlyAvailabilityUpdating: false,
       fileListUpdating: true,
       switchingProduct: false,
-      loadCountSinceList: 0,
-      busyLoading: false,
+      sweepLoading: false,
+      loadCount: 0,
+      tic: 0,
     };
-    this.tic = 0;
     this.timer = null;
     this.message = "";
     this.response = "";
@@ -44,7 +44,7 @@ class Archive {
         this.showMessage(payload, 2500);
       } else if (type == "load") {
         this.data.sweep = payload;
-        this.state.busyLoading = false;
+        this.state.sweepLoading = false;
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
         this.state.fileListUpdating = false;
@@ -54,12 +54,12 @@ class Archive {
         //   "color: deeppink",
         //   "color: inherit"
         // );
-        let oldIndex = this.grid.index;
+        let index = this.grid.index;
         this.grid = payload;
         if (this.state.liveUpdate) {
-          if (oldIndex != this.grid.index) {
-            this.state.loadCountSinceList = 0;
-            this.load(payload.index);
+          if (index != this.grid.index) {
+            this.state.loadCount = 0;
+            this.load(this.grid.index);
           } else if (this.state.switchingProduct) {
             this.state.switchingProduct = false;
             this.load(this.grid.index);
@@ -67,7 +67,7 @@ class Archive {
         }
       } else if (type == "count") {
         this.grid.hourlyAvailability = payload;
-        this.grid.hourlyAvailabilityUpdating = false;
+        this.state.hourlyAvailabilityUpdating = false;
       } else if (type == "month") {
         this.grid.dailyAvailability = payload;
         this.state.dailyAvailabilityUpdating = false;
@@ -75,9 +75,9 @@ class Archive {
         this.showMessage(payload);
         this.data.sweep = null;
         this.grid.index = -1;
-        this.state.busyLoading = false;
+        this.state.sweepLoading = false;
       }
-      this.onupdate(this.tic++);
+      this.onupdate(this.state.tic++);
     };
 
     // console.log(this.worker.data);
@@ -98,7 +98,7 @@ class Archive {
       if (this.message == message) {
         this.message = "";
         this.timer = null;
-        this.onupdate(this.tic++);
+        this.onupdate(this.state.tic++);
       }
     }, duration);
   }
@@ -107,7 +107,7 @@ class Archive {
   month(radar, day) {
     this.state.dailyAvailabilityUpdating = true;
     this.worker.postMessage({ task: "month", name: radar, day: day });
-    this.onupdate(this.tic++);
+    this.onupdate(this.state.tic++);
   }
 
   // Expect something like radar = raxpol, day = Date('2013-05-20')
@@ -125,9 +125,9 @@ class Archive {
       );
       return;
     }
-    this.grid.hourlyAvailabilityUpdating = true;
+    this.state.hourlyAvailabilityUpdating = true;
     this.worker.postMessage({ task: "count", name: radar, day: day });
-    this.onupdate(this.tic++);
+    this.onupdate(this.state.tic++);
   }
 
   // Expect something like radar = px1000, day = Date('2013-05-20'), hour = 19
@@ -158,11 +158,11 @@ class Archive {
       hour: hour,
       symbol: symbol,
     });
-    this.onupdate(this.tic++);
+    this.onupdate(this.state.tic++);
   }
 
   load(arg) {
-    this.state.busyLoading = true;
+    this.state.sweepLoading = true;
     if (Number.isInteger(arg)) {
       this.loadByIndex(arg);
     } else {
@@ -184,9 +184,9 @@ class Archive {
 
   loadByName(name = "PX-20130520-195944-E2.6-Z.nc") {
     this.message = `Loading ${name} ...`;
-    this.state.loadCountSinceList++;
+    this.state.loadCount++;
     this.worker.postMessage({ task: "load", name: name });
-    this.onupdate(this.tic++);
+    this.onupdate(this.state.tic++);
   }
 
   switch(symbol = "Z") {

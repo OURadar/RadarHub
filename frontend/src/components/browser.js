@@ -78,14 +78,11 @@ function Browser(props) {
     ) {
       return;
     }
-    // Expect loadCountSinceList = 1 during live update
-    // console.log(
-    //   `Browser.setElements() ${props.archive.state.loadCountSinceList} ${index}`
-    // );
-    if (props.archive.state.loadCountSinceList == 1) {
+    // Expect loadCount = 1 during live update
+    if (props.archive.state.loadCount == 1) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
-    } else if (props.archive.state.loadCountSinceList > 1) {
+    } else if (props.archive.state.loadCount > 1) {
       props.archive.disableLiveUpdate();
     }
   };
