@@ -65,7 +65,6 @@ function Browser(props) {
   const index = props.archive.grid.index;
 
   const [radar, setRadar] = React.useState(props.radar);
-  // const [day, setDay] = React.useState();
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
 
@@ -177,30 +176,14 @@ function Browser(props) {
   }, []);
 
   const setDayHour = (newDay, newHour) => {
+    let symbol = props.archive.grid.symbol;
     console.log(
-      `%cbrowser.setDayHour()%c   newDay = ${newDay}   newHour = ${newHour}`,
+      `%cbrowser.setDayHour()%c   newDay = ${newDay}   newHour = ${newHour}   symbol = ${symbol}`,
       "color: deeppink",
       "color: inherit"
     );
-    //console.log(`newDay = ${newDay}`);
-    // let tmp = newDay.toISOString();
-    // let y = parseInt(tmp.slice(0, 4));
-    // if (y < 2012) {
-    //   console.log("No data prior to 2013");
-    //   return;
-    // }
-    // let ymd = tmp.slice(0, 10).replace(/-/g, "");
-    // let hh = newHour.toString().padStart(2, "0");
-    // if (day != newDay) {
-    //   props.archive.count(radar, ymd);
-    // }
     props.archive.count(radar, newDay);
-    props.archive.list(radar, newDay, newHour);
-    // setDay(newDay);
-    // setHour(newHour);
-    // console.log(
-    //   `Browser.setDayHour() files.length = ${files.length}   index = ${index}   hour = ${hour}`
-    // );
+    props.archive.list(radar, newDay, newHour, symbol);
   };
 
   const getMonthTable = (newMonth) => {

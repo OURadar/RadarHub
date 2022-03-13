@@ -14,13 +14,13 @@ class Archive {
       dateTimeString: "20130520-1900",
       fileListGrouped: {},
       fileList: [],
+      symbol: "Z",
       index: -1,
       hour: -1,
       day: new Date("2013/05/20"),
     };
     this.data = {
       sweep: null,
-      symbol: "Z",
     };
     this.state = {
       liveUpdate: true,
@@ -47,12 +47,7 @@ class Archive {
         this.state.busyLoading = false;
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
-        this.grid.hourlyAvailability = payload.hourlyAvailability;
-        this.grid.dateTimeString = payload.dateTimeString;
-        this.grid.day = payload.day;
-        this.grid.hour = payload.hour;
-        this.grid.fileList = payload.fileList;
-        this.grid.fileListGrouped = payload.fileListGrouped;
+        this.grid = payload;
         this.state.fileListUpdating = false;
         // console.log(
         //   `%archive.onmessage()%c  dateTimeString = ${this.grid.dateTimeString}` +
@@ -60,12 +55,21 @@ class Archive {
         //   "color: deeppink",
         //   "color: inherit"
         // );
-        if (this.state.resetLoadCount) {
-          this.state.loadCountSinceList = 0;
-          this.onlist(payload.hour, payload.index);
-        } else {
-          this.state.resetLoadCount = true;
-          this.onlist(this.grid.hour, this.grid.index);
+        // if (this.state.resetLoadCount) {
+        //   this.state.loadCountSinceList = 0;
+        //   this.onlist(payload.hour, payload.index);
+        // } else {
+        //   this.state.resetLoadCount = true;
+        //   this.onlist(this.grid.hour, this.grid.index);
+        // }
+        if (this.state.liveUpdate) {
+          if (this.state.resetLoadCount) {
+            this.state.loadCountSinceList = 0;
+            this.load(payload.index);
+          } else {
+            this.state.resetLoadCount = true;
+            this.load(this.grid.index);
+          }
         }
       } else if (type == "count") {
         this.grid.hourlyAvailability = payload;
@@ -133,15 +137,19 @@ class Archive {
   }
 
   // Expect something like radar = px1000, day = Date('2013-05-20'), hour = 19
-  list(radar, day, hour) {
+  list(radar, day, hour, symbol) {
     console.log(
-      `%carchive.list()%c   day = ${day}   hour = ${hour}`,
+      `%carchive.list()%c   day = ${day}   hour = ${hour}   symbol = ${symbol} / ${this.grid.symbol}`,
       "color: deeppink",
       "color: inherit"
     );
-    if (day == this.grid.day && hour == this.grid.hour) {
+    if (
+      day == this.grid.day &&
+      hour == this.grid.hour &&
+      symbol == this.grid.symbol
+    ) {
       console.log(
-        `%carchive.list()%c same day and hour, do nothing`,
+        `%carchive.list()%c same day, hour & symbol, do nothing`,
         "color: deeppink",
         "color: inherit"
       );
@@ -154,7 +162,7 @@ class Archive {
       name: radar,
       day: day,
       hour: hour,
-      symbol: this.data.symbol,
+      symbol: symbol,
     });
     this.onupdate(this.tic++);
   }
@@ -193,9 +201,8 @@ class Archive {
       console.log("No change in symbol");
       return;
     }
-    this.data.symbol = symbol;
     this.state.resetLoadCount = false;
-    this.list(this.radar, this.grid.dateTimeString);
+    this.list(this.radar, this.grid.day, this.grid.hour, symbol);
   }
 
   disableLiveUpdate() {

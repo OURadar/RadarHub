@@ -23,8 +23,6 @@ class App extends Component {
       colors: colorDict(),
       theme: makeTheme(),
       sweep: null,
-      index: -1,
-      hour: -1,
       time: new Date("2013-05-20T19:00"),
     };
     this.isMobile = detectMob();
@@ -32,22 +30,20 @@ class App extends Component {
     this.archive.onupdate = (_dontcare) => {
       this.forceUpdate();
     };
-    this.archive.onlist = (hour, index) => {
-      if (props.autoLoad && index > -1) {
-        // console.log(
-        //   `%capp.archive.onlist()%c ${hour} ${index} ${this.archive.grid.index}`,
-        //   "color: deeppink",
-        //   "color: inherit"
-        // );
-        if (this.overlayLoaded && this.state.index != index) {
-          this.state.hour = hour;
-          this.state.index = index;
-          this.archive.load(index);
-        } else {
-          this.pendingLoadIndex = index;
-        }
-      }
-    };
+    // this.archive.onlist = (hour, index) => {
+    //   if (props.autoLoad && index > -1) {
+    //     console.log(
+    //       `%capp.archive.onlist()%c ${hour} ${index} ${this.archive.grid.index}`,
+    //       "color: deeppink",
+    //       "color: inherit"
+    //     );
+    //     if (this.overlayLoaded && this.archive.grid.index != index) {
+    //       this.archive.load(index);
+    //     } else {
+    //       this.pendingLoadIndex = index;
+    //     }
+    //   }
+    // };
     // console.log(props);
     this.overlayLoaded = false;
     this.pendingLoadIndex = -1;
@@ -175,10 +171,10 @@ class App extends Component {
       `App6.handleOverlayLoaded()  pendingLoadIndex = ${this.pendingLoadIndex}`
     );
     this.overlayLoaded = true;
-    if (this.pendingLoadIndex > -1) {
-      this.archive.load(this.pendingLoadIndex);
-      this.pendingLoadIndex = -1;
-    }
+    // if (this.pendingLoadIndex > -1) {
+    //   this.archive.load(this.pendingLoadIndex);
+    //   this.pendingLoadIndex = -1;
+    // }
   }
 }
 

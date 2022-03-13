@@ -246,6 +246,7 @@ function list(radar, day, hour, symbol) {
           grid.dateTimeString = dateTimeString;
           grid.day = day;
           grid.hour = hour;
+          grid.symbol = symbol;
           grid.fileList = buffer.list;
           grid.fileListGrouped = {};
           grid.fileList.forEach((file, index) => {
