@@ -186,8 +186,9 @@ def process(file):
                         file.save()
                     k += 1
             break
-        except:
-            logger.warning(f'Failed opening file {archive}   j = {j}')
+        except Exception as e:
+            logger.error(f'Failed opening file {archive}   j = {j}')
+            logger.error(f'Exception: {e}')
             time.sleep(10.0)
             j += 1
 
