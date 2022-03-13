@@ -25,6 +25,7 @@ class Product extends GLView {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
     this.colorbar = new Colorbar();
+    this.geometry.dashport.y = 100;
     this.geometry.dashport.width = this.colorbar.canvas.width;
     this.geometry.dashport.height = this.colorbar.canvas.height;
     this.offset = (Date.now() % 86400000) / 5000;
@@ -32,10 +33,12 @@ class Product extends GLView {
       ...this.state,
       spin: false,
       useEuler: true,
+      ageString: "",
+      titleString: "",
     };
-
     this.labelFaceColor = this.props.colors.label.face;
     this.assets = {
+      age: 0,
       time: 0,
       index: 0.5 / 6,
       symbol: "Z",
@@ -67,6 +70,9 @@ class Product extends GLView {
       this.loadDashboard();
     });
     this.overlay.onload = props.onOverlayLoaded;
+    this.timer = setInterval(() => {
+      this.updateAge();
+    }, 1000);
   }
 
   static defaultProps = {
@@ -254,12 +260,11 @@ class Product extends GLView {
   }
 
   render() {
-    const titleString = this.props.sweep?.titleString;
     return (
       <div className="fullHeight">
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
-        <Caption string="caption" />
-        <Title string={titleString} />
+        <Caption string={this.state.ageString} />
+        <Title string={this.state.titleString} />
       </div>
     );
   }
@@ -276,6 +281,7 @@ class Product extends GLView {
       this.assets.elements?.destroy();
       this.assets.elements = null;
       this.assets.time = 0;
+      this.assets.age = 0;
       return;
     }
     // Could update this.geometry.origin
@@ -337,9 +343,12 @@ class Product extends GLView {
       data: this.props.sweep.elements,
     });
     this.assets.time = this.props.sweep.time;
-    if (this.assets.colormap) this.assets.complete = true;
-    if (this.props.debug)
+    if (this.assets.colormap) {
+      this.assets.complete = true;
+    }
+    if (this.props.debug) {
       console.log("product.updateData()", this.assets.complete);
+    }
   }
 
   draw() {
@@ -351,7 +360,9 @@ class Product extends GLView {
     ) {
       this.updateProjection();
     }
-    if (this.labelFaceColor != this.props.colors.label.face) {
+    if (this.assets.symbol != this.props.sweep.symbol) {
+      this.loadDashboard(this.props.sweep);
+    } else if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
       this.loadDashboard();
@@ -363,7 +374,6 @@ class Product extends GLView {
           this.assets.symbol != this.props.sweep.symbol))
     ) {
       this.updateData();
-      this.loadDashboard(this.props.sweep);
     }
     this.regl.clear({
       color: this.props.colors.glview,
@@ -398,6 +408,35 @@ class Product extends GLView {
     }
     this.statsWidget?.update(0.01667);
     this.stats?.update();
+  }
+
+  updateAge() {
+    if (this.props.sweep == null) {
+      return;
+    }
+    this.assets.age = Date.now() / 1000 - this.props.sweep.time;
+    let ageString;
+    if (this.assets.age > 3 * 86400) {
+      ageString = "";
+    } else if (this.assets.age > 86400) {
+      let d = Math.floor(this.assets.age / 86400);
+      let s = d > 1 ? "s" : "";
+      ageString = `> ${d} day${s} ago`;
+    } else if (this.assets.age > 1.5 * 3600) {
+      let h = Math.floor(this.assets.age / 3600);
+      let s = h > 1 ? "s" : "";
+      ageString = `> ${h} hour${s} ago`;
+    } else if (this.assets.age > 60) {
+      let m = Math.floor(this.assets.age / 60);
+      let s = m > 1 ? "s" : "";
+      ageString = `${m} minute${s} ago`;
+    } else {
+      ageString = "< 1 minute ago";
+    }
+    this.setState({
+      titleString: this.props.sweep.timeString,
+      ageString: ageString,
+    });
   }
 
   fitToData() {

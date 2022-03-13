@@ -43,6 +43,7 @@ Copyright Boonleng Cheong
     --tertiary-system-background: #ffffffff;
     --overlay-background: #ffffffe8;
     --button-hover: rgba(0, 0, 16, 0.06);
+    --map-background: #f9f5ed;
   }
 }
 @media (prefers-color-scheme: dark) {
@@ -76,6 +77,7 @@ Copyright Boonleng Cheong
     --tertiary-system-background: #2c2c2eff;
     --overlay-background: #1e1e1ee8;
     --button-hover: rgba(248, 248, 255, 0.15);
+    --map-background: #22252a;
   }
 }
 
@@ -362,21 +364,25 @@ h3 {
 .floatText {
   display: block;
   position: absolute;
+  text-shadow: -1px 1px 0 var(--map-background), 1px 1px 0 var(--map-background),
+    1px -1px 0 var(--map-background), -1px -1px 0 var(--map-background),
+    0 0 10px var(--map-background), 0 0 10px var(--map-background),
+    0 0 10px var(--map-background);
 }
 
 #caption {
   color: var(--green);
   font-size: 20px;
   font-weight: 500;
-  bottom: 20px;
-  left: 20px;
+  bottom: 50px;
+  left: 30px;
 }
 
 #title {
   color: var(--system-foreground);
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 500;
   text-align: right;
-  bottom: 20px;
-  right: 20px;
+  bottom: 50px;
+  right: 50px;
 }

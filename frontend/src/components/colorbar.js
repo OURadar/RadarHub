@@ -10,8 +10,8 @@ class Colorbar {
     this.debug = debug;
     this.scale = window.devicePixelRatio > 1 ? 2 : 1;
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 480 * this.scale;
-    this.canvas.height = 800 * this.scale;
+    this.canvas.width = 200 * this.scale;
+    this.canvas.height = 600 * this.scale;
     this.context = this.canvas.getContext("2d");
     this.stroke = 3.5 * this.scale;
     this.busy = false;
@@ -105,7 +105,11 @@ class Colorbar {
     const scale = this.scale;
     const context = this.context;
 
-    // TItle
+    let x;
+    let y;
+    let meas;
+
+    // Title
     // context.lineWidth = theme.width;
     // context.font = `${32 * scale}px LabelFont`;
     // let meas = context.measureText(configs.time);
@@ -121,7 +125,7 @@ class Colorbar {
     const height = Math.round(255 * yscale);
     const width = Math.round(20 * scale);
     const originX = Math.round(this.canvas.width - 120 * scale);
-    const originY = Math.round(this.canvas.height - 150 * scale);
+    const originY = Math.round(this.canvas.height - 50 * scale);
     const tickOffset = yscale - 1;
     context.translate(originX, originY);
     context.font = `${16 * scale}px LabelFont`;
