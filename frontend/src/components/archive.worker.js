@@ -65,7 +65,9 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
   } else if (task == "disconnect") {
     disconnect();
   } else if (task == "toggle") {
-    console.log(`source.readyState = ${source.readyState}`);
+    let states = ["connecting", "open", "closed"];
+    let state = states[source.readyState];
+    console.log(`source.readyState = ${state}`);
     if (source.readyState == 2) {
       connect(radar);
     } else {
@@ -76,9 +78,8 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
 
 function connect(newRadar) {
   radar = newRadar;
-
+  console.log("Connecting live update ...");
   source = new EventSource("/events/");
-
   source.onmessage = (event) => {
     const payload = JSON.parse(event.data);
     payload.files.forEach((file) => {
@@ -95,7 +96,6 @@ function connect(newRadar) {
       payload: grid,
     });
   };
-
   self.postMessage({
     type: "message",
     payload: `Listening for ${radar} ...`,

@@ -27,7 +27,7 @@ class Archive {
       dailyAvailabilityUpdating: false,
       hourlyAvailabilityUpdating: false,
       fileListUpdating: true,
-      resetLoadCount: true,
+      switchingProduct: false,
       loadCountSinceList: 0,
       busyLoading: false,
     };
@@ -47,7 +47,6 @@ class Archive {
         this.state.busyLoading = false;
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
-        this.grid = payload;
         this.state.fileListUpdating = false;
         // console.log(
         //   `%archive.onmessage()%c  dateTimeString = ${this.grid.dateTimeString}` +
@@ -55,19 +54,14 @@ class Archive {
         //   "color: deeppink",
         //   "color: inherit"
         // );
-        // if (this.state.resetLoadCount) {
-        //   this.state.loadCountSinceList = 0;
-        //   this.onlist(payload.hour, payload.index);
-        // } else {
-        //   this.state.resetLoadCount = true;
-        //   this.onlist(this.grid.hour, this.grid.index);
-        // }
+        let oldIndex = this.grid.index;
+        this.grid = payload;
         if (this.state.liveUpdate) {
-          if (this.state.resetLoadCount) {
+          if (oldIndex != this.grid.index) {
             this.state.loadCountSinceList = 0;
             this.load(payload.index);
-          } else {
-            this.state.resetLoadCount = true;
+          } else if (this.state.switchingProduct) {
+            this.state.switchingProduct = false;
             this.load(this.grid.index);
           }
         }
@@ -177,8 +171,11 @@ class Archive {
   }
 
   loadByIndex(index = -1) {
-    if (index < 0 || index > this.grid.fileList.length - 1) {
-      console.log(`archive.load() index = ${index} is out of range.`);
+    if (index < 0 || index >= this.grid.fileList.length) {
+      console.log(
+        `archive.load() index = ${index} is out of range ${this.grid.fileList.length}.`
+      );
+      console.log(this.grid.fileList);
       return;
     }
     this.grid.index = index;
@@ -201,7 +198,7 @@ class Archive {
       console.log("No change in symbol");
       return;
     }
-    this.state.resetLoadCount = false;
+    this.state.switchingProduct = true;
     this.list(this.radar, this.grid.day, this.grid.hour, symbol);
   }
 

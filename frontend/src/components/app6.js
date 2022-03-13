@@ -30,23 +30,7 @@ class App extends Component {
     this.archive.onupdate = (_dontcare) => {
       this.forceUpdate();
     };
-    // this.archive.onlist = (hour, index) => {
-    //   if (props.autoLoad && index > -1) {
-    //     console.log(
-    //       `%capp.archive.onlist()%c ${hour} ${index} ${this.archive.grid.index}`,
-    //       "color: deeppink",
-    //       "color: inherit"
-    //     );
-    //     if (this.overlayLoaded && this.archive.grid.index != index) {
-    //       this.archive.load(index);
-    //     } else {
-    //       this.pendingLoadIndex = index;
-    //     }
-    //   }
-    // };
-    // console.log(props);
     this.overlayLoaded = false;
-    this.pendingLoadIndex = -1;
 
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
 
@@ -167,14 +151,8 @@ class App extends Component {
   }
 
   handleOverlayLoaded() {
-    console.log(
-      `App6.handleOverlayLoaded()  pendingLoadIndex = ${this.pendingLoadIndex}`
-    );
+    console.log(`App6.handleOverlayLoaded()`);
     this.overlayLoaded = true;
-    // if (this.pendingLoadIndex > -1) {
-    //   this.archive.load(this.pendingLoadIndex);
-    //   this.pendingLoadIndex = -1;
-    // }
   }
 }
 

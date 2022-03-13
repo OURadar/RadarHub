@@ -78,6 +78,7 @@ function Browser(props) {
     ) {
       return;
     }
+    // Expect loadCountSinceList = 1 during live update
     // console.log(
     //   `Browser.setElements() ${props.archive.state.loadCountSinceList} ${index}`
     // );
