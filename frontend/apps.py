@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 import time
 import datetime
 import threading
@@ -26,14 +25,14 @@ class FrontendConfig(AppConfig):
     name = 'frontend'
 
     def ready(self):
-        prog = sys.argv[0]
-        if 'fifo2db' in prog:
+        prog = ' '.join(sys.argv[:3])
+        if 'runserver' not in prog and 'daphne' not in prog:
             return
 
         if not tableExists():
             return
 
-        # RUN_MAIN is set to "true" in StatReloader thread
+        # RUN_MAIN is set to "true" in the StatReloader thread
         run_main = os.environ.get('RUN_MAIN', None)
         if run_main is not None:
             return
@@ -134,6 +133,7 @@ def tableExists():
         return True
     except DatabaseError:
         print('DatabaseError. Need to make the Event table.')
+        print('Run manage.py makemigrations && manage.py migrate')
         return False
 
 def announce(sender, **kwargs):
