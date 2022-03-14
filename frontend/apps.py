@@ -33,7 +33,9 @@ class FrontendConfig(AppConfig):
         if not tableExists():
             return
 
-        if os.environ.get('RUN_MAIN', None) is None:
+        # RUN_MAIN is set to "true" in StatReloader thread
+        run_main = os.environ.get('RUN_MAIN', None)
+        if run_main is not None:
             return
 
         global worker_started
@@ -62,7 +64,8 @@ def monitor():
     hourly_count = day.hourly_count
     files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
 
-    print('frontend.apps.monitor() started')
+    show = colorize('frontend.apps.monitor()', 'green')
+    print(f'{show} started')
 
     tic = 0
     while True:
@@ -135,5 +138,6 @@ def tableExists():
 
 def announce(sender, **kwargs):
     file = kwargs['instance']
-    print(f'frontend.announce() {file.name}')
+    show = colorize('frontend.announce()', 'green')
+    print(f'{show} {file.name}')
     send_event('sse', 'file', file.name)
