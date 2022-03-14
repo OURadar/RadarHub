@@ -116,6 +116,10 @@ if os.path.exists(file):
             'USER': PostgreSQL['user'],
             'PASSWORD': PostgreSQL['pass'],
             'PORT': '5432',
+        },
+        'event': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 else:
@@ -126,8 +130,14 @@ else:
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+        },
+        'event': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+DATABASE_ROUTERS = ['radarhub.dbrouter.DbRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

@@ -185,7 +185,7 @@ def params_from_source(source, dig=False):
     else:
         day_string = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', source)
         if day_string:
-            day_string = source.group(0)
+            day_string = day_string.group(0)
         else:
             day_string = None
             prefix = source + '-'
