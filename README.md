@@ -446,6 +446,14 @@ Modify `/etc/systemd/system/multi-user.target.wants/supervisor.service` by addin
 Requires=docker.service
 ```
 
+## Django_eventstream
+
+The migrations
+
+```shell
+${HOME}/.pyenv/versions/3.8.10/lib/python3.8/site-packages/django_eventstream
+```
+
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
 [docker]: https://www.docker.com

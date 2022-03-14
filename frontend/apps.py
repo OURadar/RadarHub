@@ -82,6 +82,7 @@ def monitor():
                     'count': [int(c) for c in hourly_count.split(',')],
                     'time': datetime.datetime.utcnow().isoformat()
                 }
+                print(payload)
                 send_event('sse', 'message', payload)
                 files = latest_files
                 tic = 0
