@@ -32,9 +32,10 @@ class FrontendConfig(AppConfig):
         if not tableExists():
             return
 
-        run_main = os.environ.get('RUN_MAIN', None)
-        print(f'{prog}   run_main = {run_main}')
         # Look for RUN_MAIN == "true" in development mode. Otherwise, it should None
+        run_main = os.environ.get('RUN_MAIN', None)
+        if settings.VERBOSE:
+            print(f'{prog}   run_main = {run_main}')
         if 'runserver' in prog and run_main is None:
             return
 
