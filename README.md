@@ -47,7 +47,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.6.3 Added support for multiple radars (1/30/2022)
   - [x] 0.6.4 Migrated to PostgreSQL (2/5/2022)
   - [x] 0.6.5 Refactored for a fresh run (2/10/2022)
-  - [ ] 0.6.6 Updated database tooling (3/5/2022))
+  - [x] 0.6.6 Updated database tooling (3/5/2022)
+  - [x] 0.6.7 Server side event for real-time archive (3/16/2022)
 - [ ] 0.7 RadarKit communicates with RadarHub
 - [ ] 0.8 Page template, UI materials, mobile version
 - [ ] 0.9 Authentication + user priviledges
@@ -448,20 +449,24 @@ Requires=docker.service
 
 ## Django_eventstream
 
-The migrations
+The migrations of [django_eventstream] is stored in where the package is installed. If you are using [pyenv] to manage your [Python] versions, the migration history can be removed using the following commands
 
 ```shell
-${HOME}/.pyenv/versions/3.8.10/lib/python3.8/site-packages/django_eventstream
+folder=$(python -c "import django_eventstream; print(django_eventstream.__path__[0])")
+rm ${folder}/migrations/0*.py
+rm ${folder}/migrations/__pycache__/*.pyc
 ```
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
+[django_eventstream]: https://github.com/fanout/django-eventstream
 [docker]: https://www.docker.com
+[nginx]: https://www.nginx.com
 [node.js]: https://nodejs.org
 [npm]: https://www.npmjs.com
-[nginx]: https://www.nginx.com
 [python]: https://www.python.org
+[postgresql]: https://www.postgresql.org
+[pyenv]: https://github.com/pyenv/pyenv
 [react]: https://reactjs.org
 [redis]: https://redis.io
 [supervisor]: http://supervisord.org
-[postgresql]: https://www.postgresql.org
