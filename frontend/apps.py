@@ -32,12 +32,11 @@ class FrontendConfig(AppConfig):
         if not tableExists():
             return
 
-        run_main = os.environ.get('RUN_MAIN', None)
-        print(f'{prog}   run_main = {run_main}')
         # RUN_MAIN is set to "true" in development mode. Otherwise, it should None
+        run_main = os.environ.get('RUN_MAIN', None)
+        if settings.VERBOSE:
+            print(f'{prog}   run_main = {run_main}')
         if 'runserver' in prog and run_main is None:
-            return
-        elif 'daphne' in prog and run_main is not None:
             return
 
         global worker_started
