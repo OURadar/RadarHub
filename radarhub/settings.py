@@ -18,7 +18,7 @@ from pathlib import Path
 from common import color_name_value
 
 # My additional parameters
-VERBOSE = 0
+VERBOSE = 1
 SIMULATE = False
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -40,6 +40,7 @@ DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
 if VERBOSE:
     print(color_name_value('DEBUG', DEBUG))
+    print(color_name_value('SIMULATE', SIMULATE))
 
 ALLOWED_HOSTS = ['*']
 

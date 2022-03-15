@@ -268,6 +268,7 @@ def date(request, radar):
             'hour': hour,
         }
     payload = json.dumps(data)
+    print(payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
 

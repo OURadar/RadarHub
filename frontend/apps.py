@@ -55,34 +55,47 @@ class FrontendConfig(AppConfig):
         thread.start()
 
 def monitor():
+    show = colorize('frontend.apps.monitor()', 'green')
+    print(f'{show} started')
+
     from .models import Day, File
     # print('monitor() connecting post_save ...')
     # post_save.connect(announce, sender=File)
 
     prefix = 'PX-'
+    files = []
 
     day = Day.objects.filter(name=prefix).last()
-    hourly_count = day.hourly_count
-    files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
+    if day:
+        hourly_count = day.hourly_count
+        files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())        
+    else:
+        print('No Day objects yet')
+        hourly_count = ','.join('0' * 24)
 
-    show = colorize('frontend.apps.monitor()', 'green')
-    print(f'{show} started')
-
+    no_day_warning = 0
     while True:
-        day = Day.objects.last()
-        if hourly_count != day.hourly_count:
-            hourly_count = day.hourly_count
-            latest_files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
-            delta = [file for file in latest_files if file not in files]
-            if len(delta):
-                payload = {
-                    'files':  [file.name for file in delta],
-                    'count': [int(c) for c in hourly_count.split(',')],
-                    'time': datetime.datetime.utcnow().isoformat()
-                }
-                send_event('sse', 'message', payload)
-                files = latest_files
         time.sleep(1)
+        day = Day.objects.last()
+        if day is None:
+            no_day_warning += 1
+            if no_day_warning < 3 or no_day_warning % 60 == 0:
+                print('No Day objects yet')
+            continue
+        if hourly_count == day.hourly_count:
+            continue
+        hourly_count = day.hourly_count
+        latest_files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
+        delta = [file for file in latest_files if file not in files]
+        if len(delta) == 0:
+            continue
+        payload = {
+            'files':  [file.name for file in delta],
+            'count': [int(c) for c in hourly_count.split(',')],
+            'time': datetime.datetime.utcnow().isoformat()
+        }
+        send_event('sse', 'message', payload)
+        files = latest_files
 
 def simulate():
     show = colorize('frontend.apps.simulate()', 'green')
@@ -129,7 +142,7 @@ def tableExists():
         return True
     except DatabaseError:
         print('DatabaseError. Need to make the Event table.')
-        print('Run manage.py makemigrations && manage.py migrate')
+        print('Run manage.py makemigrations && manage.py migrate --database=event')
         return False
 
 def announce(sender, **kwargs):
