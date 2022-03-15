@@ -68,11 +68,7 @@ def monitor():
     show = colorize('frontend.apps.monitor()', 'green')
     print(f'{show} started')
 
-    tic = 0
     while True:
-        if tic > 30:
-            tic = 0
-            send_event('sse', 'ping', datetime.datetime.utcnow().isoformat())
         day = Day.objects.last()
         if hourly_count != day.hourly_count:
             hourly_count = day.hourly_count
@@ -84,12 +80,9 @@ def monitor():
                     'count': [int(c) for c in hourly_count.split(',')],
                     'time': datetime.datetime.utcnow().isoformat()
                 }
-                print(payload)
                 send_event('sse', 'message', payload)
                 files = latest_files
-                tic = 0
         time.sleep(1)
-        tic += 1
 
 def simulate():
     show = colorize('frontend.apps.simulate()', 'green')
