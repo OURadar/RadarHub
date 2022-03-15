@@ -18,7 +18,7 @@ from pathlib import Path
 from common import color_name_value
 
 # My additional parameters
-VERBOSE = 0
+VERBOSE = 1
 SIMULATE = False
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
