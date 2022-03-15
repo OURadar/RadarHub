@@ -75,8 +75,8 @@ def monitor():
 
     no_day_warning = 0
     while True:
-        time.sleep(1)
-        day = Day.objects.last()
+        time.sleep(3.0)
+        day = Day.objects.filter(name=prefix).last()
         if day is None:
             no_day_warning += 1
             if no_day_warning < 3 or no_day_warning % 60 == 0:
@@ -84,6 +84,8 @@ def monitor():
             continue
         if hourly_count == day.hourly_count:
             continue
+        if settings.VERBOSE > 1:
+            day.show()
         hourly_count = day.hourly_count
         latest_files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
         delta = [file for file in latest_files if file not in files]
