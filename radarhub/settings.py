@@ -40,6 +40,7 @@ DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
 if VERBOSE:
     print(color_name_value('DEBUG', DEBUG))
+    print(color_name_value('SIMULATE', SIMULATE))
 
 ALLOWED_HOSTS = ['*']
 

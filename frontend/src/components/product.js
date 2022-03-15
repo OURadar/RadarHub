@@ -360,7 +360,10 @@ class Product extends GLView {
     ) {
       this.updateProjection();
     }
-    if (this.assets.symbol != this.props.sweep.symbol) {
+    if (
+      this.props.sweep !== null &&
+      this.assets.symbol != this.props.sweep.symbol
+    ) {
       this.loadDashboard(this.props.sweep);
     } else if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;

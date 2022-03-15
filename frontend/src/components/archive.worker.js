@@ -304,8 +304,9 @@ function load(name) {
             `${components[2].slice(2, 4)}:` +
             `${components[2].slice(4, 6)} UTC`;
           sweep.symbol = components[4].split(".")[0];
-          //console.log(`timeString = ${sweep.timeString}   symbol = ${sweep.symbol}`)
-
+          // console.log(
+          //   `timeString = ${sweep.timeString}   symbol = ${sweep.symbol}`
+          // );
           self.postMessage({ type: "load", payload: sweep });
         });
       else {
