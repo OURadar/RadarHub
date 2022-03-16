@@ -266,13 +266,19 @@ Then, run
 sudo sysctl -p
 ```
 
-# Developing
+# Redis
 
-Be sure to have [redis] going for the [Channels] module every time you reboot the machine.
+There are two options of using [Redis]. Either through [Docker] or configure it to start through `systemd`, which allows you ensure network is properly started.
 
 ```shell
 docker run -p 6379:6379 -d redis:6
 ```
+
+Refer to [install-redis.md](https://gist.github.com/hackedunit/a53f0b5376b3772d278078f686b04d38) for instructions to install [Redis] from source.
+
+# Developing
+
+Be sure to have [redis] going for the [Channels] module every time you reboot the machine.
 
 Run three terminals:
 
