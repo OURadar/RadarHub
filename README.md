@@ -268,13 +268,48 @@ sudo sysctl -p
 
 # Redis
 
-There are two options of using [Redis]. Either through [Docker] or configure it to start through `systemd`, which allows you ensure network is properly started.
+The WebSocket component depends on [Channels] and the live data update depends on [Django-eventstream]. Both of these require the messaging broker [Redis]. You can either run it through a [Docker] image or through the `systemd`.
+
+## Redis Using Docker
+
+```shell
+docker pull redis
+```
+which `redis:5` or `redis:6` can be used for a specific version if preferred.
+
+Running [Redis] through [Docker] is straight-forward. However, it does not allow the operating system to specify the start-up sequence.
 
 ```shell
 docker run -p 6379:6379 -d redis:6
 ```
 
+## Redis Using Systemd
+
+Running [Redis] through `systemd` allows you to configure the `supervisor.service`, which starts the RadarHub components, to start after the [Redis] service is active.
+
 Refer to [install-redis.md](https://gist.github.com/hackedunit/a53f0b5376b3772d278078f686b04d38) for instructions to install [Redis] from source.
+
+Configure through the file `/lib/systemd/system/supervisor.service` as:
+
+```conf
+[Unit]
+Description=Supervisor process control system for UNIX
+Documentation=http://supervisord.org
+After=redis.service
+Requires=redis.service
+ReloadPropagatedFrom=redis.service
+
+[Service]
+ExecStart=/usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
+ExecStop=/usr/bin/supervisorctl $OPTIONS shutdown
+ExecReload=/usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf $OPTIONS reload
+KillMode=process
+Restart=on-failure
+RestartSec=50s
+
+[Install]
+WantedBy=multi-user.target
+```
 
 # Developing
 
@@ -311,16 +346,6 @@ On a production server, the Ubuntu [Nginx]-[Supervisor] setup was recommended in
 cd frontend
 npm run build
 ```
-
-## Docker
-
-The WebSocket component depends on [redis] through [docker]. Besure it is installed for user `radarhub`.
-
-```shell
-docker pull redis
-```
-
-which `redis:5` or `redis:6` can be used for a specific version if preferred.
 
 ## Nginx
 
@@ -379,15 +404,6 @@ ln -s /etc/nginx/sites-available/radarhub /etc/nginx/sites-enabled/
 Configure through the file `/etc/supervisor/conf.d/radarhub.conf` as:
 
 ```conf
-[program:docker]
-user = radarhub
-command = /usr/bin/docker run -p 6379:6379 redis
-autostart = true
-autorestart = true
-stdout_logfile = /home/radarhub/log/redis.log
-redirect_stderr = true
-priority = 1
-
 [fcgi-program:radarhub.frontend]
 user = radarhub
 directory = /home/radarhub/app
@@ -400,7 +416,7 @@ autostart = true
 autorestart = true
 stdout_logfile = /home/radarhub/log/frontend.log
 redirect_stderr = true
-priority = 2
+priority = 1
 
 [program:radarhub.backhaul]
 user = radarhub
@@ -411,14 +427,14 @@ autostart = true
 autorestart = true
 stdout_logfile = /home/radarhub/log/backhaul.log
 redirect_stderr = true
-priority = 3
+priority = 2
 
 [program:radarhub.dgen]
 user = radarhub
 command = /home/radarhub/app/reporter/dgen
 autostart = true
 autorestart = true
-priority = 4
+priority = 3
 ```
 
 Create the run directory for socket
@@ -444,24 +460,22 @@ sudo supervisorctl start all
 
 A convenient script `restart.sh` is included to restart all services in a proper sequence in order to prevent channels getting full.
 
-## Systemd
-
-Modify `/etc/systemd/system/multi-user.target.wants/supervisor.service` by adding the following line to the section `[Unit]`.
-
-```
-Requires=docker.service
-```
-
 ## Django_eventstream
 
-The migrations
+The database migrations of [django-eventstream] is stored within the module. If you ever have the need to clean it up to start over, you can remove them using the following commands
 
 ```shell
-${HOME}/.pyenv/versions/3.8.10/lib/python3.8/site-packages/django_eventstream
+folder=$(python -c 'import django_eventstream; print(django_eventstream.__path__[0])')
+rm ${folder}/migrations/0*.py
+rm ${folder}/migrations/__pycache__/*.pyc
 ```
+
+Congratulations! You made it to the very end. Cheers!
+
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
+[django-eventstream]: https://github.com/fanout/django-eventstream
 [docker]: https://www.docker.com
 [node.js]: https://nodejs.org
 [npm]: https://www.npmjs.com
