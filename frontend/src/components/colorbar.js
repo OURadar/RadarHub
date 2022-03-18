@@ -65,6 +65,7 @@ class Colorbar {
       stroke: this.debug ? "#ff992288" : colors.label.stroke,
       width: this.stroke,
     });
+    context.shadowColor = "rgba(0, 0, 0, 0)";
     context.shadowBlur = 0;
 
     this.draw(configs, {
@@ -123,14 +124,19 @@ class Colorbar {
       // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
       if (theme.blank) {
         context.lineWidth = theme.width;
+        context.beginPath();
+        context.moveTo(22.5 * scale, y);
+        context.lineTo(28.5 * scale, y);
+        context.closePath();
+        context.stroke();
       } else {
         context.lineWidth = scale;
+        context.beginPath();
+        context.moveTo(22.5 * scale, y);
+        context.lineTo(27.5 * scale, y);
+        context.closePath();
+        context.stroke();
       }
-      context.beginPath();
-      context.moveTo(22.5 * scale, y);
-      context.lineTo(27.5 * scale, y);
-      context.closePath();
-      context.stroke();
 
       context.lineWidth = theme.width;
       let meas = this.context.measureText(tick.text);
@@ -148,7 +154,7 @@ class Colorbar {
     context.imageSmoothingEnabled = false;
     if (theme.blank) {
       context.fillStyle = theme.face;
-      context.strokeRect(0, 0, height, width);
+      context.strokeRect(-1.5, -1.5, height + 3, width + 3);
       context.fillRect(0, 0, height, width);
     } else {
       context.clearRect(0, 0, height, width);
