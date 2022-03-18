@@ -57,17 +57,16 @@ class Colorbar {
     const context = this.context;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    for (let x = 1; x < 3; x++) {
-      context.filter = `blur(${x * 8}px)`;
-      this.draw(configs, {
-        blank: true,
-        face: this.debug ? "#ff992288" : colors.label.stroke,
-        stroke: this.debug ? "#ff992288" : colors.label.stroke,
-        width: this.stroke * 3,
-      });
-    }
+    context.shadowColor = this.debug ? "#ff992288" : colors.label.stroke;
+    context.shadowBlur = 10;
+    this.draw(configs, {
+      blank: true,
+      face: this.debug ? "#ff992288" : colors.label.stroke,
+      stroke: this.debug ? "#ff992288" : colors.label.stroke,
+      width: this.stroke,
+    });
+    context.shadowBlur = 0;
 
-    context.filter = "none";
     this.draw(configs, {
       blank: false,
       face: colors.label.face,
@@ -124,15 +123,14 @@ class Colorbar {
       // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
       if (theme.blank) {
         context.lineWidth = theme.width;
-        context.strokeRect(22 * scale, y - scale * 0.5, 5 * scale, scale);
       } else {
         context.lineWidth = scale;
-        context.beginPath();
-        context.moveTo(22.5 * scale, y);
-        context.lineTo(27.5 * scale, y);
-        context.closePath();
-        context.stroke();
       }
+      context.beginPath();
+      context.moveTo(22.5 * scale, y);
+      context.lineTo(27.5 * scale, y);
+      context.closePath();
+      context.stroke();
 
       context.lineWidth = theme.width;
       let meas = this.context.measureText(tick.text);
