@@ -175,7 +175,7 @@ class Product extends GLView {
 
   loadDashboard(sweep = null) {
     if (sweep && this.assets.symbol != sweep.symbol) {
-      this.assets.symbol = sweep.symbol;
+      this.updateData();
     }
     this.assets.style = this.makeStyle(this.assets.symbol);
     if (this.assets.colormap) {
@@ -343,11 +343,16 @@ class Product extends GLView {
       data: this.props.sweep.elements,
     });
     this.assets.time = this.props.sweep.time;
+    this.assets.symbol = this.props.sweep.symbol;
     if (this.assets.colormap) {
       this.assets.complete = true;
     }
     if (this.props.debug) {
-      console.log("product.updateData()", this.assets.complete);
+      console.log(
+        `Product.updateData()` +
+          `   assets.symbol = ${this.assets.symbol}` +
+          `   assets.complete = ${this.assets.complete}`
+      );
     }
   }
 
@@ -360,21 +365,18 @@ class Product extends GLView {
     ) {
       this.updateProjection();
     }
-    if (
+    if (this.labelFaceColor != this.props.colors.label.face) {
+      this.labelFaceColor = this.props.colors.label.face;
+      this.overlay.updateColors(this.props.colors);
+      this.loadDashboard();
+    } else if (
       this.props.sweep !== null &&
       this.assets.symbol != this.props.sweep.symbol
     ) {
       this.loadDashboard(this.props.sweep);
-    } else if (this.labelFaceColor != this.props.colors.label.face) {
-      this.labelFaceColor = this.props.colors.label.face;
-      this.overlay.updateColors(this.props.colors);
-      this.loadDashboard();
-    }
-    if (
+    } else if (
       (this.props.sweep === null && this.assets.data !== null) ||
-      (this.props.sweep !== null &&
-        (this.assets.time != this.props.sweep.time ||
-          this.assets.symbol != this.props.sweep.symbol))
+      (this.props.sweep !== null && this.assets.time != this.props.sweep.time)
     ) {
       this.updateData();
     }

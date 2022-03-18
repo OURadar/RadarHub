@@ -58,10 +58,10 @@ class Archive {
         this.grid = payload;
         if (this.state.liveUpdate) {
           if (index != this.grid.index) {
-            this.state.loadCount = 0;
             this.load(this.grid.index);
           } else if (this.state.switchingProduct) {
             this.state.switchingProduct = false;
+            this.state.loadCount = 0;
             this.load(this.grid.index);
           }
         }

@@ -79,6 +79,7 @@ function Browser(props) {
       return;
     }
     // Expect loadCount = 1 during live update
+    // console.log(`loadCount = ${props.archive.state.loadCount}`);
     if (props.archive.state.loadCount == 1) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();

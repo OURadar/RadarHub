@@ -366,6 +366,7 @@ h3 {
   position: absolute;
   text-shadow: -1px 1px 0 var(--map-background), 1px 1px 0 var(--map-background),
     1px -1px 0 var(--map-background), -1px -1px 0 var(--map-background),
+    0 0 10px var(--map-background), 0 0 10px var(--map-background),
     0 0 10px var(--map-background);
   user-select: none;
 }
