@@ -24,11 +24,13 @@ origins = {
 
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
-def binary(request, name):
+def binary(_, name):
+    if settings.VERBOSE > 1:
+        show = colorize('binary()', 'green')
+        show += '   ' + color_name_value('name', name)
+        print(show)
     if name == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    show = colorize(name, 'orange')
-    print(f'archives.binary() name = {show}')
     elev = 0.5
     elev_bin = bytearray(struct.pack('f', elev));
     payload = elev_bin + b'\x00\x01\x02\x00\x00\x00\xfd\xfe\xff'
@@ -37,9 +39,11 @@ def binary(request, name):
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
-def header(requst, name):
-    show = colorize(name, 'orange')
-    print(f'archives.header() name = {show}')
+def header(_, name):
+    if settings.VERBOSE > 1:
+        show = colorize('header()', 'green')
+        show += '   ' + color_name_value('name', name)
+        print(show)
     data = {'elev': 0.5, 'count': 2000}
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -52,14 +56,14 @@ def header(requst, name):
     day - a string in the forms of
           - YYYYMM
 '''
-def month(request, radar, day):
-    if radar == 'undefined' or day == 'undefined':
-        return HttpResponse(f'Not a valid query.', status=500)    
-    if settings.VERBOSE:
+def month(_, radar, day):
+    if settings.VERBOSE > 1:
         show = colorize('archive.month()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         print(show)
+    if radar == 'undefined' or day == 'undefined':
+        return HttpResponse(f'Not a valid query.', status=500)
     y = int(day[0:4])
     m = int(day[4:6])
     prefix = radar_prefix(radar)
@@ -86,14 +90,14 @@ def month(request, radar, day):
     day - a string in the forms of
           - YYYYMMDD
 '''
-def count(request, radar, day):
-    if radar == 'undefined' or day == 'undefined':
-        return HttpResponse(f'Not a valid query.', status=500)
-    if settings.VERBOSE:
+def count(_, radar, day):
+    if settings.VERBOSE > 1:
         show = colorize('archive.count()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         print(show)
+    if radar == 'undefined' or day == 'undefined':
+        return HttpResponse(f'Not a valid query.', status=500)
     n = [0 for _ in range(24)]
     date = time.strftime(r'%Y-%m-%d', time.strptime(day, r'%Y%m%d'))
     prefix = radar_prefix(radar)
@@ -137,8 +141,8 @@ def _list(radar, hour_prod):
     matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     return [o.name for o in matches]
 
-def list(request, radar, hour_prod):
-    if settings.VERBOSE:
+def list(_, radar, hour_prod):
+    if settings.VERBOSE > 1:
         show = colorize('archive.list()', 'green')
         show += '   ' + color_name_value('hour_prod', hour_prod)
         print(show)
@@ -154,10 +158,10 @@ def list(request, radar, hour_prod):
 '''
     name - filename
 '''
-def load(request, name):
-    if settings.VERBOSE:
+def load(_, name):
+    if settings.VERBOSE > 1:
         show = colorize('archive.load()', 'green')
-        show += ' ' + colorize('name', 'orange') + ' = ' + colorize(name, 'yellow')
+        show += '  ' + color_name_value('name', name)
         print(show)
     if settings.SIMULATE:
         elements = name.split('-')
@@ -235,15 +239,15 @@ def _date(radar):
         print(show)
         return None, None
     ymd = day.date.strftime(r'%Y%m%d')
-    if settings.VERBOSE:
-        show = colorize('archive.date()', 'green')
+    if settings.VERBOSE > 1:
+        show = colorize('archive._date()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('prefix', prefix)
         show += '   ' + color_name_value('day', ymd)
         print(show)
     hour = day.last_hour()
     if hour is None:
-        show = colorize('archive.date()', 'green')
+        show = colorize('archive._date()', 'green')
         show += '  ' + colorize(' WARNING ', 'warning')
         show += '  ' + colorize(f'Day {day.date} with', 'white')
         show += color_name_value(' .hourly_count', 'zeros')
@@ -251,7 +255,11 @@ def _date(radar):
         return None, None
     return ymd, hour
 
-def date(request, radar):
+def date(_, radar):
+    if settings.VERBOSE > 1:
+        show = colorize('archive.date()', 'green')
+        show += '  ' + color_name_value('radar', radar)
+        print(show)
     if radar == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
     ymd, hour = _date(radar)
@@ -268,7 +276,6 @@ def date(request, radar):
             'hour': hour,
         }
     payload = json.dumps(data)
-    print(payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
@@ -281,7 +288,7 @@ def rho2ind(values):
     return index
 
 def location(radar):
-    if settings.VERBOSE:
+    if settings.VERBOSE > 1:
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('radar', radar)
         print(show)
@@ -304,7 +311,7 @@ def location(radar):
                 'latitude': float(data['latitude']),
                 'last': ymd_hm
             }
-    if settings.VERBOSE:
+    if settings.VERBOSE > 1:
         print(colorize('archive.location()', 'green'))
         pp.pprint(origins)
     return origins[radar]
