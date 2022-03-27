@@ -47,11 +47,14 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.6.3 Added support for multiple radars (1/30/2022)
   - [x] 0.6.4 Migrated to PostgreSQL (2/5/2022)
   - [x] 0.6.5 Refactored for a fresh run (2/10/2022)
-  - [ ] 0.6.6 Updated database tooling (3/5/2022))
+  - [x] 0.6.6 Updated database tooling (3/5/2022)
+  - [x] 0.6.7 Server side event for real-time archive (3/16/2022)
+  - [x] 0.6.8 Graphical optimizations (3/23/2022)
+  - [x] 0.6.9 Minor bug fixes (3/24/2022)
 - [ ] 0.7 RadarKit communicates with RadarHub
 - [ ] 0.8 Page template, UI materials, mobile version
 - [ ] 0.9 Authentication + user priviledges
-- [ ] 1.0 Landing page, radar selection, etc.
+- [ ] 1.0 Single end point, landing page, radar selection, etc.
 
 ## Post Version 1.0
 
@@ -275,6 +278,7 @@ The WebSocket component depends on [Channels] and the live data update depends o
 ```shell
 docker pull redis
 ```
+
 which `redis:5` or `redis:6` can be used for a specific version if preferred.
 
 Running [Redis] through [Docker] is straight-forward. However, it does not allow the operating system to specify the start-up sequence.
@@ -462,26 +466,26 @@ A convenient script `restart.sh` is included to restart all services in a proper
 
 ## Django_eventstream
 
-The database migrations of [django-eventstream] is stored within the module. If you ever have the need to clean it up to start over, you can remove them using the following commands
+The migrations of [django_eventstream] is stored in where the package is installed. If you are using [pyenv] to manage your [Python] versions, the migration history can be removed using the following commands
 
 ```shell
-folder=$(python -c 'import django_eventstream; print(django_eventstream.__path__[0])')
+folder=$(python -c "import django_eventstream; print(django_eventstream.__path__[0])")
 rm ${folder}/migrations/0*.py
 rm ${folder}/migrations/__pycache__/*.pyc
 ```
 
 Congratulations! You made it to the very end. Cheers!
 
-
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
-[django-eventstream]: https://github.com/fanout/django-eventstream
+[django_eventstream]: https://github.com/fanout/django-eventstream
 [docker]: https://www.docker.com
+[nginx]: https://www.nginx.com
 [node.js]: https://nodejs.org
 [npm]: https://www.npmjs.com
-[nginx]: https://www.nginx.com
 [python]: https://www.python.org
+[postgresql]: https://www.postgresql.org
+[pyenv]: https://github.com/pyenv/pyenv
 [react]: https://reactjs.org
 [redis]: https://redis.io
 [supervisor]: http://supervisord.org
-[postgresql]: https://www.postgresql.org

@@ -22,7 +22,6 @@ class App extends Component {
     this.state = {
       colors: colorDict(),
       theme: makeTheme(),
-      sweep: null,
       time: new Date("2013-05-20T19:00"),
     };
     this.isMobile = detectMob();

@@ -21,7 +21,9 @@ fi
 clear
 check_user_process radarhub python dgen fifoshare fiforead | textout "Processes" seagreen
 echo
-systemctl status supervisor --no-pager
+systemctl status redis --no-pager --lines 4
+echo
+systemctl status supervisor --no-pager --lines 4
 echo
 show_log_by_latest_line_count frontend 10 228
 #show_log_by_latest_line_count backhaul 10 214

@@ -57,17 +57,17 @@ class Colorbar {
     const context = this.context;
     context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    for (let x = 1; x < 3; x++) {
-      context.filter = `blur(${x * 8}px)`;
-      this.draw(configs, {
-        blank: true,
-        face: this.debug ? "#ff992288" : colors.label.stroke,
-        stroke: this.debug ? "#ff992288" : colors.label.stroke,
-        width: this.stroke * 3,
-      });
-    }
+    context.shadowColor = this.debug ? "#ff992288" : colors.label.stroke;
+    context.shadowBlur = 10;
+    this.draw(configs, {
+      blank: true,
+      face: this.debug ? "#ff992288" : colors.label.stroke,
+      stroke: this.debug ? "#ff992288" : colors.label.stroke,
+      width: this.stroke,
+    });
+    context.shadowColor = "rgba(0, 0, 0, 0)";
+    context.shadowBlur = 0;
 
-    context.filter = "none";
     this.draw(configs, {
       blank: false,
       face: colors.label.face,
@@ -124,7 +124,11 @@ class Colorbar {
       // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
       if (theme.blank) {
         context.lineWidth = theme.width;
-        context.strokeRect(22 * scale, y - scale * 0.5, 5 * scale, scale);
+        context.beginPath();
+        context.moveTo(22.5 * scale, y);
+        context.lineTo(28.5 * scale, y);
+        context.closePath();
+        context.stroke();
       } else {
         context.lineWidth = scale;
         context.beginPath();
@@ -150,7 +154,7 @@ class Colorbar {
     context.imageSmoothingEnabled = false;
     if (theme.blank) {
       context.fillStyle = theme.face;
-      context.strokeRect(0, 0, height, width);
+      context.strokeRect(-1.5, -1.5, height + 3, width + 3);
       context.fillRect(0, 0, height, width);
     } else {
       context.clearRect(0, 0, height, width);
