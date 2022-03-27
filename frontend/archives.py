@@ -69,25 +69,14 @@ def month(_, radar, day):
     m = int(day[4:6])
     prefix = radar_prefix(radar)
     entries = Day.objects.filter(date__year=y, date__month=m, name=prefix)
-    # s = time.mktime(time.strptime(day[:6], '%Y%m'))
-    # m += 1
-    # if m == 13:
-    #     m = 1
-    #     day = str(int(day[:4]) + 1)
-    # e = time.mktime(time.strptime(f'{day[:4]}{m:02d}', '%Y%m'))
-    # array = {}
-    # for t in np.arange(s, e, 86400):
-    #     date = time.strftime('%Y-%m-%d', time.localtime(t))
-    #     entry = entries.filter(date=date)
-    #     array[date] = entry[0].count if entry else 0
-    d = datetime.date(y, m, 1)
-    s = datetime.timedelta(days=1)
+    date = datetime.date(y, m, 1)
+    step = datetime.timedelta(days=1)
     array = {}
-    while d.month == m:
-        date = d.strftime(r'%Y-%m-%d')
-        entry = entries.filter(date=date)
-        array[date] = entry[0].count if entry else 0
-        d += s
+    while date.month == m:
+        key = date.strftime(r'%Y-%m-%d')
+        entry = entries.filter(date=date).last()
+        array[key] = entry.weather_condition() if entry else 0
+        date += step
     payload = json.dumps(array)
     response = HttpResponse(payload, content_type='application/json')
     return response

@@ -53,6 +53,18 @@ export function makeTheme(inputMode) {
               light: "rgba(162, 132, 94, 0.15)",
               dark: "rgba(162, 132, 94, 0.25)",
             },
+            gray: {
+              main: "rgb(180, 180, 180)",
+            },
+            clear: {
+              main: "rgb(123, 195, 237)",
+            },
+            rain: {
+              main: "rgb(30, 230, 56)",
+            },
+            heavy: {
+              main: "rgb(255, 175, 25)",
+            },
             divider: "rgba(0, 0, 0, 0.04)",
           }
         : {
@@ -65,6 +77,18 @@ export function makeTheme(inputMode) {
               main: "rgb(172, 142, 104)",
               light: "rgba(172, 142, 104, 0.2)",
               dark: "rgba(172, 142, 104, 0.3)",
+            },
+            gray: {
+              main: "rgb(180, 180, 180)",
+            },
+            clear: {
+              main: "rgb(123, 195, 237)",
+            },
+            rain: {
+              main: "rgb(30, 230, 56)",
+            },
+            heavy: {
+              main: "rgb(255, 175, 25)",
             },
             divider: "rgba(255, 255, 255, 0.04)",
           }),
