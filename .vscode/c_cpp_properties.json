@@ -3,7 +3,10 @@
     {
       "name": "macos-gcc-arm64",
       "includePath": [
-        "${workspaceFolder}/**"
+        "${workspaceFolder}/**",
+        ".",
+        "/usr/local/include",
+        "/usr/local/opt/openssl@1.1/include"
       ],
       "defines": [],
       "macFrameworkPath": [
