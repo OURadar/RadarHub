@@ -35,7 +35,7 @@ class FrontendConfig(AppConfig):
         # Look for RUN_MAIN == "true" in development mode. Otherwise, it should None
         run_main = os.environ.get('RUN_MAIN', None)
         if settings.VERBOSE:
-            print(f'{prog}   run_main = {run_main}')
+            print(f'{prog}   run_main = {run_main}   SIMULATE = {settings.SIMULATE}')
         if 'runserver' in prog and run_main is None:
             return
 

@@ -18,7 +18,7 @@ from pathlib import Path
 from common import color_name_value
 
 # My additional parameters
-VERBOSE = 0
+VERBOSE = 2
 SIMULATE = False
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -138,7 +138,7 @@ else:
         }
     }
 
-    SIMULATE = True
+    # SIMULATE = True
 
 DATABASE_ROUTERS = ['radarhub.dbrouter.DbRouter']
 

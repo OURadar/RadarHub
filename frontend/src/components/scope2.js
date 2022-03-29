@@ -112,8 +112,8 @@ class Scope2 extends Scope {
     geo.screen1 = mat4.ortho([], 0, w, 0, h, 0, -1);
     geo.screen2 = translateY([], geo.screen1, y2 - b);
     geo.projection = mat4.multiply([], geo.screen1, geo.view);
-    geo.dataport1 = { x: a, y: y0, width: ww, height: hh };
-    geo.dataport2 = { x: a, y: y2, width: ww, height: hh };
+    geo.dataport1 = { x: a, y: y2, width: ww, height: hh };
+    geo.dataport2 = { x: a, y: y0, width: ww, height: hh };
     geo.viewport = { x: 0, y: 0, width: w, height: h };
     geo.needsUpdate = false;
   }

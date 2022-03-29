@@ -108,7 +108,7 @@ void *run(void *in) {
     const int hdepth = sizeof(healthString) / sizeof(healthString[0]);
 
     // Memory allocation
-    const int pulseCapacity = sizeof(uint8_t) + 2 * count * sizeof(int16_t);
+    const int pulseCapacity = sizeof(uint8_t) + 4 * count * sizeof(int16_t);
     void *buf = malloc(30 * pulseCapacity);
     void *hbuf = malloc(hdepth * HEALH_CAPACITY);
     float *window = (float *)malloc(count * sizeof(float));
@@ -166,11 +166,17 @@ void *run(void *in) {
                 t = (float)k / count;
                 o = 0.1f * (t + R->rate * 777.0f * t * t - (float)j);
                 w = window[k];
-                *(x        ) = (int16_t)(w * cosf(o)) + *n;
-                *(x + count) = (int16_t)(w * sinf(o)) + *(n++ + count);
+                int16_t i = (int16_t)(w * cosf(o)) + *n;
+                int16_t q = (int16_t)(w * sinf(o)) + *(n++ + count);
+                *(x            ) = i;
+                *(x + count    ) = q;
+                *(x + count * 2) = i / 2;
+                *(x + count * 3) = q / 2;
             } else {
-                *(x        ) = *n;
-                *(x + count) = *(n++ + count);
+                *(x            ) = *n;
+                *(x + count    ) = *(n++ + count);
+                *(x + count * 2) = *x;
+                *(x + count * 3) = *(x + count);
             }
             x++;
         }
