@@ -271,10 +271,10 @@ sudo sysctl -p
 
 # Developing
 
-Be sure to have [redis] going for the [Channels] module every time you reboot the machine. Also, it is necessary to have `DEBUG = True` when using `manage.py runserver`. Otherwise, static assets would not be fetched correctly. The [Django] configuration (`radarhub/settings.py`) is programmed to look for the environmental variable `DJANGO_DEBUG=true` and set `DEBUG = True`. I recommend adding the environmental variable `DJANGO_DEBUG=true` to your shell profile. Otherwise, you could hardcode it but be sure to set it to `False` in deployment.
+Be sure to have [redis] going for the [Channels] module every time you reboot the machine. Also, it is necessary to have `DEBUG = True` when using `python manage.py runserver 0:8000` for a local server. Otherwise, static assets cannot be fetched correctly. The [Django] configuration (`radarhub/settings.py`) is programmed to look for the environmental variable `DJANGO_DEBUG=true` and set `DEBUG = True`. I recommend adding the environmental variable `DJANGO_DEBUG=true` to your shell profile (e.g., `.bash_profile`). Otherwise, you could hardcode it but be sure to restore it to `False` in deployment.
 
 
-For `.bash_profile`, add:
+In short, add the following line to `.bash_profile`:
 
 ```shell
 export DJANGO_DEBUG=true
