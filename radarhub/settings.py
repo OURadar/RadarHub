@@ -18,7 +18,7 @@ from pathlib import Path
 from common import color_name_value
 
 # My additional parameters
-VERBOSE = 2
+VERBOSE = 1
 SIMULATE = False
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -36,8 +36,7 @@ if os.path.exists(file):
         SECRET_KEY = fid.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = bool(os.getenv('DJANGO_DEBUG'))
-DEBUG = True
+DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
 if VERBOSE:
     print(color_name_value('DEBUG', DEBUG))
