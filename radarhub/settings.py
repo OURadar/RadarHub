@@ -36,7 +36,8 @@ if os.path.exists(file):
         SECRET_KEY = fid.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.getenv('DJANGO_DEBUG'))
+# DEBUG = bool(os.getenv('DJANGO_DEBUG'))
+DEBUG = True
 
 if VERBOSE:
     print(color_name_value('DEBUG', DEBUG))
