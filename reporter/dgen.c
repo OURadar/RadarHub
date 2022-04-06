@@ -304,18 +304,20 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     } else if (!strcmp(payload, "d r+")) {
         R->value++;
         sendControl(W);
-        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+        R->message[0] = '\0';
     } else if (!strcmp(payload, "d r-")) {
         R->value--;
         sendControl(W);
-        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+        R->message[0] = '\0';
     } else {
         r = sprintf(R->message, "%cNAK %s", RadarHubTypeResponse, (char *)payload);
     }
     if (R->verbose) {
         printf("REPLY \033[38;5;154m%s\033[m (%d)\n", R->message, r);
     }
-    RKWebSocketSend(R->ws, R->message, r);
+    if (strlen(R->message)) {
+        RKWebSocketSend(R->ws, R->message, r);
+    }
 }
 
 static void showHelp() {

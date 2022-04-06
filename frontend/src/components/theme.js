@@ -152,14 +152,6 @@ export function makeTheme(inputMode) {
               },
             },
           },
-          // {
-          //   props: { variant: "file", selected: false },
-          //   style: {
-          //     "&:nth-of-type(even)": {
-          //       backgroundColor: theme.palette.divider,
-          //     },
-          //   },
-          // },
           {
             props: { variant: "file", selected: true },
             style: {
