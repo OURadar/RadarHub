@@ -387,3 +387,61 @@ h3 {
   bottom: 50px;
   right: 50px;
 }
+
+/* --button-border-top: solid 1px var(--border-accent);
+--button-border-right: solid 1px var(--border-accent);
+--button-border-bottom: solid 1px var(--border-accent);
+--button-border-left: solid 1px var(--border-accent);
+--button-border-radius: 5px;
+--button-margin-bottom: 5px; */
+
+.buttonContainer {
+  background-color: transparent;
+  border-radius: var(--button-border-radius);
+  cursor: pointer;
+  color: var(--system-foreground);
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: var(--button-margin-bottom);
+  border-top: var(--button-border-top);
+  border-right: var(--button-border-right);
+  border-bottom: var(--button-border-bottom);
+  border-left: var(--button-border-left);
+  user-select: none;
+  width: 100%;
+}
+
+.plainButton {
+  padding: 0 30px;
+  line-height: 1.75;
+  text-align: center;
+}
+
+.tandemContainer {
+  position: relative;
+}
+
+.tandemButtonLeft,
+.tandemButtonText,
+.tandemButtonRight {
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+.tandemButtonLeft {
+  text-align: left;
+  padding-left: 15px;
+  width: 10%;
+}
+.tandemButtonText {
+  cursor: initial;
+  text-align: center;
+  line-height: 1.75;
+  width: 80%;
+}
+.tandemButtonRight {
+  text-align: right;
+  padding-right: 15px;
+  width: 10%;
+}

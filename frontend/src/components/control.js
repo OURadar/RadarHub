@@ -6,26 +6,42 @@
 //
 
 import React from "react";
-import Button from "@mui/material/Button";
 import { SectionHeader } from "./section-header";
 import { prettyString } from "./common";
+import { Button, TandemButtons } from "./button";
 
 function Control(props) {
   const elements = props.ingest?.data.control || [];
   const controls = [];
   for (let k = 0; k < elements.length; k++) {
     let item = elements[k];
-    if (typeof item == "object" && "Label" in item && "Command" in item) {
+    if (typeof item !== "object" || !("Label" in item)) {
+      continue;
+    }
+    if ("Command" in item) {
       controls.push(
         <Button
           key={k}
           onClick={() => {
             props.ingest.execute(item.Command);
           }}
-          variant="control"
         >
           {prettyString(item.Label)}
         </Button>
+      );
+    } else if ("Left" in item && "Right" in item) {
+      controls.push(
+        <TandemButtons
+          key={k}
+          onClickLeft={() => {
+            props.ingest.execute(item.Left);
+          }}
+          onClickRight={() => {
+            props.ingest.execute(item.Right);
+          }}
+        >
+          {prettyString(item.Label)}
+        </TandemButtons>
       );
     }
   }
