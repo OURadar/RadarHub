@@ -42,6 +42,7 @@ typedef struct _reporter {
     bool               wantActive;
     bool               connected;
     int                verbose;
+    int                value;
     float              rate;
     bool               go;
 } RKReporter;
@@ -211,19 +212,8 @@ void *run(void *in) {
     return NULL;
 }
 
-void handleOpen(RKWebSocket *w) {
-    if (R->verbose) {
-        printf("ONOPEN\n");
-    }
-    int r;
-    r = sprintf(R->welcome,
-        "%c{"
-            "\"radar\":\"%s\", "
-            "\"command\":\"radarConnect\""
-        "}",
-        RadarHubTypeHandshake, R->name);
-    RKWebSocketSend(R->ws, R->welcome, r);
-    r = sprintf(R->control,
+void sendControl(RKWebSocket *w) {
+    int r = sprintf(R->control,
         "%c{"
             "\"name\": \"%s\", "
             "\"Controls\": ["
@@ -231,7 +221,7 @@ void handleOpen(RKWebSocket *w) {
                 "{\"Label\":\"Stop\", \"Command\":\"t z\"}, "
                 "{\"Label\":\"Try Me 1\", \"Command\":\"t w 1\"}, "
                 "{\"Label\":\"Try Me 2\", \"Command\":\"t w 2\"}, "
-                "{\"Label\":\"Value\", \"Left\":\"d r-\", \"Right\":\"d r+\"}, "
+                "{\"Label\":\"Value %d\", \"Left\":\"d r-\", \"Right\":\"d r+\"}, "
                 "{\"Label\":\"PRF 1,000 Hz (84 km)\", \"Command\":\"t prf 1000\"}, "
                 "{\"Label\":\"PRF 1,475 Hz (75 km)\", \"Command\":\"t prf 1475\"}, "
                 "{\"Label\":\"PRF 2,000 Hz (65 km)\", \"Command\":\"t prf 2000\"}, "
@@ -258,8 +248,26 @@ void handleOpen(RKWebSocket *w) {
                 "{\"Label\":\"6-tilt VCP @ 18 deg/s\", \"Command\":\"p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18/p 12 300 18\"}"
             "]"
         "}",
-        RadarHubTypeControl, R->name);
+        RadarHubTypeControl, R->name, R->value);
+    if (r < 0) {
+        fprintf(stderr, "Error. Unable to construct control JSON.\n");
+    }
     RKWebSocketSend(R->ws, R->control, strlen(R->control));
+}
+
+void handleOpen(RKWebSocket *w) {
+    if (R->verbose) {
+        printf("ONOPEN\n");
+    }
+    int r;
+    r = sprintf(R->welcome,
+        "%c{"
+            "\"radar\":\"%s\", "
+            "\"command\":\"radarConnect\""
+        "}",
+        RadarHubTypeHandshake, R->name);
+    RKWebSocketSend(R->ws, R->welcome, r);
+    sendControl(w);
 }
 
 void handleClose(RKWebSocket *W) {
@@ -292,6 +300,14 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     } else if (!strcmp(payload, "t w 2")) {
         R->go = true;
         R->rate = 5.0f;
+        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+    } else if (!strcmp(payload, "d r+")) {
+        R->value++;
+        sendControl(W);
+        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+    } else if (!strcmp(payload, "d r-")) {
+        R->value--;
+        sendControl(W);
         r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
     } else {
         r = sprintf(R->message, "%cNAK %s", RadarHubTypeResponse, (char *)payload);

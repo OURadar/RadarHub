@@ -35,9 +35,21 @@ class FrontendConfig(AppConfig):
         # Look for RUN_MAIN == "true" in development mode. Otherwise, it should None
         run_main = os.environ.get('RUN_MAIN', None)
         if settings.VERBOSE:
-            print(f'{prog}   run_main = {run_main}   SIMULATE = {settings.SIMULATE}')
+            show = colorize(prog, 'teal')
+            show += '   ' + color_name_value('run_main', run_main)
+            print(show)
         if 'runserver' in prog and run_main is None:
             return
+
+        if settings.VERBOSE:
+            show = color_name_value('DEBUG', settings.DEBUG)
+            show += '   ' + color_name_value('SIMULATE', settings.SIMULATE)
+            print(show)
+
+            if 'postgresql' in settings.DATABASES['default']['ENGINE']:
+                print('Using PostgreSQL ...')
+            else:
+                print('Using SQLite ...')
 
         global worker_started
         if worker_started:

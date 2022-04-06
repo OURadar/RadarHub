@@ -38,11 +38,6 @@ if os.path.exists(file):
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
-if VERBOSE:
-    show = color_name_value('DEBUG', DEBUG)
-    show += '   ' + color_name_value('SIMULATE', SIMULATE)
-    print(show)
-
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -102,9 +97,6 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 
 file = CONFIG_DIR / 'db.conf'
 if os.path.exists(file):
-    if VERBOSE:
-        print(f'Using PostgreSQL {file} ...')
-
     with open(file) as fid:
         PostgreSQL = json.load(fid)
 
@@ -124,9 +116,6 @@ if os.path.exists(file):
         }
     }
 else:
-    if VERBOSE:
-        print('Using SQLite ...')
-
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
