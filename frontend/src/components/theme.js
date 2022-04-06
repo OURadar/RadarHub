@@ -115,20 +115,20 @@ export function makeTheme(inputMode) {
   theme = createTheme(theme, {
     components: {
       MuiButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: 4,
+          },
+        },
         variants: [
           {
             props: { variant: "control" },
             style: {
               boxSizing: "border-box",
-              borderTop: "var(--button-border-top)",
-              borderRight: "var(--button-border-right)",
-              borderBottom: "var(--button-border-bottom)",
-              borderLeft: "var(--button-border-left)",
               display: "inline-block",
               fontSize: "var(--font-size)",
-              marginBottom: "var(--button-margin-bottom)",
               overflow: "hidden",
-              padding: "0 30px",
+              padding: "0",
               textTransform: "none",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -197,6 +197,18 @@ export function makeTheme(inputMode) {
               fontWeight: 600,
             },
           },
+          {
+            props: { variant: "side" },
+            style: {
+              boxSizing: "border-box",
+              display: "inline-block",
+              fontSize: "var(--font-size)",
+              overflow: "hidden",
+              padding: "0",
+              textTransform: "none",
+              width: "10%",
+            },
+          },
         ],
       },
       MuiListItemText: {
@@ -209,6 +221,21 @@ export function makeTheme(inputMode) {
             whiteSpace: "nowrap",
           },
         },
+      },
+      MuiButtonGroup: {
+        variants: [
+          {
+            props: { variant: "control" },
+            style: {
+              boxSizing: "border-box",
+              fontSize: "var(--font-size)",
+              overflow: "hidden",
+              padding: "0",
+              textTransform: "none",
+              width: "100%",
+            },
+          },
+        ],
       },
     },
   });

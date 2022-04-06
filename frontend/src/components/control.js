@@ -8,7 +8,7 @@
 import React from "react";
 import { SectionHeader } from "./section-header";
 import { prettyString } from "./common";
-import { Button, TandemButtons } from "./button";
+import { SingleButton, TandemButtons } from "./button";
 
 function Control(props) {
   const elements = props.ingest?.data.control || [];
@@ -20,14 +20,14 @@ function Control(props) {
     }
     if ("Command" in item) {
       controls.push(
-        <Button
+        <SingleButton
           key={k}
           onClick={() => {
             props.ingest.execute(item.Command);
           }}
         >
           {prettyString(item.Label)}
-        </Button>
+        </SingleButton>
       );
     } else if ("Left" in item && "Right" in item) {
       controls.push(

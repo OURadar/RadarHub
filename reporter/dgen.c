@@ -231,6 +231,7 @@ void handleOpen(RKWebSocket *w) {
                 "{\"Label\":\"Stop\", \"Command\":\"t z\"}, "
                 "{\"Label\":\"Try Me 1\", \"Command\":\"t w 1\"}, "
                 "{\"Label\":\"Try Me 2\", \"Command\":\"t w 2\"}, "
+                "{\"Label\":\"Value\", \"Left\":\"d r-\", \"Right\":\"d r+\"}, "
                 "{\"Label\":\"PRF 1,000 Hz (84 km)\", \"Command\":\"t prf 1000\"}, "
                 "{\"Label\":\"PRF 1,475 Hz (75 km)\", \"Command\":\"t prf 1475\"}, "
                 "{\"Label\":\"PRF 2,000 Hz (65 km)\", \"Command\":\"t prf 2000\"}, "

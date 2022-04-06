@@ -1,39 +1,37 @@
 import React from "react";
+import Button from "@mui/material/Button";
+import ButtonGroup from "@mui/material/ButtonGroup";
 
-const Button = ({ children, disabled, onClick, ...props }) => {
+function SingleButton({ children, disabled, onClick, ...props }) {
   return (
     <div className="buttonContainer">
-      <div className="plainButton" onClick={!disabled ? onClick : () => {}}>
+      <Button variant="control" onClick={!disabled ? onClick : () => {}}>
         {children || "button"}
-      </div>
+      </Button>
     </div>
   );
-};
+}
 
-const TandemButtons = ({
+function TandemButtons({
   children,
   disabled,
   onClickLeft,
   onClickRight,
   ...props
-}) => {
+}) {
   return (
     <div className="buttonContainer">
-      <div
-        className="tandemButtonLeft"
-        onClick={!disabled ? onClickLeft : () => {}}
-      >
-        {"-"}
-      </div>
-      <div className="tandemButtonText">{children}</div>
-      <div
-        className="tandemButtonRight"
-        onClick={!disabled ? onClickRight : () => {}}
-      >
-        {"+"}
-      </div>
+      <ButtonGroup variant="control">
+        <Button variant="side" onClick={!disabled ? onClickLeft : () => {}}>
+          {"<"}
+        </Button>
+        <div className="buttonValue">{children || "value"}</div>
+        <Button variant="side" onClick={!disabled ? onClickRight : () => {}}>
+          {">"}
+        </Button>
+      </ButtonGroup>
     </div>
   );
-};
+}
 
-export { Button, TandemButtons };
+export { SingleButton, TandemButtons };
