@@ -144,15 +144,22 @@ function connect(newRadar, url) {
     } else if (type == enums.Response) {
       // Response of a command
       let text = new TextDecoder().decode(e.data.slice(1));
-      if (text.includes("not") || text.includes("NAK")) {
-        text = ` 👎🏼 ${text} <div class='emotion'>😿</div>`;
-      } else {
-        text = ` 👍🏼 ${text} <div class='emotion'>👻</div>`;
+        if (text[0] == "N") {
+          text = ` 👎🏼 ${text.slice(1)} <div class='emotion'>😿</div>`;
+        } else if (text[0] == "A") {
+          text = ` 👍🏼 ${text.slice(1)} <div class='emotion'>👻</div>`;
+        } else {
+          text = "";
+        }
+        if (text.length > 1) {
+          self.postMessage({
+            type: "response",
+            payload: text,
+          });
+        } else {
+          self.postMessage({ type: "response", payload: "hide" });
+        }
       }
-      self.postMessage({
-        type: "response",
-        payload: text,
-      });
     }
   };
 

@@ -145,6 +145,7 @@ canvas {
   height: 20px;
   padding-left: 10px;
   text-transform: capitalize;
+  user-select: none;
   vertical-align: 5px;
 }
 h1,

@@ -38,6 +38,7 @@ radar_channels = {}
 channel_layer = get_channel_layer()
 payload_types = json.dumps({e.name: e.value for e in RadarHubType})
 lock = threading.Lock()
+tic = 0
 
 with open('frontend/package.json') as fid:
     tmp = json.load(fid)
@@ -153,7 +154,7 @@ class Backhaul(AsyncConsumer):
                 'radar': radar,
                 'streams': 'h'
             }
-            # Should replace with somethign that depends on requested streams.
+            # Should replace with something that depends on requested streams.
             # Proposed group name: radar + product, e.g., 
             # - f'{radar}-h' for health
             # - f'{radar}-i' for scope iq (latest pulse)
@@ -307,12 +308,6 @@ class Backhaul(AsyncConsumer):
         channel = message['channel']
         command = message['command']
 
-        if verbose:
-            with lock:
-                name = colorize(radar, 'teal')
-                text = colorize(command, 'green')
-                print(f'Backhaul.userMessage() {name} {text}')
-
         # Intercept the 's' commands, consolidate the data stream the update the
         # request from the radar. Everything else gets relayed to the radar and
         # the response is relayed to the user that triggered the Nexus event
@@ -328,8 +323,23 @@ class Backhaul(AsyncConsumer):
             )
             return
 
+        command_queue = radar_channels[radar]['commands']
+        if command_queue.full():
+            print(f'queue has {command_queue.qsize()} items')
+            return
+
+        global tic
+
+        if verbose:
+            # with lock:
+            name = colorize(radar, 'teal')
+            text = colorize(command, 'green')
+            print(f'Backhaul.userMessage() {name} {text} ({command_queue.qsize()}) ({tic})')
+
+        tic += 1
+
         # Push the user message into a FIFO queue
-        radar_channels[radar]['commands'].put(channel)
+        command_queue.put(channel)
         await channel_layer.send(
             radar_channels[radar]['channel'],
             {
@@ -363,7 +373,7 @@ class Backhaul(AsyncConsumer):
             # did not wait for a welcome message and starts sending in payloads
             return
 
-        # Payload type Response, direct to the earliest request, FIFO
+        # Payload type Response, direct to the earliest request, assumes FIFO
         type = payload[0]
         if type == RadarHubType.Response:
             if verbose:
