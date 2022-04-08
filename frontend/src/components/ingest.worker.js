@@ -145,13 +145,13 @@ function connect(newRadar, url) {
       // Response of a command
       const text = new TextDecoder().decode(e.data.slice(1));
       const letter = text[0];
-      let response = "";
+      let response = null;
       if (letter == "N") {
         response = ` 👎🏼 ${text.slice(1)} <div class='emotion'>😿</div>`;
       } else if (letter == "A") {
         response = ` 👍🏼 ${text.slice(1)} <div class='emotion'>👻</div>`;
       }
-      if (response.length > 1) {
+      if (response) {
         self.postMessage({
           type: "response",
           payload: response,

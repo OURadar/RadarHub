@@ -289,28 +289,28 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     if (!strcmp(payload, "t y")) {
         R->go = true;
         R->rate = 1.0f;
-        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+        r = sprintf(R->message, "%cA%s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "t z")) {
         R->go = false;
-        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+        r = sprintf(R->message, "%cA%s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "t w 1")) {
         R->go = true;
         R->rate = -2.5f;
-        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+        r = sprintf(R->message, "%cA%s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "t w 2")) {
         R->go = true;
         R->rate = 5.0f;
-        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+        r = sprintf(R->message, "%cA%s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "d r+")) {
         R->value++;
         sendControl(W);
-        R->message[0] = '\0';
+        r = sprintf(R->message, "%cQ%s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "d r-")) {
         R->value--;
         sendControl(W);
-        R->message[0] = '\0';
+        r = sprintf(R->message, "%cQ%s", RadarHubTypeResponse, (char *)payload);
     } else {
-        r = sprintf(R->message, "%cNAK %s", RadarHubTypeResponse, (char *)payload);
+        r = sprintf(R->message, "%cN%s", RadarHubTypeResponse, (char *)payload);
     }
     if (R->verbose) {
         printf("REPLY \033[38;5;154m%s\033[m (%d)\n", R->message, r);

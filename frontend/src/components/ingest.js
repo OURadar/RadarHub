@@ -54,7 +54,7 @@ class Ingest {
       } else if (type == "control") {
         this.data.control = payload;
       } else if (type == "response") {
-        console.log(payload);
+        // console.log(payload);
         this.response = payload;
         setTimeout(() => {
           if (this.response == payload) {
