@@ -32,6 +32,10 @@
     "**/screenlog.*": true
   },
   "search.exclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/__pycache__/**": true,
+    "**/node_modules/*/**": true,
     "**/screenlog.*": true
   },
   "files.exclude": {
@@ -45,11 +49,7 @@
   "C_Cpp_Runner.cStandard": "",
   "C_Cpp_Runner.cppStandard": "",
   "C_Cpp_Runner.msvcBatchPath": "",
-  "C_Cpp_Runner.warnings": [
-    "-Wall",
-    "-Wextra",
-    "-Wpedantic"
-  ],
+  "C_Cpp_Runner.warnings": ["-Wall", "-Wextra", "-Wpedantic"],
   "C_Cpp_Runner.enableWarnings": true,
   "C_Cpp_Runner.warningsAsError": false,
   "C_Cpp_Runner.compilerArgs": [],
@@ -59,10 +59,7 @@
     "/usr/local/include",
     "/usr/local/opt/openssl@1.1/include"
   ],
-  "C_Cpp_Runner.includeSearch": [
-    "*",
-    "**/*"
-  ],
+  "C_Cpp_Runner.includeSearch": ["*", "**/*"],
   "C_Cpp_Runner.excludeSearch": [
     "**/build",
     "**/build/**",

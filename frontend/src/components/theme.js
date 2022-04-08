@@ -194,7 +194,7 @@ export function makeTheme(inputMode) {
             style: {
               boxSizing: "border-box",
               display: "inline-block",
-              fontSize: "var(--font-size)",
+              fontSize: 0,
               overflow: "hidden",
               padding: "0",
               textTransform: "none",

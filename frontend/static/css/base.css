@@ -228,6 +228,7 @@ h3 {
 .controlContainer {
   display: block;
   overflow: auto;
+  user-select: none;
 }
 .ledIndicator,
 .labelIndicator {
@@ -421,6 +422,9 @@ h3 {
   background-color: transparent;
   cursor: pointer;
   display: inline-block;
+  overflow: hidden;
   text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   width: 80%;
 }
