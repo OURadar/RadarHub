@@ -156,7 +156,7 @@ void *run(void *in) {
     usleep(s);
     int j = 1;
     while (R->wantActive) {
-        // AScope samples
+        // AScope samples: Hi Hi Hi ... Hq Hq Hq ... Vi Vi Vi ... Vq Vq Vq ...
         payload = (char *)(buf + (j % 30) * pulseCapacity);
         payload[0] = RadarHubTypeScope;
         x = (int16_t *)(payload + 1);
@@ -212,6 +212,15 @@ void *run(void *in) {
     return NULL;
 }
 
+//
+// There are two types of control:
+//
+// Single push button - {"Label": "Button Label", "Command: "_your_command_"}
+// Tandem push buttons - {"Label": "Button Label", "Left: "_your_command_", "Right: "_your_command_"}
+//
+// where _your_command_ is returned back here to handleMessage() when the button was
+// pressed on the GUI
+//
 void sendControl(RKWebSocket *w) {
     int r = sprintf(R->control,
         "%c{"
@@ -277,6 +286,13 @@ void handleClose(RKWebSocket *W) {
     }
 }
 
+//
+// An button has been pushed at the frontend GUI. Here, the string _your_command_
+// that was defined in control is returned so you get to decide what to do with
+// with the command.
+//
+// NOTE: A RadarHubResponse return is expected for every command
+//
 void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     if (R->verbose) {
         printf("ONMESSAGE \033[38;5;227m%s\033[m\n", (char *)payload);
