@@ -87,7 +87,7 @@ void *run(void *in) {
     float w;
     float o;
     float t;
-    int16_t *n;
+    float *n;
     int16_t *x;
     char *payload;
 
@@ -113,7 +113,7 @@ void *run(void *in) {
     void *buf = malloc(30 * pulseCapacity);
     void *hbuf = malloc(hdepth * HEALH_CAPACITY);
     float *window = (float *)malloc(count * sizeof(float));
-    int16_t *noise = (int16_t *)malloc(3 * count * sizeof(int16_t));
+    float *noise = (float *)malloc(3 * count * sizeof(float));
     
     tukeywin(window, count, 0.1);
 
@@ -133,12 +133,19 @@ void *run(void *in) {
 
     // Some kind of pseudo-noise sequence
     for (k = 0; k < 3 * count; k++) {
+        // if (rand() % (int)(1.0 / 0.4) == 0) {
+        //     g = rand() % 32000;
+        //     noise[k] = (float)(rand() % g - g / 2);
+        // } else {
+        //     noise[k] = (float)(rand() % (2 * nm) - nm);
+        // }
         if (rand() % (int)(1.0 / 0.4) == 0) {
             g = rand() % 32000;
-            noise[k] = rand() % g - g / 2;
         } else {
-            noise[k] = rand() % (2 * nm) - nm;
+            g = 2 * nm;
         }
+        noise[k] = (float)(rand() % g - g / 2) / (float)nm;
+        // noise[k] = 0.0f;
     }
 
     // Wait until the welcome message is received
@@ -147,7 +154,7 @@ void *run(void *in) {
     }
 
     if (R->verbose) {
-        printf("\033[38;5;9mBusy run loop\033[m\n");
+        printf("\033[38;5;197mBusy run loop\033[m\n");
     }
 
     double delta;
@@ -155,6 +162,7 @@ void *run(void *in) {
     gettimeofday(&s1, NULL);
     usleep(s);
     int j = 1;
+    int16_t i, q;
     while (R->wantActive) {
         // AScope samples: Hi Hi Hi ... Hq Hq Hq ... Vi Vi Vi ... Vq Vq Vq ...
         payload = (char *)(buf + (j % 30) * pulseCapacity);
@@ -167,18 +175,16 @@ void *run(void *in) {
                 t = (float)k / count;
                 o = 0.1f * (t + R->rate * 777.0f * t * t - (float)j);
                 w = window[k];
-                int16_t i = (int16_t)(w * cosf(o)) + *n;
-                int16_t q = (int16_t)(w * sinf(o)) + *(n++ + count);
-                *(x            ) = i;
-                *(x + count    ) = q;
-                *(x + count * 2) = i / 2;
-                *(x + count * 3) = q / 2;
+                i = (int16_t)(w * cosf(o) + R->value * *n);
+                q = (int16_t)(w * sinf(o) + R->value * *(n++ + count));
             } else {
-                *(x            ) = *n;
-                *(x + count    ) = *(n++ + count);
-                *(x + count * 2) = *x;
-                *(x + count * 3) = *(x + count);
+                i = (int16_t)(R->value * *n);
+                q = (int16_t)(R->value * *(n++ + count));
             }
+            *(x            ) = i;
+            *(x + count    ) = q;
+            *(x + count * 2) = i / 2;
+            *(x + count * 3) = q / 2;
             x++;
         }
         RKWebSocketSend(R->ws, payload, pulseCapacity);
@@ -230,7 +236,7 @@ void sendControl(RKWebSocket *w) {
                 "{\"Label\":\"Stop\", \"Command\":\"t z\"}, "
                 "{\"Label\":\"Try Me 1\", \"Command\":\"t w 1\"}, "
                 "{\"Label\":\"Try Me 2\", \"Command\":\"t w 2\"}, "
-                "{\"Label\":\"Value %d\", \"Left\":\"d r-\", \"Right\":\"d r+\"}, "
+                "{\"Label\":\"Noise %d\", \"Left\":\"d r-\", \"Right\":\"d r+\"}, "
                 "{\"Label\":\"PRF 1,000 Hz (84 km)\", \"Command\":\"t prf 1000\"}, "
                 "{\"Label\":\"PRF 1,475 Hz (75 km)\", \"Command\":\"t prf 1475\"}, "
                 "{\"Label\":\"PRF 2,000 Hz (65 km)\", \"Command\":\"t prf 2000\"}, "
@@ -318,11 +324,11 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
         R->rate = 5.0f;
         r = sprintf(R->message, "%cA%s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "d r+")) {
-        R->value++;
+        R->value += 100;
         sendControl(W);
         r = sprintf(R->message, "%cQ%s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "d r-")) {
-        R->value--;
+        R->value -= 100;
         sendControl(W);
         r = sprintf(R->message, "%cQ%s", RadarHubTypeResponse, (char *)payload);
     } else {
@@ -377,6 +383,7 @@ int main(int argc, const char *argv[]) {
     memset(R, 0, sizeof(RKReporter));
     sprintf(R->name, "demo");
     R->wantActive = true;
+    R->value = 1000;
 
     // Command line options
     struct option options[] = {
