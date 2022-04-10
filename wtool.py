@@ -7,7 +7,7 @@ import json
 import django
 import pprint
 
-from django.conf import settings
+from django.conf import global_settings, settings
 
 from pathlib import Path
 
@@ -45,16 +45,29 @@ def get_cred():
     return DATABASES
 
 if __name__ == '__main__':
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
+    # os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
+    import radarhub.settings
+
+    dbs = get_cred()
+    settings.configure(radarhub.settings,
+        DATABASES=dbs, DEBUG=True,
+        ABSOLUTE_URL_OVERRIDES=global_settings.ABSOLUTE_URL_OVERRIDES,
+        AUTH_USER_MODEL=global_settings.AUTH_USER_MODEL,
+        DEFAULT_EXCEPTION_REPORTER=global_settings.DEFAULT_EXCEPTION_REPORTER,
+        DEFAULT_INDEX_TABLESPACE=global_settings.DEFAULT_INDEX_TABLESPACE,
+        DEFAULT_HASHING_ALGORITHM=global_settings.DEFAULT_HASHING_ALGORITHM,
+        DEFAULT_TABLESPACE=global_settings.DEFAULT_TABLESPACE,
+        FORCE_SCRIPT_NAME=global_settings.FORCE_SCRIPT_NAME,
+        LOCALE_PATHS=global_settings.LOCALE_PATHS,
+        LOGGING=global_settings.LOGGING,
+        LOGGING_CONFIG=global_settings.LOGGING_CONFIG)
 
     show = color_name_value('DEBUG', settings.DEBUG)
     pp.pprint(settings.DATABASES)
     print(show)
 
-    dbs = get_cred()
-
-    pp.pprint(dbs)
-
-    settings.DATABASES = dbs
+    # pp.pprint(dbs)
+    # settings.DATABASES = dbs
+    pp.pprint(settings.DATABASES)
 
     django.setup()
