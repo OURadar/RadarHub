@@ -48,9 +48,12 @@ class Archive {
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
         this.state.fileListUpdating = false;
+        this.state.loadCount = 0;
         console.log(
-          `%carchive.onmessage()%c  dateTimeString = ${this.grid.dateTimeString}` +
-            `   hour = ${this.grid.hour}   index = ${this.grid.index}`,
+          `%carchive.onmessage()%c "list"` +
+            `   dateTimeString = ${this.grid.dateTimeString}` +
+            `   hour = ${this.grid.hour} -> ${payload.hour}` +
+            `   index = ${this.grid.index} -> ${payload.index}`,
           "color: deeppink",
           "color: inherit"
         );
@@ -59,11 +62,9 @@ class Archive {
         this.grid = payload;
         if (this.state.liveUpdate) {
           if (hour != this.grid.hour || index != this.grid.index) {
-            this.state.loadCount = 0;
             this.load(this.grid.index);
           } else if (this.state.switchingProduct) {
             this.state.switchingProduct = false;
-            this.state.loadCount = 0;
             this.load(this.grid.index);
           }
         }
@@ -78,6 +79,13 @@ class Archive {
         this.data.sweep = null;
         this.grid.index = -1;
         this.state.sweepLoading = false;
+      } else if (type == "state") {
+        if (payload.state == "connect") {
+          this.state.liveUpdate = true;
+        } else if (payload == "disconnect") {
+          this.state.liveUpdate = false;
+        }
+        this.showMessage(payload.message, 2500);
       }
       this.onupdate(this.state.tic++);
     };

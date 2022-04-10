@@ -100,8 +100,11 @@ function connect(newRadar) {
     });
   };
   self.postMessage({
-    type: "message",
-    payload: `Listening for ${radar} ...`,
+    type: "state",
+    payload: {
+      state: "connect",
+      message: `Listening for ${radar} ...`,
+    },
   });
 }
 
@@ -112,8 +115,11 @@ function disconnect() {
   console.log("Disconnecting live update ...");
   source.close();
   self.postMessage({
-    type: "message",
-    payload: `Live update disabled`,
+    type: "state",
+    payload: {
+      state: "disconnect",
+      message: "Live update disabled",
+    },
   });
 }
 
