@@ -48,16 +48,18 @@ class Archive {
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
         this.state.fileListUpdating = false;
-        // console.log(
-        //   `%archive.onmessage()%c  dateTimeString = ${this.grid.dateTimeString}` +
-        //     `   hour = ${this.grid.hour}   index = ${this.grid.index}`,
-        //   "color: deeppink",
-        //   "color: inherit"
-        // );
+        console.log(
+          `%carchive.onmessage()%c  dateTimeString = ${this.grid.dateTimeString}` +
+            `   hour = ${this.grid.hour}   index = ${this.grid.index}`,
+          "color: deeppink",
+          "color: inherit"
+        );
+        let hour = this.grid.hour;
         let index = this.grid.index;
         this.grid = payload;
         if (this.state.liveUpdate) {
-          if (index != this.grid.index) {
+          if (hour != this.grid.hour || index != this.grid.index) {
+            this.state.loadCount = 0;
             this.load(this.grid.index);
           } else if (this.state.switchingProduct) {
             this.state.switchingProduct = false;

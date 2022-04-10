@@ -70,6 +70,9 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
     console.log(`source.readyState = ${state}`);
     if (source.readyState == 2) {
       connect(radar);
+      console.log(
+        `Going live ... day = ${grid.day}   hour = ${grid.hour}   symbol = ${grid.symbol}`
+      );
     } else {
       disconnect();
     }
