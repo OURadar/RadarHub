@@ -79,12 +79,12 @@ function Browser(props) {
       return;
     }
     // Expect loadCount <= 1 during live update
-    console.log(`loadCount = ${props.archive.state.loadCount}`);
+    // console.log(`loadCount = ${props.archive.state.loadCount}`);
     if (props.archive.state.loadCount <= 1) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
-    } else {
-      props.archive.disableLiveUpdate();
+      // } else if (props.archive.grid.latestHour) {
+      //   props.archive.disableLiveUpdate();
     }
   };
 

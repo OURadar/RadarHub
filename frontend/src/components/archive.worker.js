@@ -13,8 +13,10 @@ import { deg2rad, clamp } from "./common";
 let source = null;
 let radar;
 let grid = {
-  hourlyAvailability: new Array(24).fill(0),
   dateTimeString: "20130520-1900",
+  dailyAvailability: {},
+  hourlyAvailability: new Array(24).fill(0),
+  latestHour: -1,
   fileListGrouped: {},
   fileList: [],
   symbol: "Z",
@@ -64,24 +66,12 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
     connect(name);
   } else if (task == "disconnect") {
     disconnect();
-  } else if (task == "toggle") {
-    let states = ["connecting", "open", "closed"];
-    let state = states[source.readyState];
-    console.log(`source.readyState = ${state}`);
-    if (source.readyState == 2) {
-      connect(radar);
-      console.log(
-        `Going live ... day = ${grid.day}   hour = ${grid.hour}   symbol = ${grid.symbol}`
-      );
-    } else {
-      disconnect();
-    }
   }
 };
 
 function connect(newRadar) {
   radar = newRadar;
-  console.log("Connecting live update ...");
+  console.log(`Connecting live update to ${radar} ...`);
   source = new EventSource("/events/");
   source.onmessage = (event) => {
     const payload = JSON.parse(event.data);
@@ -94,6 +84,12 @@ function connect(newRadar) {
       updateListWithFile(file);
     });
     grid.hourlyAvailability = payload.count;
+    grid.latestHour =
+      23 -
+      payload.count
+        .slice()
+        .reverse()
+        .findIndex((x) => x > 0);
     self.postMessage({
       type: "list",
       payload: grid,
@@ -226,6 +222,12 @@ function count(radar, day) {
         response.json().then((buffer) => {
           grid.day = day;
           grid.hourlyAvailability = buffer.count;
+          grid.latestHour =
+            23 -
+            buffer.count
+              .slice()
+              .reverse()
+              .findIndex((x) => x > 0);
           self.postMessage({ type: "count", payload: grid.hourlyAvailability });
         });
       else
