@@ -52,7 +52,9 @@ const sweepParser = new Parser()
   });
 
 self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
-  if (task == "load") {
+  if (task == "dummy") {
+    dummy();
+  } else if (task == "load") {
     load(name);
   } else if (task == "list") {
     list(name, day, hour, symbol);
@@ -60,8 +62,6 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
     count(name, day);
   } else if (task == "month") {
     month(name, day);
-  } else if (task == "dummy") {
-    dummy();
   } else if (task == "connect") {
     connect(name);
   } else if (task == "disconnect") {

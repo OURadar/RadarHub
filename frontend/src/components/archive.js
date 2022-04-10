@@ -143,14 +143,14 @@ class Archive {
       "color: deeppink",
       "color: inherit"
     );
-    if (this.grid.day == day) {
-      console.log(
-        `%carchive.count()%c same day, do nothing`,
-        "color: deeppink",
-        "color: inherit"
-      );
-      return;
-    }
+    // if (this.grid.day == day) {
+    //   console.log(
+    //     `%carchive.count()%c same day, do nothing`,
+    //     "color: deeppink",
+    //     "color: inherit"
+    //   );
+    //   return;
+    // }
     this.state.hourlyAvailabilityUpdating = true;
     this.worker.postMessage({ task: "count", name: radar, day: day });
     this.onupdate(this.state.tic++);
