@@ -7,46 +7,48 @@ import json
 import django
 import pprint
 
-from django.conf import global_settings, settings
-
 from pathlib import Path
 
 from common import color_name_value
 
-pp = pprint.PrettyPrinter(indent=1, depth=2, width=120, sort_dicts=False)
+pp = pprint.PrettyPrinter(indent=1, depth=2, width=80, sort_dicts=False)
 
 
 def get_cred():
-    BASE_DIR = Path(__file__).resolve().parent
+    basedir = Path(__file__).resolve().parent
 
-    with open('config/db.conf.readwrite') as fid:
-        PostgreSQL = json.load(fid)
+    config = 'config/db.conf.readwrite'
+    if not os.path.exists(config):
+        config = 'config/db.conf'
 
-    show = color_name_value('BASE_DIR', str(BASE_DIR))
-    show += '   ' + color_name_value('user', PostgreSQL['user'])
-    show += '   ' + color_name_value('pass', PostgreSQL['pass'])
+    with open(config) as fid:
+        dbconf = json.load(fid)
+
+    show = color_name_value('BASE_DIR', str(basedir))
+    show += '   ' + color_name_value('user', dbconf['user'])
+    show += '   ' + color_name_value('pass', dbconf['pass'])
     print(show)
 
-    DATABASES = {
+    databases = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'NAME': 'radarhub',
-            'HOST': PostgreSQL['host'],
-            'USER': PostgreSQL['user'],
-            'PASSWORD': PostgreSQL['pass'],
+            'HOST': dbconf['host'],
+            'USER': dbconf['user'],
+            'PASSWORD': dbconf['pass'],
             'PORT': '5432',
         },
         'event': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': basedir / 'db.sqlite3',
         }
     }
 
-    return DATABASES
+    return databases
 
 if __name__ == '__main__':
-    # os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
     import radarhub.settings
+    from django.conf import global_settings, settings
 
     dbs = get_cred()
     settings.configure(radarhub.settings,
@@ -65,9 +67,5 @@ if __name__ == '__main__':
     show = color_name_value('DEBUG', settings.DEBUG)
     pp.pprint(settings.DATABASES)
     print(show)
-
-    # pp.pprint(dbs)
-    # settings.DATABASES = dbs
-    pp.pprint(settings.DATABASES)
 
     django.setup()
