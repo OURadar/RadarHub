@@ -269,10 +269,9 @@ Then, run
 sudo sysctl -p
 ```
 
-# Developing
+# Redis
 
 Be sure to have [redis] going for the [Channels] module every time you reboot the machine. Also, it is necessary to have `DEBUG = True` when using `python manage.py runserver 0:8000` for a local server. Otherwise, static assets cannot be fetched correctly. The [Django] configuration (`radarhub/settings.py`) is programmed to look for the environmental variable `DJANGO_DEBUG=true` and set `DEBUG = True`. I recommend adding the environmental variable `DJANGO_DEBUG=true` to your shell profile (e.g., `.bash_profile`). Otherwise, you could hardcode it but be sure to restore it to `False` in deployment.
-
 
 In short, add the following line to `.bash_profile`:
 
@@ -286,7 +285,39 @@ For running [redis] using [Docker]:
 docker run -p 6379:6379 -d redis:6
 ```
 
-Every time when you are ready to code, run three terminals:
+## Redis Using Systemd
+
+Running [Redis] through `systemd` allows you to configure the `supervisor.service`, which starts the RadarHub components, to start after the [Redis] service is active.
+
+Refer to [install-redis.md](https://gist.github.com/hackedunit/a53f0b5376b3772d278078f686b04d38) for instructions to install [Redis] from source.
+
+Configure through the file `/lib/systemd/system/supervisor.service` as:
+
+```conf
+[Unit]
+Description=Supervisor process control system for UNIX
+Documentation=http://supervisord.org
+After=redis.service
+Requires=redis.service
+ReloadPropagatedFrom=redis.service
+
+[Service]
+ExecStart=/usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
+ExecStop=/usr/bin/supervisorctl $OPTIONS shutdown
+ExecReload=/usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf $OPTIONS reload
+KillMode=process
+Restart=on-failure
+RestartSec=50s
+
+[Install]
+WantedBy=multi-user.target
+```
+
+# Developing
+
+Be sure to have [redis] going for the [Channels] module every time you reboot the machine.
+
+Run three terminals:
 
 1. webpack
 
@@ -317,16 +348,6 @@ On a production server, the Ubuntu [Nginx]-[Supervisor] setup was recommended in
 cd frontend
 npm run build
 ```
-
-## Docker
-
-The WebSocket component depends on [redis] through [docker]. Besure it is installed for user `radarhub`.
-
-```shell
-docker pull redis
-```
-
-which `redis:5` or `redis:6` can be used for a specific version if preferred.
 
 ## Nginx
 
@@ -385,15 +406,6 @@ ln -s /etc/nginx/sites-available/radarhub /etc/nginx/sites-enabled/
 Configure through the file `/etc/supervisor/conf.d/radarhub.conf` as:
 
 ```conf
-[program:docker]
-user = radarhub
-command = /usr/bin/docker run -p 6379:6379 redis
-autostart = true
-autorestart = true
-stdout_logfile = /home/radarhub/log/redis.log
-redirect_stderr = true
-priority = 1
-
 [fcgi-program:radarhub.frontend]
 user = radarhub
 directory = /home/radarhub/app
@@ -406,7 +418,7 @@ autostart = true
 autorestart = true
 stdout_logfile = /home/radarhub/log/frontend.log
 redirect_stderr = true
-priority = 2
+priority = 1
 
 [program:radarhub.backhaul]
 user = radarhub
@@ -417,14 +429,14 @@ autostart = true
 autorestart = true
 stdout_logfile = /home/radarhub/log/backhaul.log
 redirect_stderr = true
-priority = 3
+priority = 2
 
 [program:radarhub.dgen]
 user = radarhub
 command = /home/radarhub/app/reporter/dgen
 autostart = true
 autorestart = true
-priority = 4
+priority = 3
 ```
 
 Create the run directory for socket
@@ -450,14 +462,6 @@ sudo supervisorctl start all
 
 A convenient script `restart.sh` is included to restart all services in a proper sequence in order to prevent channels getting full.
 
-## Systemd
-
-Modify `/etc/systemd/system/multi-user.target.wants/supervisor.service` by adding the following line to the section `[Unit]`.
-
-```
-Requires=docker.service
-```
-
 ## Django_eventstream
 
 The migrations of [django_eventstream] is stored in where the package is installed. If you are using [pyenv] to manage your [Python] versions, the migration history can be removed using the following commands
@@ -467,6 +471,8 @@ folder=$(python -c "import django_eventstream; print(django_eventstream.__path__
 rm ${folder}/migrations/0*.py
 rm ${folder}/migrations/__pycache__/*.pyc
 ```
+
+Congratulations! You made it to the very end. Cheers!
 
 [channels]: https://channels.readthedocs.io
 [django]: https://www.djangoproject.com
