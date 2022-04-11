@@ -237,6 +237,10 @@ class Archive {
     this.worker.postMessage({ task: "connect", name: this.radar });
   }
 
+  catchup() {
+    this.worker.postMessage({ task: "catchup", name: this.radar });
+  }
+
   toggleLiveUpdate() {
     if (this.state.liveUpdate) {
       this.disableLiveUpdate();
@@ -248,7 +252,7 @@ class Archive {
       //   this.grid.symbol
       // );
       // this.enableLiveUpdate();
-      this.worker.postMessage({ task: "catchup", name: this.radar });
+      this.catchup();
     }
   }
 }

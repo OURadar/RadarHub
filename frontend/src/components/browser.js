@@ -174,6 +174,10 @@ function Browser(props) {
       });
   }, []);
 
+  // React.useEffect(() => {
+  //   props.archive.catchup(radar);
+  // }, []);
+
   const setDayHour = (newDay, newHour) => {
     let symbol = props.archive.grid.symbol;
     let t = day instanceof Date;
