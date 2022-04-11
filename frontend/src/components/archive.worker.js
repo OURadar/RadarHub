@@ -205,8 +205,9 @@ function month(radar, day) {
 }
 
 function count(radar, day) {
+  let t = day instanceof Date;
   console.log(
-    `%carchive.worker.count()%c ${radar} ${day}`,
+    `%carchive.worker.count()%c ${radar} ${day} (${t})`,
     "color: lightseagreen",
     "color: inherit"
   );
@@ -374,19 +375,28 @@ function geometry(sweep) {
 }
 
 function catchup(radar) {
-  console.log(`catchup() ${radar}`);
+  console.log(
+    `%carchive.worker.catchup()%c radar = ${radar}`,
+    "color: lightseagreen",
+    "color: inherit"
+  );
   fetch(`/data/catchup/${radar}/`).then((response) => {
     if (response.status == 200) {
       response
         .json()
         .then((buffer) => {
           let day = new Date(buffer.dayISOString);
-          let hour = buffer.hour;
-          console.log(`day = ${day}   hour = ${hour}`);
+          console.log(
+            `%carchive.worker.catchup()%c day = ${day}   hour = ${buffer.hour}`,
+            "color: lightseagreen",
+            "color: inherit"
+          );
           grid.dateTimeString = buffer.dayString;
-          grid.day = day;
-          grid.hour = hour;
+          grid.hourlyAvailability = buffer.count;
+          grid.latestHour = buffer.hour;
           grid.fileList = buffer.list;
+          grid.hour = buffer.hour;
+          grid.day = day;
           grid.fileList.forEach((file, index) => {
             let elements = file.split("-");
             let scanType = elements[3];
@@ -402,16 +412,19 @@ function catchup(radar) {
           } else {
             grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
           }
-          console.log(`grid.index = ${grid.index}`);
           self.postMessage({
             type: "list",
             payload: grid,
           });
+          let filename = grid.fileList[grid.index];
+          return { radar: radar, filename: filename };
+        })
+        .then(({ radar, filename }) => {
+          load(filename);
           return radar;
         })
-        .then((x) => {
-          console.log(`radar = ${x}`);
-        });
+        .then((radar) => connect(radar))
+        .catch((error) => console.log(`Unexpected error ${error}`));
     }
   });
 }

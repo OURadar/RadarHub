@@ -90,6 +90,15 @@ def month(_, radar, day):
     day - a string in the forms of
           - YYYYMMDD
 '''
+def _count(radar, day):
+    date = time.strftime(r'%Y-%m-%d', time.strptime(day, r'%Y%m%d'))
+    prefix = radar_prefix(radar)
+    d = Day.objects.filter(date=date, name=prefix)
+    if d:
+        d = d[0]
+        return [int(n) for n in d.hourly_count.split(',')]
+    return [0 for _ in range(24)]
+
 def count(_, radar, day):
     if settings.VERBOSE > 1:
         show = colorize('archive.count()', 'green')
@@ -98,15 +107,8 @@ def count(_, radar, day):
         print(show)
     if radar == 'undefined' or day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    n = [0 for _ in range(24)]
-    date = time.strftime(r'%Y-%m-%d', time.strptime(day, r'%Y%m%d'))
-    prefix = radar_prefix(radar)
-    d = Day.objects.filter(date=date, name=prefix)
-    if d:
-        d = d[0]
-        n = [int(n) for n in d.hourly_count.split(',')]
     data = {
-        'count': n
+        'count': _count(radar, day)
     }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -333,6 +335,7 @@ def catchup(_, radar):
             'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
             'hour': hour,
         }
+        data['count'] = _count(radar, ymd)
         data['list'] = _list(radar, data['dateString'])
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')

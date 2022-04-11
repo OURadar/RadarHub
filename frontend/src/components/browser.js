@@ -176,8 +176,9 @@ function Browser(props) {
 
   const setDayHour = (newDay, newHour) => {
     let symbol = props.archive.grid.symbol;
+    let t = day instanceof Date;
     console.log(
-      `%cbrowser.setDayHour()%c   newDay = ${newDay}   newHour = ${newHour}   symbol = ${symbol}`,
+      `%cbrowser.setDayHour()%c   newDay = ${newDay} (${t})   newHour = ${newHour}   symbol = ${symbol}`,
       "color: deeppink",
       "color: inherit"
     );

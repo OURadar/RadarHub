@@ -138,8 +138,9 @@ class Archive {
 
   // Expect something like radar = raxpol, day = Date('2013-05-20')
   count(radar, day) {
+    let t = day instanceof Date;
     console.log(
-      `%carchive.count()%c   day = ${day}`,
+      `%carchive.count()%c   day = ${day} (${t})`,
       "color: deeppink",
       "color: inherit"
     );
