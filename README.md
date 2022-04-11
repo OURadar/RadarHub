@@ -271,17 +271,15 @@ sudo sysctl -p
 
 # Redis
 
-The WebSocket component depends on [Channels] and the live data update depends on [Django-eventstream]. Both of these require the messaging broker [Redis]. You can either run it through a [Docker] image or through the `systemd`.
+Be sure to have [redis] going for the [Channels] module every time you reboot the machine. Also, it is necessary to have `DEBUG = True` when using `python manage.py runserver 0:8000` for a local server. Otherwise, static assets cannot be fetched correctly. The [Django] configuration (`radarhub/settings.py`) is programmed to look for the environmental variable `DJANGO_DEBUG=true` and set `DEBUG = True`. I recommend adding the environmental variable `DJANGO_DEBUG=true` to your shell profile (e.g., `.bash_profile`). Otherwise, you could hardcode it but be sure to restore it to `False` in deployment.
 
-## Redis Using Docker
+In short, add the following line to `.bash_profile`:
 
 ```shell
-docker pull redis
+export DJANGO_DEBUG=true
 ```
 
-which `redis:5` or `redis:6` can be used for a specific version if preferred.
-
-Running [Redis] through [Docker] is straight-forward. However, it does not allow the operating system to specify the start-up sequence.
+For running [redis] using [Docker]:
 
 ```shell
 docker run -p 6379:6379 -d redis:6

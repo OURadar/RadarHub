@@ -79,13 +79,13 @@ function Browser(props) {
     ) {
       return;
     }
-    // Expect loadCount = 1 during live update
+    // Expect loadCount <= 1 during live update
     // console.log(`loadCount = ${props.archive.state.loadCount}`);
-    if (props.archive.state.loadCount == 1) {
+    if (props.archive.state.loadCount <= 1) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
-    } else if (props.archive.state.loadCount > 1) {
-      props.archive.disableLiveUpdate();
+      // } else if (props.archive.grid.latestHour) {
+      //   props.archive.disableLiveUpdate();
     }
   };
 
@@ -175,10 +175,15 @@ function Browser(props) {
       });
   }, []);
 
+  // React.useEffect(() => {
+  //   props.archive.catchup(radar);
+  // }, []);
+
   const setDayHour = (newDay, newHour) => {
     let symbol = props.archive.grid.symbol;
+    let t = day instanceof Date;
     console.log(
-      `%cbrowser.setDayHour()%c   newDay = ${newDay}   newHour = ${newHour}   symbol = ${symbol}`,
+      `%cbrowser.setDayHour()%c   newDay = ${newDay} (${t})   newHour = ${newHour}   symbol = ${symbol}`,
       "color: deeppink",
       "color: inherit"
     );

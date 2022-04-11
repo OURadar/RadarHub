@@ -9,9 +9,10 @@ class Archive {
   constructor(radar) {
     this.radar = radar;
     this.grid = {
+      dateTimeString: "20130520-1900",
       dailyAvailability: {},
       hourlyAvailability: new Array(24).fill(0),
-      dateTimeString: "20130520-1900",
+      latestHour: -1,
       fileListGrouped: {},
       fileList: [],
       symbol: "Z",
@@ -23,7 +24,7 @@ class Archive {
       sweep: null,
     };
     this.state = {
-      liveUpdate: true,
+      liveUpdate: false,
       dailyAvailabilityUpdating: false,
       hourlyAvailabilityUpdating: false,
       fileListUpdating: true,
@@ -45,23 +46,41 @@ class Archive {
       } else if (type == "load") {
         this.data.sweep = payload;
         this.state.sweepLoading = false;
+        console.log(
+          `%carchive.onmessage()%c "load"` +
+            `   hour = ${this.grid.hour}` +
+            `   latestHour = ${this.grid.latestHour}` +
+            `   loadCount = ${this.state.loadCount}`,
+          "color: deeppink",
+          "color: inherit"
+        );
+        if (
+          this.grid.latestHour != this.grid.hour ||
+          this.state.loadCount > 1
+        ) {
+          this.disableLiveUpdate();
+        }
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
         this.state.fileListUpdating = false;
-        // console.log(
-        //   `%archive.onmessage()%c  dateTimeString = ${this.grid.dateTimeString}` +
-        //     `   hour = ${this.grid.hour}   index = ${this.grid.index}`,
-        //   "color: deeppink",
-        //   "color: inherit"
-        // );
+        this.state.loadCount = 0;
+        console.log(
+          `%carchive.onmessage()%c "list"` +
+            `   dateTimeString = ${this.grid.dateTimeString}` +
+            `   latestHour = ${this.grid.latestHour} -> ${payload.latestHour}` +
+            `   hour = ${this.grid.hour} -> ${payload.hour}` +
+            `   index = ${this.grid.index} -> ${payload.index}`,
+          "color: deeppink",
+          "color: inherit"
+        );
+        let hour = this.grid.hour;
         let index = this.grid.index;
         this.grid = payload;
         if (this.state.liveUpdate) {
-          if (index != this.grid.index) {
+          if (hour != this.grid.hour || index != this.grid.index) {
             this.load(this.grid.index);
           } else if (this.state.switchingProduct) {
             this.state.switchingProduct = false;
-            this.state.loadCount = 0;
             this.load(this.grid.index);
           }
         }
@@ -76,6 +95,13 @@ class Archive {
         this.data.sweep = null;
         this.grid.index = -1;
         this.state.sweepLoading = false;
+      } else if (type == "state") {
+        if (payload.state == "connect") {
+          this.state.liveUpdate = true;
+        } else if (payload.state == "disconnect") {
+          this.state.liveUpdate = false;
+        }
+        this.showMessage(payload.message, 2500);
       }
       this.onupdate(this.state.tic++);
     };
@@ -112,19 +138,20 @@ class Archive {
 
   // Expect something like radar = raxpol, day = Date('2013-05-20')
   count(radar, day) {
+    let t = day instanceof Date;
     console.log(
-      `%carchive.count()%c   day = ${day}`,
+      `%carchive.count()%c   day = ${day} (${t})`,
       "color: deeppink",
       "color: inherit"
     );
-    if (this.grid.day == day) {
-      console.log(
-        `%carchive.count()%c same day, do nothing`,
-        "color: deeppink",
-        "color: inherit"
-      );
-      return;
-    }
+    // if (this.grid.day == day) {
+    //   console.log(
+    //     `%carchive.count()%c same day, do nothing`,
+    //     "color: deeppink",
+    //     "color: inherit"
+    //   );
+    //   return;
+    // }
     this.state.hourlyAvailabilityUpdating = true;
     this.worker.postMessage({ task: "count", name: radar, day: day });
     this.onupdate(this.state.tic++);
@@ -203,11 +230,30 @@ class Archive {
   }
 
   disableLiveUpdate() {
-    this.worker.postMessage({ task: "disconnect" });
+    this.worker.postMessage({ task: "disconnect", name: this.radar });
+  }
+
+  enableLiveUpdate() {
+    this.worker.postMessage({ task: "connect", name: this.radar });
+  }
+
+  catchup() {
+    this.worker.postMessage({ task: "catchup", name: this.radar });
   }
 
   toggleLiveUpdate() {
-    this.worker.postMessage({ task: "toggle" });
+    if (this.state.liveUpdate) {
+      this.disableLiveUpdate();
+    } else {
+      // this.list(
+      //   this.radar,
+      //   this.grid.day,
+      //   this.grid.latestHour,
+      //   this.grid.symbol
+      // );
+      // this.enableLiveUpdate();
+      this.catchup();
+    }
   }
 }
 

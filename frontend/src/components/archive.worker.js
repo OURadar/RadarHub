@@ -13,8 +13,10 @@ import { deg2rad, clamp } from "./common";
 let source = null;
 let radar;
 let grid = {
-  hourlyAvailability: new Array(24).fill(0),
   dateTimeString: "20130520-1900",
+  dailyAvailability: {},
+  hourlyAvailability: new Array(24).fill(0),
+  latestHour: -1,
   fileListGrouped: {},
   fileList: [],
   symbol: "Z",
@@ -50,7 +52,9 @@ const sweepParser = new Parser()
   });
 
 self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
-  if (task == "load") {
+  if (task == "dummy") {
+    dummy();
+  } else if (task == "load") {
     load(name);
   } else if (task == "list") {
     list(name, day, hour, symbol);
@@ -58,27 +62,18 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
     count(name, day);
   } else if (task == "month") {
     month(name, day);
-  } else if (task == "dummy") {
-    dummy();
   } else if (task == "connect") {
     connect(name);
   } else if (task == "disconnect") {
     disconnect();
-  } else if (task == "toggle") {
-    let states = ["connecting", "open", "closed"];
-    let state = states[source.readyState];
-    console.log(`source.readyState = ${state}`);
-    if (source.readyState == 2) {
-      connect(radar);
-    } else {
-      disconnect();
-    }
+  } else if (task == "catchup") {
+    catchup(name);
   }
 };
 
 function connect(newRadar) {
   radar = newRadar;
-  console.log("Connecting live update ...");
+  console.log(`Connecting live update to ${radar} ...`);
   source = new EventSource("/events/");
   source.onmessage = (event) => {
     const payload = JSON.parse(event.data);
@@ -91,14 +86,23 @@ function connect(newRadar) {
       updateListWithFile(file);
     });
     grid.hourlyAvailability = payload.count;
+    grid.latestHour =
+      23 -
+      payload.count
+        .slice()
+        .reverse()
+        .findIndex((x) => x > 0);
     self.postMessage({
       type: "list",
       payload: grid,
     });
   };
   self.postMessage({
-    type: "message",
-    payload: `Listening for ${radar} ...`,
+    type: "state",
+    payload: {
+      state: "connect",
+      message: `Listening for ${radar} ...`,
+    },
   });
 }
 
@@ -109,8 +113,11 @@ function disconnect() {
   console.log("Disconnecting live update ...");
   source.close();
   self.postMessage({
-    type: "message",
-    payload: `Live update disabled`,
+    type: "state",
+    payload: {
+      state: "disconnect",
+      message: "Live update disabled",
+    },
   });
 }
 
@@ -198,8 +205,9 @@ function month(radar, day) {
 }
 
 function count(radar, day) {
+  let t = day instanceof Date;
   console.log(
-    `%carchive.worker.count()%c ${radar} ${day}`,
+    `%carchive.worker.count()%c ${radar} ${day} (${t})`,
     "color: lightseagreen",
     "color: inherit"
   );
@@ -217,6 +225,12 @@ function count(radar, day) {
         response.json().then((buffer) => {
           grid.day = day;
           grid.hourlyAvailability = buffer.count;
+          grid.latestHour =
+            23 -
+            buffer.count
+              .slice()
+              .reverse()
+              .findIndex((x) => x > 0);
           self.postMessage({ type: "count", payload: grid.hourlyAvailability });
         });
       else
@@ -358,6 +372,61 @@ function geometry(sweep) {
   sweep.origins = origins;
   sweep.elements = elements;
   return sweep;
+}
+
+function catchup(radar) {
+  console.log(
+    `%carchive.worker.catchup()%c radar = ${radar}`,
+    "color: lightseagreen",
+    "color: inherit"
+  );
+  fetch(`/data/catchup/${radar}/`).then((response) => {
+    if (response.status == 200) {
+      response
+        .json()
+        .then((buffer) => {
+          let day = new Date(buffer.dayISOString);
+          console.log(
+            `%carchive.worker.catchup()%c day = ${day}   hour = ${buffer.hour}`,
+            "color: lightseagreen",
+            "color: inherit"
+          );
+          grid.dateTimeString = buffer.dayString;
+          grid.hourlyAvailability = buffer.count;
+          grid.latestHour = buffer.hour;
+          grid.fileList = buffer.list;
+          grid.hour = buffer.hour;
+          grid.day = day;
+          grid.fileList.forEach((file, index) => {
+            let elements = file.split("-");
+            let scanType = elements[3];
+            if (!(scanType in grid.fileListGrouped)) {
+              grid.fileListGrouped[scanType] = [];
+            }
+            grid.fileListGrouped[scanType].push({ file: file, index: index });
+          });
+          console.log(grid.fileListGrouped);
+          let scanType = "E4.0";
+          if (scanType in grid.fileListGrouped) {
+            grid.index = grid.fileListGrouped[scanType].slice(-1)[0].index;
+          } else {
+            grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
+          }
+          self.postMessage({
+            type: "list",
+            payload: grid,
+          });
+          let filename = grid.fileList[grid.index];
+          return { radar: radar, filename: filename };
+        })
+        .then(({ radar, filename }) => {
+          load(filename);
+          return radar;
+        })
+        .then((radar) => connect(radar))
+        .catch((error) => console.log(`Unexpected error ${error}`));
+    }
+  });
 }
 
 // fetch("/data/binary/PX-20200520-060102")
