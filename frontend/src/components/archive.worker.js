@@ -66,6 +66,8 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
     connect(name);
   } else if (task == "disconnect") {
     disconnect();
+  } else if (task == "catchup") {
+    catchup(name);
   }
 };
 
@@ -369,6 +371,49 @@ function geometry(sweep) {
   sweep.origins = origins;
   sweep.elements = elements;
   return sweep;
+}
+
+function catchup(radar) {
+  console.log(`catchup() ${radar}`);
+  fetch(`/data/catchup/${radar}/`).then((response) => {
+    if (response.status == 200) {
+      response
+        .json()
+        .then((buffer) => {
+          let day = new Date(buffer.dayISOString);
+          let hour = buffer.hour;
+          console.log(`day = ${day}   hour = ${hour}`);
+          grid.dateTimeString = buffer.dayString;
+          grid.day = day;
+          grid.hour = hour;
+          grid.fileList = buffer.list;
+          grid.fileList.forEach((file, index) => {
+            let elements = file.split("-");
+            let scanType = elements[3];
+            if (!(scanType in grid.fileListGrouped)) {
+              grid.fileListGrouped[scanType] = [];
+            }
+            grid.fileListGrouped[scanType].push({ file: file, index: index });
+          });
+          console.log(grid.fileListGrouped);
+          let scanType = "E4.0";
+          if (scanType in grid.fileListGrouped) {
+            grid.index = grid.fileListGrouped[scanType].slice(-1)[0].index;
+          } else {
+            grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
+          }
+          console.log(`grid.index = ${grid.index}`);
+          self.postMessage({
+            type: "list",
+            payload: grid,
+          });
+          return radar;
+        })
+        .then((x) => {
+          console.log(`radar = ${x}`);
+        });
+    }
+  });
 }
 
 // fetch("/data/binary/PX-20200520-060102")

@@ -315,3 +315,25 @@ def location(radar):
         print(colorize('archive.location()', 'green'))
         pp.pprint(origins)
     return origins[radar]
+
+def catchup(_, radar):
+    show = colorize('archive.catchup()', 'green')
+    show += '  ' + color_name_value('radar', radar)
+    print(show)
+    ymd, hour = _date(radar)
+    if ymd is None:
+        data = {
+            'dateString': '19700101-0000',
+            'dayISOString': '1970/01/01',
+            'hour': 0,
+        }
+    else:
+        data = {
+            'dateString': f'{ymd}-{hour:02d}00',
+            'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+            'hour': hour,
+        }
+        data['list'] = _list(radar, data['dateString'])
+    payload = json.dumps(data)
+    response = HttpResponse(payload, content_type='application/json')
+    return response

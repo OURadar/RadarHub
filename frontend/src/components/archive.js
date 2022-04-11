@@ -240,13 +240,14 @@ class Archive {
     if (this.state.liveUpdate) {
       this.disableLiveUpdate();
     } else {
-      this.list(
-        this.radar,
-        this.grid.day,
-        this.grid.latestHour,
-        this.grid.symbol
-      );
-      this.enableLiveUpdate();
+      // this.list(
+      //   this.radar,
+      //   this.grid.day,
+      //   this.grid.latestHour,
+      //   this.grid.symbol
+      // );
+      // this.enableLiveUpdate();
+      this.worker.postMessage({ task: "catchup", name: this.radar });
     }
   }
 }
