@@ -294,8 +294,9 @@ def location(radar):
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('radar', radar)
         print(show)
+    prefix = radar_prefix(radar)
     global origins
-    ymd, hour = _date(radar)
+    ymd, hour = _date(prefix)
     if ymd is None:
         origins[radar] = {
           'longitude': -97.422413,
@@ -305,7 +306,7 @@ def location(radar):
     else:
         ymd_hm = f'{ymd}-{hour:02d}00'
         if radar not in origins or origins[radar] is None or origins[radar]['last'] != ymd_hm:
-            name = _list(radar, ymd_hm)[-1]
+            name = _list(prefix, ymd_hm)[-1]
             file = File.objects.filter(name=name).first()
             data = file.read()
             origins[radar] = {
