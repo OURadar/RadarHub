@@ -48,11 +48,11 @@ class Archive {
         this.data.sweep = payload;
         this.state.sweepLoading = false;
         console.log(
-          `%carchive.onmessage()%c "load"` +
+          `%carchive.onmessage()%c load` +
             `   hour = ${this.grid.hour}` +
             `   latestHour = ${this.grid.latestHour}` +
             `   loadCount = ${this.state.loadCount}`,
-          "color: deeppink",
+          "color: lightseagreen",
           "color: inherit"
         );
         if (
@@ -64,14 +64,13 @@ class Archive {
         this.showMessage(`${payload.name} loaded`);
       } else if (type == "list") {
         this.state.fileListUpdating = false;
-        this.state.loadCount = 0;
         console.log(
-          `%carchive.onmessage()%c "list"` +
+          `%carchive.onmessage()%c list` +
             `   ${this.grid.dateTimeString}` +
             `   ${this.grid.latestFile} -> ${payload.latestFile}` +
             `   hour = ${this.grid.hour} -> ${payload.hour}` +
             `   index = ${this.grid.index} -> ${payload.index}`,
-          "color: deeppink",
+          "color: lightseagreen",
           "color: inherit"
         );
         let hour = this.grid.hour;
@@ -79,11 +78,14 @@ class Archive {
         this.grid = payload;
         if (hour != this.grid.hour || index != this.grid.index) {
           if (this.grid.index >= 0) {
+            this.state.loadCount = 0;
             this.loadByIndex(this.grid.index);
-          } else if (hour == this.grid.latestHour && this.grid.index == -1) {
+          } else if (this.grid.index == -1) {
+            this.state.loadCount = 0;
             this.loadByName(this.grid.latestFile);
           }
         } else if (this.state.switchingProduct) {
+          this.state.loadCount = 0;
           this.state.switchingProduct = false;
           this.loadByIndex(this.grid.index);
         }
@@ -142,13 +144,13 @@ class Archive {
     let t = day instanceof Date;
     console.log(
       `%carchive.count()%c   day = ${day} (${t})`,
-      "color: deeppink",
+      "color: lightseagreen",
       "color: inherit"
     );
     // if (this.grid.day == day) {
     //   console.log(
     //     `%carchive.count()%c same day, do nothing`,
-    //     "color: deeppink",
+    //     "color: lightseagreen",
     //     "color: inherit"
     //   );
     //   return;
@@ -162,7 +164,7 @@ class Archive {
   list(radar, day, hour, symbol) {
     console.log(
       `%carchive.list()%c   day = ${day}   hour = ${hour}   symbol = ${symbol} / ${this.grid.symbol}`,
-      "color: deeppink",
+      "color: lightseagreen",
       "color: inherit"
     );
     if (
@@ -172,7 +174,7 @@ class Archive {
     ) {
       console.log(
         `%carchive.list()%c same day, hour & symbol, do nothing`,
-        "color: deeppink",
+        "color: lightseagreen",
         "color: inherit"
       );
       return;
