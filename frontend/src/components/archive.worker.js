@@ -17,6 +17,7 @@ let grid = {
   dailyAvailability: {},
   hourlyAvailability: new Array(24).fill(0),
   latestHour: -1,
+  latestFile: "",
   fileListGrouped: {},
   fileList: [],
   symbol: "Z",
@@ -407,6 +408,7 @@ function catchup(radar) {
           grid.dateTimeString = buffer.dateString;
           grid.hourlyAvailability = buffer.count;
           grid.latestHour = buffer.hour;
+          grid.latestFile = buffer.file;
           grid.fileList = buffer.list;
           grid.hour = buffer.hour;
           grid.day = day;
