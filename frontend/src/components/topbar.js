@@ -49,7 +49,6 @@ export function TopBar(props) {
     status = <StatusBody message="Some text" />;
     notify = <Notification message={message} />;
   }
-  console.log(`online = ${online}`);
   return (
     <div>
       <div id="topbar" roll="banner">
