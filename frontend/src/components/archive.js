@@ -76,13 +76,11 @@ class Archive {
         let hour = this.grid.hour;
         let index = this.grid.index;
         this.grid = payload;
-        if (this.state.liveUpdate) {
-          if (hour != this.grid.hour || index != this.grid.index) {
-            this.load(this.grid.index);
-          } else if (this.state.switchingProduct) {
-            this.state.switchingProduct = false;
-            this.load(this.grid.index);
-          }
+        if (hour != this.grid.hour || index != this.grid.index) {
+          this.loadByIndex(this.grid.index);
+        } else if (this.state.switchingProduct) {
+          this.state.switchingProduct = false;
+          this.loadByIndex(this.grid.index);
         }
       } else if (type == "count") {
         this.grid.hourlyAvailability = payload;
@@ -113,8 +111,6 @@ class Archive {
     this.count = this.count.bind(this);
     this.list = this.list.bind(this);
     this.load = this.load.bind(this);
-
-    this.worker.postMessage({ task: "connect", name: radar });
   }
 
   showMessage(message, duration = 2000) {
