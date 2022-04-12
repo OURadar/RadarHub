@@ -392,7 +392,6 @@ function catchup(radar) {
     "color: lightseagreen",
     "color: inherit"
   );
-
   fetch(`/data/catchup/${radar}/`).then((response) => {
     if (response.status == 200) {
       response
@@ -400,8 +399,8 @@ function catchup(radar) {
         .then((buffer) => {
           let day = new Date(buffer.dayISOString);
           console.log(
-            `%carchive.worker.catchup()%c day = ${day}` +
-              `   hour = ${buffer.hour}  ${buffer.dateString}`,
+            `%carchive.worker.catchup()%c dateString = ${buffer.dateString}` +
+              `   hour = ${buffer.hour}  `,
             "color: lightseagreen",
             "color: inherit"
           );

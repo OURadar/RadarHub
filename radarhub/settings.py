@@ -138,7 +138,7 @@ else:
         }
     }
 
-    SIMULATE = True
+    # SIMULATE = True
 
 DATABASE_ROUTERS = ['radarhub.dbrouter.DbRouter']
 
