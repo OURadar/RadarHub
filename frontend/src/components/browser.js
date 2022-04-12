@@ -81,11 +81,11 @@ function Browser(props) {
     }
     // Expect loadCount <= 1 during live update
     // console.log(`loadCount = ${props.archive.state.loadCount}`);
-    if (props.archive.state.loadCount <= 1) {
+    if (props.archive.state.loadCount == 1) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
-      // } else if (props.archive.grid.latestHour) {
-      //   props.archive.disableLiveUpdate();
+    } else if (props.archive.grid.latestHour) {
+      props.archive.disableLiveUpdate();
     }
   };
 
@@ -147,37 +147,10 @@ function Browser(props) {
     setHourButtons(newButtons);
   }, [day, hour, count]);
 
+  // View did mount
   React.useEffect(() => {
-    fetch(`/data/date/${radar}/`)
-      .then((response) => {
-        if (response.status == 200) {
-          response.json().then((buffer) => {
-            let initialDay = new Date(buffer.dayISOString);
-            let initialHour = buffer.hour;
-            getMonthTable(initialDay);
-            setDayHour(initialDay, initialHour);
-          });
-        } else {
-          console.log(response);
-          let initialDay = new Date("2022/01/02");
-          getMonthTable(initialDay);
-          setDayHour(initialDay, 2);
-        }
-      })
-      .catch((error) => {
-        console.log(`Unexpected error ${error}`);
-        let initialDay = new Date("2013/05/20");
-        // let initialDay = new Date("2018/02/14");
-        // let initialDay = new Date("2018/08/10");
-        // let initialDay = new Date("2022/01/02");
-        getMonthTable(initialDay);
-        setDayHour(initialDay, 19);
-      });
+    props.archive.catchup(radar);
   }, []);
-
-  // React.useEffect(() => {
-  //   props.archive.catchup(radar);
-  // }, []);
 
   const setDayHour = (newDay, newHour) => {
     let symbol = props.archive.grid.symbol;

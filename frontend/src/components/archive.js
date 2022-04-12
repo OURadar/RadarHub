@@ -13,6 +13,7 @@ class Archive {
       dailyAvailability: {},
       hourlyAvailability: new Array(24).fill(0),
       latestHour: -1,
+      latestFile: "",
       fileListGrouped: {},
       fileList: [],
       symbol: "Z",
@@ -66,8 +67,8 @@ class Archive {
         this.state.loadCount = 0;
         console.log(
           `%carchive.onmessage()%c "list"` +
-            `   dateTimeString = ${this.grid.dateTimeString}` +
-            `   latestHour = ${this.grid.latestHour} -> ${payload.latestHour}` +
+            `   ${this.grid.dateTimeString}` +
+            `   ${this.grid.latestFile} -> ${payload.latestFile}` +
             `   hour = ${this.grid.hour} -> ${payload.hour}` +
             `   index = ${this.grid.index} -> ${payload.index}`,
           "color: deeppink",
@@ -76,13 +77,15 @@ class Archive {
         let hour = this.grid.hour;
         let index = this.grid.index;
         this.grid = payload;
-        if (this.state.liveUpdate) {
-          if (hour != this.grid.hour || index != this.grid.index) {
-            this.load(this.grid.index);
-          } else if (this.state.switchingProduct) {
-            this.state.switchingProduct = false;
-            this.load(this.grid.index);
+        if (hour != this.grid.hour || index != this.grid.index) {
+          if (this.grid.index >= 0) {
+            this.loadByIndex(this.grid.index);
+          } else if (hour == this.grid.latestHour && this.grid.index == -1) {
+            this.loadByName(this.grid.latestFile);
           }
+        } else if (this.state.switchingProduct) {
+          this.state.switchingProduct = false;
+          this.loadByIndex(this.grid.index);
         }
       } else if (type == "count") {
         this.grid.hourlyAvailability = payload;
@@ -113,8 +116,6 @@ class Archive {
     this.count = this.count.bind(this);
     this.list = this.list.bind(this);
     this.load = this.load.bind(this);
-
-    this.worker.postMessage({ task: "connect", name: radar });
   }
 
   showMessage(message, duration = 2000) {
@@ -245,13 +246,6 @@ class Archive {
     if (this.state.liveUpdate) {
       this.disableLiveUpdate();
     } else {
-      // this.list(
-      //   this.radar,
-      //   this.grid.day,
-      //   this.grid.latestHour,
-      //   this.grid.symbol
-      // );
-      // this.enableLiveUpdate();
       this.catchup();
     }
   }

@@ -51,7 +51,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.6.7 Server side event for real-time archive (3/16/2022)
   - [x] 0.6.8 Graphical optimizations (3/23/2022)
   - [x] 0.6.9 Minor bug fixes (3/24/2022)
-  - [ ] 0.6.10 Added live mode resumption
+  - [x] 0.6.10 Added live mode resumption (4/12/2022)
 - [ ] 0.7 RadarKit communicates with RadarHub
 - [ ] 0.8 Page template, UI materials, mobile version
 - [ ] 0.9 Authentication + user priviledges

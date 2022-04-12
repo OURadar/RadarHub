@@ -17,6 +17,7 @@ let grid = {
   dailyAvailability: {},
   hourlyAvailability: new Array(24).fill(0),
   latestHour: -1,
+  latestFile: "",
   fileListGrouped: {},
   fileList: [],
   symbol: "Z",
@@ -73,6 +74,10 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
 
 function connect(newRadar) {
   radar = newRadar;
+  if (source?.readyState == 1) {
+    console.log("Connection exists");
+    source.close();
+  }
   console.log(`Connecting live update to ${radar} ...`);
   source = new EventSource("/events/");
   source.onmessage = (event) => {
@@ -81,7 +86,7 @@ function connect(newRadar) {
       // console.log(
       //   `%csource.onmessage()%c ${file}`,
       //   "color: lightseagreen",
-      //   "color: inherit"
+      //   "color: #aa6611"
       // );
       updateListWithFile(file);
     });
@@ -107,7 +112,7 @@ function connect(newRadar) {
 }
 
 function disconnect() {
-  if (source.readyState == 2) {
+  if (source === null || source.readyState == 2) {
     return;
   }
   console.log("Disconnecting live update ...");
@@ -130,7 +135,11 @@ function updateListWithFile(file) {
   const scan = elements[3];
   const s = elements[1];
   const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
-  // console.log(`updateListWithFile() ${file} ${day}`);
+  console.log(
+    `%carchive.worker.updateListWithFile()%c ${file} ${day}`,
+    "color: lightseagreen",
+    "color: darkorange"
+  );
   const listHour = elements[2].slice(0, 2);
   const dateTimeString = `${elements[1]}-${listHour}00`;
   if (grid.dateTimeString != dateTimeString) {
@@ -138,7 +147,7 @@ function updateListWithFile(file) {
     grid.fileListGrouped = {};
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
-    grid.day = Date(day);
+    grid.day = new Date(day);
     console.log(
       `%carchive.worker.updateListWithFile()%c   ${day} ${grid.hour}`,
       "color: lightseagreen",
@@ -148,6 +157,10 @@ function updateListWithFile(file) {
   if (!(scan in grid.fileListGrouped)) {
     grid.fileListGrouped[scan] = [];
   }
+  if (grid.fileList.indexOf(file) > 0) {
+    console.log(`File ${file} exists.`);
+    return;
+  }
   const index = grid.fileList.length;
   grid.fileList.push(file);
   grid.fileListGrouped[scan].push({ file: file, index: index });
@@ -155,7 +168,6 @@ function updateListWithFile(file) {
   if (targetScan in grid.fileListGrouped) {
     grid.index = grid.fileListGrouped[targetScan].slice(-1)[0].index;
   } else {
-    // data.index = data.fileList.length ? data.fileList.length - 1 : -1;
     grid.index = -1;
   }
 }
@@ -296,9 +308,9 @@ function list(radar, day, hour, symbol) {
 function load(name) {
   const url = `/data/load/${name}/`;
   console.log(
-    `%carchiver.worker.load()%c ${url}`,
+    `%carchiver.worker.load() %c${url}`,
     "color: lightseagreen",
-    "color: inherit"
+    "color: dodgerblue"
   );
   fetch(url)
     .then((response) => {
@@ -387,13 +399,15 @@ function catchup(radar) {
         .then((buffer) => {
           let day = new Date(buffer.dayISOString);
           console.log(
-            `%carchive.worker.catchup()%c day = ${day}   hour = ${buffer.hour}`,
+            `%carchive.worker.catchup()%c dateString = ${buffer.dateString}` +
+              `   hour = ${buffer.hour}  `,
             "color: lightseagreen",
             "color: inherit"
           );
-          grid.dateTimeString = buffer.dayString;
+          grid.dateTimeString = buffer.dateString;
           grid.hourlyAvailability = buffer.count;
           grid.latestHour = buffer.hour;
+          grid.latestFile = buffer.file;
           grid.fileList = buffer.list;
           grid.hour = buffer.hour;
           grid.day = day;
@@ -416,15 +430,12 @@ function catchup(radar) {
             type: "list",
             payload: grid,
           });
-          let filename = grid.fileList[grid.index];
-          return { radar: radar, filename: filename };
-        })
-        .then(({ radar, filename }) => {
-          load(filename);
           return radar;
         })
         .then((radar) => connect(radar))
         .catch((error) => console.log(`Unexpected error ${error}`));
+    } else {
+      console.log("Unable to catch up.");
     }
   });
 }

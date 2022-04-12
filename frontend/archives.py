@@ -88,9 +88,8 @@ def month(_, radar, day):
     day - a string in the forms of
           - YYYYMMDD
 '''
-def _count(radar, day):
+def _count(prefix, day):
     date = time.strftime(r'%Y-%m-%d', time.strptime(day, r'%Y%m%d'))
-    prefix = radar_prefix(radar)
     d = Day.objects.filter(date=date, name=prefix)
     if d:
         d = d[0]
@@ -105,8 +104,9 @@ def count(_, radar, day):
         print(show)
     if radar == 'undefined' or day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
+    prefix = radar_prefix(radar)
     data = {
-        'count': _count(radar, day)
+        'count': _count(prefix, day)
     }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -124,7 +124,7 @@ def count(_, radar, day):
         - YYYYMMDD-S
         - YYYYMMDD
 '''
-def _list(radar, hour_prod):
+def _list(prefix, hour_prod):
     c = hour_prod.split('-');
     if len(c) == 1:
         c.append('0000')
@@ -134,10 +134,9 @@ def _list(radar, hour_prod):
     t = '-'.join(c[:2])
     s = time.strptime(t, r'%Y%m%d-%H%M')
     e = time.localtime(time.mktime(s) + 3599)
-    ss = time.strftime('%Y-%m-%d %H:%M:%SZ', s)
-    ee = time.strftime('%Y-%m-%d %H:%M:%SZ', e)
+    ss = time.strftime(r'%Y-%m-%d %H:%M:%SZ', s)
+    ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
     date_range = [ss, ee]
-    prefix = radar_prefix(radar)
     matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     return [o.name for o in matches]
 
@@ -148,8 +147,9 @@ def list(_, radar, hour_prod):
         print(show)
     if radar == 'undefined' or hour_prod == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
+    prefix = radar_prefix(radar)
     data = {
-        'list': _list(radar, hour_prod)
+        'list': _list(prefix, hour_prod)
     }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -226,8 +226,7 @@ def load(_, name):
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
-def _date(radar):
-    prefix = radar_prefix(radar)
+def _date(prefix):
     if prefix is None:
         return None, None
     day = Day.objects.filter(name=prefix)
@@ -262,7 +261,8 @@ def date(_, radar):
         print(show)
     if radar == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    ymd, hour = _date(radar)
+    prefix = radar_prefix(radar)
+    ymd, hour = _date(prefix)
     if ymd is None:
         data = {
             'dateString': '19700101-0000',
@@ -292,8 +292,9 @@ def location(radar):
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('radar', radar)
         print(show)
+    prefix = radar_prefix(radar)
     global origins
-    ymd, hour = _date(radar)
+    ymd, hour = _date(prefix)
     if ymd is None:
         origins[radar] = {
           'longitude': -97.422413,
@@ -303,7 +304,7 @@ def location(radar):
     else:
         ymd_hm = f'{ymd}-{hour:02d}00'
         if radar not in origins or origins[radar] is None or origins[radar]['last'] != ymd_hm:
-            name = _list(radar, ymd_hm)[-1]
+            name = _list(prefix, ymd_hm)[-1]
             file = File.objects.filter(name=name).first()
             data = file.read()
             origins[radar] = {
@@ -316,11 +317,18 @@ def location(radar):
         pp.pprint(origins)
     return origins[radar]
 
-def catchup(_, radar):
+def _file(prefix, scan='E4.0', symbol='Z'):
+    day = Day.objects.filter(name=prefix).latest('date')
+    last = day.last_hour_range()
+    file = File.objects.filter(name__startswith=prefix, name__endswith=f'{scan}-{symbol}.nc', date__range=last).latest('date')
+    return file.name
+
+def catchup(_, radar, scan='E4.0', symbol='Z'):
     show = colorize('archive.catchup()', 'green')
     show += '  ' + color_name_value('radar', radar)
     print(show)
-    ymd, hour = _date(radar)
+    prefix = radar_prefix(radar)
+    ymd, hour = _date(prefix)
     if ymd is None:
         data = {
             'dateString': '19700101-0000',
@@ -328,13 +336,16 @@ def catchup(_, radar):
             'hour': 0,
         }
     else:
+        dateString = f'{ymd}-{hour:02d}00'
         data = {
-            'dateString': f'{ymd}-{hour:02d}00',
+            'dateString': dateString,
             'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
             'hour': hour,
         }
-        data['count'] = _count(radar, ymd)
-        data['list'] = _list(radar, data['dateString'])
+        data['count'] = _count(prefix, ymd)
+        data['file'] = _file(prefix, scan, symbol)
+        data['list'] = _list(prefix, f'{dateString}-{symbol}')
+
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response

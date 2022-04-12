@@ -39,11 +39,13 @@ export function TopBar(props) {
   const name = props.ingest ? ` / ${props.ingest.radar}` : "";
   const prefix = `v${version}${name}`;
   const [message, setMessage] = React.useState("");
-  let status, notify;
+  let online, status, notify;
   if (props.ingest) {
+    online = props.ingest?.state?.liveUpdate ? "online" : "offline";
     status = <StatusBody message={props.ingest.message} />;
     notify = <Notification message={props.ingest.response || message} />;
   } else {
+    online = "offline";
     status = <StatusBody message="Some text" />;
     notify = <Notification message={message} />;
   }
@@ -51,7 +53,10 @@ export function TopBar(props) {
     <div>
       <div id="topbar" roll="banner">
         <h1>Seven</h1>
-        <div id="statusPrefix">{prefix}</div>
+        <div id="statusPrefix">
+          <div id="statusLed" className={online}></div>
+          {prefix}
+        </div>
         {status}
         {notify}
         <Console

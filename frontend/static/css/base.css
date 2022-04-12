@@ -392,13 +392,6 @@ h3 {
   right: 50px;
 }
 
-/* --button-border-top: solid 1px var(--border-accent);
---button-border-right: solid 1px var(--border-accent);
---button-border-bottom: solid 1px var(--border-accent);
---button-border-left: solid 1px var(--border-accent);
---button-border-radius: 5px;
---button-margin-bottom: 5px; */
-
 .buttonContainer {
   background-color: transparent;
   border-radius: var(--button-border-radius);
@@ -427,4 +420,26 @@ h3 {
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 80%;
+}
+
+#statusLed {
+  display: inline-block;
+  border-radius: 50%;
+  box-sizing: border-box;
+  font-size: var(--font-size);
+  height: 10px;
+  line-height: var(--font-size);
+  margin-right: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 10px;
+}
+
+.online {
+  background-color: var(--green);
+}
+
+.offline {
+  background-color: var(--orange);
 }
