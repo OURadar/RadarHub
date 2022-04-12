@@ -85,7 +85,7 @@ function connect(newRadar) {
     payload.files.forEach((file) => {
       // console.log(
       //   `%csource.onmessage()%c ${file}`,
-      //   "color: lightseagreen",
+      //   "color: tan",
       //   "color: #aa6611"
       // );
       updateListWithFile(file);
@@ -137,8 +137,8 @@ function updateListWithFile(file) {
   const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
   console.log(
     `%carchive.worker.updateListWithFile()%c ${file} ${day}`,
-    "color: lightseagreen",
-    "color: darkorange"
+    "color: tan;",
+    "color: inherit"
   );
   const listHour = elements[2].slice(0, 2);
   const dateTimeString = `${elements[1]}-${listHour}00`;
@@ -150,7 +150,7 @@ function updateListWithFile(file) {
     grid.day = new Date(day);
     console.log(
       `%carchive.worker.updateListWithFile()%c   ${day} ${grid.hour}`,
-      "color: lightseagreen",
+      "color: tan",
       "color: inherit"
     );
   }
@@ -195,7 +195,7 @@ function createSweep(name = "dummy") {
 function month(radar, day) {
   console.log(
     `%carchive.worker.month()%c ${radar} ${day}`,
-    "color: lightseagreen",
+    "color: tan",
     "color: inherit"
   );
   const url = `/data/month/${radar}/${day}/`;
@@ -220,7 +220,7 @@ function count(radar, day) {
   let t = day instanceof Date;
   console.log(
     `%carchive.worker.count()%c ${radar} ${day} (${t})`,
-    "color: lightseagreen",
+    "color: tan",
     "color: inherit"
   );
   let tmp = day.toISOString();
@@ -258,7 +258,7 @@ function count(radar, day) {
 function list(radar, day, hour, symbol) {
   console.log(
     `%carchive.worker.list()%c ${radar} ${day.toISOString()} ${hour} ${symbol}`,
-    "color: lightseagreen",
+    "color: tan",
     "color: inherit"
   );
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
@@ -309,7 +309,7 @@ function load(name) {
   const url = `/data/load/${name}/`;
   console.log(
     `%carchiver.worker.load() %c${url}`,
-    "color: lightseagreen",
+    "color: tan",
     "color: dodgerblue"
   );
   fetch(url)
@@ -389,7 +389,7 @@ function geometry(sweep) {
 function catchup(radar) {
   console.log(
     `%carchive.worker.catchup()%c radar = ${radar}`,
-    "color: lightseagreen",
+    "color: tan",
     "color: inherit"
   );
   fetch(`/data/catchup/${radar}/`).then((response) => {
@@ -401,7 +401,7 @@ function catchup(radar) {
           console.log(
             `%carchive.worker.catchup()%c dateString = ${buffer.dateString}` +
               `   hour = ${buffer.hour}  `,
-            "color: lightseagreen",
+            "color: tan",
             "color: inherit"
           );
           grid.dateTimeString = buffer.dateString;
