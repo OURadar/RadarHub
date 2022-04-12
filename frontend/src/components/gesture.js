@@ -22,9 +22,12 @@ class Gesture {
     this.pointV = 0;
     this.pointD = 0;
     this.scale = 1;
+    // this.altKey = false;
+    // this.metaKey = false;
+    // this.shiftKey = false;
     this.hasTouch = false;
-    this.shiftKey = false;
     this.panInProgress = false;
+    this.tiltInProgress = false;
     this.singleTapTimeout = null;
     this.lastMagnifyTime = Date.now();
     this.lastTapTime = Date.now();
@@ -36,6 +39,7 @@ class Gesture {
     this.handleMagnify = (_mx, _my, _m, _x, _y) => {};
 
     this.element.addEventListener("mousedown", (e) => {
+      console.log(e);
       if (
         e.offsetX > this.bounds.left &&
         e.offsetY < this.element.height - this.bounds.bottom
@@ -48,12 +52,11 @@ class Gesture {
     });
     this.element.addEventListener("mousemove", (e) => {
       e.preventDefault();
-      if (this.panInProgress === true || this.shiftKey === true) {
+      if (this.panInProgress === true || e.shiftKey === true) {
         this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
       }
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
-      this.shiftKey = e.shiftKey;
       this.message = `mousemove (${this.pointX}, ${this.pointY})`;
     });
     this.element.addEventListener("mouseup", (e) => {
@@ -63,6 +66,7 @@ class Gesture {
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
       this.panInProgress = false;
+      this.tiltInProgress = false;
     });
     this.element.addEventListener("wheel", (e) => {
       if (
