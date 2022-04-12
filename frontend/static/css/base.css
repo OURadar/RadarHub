@@ -387,3 +387,25 @@ h3 {
   bottom: 50px;
   right: 50px;
 }
+
+#statusLed {
+  display: inline-block;
+  border-radius: 50%;
+  box-sizing: border-box;
+  font-size: var(--font-size);
+  height: 10px;
+  line-height: var(--font-size);
+  margin-right: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 10px;
+}
+
+.online {
+  background-color: var(--green);
+}
+
+.offline {
+  background-color: var(--orange);
+}

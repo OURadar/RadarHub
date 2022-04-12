@@ -135,9 +135,9 @@ function updateListWithFile(file) {
   const s = elements[1];
   const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
   console.log(
-    `%cupdateListWithFile()%c ${file} ${day}`,
+    `%carchive.worker.updateListWithFile()%c ${file} ${day}`,
     "color: lightseagreen",
-    "color: #aa6611"
+    "color: darkorange"
   );
   const listHour = elements[2].slice(0, 2);
   const dateTimeString = `${elements[1]}-${listHour}00`;
@@ -309,7 +309,7 @@ function load(name) {
   console.log(
     `%carchiver.worker.load() %c${url}`,
     "color: lightseagreen",
-    "color: #0077cc"
+    "color: dodgerblue"
   );
   fetch(url)
     .then((response) => {
