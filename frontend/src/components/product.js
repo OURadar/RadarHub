@@ -70,9 +70,9 @@ class Product extends GLView {
       this.loadDashboard();
     });
     this.overlay.onload = props.onOverlayLoaded;
-    this.timer = setInterval(() => {
-      this.updateAge();
-    }, 1000);
+    // this.timer = setInterval(() => {
+    //   this.updateAge();
+    // }, 1000);
   }
 
   static defaultProps = {
@@ -263,8 +263,8 @@ class Product extends GLView {
     return (
       <div className="fullHeight">
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
-        <Caption string={this.state.ageString} />
-        <Title string={this.state.titleString} />
+        <Caption string={this.props.sweep?.age || ""} />
+        <Title string={this.props.sweep?.timeString || ""} />
       </div>
     );
   }
@@ -354,6 +354,9 @@ class Product extends GLView {
           `   assets.complete = ${this.assets.complete}`
       );
     }
+    this.setState({
+      titleString: this.props.sweep.timeString,
+    });
   }
 
   draw() {
@@ -413,35 +416,6 @@ class Product extends GLView {
     }
     this.statsWidget?.update(0.01667);
     this.stats?.update();
-  }
-
-  updateAge() {
-    if (this.props.sweep == null) {
-      return;
-    }
-    this.assets.age = Date.now() / 1000 - this.props.sweep.time;
-    let ageString;
-    if (this.assets.age > 3 * 86400) {
-      ageString = "";
-    } else if (this.assets.age > 86400) {
-      let d = Math.floor(this.assets.age / 86400);
-      let s = d > 1 ? "s" : "";
-      ageString = `> ${d} day${s} ago`;
-    } else if (this.assets.age > 1.5 * 3600) {
-      let h = Math.floor(this.assets.age / 3600);
-      let s = h > 1 ? "s" : "";
-      ageString = `> ${h} hour${s} ago`;
-    } else if (this.assets.age > 60) {
-      let m = Math.floor(this.assets.age / 60);
-      let s = m > 1 ? "s" : "";
-      ageString = `${m} minute${s} ago`;
-    } else {
-      ageString = "< 1 minute ago";
-    }
-    this.setState({
-      titleString: this.props.sweep.timeString,
-      ageString: ageString,
-    });
   }
 
   fitToData() {

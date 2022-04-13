@@ -20,6 +20,11 @@ worker_started = False
 # show += '  ' + color_name_value('DATABASES.ENGINE', settings.DATABASES['default']['ENGINE'])
 # print(show)
 
+radar_prefix_pairs = [
+    ('px1000', 'PX-'),
+    ('raxpol', 'RAXPOL-')
+]
+
 class FrontendConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'frontend'
@@ -59,22 +64,22 @@ class FrontendConfig(AppConfig):
 
         worker_started = True
 
-        if settings.SIMULATE:
-            thread = threading.Thread(target=simulate)
-        else:
-            thread = threading.Thread(target=monitor)
-        thread.daemon = True
-        thread.start()
+        for radar_prefix in radar_prefix_pairs:
+            if settings.SIMULATE:
+                thread = threading.Thread(target=simulate, args=radar_prefix)
+            else:
+                thread = threading.Thread(target=monitor, args=radar_prefix)
+            thread.daemon = True
+            thread.start()
 
-def monitor():
+def monitor(radar='px1000', prefix='PX-'):
     show = colorize('frontend.apps.monitor()', 'green')
-    print(f'{show} started')
+    show += '   ' + color_name_value('radar', radar)
+    show += '   ' + color_name_value('prefix', prefix)
+    print(show)
 
     from .models import Day, File
-    # print('monitor() connecting post_save ...')
-    # post_save.connect(announce, sender=File)
 
-    prefix = 'PX-'
     files = []
 
     day = Day.objects.filter(name=prefix).last()
@@ -108,14 +113,13 @@ def monitor():
             'count': [int(c) for c in hourly_count.split(',')],
             'time': datetime.datetime.utcnow().isoformat()
         }
-        send_event('sse', 'message', payload)
+        send_event('sse', radar, payload)
         files = latest_files
 
-def simulate():
+def simulate(radar='px1000', prefix='PX-'):
     show = colorize('frontend.apps.simulate()', 'green')
     print(f'{show} started')
 
-    prefix = 'PX'
     hourly_count = [0 for _ in range(24)]
     # sweep_time = datetime.datetime.utcnow()
     sweep_time = datetime.datetime(2022, 3, 10, 23, 50, 12)
@@ -134,7 +138,7 @@ def simulate():
         if tic % block == 0:
             scan = scans[int(tic / block) % len(scans)]
             for symbol in ['Z', 'V', 'W', 'D', 'P', 'R']:
-                filename = f'{prefix}-{time_string}-{scan}-{symbol}.nc'
+                filename = f'{prefix}{time_string}-{scan}-{symbol}.nc'
                 files.append(filename)
                 hourly_count[sweep_time.hour] += 1
             payload = {

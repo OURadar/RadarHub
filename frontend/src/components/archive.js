@@ -34,7 +34,8 @@ class Archive {
       loadCount: 0,
       tic: 0,
     };
-    this.timer = null;
+    this.ageTimer = setInterval(() => this.updateAge(), 1000);
+    this.messageTimer = null;
     this.message = "";
     this.response = "";
     this.onupdate = () => {};
@@ -44,30 +45,15 @@ class Archive {
     this.worker.onmessage = ({ data: { type, payload } }) => {
       if (type == "message") {
         this.showMessage(payload, 2500);
-      } else if (type == "load") {
-        this.data.sweep = payload;
-        this.state.sweepLoading = false;
-        console.log(
-          `%carchive.onmessage()%c load` +
-            `   hour = ${this.grid.hour}` +
-            `   latestHour = ${this.grid.latestHour}` +
-            `   loadCount = ${this.state.loadCount}`,
-          "color: lightseagreen",
-          "color: inherit"
-        );
-        if (
-          this.grid.latestHour != this.grid.hour ||
-          this.state.loadCount > 1
-        ) {
-          this.disableLiveUpdate();
-        }
-        this.showMessage(`${payload.name} loaded`);
+      } else if (type == "count") {
+        this.grid.hourlyAvailability = payload;
+        this.state.hourlyAvailabilityUpdating = false;
       } else if (type == "list") {
         this.state.fileListUpdating = false;
         console.log(
           `%carchive.onmessage()%c list` +
             `   ${this.grid.dateTimeString}` +
-            `   ${this.grid.latestFile} -> ${payload.latestFile}` +
+            `   ${payload.latestFile}` +
             `   hour = ${this.grid.hour} -> ${payload.hour}` +
             `   index = ${this.grid.index} -> ${payload.index}`,
           "color: lightseagreen",
@@ -89,9 +75,25 @@ class Archive {
           this.state.switchingProduct = false;
           this.loadByIndex(this.grid.index);
         }
-      } else if (type == "count") {
-        this.grid.hourlyAvailability = payload;
-        this.state.hourlyAvailabilityUpdating = false;
+      } else if (type == "load") {
+        this.data.sweep = payload;
+        this.updateAge();
+        this.state.sweepLoading = false;
+        console.log(
+          `%carchive.onmessage()%c load` +
+            `   hour = ${this.grid.hour}` +
+            `   latestHour = ${this.grid.latestHour}` +
+            `   loadCount = ${this.state.loadCount}`,
+          "color: lightseagreen",
+          "color: inherit"
+        );
+        if (
+          this.grid.latestHour != this.grid.hour ||
+          this.state.loadCount > 1
+        ) {
+          this.disableLiveUpdate();
+        }
+        this.showMessage(`${payload.name} loaded`);
       } else if (type == "month") {
         this.grid.dailyAvailability = payload;
         this.state.dailyAvailabilityUpdating = false;
@@ -118,15 +120,16 @@ class Archive {
     this.count = this.count.bind(this);
     this.list = this.list.bind(this);
     this.load = this.load.bind(this);
+    this.updateAge = this.updateAge.bind(this);
   }
 
   showMessage(message, duration = 2000) {
     this.message = message;
-    if (this.timer) clearTimeout(this.timer);
-    this.timer = setTimeout(() => {
+    if (this.messageTimer) clearTimeout(this.messageTimer);
+    this.messageTimer = setTimeout(() => {
       if (this.message == message) {
         this.message = "";
-        this.timer = null;
+        this.messageTimer = null;
         this.onupdate(this.state.tic++);
       }
     }, duration);
@@ -249,6 +252,36 @@ class Archive {
       this.disableLiveUpdate();
     } else {
       this.catchup();
+    }
+  }
+
+  updateAge() {
+    if (this.data.sweep == null) {
+      return;
+    }
+    let age = Date.now() / 1000 - this.data.sweep.time;
+    let ageString;
+    if (age > 3 * 86400) {
+      ageString = "";
+    } else if (age > 86400) {
+      let d = Math.floor(age / 86400);
+      let s = d > 1 ? "s" : "";
+      ageString = `> ${d} day${s} ago`;
+    } else if (age > 1.5 * 3600) {
+      let h = Math.floor(age / 3600);
+      let s = h > 1 ? "s" : "";
+      ageString = `> ${h} hour${s} ago`;
+    } else if (age > 60) {
+      let m = Math.floor(age / 60);
+      let s = m > 1 ? "s" : "";
+      ageString = `${m} minute${s} ago`;
+    } else {
+      ageString = "< 1 minute ago";
+    }
+    if (this.data.sweep.age != ageString) {
+      this.data.sweep.age = ageString;
+      console.log(`age = ${this.data.sweep.age}`);
+      this.onupdate(this.state.tic++);
     }
   }
 }
