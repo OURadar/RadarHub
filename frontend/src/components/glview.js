@@ -108,6 +108,7 @@ class GLView extends Component {
     this.updateProjection = this.updateProjection.bind(this);
     this.draw = this.draw.bind(this);
     this.pan = this.pan.bind(this);
+    this.tilt = this.tilt.bind(this);
     this.tap = this.tap.bind(this);
     this.taptap = this.taptap.bind(this);
     this.magnify = this.magnify.bind(this);
@@ -115,6 +116,7 @@ class GLView extends Component {
     // User interaction
     this.gesture = new Gesture(this.canvas, this.constants.bounds);
     this.gesture.handlePan = this.pan;
+    this.gesture.handleTilt = this.tilt;
     this.gesture.handleSingleTap = this.tap;
     this.gesture.handleDoubleTap = this.taptap;
     this.gesture.handleMagnify = this.magnify;
@@ -234,6 +236,17 @@ class GLView extends Component {
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message += ` satQ (${geo.satI.toFixed(3)}, ${geo.satQ.toFixed(3)})`;
+      this.setState({
+        lastPanTime: window.performance.now(),
+      });
+    }
+  }
+
+  tilt(x, y) {
+    const geo = this.geometry;
+    geo.needsUpdate = true;
+    if (this.props.debug) {
+      geo.message += ` tilt()`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
