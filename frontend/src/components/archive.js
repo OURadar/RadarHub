@@ -67,8 +67,13 @@ class Archive {
             this.state.loadCount = 0;
             this.loadByIndex(this.grid.index);
           } else if (this.grid.index == -1) {
-            this.state.loadCount = 0;
-            this.loadByName(this.grid.latestFile);
+            let fileDayString = this.grid.latestFile.split("-")[1];
+            let gridDayString = this.grid.dateTimeString.split("-")[0];
+            console.log(`file: ${fileDayString}   grid: ${gridDayString}`);
+            if (fileDayString == gridDayString) {
+              this.state.loadCount = 0;
+              this.loadByName(this.grid.latestFile);
+            }
           }
         } else if (this.state.switchingProduct) {
           this.state.loadCount = 0;
@@ -144,20 +149,19 @@ class Archive {
 
   // Expect something like radar = raxpol, day = Date('2013-05-20')
   count(radar, day) {
-    let t = day instanceof Date;
     console.log(
-      `%carchive.count()%c   day = ${day} (${t})`,
+      `%carchive.count()%c   day = ${day.toISOString()}`,
       "color: lightseagreen",
       "color: inherit"
     );
-    // if (this.grid.day == day) {
-    //   console.log(
-    //     `%carchive.count()%c same day, do nothing`,
-    //     "color: lightseagreen",
-    //     "color: inherit"
-    //   );
-    //   return;
-    // }
+    if (this.grid.day == day) {
+      console.log(
+        `%carchive.count()%c same day, do nothing`,
+        "color: lightseagreen",
+        "color: inherit"
+      );
+      return;
+    }
     this.state.hourlyAvailabilityUpdating = true;
     this.worker.postMessage({ task: "count", name: radar, day: day });
     this.onupdate(this.state.tic++);
@@ -166,7 +170,10 @@ class Archive {
   // Expect something like radar = px1000, day = Date('2013-05-20'), hour = 19
   list(radar, day, hour, symbol) {
     console.log(
-      `%carchive.list()%c   day = ${day}   hour = ${hour}   symbol = ${symbol} / ${this.grid.symbol}`,
+      `%carchive.list()%c` +
+        `   day = ${day.toISOString()}` +
+        `   hour = ${hour}` +
+        `   symbol = ${symbol} / ${this.grid.symbol}`,
       "color: lightseagreen",
       "color: inherit"
     );
@@ -280,7 +287,6 @@ class Archive {
     }
     if (this.data.sweep.age != ageString) {
       this.data.sweep.age = ageString;
-      console.log(`age = ${this.data.sweep.age}`);
       this.onupdate(this.state.tic++);
     }
   }
