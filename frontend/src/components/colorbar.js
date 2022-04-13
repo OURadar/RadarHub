@@ -113,7 +113,7 @@ class Colorbar {
     const yscale = Math.round(2.0 * scale);
     const height = Math.round(255 * yscale);
     const width = Math.round(20 * scale);
-    const originX = Math.round(this.canvas.width - 120 * scale);
+    const originX = Math.round(this.canvas.width - 110 * scale);
     const originY = Math.round(this.canvas.height - 60 * scale);
     const tickOffset = yscale - 1;
     context.translate(originX, originY);
