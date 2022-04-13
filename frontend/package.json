@@ -21,15 +21,15 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "unused-files-webpack-plugin": "^3.4.0",
-    "webpack": "^5.64.1",
-    "webpack-cli": "^4.7.2"
+    "webpack": "^5.72.0",
+    "webpack-cli": "^4.9.2"
   },
   "dependencies": {
-    "@emotion/react": "^11.4.1",
-    "@emotion/styled": "^11.3.0",
+    "@emotion/react": "^11.9.0",
+    "@emotion/styled": "^11.8.1",
     "@mui/icons-material": "^5.0.1",
     "@mui/lab": "^5.0.0-alpha.48",
-    "@mui/material": "^5.1.0",
+    "@mui/material": "^5.6.1",
     "@mui/styles": "^5.0.1",
     "binary-parser": "^1.9.2",
     "date-fns": "^2.24.0",
@@ -41,6 +41,7 @@
     "regl-stats-widget": "^0.0.1",
     "shapefile": "^0.6.6",
     "split.js": "^1.6.4",
-    "stats-js": "^1.0.1"
+    "stats-js": "^1.0.1",
+    "update": "^0.4.2"
   }
 }

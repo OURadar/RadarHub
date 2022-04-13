@@ -80,7 +80,8 @@ class GLView extends Component {
     model = mat4.translate([], model, [0, 0, common.earthRadius]);
     // Important parameters for WebGL. Don't want to use React state
     this.geometry = {
-      fov: 0.028,
+      // fov: 0.028,
+      fov: 0.2,
       aspect: 1,
       origin: origin,
       satCoordinate: satCoordinate,
@@ -262,21 +263,26 @@ class GLView extends Component {
     // );
     // let coord = common.rad.point2coord(...position);
     // geo.satCoordinate = vec3.fromValues(...coord, vec3.length(position));
-    geo.satTarget = vec3.rotateX(
+
+    geo.satTarget[1] += 5000 * (y / this.mount.clientHeight) * geo.fov;
+
+    // geo.satTarget = vec3.rotateY(
+    //   [],
+    //   geo.satTarget,
+    //   geo.satPosition,
+    //   (x / this.mount.clientWidth) * geo.fov
+    // );
+
+    let vec = vec3.rotateX(
       [],
-      geo.satTarget,
-      geo.satPosition,
-      (y / this.mount.clientHeight) * geo.fov
-    );
-    geo.satTarget = vec3.rotateY(
-      [],
-      geo.satTarget,
-      geo.satPosition,
+      [0, 0, -common.earthRadius],
+      [0, 0, 0],
       (x / this.mount.clientWidth) * geo.fov
     );
+
     geo.needsUpdate = true;
     if (this.props.debug) {
-      geo.message += ` tilt()  ${geo.satUp}`;
+      geo.message += ` tilt()  ${geo.satTarget}`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
@@ -306,6 +312,7 @@ class GLView extends Component {
     geo.fov = 0.028;
     geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
     geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
+    geo.satTarget = [0, 0, 0];
     geo.needsUpdate = true;
     if (this.props.debug) {
       this.setState({
