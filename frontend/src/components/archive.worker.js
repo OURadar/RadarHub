@@ -80,7 +80,7 @@ function connect(newRadar) {
   }
   console.log(`Connecting live update to ${radar} ...`);
   source = new EventSource("/events/");
-  source.onmessage = (event) => {
+  source.addEventListener(radar, (event) => {
     const payload = JSON.parse(event.data);
     payload.files.forEach((file) => {
       // console.log(
@@ -101,7 +101,7 @@ function connect(newRadar) {
       type: "list",
       payload: grid,
     });
-  };
+  });
   self.postMessage({
     type: "state",
     payload: {
@@ -137,7 +137,7 @@ function updateListWithFile(file) {
   const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
   console.log(
     `%carchive.worker.updateListWithFile()%c ${file} ${day}`,
-    "color: tan;",
+    "color: tan",
     "color: inherit"
   );
   const listHour = elements[2].slice(0, 2);

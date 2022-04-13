@@ -41,7 +41,7 @@ export function TopBar(props) {
   const [message, setMessage] = React.useState("");
   let online, status, notify;
   if (props.ingest) {
-    online = props.ingest?.state?.liveUpdate ? "online" : "offline";
+    online = props.ingest.state?.liveUpdate ? "online" : "offline";
     status = <StatusBody message={props.ingest.message} />;
     notify = <Notification message={props.ingest.response || message} />;
   } else {

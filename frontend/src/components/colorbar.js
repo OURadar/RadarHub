@@ -114,7 +114,7 @@ class Colorbar {
     const height = Math.round(255 * yscale);
     const width = Math.round(20 * scale);
     const originX = Math.round(this.canvas.width - 120 * scale);
-    const originY = Math.round(this.canvas.height - 50 * scale);
+    const originY = Math.round(this.canvas.height - 60 * scale);
     const tickOffset = yscale - 1;
     context.translate(originX, originY);
     context.font = `${16 * scale}px LabelFont`;
