@@ -81,7 +81,7 @@ class GLView extends Component {
     // Important parameters for WebGL. Don't want to use React state
     this.geometry = {
       // fov: 0.028,
-      fov: 0.2,
+      fov: 1.0,
       aspect: 1,
       origin: origin,
       satCoordinate: satCoordinate,
@@ -94,6 +94,7 @@ class GLView extends Component {
       radarCoordinate: radarCoordinate,
       radarPosition: common.rad.coord2point(...radarCoordinate),
       model: model,
+      targetModel: mat4.scale([], mat4.create(), [0.3, 0.3, 0.3]),
       view: mat4.create(),
       projection: mat4.create(),
       modelview: model,
@@ -183,7 +184,8 @@ class GLView extends Component {
     geo.aspect = w / h;
     geo.satPosition = common.rad.coord2point(...geo.satCoordinate);
     geo.view = mat4.lookAt([], geo.satPosition, geo.satTarget, geo.satUp);
-    geo.modelview = mat4.multiply([], geo.view, geo.model);
+    // geo.modelview = mat4.multiply([], geo.view, geo.model);
+    geo.modelview = mat4.multiply([], geo.view, geo.targetModel);
     geo.projection = mat4.perspective([], geo.fov, geo.aspect, 100, 30000.0);
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
     geo.dashport.x = w - geo.dashport.width;
@@ -208,18 +210,32 @@ class GLView extends Component {
     this.regl.clear({
       color: this.props.colors.glview,
     });
-    this.sphere2({
-      modelview: geo.view,
-      projection: geo.projection,
-      viewport: geo.viewport,
-      color: [1.0, 0.4, 0.4, 1.0],
-    });
-    this.sphere({
-      modelview: geo.view,
-      projection: geo.projection,
-      viewport: geo.viewport,
-      color: this.props.colors.lines[2],
-    });
+    // this.sphere2({
+    //   modelview: geo.view,
+    //   projection: geo.projection,
+    //   viewport: geo.viewport,
+    //   color: [1.0, 0.4, 0.4, 1.0],
+    // });
+    // this.sphere({
+    //   modelview: geo.view,
+    //   projection: geo.projection,
+    //   viewport: geo.viewport,
+    //   color: this.props.colors.lines[2],
+    // });
+    this.sphere([
+      {
+        modelview: geo.modelview,
+        projection: geo.projection,
+        viewport: geo.viewport,
+        color: [1.0, 0.0, 0.0, 1.0],
+      },
+      {
+        modelview: geo.view,
+        projection: geo.projection,
+        viewport: geo.viewport,
+        color: this.props.colors.lines[2],
+      },
+    ]);
     // quad: [mode, shader-user mix, shader color tint, opacity]
     this.monet({
       width: 2.5,
@@ -271,7 +287,12 @@ class GLView extends Component {
     // let coord = common.rad.point2coord(...position);
     // geo.satCoordinate = vec3.fromValues(...coord, vec3.length(position));
 
-    geo.satTarget[1] += 5000 * (y / this.mount.clientHeight) * geo.fov;
+    let delta = (y / this.mount.clientHeight) * geo.fov;
+
+    geo.satTarget[1] += 5000 * delta;
+
+    let satToRadar = vec3.sub([], geo.satPosition, geo.radarPosition);
+    // vec3.add(geo.satTarget, geo.radarPosition, satToRadar);
 
     // geo.satTarget = vec3.rotateY(
     //   [],
@@ -280,16 +301,16 @@ class GLView extends Component {
     //   (x / this.mount.clientWidth) * geo.fov
     // );
 
-    let vec = vec3.rotateX(
-      [],
-      [0, 0, -common.earthRadius],
-      [0, 0, 0],
-      (x / this.mount.clientWidth) * geo.fov
-    );
+    // let vec = vec3.rotateX(
+    //   [],
+    //   [0, 0, -common.earthRadius],
+    //   [0, 0, 0],
+    //   (x / this.mount.clientWidth) * geo.fov
+    // );
 
     geo.needsUpdate = true;
     if (this.props.debug) {
-      geo.message += ` tilt()  ${geo.satTarget}`;
+      geo.message += ` tilt()  ${geo.satTarget}  delta = ${delta}`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
