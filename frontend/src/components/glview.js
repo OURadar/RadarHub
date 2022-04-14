@@ -116,6 +116,7 @@ class GLView extends Component {
     this.basic3 = artists.basic3(this.regl);
     this.sphere = artists.sphere(this.regl);
     this.sphere2 = artists.sphere2(this.regl);
+    this.element3 = artists.element3(this.regl);
     this.michelangelo = artists.rect2(this.regl);
     // Bind some methods
     this.updateProjection = this.updateProjection.bind(this);
@@ -135,6 +136,16 @@ class GLView extends Component {
     this.gesture.handleMagnify = this.magnify;
     // Other built-in assets
     this.rings = new Rings(this.regl, [1, 60, 120, 250], 60);
+    let earth = require("./earth-grid");
+    this.earth = {
+      points: this.regl.buffer({
+        usage: "static",
+        type: "float",
+        data: earth.points,
+      }),
+      elements: earth.elements,
+    };
+    console.log(this.earth);
   }
 
   static defaultProps = {
@@ -222,20 +233,43 @@ class GLView extends Component {
     //   viewport: geo.viewport,
     //   color: this.props.colors.lines[2],
     // });
-    this.sphere([
+
+    // this.sphere([
+    //   {
+    //     modelview: geo.modelview,
+    //     projection: geo.projection,
+    //     viewport: geo.viewport,
+    //     color: [1.0, 0.0, 0.0, 1.0],
+    //   },
+    //   {
+    //     modelview: geo.view,
+    //     projection: geo.projection,
+    //     viewport: geo.viewport,
+    //     color: this.props.colors.lines[2],
+    //   },
+    // ]);
+
+    this.element3([
       {
         modelview: geo.modelview,
         projection: geo.projection,
         viewport: geo.viewport,
         color: [1.0, 0.0, 0.0, 1.0],
+        points: this.earth.points,
+        elements: this.earth.elements,
+        primitive: "lines",
       },
       {
         modelview: geo.view,
         projection: geo.projection,
         viewport: geo.viewport,
-        color: this.props.colors.lines[2],
+        color: [0.0, 0.5, 0.0, 1.0],
+        points: this.earth.points,
+        elements: this.earth.elements,
+        primitive: "lines",
       },
     ]);
+
     // quad: [mode, shader-user mix, shader color tint, opacity]
     this.monet({
       width: 2.5,

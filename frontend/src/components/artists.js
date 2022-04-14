@@ -242,7 +242,7 @@ export function element3(regl) {
         gl_Position = projection * modelview * vec4(position, 1.0);
         n = mat3(modelview) * normalize(position);
         s = dot(vec3(0.0, 0.0, 1.0), n);
-        s = clamp(0.4 + 0.6 * s, 0.0, 1.0);
+        s = clamp(0.5 + 0.5 * s, 0.0, 1.0);
       }`,
 
     frag: `
