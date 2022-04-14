@@ -114,6 +114,7 @@ class GLView extends Component {
     this.vinci = artists.texturedElements(this.regl);
     this.basic3 = artists.basic3(this.regl);
     this.sphere = artists.sphere(this.regl);
+    this.sphere2 = artists.sphere2(this.regl);
     this.michelangelo = artists.rect2(this.regl);
     // Bind some methods
     this.updateProjection = this.updateProjection.bind(this);
@@ -206,6 +207,12 @@ class GLView extends Component {
     const geo = this.geometry;
     this.regl.clear({
       color: this.props.colors.glview,
+    });
+    this.sphere2({
+      modelview: geo.view,
+      projection: geo.projection,
+      viewport: geo.viewport,
+      color: [1.0, 0.4, 0.4, 1.0],
     });
     this.sphere({
       modelview: geo.view,

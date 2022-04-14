@@ -332,6 +332,52 @@ export function sphere(regl) {
   });
 }
 
+let s = [];
+earth.points.forEach((point) => {
+  s.push(0.2 * point);
+});
+
+const small = { points: s.flat(), elements: earth.elements.slice() };
+
+export function sphere2(regl) {
+  return regl({
+    vert: `
+      precision highp float;
+      attribute vec3 position;
+      uniform mat4 modelview;
+      uniform mat4 projection;
+      uniform vec4 color;
+      void main() {
+        gl_Position = projection * modelview * vec4(position, 1.0);
+      }`,
+
+    frag: `
+      precision highp float;
+      uniform vec4 color;
+      void main() {
+        gl_FragColor = color;
+      }`,
+
+    uniforms: {
+      modelview: regl.prop("modelview"),
+      projection: regl.prop("projection"),
+      color: regl.prop("color"),
+    },
+
+    attributes: {
+      position: regl.buffer({
+        usage: "static",
+        type: "float",
+        data: small.points,
+      }),
+    },
+
+    primitive: "lines",
+    elements: small.elements,
+    viewport: regl.prop("viewport"),
+  });
+}
+
 // A point drawing artist to paint points based on a large texture
 export function sprite3(regl) {
   return regl({
