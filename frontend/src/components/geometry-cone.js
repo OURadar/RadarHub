@@ -8,7 +8,7 @@
 //
 
 let points = [];
-let count = 12;
+let count = 24;
 let theta;
 let point;
 
@@ -26,11 +26,11 @@ for (let k = 0; k < count; k++) {
 
 // X (right)
 points.push([0.0, 0.0, 1.0]);
-points.push([1.0, 0.0, 1.0]);
+points.push([1.5, 0.0, 1.0]);
 
 // Y (up)
 points.push([0.0, 0.0, 1.0]);
-points.push([0.0, 1.0, 1.0]);
+points.push([0.0, 1.5, 1.0]);
 
 count = count * 4 + 4;
 
