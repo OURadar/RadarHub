@@ -78,9 +78,20 @@ class GLView extends Component {
     model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
     model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
     model = mat4.translate([], model, [0, 0, common.earthRadius]);
-    let satModel = mat4.create();
-    satModel = mat4.scale([], satModel, [100, 100, 100]);
+    // let satModel = mat4.create();
+    // satModel = mat4.rotateY([], satModel, common.deg2rad(origin.longitude));
+    // satModel = mat4.rotateX([], satModel, common.deg2rad(-origin.latitude));
+    // satModel = mat4.translate([], satModel, [0, 0, common.earthRadius]);
+    // satModel = mat4.scale([], satModel, [250, 250, 500]);
+    let satQuaternion = quat.fromEuler(
+      [],
+      -origin.latitude,
+      origin.longitude,
+      0
+    );
+    let satModel = mat4.fromQuat([], satQuaternion);
     satModel = mat4.translate([], satModel, [0, 0, common.earthRadius]);
+    satModel = mat4.scale([], satModel, [250, 250, 500]);
     // Important parameters for WebGL. Don't want to use React state
     this.geometry = {
       // fov: 0.028,
@@ -89,9 +100,9 @@ class GLView extends Component {
       origin: origin,
       satCoordinate: satCoordinate,
       satPosition: common.rad.coord2point(...satCoordinate),
-      satQuaternion: quat.fromEuler([], -origin.latitude, origin.longitude, 0),
+      satQuaternion: satQuaternion,
       satModel: satModel,
-      satModelview: mat4.create(),
+      satModelview: satModel,
       satI: 1.0,
       satQ: 0.0,
       satUp: [0, 1, 0],
@@ -110,8 +121,6 @@ class GLView extends Component {
       needsUpdate: true,
       message: "geo",
     };
-    console.log(`satPosition = ${this.geometry.satPosition}`);
-    console.log(`radarPosition = ${this.geometry.radarPosition}`);
 
     // Our artists
     this.picaso = artists.simplifiedInstancedLines(this.regl);
@@ -135,7 +144,7 @@ class GLView extends Component {
     this.fitToData = this.fitToData.bind(this);
     // User interaction
     this.gesture = new Gesture(this.canvas, this.constants.bounds);
-    this.gesture.handlePan = this.pan;
+    this.gesture.handlePan = this.pan2;
     this.gesture.handleTilt = this.tilt;
     this.gesture.handleSingleTap = this.tap;
     this.gesture.handleDoubleTap = this.taptap;
@@ -159,9 +168,8 @@ class GLView extends Component {
         type: "float",
         data: cone.points,
       }),
+      count: cone.count,
     };
-    console.log(cone.points);
-    console.log(this.cone);
   }
 
   static defaultProps = {
@@ -209,13 +217,13 @@ class GLView extends Component {
     const w = this.canvas.width;
     const h = this.canvas.height;
     geo.aspect = w / h;
-    geo.satPosition = common.rad.coord2point(...geo.satCoordinate);
-    geo.satModelview = mat4.multiply([], geo.view, geo.satModel);
     geo.view = mat4.lookAt([], geo.satPosition, geo.satTarget, geo.satUp);
     // geo.modelview = mat4.multiply([], geo.view, geo.model);
     geo.modelview = mat4.multiply([], geo.view, geo.targetModel);
     geo.projection = mat4.perspective([], geo.fov, geo.aspect, 100, 30000.0);
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
+    geo.satPosition = common.rad.coord2point(...geo.satCoordinate);
+    geo.satModelview = mat4.multiply([], geo.view, geo.satModel);
     geo.dashport.x = w - geo.dashport.width;
     geo.viewport.width = w;
     geo.viewport.height = h;
@@ -294,7 +302,7 @@ class GLView extends Component {
       color: [0.2, 0.2, 1.0, 1.0],
       points: this.cone.points,
       primitive: "lines",
-      count: 20,
+      count: this.cone.count,
     });
 
     // quad: [mode, shader-user mix, shader color tint, opacity]
@@ -340,9 +348,33 @@ class GLView extends Component {
 
   pan2(x, y) {
     const geo = this.geometry;
-    let deltaX = (x / this.mount.clientWidth) * geo.aspect;
-    let deltaY = y / this.mount.clientHeight;
-    geo.satPosition = mat4.rotateX([], geo.satPosition, deltaX);
+    let deltaX = (x / this.mount.clientWidth) * 2.0;
+    let deltaY = (-y / this.mount.clientHeight) * 2.0;
+
+    // geo.satModel = mat4.rotateX([], geo.satModel, deltaY);
+    // geo.satModel = mat4.rotateY([], geo.satModel, deltaX);
+
+    // let m = mat4.fromYRotation([], deltaX);
+    // geo.satModel = mat4.multiply([], m, geo.satModel);
+    // let n = mat4.fromXRotation([], deltaY);
+    // geo.satModel = mat4.multiply([], geo.satModel, n);
+
+    // let q = quat.create();
+    geo.satQuaternion = quat.rotateY([], geo.satQuaternion, deltaX);
+    geo.satQuaternion = quat.rotateX([], geo.satQuaternion, deltaY);
+    geo.satModel = mat4.fromQuat([], geo.satQuaternion);
+    geo.satModel = mat4.translate([], geo.satModel, [0, 0, common.earthRadius]);
+    geo.satModel = mat4.scale([], geo.satModel, [250, 250, 500]);
+
+    geo.needsUpdate = true;
+    if (this.props.debug) {
+      geo.message +=
+        ` delta (${x}, ${y}) ` +
+        `-> (${deltaX.toFixed(3)}, ${deltaY.toFixed(3)})`;
+      this.setState({
+        lastPanTime: window.performance.now(),
+      });
+    }
   }
 
   tilt(x, y) {
