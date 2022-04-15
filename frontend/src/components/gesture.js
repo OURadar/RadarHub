@@ -40,7 +40,6 @@ class Gesture {
     this.handleMagnify = (_mx, _my, _m, _x, _y) => {};
 
     this.element.addEventListener("mousedown", (e) => {
-      console.log(e);
       if (
         e.offsetX > this.bounds.left &&
         e.offsetY < this.element.height - this.bounds.bottom

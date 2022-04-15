@@ -202,9 +202,10 @@ export function basic3(regl) {
     vert: `
       precision highp float;
       attribute vec3 position;
+      uniform mat4 modelview;
       uniform mat4 projection;
       void main() {
-        gl_Position = projection * vec4(position, 1);
+        gl_Position = projection * modelview * vec4(position, 1);
       }`,
 
     frag: `
@@ -216,6 +217,7 @@ export function basic3(regl) {
 
     uniforms: {
       color: regl.prop("color"),
+      modelview: regl.prop("modelview"),
       projection: regl.prop("projection"),
     },
 

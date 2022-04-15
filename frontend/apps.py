@@ -49,6 +49,7 @@ class FrontendConfig(AppConfig):
         if settings.VERBOSE:
             show = color_name_value('DEBUG', settings.DEBUG)
             show += '   ' + color_name_value('SIMULATE', settings.SIMULATE)
+            show += '   ' + color_name_value('VERBOSE', settings.VERBOSE)
             print(show)
 
             if 'postgresql' in settings.DATABASES['default']['ENGINE']:
@@ -87,8 +88,8 @@ def monitor(radar='px1000', prefix='PX-'):
         hourly_count = day.hourly_count
         files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())        
     else:
-        print('No Day objects yet')
         hourly_count = ','.join('0' * 24)
+        print('No Day objects yet')
 
     no_day_warning = 0
     while True:
@@ -96,7 +97,7 @@ def monitor(radar='px1000', prefix='PX-'):
         day = Day.objects.filter(name=prefix).last()
         if day is None:
             no_day_warning += 1
-            if no_day_warning < 3 or no_day_warning % 60 == 0:
+            if no_day_warning < 3 or no_day_warning % 100 == 0:
                 print('No Day objects yet')
             continue
         if hourly_count == day.hourly_count:
