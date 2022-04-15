@@ -181,8 +181,10 @@ class GLView extends Component {
     linewidth: 1.4,
     textureScale: 1.0,
     origin: {
-      longitude: -97.422413,
-      latitude: 35.25527,
+      // longitude: -97.422413,
+      // latitude: 35.25527,
+      longitude: 15.0,
+      latitude: 20.0,
     },
   };
 
@@ -222,7 +224,7 @@ class GLView extends Component {
     geo.modelview = mat4.multiply([], geo.view, geo.targetModel);
     geo.projection = mat4.perspective([], geo.fov, geo.aspect, 100, 30000.0);
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
-    geo.satPosition = common.rad.coord2point(...geo.satCoordinate);
+    // geo.satPosition = common.rad.coord2point(...geo.satCoordinate);
     geo.satModelview = mat4.multiply([], geo.view, geo.satModel);
     geo.dashport.x = w - geo.dashport.width;
     geo.viewport.width = w;
@@ -348,29 +350,45 @@ class GLView extends Component {
 
   pan2(x, y) {
     const geo = this.geometry;
-    let deltaX = (x / this.mount.clientWidth) * 2.0;
-    let deltaY = (-y / this.mount.clientHeight) * 2.0;
+    let deltaX = (-x / this.mount.clientWidth) * geo.fov;
+    let deltaY = (y / this.mount.clientHeight) * geo.fov;
 
-    // geo.satModel = mat4.rotateX([], geo.satModel, deltaY);
-    // geo.satModel = mat4.rotateY([], geo.satModel, deltaX);
+    const lon =
+      geo.satCoordinate[0] -
+      ((x / this.mount.clientWidth) * geo.fov * geo.aspect) /
+        Math.cos(geo.satCoordinate[1]);
+    geo.satCoordinate[1] = common.clamp(
+      geo.satCoordinate[1] - (y / this.mount.clientHeight) * geo.fov,
+      -0.499 * Math.PI,
+      +0.499 * Math.PI
+    );
+    // For continuous longitude transition around +/-180 deg, poor-man quartenion
+    geo.satI = Math.cos(lon);
+    geo.satQ = Math.sin(lon);
+    geo.satCoordinate[0] = Math.atan2(geo.satQ, geo.satI);
 
-    // let m = mat4.fromYRotation([], deltaX);
-    // geo.satModel = mat4.multiply([], m, geo.satModel);
-    // let n = mat4.fromXRotation([], deltaY);
-    // geo.satModel = mat4.multiply([], geo.satModel, n);
+    let p = quat.setAxisAngle([], [0.0, 1.0, 0.0], deltaX);
+    let q = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
 
-    // let q = quat.create();
-    geo.satQuaternion = quat.rotateY([], geo.satQuaternion, deltaX);
-    geo.satQuaternion = quat.rotateX([], geo.satQuaternion, deltaY);
-    geo.satModel = mat4.fromQuat([], geo.satQuaternion);
-    geo.satModel = mat4.translate([], geo.satModel, [0, 0, common.earthRadius]);
-    geo.satModel = mat4.scale([], geo.satModel, [250, 250, 500]);
+    // Here comes the Quaternion Voodoo
+    quat.multiply(geo.satQuaternion, p, geo.satQuaternion);
+    quat.multiply(geo.satQuaternion, geo.satQuaternion, q);
+
+    // geo.satQuaternion = quat.rotateY([], geo.satQuaternion, deltaX);
+    // quat.rotateX(geo.satQuaternion, geo.satQuaternion, deltaY);
+
+    mat4.fromQuat(geo.satModel, geo.satQuaternion);
+    mat4.translate(geo.satModel, geo.satModel, [0, 0, 2 * common.earthRadius]);
+    mat4.scale(geo.satModel, geo.satModel, [250, 250, 500]);
+
+    geo.satPosition = mat4.getTranslation([], geo.satModel);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message +=
         ` delta (${x}, ${y}) ` +
-        `-> (${deltaX.toFixed(3)}, ${deltaY.toFixed(3)})`;
+        `-> (${deltaX.toFixed(3)}, ${deltaY.toFixed(3)})` +
+        `  ${geo.satI.toFixed(2)}, ${geo.satQ.toFixed(2)}`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
@@ -418,6 +436,16 @@ class GLView extends Component {
 
     m = mat4.translate([], m, v);
     geo.targetModel = mat4.scale([], m, [0.1, 0.1, 0.1]);
+
+    // geo.satQuaternion = quat.rotateY([], geo.satQuaternion, deltaX);
+    // geo.satQuaternion = quat.rotateX([], geo.satQuaternion, deltaY);
+    // geo.satModel = mat4.fromRotationTranslationScaleOrigin(
+    //   [],
+    //   geo.satQuaternion,
+    //   [0, 0, common.earthRadius],
+    //   [250, 250, 500],
+    //   [0, 0, 0]
+    // );
 
     geo.needsUpdate = true;
     if (this.props.debug) {
