@@ -248,19 +248,21 @@ class GLView extends Component {
     const w = this.canvas.width;
     const h = this.canvas.height;
     const r = common.earthRadius;
+    const a = 0.2 * r;
     geo.aspect = w / h;
 
     let t = [0, 0, r];
-    let s = [r * geo.fov, r * geo.fov, r];
+    let e = [0, 0, a];
+    let s = [a * geo.fov, a * geo.fov, a];
 
     mat4.fromQuat(geo.target.model, geo.target.quaternion);
     mat4.translate(geo.target.model, geo.target.model, t);
 
     mat4.fromQuat(geo.eye.model, geo.eye.quaternion);
     mat4.multiply(geo.eye.model, geo.target.model, geo.eye.model);
-    mat4.translate(geo.eye.model, geo.eye.model, [0, 0, geo.eye.range]);
+    mat4.translate(geo.eye.model, geo.eye.model, e);
 
-    mat4.scale(geo.target.model, geo.target.model, [0.1, 0.1, 0.1]);
+    mat4.scale(geo.target.model, geo.target.model, [0.05, 0.05, 0.05]);
     mat4.scale(geo.eye.model, geo.eye.model, s);
 
     let u = vec3.fromValues(

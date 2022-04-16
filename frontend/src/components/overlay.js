@@ -7,7 +7,7 @@
 
 import { Polygon } from "./polygon";
 import { Text } from "./text";
-import { clamp, deg2rad } from "./common";
+import { clamp, deg } from "./common";
 import { mat4, vec4 } from "gl-matrix";
 
 //
@@ -20,15 +20,10 @@ class Overlay {
     this.colors = colors;
     this.geometry = geometry;
     this.viewprojection = mat4.create();
-    // this.viewParameters = [
-    //   1.0,
-    //   this.geometry.satCoordinate[0],
-    //   this.geometry.satCoordinate[1],
-    // ];
     this.viewParameters = [
       1.0,
-      deg2rad(geometry.origin.longitude),
-      deg2rad(geometry.origin.latitude),
+      geometry.origin.longitude,
+      geometry.origin.latitude,
     ];
     this.targetOpacity = [];
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
@@ -278,30 +273,27 @@ class Overlay {
   }
 
   getDrawables() {
-    const viewParameters = [
-      this.geometry.fov,
-      deg2rad(this.geometry.origin.longitude),
-      deg2rad(this.geometry.origin.latitude),
-    ];
+    const [lon, lat] = deg.point2coord(...this.geometry.target.position);
+    const viewParameters = [this.geometry.fov, lon, lat];
 
     if (
       this.tic++ % 12 == 0 &&
       (Math.abs(this.viewParameters[0] / viewParameters[0] - 1.0) > 0.05 ||
-        Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.01 ||
-        Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.01)
+        Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.5 ||
+        Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.5)
     ) {
       this.viewParameters = viewParameters;
 
       // Compute deviation from the origin
-      const dx = viewParameters[1] - deg2rad(this.geometry.origin.longitude);
-      const dy = viewParameters[2] - deg2rad(this.geometry.origin.latitude);
+      const dx = viewParameters[1] - this.geometry.origin.longitude;
+      const dy = viewParameters[2] - this.geometry.origin.latitude;
       const d = Math.sqrt(dx * dx + dy * dy);
       // console.log(`fov = ${this.geometry.fov.toFixed(3)}  d = ${d.toFixed(2)}`);
 
       // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
-      if (this.geometry.fov < 0.06 && d < 0.1) {
+      if (this.geometry.fov < 0.06 && d < 5) {
         this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
-      } else if (this.geometry.fov < 0.42 && d < 0.3) {
+      } else if (this.geometry.fov < 0.42 && d < 10) {
         this.targetOpacity = [1, 1, 0, 0, 1, 1, 0];
       } else {
         this.targetOpacity = [1, 1, 0, 0, 0, 1, 1];
