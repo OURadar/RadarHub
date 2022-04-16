@@ -64,16 +64,22 @@ class GLView extends Component {
     //  - view = view matrix derived from satPosition
     //  - projection = projection matrix to GL view
     const origin = props.origin;
-    const satCoordinate = vec3.fromValues(
-      common.deg2rad(origin.longitude),
-      common.deg2rad(origin.latitude),
-      2.0 * common.earthRadius
-    );
-    const radarCoordinate = vec3.fromValues(
-      common.deg2rad(origin.longitude),
-      common.deg2rad(origin.latitude),
+    // const satCoordinate = vec3.fromValues(
+    //   common.deg2rad(origin.longitude),
+    //   common.deg2rad(origin.latitude),
+    //   2.0 * common.earthRadius
+    // );
+    const radarPosition = common.deg.coord2point(
+      origin.longitude,
+      origin.latitude,
       common.earthRadius
     );
+    const height = common.earthRadius;
+    const satPosition = [
+      radarPosition[0],
+      radarPosition[1],
+      radarPosition[2] + height,
+    ];
     let model = mat4.create();
     model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
     model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
@@ -99,22 +105,19 @@ class GLView extends Component {
       aspect: 1,
       origin: origin,
       originQuaternion: originQuaternion,
-      satCoordinate: satCoordinate,
-      satPosition: common.rad.coord2point(...satCoordinate),
+      // satCoordinate: satCoordinate,
+      satPosition: vec3.fromValues(...satPosition),
       satQuaternion: quat.create(),
       satModel: satModel,
       satModelview: mat4.create(),
-      satI: 1.0,
-      satQ: 0.0,
       satUp: vec3.fromValues(0, 1, 0),
-      satTarget: vec3.create(),
-      radarCoordinate: radarCoordinate,
-      radarPosition: common.rad.coord2point(...radarCoordinate),
+      satTarget: vec3.fromValues(...satModel),
+      radarPosition: radarPosition,
       model: model,
-      targetModel: mat4.scale([], mat4.create(), [0.1, 0.1, 0.1]),
+      targetModel: mat4.scale([], satModel, [0.01, 0.01, 0.01]),
       view: mat4.create(),
       projection: mat4.create(),
-      modelview: model,
+      modelview: mat4.create(),
       viewprojection: mat4.create(),
       orthoprojection: mat4.ortho([], 0, 1, 0, 1, 0, 1),
       viewport: { x: 0, y: 0, width: 1, height: 1 },
@@ -137,7 +140,6 @@ class GLView extends Component {
     this.updateProjection = this.updateProjection.bind(this);
     this.draw = this.draw.bind(this);
     this.pan = this.pan.bind(this);
-    this.pan2 = this.pan2.bind(this);
     this.tilt = this.tilt.bind(this);
     this.tap = this.tap.bind(this);
     this.taptap = this.taptap.bind(this);
@@ -145,7 +147,7 @@ class GLView extends Component {
     this.fitToData = this.fitToData.bind(this);
     // User interaction
     this.gesture = new Gesture(this.canvas, this.constants.bounds);
-    this.gesture.handlePan = this.pan2;
+    this.gesture.handlePan = this.pan;
     this.gesture.handleTilt = this.tilt;
     this.gesture.handleSingleTap = this.tap;
     this.gesture.handleDoubleTap = this.taptap;
@@ -220,13 +222,18 @@ class GLView extends Component {
     const w = this.canvas.width;
     const h = this.canvas.height;
     geo.aspect = w / h;
+
+    // mat4.getTranslation(geo.satPosition, geo.satModel);
+
     geo.view = mat4.lookAt([], geo.satPosition, geo.satTarget, geo.satUp);
     // geo.modelview = mat4.multiply([], geo.view, geo.model);
-    geo.modelview = mat4.multiply([], geo.view, geo.targetModel);
+    mat4.multiply(geo.modelview, geo.view, geo.targetModel);
     geo.projection = mat4.perspective([], geo.fov, geo.aspect, 100, 30000.0);
     geo.viewprojection = mat4.multiply([], geo.projection, geo.view);
     // geo.satPosition = common.rad.coord2point(...geo.satCoordinate);
+
     geo.satModelview = mat4.multiply([], geo.view, geo.satModel);
+
     geo.dashport.x = w - geo.dashport.width;
     geo.viewport.width = w;
     geo.viewport.height = h;
@@ -326,31 +333,6 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    const lon =
-      geo.satCoordinate[0] -
-      ((x / this.mount.clientWidth) * geo.fov * geo.aspect) /
-        Math.cos(geo.satCoordinate[1]);
-    geo.satCoordinate[1] = common.clamp(
-      geo.satCoordinate[1] - (y / this.mount.clientHeight) * geo.fov,
-      -0.499 * Math.PI,
-      +0.499 * Math.PI
-    );
-    // For continuous longitude transition around +/-180 deg, poor-man quartenion
-    geo.satI = Math.cos(lon);
-    geo.satQ = Math.sin(lon);
-    geo.satCoordinate[0] = Math.atan2(geo.satQ, geo.satI);
-    geo.satPosition = common.rad.coord2point(...geo.satCoordinate);
-    geo.needsUpdate = true;
-    if (this.props.debug) {
-      geo.message += ` satQ (${geo.satI.toFixed(3)}, ${geo.satQ.toFixed(3)})`;
-      this.setState({
-        lastPanTime: window.performance.now(),
-      });
-    }
-  }
-
-  pan2(x, y) {
-    const geo = this.geometry;
     let deltaX = (-x / this.mount.clientWidth) * geo.fov;
     let deltaY = (y / this.mount.clientHeight) * geo.fov;
     let r = [0, 0, common.earthRadius];
@@ -359,7 +341,7 @@ class GLView extends Component {
     mat4.translate(geo.satModel, geo.satModel, r);
 
     mat4.scale(geo.targetModel, geo.satModel, [0.01, 0.01, 0.01]);
-    mat4.getTranslation(geo.satTarget, geo.satModel);
+    // mat4.getTranslation(geo.satTarget, geo.satModel);
 
     let p = quat.setAxisAngle([], [0.0, 1.0, 0.0], deltaX);
     let q = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
@@ -371,19 +353,19 @@ class GLView extends Component {
     let a = mat4.fromQuat([], geo.satQuaternion);
     mat4.multiply(geo.satModel, geo.satModel, a);
 
+    // let f = [0, 0, common.earthRadius];
     let f = [0, 0, 1000.0];
     mat4.translate(geo.satModel, geo.satModel, f);
 
     mat4.scale(geo.satModel, geo.satModel, [250, 250, 500]);
 
-    geo.satPosition = mat4.getTranslation([], geo.satModel);
+    // mat4.getTranslation(geo.satPosition, geo.satModel);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message +=
         ` delta (${x}, ${y}) ` +
-        `-> (${deltaX.toFixed(3)}, ${deltaY.toFixed(3)})` +
-        `  ${geo.satI.toFixed(2)}, ${geo.satQ.toFixed(2)}`;
+        `-> (${deltaX.toFixed(3)}, ${deltaY.toFixed(3)})`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
@@ -400,23 +382,24 @@ class GLView extends Component {
     mat4.translate(geo.satModel, geo.satModel, r);
 
     mat4.scale(geo.targetModel, geo.satModel, [0.01, 0.01, 0.01]);
-    mat4.getTranslation(geo.satTarget, geo.satModel);
+    // mat4.getTranslation(geo.satTarget, geo.satModel);
 
     // Here comes the Quaternion Voodoo
-    let u = quat.setAxisAngle([], [0.0, 1.0, 0.0], deltaX);
+    let u = quat.setAxisAngle([], [0.0, 0.0, 1.0], deltaX);
     let v = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
-    quat.multiply(geo.satQuaternion, u, geo.satQuaternion);
-    quat.multiply(geo.satQuaternion, geo.satQuaternion, v);
+    quat.multiply(geo.satQuaternion, v, geo.satQuaternion);
+    quat.multiply(geo.satQuaternion, geo.satQuaternion, u);
 
     let a = mat4.fromQuat([], geo.satQuaternion);
     mat4.multiply(geo.satModel, geo.satModel, a);
 
+    // let f = [0, 0, common.earthRadius];
     let f = [0, 0, 1000.0];
     mat4.translate(geo.satModel, geo.satModel, f);
 
     mat4.scale(geo.satModel, geo.satModel, [250, 250, 500]);
 
-    geo.satPosition = mat4.getTranslation([], geo.satModel);
+    // mat4.getTranslation(geo.satPosition, geo.satModel);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
@@ -451,10 +434,21 @@ class GLView extends Component {
     const geo = this.geometry;
     // geo.fov = 0.028;
     geo.fov = 1.0;
-    geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
-    geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
-    geo.satPosition = common.rad.coord2point(...geo.satCoordinate);
-    geo.satTarget = [0, 0, 0];
+    // geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
+    // geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
+    const radarPosition = common.deg.coord2point(
+      origin.longitude,
+      origin.latitude,
+      common.earthRadius
+    );
+    const height = 1000.0;
+    const satPosition = [
+      radarPosition[0],
+      radarPosition[1],
+      radarPosition[2] + height,
+    ];
+    vec3.copy(geo.satPosition, satPosition);
+    vec3.copy(geo.satTarget, [0, 0, 0]);
     geo.needsUpdate = true;
     if (this.props.debug) {
       this.setState({
