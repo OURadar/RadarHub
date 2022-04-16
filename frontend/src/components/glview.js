@@ -62,29 +62,37 @@ class GLView extends Component {
     //  - view = view matrix derived from satPosition
     //  - projection = projection matrix to GL view
     const origin = props.origin;
+    const range = vec3.fromValues(0, 0, common.earthRadius);
 
     // The radar
-    let quaternion = quat.fromEuler([], -origin.latitude, origin.longitude, 0);
-    let model = mat4.fromQuat([], quaternion);
-    mat4.translate(model, model, [0, 0, common.earthRadius]);
+    let model = mat4.create();
+    let quaternion = quat.create();
+    quat.fromEuler(quaternion, -origin.latitude, origin.longitude, 0);
+    mat4.fromQuat(model, quaternion);
+    mat4.translate(model, model, range);
 
     // The target (little red sphere)
-    let targetModel = mat4.fromQuat([], quaternion);
-    mat4.translate(targetModel, targetModel, [0, 0, common.earthRadius]);
+    let targetModel = mat4.create();
+    mat4.fromQuat(targetModel, quaternion);
+    mat4.translate(targetModel, targetModel, range);
 
     // The eye (cone) relative to target
     let eyeModel = mat4.clone(targetModel);
-    mat4.translate(eyeModel, eyeModel, [0, 0, common.earthRadius]);
+    mat4.translate(eyeModel, eyeModel, range);
 
     mat4.scale(targetModel, targetModel, [0.01, 0.01, 0.01]);
-    mat4.scale(eyeModel, eyeModel, [250, 250, 500]);
+    mat4.scale(eyeModel, eyeModel, [250, 250, 5000]);
 
-    let fixModel = mat4.fromQuat([], quaternion);
-    mat4.translate(fixModel, fixModel, [0, 0, 2 * common.earthRadius]);
-    let fixPosition = mat4.getTranslation([], fixModel);
-    let fixView = mat4.lookAt([], fixPosition, [0, 0, 0], [0, 1, 0]);
-    let fixProjection = mat4.perspective([], 1.5, 1, 100, 30000);
-    let fixModelView = mat4.multiply([], fixView, fixModel);
+    let fixView = mat4.create();
+    let fixModel = mat4.create();
+    let fixPosition = mat4.create();
+    let fixProjection = mat4.create();
+    let fixRange = vec3.fromValues(0, 0, 3 * common.earthRadius);
+    mat4.fromQuat(fixModel, quaternion);
+    mat4.translate(fixModel, fixModel, fixRange);
+    mat4.getTranslation(fixPosition, fixModel);
+    mat4.lookAt(fixView, fixPosition, [0, 0, 0], [0, 1, 0]);
+    mat4.perspective(fixProjection, 1.5, 1, 100, 30000);
 
     // Important parameters for WebGL. Don't want to use React state
     this.geometry = {
@@ -110,7 +118,6 @@ class GLView extends Component {
         aspect: 1.0,
         view: fixView,
         model: fixModel,
-        modelview: fixModelView,
         projection: fixProjection,
         viewport: {
           x: 800,
@@ -137,6 +144,7 @@ class GLView extends Component {
     this.monet = artists.instancedLines(this.regl, 0);
     this.gogh = artists.instancedPatches(this.regl);
     this.vinci = artists.texturedElements(this.regl);
+    this.basic = artists.basic(this.regl);
     this.basic3 = artists.basic3(this.regl);
     this.sphere = artists.sphere(this.regl);
     this.sphere2 = artists.sphere2(this.regl);
@@ -178,6 +186,15 @@ class GLView extends Component {
         data: cone.points,
       }),
       count: cone.count,
+    };
+    let rect = require("./geometry-rect");
+    this.rect = {
+      points: this.regl.buffer({
+        usage: "static",
+        type: "float",
+        data: rect.points,
+      }),
+      count: rect.count,
     };
   }
 
@@ -227,7 +244,21 @@ class GLView extends Component {
     const geo = this.geometry;
     const w = this.canvas.width;
     const h = this.canvas.height;
+    const r = common.earthRadius;
     geo.aspect = w / h;
+
+    let t = [0, 0, r];
+    let s = [r * geo.fov, r * geo.fov, r];
+
+    mat4.fromQuat(geo.target.model, geo.target.quaternion);
+    mat4.translate(geo.target.model, geo.target.model, t);
+
+    mat4.fromQuat(geo.eye.model, geo.eye.quaternion);
+    mat4.multiply(geo.eye.model, geo.target.model, geo.eye.model);
+    mat4.translate(geo.eye.model, geo.eye.model, [0, 0, geo.eye.altitude]);
+
+    mat4.scale(geo.target.model, geo.target.model, [0.1, 0.1, 0.1]);
+    mat4.scale(geo.eye.model, geo.eye.model, s);
 
     mat4.getTranslation(geo.eye.position, geo.eye.model);
     mat4.getTranslation(geo.target.position, geo.target.model);
@@ -235,7 +266,16 @@ class GLView extends Component {
     mat4.multiply(geo.eye.modelview, geo.view, geo.eye.model);
     mat4.perspective(geo.projection, geo.fov, geo.aspect, 100, 30000.0);
 
+    mat4.multiply(geo.eye.modelview, geo.fix.view, geo.eye.model);
+    mat4.multiply(geo.target.modelview, geo.fix.view, geo.target.model);
+
     geo.dashport.x = w - geo.dashport.width;
+
+    const ww = Math.round(w / 3);
+    geo.fix.viewport.width = ww;
+    geo.fix.viewport.height = ww;
+    geo.fix.viewport.x = w - ww;
+
     geo.viewport.width = w;
     geo.viewport.height = h;
     geo.message = "geo";
@@ -257,60 +297,16 @@ class GLView extends Component {
     this.regl.clear({
       color: this.props.colors.glview,
     });
-    // this.sphere2({
-    //   modelview: geo.view,
-    //   projection: geo.projection,
-    //   viewport: geo.viewport,
-    //   color: [1.0, 0.4, 0.4, 1.0],
-    // });
-    // this.sphere({
-    //   modelview: geo.view,
-    //   projection: geo.projection,
-    //   viewport: geo.viewport,
-    //   color: this.props.colors.lines[2],
-    // });
 
-    this.element3([
-      {
-        modelview: geo.view,
-        projection: geo.projection,
-        viewport: geo.viewport,
-        color: [0.0, 0.5, 0.0, 1.0],
-        points: this.earth.points,
-        elements: this.earth.elements,
-        primitive: "lines",
-      },
-      {
-        modelview: geo.fix.view,
-        projection: geo.fix.projection,
-        viewport: geo.fix.viewport,
-        color: [0.0, 0.5, 0.0, 1.0],
-        points: this.earth.points,
-        elements: this.earth.elements,
-        primitive: "lines",
-      },
-    ]);
-
-    // this.basic3([
-    //   {
-    //     modelview: geo.satModelview,
-    //     projection: geo.projection,
-    //     viewport: geo.viewport,
-    //     color: [0.0, 0.3, 1.0, 1.0],
-    //     points: this.cone.points,
-    //     primitive: "lines",
-    //     count: this.cone.count,
-    //   },
-    //   {
-    //     modelview: geo.fix.modelview,
-    //     projection: geo.fix.projection,
-    //     viewport: geo.fix.viewport,
-    //     color: [0.0, 0.3, 1.0, 1.0],
-    //     points: this.cone.points,
-    //     primitive: "lines",
-    //     count: this.cone.count,
-    //   },
-    // ]);
+    this.element3({
+      modelview: geo.view,
+      projection: geo.projection,
+      viewport: geo.viewport,
+      color: [0.0, 0.5, 0.0, 1.0],
+      points: this.earth.points,
+      elements: this.earth.elements,
+      primitive: "lines",
+    });
 
     // quad: [mode, shader-user mix, shader color tint, opacity]
     this.monet({
@@ -325,6 +321,38 @@ class GLView extends Component {
       points: this.rings.points,
       segments: this.rings.count,
     });
+
+    //
+
+    this.basic({
+      projection: geo.orthoprojection,
+      viewport: geo.fix.viewport,
+      color: [0.1, 0.1, 0.2, 0.98],
+      points: this.rect.points,
+      count: this.rect.count,
+      primitive: "triangles",
+    });
+
+    this.element3({
+      modelview: geo.fix.view,
+      projection: geo.fix.projection,
+      viewport: geo.fix.viewport,
+      color: [0.0, 0.5, 0.0, 1.0],
+      points: this.earth.points,
+      elements: this.earth.elements,
+      primitive: "lines",
+    });
+
+    this.basic3({
+      modelview: geo.eye.modelview,
+      projection: geo.fix.projection,
+      viewport: geo.fix.viewport,
+      color: [0.0, 0.3, 1.0, 1.0],
+      points: this.cone.points,
+      count: this.cone.count,
+      primitive: "lines",
+    });
+
     this.stats?.update();
   }
 
@@ -333,23 +361,11 @@ class GLView extends Component {
     let deltaX = (-x / this.mount.clientWidth) * geo.fov;
     let deltaY = (y / this.mount.clientHeight) * geo.fov;
 
-    let r = [0, 0, common.earthRadius];
-
     // Here comes the Quaternion Voodoo
     let p = quat.setAxisAngle([], [0.0, 1.0, 0.0], deltaX);
     let q = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
     quat.multiply(geo.target.quaternion, p, geo.target.quaternion);
     quat.multiply(geo.target.quaternion, geo.target.quaternion, q);
-
-    mat4.fromQuat(geo.target.model, geo.target.quaternion);
-    mat4.translate(geo.target.model, geo.target.model, r);
-
-    mat4.fromQuat(geo.eye.model, geo.eye.quaternion);
-    mat4.multiply(geo.eye.model, geo.target.model, geo.eye.model);
-    mat4.translate(geo.eye.model, geo.eye.model, [0, 0, geo.eye.altitude]);
-
-    mat4.scale(geo.target.model, geo.target.model, [0.1, 0.1, 0.1]);
-    mat4.scale(geo.eye.model, geo.eye.model, [250, 250, 500]);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
@@ -366,29 +382,11 @@ class GLView extends Component {
     const geo = this.geometry;
     let deltaX = (x / this.mount.clientWidth) * 2.0;
     let deltaY = (y / this.mount.clientHeight) * 2.0;
-    let r = [0, 0, common.earthRadius];
 
-    mat4.fromQuat(geo.eye.model, geo.eye.quaternion);
-    mat4.translate(geo.eye.model, geo.eye.model, r);
-
-    mat4.scale(geo.target.model, geo.target.model, [0.01, 0.01, 0.01]);
-
-    // Here comes the Quaternion Voodoo
     let u = quat.setAxisAngle([], [0.0, 0.0, 1.0], deltaX);
     let v = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
     quat.multiply(geo.eye.quaternion, v, geo.eye.quaternion);
     quat.multiply(geo.eye.quaternion, geo.eye.quaternion, u);
-
-    let a = mat4.fromQuat([], geo.eye.quaternion);
-    mat4.multiply(geo.eye.model, geo.eye.model, a);
-
-    // let f = [0, 0, common.earthRadius];
-    // let f = [0, 0, 1000.0];
-    // mat4.translate(geo.satModel, geo.satModel, f);
-
-    // mat4.scale(geo.satModel, geo.satModel, [250, 250, 500]);
-
-    // mat4.getTranslation(geo.satPosition, geo.satModel);
 
     geo.needsUpdate = true;
     if (this.props.debug) {

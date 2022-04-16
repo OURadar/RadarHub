@@ -28,7 +28,6 @@ export function basic(regl) {
 
     uniforms: {
       color: regl.prop("color"),
-      modelview: regl.prop("modelview"),
       projection: regl.prop("projection"),
     },
 
