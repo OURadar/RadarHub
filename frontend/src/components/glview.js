@@ -112,6 +112,11 @@ class GLView extends Component {
       satModelview: mat4.create(),
       satUp: vec3.fromValues(0, 1, 0),
       satTarget: vec3.fromValues(...satModel),
+      fix: {
+        model: mat4.create(),
+        modelview: mat4.create(),
+        projection: mat4.create(),
+      },
       radarPosition: radarPosition,
       model: model,
       targetModel: mat4.scale([], satModel, [0.01, 0.01, 0.01]),
@@ -121,7 +126,7 @@ class GLView extends Component {
       viewprojection: mat4.create(),
       orthoprojection: mat4.ortho([], 0, 1, 0, 1, 0, 1),
       viewport: { x: 0, y: 0, width: 1, height: 1 },
-      dashport: { x: 0, y: 0, width: 1, height: 1 },
+      dashport: { x: 0, y: 100, width: 1000, height: 1000 },
       needsUpdate: true,
       message: "geo",
     };
@@ -303,17 +308,47 @@ class GLView extends Component {
         elements: this.earth.elements,
         primitive: "lines",
       },
+      // dashport
+      {
+        modelview: geo.modelview,
+        projection: geo.projection,
+        viewport: geo.dashport,
+        color: [1.0, 0.0, 0.0, 1.0],
+        points: this.earth.points,
+        elements: this.earth.elements,
+        primitive: "lines",
+      },
+      {
+        modelview: geo.view,
+        projection: geo.projection,
+        viewport: geo.dashport,
+        color: [0.0, 0.5, 0.0, 1.0],
+        points: this.earth.points,
+        elements: this.earth.elements,
+        primitive: "lines",
+      },
     ]);
 
-    this.basic3({
-      modelview: geo.satModelview,
-      projection: geo.projection,
-      viewport: geo.viewport,
-      color: [0.0, 0.3, 1.0, 1.0],
-      points: this.cone.points,
-      primitive: "lines",
-      count: this.cone.count,
-    });
+    this.basic3([
+      {
+        modelview: geo.satModelview,
+        projection: geo.projection,
+        viewport: geo.viewport,
+        color: [0.0, 0.3, 1.0, 1.0],
+        points: this.cone.points,
+        primitive: "lines",
+        count: this.cone.count,
+      },
+      {
+        modelview: geo.satModelview,
+        projection: geo.projection,
+        viewport: geo.dashport,
+        color: [0.0, 0.3, 1.0, 1.0],
+        points: this.cone.points,
+        primitive: "lines",
+        count: this.cone.count,
+      },
+    ]);
 
     // quad: [mode, shader-user mix, shader color tint, opacity]
     this.monet({
