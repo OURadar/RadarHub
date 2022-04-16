@@ -88,7 +88,7 @@ class GLView extends Component {
     let fixPosition = mat4.create();
     let fixProjection = mat4.create();
     let fixRange = vec3.fromValues(0, 0, 3 * common.earthRadius);
-    mat4.fromQuat(fixModel, quaternion);
+    // mat4.fromQuat(fixModel, quaternion);
     mat4.translate(fixModel, fixModel, fixRange);
     mat4.getTranslation(fixPosition, fixModel);
     mat4.lookAt(fixView, fixPosition, [0, 0, 0], [0, 1, 0]);
@@ -100,7 +100,7 @@ class GLView extends Component {
       origin: origin,
       quaternion: quaternion,
       eye: {
-        altitude: common.earthRadius,
+        range: common.earthRadius,
         model: eyeModel,
         modelview: mat4.create(),
         quaternion: quat.create(),
@@ -120,10 +120,10 @@ class GLView extends Component {
         model: fixModel,
         projection: fixProjection,
         viewport: {
-          x: 800,
-          y: 50,
-          width: 600,
-          height: 600,
+          x: 0,
+          y: 0,
+          width: 1,
+          height: 1,
         },
       },
       fov: 1.0,
@@ -131,6 +131,7 @@ class GLView extends Component {
       model: model,
       view: mat4.create(),
       projection: mat4.create(),
+      viewprojection: mat4.create(),
       modelview: mat4.create(),
       orthoprojection: mat4.ortho([], 0, 1, 0, 1, 0, 1),
       viewport: { x: 0, y: 0, width: 1, height: 1 },
@@ -155,6 +156,7 @@ class GLView extends Component {
     this.draw = this.draw.bind(this);
     this.pan = this.pan.bind(this);
     this.tilt = this.tilt.bind(this);
+    this.roll = this.roll.bind(this);
     this.tap = this.tap.bind(this);
     this.taptap = this.taptap.bind(this);
     this.magnify = this.magnify.bind(this);
@@ -163,6 +165,7 @@ class GLView extends Component {
     this.gesture = new Gesture(this.canvas, this.constants.bounds);
     this.gesture.handlePan = this.pan;
     this.gesture.handleTilt = this.tilt;
+    this.gesture.handleRoll = this.roll;
     this.gesture.handleSingleTap = this.tap;
     this.gesture.handleDoubleTap = this.taptap;
     this.gesture.handleMagnify = this.magnify;
@@ -209,7 +212,7 @@ class GLView extends Component {
     origin: {
       // longitude: -97.422413,
       // latitude: 35.25527,
-      longitude: 15.0,
+      longitude: 60.0,
       latitude: 20.0,
     },
   };
@@ -255,30 +258,38 @@ class GLView extends Component {
 
     mat4.fromQuat(geo.eye.model, geo.eye.quaternion);
     mat4.multiply(geo.eye.model, geo.target.model, geo.eye.model);
-    mat4.translate(geo.eye.model, geo.eye.model, [0, 0, geo.eye.altitude]);
+    mat4.translate(geo.eye.model, geo.eye.model, [0, 0, geo.eye.range]);
 
     mat4.scale(geo.target.model, geo.target.model, [0.1, 0.1, 0.1]);
     mat4.scale(geo.eye.model, geo.eye.model, s);
 
+    let u = vec3.fromValues(
+      geo.eye.model[4],
+      geo.eye.model[5],
+      geo.eye.model[6]
+    );
+
     mat4.getTranslation(geo.eye.position, geo.eye.model);
     mat4.getTranslation(geo.target.position, geo.target.model);
-    mat4.lookAt(geo.view, geo.eye.position, geo.target.position, geo.eye.up);
+    // mat4.lookAt(geo.view, geo.eye.position, geo.target.position, geo.eye.up);
+    mat4.lookAt(geo.view, geo.eye.position, geo.target.position, u);
     mat4.multiply(geo.eye.modelview, geo.view, geo.eye.model);
     mat4.perspective(geo.projection, geo.fov, geo.aspect, 100, 30000.0);
 
     mat4.multiply(geo.eye.modelview, geo.fix.view, geo.eye.model);
     mat4.multiply(geo.target.modelview, geo.fix.view, geo.target.model);
+    mat4.multiply(geo.viewprojection, geo.projection, geo.view);
 
     geo.dashport.x = w - geo.dashport.width;
 
-    const ww = Math.round(w / 3);
+    const ww = Math.round(h / 3);
     geo.fix.viewport.width = ww;
     geo.fix.viewport.height = ww;
     geo.fix.viewport.x = w - ww;
 
     geo.viewport.width = w;
     geo.viewport.height = h;
-    geo.message = "geo";
+    geo.message = `geo`;
     geo.needsUpdate = false;
   }
 
@@ -327,27 +338,38 @@ class GLView extends Component {
     this.basic({
       projection: geo.orthoprojection,
       viewport: geo.fix.viewport,
-      color: [0.1, 0.1, 0.2, 0.98],
+      color: [0.1, 0.1, 0.2, 1.0],
       points: this.rect.points,
       count: this.rect.count,
       primitive: "triangles",
     });
 
-    this.element3({
-      modelview: geo.fix.view,
-      projection: geo.fix.projection,
-      viewport: geo.fix.viewport,
-      color: [0.0, 0.5, 0.0, 1.0],
-      points: this.earth.points,
-      elements: this.earth.elements,
-      primitive: "lines",
-    });
+    this.element3([
+      {
+        modelview: geo.fix.view,
+        projection: geo.fix.projection,
+        viewport: geo.fix.viewport,
+        color: [0.0, 1.0, 0.0, 1.0],
+        points: this.earth.points,
+        elements: this.earth.elements,
+        primitive: "lines",
+      },
+      {
+        modelview: geo.target.modelview,
+        projection: geo.fix.projection,
+        viewport: geo.fix.viewport,
+        color: [1.0, 0.5, 0.0, 1.0],
+        points: this.earth.points,
+        elements: this.earth.elements,
+        primitive: "lines",
+      },
+    ]);
 
     this.basic3({
       modelview: geo.eye.modelview,
       projection: geo.fix.projection,
       viewport: geo.fix.viewport,
-      color: [0.0, 0.3, 1.0, 1.0],
+      color: [0.2, 0.5, 1.0, 1.0],
       points: this.cone.points,
       count: this.cone.count,
       primitive: "lines",
@@ -364,7 +386,10 @@ class GLView extends Component {
     // Here comes the Quaternion Voodoo
     let p = quat.setAxisAngle([], [0.0, 1.0, 0.0], deltaX);
     let q = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
-    quat.multiply(geo.target.quaternion, p, geo.target.quaternion);
+    // quat.multiply(geo.target.quaternion, p, geo.target.quaternion);
+    // quat.multiply(geo.target.quaternion, geo.target.quaternion, q);
+
+    quat.multiply(geo.target.quaternion, geo.target.quaternion, p);
     quat.multiply(geo.target.quaternion, geo.target.quaternion, q);
 
     geo.needsUpdate = true;
@@ -383,10 +408,10 @@ class GLView extends Component {
     let deltaX = (x / this.mount.clientWidth) * 2.0;
     let deltaY = (y / this.mount.clientHeight) * 2.0;
 
-    let u = quat.setAxisAngle([], [0.0, 0.0, 1.0], deltaX);
-    let v = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
-    quat.multiply(geo.eye.quaternion, v, geo.eye.quaternion);
+    let u = quat.setAxisAngle([], [0.0, 1.0, 0.0], deltaX);
+    // let v = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
     quat.multiply(geo.eye.quaternion, geo.eye.quaternion, u);
+    // quat.multiply(geo.eye.quaternion, geo.eye.quaternion, v);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
@@ -397,6 +422,17 @@ class GLView extends Component {
         lastPanTime: window.performance.now(),
       });
     }
+  }
+
+  roll(x, y) {
+    const geo = this.geometry;
+    let deltaX = (x / this.mount.clientWidth) * 2.0;
+    let deltaY = (y / this.mount.clientHeight) * 2.0;
+    let u = quat.setAxisAngle([], [0.0, 0.0, 1.0], deltaX);
+    let v = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
+    quat.multiply(geo.eye.quaternion, geo.eye.quaternion, u);
+    quat.multiply(geo.eye.quaternion, geo.eye.quaternion, v);
+    geo.needsUpdate = true;
   }
 
   tap(x, y) {}
@@ -427,9 +463,14 @@ class GLView extends Component {
     // vec3.copy(geo.satPosition, satPosition);
 
     const origin = geo.origin;
-    geo.quaternion = quat.fromEuler([], -origin.latitude, origin.longitude, 0);
-    mat4.fromQuat(geo.model, geo.quaternion);
-    mat4.translate(geo.model, geo.model, [0, 0, common.earthRadius]);
+    quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0);
+    quat.fromEuler(
+      geo.target.quaternion,
+      -origin.latitude,
+      origin.longitude,
+      0
+    );
+    quat.identity(geo.eye.quaternion);
 
     geo.needsUpdate = true;
     if (this.props.debug) {

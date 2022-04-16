@@ -20,10 +20,15 @@ class Overlay {
     this.colors = colors;
     this.geometry = geometry;
     this.viewprojection = mat4.create();
+    // this.viewParameters = [
+    //   1.0,
+    //   this.geometry.satCoordinate[0],
+    //   this.geometry.satCoordinate[1],
+    // ];
     this.viewParameters = [
       1.0,
-      this.geometry.satCoordinate[0],
-      this.geometry.satCoordinate[1],
+      deg2rad(geometry.origin.longitude),
+      deg2rad(geometry.origin.latitude),
     ];
     this.targetOpacity = [];
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
@@ -275,8 +280,8 @@ class Overlay {
   getDrawables() {
     const viewParameters = [
       this.geometry.fov,
-      this.geometry.satCoordinate[0],
-      this.geometry.satCoordinate[1],
+      deg2rad(this.geometry.origin.longitude),
+      deg2rad(this.geometry.origin.latitude),
     ];
 
     if (

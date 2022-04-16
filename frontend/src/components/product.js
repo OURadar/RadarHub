@@ -219,28 +219,30 @@ class Product extends GLView {
     const t = this.offset + 0.0002 * window.performance.now();
     const a = t % (2.0 * Math.PI);
     // console.log(` = ${t.toFixed(3)}   a = ${a.toFixed(2)}`);
-    if (this.state.useEuler) {
-      this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.sin(a);
-      this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.cos(a);
-      this.geometry.satCoordinate[0] = Math.atan2(
-        this.geometry.satQ,
-        this.geometry.satI
-      );
-      this.geometry.message = "";
-    } else {
-      // Not fully tested
-      const q = this.graphics.satQuaternion;
-      const qt = quat.fromEuler(
-        [],
-        -this.graphics.satCoordinate[1],
-        common.rad2deg(a),
-        0.0
-      );
-      const i = quat.slerp([], q, qt, 0.5);
-      this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
-      const b = this.geometry.satCoordinate[0];
-      this.geometry.message = `angle = ${b.toFixed(1)}`;
-    }
+    // if (this.state.useEuler) {
+    //   this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.sin(a);
+    //   this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.cos(a);
+    //   this.geometry.satCoordinate[0] = Math.atan2(
+    //     this.geometry.satQ,
+    //     this.geometry.satI
+    //   );
+    //   this.geometry.message = "";
+
+    // } else {
+    //   // Not fully tested
+    //   const q = this.graphics.satQuaternion;
+    //   const qt = quat.fromEuler(
+    //     [],
+    //     -this.graphics.satCoordinate[1],
+    //     common.rad2deg(a),
+    //     0.0
+    //   );
+    //   const i = quat.slerp([], q, qt, 0.5);
+    //   this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
+    //   const b = this.geometry.satCoordinate[0];
+    //   this.geometry.message = `angle = ${b.toFixed(1)}`;
+    // }
+
     this.geometry.fov += 0.001 * Math.cos(t);
     this.geometry.needsUpdate = true;
   }
@@ -294,28 +296,35 @@ class Product extends GLView {
       Math.abs(viewOrigin.longitude - origin.longitude) > 0.001 ||
       Math.abs(viewOrigin.latitude - origin.latitude) > 0.001
     ) {
-      const satCoordinate = vec3.fromValues(
-        common.deg2rad(origin.longitude),
-        common.deg2rad(origin.latitude),
-        2.0 * common.earthRadius
-      );
-      const satPosition = common.rad.coord2point(satCoordinate);
+      // const satCoordinate = vec3.fromValues(
+      //   common.deg2rad(origin.longitude),
+      //   common.deg2rad(origin.latitude),
+      //   2.0 * common.earthRadius
+      // );
+      // const satPosition = common.rad.coord2point(satCoordinate);
       console.log(`New lon/lat = ${origin.longitude}, ${origin.latitude}`);
       localStorage.setItem("glview-origin", JSON.stringify(origin));
-      let model = mat4.create();
-      model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
-      model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
-      model = mat4.translate([], model, [0, 0, common.earthRadius]);
-      this.geometry.origin = origin;
-      this.geometry.satCoordinate = satCoordinate;
-      this.geometry.satPosition = satPosition;
-      this.geometry.satQuaternion = quat.fromEuler(
-        [],
-        -origin.latitude,
-        origin.longitude,
-        0
-      );
-      this.geometry.model = model;
+      // let model = mat4.create();
+      // model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
+      // model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
+      // model = mat4.translate([], model, [0, 0, common.earthRadius]);
+      // this.geometry.origin = origin;
+      // this.geometry.satCoordinate = satCoordinate;
+      // this.geometry.satPosition = satPosition;
+      // this.geometry.satQuaternion = quat.fromEuler(
+      //   [],
+      //   -origin.latitude,
+      //   origin.longitude,
+      //   0
+      // );
+      // this.geometry.model = model;
+
+      const geo = this.geometry;
+      const range = vec3.fromValues(0, 0, common.earthRadius);
+      quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0.0);
+      mat4.fromQuat(geo.model, geo.quaternion);
+      mat4.translate(geo.model, geo.model, range);
+
       this.geometry.needsUpdate = true;
       this.overlay.purge();
       this.overlay.load();
@@ -429,8 +438,17 @@ class Product extends GLView {
     } else {
       geo.fov = 0.028;
     }
-    geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
-    geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
+    // geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
+    // geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
+    const origin = geo.origin;
+    quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0);
+    quat.fromEuler(
+      geo.target.quaternion,
+      -origin.latitude,
+      origin.longitude,
+      0
+    );
+    quat.identity(geo.eye.quaternion);
     geo.needsUpdate = true;
     this.setState({
       spin: false,

@@ -51,7 +51,7 @@ function reviseOpacity(geometry, verbose = 0) {
   const theta = Math.cos(Math.min(0.9, geometry.fov));
 
   for (let k = 0, l = labels.points.length; k < l; k++) {
-    if (ndot(geometry.satPosition, labels.points[k]) < theta) {
+    if (ndot(geometry.target.position, labels.points[k]) < theta) {
       pass1++;
       continue;
     }

@@ -28,6 +28,7 @@ class Gesture {
     this.hasTouch = false;
     this.panInProgress = false;
     this.tiltInProgress = false;
+    this.rollInProgress = false;
     this.singleTapTimeout = null;
     this.lastMagnifyTime = Date.now();
     this.lastTapTime = Date.now();
@@ -35,6 +36,7 @@ class Gesture {
     this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
     this.handlePan = (_x, _y) => {};
     this.handleTilt = (_x, _y) => {};
+    this.handleRoll = (_x, _y) => {};
     this.handleSingleTap = (_x, _y) => {};
     this.handleDoubleTap = (_x, _y) => {};
     this.handleMagnify = (_mx, _my, _m, _x, _y) => {};
@@ -49,6 +51,8 @@ class Gesture {
         this.rect = this.element.getBoundingClientRect();
         if (e.metaKey) {
           this.tiltInProgress = true;
+        } else if (e.altKey) {
+          this.rollInProgress = true;
         } else {
           this.panInProgress = true;
         }
@@ -60,6 +64,8 @@ class Gesture {
         this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
       } else if (this.tiltInProgress === true || e.metaKey === true) {
         this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.rollInProgress === true || e.altKey === true) {
+        this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
       }
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
@@ -70,6 +76,8 @@ class Gesture {
         this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
       } else if (this.tiltInProgress === true) {
         this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.rollInProgress === true) {
+        this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
       }
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;

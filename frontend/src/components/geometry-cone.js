@@ -30,7 +30,7 @@ points.push([1.0, 0.0, 0.0]);
 
 // Y (up)
 points.push([0.0, 0.0, 0.0]);
-points.push([0.0, 1.0, 0.0]);
+points.push([0.0, 0.3, 0.0]);
 
 count = count * 4 + 4;
 
