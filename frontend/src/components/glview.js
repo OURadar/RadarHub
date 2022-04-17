@@ -445,7 +445,7 @@ class GLView extends Component {
 
   magnify(_mx, _my, m, _x, _y) {
     const geo = this.geometry;
-    geo.fov = common.clamp(geo.fov / m, 0.001, 0.5 * Math.PI);
+    geo.fov = common.clamp(geo.fov / m, 0.005, 0.6 * Math.PI);
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message += ` fov: ${geo.fov.toFixed(3)}`;
@@ -458,7 +458,7 @@ class GLView extends Component {
   fitToData() {
     const geo = this.geometry;
     // geo.fov = 0.028;
-    geo.fov = 1.0;
+    geo.fov = 0.5;
     // geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
     // geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
     // const height = 1000.0;
