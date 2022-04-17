@@ -90,7 +90,6 @@ class GLView extends Component {
     let eyeScale = vec3.create();
     let d = vec3.length(e);
     let b = d * f;
-    console.log(`d = ${d.toFixed(2)}`);
     mat4.translate(eyeModel, eyeModel, e);
     mat4.scale(eyeModel, eyeModel, [b, b, d]);
     mat4.getTranslation(eyeTranslation, eyeModel);
@@ -437,6 +436,8 @@ class GLView extends Component {
 
     mat4.multiply(geo.eye.model, m, geo.eye.model);
     mat4.multiply(geo.target.model, m, geo.target.model);
+    // mat4.multiply(geo.eye.model, geo.eye.model, m);
+    // mat4.multiply(geo.target.model, geo.target.model, m);
 
     mat4.getRotation(geo.eye.quaternion, geo.eye.model);
     mat4.getTranslation(geo.eye.translation, geo.eye.model);
@@ -530,10 +531,26 @@ class GLView extends Component {
     // const height = 1000.0;
     // vec3.copy(geo.satPosition, satPosition);
 
-    const origin = geo.origin;
-    quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0);
-    quat.copy(geo.target.quaternion, geo.quaternion);
-    quat.copy(geo.eye.quaternion, geo.quaternion);
+    // const origin = geo.origin;
+    // quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0);
+
+    const v = vec3.fromValues(0, 0, common.earthRadius);
+    const e = vec3.fromValues(0, 0, 0.2 * common.earthRadius);
+
+    // mat4.fromQuat(geo.target.model, geo.quaternion);
+    mat4.copy(geo.target.model, geo.model);
+    mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
+    mat4.getRotation(geo.target.quaternion, geo.target.model);
+    mat4.getTranslation(geo.target.translation, geo.target.model);
+
+    let d = vec3.length(e);
+    let b = d * geo.fov;
+
+    mat4.copy(geo.eye.model, geo.model);
+    mat4.translate(geo.eye.model, geo.eye.model, e);
+    mat4.scale(geo.eye.model, geo.eye.model, [b, b, d]);
+    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+    mat4.getTranslation(geo.eye.translation, geo.eye.model);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
