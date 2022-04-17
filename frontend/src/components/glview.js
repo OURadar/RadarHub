@@ -276,16 +276,16 @@ class GLView extends Component {
     s = geo.eye.scale;
     // mat4.fromRotationTranslationScale(geo.eye.model, q, v, s);
 
-    // let u = vec3.fromValues(
-    //   geo.eye.model[4],
-    //   geo.eye.model[5],
-    //   geo.eye.model[6]
-    // );
+    let u = vec3.fromValues(
+      geo.eye.model[4],
+      geo.eye.model[5],
+      geo.eye.model[6]
+    );
 
     mat4.getTranslation(geo.eye.position, geo.eye.model);
     mat4.getTranslation(geo.target.position, geo.target.model);
-    mat4.lookAt(geo.view, geo.eye.position, geo.target.position, geo.eye.up);
-    // mat4.lookAt(geo.view, geo.eye.position, geo.target.position, u);
+    // mat4.lookAt(geo.view, geo.eye.position, geo.target.position, geo.eye.up);
+    mat4.lookAt(geo.view, geo.eye.position, geo.target.position, u);
     // mat4.multiply(geo.eye.modelview, geo.view, geo.eye.model);
     mat4.perspective(geo.projection, geo.fov, geo.aspect, 100, 30000.0);
 
@@ -406,9 +406,10 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    const s =
-      (((geo.target.range / geo.eye.range) * geo.fov) / 2 / Math.PI) * 180;
-    // const s = (180.0 / Math.PI / 2) * (geo.target.range / geo.eye.range);
+    // const s =
+    //   (((geo.target.range / geo.eye.range) * geo.fov) / 2 / Math.PI) * 180;
+    // const s = ((1 / common.earthRadius) * geo.fov) / 180;
+    const s = geo.fov / common.earthRadius;
     let deltaX = (-x / this.mount.clientWidth) * s;
     let deltaY = (y / this.mount.clientHeight) * s;
 
@@ -429,15 +430,37 @@ class GLView extends Component {
     // mat4.rotateX(geo.eye.model, geo.eye.model, deltaY);
     // mat4.rotateY(geo.eye.model, geo.eye.model, deltaX);
 
-    let q = quat.create();
-    let m = mat4.create();
-    quat.fromEuler(q, deltaY, deltaX, 0);
-    mat4.fromQuat(m, q);
+    // let q = quat.create();
+    // let m = mat4.create();
+    // quat.fromEuler(q, deltaY, deltaX, 0);
+    // mat4.fromQuat(m, q);
+
+    let u = vec3.fromValues(
+      geo.eye.model[0],
+      geo.eye.model[1],
+      geo.eye.model[2]
+    );
+    let v = vec3.fromValues(
+      geo.eye.model[4],
+      geo.eye.model[5],
+      geo.eye.model[6]
+    );
+    let p = quat.setAxisAngle([], u, deltaY);
+    let q = quat.setAxisAngle([], v, deltaX);
+
+    // let n = mat4.fromQuat([], q);
+    quat.multiply(p, q, p);
+
+    let m = mat4.fromQuat([], p);
 
     mat4.multiply(geo.eye.model, m, geo.eye.model);
+
     mat4.multiply(geo.target.model, m, geo.target.model);
-    // mat4.multiply(geo.eye.model, geo.eye.model, m);
-    // mat4.multiply(geo.target.model, geo.target.model, m);
+
+    // let q = mat4.getRotation([], geo.target.model);
+    // quat.rotateX(q, q, deltaY);
+    // let m = mat4.fromQuat([], q);
+    // mat4.multiply(geo.target.model, m, geo.target.model);
 
     mat4.getRotation(geo.eye.quaternion, geo.eye.model);
     mat4.getTranslation(geo.eye.translation, geo.eye.model);
@@ -449,7 +472,8 @@ class GLView extends Component {
     if (this.props.debug) {
       geo.message +=
         ` delta (${x}, ${y}) ` +
-        `-> (${deltaX.toFixed(3)}, ${deltaY.toFixed(3)})`;
+        `-> (${deltaX.toFixed(3)}, ${deltaY.toFixed(3)})` +
+        `-> ${s.toFixed(5)}`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
