@@ -266,14 +266,14 @@ class GLView extends Component {
 
     geo.aspect = w / h;
 
-    let q = geo.target.quaternion;
-    let v = geo.target.translation;
-    let s = geo.target.scale;
-    mat4.fromRotationTranslationScale(geo.target.model, q, v, s);
+    // let q = geo.target.quaternion;
+    // let v = geo.target.translation;
+    // let s = geo.target.scale;
+    // mat4.fromRotationTranslationScale(geo.target.model, q, v, s);
 
-    q = geo.eye.quaternion;
-    v = geo.eye.translation;
-    s = geo.eye.scale;
+    // q = geo.eye.quaternion;
+    // v = geo.eye.translation;
+    // s = geo.eye.scale;
     // mat4.fromRotationTranslationScale(geo.eye.model, q, v, s);
 
     let u = vec3.fromValues(
@@ -406,34 +406,9 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    // const s =
-    //   (((geo.target.range / geo.eye.range) * geo.fov) / 2 / Math.PI) * 180;
-    // const s = ((1 / common.earthRadius) * geo.fov) / 180;
-    const s = geo.fov / common.earthRadius;
+    const s = (geo.fov / common.earthRadius) * 1.2;
     let deltaX = (-x / this.mount.clientWidth) * s;
     let deltaY = (y / this.mount.clientHeight) * s;
-
-    // Here comes the Quaternion Voodoo
-    // let u = quat.setAxisAngle([], [0.0, 1.0, 0.0], deltaX);
-    // let v = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
-
-    // let t = mat4.getTranslation([], geo.target.model);
-    // mat4.translate(geo.target.model, geo.target.model, vec3.negate([], t));
-    // let q = mat4.getRotation([], geo.target.model);
-    // quat.multiply(q, q, u);
-    // quat.multiply(q, q, v);
-    // mat4.fromRotationTranslation(geo.model, q, t);
-
-    // mat4.fromRotationTranslation(geo.target.model, q, t);
-    // let q = quat.multiply([], u, v);
-
-    // mat4.rotateX(geo.eye.model, geo.eye.model, deltaY);
-    // mat4.rotateY(geo.eye.model, geo.eye.model, deltaX);
-
-    // let q = quat.create();
-    // let m = mat4.create();
-    // quat.fromEuler(q, deltaY, deltaX, 0);
-    // mat4.fromQuat(m, q);
 
     let u = vec3.fromValues(
       geo.eye.model[0],
@@ -454,13 +429,7 @@ class GLView extends Component {
     let m = mat4.fromQuat([], p);
 
     mat4.multiply(geo.eye.model, m, geo.eye.model);
-
     mat4.multiply(geo.target.model, m, geo.target.model);
-
-    // let q = mat4.getRotation([], geo.target.model);
-    // quat.rotateX(q, q, deltaY);
-    // let m = mat4.fromQuat([], q);
-    // mat4.multiply(geo.target.model, m, geo.target.model);
 
     mat4.getRotation(geo.eye.quaternion, geo.eye.model);
     mat4.getTranslation(geo.eye.translation, geo.eye.model);
