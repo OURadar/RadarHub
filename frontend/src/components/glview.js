@@ -119,7 +119,6 @@ class GLView extends Component {
         quaternion: eyeQuaternion,
         translation: eyeTranslation,
         scale: eyeScale,
-        position: vec3.create(),
         up: vec3.fromValues(0, 1, 0),
       },
       target: {
@@ -129,7 +128,6 @@ class GLView extends Component {
         quaternion: targetQuaternion,
         translation: targetTranslation,
         scale: targetScale,
-        position: vec3.create(),
       },
       fix: {
         view: fixView,
@@ -282,11 +280,7 @@ class GLView extends Component {
       geo.eye.model[6]
     );
 
-    mat4.getTranslation(geo.eye.position, geo.eye.model);
-    mat4.getTranslation(geo.target.position, geo.target.model);
-    // mat4.lookAt(geo.view, geo.eye.position, geo.target.position, geo.eye.up);
-    mat4.lookAt(geo.view, geo.eye.position, geo.target.position, u);
-    // mat4.multiply(geo.eye.modelview, geo.view, geo.eye.model);
+    mat4.lookAt(geo.view, geo.eye.translation, geo.target.translation, u);
     mat4.perspective(geo.projection, geo.fov, geo.aspect, 100, 30000.0);
 
     mat4.multiply(geo.eye.modelview, geo.fix.view, geo.eye.model);
@@ -406,7 +400,8 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    const s = (geo.fov / common.earthRadius) * 1.2;
+    // const s = (geo.fov / common.earthRadius) * 2.0;
+    const s = (geo.fov / common.earthRadius) * 1.1;
     let deltaX = (-x / this.mount.clientWidth) * s;
     let deltaY = (y / this.mount.clientHeight) * s;
 
@@ -431,10 +426,10 @@ class GLView extends Component {
     mat4.multiply(geo.eye.model, m, geo.eye.model);
     mat4.multiply(geo.target.model, m, geo.target.model);
 
-    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+    // mat4.getRotation(geo.eye.quaternion, geo.eye.model);
     mat4.getTranslation(geo.eye.translation, geo.eye.model);
 
-    mat4.getRotation(geo.target.quaternion, geo.target.model);
+    // mat4.getRotation(geo.target.quaternion, geo.target.model);
     mat4.getTranslation(geo.target.translation, geo.target.model);
 
     geo.needsUpdate = true;
@@ -451,24 +446,44 @@ class GLView extends Component {
 
   tilt(x, y) {
     const geo = this.geometry;
-    let deltaX = (x / this.mount.clientWidth) * 2.0;
-    let deltaY = (y / this.mount.clientHeight) * 2.0;
+    const z = 1.0 / (0.2 * common.earthRadius);
+    let deltaX = (x / this.mount.clientWidth) * z;
+    let deltaY = (y / this.mount.clientHeight) * z;
 
-    console.log(geo.eye.quaternion);
-    mat4.getTranslation(geo.eye.translation, geo.eye.model);
-    vec3.negate(geo.eye.translation, geo.eye.translation);
-    mat4.translate(geo.eye.model, geo.eye.model, geo.eye.translation);
+    // mat4.getTranslation(geo.eye.translation, geo.eye.model);
+    // vec3.negate(geo.eye.translation, geo.eye.translation);
+    // mat4.translate(geo.eye.model, geo.eye.model, geo.eye.translation);
     // geo.eye.model[12] = 0;
     // geo.eye.model[13] = 0;
     // geo.eye.model[14] = 0;
+    // mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+    // console.log(geo.eye.quaternion);
+
+    let u = vec3.fromValues(
+      geo.eye.model[0],
+      geo.eye.model[1],
+      geo.eye.model[2]
+    );
+    // let v = vec3.fromValues(
+    //   geo.eye.model[4],
+    //   geo.eye.model[5],
+    //   geo.eye.model[6]
+    // );
+
     mat4.getRotation(geo.eye.quaternion, geo.eye.model);
-    console.log(geo.eye.quaternion);
+    mat4.getTranslation(geo.eye.translation, geo.eye.model);
 
-    let u = quat.setAxisAngle([], [0.0, 1.0, 0.0], deltaX);
-    let v = quat.setAxisAngle([], [1.0, 0.0, 0.0], deltaY);
+    let p = quat.setAxisAngle([], u, deltaY);
+    // let q = quat.setAxisAngle([], v, deltaY);
 
-    quat.multiply(geo.eye.quaternion, geo.eye.quaternion, u);
-    quat.multiply(geo.eye.quaternion, geo.eye.quaternion, v);
+    quat.multiply(geo.eye.quaternion, geo.eye.quaternion, p);
+
+    let q = geo.eye.quaternion;
+    let v = geo.eye.translation;
+    let s = geo.eye.scale;
+    mat4.fromRotationTranslationScale(geo.eye.model, q, v, s);
+    // quat.multiply(geo.eye.quaternion, geo.eye.quaternion, u);
+    // quat.multiply(geo.eye.quaternion, geo.eye.quaternion, v);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
@@ -505,7 +520,7 @@ class GLView extends Component {
 
   magnify(_mx, _my, m, _x, _y) {
     const geo = this.geometry;
-    geo.fov = common.clamp(geo.fov / m, 0.005, 0.6 * Math.PI);
+    geo.fov = common.clamp(geo.fov / m, 0.005, 0.65 * Math.PI);
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message += ` fov: ${geo.fov.toFixed(3)}`;
