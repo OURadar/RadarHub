@@ -454,26 +454,21 @@ class GLView extends Component {
       geo.eye.model[1],
       geo.eye.model[2]
     );
-    let v = geo.target.translation;
-
-    let a = quat.setAxisAngle([], u, deltaY);
-    let b = quat.setAxisAngle([], v, deltaX);
-
+    let d = geo.target.translation;
     let q = geo.eye.quaternion;
     let t = geo.eye.translation;
     let s = geo.eye.scale;
 
-    let m = mat4.fromQuat([], a);
-    let n = mat4.fromQuat([], b);
+    let a = quat.setAxisAngle([], u, deltaY);
+    let b = quat.setAxisAngle([], d, deltaX);
+    quat.multiply(q, a, b);
 
-    mat4.multiply(geo.eye.model, n, geo.eye.model);
-
-    quat.multiply(q, a, q);
-    quat.multiply(q, b, q);
-    mat4.getTranslation(t, geo.eye.model);
-    mat4.fromRotationTranslationScale(geo.eye.model, q, t, s);
-
+    let m = mat4.fromQuat([], q);
     mat4.multiply(geo.eye.model, m, geo.eye.model);
+
+    mat4.getTranslation(t, geo.eye.model);
+    mat4.targetTo(geo.eye.model, t, d, d);
+    mat4.scale(geo.eye.model, geo.eye.model, s);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
