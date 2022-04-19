@@ -40,6 +40,7 @@ class Gesture {
     this.handleSingleTap = (_x, _y) => {};
     this.handleDoubleTap = (_x, _y) => {};
     this.handleMagnify = (_mx, _my, _m, _x, _y) => {};
+    this.handleDolly = (_mx, _my, _m, _x, _y) => {};
 
     this.element.addEventListener("mousedown", (e) => {
       if (
@@ -92,13 +93,23 @@ class Gesture {
         e.offsetY < this.element.height - this.bounds.bottom
       ) {
         e.preventDefault();
-        this.handleMagnify(
-          delta2scale(3 * e.deltaX),
-          delta2scale(-3 * e.deltaY),
-          delta2scale(3 * e.deltaY),
-          e.offsetX - this.bounds.left,
-          e.offsetY - this.bounds.bottom
-        );
+        if (e.metaKey) {
+          this.handleMagnify(
+            delta2scale(3 * e.deltaX),
+            delta2scale(-3 * e.deltaY),
+            delta2scale(3 * e.deltaY),
+            e.offsetX - this.bounds.left,
+            e.offsetY - this.bounds.bottom
+          );
+        } else {
+          this.handleDolly(
+            delta2scale(3 * e.deltaX),
+            delta2scale(-3 * e.deltaY),
+            delta2scale(3 * e.deltaY),
+            e.offsetX - this.bounds.left,
+            e.offsetY - this.bounds.bottom
+          );
+        }
       }
       this.message =
         `wheel (${e.offsetX}, ${e.offsetY})` +
