@@ -429,31 +429,22 @@ class Product extends GLView {
 
   fitToData() {
     const geo = this.geometry;
-    if (this.props.sweep) {
-      const sweep = this.props.sweep;
-      const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
-      const d = Math.sqrt(1 + geo.aspect ** 2);
-      // console.log(`r = ${r}   d = ${d}`);
-      geo.fov = (2.5 * r) / d / common.earthRadius;
-    } else {
-      // geo.fov = 0.028;
-      geo.fov = 1.0;
-    }
-    // geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
-    // geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
-    // const origin = geo.origin;
-    // quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0);
-    // quat.fromEuler(
-    //   geo.target.quaternion,
-    //   -origin.latitude,
-    //   origin.longitude,
-    //   0
-    // );
-    // quat.identity(geo.eye.quaternion);
+    // if (this.props.sweep) {
+    //   const sweep = this.props.sweep;
+    //   const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
+    //   const d = Math.sqrt(1 + geo.aspect ** 2);
+    //   console.log(`r = ${r}   d = ${d}`);
+    //   geo.fov = (2.5 * r) / d / common.earthRadius;
+    //   const e = vec3.fromValues(0, 0, 0.1 * common.earthRadius);
+    // } else {
+    //   geo.fov = 1.0;
+    // }
 
-    const e = vec3.fromValues(0, 0, 0.2 * common.earthRadius);
+    const e = vec3.fromValues(0, 0, geo.range);
+
     mat4.copy(geo.target.model, geo.model);
     mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
+
     mat4.copy(geo.eye.model, geo.model);
     mat4.translate(geo.eye.model, geo.eye.model, e);
 

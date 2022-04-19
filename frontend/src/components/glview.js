@@ -62,7 +62,7 @@ class GLView extends Component {
     //  - view = view matrix derived from satPosition
     //  - projection = projection matrix to GL view
     const f = 1.0;
-    const r = 0.2 * common.earthRadius;
+    const r = 250.0;
     const v = vec3.fromValues(0, 0, common.earthRadius);
     const e = vec3.fromValues(0, 0, r);
     const origin = props.origin;
@@ -110,7 +110,7 @@ class GLView extends Component {
       origin: origin,
       quaternion: quaternion,
       eye: {
-        ppk: 1,
+        kpp: 1,
         base: b,
         range: r,
         model: eyeModel,
@@ -265,7 +265,7 @@ class GLView extends Component {
     const h = this.canvas.height;
 
     geo.aspect = w / h;
-    geo.eye.ppk = w / geo.eye.base;
+    geo.eye.kpp = geo.eye.base / w;
 
     let u = vec3.fromValues(
       geo.eye.model[4],
@@ -504,7 +504,7 @@ class GLView extends Component {
     vec3.set(s, b, b, l);
     geo.eye.range = l;
     geo.eye.base = b;
-    geo.eye.ppk = geo.viewport.width / b;
+    geo.eye.kpp = b / geo.viewport.width;
 
     vec3.add(t, geo.target.translation, d);
     mat4.fromRotationTranslationScale(geo.eye.model, q, t, s);

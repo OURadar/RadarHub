@@ -46,13 +46,16 @@ function reviseOpacity(geometry, verbose = 0) {
 
   const t2 = Date.now();
 
-  let ppk = geometry.eye.ppk / labels.ratio;
-  const maxWeight = getMaxWeight(ppk);
-  console.log(`reviseOpacity()  ppk = ${ppk.toFixed(4)} w = ${maxWeight}`);
+  let kpp = geometry.eye.kpp * labels.ratio;
+  const maxWeight = getMaxWeight(kpp);
+  // console.log(`reviseOpacity()  kpp = ${kpp.toFixed(3)} w = ${maxWeight}`);
   const viewportWidth = geometry.viewport.width;
   const viewportHeight = geometry.viewport.height;
-  // const maxWeight = getMaxWeight(geometry.fov);
-  const theta = Math.cos(Math.min(0.9, geometry.fov));
+  // const theta = Math.cos(Math.min(0.9, geometry.fov));
+  const theta = Math.cos(Math.min(0.9, 0.5 * kpp));
+  // console.log(
+  //   `reviseOpacity()  kpp = ${kpp.toFixed(3)}   theta = ${theta.toFixed(3)}`
+  // );
 
   for (let k = 0, l = labels.points.length; k < l; k++) {
     if (ndot(geometry.target.translation, labels.points[k]) < theta) {
@@ -115,18 +118,12 @@ function reviseOpacity(geometry, verbose = 0) {
 }
 
 function getMaxWeight(x) {
-  // if (fov < 0.018) return 9;
-  // if (fov < 0.024) return 8;
-  // if (fov < 0.03) return 7;
-  // if (fov < 0.06) return 6;
-  // if (fov < 0.5) return 5;
-  // if (fov < 1.0) return 4;
-  if (x < 0.018) return 9;
-  if (x < 0.024) return 8;
-  if (x < 0.03) return 7;
-  if (x < 0.06) return 6;
-  if (x < 0.5) return 5;
-  if (x < 1.0) return 4;
+  if (x < 0.06) return 9;
+  if (x < 0.12) return 8;
+  if (x < 0.2) return 7;
+  if (x < 0.4) return 6;
+  if (x < 2) return 5;
+  if (x < 3) return 4;
   return 3;
 }
 
