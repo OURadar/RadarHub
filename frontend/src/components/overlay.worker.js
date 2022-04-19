@@ -14,6 +14,7 @@ let labels = {
   points: [[]],
   extents: [[]],
   weights: [],
+  ratio: 1.0,
 };
 
 self.onmessage = ({ data: { type, payload } }) => {
@@ -45,9 +46,12 @@ function reviseOpacity(geometry, verbose = 0) {
 
   const t2 = Date.now();
 
+  let ppk = geometry.eye.ppk / labels.ratio;
+  const maxWeight = getMaxWeight(ppk);
+  console.log(`reviseOpacity()  ppk = ${ppk.toFixed(4)} w = ${maxWeight}`);
   const viewportWidth = geometry.viewport.width;
   const viewportHeight = geometry.viewport.height;
-  const maxWeight = getMaxWeight(geometry.fov);
+  // const maxWeight = getMaxWeight(geometry.fov);
   const theta = Math.cos(Math.min(0.9, geometry.fov));
 
   for (let k = 0, l = labels.points.length; k < l; k++) {
@@ -110,13 +114,19 @@ function reviseOpacity(geometry, verbose = 0) {
   return visibility;
 }
 
-function getMaxWeight(fov) {
-  if (fov < 0.018) return 9;
-  if (fov < 0.024) return 8;
-  if (fov < 0.03) return 7;
-  if (fov < 0.06) return 6;
-  if (fov < 0.5) return 5;
-  if (fov < 1.0) return 4;
+function getMaxWeight(x) {
+  // if (fov < 0.018) return 9;
+  // if (fov < 0.024) return 8;
+  // if (fov < 0.03) return 7;
+  // if (fov < 0.06) return 6;
+  // if (fov < 0.5) return 5;
+  // if (fov < 1.0) return 4;
+  if (x < 0.018) return 9;
+  if (x < 0.024) return 8;
+  if (x < 0.03) return 7;
+  if (x < 0.06) return 6;
+  if (x < 0.5) return 5;
+  if (x < 1.0) return 4;
   return 3;
 }
 

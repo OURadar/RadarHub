@@ -54,17 +54,18 @@ class GLView extends Component {
       message: "glView",
     };
     // Key elements of geometry:
-    //  - origin = the radar (lon, lat) in degrees
+    //  - f - default fov
     //  - satCoordinate = (lon-rad, lat-rad, alt-km) of satellite
     //  - satPosition = (x, y, z) of satellite
     //  - satQuaternion = quaternion represent of satellite orientation
     //  - model = model matrix for product, rings, radar-relative drawings
     //  - view = view matrix derived from satPosition
     //  - projection = projection matrix to GL view
-    const origin = props.origin;
-    const v = vec3.fromValues(0, 0, common.earthRadius);
-    const e = vec3.fromValues(0, 0, 0.2 * common.earthRadius);
     const f = 1.0;
+    const r = 0.2 * common.earthRadius;
+    const v = vec3.fromValues(0, 0, common.earthRadius);
+    const e = vec3.fromValues(0, 0, r);
+    const origin = props.origin;
 
     // The radar
     let model = mat4.create();
@@ -88,24 +89,20 @@ class GLView extends Component {
     let eyeTranslation = vec3.create();
     let eyeQuaternion = quat.create();
     let eyeScale = vec3.create();
-    let d = vec3.length(e);
-    let b = d * f;
+    let b = r * f;
     mat4.translate(eyeModel, eyeModel, e);
-    mat4.scale(eyeModel, eyeModel, [b, b, d]);
+    mat4.scale(eyeModel, eyeModel, [b, b, r]);
     mat4.getTranslation(eyeTranslation, eyeModel);
     mat4.getRotation(eyeQuaternion, eyeModel);
     mat4.getScaling(eyeScale, eyeModel);
 
     let fixView = mat4.create();
     let fixModel = mat4.create();
-    let fixPosition = mat4.create();
     let fixProjection = mat4.create();
     let fixTranslation = vec3.fromValues(0, 0, 2 * common.earthRadius);
-    // mat4.fromQuat(fixModel, quaternion);
     mat4.translate(fixModel, fixModel, fixTranslation);
-    mat4.getTranslation(fixPosition, fixModel);
-    mat4.lookAt(fixView, fixPosition, [0, 0, 0], [0, 1, 0]);
-    mat4.perspective(fixProjection, 1.2, 1, 100, 30000);
+    mat4.lookAt(fixView, fixTranslation, [0, 0, 0], [0, 1, 0]);
+    mat4.perspective(fixProjection, f, 1, 10, 30000);
 
     // Important parameters for WebGL. Don't want to use React state
     this.geometry = {
@@ -113,7 +110,9 @@ class GLView extends Component {
       origin: origin,
       quaternion: quaternion,
       eye: {
-        range: vec3.length(e),
+        ppk: 1,
+        base: b,
+        range: r,
         model: eyeModel,
         modelview: mat4.create(),
         quaternion: eyeQuaternion,
@@ -141,6 +140,7 @@ class GLView extends Component {
         },
       },
       fov: f,
+      range: r,
       aspect: 1,
       model: model,
       view: mat4.create(),
@@ -265,13 +265,7 @@ class GLView extends Component {
     const h = this.canvas.height;
 
     geo.aspect = w / h;
-
-    // mat4.getRotation(geo.eye.quaternion, geo.eye.model);
-    // mat4.getTranslation(geo.eye.translation, geo.eye.model);
-    // mat4.getScaling(geo.eye.scale, geo.eye.model);
-
-    // mat4.getRotation(geo.target.quaternion, geo.target.model);
-    // mat4.getTranslation(geo.target.translation, geo.target.model);
+    geo.eye.ppk = w / geo.eye.base;
 
     let u = vec3.fromValues(
       geo.eye.model[4],
@@ -503,11 +497,14 @@ class GLView extends Component {
     let s = geo.eye.scale;
     let d = vec3.subtract([], t, geo.target.translation);
     let l = vec3.length(d);
-    let n = common.clamp(m * l, 20, 2 * common.earthRadius);
+    let n = common.clamp(l / m, 20, 2 * common.earthRadius);
     vec3.scale(d, d, n / l);
 
     let b = l * geo.fov;
     vec3.set(s, b, b, l);
+    geo.eye.range = l;
+    geo.eye.base = b;
+    geo.eye.ppk = geo.viewport.width / b;
 
     vec3.add(t, geo.target.translation, d);
     mat4.fromRotationTranslationScale(geo.eye.model, q, t, s);

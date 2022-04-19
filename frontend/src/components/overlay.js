@@ -249,6 +249,7 @@ class Overlay {
               points: buffer.points,
               weights: buffer.weights,
               extents: buffer.extents,
+              ratio: this.ratio,
             },
           });
         }
@@ -274,7 +275,9 @@ class Overlay {
 
   getDrawables() {
     const [lon, lat] = deg.point2coord(...this.geometry.target.translation);
-    const viewParameters = [this.geometry.fov, lon, lat];
+    const ppk = this.geometry.eye.ppk * this.ratio;
+    // const viewParameters = [this.geometry.fov, lon, lat];
+    const viewParameters = [ppk, lon, lat];
 
     if (
       this.tic++ % 12 == 0 &&
@@ -291,12 +294,19 @@ class Overlay {
       // console.log(`overlay.js  fov = ${this.geometry.fov.toFixed(3)}  d = ${d.toFixed(4)}`);
 
       // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
-      if (this.geometry.fov < 0.18 && d < 5) {
-        this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
-      } else if (this.geometry.fov < 1.25 && d < 10) {
+      // if (this.geometry.fov < 0.18 && d < 5) {
+      //   this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
+      // } else if (this.geometry.fov < 1.25 && d < 10) {
+      //   this.targetOpacity = [1, 1, 0, 0, 1, 1, 0];
+      // } else {
+      //   this.targetOpacity = [1, 1, 0, 0, 0, 1, 1];
+      // }
+      if (ppk < 0.18 && d < 5) {
+        this.targetOpacity = [1, 1, 0, 0, 0, 1, 1];
+      } else if (ppk < 1.25 && d < 10) {
         this.targetOpacity = [1, 1, 0, 0, 1, 1, 0];
       } else {
-        this.targetOpacity = [1, 1, 0, 0, 0, 1, 1];
+        this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
       }
 
       // const t1 = window.performance.now();
@@ -339,16 +349,18 @@ class Overlay {
     };
     this.layers.forEach((o) => {
       if (o.opacity >= 0.05) {
-        o.linewidth = clamp(
-          o.weight / Math.sqrt(this.geometry.fov),
-          ...o.limits
-        );
+        // o.linewidth = clamp(
+        //   o.weight / Math.sqrt(this.geometry.fov),
+        //   ...o.limits
+        // );
+        o.linewidth = clamp(o.weight * ppk, ...o.limits);
         // quad: [mode, shader-user mix, shader color tint, opacity]
         //   zoom out fov > 0.63 --> 0 (shader)
         //    zoom in fov < 0.43 --> 1 (user)
-        o.quad[1] = o.quad[0]
-          ? 1.0
-          : clamp(3.15 - 5.0 * this.geometry.fov, 0.0, 1.0);
+        // o.quad[1] = o.quad[0]
+        //   ? 1.0
+        //   : clamp(3.15 - 5.0 * this.geometry.fov, 0.0, 1.0);
+        o.quad[1] = o.quad[0] ? 1.0 : clamp(3.15 - 5.0 / ppk, 0.0, 1.0);
         o.quad[3] = o.opacity;
         shapes.poly.push({
           points: o.points,
