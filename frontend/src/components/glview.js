@@ -226,8 +226,8 @@ class GLView extends Component {
     origin: {
       // longitude: -97.422413,
       // latitude: 35.25527,
-      longitude: 30.0,
-      latitude: 20.0,
+      longitude: 20.0,
+      latitude: 10.0,
     },
   };
 
@@ -273,6 +273,12 @@ class GLView extends Component {
     // v = geo.eye.translation;
     // s = geo.eye.scale;
     // mat4.fromRotationTranslationScale(geo.eye.model, q, v, s);
+
+    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+    mat4.getTranslation(geo.eye.translation, geo.eye.model);
+
+    mat4.getRotation(geo.target.quaternion, geo.target.model);
+    mat4.getTranslation(geo.target.translation, geo.target.model);
 
     let u = vec3.fromValues(
       geo.eye.model[4],
@@ -425,12 +431,6 @@ class GLView extends Component {
     mat4.multiply(geo.eye.model, m, geo.eye.model);
     mat4.multiply(geo.target.model, m, geo.target.model);
 
-    // mat4.getRotation(geo.eye.quaternion, geo.eye.model);
-    mat4.getTranslation(geo.eye.translation, geo.eye.model);
-
-    // mat4.getRotation(geo.target.quaternion, geo.target.model);
-    mat4.getTranslation(geo.target.translation, geo.target.model);
-
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message +=
@@ -454,7 +454,7 @@ class GLView extends Component {
       geo.eye.model[1],
       geo.eye.model[2]
     );
-    let v = mat4.getTranslation([], geo.model);
+    let v = geo.target.translation;
 
     let a = quat.setAxisAngle([], u, deltaY);
     let b = quat.setAxisAngle([], v, deltaX);
@@ -474,9 +474,6 @@ class GLView extends Component {
     mat4.fromRotationTranslationScale(geo.eye.model, q, t, s);
 
     mat4.multiply(geo.eye.model, m, geo.eye.model);
-
-    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
-    mat4.getTranslation(geo.eye.translation, geo.eye.model);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
@@ -525,6 +522,7 @@ class GLView extends Component {
   fitToData() {
     const geo = this.geometry;
     // geo.fov = 0.028;
+    console.log(`fov = ${geo.fov.toFixed(2)}`);
     geo.fov = 1.0;
     // geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
     // geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
@@ -534,23 +532,23 @@ class GLView extends Component {
     // const origin = geo.origin;
     // quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0);
 
-    const v = vec3.fromValues(0, 0, common.earthRadius);
+    // const v = vec3.fromValues(0, 0, common.earthRadius);
     const e = vec3.fromValues(0, 0, 0.2 * common.earthRadius);
 
-    // mat4.fromQuat(geo.target.model, geo.quaternion);
     mat4.copy(geo.target.model, geo.model);
     mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
-    mat4.getRotation(geo.target.quaternion, geo.target.model);
-    mat4.getTranslation(geo.target.translation, geo.target.model);
+    // vec3.set(geo.target.translation, 0, 0, 0);
+    // mat4.getRotation(geo.target.quaternion, geo.target.model);
+    // mat4.getTranslation(geo.target.translation, geo.target.model);
 
-    let d = vec3.length(e);
-    let b = d * geo.fov;
+    // let d = vec3.length(e);
+    // let b = d * geo.fov;
 
     mat4.copy(geo.eye.model, geo.model);
     mat4.translate(geo.eye.model, geo.eye.model, e);
-    mat4.scale(geo.eye.model, geo.eye.model, [b, b, d]);
-    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
-    mat4.getTranslation(geo.eye.translation, geo.eye.model);
+    // mat4.scale(geo.eye.model, geo.eye.model, [b, b, d]);
+    // mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+    // mat4.getTranslation(geo.eye.translation, geo.eye.model);
 
     geo.needsUpdate = true;
     if (this.props.debug) {

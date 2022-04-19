@@ -436,19 +436,27 @@ class Product extends GLView {
       // console.log(`r = ${r}   d = ${d}`);
       geo.fov = (2.5 * r) / d / common.earthRadius;
     } else {
-      geo.fov = 0.028;
+      // geo.fov = 0.028;
+      geo.fov = 1.0;
     }
     // geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
     // geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
-    const origin = geo.origin;
-    quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0);
-    quat.fromEuler(
-      geo.target.quaternion,
-      -origin.latitude,
-      origin.longitude,
-      0
-    );
-    quat.identity(geo.eye.quaternion);
+    // const origin = geo.origin;
+    // quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0);
+    // quat.fromEuler(
+    //   geo.target.quaternion,
+    //   -origin.latitude,
+    //   origin.longitude,
+    //   0
+    // );
+    // quat.identity(geo.eye.quaternion);
+
+    const e = vec3.fromValues(0, 0, 0.2 * common.earthRadius);
+    mat4.copy(geo.target.model, geo.model);
+    mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
+    mat4.copy(geo.eye.model, geo.model);
+    mat4.translate(geo.eye.model, geo.eye.model, e);
+
     geo.needsUpdate = true;
     this.setState({
       spin: false,
