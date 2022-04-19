@@ -454,7 +454,6 @@ class GLView extends Component {
       geo.eye.model[1],
       geo.eye.model[2]
     );
-    // let v = mat4.getTranslation([], geo.target.model);
     let v = mat4.getTranslation([], geo.model);
 
     let a = quat.setAxisAngle([], u, deltaY);
@@ -467,9 +466,7 @@ class GLView extends Component {
     let m = mat4.fromQuat([], a);
     let n = mat4.fromQuat([], b);
 
-    mat4.translate(geo.eye.model, geo.eye.model, vec3.negate([], v));
     mat4.multiply(geo.eye.model, n, geo.eye.model);
-    mat4.translate(geo.eye.model, geo.eye.model, v);
 
     quat.multiply(q, a, q);
     quat.multiply(q, b, q);
