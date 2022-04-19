@@ -266,12 +266,12 @@ class GLView extends Component {
 
     geo.aspect = w / h;
 
-    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
-    mat4.getTranslation(geo.eye.translation, geo.eye.model);
-    mat4.getScaling(geo.eye.scale, geo.eye.model);
+    // mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+    // mat4.getTranslation(geo.eye.translation, geo.eye.model);
+    // mat4.getScaling(geo.eye.scale, geo.eye.model);
 
-    mat4.getRotation(geo.target.quaternion, geo.target.model);
-    mat4.getTranslation(geo.target.translation, geo.target.model);
+    // mat4.getRotation(geo.target.quaternion, geo.target.model);
+    // mat4.getTranslation(geo.target.translation, geo.target.model);
 
     let u = vec3.fromValues(
       geo.eye.model[4],
@@ -424,6 +424,12 @@ class GLView extends Component {
     mat4.multiply(geo.eye.model, m, geo.eye.model);
     mat4.multiply(geo.target.model, m, geo.target.model);
 
+    mat4.getTranslation(geo.eye.translation, geo.eye.model);
+    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+
+    mat4.getTranslation(geo.target.translation, geo.target.model);
+    mat4.getRotation(geo.target.quaternion, geo.target.model);
+
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message +=
@@ -457,11 +463,12 @@ class GLView extends Component {
     quat.multiply(q, a, b);
 
     let m = mat4.fromQuat([], q);
-    mat4.multiply(geo.eye.model, m, geo.eye.model);
+    let n = mat4.multiply([], m, geo.eye.model);
 
-    mat4.getTranslation(t, geo.eye.model);
-    mat4.targetTo(geo.eye.model, t, d, d);
-    mat4.scale(geo.eye.model, geo.eye.model, s);
+    mat4.getRotation(q, n);
+    mat4.getTranslation(t, n);
+    mat4.targetTo(n, t, d, d);
+    mat4.scale(geo.eye.model, n, s);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
@@ -522,6 +529,15 @@ class GLView extends Component {
   magnify(_mx, _my, m, _x, _y) {
     const geo = this.geometry;
     geo.fov = common.clamp(geo.fov / m, 0.005, 0.65 * Math.PI);
+    let q = geo.eye.quaternion;
+    let t = geo.eye.translation;
+    let s = geo.eye.scale;
+    let d = vec3.subtract([], t, geo.target.translation);
+    let l = vec3.length(d);
+    let b = l * geo.fov;
+    vec3.set(s, b, b, l);
+    mat4.fromRotationTranslationScale(geo.eye.model, q, t, s);
+
     geo.needsUpdate = true;
     if (this.props.debug) {
       geo.message += ` fov: ${geo.fov.toFixed(3)}`;
@@ -538,13 +554,22 @@ class GLView extends Component {
     const e = vec3.fromValues(0, 0, geo.eye.range);
     let d = vec3.length(e);
     let b = d * geo.fov;
+    let s = geo.eye.scale;
 
     mat4.copy(geo.target.model, geo.model);
     mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
+    vec3.set(geo.target.scale, [0.03, 0.03, 0.03]);
 
     mat4.copy(geo.eye.model, geo.model);
     mat4.translate(geo.eye.model, geo.eye.model, e);
     mat4.scale(geo.eye.model, geo.eye.model, [b, b, d]);
+    vec3.set(s, b, b, d);
+
+    mat4.getTranslation(geo.eye.translation, geo.eye.model);
+    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+
+    mat4.getTranslation(geo.target.translation, geo.target.model);
+    mat4.getRotation(geo.target.quaternion, geo.target.model);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
