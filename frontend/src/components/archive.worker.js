@@ -320,7 +320,7 @@ function load(name) {
             ...createSweep(name),
             ...sweepParser.parse(new Uint8Array(buffer)),
           });
-          // console.log(sweep);
+          console.log(sweep);
           let components = sweep.name.split("-");
           sweep.timeString =
             `${components[1].slice(0, 4)}/` +
