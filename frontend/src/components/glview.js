@@ -454,15 +454,14 @@ class GLView extends Component {
     let t = geo.eye.translation;
     let s = geo.eye.scale;
 
-    let o = vec3.angle(d, t);
-    if (o < 0.001 && deltaY < 0) {
-      deltaY = 0;
-    }
-
     let a = quat.setAxisAngle([], u, deltaY);
     let b = quat.setAxisAngle([], d, deltaX);
 
-    quat.multiply(q, a, b);
+    if (common.ndot(d, t) > 0.999999 && deltaY < 0) {
+      quat.copy(q, b);
+    } else {
+      quat.multiply(q, a, b);
+    }
 
     let m = mat4.fromQuat([], q);
     let n = mat4.multiply([], m, geo.eye.model);
