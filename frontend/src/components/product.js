@@ -443,7 +443,7 @@ class Product extends GLView {
     let f = geo.fov;
     let b = r * f;
     let s = geo.eye.scale;
-    console.log(`r = ${r}   f = ${f}`);
+    // console.log(`r = ${r}   f = ${f}`);
 
     const e = vec3.fromValues(0, 0, r);
 

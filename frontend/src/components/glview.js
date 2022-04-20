@@ -62,7 +62,7 @@ class GLView extends Component {
     const f = 1.0;
     const r = 169.0;
     const v = vec3.fromValues(0, 0, common.earthRadius);
-    const e = vec3.fromValues(0, 0, r);
+    const e = vec3.fromValues(0, -0.01, r);
     const origin = props.origin;
 
     // The radar
@@ -104,7 +104,6 @@ class GLView extends Component {
 
     // Important parameters for WebGL. Don't want to use React state
     this.geometry = {
-      // fov: 0.028,
       origin: origin,
       quaternion: quaternion,
       eye: {
@@ -263,7 +262,7 @@ class GLView extends Component {
 
     let v = vec3.subtract([], geo.eye.translation, geo.target.translation);
     let n = common.ndot(v, geo.target.translation);
-    let a = 1.0 - 0.5 * Math.acos(n);
+    let a = 1.0 - 0.6 * Math.acos(n);
 
     geo.aspect = w / h;
     geo.eye.kpp = geo.eye.scale[0] / w / a;
@@ -395,8 +394,8 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    // const s = (geo.fov / common.earthRadius) * 2.0;
-    const s = (geo.fov / common.earthRadius) * 1.1;
+    const s = (geo.fov / common.earthRadius) * 2.0;
+    // const s = (geo.fov * geo.eye.range) / common.earthRadius;
     let deltaX = (-x / this.mount.clientWidth) * s;
     let deltaY = (y / this.mount.clientHeight) * s;
 
@@ -455,6 +454,11 @@ class GLView extends Component {
     let t = geo.eye.translation;
     let s = geo.eye.scale;
 
+    let o = vec3.angle(d, t);
+    if (o < 0.001 && deltaY < 0) {
+      deltaY = 0;
+    }
+
     let a = quat.setAxisAngle([], u, deltaY);
     let b = quat.setAxisAngle([], d, deltaX);
 
@@ -470,9 +474,7 @@ class GLView extends Component {
 
     geo.needsUpdate = true;
     if (this.props.debug) {
-      geo.message += ` tilt() delta = ${deltaX.toFixed(2)}, ${deltaY.toFixed(
-        2
-      )}`;
+      geo.message += ` tilt() ${deltaX.toFixed(2)}, ${deltaY.toFixed(2)}`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
@@ -480,7 +482,6 @@ class GLView extends Component {
   }
 
   roll(x, y) {
-    console.log("roll()");
     const geo = this.geometry;
     let deltaX = (x / this.mount.clientWidth) * 2.0;
     let u = quat.setAxisAngle([], [0.0, 0.0, 1.0], deltaX);
@@ -552,7 +553,7 @@ class GLView extends Component {
     const geo = this.geometry;
     geo.fov = 1.2;
 
-    const e = vec3.fromValues(0, 0, geo.range);
+    const e = vec3.fromValues(0, -0.01, geo.range);
     let d = vec3.length(e);
     let b = d * geo.fov;
     let s = geo.eye.scale;

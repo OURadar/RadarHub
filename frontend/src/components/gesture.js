@@ -26,6 +26,7 @@ class Gesture {
     // this.metaKey = false;
     // this.shiftKey = false;
     this.hasTouch = false;
+    this.mouseDown = false;
     this.panInProgress = false;
     this.tiltInProgress = false;
     this.rollInProgress = false;
@@ -41,12 +42,10 @@ class Gesture {
     this.handleDoubleTap = (_x, _y) => {};
     this.handleMagnify = (_mx, _my, _m, _x, _y) => {};
     this.handleDolly = (_mx, _my, _m, _x, _y) => {};
+    this.inbound = this.inbound.bind(this);
 
     this.element.addEventListener("mousedown", (e) => {
-      if (
-        e.offsetX > this.bounds.left &&
-        e.offsetY < this.element.height - this.bounds.bottom
-      ) {
+      if (this.inbound(e)) {
         this.pointX = e.offsetX;
         this.pointY = e.offsetY;
         this.rect = this.element.getBoundingClientRect();
@@ -61,18 +60,30 @@ class Gesture {
     });
     this.element.addEventListener("mousemove", (e) => {
       e.preventDefault();
-      let dx = Math.abs(e.offsetX - this.pointX);
-      let dy = Math.abs(this.pointY - e.offsetY);
-      if (dx < 100 && dy < 100) {
-        if (this.panInProgress === true || e.shiftKey === true) {
-          this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
-        } else if (this.tiltInProgress === true || e.altKey === true) {
-          this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
-        } else if (this.rollInProgress === true || e.ctrlKey === true) {
-          this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      if (this.panInProgress === true) {
+        this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.tiltInProgress === true) {
+        this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.rollInProgress === true) {
+        this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.inbound(e)) {
+        if (e.shiftKey) {
+          this.panInProgress = true;
+          // console.log("pan mode");
+        } else if (e.metaKey) {
+          this.tiltInProgress = true;
+          // console.log("tilt mode");
+        } else if (e.altKey) {
+          this.rollInProgress = true;
+        } else {
+          this.panInProgress = false;
+          this.tiltInProgress = false;
+          this.rollInProgress = false;
         }
       } else {
-        console.log(`dx = ${dx}  dy = ${dy}`);
+        this.panInProgress = false;
+        this.tiltInProgress = false;
+        this.rollInProgress = false;
       }
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
@@ -82,18 +93,29 @@ class Gesture {
     this.element.addEventListener("focus", (e) => {
       console.log(`focus ${e.offsetX}`);
     });
-    // this.element.addEventListener("keydown", (e) => {
-    //   if (e.metaKey) {
-    //     this.tiltInProgress = true;
-    //     console.log("tilt mode");
-    //   } else if (e.altKey) {
-    //     this.rollInProgress = true;
-    //   } else if (e.shiftKey) {
-    //     this.panInProgress = true;
+    // window.addEventListener("keydown", (e) => {
+    //   console.log(`keydown ${e.offsetX}, ${e.offsetY}`);
+    //   if (this.inbound(e)) {
+    //     if (e.metaKey) {
+    //       this.tiltInProgress = true;
+    //     } else if (e.altKey) {
+    //       this.rollInProgress = true;
+    //     } else if (e.shiftKey) {
+    //       this.panInProgress = true;
+    //       console.log("pan mode");
+    //     }
+    //     this.pointX = e.offsetX;
+    //     this.pointY = e.offsetY;
     //   }
-    //   this.pointX = e.offsetX;
-    //   this.pointY = e.offsetY;
     // });
+    window.addEventListener("keyup", (e) => {
+      // console.log(`keyup ${e.offsetX}, ${e.offsetY}`);
+      if (!this.mouseDown) {
+        this.panInProgress = false;
+        this.tiltInProgress = false;
+        this.rollInProgress = false;
+      }
+    });
     this.element.addEventListener("mouseup", (e) => {
       if (this.panInProgress === true) {
         this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
@@ -107,6 +129,7 @@ class Gesture {
       this.panInProgress = false;
       this.tiltInProgress = false;
       this.rollInProgress = false;
+      this.mouseDown = false;
     });
     this.element.addEventListener("wheel", (e) => {
       if (
@@ -260,6 +283,13 @@ class Gesture {
       this.handleDolly(s, s, s, e.clientX, e.clientY);
       this.scale = e.scale;
     });
+  }
+
+  inbound(e) {
+    return (
+      e.offsetX > this.bounds.left &&
+      e.offsetY < this.element.height - this.bounds.bottom
+    );
   }
 }
 

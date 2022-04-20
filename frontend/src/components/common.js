@@ -254,8 +254,8 @@ export const rad = {
 /**
  * Normalized dot product between two vectors
  *
- * @param {*} a input vector 1
- * @param {*} b input vector 2
+ * @param {ReadonlyVec3} a input vector 1
+ * @param {ReadonlyVec3} b input vector 2
  * @returns out
  */
 export function ndot(a, b) {
@@ -263,4 +263,25 @@ export function ndot(a, b) {
   const n = Math.hypot(b[0], b[1], b[2]);
   const dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   return dot / (m * n);
+}
+
+/**
+ * Show the u, v, w components of a 4 x 4 matrix
+ *
+ * @param {ReadonlyMat4} m input matrix
+ */
+export function showMatrix(m) {
+  let u0 = m[0].toFixed(3);
+  let u1 = m[1].toFixed(3);
+  let u2 = m[2].toFixed(3);
+
+  let v0 = m[4].toFixed(3);
+  let v1 = m[5].toFixed(3);
+  let v2 = m[6].toFixed(3);
+
+  let w0 = m[8].toFixed(3);
+  let w1 = m[9].toFixed(3);
+  let w2 = m[10].toFixed(3);
+
+  console.log(`${u0} ${u1} ${u2}   ${v0} ${v1} ${v2}   ${w0} ${w1} ${w2}`);
 }
