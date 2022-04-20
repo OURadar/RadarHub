@@ -250,3 +250,17 @@ export const rad = {
   point2coord: _point2coord,
   dotAngle: _dotAngle,
 };
+
+/**
+ * Normalized dot product between two vectors
+ *
+ * @param {*} a input vector 1
+ * @param {*} b input vector 2
+ * @returns out
+ */
+export function ndot(a, b) {
+  const m = Math.hypot(a[0], a[1], a[2]);
+  const n = Math.hypot(b[0], b[1], b[2]);
+  const dot = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  return dot / (m * n);
+}

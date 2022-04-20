@@ -216,34 +216,33 @@ class Product extends GLView {
   }
 
   updateViewPoint() {
+    const geo = this.geometry;
     const t = this.offset + 0.0002 * window.performance.now();
-    const a = t % (2.0 * Math.PI);
-    // console.log(` = ${t.toFixed(3)}   a = ${a.toFixed(2)}`);
-    // if (this.state.useEuler) {
-    //   this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.sin(a);
-    //   this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.cos(a);
-    //   this.geometry.satCoordinate[0] = Math.atan2(
-    //     this.geometry.satQ,
-    //     this.geometry.satI
-    //   );
-    //   this.geometry.message = "";
 
-    // } else {
-    //   // Not fully tested
-    //   const q = this.graphics.satQuaternion;
-    //   const qt = quat.fromEuler(
-    //     [],
-    //     -this.graphics.satCoordinate[1],
-    //     common.rad2deg(a),
-    //     0.0
-    //   );
-    //   const i = quat.slerp([], q, qt, 0.5);
-    //   this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
-    //   const b = this.geometry.satCoordinate[0];
-    //   this.geometry.message = `angle = ${b.toFixed(1)}`;
-    // }
+    let c = quat.setAxisAngle([], [0, 1, 0], 0.005);
+    let m = mat4.fromQuat([], c);
 
-    this.geometry.fov += 0.001 * Math.cos(t);
+    mat4.multiply(geo.eye.model, m, geo.eye.model);
+    mat4.multiply(geo.target.model, m, geo.target.model);
+
+    let v = mat4.getTranslation([], geo.eye.model);
+
+    let s = 1.8 * common.earthRadius + 2000 * (1 + Math.cos(t));
+    let d = s - common.earthRadius;
+    let b = d * geo.fov;
+
+    vec3.scale(v, v, s / vec3.length(v));
+    geo.eye.model[12] = v[0];
+    geo.eye.model[13] = v[1];
+    geo.eye.model[14] = v[2];
+    vec3.set(geo.eye.scale, b, b, d);
+
+    mat4.getTranslation(geo.eye.translation, geo.eye.model);
+    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+
+    mat4.getTranslation(geo.target.translation, geo.target.model);
+    mat4.getRotation(geo.target.quaternion, geo.target.model);
+
     this.geometry.needsUpdate = true;
   }
 
@@ -372,8 +371,8 @@ class Product extends GLView {
     if (this.mount === null) return;
     if (
       this.geometry.needsUpdate ||
-      this.canvas.width != this.mount.offsetWidth ||
-      this.canvas.height != this.mount.offsetHeight
+      this.canvas.width != this.mount.offsetWidth * this.ratio ||
+      this.canvas.height != this.mount.offsetHeight * this.ratio
     ) {
       this.updateProjection();
     }
@@ -440,13 +439,25 @@ class Product extends GLView {
     //   geo.fov = 1.0;
     // }
 
-    const e = vec3.fromValues(0, 0, geo.range);
+    let r = geo.range;
+    let f = geo.fov;
+    let b = r * f;
+    let s = geo.eye.scale;
+    console.log(`r = ${r}   f = ${f}`);
+
+    const e = vec3.fromValues(0, 0, r);
 
     mat4.copy(geo.target.model, geo.model);
     mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
+    mat4.getTranslation(geo.target.translation, geo.target.model);
+    mat4.getRotation(geo.target.quaternion, geo.target.model);
 
     mat4.copy(geo.eye.model, geo.model);
     mat4.translate(geo.eye.model, geo.eye.model, e);
+    mat4.scale(geo.eye.model, geo.eye.model, [b, b, r]);
+    mat4.getTranslation(geo.eye.translation, geo.eye.model);
+    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+    vec3.set(s, b, b, r);
 
     geo.needsUpdate = true;
     this.setState({

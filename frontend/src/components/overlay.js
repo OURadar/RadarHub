@@ -111,16 +111,16 @@ class Overlay {
       {
         file: "/static/maps/United States/states-10m.json",
         color: this.colors.state,
-        limits: [1.3, 5.0 * ratio],
-        weight: 0.9 * ratio,
+        limits: [1.3 * ratio, 4.0 * ratio],
+        weight: 1.3 * ratio,
         origin: false,
         fixed: false,
       },
       {
         file: "/static/maps/World/countries-50m.json",
         color: this.colors.state,
-        limits: [1.3, 5.0 * ratio],
-        weight: 1.7 * ratio,
+        limits: [1.3 * ratio, 5.0 * ratio],
+        weight: 4.0 * ratio,
         origin: false,
         fixed: false,
       },
@@ -292,17 +292,10 @@ class Overlay {
       const dy = viewParameters[2] - this.geometry.origin.latitude;
       const d = Math.sqrt(dx * dx + dy * dy);
 
-      console.log(`overlay.js  kpp = ${kpp.toFixed(3)}  d = ${d.toFixed(4)}`);
+      // console.log(`overlay.js  kpp = ${kpp.toFixed(3)}  d = ${d.toFixed(4)}`);
 
       // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
-      // if (this.geometry.fov < 0.18 && d < 5) {
-      //   this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
-      // } else if (this.geometry.fov < 1.25 && d < 10) {
-      //   this.targetOpacity = [1, 1, 0, 0, 1, 1, 0];
-      // } else {
-      //   this.targetOpacity = [1, 1, 0, 0, 0, 1, 1];
-      // }
-      if (kpp < 0.18 && d < 5) {
+      if (kpp < 0.2 && d < 5) {
         this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
       } else if (kpp < 1.25 && d < 10) {
         this.targetOpacity = [1, 1, 0, 0, 1, 1, 0];

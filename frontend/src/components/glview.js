@@ -55,14 +55,12 @@ class GLView extends Component {
     };
     // Key elements of geometry:
     //  - f - default fov
-    //  - satCoordinate = (lon-rad, lat-rad, alt-km) of satellite
-    //  - satPosition = (x, y, z) of satellite
-    //  - satQuaternion = quaternion represent of satellite orientation
+    //  - r - default range of eye
     //  - model = model matrix for product, rings, radar-relative drawings
-    //  - view = view matrix derived from satPosition
+    //  - view = view matrix derived from eye
     //  - projection = projection matrix to GL view
     const f = 1.0;
-    const r = 250.0;
+    const r = 169.0;
     const v = vec3.fromValues(0, 0, common.earthRadius);
     const e = vec3.fromValues(0, 0, r);
     const origin = props.origin;
@@ -111,7 +109,6 @@ class GLView extends Component {
       quaternion: quaternion,
       eye: {
         kpp: 1,
-        base: b,
         range: r,
         model: eyeModel,
         modelview: mat4.create(),
@@ -264,8 +261,12 @@ class GLView extends Component {
     const w = this.canvas.width;
     const h = this.canvas.height;
 
+    let v = vec3.subtract([], geo.eye.translation, geo.target.translation);
+    let n = common.ndot(v, geo.target.translation);
+    let a = 1.0 - 0.5 * Math.acos(n);
+
     geo.aspect = w / h;
-    geo.eye.kpp = geo.eye.base / w;
+    geo.eye.kpp = geo.eye.scale[0] / w / a;
 
     let u = vec3.fromValues(
       geo.eye.model[4],
@@ -290,6 +291,7 @@ class GLView extends Component {
     geo.viewport.width = w;
     geo.viewport.height = h;
     geo.message = `geo`;
+
     geo.needsUpdate = false;
   }
 
@@ -497,13 +499,12 @@ class GLView extends Component {
     let s = geo.eye.scale;
     let d = vec3.subtract([], t, geo.target.translation);
     let l = vec3.length(d);
-    let n = common.clamp(l / m, 20, 2 * common.earthRadius);
+    let n = common.clamp(l / m, 20, 1.2 * common.earthRadius);
     vec3.scale(d, d, n / l);
 
     let b = l * geo.fov;
     vec3.set(s, b, b, l);
     geo.eye.range = l;
-    geo.eye.base = b;
     geo.eye.kpp = b / geo.viewport.width;
 
     vec3.add(t, geo.target.translation, d);
@@ -548,7 +549,7 @@ class GLView extends Component {
     const geo = this.geometry;
     geo.fov = 1.2;
 
-    const e = vec3.fromValues(0, 0, geo.eye.range);
+    const e = vec3.fromValues(0, 0, geo.range);
     let d = vec3.length(e);
     let b = d * geo.fov;
     let s = geo.eye.scale;
