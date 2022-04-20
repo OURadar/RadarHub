@@ -77,7 +77,7 @@ class Overlay {
         fixed: true,
       },
       {
-        file: "@rings/1/30/60/120",
+        file: "@rings/1/30/60/84.5/92/120",
         color: this.colors.ring,
         limits: [0.8, 2.0 * ratio],
         weight: 0.4 * ratio,

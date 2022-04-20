@@ -394,9 +394,8 @@ class GLView extends Component {
 
   pan(x, y) {
     const geo = this.geometry;
-    const s = (geo.fov / common.earthRadius) * 2.0;
-    // const s = (geo.fov * geo.eye.range) / common.earthRadius;
-    let deltaX = (-x / this.mount.clientWidth) * s;
+    const s = (2.0 * Math.tan(0.5 * geo.fov)) / common.earthRadius;
+    let deltaX = (-x / this.mount.clientHeight) * s;
     let deltaY = (y / this.mount.clientHeight) * s;
 
     let u = vec3.fromValues(
