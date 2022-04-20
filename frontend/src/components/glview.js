@@ -439,6 +439,7 @@ class GLView extends Component {
   }
 
   tilt(x, y) {
+    // console.log(`tilt() ${x} ${y}`);
     const geo = this.geometry;
     const z = 1.0 / (0.2 * common.earthRadius);
     let deltaX = (-x / this.mount.clientWidth) * z;
@@ -456,6 +457,7 @@ class GLView extends Component {
 
     let a = quat.setAxisAngle([], u, deltaY);
     let b = quat.setAxisAngle([], d, deltaX);
+
     quat.multiply(q, a, b);
 
     let m = mat4.fromQuat([], q);
@@ -478,6 +480,7 @@ class GLView extends Component {
   }
 
   roll(x, y) {
+    console.log("roll()");
     const geo = this.geometry;
     let deltaX = (x / this.mount.clientWidth) * 2.0;
     let u = quat.setAxisAngle([], [0.0, 0.0, 1.0], deltaX);
