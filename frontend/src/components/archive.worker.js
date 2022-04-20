@@ -320,7 +320,7 @@ function load(name) {
             ...createSweep(name),
             ...sweepParser.parse(new Uint8Array(buffer)),
           });
-          console.log(sweep);
+          // console.log(sweep);
           let components = sweep.name.split("-");
           sweep.timeString =
             `${components[1].slice(0, 4)}/` +
@@ -354,31 +354,58 @@ function dummy() {
 }
 
 function geometry(sweep) {
+  console.log(`archive.worker.geometry()`);
+  let scan = sweep["name"].split("-")[3];
   let points = [];
   let origins = [];
   let elements = [];
-  const e = deg2rad(sweep.scanElevation);
   const rs = sweep.rangeStart;
   const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
-  const ce = Math.cos(e);
-  const z = Math.sin(e);
-  const m = clamp(sweep.na / 2, 0, sweep.na - 1);
-  const da = sweep.azimuths[m] - sweep.azimuths[m - 1];
-  let az = sweep.azimuths[sweep.na - 1] + da;
-  sweep.azimuths.push(az);
-  for (let k = 0; k < sweep.azimuths.length; k++) {
-    const a = deg2rad(sweep.azimuths[k]);
-    const v = k / sweep.na;
-    const x = ce * Math.sin(a);
-    const y = ce * Math.cos(a);
-    points.push(rs * x, rs * y, rs * z);
-    points.push(re * x, re * y, re * z);
-    origins.push(0, v);
-    origins.push(1, v);
-  }
-  for (let o = 2, l = 2 * sweep.na; o <= l; o += 2) {
-    elements.push(o - 2, o - 1, o);
-    elements.push(o - 1, o, o + 1);
+  if (scan[0] == "E") {
+    const e = deg2rad(sweep.scanElevation);
+    const ce = Math.cos(e);
+    const se = Math.sin(e);
+    const m = clamp(sweep.na / 2, 0, sweep.na - 1);
+    const da = sweep.azimuths[m] - sweep.azimuths[m - 1];
+    let az = sweep.azimuths[sweep.na - 1] + da;
+    sweep.azimuths.push(az);
+    for (let k = 0; k < sweep.na + 1; k++) {
+      const a = deg2rad(sweep.azimuths[k]);
+      const v = k / sweep.na;
+      const x = ce * Math.sin(a);
+      const y = ce * Math.cos(a);
+      points.push(rs * x, rs * y, rs * se);
+      points.push(re * x, re * y, re * se);
+      origins.push(0, v);
+      origins.push(1, v);
+    }
+    for (let o = 2, l = 2 * sweep.na; o <= l; o += 2) {
+      elements.push(o - 2, o - 1, o);
+      elements.push(o - 1, o, o + 1);
+    }
+  } else if (scan[0] == "A") {
+    const a = deg2rad(sweep.scanAzimuth);
+    const ca = Math.cos(a);
+    const sa = Math.sin(a);
+    const de = sweep.elevations[sweep.na - 1] - sweep.elevations[sweep.na - 2];
+    let el = sweep.elevations[sweep.na - 1] + de;
+    sweep.elevations.push(el);
+    for (let k = 0; k < sweep.na + 1; k++) {
+      const e = deg2rad(sweep.elevations[k]);
+      const ce = Math.cos(e);
+      const se = Math.sin(e);
+      const v = k / sweep.na;
+      const x = ce * sa;
+      const y = ce * ca;
+      points.push(rs * x, rs * y, rs * se);
+      points.push(re * x, re * y, re * se);
+      origins.push(0, v);
+      origins.push(1, v);
+    }
+    for (let o = 2, l = 2 * sweep.na; o <= l; o += 2) {
+      elements.push(o - 2, o - 1, o);
+      elements.push(o - 1, o, o + 1);
+    }
   }
   sweep.points = points;
   sweep.origins = origins;

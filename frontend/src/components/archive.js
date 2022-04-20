@@ -77,6 +77,7 @@ class Archive {
         }
       } else if (type == "load") {
         this.data.sweep = payload;
+        console.log(this.data.sweep);
         this.updateAge();
         this.state.sweepLoading = false;
         console.log(
@@ -280,7 +281,6 @@ class Archive {
     }
     if (this.data.sweep.age != ageString) {
       this.data.sweep.age = ageString;
-      console.log(`age = ${this.data.sweep.age}`);
       this.onupdate(this.state.tic++);
     }
   }
