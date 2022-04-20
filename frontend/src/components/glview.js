@@ -274,10 +274,12 @@ class GLView extends Component {
     );
 
     mat4.lookAt(geo.view, geo.eye.translation, geo.target.translation, u);
-    mat4.perspective(geo.projection, geo.fov, geo.aspect, 10, 30000.0);
+    mat4.perspective(geo.projection, geo.fov, geo.aspect, 1, 30000.0);
 
     mat4.multiply(geo.eye.modelview, geo.fix.view, geo.eye.model);
     mat4.multiply(geo.target.modelview, geo.fix.view, geo.target.model);
+
+    mat4.multiply(geo.modelview, geo.view, geo.model);
     mat4.multiply(geo.viewprojection, geo.projection, geo.view);
 
     geo.dashport.x = w - geo.dashport.width;
