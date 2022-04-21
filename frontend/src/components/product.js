@@ -310,7 +310,7 @@ class Product extends GLView {
     }
 
     this.assets.data = this.regl.texture({
-      shape: [this.props.sweep.nr, this.props.sweep.na],
+      shape: [this.props.sweep.nr, this.props.sweep.nb],
       data: this.props.sweep.values,
       format: "luminance",
       type: "uint8",

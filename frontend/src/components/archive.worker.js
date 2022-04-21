@@ -31,7 +31,7 @@ let data = {
 
 const sweepParser = new Parser()
   .endianess("little")
-  .uint16("na")
+  .uint16("nb")
   .uint16("nr")
   .uint16("reserved1")
   .uint16("reserved2")
@@ -43,12 +43,12 @@ const sweepParser = new Parser()
   .floatle("scanAzimuth")
   .floatle("rangeStart")
   .floatle("rangeSpacing")
-  .array("elevations", { type: "floatle", length: "na" })
-  .array("azimuths", { type: "floatle", length: "na" })
+  .array("elevations", { type: "floatle", length: "nb" })
+  .array("azimuths", { type: "floatle", length: "nb" })
   .array("values", {
     type: "uint8",
     length: function () {
-      return this.na * this.nr;
+      return this.nb * this.nr;
     },
   });
 
@@ -365,13 +365,13 @@ function geometry(sweep) {
     const e = deg2rad(sweep.scanElevation);
     const ce = Math.cos(e);
     const se = Math.sin(e);
-    const m = clamp(sweep.na / 2, 0, sweep.na - 1);
-    const da = sweep.azimuths[m] - sweep.azimuths[m - 1];
-    let az = sweep.azimuths[sweep.na - 1] + da;
+    const ii = clamp(sweep.nb / 2, 0, sweep.nb - 1);
+    const da = sweep.azimuths[ii] - sweep.azimuths[ii - 1];
+    const az = sweep.azimuths[sweep.nb - 1] + da;
     sweep.azimuths.push(az);
-    for (let k = 0; k < sweep.na + 1; k++) {
+    for (let k = 0; k < sweep.nb + 1; k++) {
       const a = deg2rad(sweep.azimuths[k]);
-      const v = k / sweep.na;
+      const v = k / sweep.nb;
       const x = ce * Math.sin(a);
       const y = ce * Math.cos(a);
       points.push(rs * x, rs * y, rs * se);
@@ -379,7 +379,7 @@ function geometry(sweep) {
       origins.push(0, v);
       origins.push(1, v);
     }
-    for (let o = 2, l = 2 * sweep.na; o <= l; o += 2) {
+    for (let o = 2, l = 2 * sweep.nb; o <= l; o += 2) {
       elements.push(o - 2, o - 1, o);
       elements.push(o - 1, o, o + 1);
     }
@@ -387,14 +387,15 @@ function geometry(sweep) {
     const a = deg2rad(sweep.scanAzimuth);
     const ca = Math.cos(a);
     const sa = Math.sin(a);
-    const de = sweep.elevations[sweep.na - 1] - sweep.elevations[sweep.na - 2];
-    let el = sweep.elevations[sweep.na - 1] + de;
+    const ii = sweep.nb - 1;
+    const de = sweep.elevations[ii] - sweep.elevations[ii - 1];
+    const el = sweep.elevations[sweep.nb - 1] + de;
     sweep.elevations.push(el);
-    for (let k = 0; k < sweep.na + 1; k++) {
+    for (let k = 0; k < sweep.nb + 1; k++) {
       const e = deg2rad(sweep.elevations[k]);
       const ce = Math.cos(e);
       const se = Math.sin(e);
-      const v = k / sweep.na;
+      const v = k / sweep.nb;
       const x = ce * sa;
       const y = ce * ca;
       points.push(rs * x, rs * y, rs * se);
@@ -402,7 +403,7 @@ function geometry(sweep) {
       origins.push(0, v);
       origins.push(1, v);
     }
-    for (let o = 2, l = 2 * sweep.na; o <= l; o += 2) {
+    for (let o = 2, l = 2 * sweep.nb; o <= l; o += 2) {
       elements.push(o - 2, o - 1, o);
       elements.push(o - 1, o, o + 1);
     }
