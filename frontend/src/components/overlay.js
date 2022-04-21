@@ -341,6 +341,8 @@ class Overlay {
       poly: [],
       text: null,
     };
+    let depth = this.geometry.zenith > 0.1;
+
     this.layers.forEach((o) => {
       if (o.opacity >= 0.05) {
         o.linewidth = clamp(o.weight / kpp, ...o.limits);
@@ -358,6 +360,7 @@ class Overlay {
           view: this.geometry.view,
           projection: this.geometry.projection,
           viewport: this.geometry.viewport,
+          depth: depth,
         });
       }
     });
@@ -386,6 +389,7 @@ class Overlay {
         ...this.cities,
         projection: this.geometry.viewprojection,
         viewport: this.geometry.viewport,
+        depth: depth,
       };
     }
 

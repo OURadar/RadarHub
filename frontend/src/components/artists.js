@@ -640,7 +640,7 @@ export function simplifiedInstancedLines(regl) {
     },
 
     depth: {
-      enable: false,
+      enable: regl.prop("depth"),
     },
 
     blend: {

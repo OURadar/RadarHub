@@ -52,8 +52,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.6.8 Graphical optimizations (3/23/2022)
   - [x] 0.6.9 Minor bug fixes (3/24/2022)
   - [x] 0.6.10 Added live mode resumption (4/12/2022)
-- [ ] 0.7 RadarKit-RadarHub communication and 3D view (4/30/2022)
-  - [ ] 0.7.1 Auto adjustments for best view of RHI data
+- [ ] 0.7 RadarKit-RadarHub communication and 3D flyover view (4/30/2022)
+  - [ ] 0.7.1 Auto adjustments for best view of PPI/RHI data
   - [ ] 0.7.2 Streaming buffers for radial-by-radial updates
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Page template, UI materials, mobile version
