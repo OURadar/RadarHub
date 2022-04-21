@@ -51,7 +51,6 @@ function reviseOpacity(geometry, verbose = 0) {
   // console.log(`reviseOpacity()  kpp = ${kpp.toFixed(3)} w = ${maxWeight}`);
   const viewportWidth = geometry.viewport.width;
   const viewportHeight = geometry.viewport.height;
-  // const theta = Math.cos(Math.min(0.9, geometry.fov));
   const theta = Math.cos(Math.min(0.9, 0.5 * kpp));
   // console.log(
   //   `reviseOpacity()  kpp = ${kpp.toFixed(3)}   theta = ${theta.toFixed(3)}`
