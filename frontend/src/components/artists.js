@@ -737,7 +737,7 @@ export function instancedPatches(regl) {
     },
 
     depth: {
-      enable: false,
+      enable: regl.prop("depth"),
     },
 
     blend: {
