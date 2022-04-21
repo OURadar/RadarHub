@@ -176,10 +176,10 @@ function createSweep(name = "dummy") {
   // Pad an extra azimuth and elevation
   return {
     name,
-    na: 4,
+    nb: 4,
     nr: 3,
-    time: 9,
-    timeString: "1970/01/01 00:00:00 UTC",
+    time: 42,
+    timeString: "1970/01/01 00:00:42 UTC",
     symbol: "U",
     isRHI: false,
     scanElevation: 4.0,
@@ -354,7 +354,6 @@ function dummy() {
 }
 
 function geometry(sweep) {
-  console.log(`archive.worker.geometry()`);
   let scan = sweep["name"].split("-")[3];
   let points = [];
   let origins = [];
@@ -362,6 +361,7 @@ function geometry(sweep) {
   const rs = sweep.rangeStart;
   const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
   if (scan[0] == "E") {
+    sweep.isRHI = false;
     const e = deg2rad(sweep.scanElevation);
     const ce = Math.cos(e);
     const se = Math.sin(e);
@@ -384,6 +384,7 @@ function geometry(sweep) {
       elements.push(o - 1, o, o + 1);
     }
   } else if (scan[0] == "A") {
+    sweep.isRHI = true;
     const a = deg2rad(sweep.scanAzimuth);
     const ca = Math.cos(a);
     const sa = Math.sin(a);

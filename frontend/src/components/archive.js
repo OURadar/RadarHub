@@ -77,7 +77,7 @@ class Archive {
         }
       } else if (type == "load") {
         this.data.sweep = payload;
-        console.log(this.data.sweep);
+        // console.log(this.data.sweep);
         this.updateAge();
         this.state.sweepLoading = false;
         console.log(

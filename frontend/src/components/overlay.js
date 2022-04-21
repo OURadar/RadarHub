@@ -275,7 +275,7 @@ class Overlay {
 
   getDrawables() {
     const [lon, lat] = deg.point2coord(...this.geometry.target.translation);
-    const kpp = this.geometry.eye.kpp / this.ratio;
+    const kpp = this.geometry.eye.kpp * this.ratio;
     const viewParameters = [kpp, lon, lat];
 
     if (
@@ -284,6 +284,9 @@ class Overlay {
         Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.5 ||
         Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.5)
     ) {
+      // let dk = Math.abs(this.viewParameters[0] / viewParameters[0] - 1.0);
+      // let kpp0 = this.viewParameters[0];
+      // console.log(`kpp = ${kpp} / ${kpp0}   dk = ${dk}`);
       this.viewParameters = viewParameters;
 
       // Compute deviation from the origin
@@ -294,9 +297,9 @@ class Overlay {
       // console.log(`overlay.js  kpp = ${kpp.toFixed(3)}  d = ${d.toFixed(4)}`);
 
       // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
-      if (kpp < 0.45 && d < 5) {
+      if (kpp < 0.36 && d < 5) {
         this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
-      } else if (kpp < 2.5 && d < 10) {
+      } else if (kpp < 1.7 && d < 10) {
         this.targetOpacity = [1, 1, 0, 0, 1, 1, 0];
       } else {
         this.targetOpacity = [1, 1, 0, 0, 0, 1, 1];
