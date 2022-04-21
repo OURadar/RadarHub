@@ -138,6 +138,7 @@ class GLView extends Component {
       fov: f,
       range: r,
       aspect: 1,
+      zenith: 0,
       model: model,
       view: mat4.create(),
       projection: mat4.create(),
@@ -259,13 +260,15 @@ class GLView extends Component {
     const geo = this.geometry;
     const w = this.canvas.width;
     const h = this.canvas.height;
+    const t = geo.target.translation;
+    const e = geo.eye.translation;
 
-    let v = vec3.subtract([], geo.eye.translation, geo.target.translation);
-    let n = common.ndot(v, geo.target.translation);
-    let a = 1.0 - 0.6 * Math.acos(n);
+    let v = vec3.subtract([], e, t);
+    let n = common.ndot(v, t);
 
     geo.aspect = w / h;
-    geo.eye.kpp = geo.eye.scale[0] / w / a;
+    geo.zenith = Math.acos(n);
+    geo.eye.kpp = geo.eye.scale[0] / w / n;
 
     let u = vec3.fromValues(
       geo.eye.model[4],
@@ -273,7 +276,7 @@ class GLView extends Component {
       geo.eye.model[6]
     );
 
-    mat4.lookAt(geo.view, geo.eye.translation, geo.target.translation, u);
+    mat4.lookAt(geo.view, e, t, u);
     mat4.perspective(geo.projection, geo.fov, geo.aspect, 1, 30000.0);
 
     mat4.multiply(geo.eye.modelview, geo.fix.view, geo.eye.model);
@@ -291,7 +294,9 @@ class GLView extends Component {
 
     geo.viewport.width = w;
     geo.viewport.height = h;
-    geo.message = `geo`;
+    geo.message = "geo";
+
+    // console.log(`zenith = ${geo.zenith.toFixed(6)}`);
 
     geo.needsUpdate = false;
   }
@@ -371,8 +376,9 @@ class GLView extends Component {
     this.monet({
       width: 2.5,
       color: [1.0, 0.3, 0.7, 1.0],
-      model: geo.model,
       quad: [0.0, 1.0, 0.5, 1.0],
+      depth: geo.zenith > 0.05,
+      model: geo.model,
       view: geo.fix.view,
       projection: geo.fix.projection,
       resolution: [geo.fix.viewport.width, geo.fix.viewport.height],
@@ -458,7 +464,7 @@ class GLView extends Component {
     let a = quat.setAxisAngle([], u, deltaY);
     let b = quat.setAxisAngle([], d, deltaX);
 
-    if (common.ndot(d, t) > 0.999999 && deltaY < 0) {
+    if (geo.zenith < 0.05 && deltaY < 0) {
       quat.copy(q, b);
     } else {
       quat.multiply(q, a, b);
