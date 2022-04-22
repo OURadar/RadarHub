@@ -107,7 +107,6 @@ class GLView extends Component {
       origin: origin,
       quaternion: quaternion,
       eye: {
-        kpp: 1,
         range: r,
         model: eyeModel,
         modelview: mat4.create(),
@@ -147,6 +146,8 @@ class GLView extends Component {
       orthoprojection: mat4.ortho([], 0, 1, 0, 1, 0, 1),
       viewport: { x: 0, y: 0, width: 1, height: 1 },
       dashport: { x: 0, y: 100, width: 1000, height: 1000 },
+      pixelDensity: 1,
+      pointDensity: 1,
       needsUpdate: true,
       message: "geo",
     };
@@ -268,7 +269,8 @@ class GLView extends Component {
 
     geo.aspect = w / h;
     geo.zenith = Math.acos(n);
-    geo.eye.kpp = geo.eye.scale[0] / w / n;
+    geo.pixelDensity = geo.eye.scale[0] / w / n;
+    geo.pointDensity = geo.pixelDensity * this.ratio;
 
     let u = vec3.fromValues(
       geo.eye.model[4],
@@ -514,7 +516,8 @@ class GLView extends Component {
     let b = l * geo.fov;
     vec3.set(s, b, b, l);
     geo.eye.range = l;
-    geo.eye.kpp = b / geo.viewport.width;
+    geo.pixelDensity = b / geo.viewport.width;
+    geo.pointDensity = geo.pixelDensity * this.ratio;
 
     vec3.add(t, geo.target.translation, d);
     mat4.fromRotationTranslationScale(geo.eye.model, q, t, s);

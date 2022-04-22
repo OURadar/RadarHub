@@ -46,15 +46,12 @@ function reviseOpacity(geometry, verbose = 0) {
 
   const t2 = Date.now();
 
-  let kpp = geometry.eye.kpp * labels.ratio;
-  const maxWeight = getMaxWeight(kpp);
-  // console.log(`reviseOpacity()  kpp = ${kpp.toFixed(3)} w = ${maxWeight}`);
+  const pointDensity = geometry.pointDensity;
   const viewportWidth = geometry.viewport.width;
   const viewportHeight = geometry.viewport.height;
-  const theta = Math.cos(Math.min(0.9, 0.5 * kpp));
-  // console.log(
-  //   `reviseOpacity()  kpp = ${kpp.toFixed(3)}   theta = ${theta.toFixed(3)}`
-  // );
+  const theta = Math.cos(Math.min(0.9, 0.5 * pointDensity));
+  const maxWeight = getMaxWeight(pointDensity);
+  // console.log(`reviseOpacity()  pointDensity = ${pointDensity.toFixed(3)}   theta = ${theta.toFixed(3)}   w = ${maxWeight}`);
 
   for (let k = 0, l = labels.points.length; k < l; k++) {
     if (ndot(geometry.target.translation, labels.points[k]) < theta) {
