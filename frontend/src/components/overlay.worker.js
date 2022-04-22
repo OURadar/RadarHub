@@ -51,10 +51,15 @@ function reviseOpacity(geometry, verbose = 0) {
   const viewportHeight = geometry.viewport.height;
   const theta = Math.cos(Math.min(0.9, 0.5 * pointDensity));
   const maxWeight = getMaxWeight(pointDensity);
-  // console.log(`reviseOpacity()  pointDensity = ${pointDensity.toFixed(3)}   theta = ${theta.toFixed(3)}   w = ${maxWeight}`);
+  // console.log(
+  //   `reviseOpacity()  ${pointDensity.toFixed(3)} ${theta.toFixed(
+  //     3
+  //   )}   w = ${maxWeight}`
+  // );
 
   for (let k = 0, l = labels.points.length; k < l; k++) {
-    if (ndot(geometry.target.translation, labels.points[k]) < theta) {
+    let dot = ndot(geometry.target.translation, labels.points[k]);
+    if (dot < theta || (geometry.zenith > 0.1 && dot < 0.999)) {
       pass1++;
       continue;
     }

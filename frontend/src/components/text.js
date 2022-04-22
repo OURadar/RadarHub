@@ -198,6 +198,10 @@ class Text {
       context.fillStyle = label.color || "#888888";
       context.strokeText(label.text, x, y);
       context.fillText(label.text, x, y);
+      // if (label.text == "Alva") {
+      //   console.log(`k = ${k}`);
+      //   console.log(label);
+      // }
       u += ww + 1;
     }
 

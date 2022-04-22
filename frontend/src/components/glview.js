@@ -269,7 +269,7 @@ class GLView extends Component {
 
     geo.aspect = w / h;
     geo.zenith = Math.acos(n);
-    geo.pixelDensity = geo.eye.scale[0] / w / n;
+    geo.pixelDensity = geo.eye.scale[0] / w / n ** 1.5;
     geo.pointDensity = geo.pixelDensity * this.ratio;
 
     let u = vec3.fromValues(
@@ -279,7 +279,7 @@ class GLView extends Component {
     );
 
     mat4.lookAt(geo.view, e, t, u);
-    mat4.perspective(geo.projection, geo.fov, geo.aspect, 1, 30000.0);
+    mat4.perspective(geo.projection, geo.fov, geo.aspect, 1, 30000);
 
     mat4.multiply(geo.eye.modelview, geo.fix.view, geo.eye.model);
     mat4.multiply(geo.target.modelview, geo.fix.view, geo.target.model);
@@ -510,14 +510,12 @@ class GLView extends Component {
     let s = geo.eye.scale;
     let d = vec3.subtract([], t, geo.target.translation);
     let l = vec3.length(d);
-    let n = common.clamp(l / m, 20, 1.2 * common.earthRadius);
+    let n = common.clamp(l / m, 10, 1.2 * common.earthRadius);
     vec3.scale(d, d, n / l);
 
     let b = l * geo.fov;
     vec3.set(s, b, b, l);
     geo.eye.range = l;
-    geo.pixelDensity = b / geo.viewport.width;
-    geo.pointDensity = geo.pixelDensity * this.ratio;
 
     vec3.add(t, geo.target.translation, d);
     mat4.fromRotationTranslationScale(geo.eye.model, q, t, s);

@@ -77,7 +77,8 @@ class Overlay {
         fixed: true,
       },
       {
-        file: "@rings/1/30/60/84.5/92/120",
+        // file: "@rings/1/30/60/84.5/92/120",
+        file: "@rings/1/30/60/120",
         color: this.colors.ring,
         limits: [0.8, 2.0 * scale],
         weight: 0.4,
@@ -290,7 +291,7 @@ class Overlay {
 
       // console.log(`overlay.js  pd = ${pd.toFixed(3)}  d = ${d.toFixed(4)}`);
 
-      // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
+      // Overlays are earth-grid, rings, highways, hi-res counties, lo-res counties, states, countries
       if (pd < 0.24 && d < 5) {
         this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
       } else if (pd < 1.69 && d < 10) {
