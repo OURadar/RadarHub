@@ -59,8 +59,8 @@ class GLView extends Component {
     //  - model = model matrix for product, rings, radar-relative drawings
     //  - view = view matrix derived from eye
     //  - projection = projection matrix to GL view
-    const f = 1.2;
-    const r = 169.0;
+    const f = 1;
+    const r = 150;
     const v = vec3.fromValues(0, 0, common.earthRadius);
     const e = vec3.fromValues(0, -0.01, r);
     const origin = props.origin;
@@ -87,9 +87,10 @@ class GLView extends Component {
     let eyeTranslation = vec3.create();
     let eyeQuaternion = quat.create();
     let eyeScale = vec3.create();
-    let b = r * f;
+    // let b = r * f;
     mat4.translate(eyeModel, eyeModel, e);
-    mat4.scale(eyeModel, eyeModel, [b, b, r]);
+    // mat4.scale(eyeModel, eyeModel, [b, b, r]);
+    mat4.scale(eyeModel, eyeModel, [r, r, r]);
     mat4.getTranslation(eyeTranslation, eyeModel);
     mat4.getRotation(eyeQuaternion, eyeModel);
     mat4.getScaling(eyeScale, eyeModel);
@@ -99,8 +100,6 @@ class GLView extends Component {
       eyeTranslation,
       eyeScale
     );
-    common.showMatrix(eyeModel);
-    common.showVector4(eyeQuaternion);
 
     let fixView = mat4.create();
     let fixModel = mat4.create();
@@ -285,10 +284,10 @@ class GLView extends Component {
       geo.eye.model[5],
       geo.eye.model[6]
     );
-    vec3.normalize(u, u);
+    // vec3.normalize(u, u);
     // let u = vec3.copy([], t);
     // vec3.normalize(u, u);
-    common.showVector(u);
+    // common.showVector(u);
 
     mat4.lookAt(geo.view, e, t, u);
     mat4.perspective(geo.projection, geo.fov, geo.aspect, 1, 30000);
@@ -525,8 +524,9 @@ class GLView extends Component {
     let n = common.clamp(l / m, 10, 1.2 * common.earthRadius);
     vec3.scale(d, d, n / l);
 
-    let b = l * geo.fov;
-    vec3.set(s, b, b, l);
+    // let b = l * geo.fov;
+    // vec3.set(s, b, b, l);
+    vec3.set(s, l, l, l);
     geo.eye.range = l;
 
     vec3.add(t, geo.target.translation, d);
@@ -569,27 +569,25 @@ class GLView extends Component {
 
   fitToData() {
     const geo = this.geometry;
-    geo.fov = 1.2;
 
-    const e = vec3.fromValues(0, -0.01, geo.range);
-    let d = vec3.length(e);
-    let b = d * geo.fov;
-    let s = geo.eye.scale;
+    const r = geo.range;
+    const s = geo.eye.scale;
+    const e = vec3.fromValues(0, -0.01, r);
+
+    // let b = d * geo.fov;
 
     mat4.copy(geo.target.model, geo.model);
     mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
-    vec3.set(geo.target.scale, [0.03, 0.03, 0.03]);
-
-    mat4.copy(geo.eye.model, geo.model);
-    mat4.translate(geo.eye.model, geo.eye.model, e);
-    mat4.scale(geo.eye.model, geo.eye.model, [b, b, d]);
-    vec3.set(s, b, b, d);
-
-    mat4.getTranslation(geo.eye.translation, geo.eye.model);
-    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
-
     mat4.getTranslation(geo.target.translation, geo.target.model);
     mat4.getRotation(geo.target.quaternion, geo.target.model);
+
+    // vec3.set(s, b, b, d);
+    vec3.set(s, r, r, r);
+    mat4.copy(geo.eye.model, geo.model);
+    mat4.translate(geo.eye.model, geo.eye.model, e);
+    mat4.scale(geo.eye.model, geo.eye.model, s);
+    mat4.getTranslation(geo.eye.translation, geo.eye.model);
+    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
 
     geo.needsUpdate = true;
     if (this.props.debug) {
