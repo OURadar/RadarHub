@@ -296,7 +296,22 @@ export function showMatrix(m, precision = 3) {
 export function showVector(v, precision = 3) {
   let v0 = v[0].toFixed(precision);
   let v1 = v[1].toFixed(precision);
-  let v2 = v[0].toFixed(precision);
+  let v2 = v[2].toFixed(precision);
 
   console.log(`${v0} ${v1} ${v2}`);
+}
+
+/**
+ * Show the components of a 3 x 1 vector
+ *
+ * @param {ReadonlyVec4} m input matrix
+ * @param {*} precision number of decimals to show
+ */
+export function showVector4(v, precision = 3) {
+  let v0 = v[0].toFixed(precision);
+  let v1 = v[1].toFixed(precision);
+  let v2 = v[2].toFixed(precision);
+  let v3 = v[3].toFixed(precision);
+
+  console.log(`${v0} ${v1} ${v2} ${v3}`);
 }

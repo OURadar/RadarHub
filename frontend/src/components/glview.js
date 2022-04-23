@@ -59,7 +59,7 @@ class GLView extends Component {
     //  - model = model matrix for product, rings, radar-relative drawings
     //  - view = view matrix derived from eye
     //  - projection = projection matrix to GL view
-    const f = 1.0;
+    const f = 1.2;
     const r = 169.0;
     const v = vec3.fromValues(0, 0, common.earthRadius);
     const e = vec3.fromValues(0, -0.01, r);
@@ -93,6 +93,14 @@ class GLView extends Component {
     mat4.getTranslation(eyeTranslation, eyeModel);
     mat4.getRotation(eyeQuaternion, eyeModel);
     mat4.getScaling(eyeScale, eyeModel);
+    mat4.fromRotationTranslationScale(
+      eyeModel,
+      eyeQuaternion,
+      eyeTranslation,
+      eyeScale
+    );
+    common.showMatrix(eyeModel);
+    common.showVector4(eyeQuaternion);
 
     let fixView = mat4.create();
     let fixModel = mat4.create();
