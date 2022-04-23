@@ -269,19 +269,34 @@ export function ndot(a, b) {
  * Show the u, v, w components of a 4 x 4 matrix
  *
  * @param {ReadonlyMat4} m input matrix
+ * @param {*} precision number of decimals to show
  */
-export function showMatrix(m) {
-  let u0 = m[0].toFixed(3);
-  let u1 = m[1].toFixed(3);
-  let u2 = m[2].toFixed(3);
+export function showMatrix(m, precision = 3) {
+  let u0 = m[0].toFixed(precision);
+  let u1 = m[1].toFixed(precision);
+  let u2 = m[2].toFixed(precision);
 
-  let v0 = m[4].toFixed(3);
-  let v1 = m[5].toFixed(3);
-  let v2 = m[6].toFixed(3);
+  let v0 = m[4].toFixed(precision);
+  let v1 = m[5].toFixed(precision);
+  let v2 = m[6].toFixed(precision);
 
-  let w0 = m[8].toFixed(3);
-  let w1 = m[9].toFixed(3);
-  let w2 = m[10].toFixed(3);
+  let w0 = m[8].toFixed(precision);
+  let w1 = m[9].toFixed(precision);
+  let w2 = m[10].toFixed(precision);
 
   console.log(`${u0} ${u1} ${u2}   ${v0} ${v1} ${v2}   ${w0} ${w1} ${w2}`);
+}
+
+/**
+ * Show the components of a 3 x 1 vector
+ *
+ * @param {ReadonlyVec3} m input matrix
+ * @param {*} precision number of decimals to show
+ */
+export function showVector(v, precision = 3) {
+  let v0 = v[0].toFixed(precision);
+  let v1 = v[1].toFixed(precision);
+  let v2 = v[0].toFixed(precision);
+
+  console.log(`${v0} ${v1} ${v2}`);
 }

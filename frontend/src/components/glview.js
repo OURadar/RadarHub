@@ -224,10 +224,10 @@ class GLView extends Component {
     linewidth: 1.4,
     textureScale: 1.0,
     origin: {
-      // longitude: -97.422413,
-      // latitude: 35.25527,
-      longitude: 20.0,
-      latitude: 10.0,
+      longitude: -97.422413,
+      latitude: 35.25527,
+      // longitude: 20.0,
+      // latitude: 10.0,
     },
   };
 
@@ -277,6 +277,10 @@ class GLView extends Component {
       geo.eye.model[5],
       geo.eye.model[6]
     );
+    vec3.normalize(u, u);
+    // let u = vec3.copy([], t);
+    // vec3.normalize(u, u);
+    common.showVector(u);
 
     mat4.lookAt(geo.view, e, t, u);
     mat4.perspective(geo.projection, geo.fov, geo.aspect, 1, 30000);
