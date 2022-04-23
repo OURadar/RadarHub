@@ -295,7 +295,11 @@ class Product extends GLView {
       Math.abs(viewOrigin.longitude - origin.longitude) > 0.001 ||
       Math.abs(viewOrigin.latitude - origin.latitude) > 0.001
     ) {
-      console.log(`New lon/lat = ${origin.longitude}, ${origin.latitude}`);
+      let x0 = origin.longitude.toFixed(6);
+      let y0 = origin.latitude.toFixed(6);
+      let x1 = viewOrigin.longitude.toFixed(6);
+      let y1 = viewOrigin.latitude.toFixed(6);
+      console.log(`Origin (${x0}, ${y0}) ← (${x1}, ${y1})`);
       localStorage.setItem("glview-origin", JSON.stringify(origin));
 
       const geo = this.geometry;
@@ -304,6 +308,7 @@ class Product extends GLView {
       mat4.fromQuat(geo.model, geo.quaternion);
       mat4.translate(geo.model, geo.model, range);
 
+      this.geometry.origin = origin;
       this.geometry.needsUpdate = true;
       this.overlay.purge();
       this.overlay.load();
