@@ -28,7 +28,6 @@ export function basic(regl) {
 
     uniforms: {
       color: regl.prop("color"),
-      modelview: regl.prop("modelview"),
       projection: regl.prop("projection"),
     },
 
@@ -202,9 +201,10 @@ export function basic3(regl) {
     vert: `
       precision highp float;
       attribute vec3 position;
+      uniform mat4 modelview;
       uniform mat4 projection;
       void main() {
-        gl_Position = projection * vec4(position, 1);
+        gl_Position = projection * modelview * vec4(position, 1);
       }`,
 
     frag: `
@@ -216,6 +216,7 @@ export function basic3(regl) {
 
     uniforms: {
       color: regl.prop("color"),
+      modelview: regl.prop("modelview"),
       projection: regl.prop("projection"),
     },
 
@@ -242,7 +243,7 @@ export function element3(regl) {
         gl_Position = projection * modelview * vec4(position, 1.0);
         n = mat3(modelview) * normalize(position);
         s = dot(vec3(0.0, 0.0, 1.0), n);
-        s = clamp(0.4 + 0.6 * s, 0.0, 1.0);
+        s = clamp(0.5 + 0.5 * s, 0.0, 1.0);
       }`,
 
     frag: `
@@ -329,6 +330,52 @@ export function sphere(regl) {
         dst: "one minus src alpha",
       },
     },
+  });
+}
+
+let s = [];
+earth.points.forEach((point) => {
+  s.push(0.2 * point);
+});
+
+const small = { points: s.flat(), elements: earth.elements.slice() };
+
+export function sphere2(regl) {
+  return regl({
+    vert: `
+      precision highp float;
+      attribute vec3 position;
+      uniform mat4 modelview;
+      uniform mat4 projection;
+      uniform vec4 color;
+      void main() {
+        gl_Position = projection * modelview * vec4(position, 1.0);
+      }`,
+
+    frag: `
+      precision highp float;
+      uniform vec4 color;
+      void main() {
+        gl_FragColor = color;
+      }`,
+
+    uniforms: {
+      modelview: regl.prop("modelview"),
+      projection: regl.prop("projection"),
+      color: regl.prop("color"),
+    },
+
+    attributes: {
+      position: regl.buffer({
+        usage: "static",
+        type: "float",
+        data: small.points,
+      }),
+    },
+
+    primitive: "lines",
+    elements: small.elements,
+    viewport: regl.prop("viewport"),
   });
 }
 
@@ -593,7 +640,7 @@ export function simplifiedInstancedLines(regl) {
     },
 
     depth: {
-      enable: false,
+      enable: regl.prop("depth"),
     },
 
     blend: {
@@ -690,7 +737,7 @@ export function instancedPatches(regl) {
     },
 
     depth: {
-      enable: false,
+      enable: regl.prop("depth"),
     },
 
     blend: {

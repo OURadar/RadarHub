@@ -100,6 +100,7 @@ class File(models.Model):
             longitude = nc.getncattr('Longitude')
             latitude = nc.getncattr('Latitude')
             sweepElevation = nc.getncattr('Elevation')
+            sweepAzimuth = nc.getncattr('Azimuth')
             sweepTime = nc.getncattr('Time')
             gatewidth = float(nc.variables['GateWidth'][:][0])
             symbol = self.name.split('.')[-2].split('-')[-1]
@@ -109,6 +110,7 @@ class File(models.Model):
                 'latitude': latitude,
                 'sweepTime': sweepTime,
                 'sweepElevation': sweepElevation,
+                'sweepAzimuth': sweepAzimuth,
                 'gatewidth': gatewidth,
                 'elevations': elevations,
                 'azimuths': azimuths,
@@ -163,13 +165,16 @@ class Day(models.Model):
             return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
         else:
             counts = ' '.join([f'{n:>3}' for n in self.hourly_count.split(',')])
-            b = '\033[48;5;238m'
-            for s, c in [(self.blue, 'blue'), (self.green, 'green'), (self.orange, 'orange'), (self.red, 'red')]:
-                i = min(7, int(s / 100))
-                b += colorize(vbar[i], c, end='')
-            b += '\033[m'
-            show = f'{self.name}{date} {counts} {b}'
+            show = f'{self.name}{date} {counts} {self.__vbar__()}'
         return show
+
+    def __vbar__(self):
+        b = '\033[48;5;238m'
+        for s, c in [(self.blue, 'blue'), (self.green, 'green'), (self.orange, 'orange'), (self.red, 'red')]:
+            i = min(7, int(s / 100))
+            b += colorize(vbar[i], c, end='')
+        b += '\033[m'
+        return b
 
     def show(self, long=False, short=False):
         print(self.__repr__(long=long, short=short))
@@ -209,3 +214,19 @@ class Day(models.Model):
         first = self.first_hour()
         last = self.last_hour()
         return [f'{day} {first:02d}:00Z', f'{day} {last:02d}:59:59.9Z']
+
+    def weather_condition(self):
+        if self.blue == 0 and self.green == 0:
+            return f'unknown {self.blue} {self.green} {self.orange} {self.red}'
+        cond = 0
+        if self.blue < 10:
+            cond = 1
+        elif self.green < 300:
+            cond = 2
+        elif self.green / self.blue > 5:
+            if self.red / self.green >= 0.1:
+                cond = 4
+            else:
+                cond = 3
+        # print(f'{self.day_string()}  {self.__vbar__()}  {self.blue} {self.green} {self.orange} {self.red} -> {cond}')
+        return cond

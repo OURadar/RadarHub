@@ -16,53 +16,120 @@ class Gesture {
           bottom: 0,
           left: 0,
         };
-    this.pointX = 0;
-    this.pointY = 0;
+    this.pointX = -1;
+    this.pointY = -1;
     this.pointU = 0;
     this.pointV = 0;
     this.pointD = 0;
     this.scale = 1;
+    // this.altKey = false;
+    // this.metaKey = false;
+    // this.shiftKey = false;
     this.hasTouch = false;
-    this.shiftKey = false;
+    this.mouseDown = false;
     this.panInProgress = false;
+    this.tiltInProgress = false;
+    this.rollInProgress = false;
     this.singleTapTimeout = null;
     this.lastMagnifyTime = Date.now();
     this.lastTapTime = Date.now();
     this.message = "gesture";
     this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
     this.handlePan = (_x, _y) => {};
-    this.handleSingleTap = () => {};
+    this.handleTilt = (_x, _y) => {};
+    this.handleRoll = (_x, _y) => {};
+    this.handleSingleTap = (_x, _y) => {};
     this.handleDoubleTap = (_x, _y) => {};
     this.handleMagnify = (_mx, _my, _m, _x, _y) => {};
+    this.handleDolly = (_mx, _my, _m, _x, _y) => {};
+    this.inbound = this.inbound.bind(this);
 
     this.element.addEventListener("mousedown", (e) => {
-      if (
-        e.offsetX > this.bounds.left &&
-        e.offsetY < this.element.height - this.bounds.bottom
-      ) {
+      if (this.inbound(e)) {
         this.pointX = e.offsetX;
         this.pointY = e.offsetY;
-        this.panInProgress = true;
         this.rect = this.element.getBoundingClientRect();
+        if (e.metaKey) {
+          this.tiltInProgress = true;
+        } else if (e.altKey) {
+          this.rollInProgress = true;
+        } else {
+          this.panInProgress = true;
+        }
       }
     });
     this.element.addEventListener("mousemove", (e) => {
       e.preventDefault();
-      if (this.panInProgress === true || this.shiftKey === true) {
+      if (this.panInProgress === true) {
         this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.tiltInProgress === true) {
+        this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.rollInProgress === true) {
+        this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.inbound(e)) {
+        if (e.shiftKey) {
+          this.panInProgress = true;
+          // console.log("pan mode");
+        } else if (e.metaKey) {
+          this.tiltInProgress = true;
+          // console.log("tilt mode");
+        } else if (e.altKey) {
+          this.rollInProgress = true;
+        } else {
+          this.panInProgress = false;
+          this.tiltInProgress = false;
+          this.rollInProgress = false;
+        }
+      } else {
+        this.panInProgress = false;
+        this.tiltInProgress = false;
+        this.rollInProgress = false;
       }
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
-      this.shiftKey = e.shiftKey;
-      this.message = `mousemove (${this.pointX}, ${this.pointY})`;
+      // this.message = `mousemove (${this.pointX}, ${this.pointY})`;
+      // console.log(this.message);
+    });
+    this.element.addEventListener("focus", (e) => {
+      console.log(`focus ${e.offsetX}`);
+    });
+    // window.addEventListener("keydown", (e) => {
+    //   console.log(`keydown ${e.offsetX}, ${e.offsetY}`);
+    //   if (this.inbound(e)) {
+    //     if (e.metaKey) {
+    //       this.tiltInProgress = true;
+    //     } else if (e.altKey) {
+    //       this.rollInProgress = true;
+    //     } else if (e.shiftKey) {
+    //       this.panInProgress = true;
+    //       console.log("pan mode");
+    //     }
+    //     this.pointX = e.offsetX;
+    //     this.pointY = e.offsetY;
+    //   }
+    // });
+    window.addEventListener("keyup", (e) => {
+      // console.log(`keyup ${e.offsetX}, ${e.offsetY}`);
+      if (!this.mouseDown) {
+        this.panInProgress = false;
+        this.tiltInProgress = false;
+        this.rollInProgress = false;
+      }
     });
     this.element.addEventListener("mouseup", (e) => {
       if (this.panInProgress === true) {
         this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.tiltInProgress === true) {
+        this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.rollInProgress === true) {
+        this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
       }
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
       this.panInProgress = false;
+      this.tiltInProgress = false;
+      this.rollInProgress = false;
+      this.mouseDown = false;
     });
     this.element.addEventListener("wheel", (e) => {
       if (
@@ -72,13 +139,23 @@ class Gesture {
         e.offsetY < this.element.height - this.bounds.bottom
       ) {
         e.preventDefault();
-        this.handleMagnify(
-          delta2scale(3 * e.deltaX),
-          delta2scale(-3 * e.deltaY),
-          delta2scale(3 * e.deltaY),
-          e.offsetX - this.bounds.left,
-          e.offsetY - this.bounds.bottom
-        );
+        if (e.metaKey) {
+          this.handleMagnify(
+            delta2scale(3 * e.deltaX),
+            delta2scale(-3 * e.deltaY),
+            delta2scale(3 * e.deltaY),
+            e.offsetX - this.bounds.left,
+            e.offsetY - this.bounds.bottom
+          );
+        } else {
+          this.handleDolly(
+            delta2scale(3 * e.deltaX),
+            delta2scale(-3 * e.deltaY),
+            delta2scale(3 * e.deltaY),
+            e.offsetX - this.bounds.left,
+            e.offsetY - this.bounds.bottom
+          );
+        }
       }
       this.message =
         `wheel (${e.offsetX}, ${e.offsetY})` +
@@ -159,7 +236,7 @@ class Gesture {
             s = d / this.pointD;
             m = "d";
           }
-          this.handleMagnify(
+          this.handleDolly(
             u > 10 ? u / this.pointU : 1,
             v > 10 ? v / this.pointV : 1,
             s,
@@ -193,7 +270,8 @@ class Gesture {
       this.message = `gesturechange (${e.scale.toFixed(4)})`;
       e.preventDefault();
       const s = e.scale / this.scale;
-      this.handleMagnify(s, s, s, e.clientX, e.clientY);
+      //this.handleMagnify(s, s, s, e.clientX, e.clientY);
+      this.handleDolly(s, s, s, e.clientX, e.clientY);
       this.scale = e.scale;
     });
     this.element.addEventListener("gestureend", (e) => {
@@ -201,9 +279,17 @@ class Gesture {
       this.message = `gestureend (${e.scale.toFixed(4)})`;
       e.preventDefault();
       const s = e.scale / this.scale;
-      this.handleMagnify(s, s, s, e.clientX, e.clientY);
+      // this.handleMagnify(s, s, s, e.clientX, e.clientY);
+      this.handleDolly(s, s, s, e.clientX, e.clientY);
       this.scale = e.scale;
     });
+  }
+
+  inbound(e) {
+    return (
+      e.offsetX > this.bounds.left &&
+      e.offsetY < this.element.height - this.bounds.bottom
+    );
   }
 }
 

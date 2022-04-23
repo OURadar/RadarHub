@@ -216,32 +216,33 @@ class Product extends GLView {
   }
 
   updateViewPoint() {
+    const geo = this.geometry;
     const t = this.offset + 0.0002 * window.performance.now();
-    const a = t % (2.0 * Math.PI);
-    // console.log(` = ${t.toFixed(3)}   a = ${a.toFixed(2)}`);
-    if (this.state.useEuler) {
-      this.geometry.satI = 0.92 * this.geometry.satI + 0.08 * Math.sin(a);
-      this.geometry.satQ = 0.92 * this.geometry.satQ + 0.08 * Math.cos(a);
-      this.geometry.satCoordinate[0] = Math.atan2(
-        this.geometry.satQ,
-        this.geometry.satI
-      );
-      this.geometry.message = "";
-    } else {
-      // Not fully tested
-      const q = this.graphics.satQuaternion;
-      const qt = quat.fromEuler(
-        [],
-        -this.graphics.satCoordinate[1],
-        common.rad2deg(a),
-        0.0
-      );
-      const i = quat.slerp([], q, qt, 0.5);
-      this.graphics.satCoordinate[0] = -Math.atan2(i[1], i[3]) * 2.0;
-      const b = this.geometry.satCoordinate[0];
-      this.geometry.message = `angle = ${b.toFixed(1)}`;
-    }
-    this.geometry.fov += 0.001 * Math.cos(t);
+
+    let c = quat.setAxisAngle([], [0, 1, 0], 0.005);
+    let m = mat4.fromQuat([], c);
+
+    mat4.multiply(geo.eye.model, m, geo.eye.model);
+    mat4.multiply(geo.target.model, m, geo.target.model);
+
+    let v = mat4.getTranslation([], geo.eye.model);
+
+    let s = 1.8 * common.earthRadius + 2000 * (1 + Math.cos(t));
+    let d = s - common.earthRadius;
+    let b = d * geo.fov;
+
+    vec3.scale(v, v, s / vec3.length(v));
+    geo.eye.model[12] = v[0];
+    geo.eye.model[13] = v[1];
+    geo.eye.model[14] = v[2];
+    vec3.set(geo.eye.scale, b, b, d);
+
+    mat4.getTranslation(geo.eye.translation, geo.eye.model);
+    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+
+    mat4.getTranslation(geo.target.translation, geo.target.model);
+    mat4.getRotation(geo.target.quaternion, geo.target.model);
+
     this.geometry.needsUpdate = true;
   }
 
@@ -294,35 +295,22 @@ class Product extends GLView {
       Math.abs(viewOrigin.longitude - origin.longitude) > 0.001 ||
       Math.abs(viewOrigin.latitude - origin.latitude) > 0.001
     ) {
-      const satCoordinate = vec3.fromValues(
-        common.deg2rad(origin.longitude),
-        common.deg2rad(origin.latitude),
-        2.0 * common.earthRadius
-      );
-      const satPosition = common.rad.coord2point(satCoordinate);
       console.log(`New lon/lat = ${origin.longitude}, ${origin.latitude}`);
       localStorage.setItem("glview-origin", JSON.stringify(origin));
-      let model = mat4.create();
-      model = mat4.rotateY([], model, common.deg2rad(origin.longitude));
-      model = mat4.rotateX([], model, common.deg2rad(-origin.latitude));
-      model = mat4.translate([], model, [0, 0, common.earthRadius]);
-      this.geometry.origin = origin;
-      this.geometry.satCoordinate = satCoordinate;
-      this.geometry.satPosition = satPosition;
-      this.geometry.satQuaternion = quat.fromEuler(
-        [],
-        -origin.latitude,
-        origin.longitude,
-        0
-      );
-      this.geometry.model = model;
+
+      const geo = this.geometry;
+      const range = vec3.fromValues(0, 0, common.earthRadius);
+      quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0.0);
+      mat4.fromQuat(geo.model, geo.quaternion);
+      mat4.translate(geo.model, geo.model, range);
+
       this.geometry.needsUpdate = true;
       this.overlay.purge();
       this.overlay.load();
     }
 
     this.assets.data = this.regl.texture({
-      shape: [this.props.sweep.nr, this.props.sweep.na],
+      shape: [this.props.sweep.nr, this.props.sweep.nb],
       data: this.props.sweep.values,
       format: "luminance",
       type: "uint8",
@@ -363,8 +351,8 @@ class Product extends GLView {
     if (this.mount === null) return;
     if (
       this.geometry.needsUpdate ||
-      this.canvas.width != this.mount.offsetWidth ||
-      this.canvas.height != this.mount.offsetHeight
+      this.canvas.width != this.mount.offsetWidth * this.ratio ||
+      this.canvas.height != this.mount.offsetHeight * this.ratio
     ) {
       this.updateProjection();
     }
@@ -420,17 +408,37 @@ class Product extends GLView {
 
   fitToData() {
     const geo = this.geometry;
-    if (this.props.sweep) {
-      const sweep = this.props.sweep;
-      const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
-      const d = Math.sqrt(1 + geo.aspect ** 2);
-      // console.log(`r = ${r}   d = ${d}`);
-      geo.fov = (2.5 * r) / d / common.earthRadius;
-    } else {
-      geo.fov = 0.028;
-    }
-    geo.satCoordinate[0] = common.deg2rad(geo.origin.longitude);
-    geo.satCoordinate[1] = common.deg2rad(geo.origin.latitude);
+    // if (this.props.sweep) {
+    //   const sweep = this.props.sweep;
+    //   const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
+    //   const d = Math.sqrt(1 + geo.aspect ** 2);
+    //   console.log(`r = ${r}   d = ${d}`);
+    //   geo.fov = (2.5 * r) / d / common.earthRadius;
+    //   const e = vec3.fromValues(0, 0, 0.1 * common.earthRadius);
+    // } else {
+    //   geo.fov = 1.0;
+    // }
+
+    let r = geo.range;
+    let s = geo.eye.scale;
+    const e = vec3.fromValues(0, 0, r);
+
+    // let b = r * geo.fov;
+    // console.log(`r = ${r}   f = ${f}`);
+
+    mat4.copy(geo.target.model, geo.model);
+    mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
+    mat4.getTranslation(geo.target.translation, geo.target.model);
+    mat4.getRotation(geo.target.quaternion, geo.target.model);
+
+    // vec3.set(s, b, b, r);
+    vec3.set(s, r, r, r);
+    mat4.copy(geo.eye.model, geo.model);
+    mat4.translate(geo.eye.model, geo.eye.model, e);
+    mat4.scale(geo.eye.model, geo.eye.model, s);
+    mat4.getTranslation(geo.eye.translation, geo.eye.model);
+    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+
     geo.needsUpdate = true;
     this.setState({
       spin: false,

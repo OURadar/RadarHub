@@ -40,9 +40,22 @@ class FrontendConfig(AppConfig):
         # Look for RUN_MAIN == "true" in development mode. Otherwise, it should None
         run_main = os.environ.get('RUN_MAIN', None)
         if settings.VERBOSE:
-            print(f'{prog}   run_main = {run_main}')
+            show = colorize(prog, 'teal')
+            show += '   ' + color_name_value('run_main', run_main)
+            print(show)
         if 'runserver' in prog and run_main is None:
             return
+
+        if settings.VERBOSE:
+            show = color_name_value('DEBUG', settings.DEBUG)
+            show += '   ' + color_name_value('SIMULATE', settings.SIMULATE)
+            show += '   ' + color_name_value('VERBOSE', settings.VERBOSE)
+            print(show)
+
+            if 'postgresql' in settings.DATABASES['default']['ENGINE']:
+                print('Using PostgreSQL ...')
+            else:
+                print('Using SQLite ...')
 
         global worker_started
         if worker_started:
@@ -75,8 +88,8 @@ def monitor(radar='px1000', prefix='PX-'):
         hourly_count = day.hourly_count
         files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())        
     else:
-        print('No Day objects yet')
         hourly_count = ','.join('0' * 24)
+        print('No Day objects yet')
 
     no_day_warning = 0
     while True:
@@ -84,7 +97,7 @@ def monitor(radar='px1000', prefix='PX-'):
         day = Day.objects.filter(name=prefix).last()
         if day is None:
             no_day_warning += 1
-            if no_day_warning < 3 or no_day_warning % 60 == 0:
+            if no_day_warning < 3 or no_day_warning % 100 == 0:
                 print('No Day objects yet')
             continue
         if hourly_count == day.hourly_count:

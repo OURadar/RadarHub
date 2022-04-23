@@ -3,6 +3,7 @@ import json
 import time
 import pprint
 import struct
+import datetime
 import numpy as np
 from django.http import HttpResponse
 from django.conf import settings
@@ -68,17 +69,14 @@ def month(_, radar, day):
     m = int(day[4:6])
     prefix = radar_prefix(radar)
     entries = Day.objects.filter(date__year=y, date__month=m, name=prefix)
-    s = time.mktime(time.strptime(day[:6], '%Y%m'))
-    m += 1
-    if m == 13:
-        m = 1
-        day = str(int(day[:4]) + 1)
-    e = time.mktime(time.strptime(f'{day[:4]}{m:02d}', '%Y%m'))
+    date = datetime.date(y, m, 1)
+    step = datetime.timedelta(days=1)
     array = {}
-    for t in np.arange(s, e, 86400):
-        date = time.strftime('%Y-%m-%d', time.localtime(t))
-        entry = entries.filter(date=date)
-        array[date] = entry[0].count if entry else 0
+    while date.month == m:
+        key = date.strftime(r'%Y-%m-%d')
+        entry = entries.filter(date=date).last()
+        array[key] = entry.weather_condition() if entry else 0
+        date += step
     payload = json.dumps(array)
     response = HttpResponse(payload, content_type='application/json')
     return response
@@ -173,7 +171,8 @@ def load(_, name):
             'longitude': -97.422413,
             'latitude': 35.25527,
             'sweepTime': time.mktime(time.strptime(elements[1] + elements[2], r'%Y%m%d%H%M%S')),
-            'sweepElevation': float(elements[3][1:]) if "E" in elements[3] else 4.0,
+            'sweepElevation': float(elements[3][1:]) if "E" in elements[3] else 0.0,
+            'sweepAzimuth': float(elements[3][1:]) if "A" in elements[3] else 4.0,
             'gatewidth': 60.0,
             'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=float),
             'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=float),
@@ -202,7 +201,7 @@ def load(_, name):
 
     head = struct.pack('hhhhddddffff', *sweep['values'].shape, 0, 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
-        sweep['sweepElevation'], 0.0, 0.0, gatewidth)
+        sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)
     symbol = sweep['symbol']
     if symbol == 'Z':
         values = sweep['values'] * 2.0 + 64.0
@@ -322,8 +321,12 @@ def location(radar):
 def _file(prefix, scan='E4.0', symbol='Z'):
     day = Day.objects.filter(name=prefix).latest('date')
     last = day.last_hour_range()
-    file = File.objects.filter(name__startswith=prefix, name__endswith=f'{scan}-{symbol}.nc', date__range=last).latest('date')
-    return file.name
+    files = File.objects.filter(name__startswith=prefix, name__endswith=f'{scan}-{symbol}.nc', date__range=last)
+    if files.exists():
+        file = files.latest('date')
+        return file.name
+    else:
+        return ''
 
 def catchup(_, radar, scan='E4.0', symbol='Z'):
     show = colorize('archive.catchup()', 'green')

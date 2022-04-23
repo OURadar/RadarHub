@@ -18,7 +18,7 @@ from pathlib import Path
 from common import color_name_value
 
 # My additional parameters
-VERBOSE = 0
+VERBOSE = 1
 SIMULATE = False
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -37,10 +37,6 @@ if os.path.exists(file):
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
-
-if VERBOSE:
-    print(color_name_value('DEBUG', DEBUG))
-    print(color_name_value('SIMULATE', SIMULATE))
 
 ALLOWED_HOSTS = ['*']
 
@@ -95,12 +91,12 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 #
 # Migrated 'default' to PostgreSQL
 # https://medium.com/djangotube/django-sqlite-to-postgresql-database-migration-e3c1f76711e1
+#
+# Django_stream requires a table in the database. Using 'event' and a dbrouter for this
+# https://docs.djangoproject.com/en/4.0/topics/db/multi-db/
 
 file = CONFIG_DIR / 'db.conf'
 if os.path.exists(file):
-    if VERBOSE:
-        print(f'Using PostgreSQL {file} ...')
-
     with open(file) as fid:
         PostgreSQL = json.load(fid)
 
@@ -117,28 +113,20 @@ if os.path.exists(file):
             'USER': PostgreSQL['user'],
             'PASSWORD': PostgreSQL['pass'],
             'PORT': '5432',
-        },
-        'event': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 else:
-    if VERBOSE:
-        print('Using SQLite ...')
-
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
-        },
-        'event': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 
-    # SIMULATE = True
+DATABASES['event'] = {
+    'ENGINE': 'django.db.backends.sqlite3',
+    'NAME': BASE_DIR / 'db.sqlite3',
+}
 
 DATABASE_ROUTERS = ['radarhub.dbrouter.DbRouter']
 
@@ -192,7 +180,12 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('localhost', 6379)]
+            'hosts': [('localhost', 6379)],
+            'capacity': 1000,
+            'channel_capacity': {
+                'http.request': 200,
+                'websocket.send*': 50,
+            }
         }
     }
 }

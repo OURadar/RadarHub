@@ -42,7 +42,9 @@ typedef struct _reporter {
     bool               wantActive;
     bool               connected;
     int                verbose;
-    float              rate;
+    int                value;
+    int                rate;
+    int                fps;
     bool               go;
 } RKReporter;
 
@@ -86,17 +88,11 @@ void *run(void *in) {
     float w;
     float o;
     float t;
-    int16_t *n;
+    float *n;
     int16_t *x;
     char *payload;
 
-    // Let's do 15 FPS
-    const int f = 15;
-
-    useconds_t s = 1000000 / f;
-
-    // Post health status about every 0.5s
-    const int ht = 500000 / s;
+    useconds_t s = 1000000 / R->fps;
 
     // Noise magnitude of 1000
     const int nm = 1000;
@@ -108,11 +104,11 @@ void *run(void *in) {
     const int hdepth = sizeof(healthString) / sizeof(healthString[0]);
 
     // Memory allocation
-    const int pulseCapacity = sizeof(uint8_t) + 2 * count * sizeof(int16_t);
+    const int pulseCapacity = sizeof(uint8_t) + 4 * count * sizeof(int16_t);
     void *buf = malloc(30 * pulseCapacity);
     void *hbuf = malloc(hdepth * HEALH_CAPACITY);
     float *window = (float *)malloc(count * sizeof(float));
-    int16_t *noise = (int16_t *)malloc(3 * count * sizeof(int16_t));
+    float *noise = (float *)malloc(3 * count * sizeof(float));
     
     tukeywin(window, count, 0.1);
 
@@ -132,12 +128,19 @@ void *run(void *in) {
 
     // Some kind of pseudo-noise sequence
     for (k = 0; k < 3 * count; k++) {
+        // if (rand() % (int)(1.0 / 0.4) == 0) {
+        //     g = rand() % 32000;
+        //     noise[k] = (float)(rand() % g - g / 2);
+        // } else {
+        //     noise[k] = (float)(rand() % (2 * nm) - nm);
+        // }
         if (rand() % (int)(1.0 / 0.4) == 0) {
             g = rand() % 32000;
-            noise[k] = rand() % g - g / 2;
         } else {
-            noise[k] = rand() % (2 * nm) - nm;
+            g = 2 * nm;
         }
+        noise[k] = (float)(rand() % g - g / 2) / (float)nm;
+        // noise[k] = 0.0f;
     }
 
     // Wait until the welcome message is received
@@ -146,16 +149,18 @@ void *run(void *in) {
     }
 
     if (R->verbose) {
-        printf("\033[38;5;9mBusy run loop\033[m\n");
+        printf("\033[38;5;197mBusy run loop\033[m\n");
     }
 
+    int ht;
     double delta;
     struct timeval s0, s1;
     gettimeofday(&s1, NULL);
     usleep(s);
     int j = 1;
+    int16_t i, q;
     while (R->wantActive) {
-        // AScope samples
+        // AScope samples: Hi Hi Hi ... Hq Hq Hq ... Vi Vi Vi ... Vq Vq Vq ...
         payload = (char *)(buf + (j % 30) * pulseCapacity);
         payload[0] = RadarHubTypeScope;
         x = (int16_t *)(payload + 1);
@@ -166,30 +171,39 @@ void *run(void *in) {
                 t = (float)k / count;
                 o = 0.1f * (t + R->rate * 777.0f * t * t - (float)j);
                 w = window[k];
-                *(x        ) = (int16_t)(w * cosf(o)) + *n;
-                *(x + count) = (int16_t)(w * sinf(o)) + *(n++ + count);
+                i = (int16_t)(w * cosf(o) + R->value * *n);
+                q = (int16_t)(w * sinf(o) + R->value * *(n++ + count));
             } else {
-                *(x        ) = *n;
-                *(x + count) = *(n++ + count);
+                i = (int16_t)(R->value * *n);
+                q = (int16_t)(R->value * *(n++ + count));
             }
+            *(x            ) = i;
+            *(x + count    ) = q;
+            *(x + count * 2) = i / 2;
+            *(x + count * 3) = q / 2;
             x++;
         }
         RKWebSocketSend(R->ws, payload, pulseCapacity);
 
-        if (j % ht == 0) {
+        // Send health packet if we are stride ht
+        ht = R->fps / 2;
+        if (j % (R->fps / 2) == 0) {
             payload = (char *)(hbuf + (j / ht) % hdepth * HEALH_CAPACITY);
             RKWebSocketSend(R->ws, payload, 1 + strlen(payload + 1));
         }
 
-        if (j % f == 0) {
+        // Adjust the sleep time every f frames. Adjustment of 1 / 10 at a time.
+        if (j % R->fps == 0) {
             gettimeofday(&s0, NULL);
             delta = timevalDiff(s0, s1);
-            int e = (1000000 - (int)(1000000 * delta)) / 50;
+            int e = (1000000 - (int)(1000000 * delta)) / 10;
             //printf("delta = %.2f ms  -> e = %d\n", 1.0e3 * delta, e);
             s1 = s0;
             s += e;
         }
+
         usleep(s);
+
         j++;
     }
 
@@ -205,19 +219,17 @@ void *run(void *in) {
     return NULL;
 }
 
-void handleOpen(RKWebSocket *w) {
-    if (R->verbose) {
-        printf("ONOPEN\n");
-    }
-    int r;
-    r = sprintf(R->welcome,
-        "%c{"
-            "\"radar\":\"%s\", "
-            "\"command\":\"radarConnect\""
-        "}",
-        RadarHubTypeHandshake, R->name);
-    RKWebSocketSend(R->ws, R->welcome, r);
-    r = sprintf(R->control,
+//
+// There are two types of control:
+//
+// Single push button - {"Label": "Button Label", "Command: "_your_command_"}
+// Tandem push buttons - {"Label": "Button Label", "Left: "_your_command_", "Right: "_your_command_"}
+//
+// where _your_command_ is returned back here to handleMessage() when the button was
+// pressed on the GUI
+//
+void sendControl(RKWebSocket *w) {
+    int r = sprintf(R->control,
         "%c{"
             "\"name\": \"%s\", "
             "\"Controls\": ["
@@ -225,6 +237,8 @@ void handleOpen(RKWebSocket *w) {
                 "{\"Label\":\"Stop\", \"Command\":\"t z\"}, "
                 "{\"Label\":\"Try Me 1\", \"Command\":\"t w 1\"}, "
                 "{\"Label\":\"Try Me 2\", \"Command\":\"t w 2\"}, "
+                "{\"Label\":\"%d FPS\", \"Left\":\"d f-\", \"Right\":\"d f+\"}, "
+                "{\"Label\":\"Noise %d\", \"Left\":\"d n-\", \"Right\":\"d n+\"}, "
                 "{\"Label\":\"PRF 1,000 Hz (84 km)\", \"Command\":\"t prf 1000\"}, "
                 "{\"Label\":\"PRF 1,475 Hz (75 km)\", \"Command\":\"t prf 1475\"}, "
                 "{\"Label\":\"PRF 2,000 Hz (65 km)\", \"Command\":\"t prf 2000\"}, "
@@ -251,8 +265,26 @@ void handleOpen(RKWebSocket *w) {
                 "{\"Label\":\"6-tilt VCP @ 18 deg/s\", \"Command\":\"p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18/p 12 300 18\"}"
             "]"
         "}",
-        RadarHubTypeControl, R->name);
+        RadarHubTypeControl, R->name, R->fps, R->value);
+    if (r < 0) {
+        fprintf(stderr, "Error. Unable to construct control JSON.\n");
+    }
     RKWebSocketSend(R->ws, R->control, strlen(R->control));
+}
+
+void handleOpen(RKWebSocket *w) {
+    if (R->verbose) {
+        printf("ONOPEN\n");
+    }
+    int r;
+    r = sprintf(R->welcome,
+        "%c{"
+            "\"radar\":\"%s\", "
+            "\"command\":\"radarConnect\""
+        "}",
+        RadarHubTypeHandshake, R->name);
+    RKWebSocketSend(R->ws, R->welcome, r);
+    sendControl(w);
 }
 
 void handleClose(RKWebSocket *W) {
@@ -262,6 +294,13 @@ void handleClose(RKWebSocket *W) {
     }
 }
 
+//
+// An button has been pushed at the frontend GUI. Here, the string _your_command_
+// that was defined in control is returned so you get to decide what to do with
+// with the command.
+//
+// NOTE: A RadarHubResponse return is expected for every command
+//
 void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     if (R->verbose) {
         printf("ONMESSAGE \033[38;5;227m%s\033[m\n", (char *)payload);
@@ -273,26 +312,44 @@ void handleMessage(RKWebSocket *W, void *payload, size_t size) {
     int r = 0;
     if (!strcmp(payload, "t y")) {
         R->go = true;
-        R->rate = 1.0f;
-        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+        R->rate = 1;
+        r = sprintf(R->message, "%cA%s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "t z")) {
         R->go = false;
-        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+        r = sprintf(R->message, "%cA%s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "t w 1")) {
         R->go = true;
-        R->rate = -2.5f;
-        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+        R->rate = -3;
+        r = sprintf(R->message, "%cA%s", RadarHubTypeResponse, (char *)payload);
     } else if (!strcmp(payload, "t w 2")) {
         R->go = true;
-        R->rate = 5.0f;
-        r = sprintf(R->message, "%cACK %s", RadarHubTypeResponse, (char *)payload);
+        R->rate = 5;
+        r = sprintf(R->message, "%cA%s", RadarHubTypeResponse, (char *)payload);
+    } else if (!strcmp(payload, "d n-")) {
+        R->value -= 100;
+        sendControl(W);
+        r = sprintf(R->message, "%cQ%s", RadarHubTypeResponse, (char *)payload);
+    } else if (!strcmp(payload, "d n+")) {
+        R->value += 100;
+        sendControl(W);
+        r = sprintf(R->message, "%cQ%s", RadarHubTypeResponse, (char *)payload);
+    } else if (!strcmp(payload, "d f-")) {
+        R->fps = R->fps == 1 ? 1 : R->fps - 1;
+        sendControl(W);
+        r = sprintf(R->message, "%cQ%s", RadarHubTypeResponse, (char *)payload);
+    } else if (!strcmp(payload, "d f+")) {
+        R->fps = R->fps == 30 ? 30 : R->fps + 1;
+        sendControl(W);
+        r = sprintf(R->message, "%cQ%s", RadarHubTypeResponse, (char *)payload);
     } else {
-        r = sprintf(R->message, "%cNAK %s", RadarHubTypeResponse, (char *)payload);
+        r = sprintf(R->message, "%cN%s", RadarHubTypeResponse, (char *)payload);
     }
     if (R->verbose) {
         printf("REPLY \033[38;5;154m%s\033[m (%d)\n", R->message, r);
     }
-    RKWebSocketSend(R->ws, R->message, r);
+    if (strlen(R->message)) {
+        RKWebSocketSend(R->ws, R->message, r);
+    }
 }
 
 static void showHelp() {
@@ -336,6 +393,8 @@ int main(int argc, const char *argv[]) {
     memset(R, 0, sizeof(RKReporter));
     sprintf(R->name, "demo");
     R->wantActive = true;
+    R->value = 1000;
+    R->fps = 15;
 
     // Command line options
     struct option options[] = {

@@ -7,7 +7,7 @@
 
 import { Polygon } from "./polygon";
 import { Text } from "./text";
-import { clamp, deg2rad } from "./common";
+import { clamp, deg } from "./common";
 import { mat4, vec4 } from "gl-matrix";
 
 //
@@ -22,8 +22,8 @@ class Overlay {
     this.viewprojection = mat4.create();
     this.viewParameters = [
       1.0,
-      this.geometry.satCoordinate[0],
-      this.geometry.satCoordinate[1],
+      geometry.origin.longitude,
+      geometry.origin.latitude,
     ];
     this.targetOpacity = [];
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
@@ -56,7 +56,7 @@ class Overlay {
   }
 
   async load() {
-    const ratio = this.ratio > 1 ? 0.8 * this.ratio : this.ratio;
+    const scale = this.ratio > 1 ? 0.85 * this.ratio : 1;
 
     // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
     //
@@ -71,56 +71,57 @@ class Overlay {
       {
         file: "@grid",
         color: this.colors.grid,
-        limits: [1.0, 1.5 * ratio],
-        weight: 0.4 * ratio,
+        limits: [1.0, 1.5 * scale],
+        weight: 0.4,
         origin: false,
         fixed: true,
       },
       {
+        // file: "@rings/1/30/60/84.5/92/120",
         file: "@rings/1/30/60/120",
         color: this.colors.ring,
-        limits: [0.8, 2.0 * ratio],
-        weight: 0.4 * ratio,
+        limits: [0.8, 2.0 * scale],
+        weight: 0.4,
         origin: true,
         fixed: true,
       },
       {
         file: "/static/maps/United States/intrstat.shp",
         color: this.colors.street,
-        limits: [0.5, 2.5 * ratio],
-        weight: 0.4 * ratio,
+        limits: [0.5, 2.5 * scale],
+        weight: 0.4,
         origin: true,
         fixed: false,
       },
       {
         file: "/static/maps/United States/gz_2010_us_050_00_500k.shp",
         color: this.colors.county,
-        limits: [0.5, 2.0 * ratio],
-        weight: 0.4 * ratio,
+        limits: [0.5, 2.0 * scale],
+        weight: 0.4,
         origin: true,
         fixed: false,
       },
       {
         file: "/static/maps/United States/counties-10m.json",
         color: this.colors.county,
-        limits: [0.5, 2.0 * ratio],
-        weight: 0.4 * ratio,
+        limits: [0.5, 2.0 * scale],
+        weight: 0.4,
         origin: false,
         fixed: false,
       },
       {
         file: "/static/maps/United States/states-10m.json",
         color: this.colors.state,
-        limits: [1.3, 5.0 * ratio],
-        weight: 0.9 * ratio,
+        limits: [1.3 * scale, 4.0 * scale],
+        weight: 1.3,
         origin: false,
         fixed: false,
       },
       {
         file: "/static/maps/World/countries-50m.json",
         color: this.colors.state,
-        limits: [1.3, 5.0 * ratio],
-        weight: 1.7 * ratio,
+        limits: [1.3 * scale, 5.0 * scale],
+        weight: 4.0,
         origin: false,
         fixed: false,
       },
@@ -249,6 +250,7 @@ class Overlay {
               points: buffer.points,
               weights: buffer.weights,
               extents: buffer.extents,
+              ratio: this.ratio,
             },
           });
         }
@@ -273,30 +275,26 @@ class Overlay {
   }
 
   getDrawables() {
-    const viewParameters = [
-      this.geometry.fov,
-      this.geometry.satCoordinate[0],
-      this.geometry.satCoordinate[1],
-    ];
+    const [lon, lat] = deg.point2coord(...this.geometry.target.translation);
+    const pd = this.geometry.pointDensity;
+    const d0 = Math.abs(this.viewParameters[0] / pd - 1.0);
+    const d1 = Math.abs(this.viewParameters[1] - lon);
+    const d2 = Math.abs(this.viewParameters[2] - lat);
 
-    if (
-      this.tic++ % 12 == 0 &&
-      (Math.abs(this.viewParameters[0] / viewParameters[0] - 1.0) > 0.05 ||
-        Math.abs(this.viewParameters[1] - viewParameters[1]) > 0.01 ||
-        Math.abs(this.viewParameters[2] - viewParameters[2]) > 0.01)
-    ) {
-      this.viewParameters = viewParameters;
+    if (this.tic++ % 12 == 0 && (d0 > 0.05 || d1 > 0.5 || d2 > 0.5)) {
+      this.viewParameters = [pd, lon, lat];
 
       // Compute deviation from the origin
-      const dx = viewParameters[1] - deg2rad(this.geometry.origin.longitude);
-      const dy = viewParameters[2] - deg2rad(this.geometry.origin.latitude);
+      const dx = lon - this.geometry.origin.longitude;
+      const dy = lat - this.geometry.origin.latitude;
       const d = Math.sqrt(dx * dx + dy * dy);
-      // console.log(`fov = ${this.geometry.fov.toFixed(3)}  d = ${d.toFixed(2)}`);
 
-      // Overlays are grid, rings, highways, hi-res counties, lo-res counties, states, countries
-      if (this.geometry.fov < 0.06 && d < 0.1) {
+      // console.log(`overlay.js  pd = ${pd.toFixed(3)}  d = ${d.toFixed(4)}`);
+
+      // Overlays are earth-grid, rings, highways, hi-res counties, lo-res counties, states, countries
+      if (pd < 0.24 && d < 5) {
         this.targetOpacity = [0, 1, 1, 1, 0, 0, 0];
-      } else if (this.geometry.fov < 0.42 && d < 0.3) {
+      } else if (pd < 1.69 && d < 10) {
         this.targetOpacity = [1, 1, 0, 0, 1, 1, 0];
       } else {
         this.targetOpacity = [1, 1, 0, 0, 0, 1, 1];
@@ -340,18 +338,16 @@ class Overlay {
       poly: [],
       text: null,
     };
+    const depth = this.geometry.zenith > 0.1;
+    const xd = this.geometry.pixelDensity;
+
     this.layers.forEach((o) => {
       if (o.opacity >= 0.05) {
-        o.linewidth = clamp(
-          o.weight / Math.sqrt(this.geometry.fov),
-          ...o.limits
-        );
+        o.linewidth = clamp(o.weight / xd, ...o.limits);
         // quad: [mode, shader-user mix, shader color tint, opacity]
-        //   zoom out fov > 0.63 --> 0 (shader)
-        //    zoom in fov < 0.43 --> 1 (user)
-        o.quad[1] = o.quad[0]
-          ? 1.0
-          : clamp(3.15 - 5.0 * this.geometry.fov, 0.0, 1.0);
+        //   zoom out density > 0.63 --> 0 (shader)
+        //    zoom in density < 0.43 --> 1 (user)
+        o.quad[1] = o.quad[0] ? 1.0 : clamp(3.15 - 5.0 * pd, 0.0, 1.0);
         o.quad[3] = o.opacity;
         shapes.poly.push({
           points: o.points,
@@ -362,11 +358,16 @@ class Overlay {
           view: this.geometry.view,
           projection: this.geometry.projection,
           viewport: this.geometry.viewport,
+          depth: depth,
         });
       }
     });
     if (shapes.poly.length > 4) {
-      console.log(`does not work shapes.poly.length = ${shapes.poly.length}`);
+      console.log(
+        `%coverlay.getDrawables() Error.%c shapes.poly.length = ${shapes.poly.length}`,
+        "color: red",
+        "color: inherit"
+      );
       console.log(
         `${this.layers[0].opacity.toFixed(2)}` +
           ` ${this.layers[1].opacity.toFixed(2)}` +
@@ -390,6 +391,7 @@ class Overlay {
         ...this.cities,
         projection: this.geometry.viewprojection,
         viewport: this.geometry.viewport,
+        depth: depth,
       };
     }
 

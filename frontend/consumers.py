@@ -17,12 +17,14 @@
 import json
 import pprint
 
+from channels.layers import get_channel_layer
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from reporter.enums import RadarHubType
 from common import colorize
 
 verbose = 0
+tic = 0
 
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
@@ -170,10 +172,6 @@ class User(AsyncWebsocketConsumer):
         if text_data is None or len(text_data) == 0:
             return
 
-        if verbose:
-            text = colorize(text_data, 'green')
-            print(f'User.receive() {text}')
-
         try:
             request = json.loads(text_data)
         except:
@@ -188,6 +186,17 @@ class User(AsyncWebsocketConsumer):
         if radar != self.radar:
             text = colorize('BUG', 'red')
             print(f'{text}: radar = {radar} != self.radar = {self.radar}')
+
+        if get_channel_layer() != self.channel_layer:
+            print(colorize('Channel layer changed', 'red'))
+
+        global tic
+
+        if verbose:
+            text = colorize(text_data, 'green')
+            print(f'User.receive() {text} ({tic})')
+
+        tic += 1
 
         await self.channel_layer.send(
             'backhaul',

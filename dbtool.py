@@ -504,7 +504,7 @@ def build_day(source, bgor=False, verbose=0):
             logger.error(f'Error. No File entries for {date}')
             return None
 
-    day_string = date.strftime('%Y-%m-%d')
+    day_string = date.strftime(r'%Y-%m-%d')
 
     tic = time.time()
 

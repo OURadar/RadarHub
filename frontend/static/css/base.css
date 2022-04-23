@@ -134,8 +134,9 @@ canvas {
 }
 .sectionHeader {
   background-color: var(--gray6);
-  padding: 10px 20px;
   height: 24px;
+  padding: 10px 20px;
+  user-select: none;
 }
 .sectionTitle {
   display: inline-block;
@@ -144,6 +145,7 @@ canvas {
   height: 20px;
   padding-left: 10px;
   text-transform: capitalize;
+  user-select: none;
   vertical-align: 5px;
 }
 h1,
@@ -151,6 +153,7 @@ h2,
 h3 {
   margin: 0;
   padding: 10px 20px;
+  user-select: none;
 }
 h1 {
   padding-bottom: 5px;
@@ -225,6 +228,7 @@ h3 {
 .controlContainer {
   display: block;
   overflow: auto;
+  user-select: none;
 }
 .ledIndicator,
 .labelIndicator {
@@ -386,6 +390,36 @@ h3 {
   text-align: right;
   bottom: 50px;
   right: 50px;
+}
+
+.buttonContainer {
+  background-color: transparent;
+  border-radius: var(--button-border-radius);
+  border-top: var(--button-border-top);
+  border-right: var(--button-border-right);
+  border-bottom: var(--button-border-bottom);
+  border-left: var(--button-border-left);
+  cursor: pointer;
+  color: var(--system-foreground);
+  display: inline-flex;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.75;
+  margin-bottom: var(--button-margin-bottom);
+  text-align: center;
+  user-select: none;
+  width: 100%;
+}
+
+.buttonValue {
+  background-color: transparent;
+  cursor: pointer;
+  display: inline-block;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 80%;
 }
 
 #statusLed {

@@ -111,30 +111,31 @@ function connect(newRadar, url) {
     } else if (type == enums.Scope) {
       // AScope data - convert arraybuffer to int16 typed array
       const samples = new Int16Array(e.data.slice(1));
-      // Parse out the array into I/Q/A arrays for Scope
-      const count = Math.floor(samples.length / 2);
+      // Parse out the array into I/Q arrays for Scope
+      const count = Math.floor(samples.length / 4);
       if (scope.count != count) {
         scope.count = count;
-        const i = new ArrayBuffer(4 * count);
-        const q = new ArrayBuffer(4 * count);
-        const a = new ArrayBuffer(4 * count);
-        scope.ch1.i = new Float32Array(i);
-        scope.ch1.q = new Float32Array(q);
-        scope.ch1.a = new Float32Array(a);
-        scope.ch2.i = new Float32Array(i);
-        scope.ch2.q = new Float32Array(q);
-        scope.ch2.a = new Float32Array(a);
+        scope.ch1.i = new Float32Array(count);
+        scope.ch1.q = new Float32Array(count);
+        scope.ch1.a = new Float32Array(count);
+        scope.ch2.i = new Float32Array(count);
+        scope.ch2.q = new Float32Array(count);
+        scope.ch2.a = new Float32Array(count);
       }
+      const offset1 = count;
+      const offset2 = count * 2;
+      const offset3 = count * 3;
       for (var k = 0; k < count; k++) {
-        const i = samples[k];
-        const q = samples[count + k];
-        const a = Math.sqrt(i * i + q * q);
+        var i = samples[k];
+        var q = samples[k + offset1];
         scope.ch1.i[k] = i;
         scope.ch1.q[k] = q;
-        scope.ch1.a[k] = a;
+        scope.ch1.a[k] = Math.sqrt(i * i + q * q);
+        var i = samples[k + offset2];
+        var q = samples[k + offset3];
         scope.ch2.i[k] = i;
         scope.ch2.q[k] = q;
-        scope.ch2.a[k] = a;
+        scope.ch2.a[k] = Math.sqrt(i * i + q * q);
       }
       self.postMessage({
         type: "scope",
@@ -142,16 +143,20 @@ function connect(newRadar, url) {
       });
     } else if (type == enums.Response) {
       // Response of a command
-      let text = new TextDecoder().decode(e.data.slice(1));
-      if (text.includes("not") || text.includes("NAK")) {
-        text = ` 👎🏼 ${text} <div class='emotion'>😿</div>`;
-      } else {
-        text = ` 👍🏼 ${text} <div class='emotion'>👻</div>`;
+      const text = new TextDecoder().decode(e.data.slice(1));
+      const letter = text[0];
+      let response = null;
+      if (letter == "N") {
+        response = ` 👎🏼 ${text.slice(1)} <div class='emotion'>😿</div>`;
+      } else if (letter == "A") {
+        response = ` 👍🏼 ${text.slice(1)} <div class='emotion'>👻</div>`;
       }
-      self.postMessage({
-        type: "response",
-        payload: text,
-      });
+      if (response) {
+        self.postMessage({
+          type: "response",
+          payload: response,
+        });
+      }
     }
   };
 

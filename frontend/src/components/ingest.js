@@ -22,12 +22,11 @@ class Ingest {
       },
       health: { time: 0 },
       control: { time: 0 },
-      ppi: {
-        az: null,
-        z: [],
-      },
+      sweep: null,
     };
-    this.tic = 0;
+    this.state = {
+      tic: 0,
+    };
     this.message = "";
     this.response = "";
     this.onupdate = (_data) => {};
@@ -39,11 +38,11 @@ class Ingest {
         setTimeout(() => {
           if (this.message == payload) {
             this.message = "";
-            this.onupdate(this.tic++);
+            this.onupdate(this.state.tic++);
           }
         }, 2000);
       } else if (type == "scope") {
-        //if (this.tic < 5) console.log(payload);
+        //if (this.state.tic < 5) console.log(payload);
         this.data.ch1 = payload.ch1;
         this.data.ch2 = payload.ch2;
         if (this.data.t === null || this.data.t.length != payload.count) {
@@ -54,16 +53,16 @@ class Ingest {
       } else if (type == "control") {
         this.data.control = payload;
       } else if (type == "response") {
-        console.log(payload);
+        // console.log(payload);
         this.response = payload;
         setTimeout(() => {
           if (this.response == payload) {
             this.response = "";
-            this.onupdate(this.tic++);
+            this.onupdate(this.state.tic++);
           }
         }, 2000);
       }
-      this.onupdate(this.tic++);
+      this.onupdate(this.state.tic++);
     };
 
     this.connect = this.connect.bind(this);
@@ -73,7 +72,7 @@ class Ingest {
 
   connect() {
     this.message = "Connecting ...";
-    this.onupdate(this.tic++);
+    this.onupdate(this.state.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
     const url = `${p}://${window.location.host}/ws/${this.radar}/`;
     this.worker.postMessage({

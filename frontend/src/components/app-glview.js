@@ -22,10 +22,10 @@ class App extends Component {
       colors: colorDict(),
     };
     this.isMobile = detectMob();
-    // this.archive = new Archive();
-    // this.archive.onupdate = (_dontcare) => {
-    //   this.forceUpdate();
-    // };
+    this.archive = new Archive(props.radar);
+    this.archive.onupdate = (_dontcare) => {
+      this.forceUpdate();
+    };
     console.log(props);
   }
 

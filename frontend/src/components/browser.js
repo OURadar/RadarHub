@@ -14,6 +14,7 @@ import PickersDay from "@mui/lab/PickersDay";
 import { SectionHeader } from "./section-header";
 import { getMonth } from "date-fns";
 
+const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 const Item = memo(({ data, index, style }) => {
   const { list, selectedIndex, loadItem } = data;
   const selected = index == selectedIndex;
@@ -80,7 +81,7 @@ function Browser(props) {
     }
     // Expect loadCount <= 1 during live update
     // console.log(`loadCount = ${props.archive.state.loadCount}`);
-    if (props.archive.state.loadCount <= 1) {
+    if (props.archive.state.loadCount == 1) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
     } else if (props.archive.grid.latestHour) {
@@ -198,15 +199,17 @@ function Browser(props) {
             renderInput={(params) => <TextField {...params} />}
             renderDay={(day, _value, DayComponentProps) => {
               let key = day.toISOString().slice(0, 10);
-              const hasData =
-                key in props.archive.grid.dailyAvailability &&
-                props.archive.grid.dailyAvailability[key] > 0;
+              let num =
+                key in props.archive.grid.dailyAvailability
+                  ? props.archive.grid.dailyAvailability[key]
+                  : 0;
+              let variant = num ? "dot" : undefined;
               return (
                 <Badge
                   key={key}
-                  color="primary"
+                  color={badgeColors[num]}
                   overlap="circular"
-                  variant={hasData ? "dot" : undefined}
+                  variant={variant}
                 >
                   <PickersDay {...DayComponentProps} />
                 </Badge>
