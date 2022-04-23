@@ -144,7 +144,7 @@ class GLView extends Component {
       fov: f,
       range: r,
       aspect: 1,
-      zenith: 0,
+      zenith: 0.01,
       model: model,
       view: mat4.create(),
       modelview: mat4.create(),
@@ -309,7 +309,7 @@ class GLView extends Component {
     geo.viewport.height = h;
     geo.message = "geo";
 
-    // console.log(`zenith = ${geo.zenith.toFixed(6)}`);
+    // console.log(`zenith = ${geo.zenith.toFixed(2)}`);
 
     geo.needsUpdate = false;
   }
@@ -468,6 +468,12 @@ class GLView extends Component {
       geo.eye.model[1],
       geo.eye.model[2]
     );
+    // console.log(
+    //   `zenith = ${geo.zenith}` +
+    //     `  y = ${y}` +
+    //     `  deltaY = ${deltaY}` +
+    //     `  ${u[2].toFixed(2)}`
+    // );
     let d = geo.target.translation;
     let q = geo.eye.quaternion;
     let t = geo.eye.translation;
@@ -476,7 +482,7 @@ class GLView extends Component {
     let a = quat.setAxisAngle([], u, deltaY);
     let b = quat.setAxisAngle([], d, deltaX);
 
-    if (geo.zenith < 0.05 && deltaY < 0) {
+    if (deltaY < 0 && geo.zenith + deltaY * 2 * common.earthRadius < 0) {
       quat.copy(q, b);
     } else {
       quat.multiply(q, a, b);
@@ -520,14 +526,14 @@ class GLView extends Component {
     let t = geo.eye.translation;
     let s = geo.eye.scale;
     let d = vec3.subtract([], t, geo.target.translation);
-    let l = vec3.length(d);
-    let n = common.clamp(l / m, 10, 1.2 * common.earthRadius);
-    vec3.scale(d, d, n / l);
+    let r = vec3.length(d);
+    let n = common.clamp(r / m, 10, 1.2 * common.earthRadius);
+    vec3.scale(d, d, n / r);
 
-    // let b = l * geo.fov;
-    // vec3.set(s, b, b, l);
-    vec3.set(s, l, l, l);
-    geo.eye.range = l;
+    // let b = r * geo.fov;
+    // vec3.set(s, b, b, r);
+    vec3.set(s, r, r, r);
+    geo.eye.range = r;
 
     vec3.add(t, geo.target.translation, d);
     mat4.fromRotationTranslationScale(geo.eye.model, q, t, s);
@@ -574,14 +580,13 @@ class GLView extends Component {
     const s = geo.eye.scale;
     const e = vec3.fromValues(0, -0.01, r);
 
-    // let b = d * geo.fov;
-
     mat4.copy(geo.target.model, geo.model);
     mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
     mat4.getTranslation(geo.target.translation, geo.target.model);
     mat4.getRotation(geo.target.quaternion, geo.target.model);
 
-    // vec3.set(s, b, b, d);
+    // let b = r * geo.fov;
+    // vec3.set(s, b, b, r);
     vec3.set(s, r, r, r);
     mat4.copy(geo.eye.model, geo.model);
     mat4.translate(geo.eye.model, geo.eye.model, e);

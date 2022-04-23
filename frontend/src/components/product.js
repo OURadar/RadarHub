@@ -419,18 +419,16 @@ class Product extends GLView {
     //   geo.fov = 1.0;
     // }
 
-    let r = geo.range;
-    let s = geo.eye.scale;
-    const e = vec3.fromValues(0, 0, r);
-
-    // let b = r * geo.fov;
-    // console.log(`r = ${r}   f = ${f}`);
+    const r = geo.range;
+    const s = geo.eye.scale;
+    const e = vec3.fromValues(0, -0.01, r);
 
     mat4.copy(geo.target.model, geo.model);
     mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
     mat4.getTranslation(geo.target.translation, geo.target.model);
     mat4.getRotation(geo.target.quaternion, geo.target.model);
 
+    // const b = r * geo.fov;
     // vec3.set(s, b, b, r);
     vec3.set(s, r, r, r);
     mat4.copy(geo.eye.model, geo.model);

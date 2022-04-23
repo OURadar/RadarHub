@@ -52,7 +52,7 @@ export function TopBar(props) {
   return (
     <div>
       <div id="topbar" roll="banner">
-        <h1>Seven</h1>
+        <h1>RadarHub</h1>
         <div id="statusPrefix">
           <div id="statusLed" className={online}></div>
           {prefix}
