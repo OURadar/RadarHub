@@ -276,7 +276,7 @@ class GLView extends Component {
 
     geo.aspect = w / h;
     geo.zenith = Math.acos(n);
-    geo.pixelDensity = geo.eye.scale[0] / w / n ** 1.5;
+    geo.pixelDensity = geo.eye.scale[1] / h / n ** 1.5;
     geo.pointDensity = geo.pixelDensity * this.ratio;
 
     let u = vec3.fromValues(
@@ -415,26 +415,17 @@ class GLView extends Component {
     const s = (2.0 * Math.tan(0.5 * geo.fov)) / common.earthRadius;
     let deltaX = (-x / this.mount.clientHeight) * s;
     let deltaY = (y / this.mount.clientHeight) * s;
-
-    let u = vec3.fromValues(
-      geo.eye.model[0],
-      geo.eye.model[1],
-      geo.eye.model[2]
-    );
-    let v = vec3.fromValues(
-      geo.eye.model[4],
-      geo.eye.model[5],
-      geo.eye.model[6]
-    );
+    let m = geo.eye.model;
+    let u = vec3.fromValues(m[0], m[1], m[2]);
+    let v = vec3.fromValues(m[4], m[5], m[6]);
     let p = quat.setAxisAngle([], u, deltaY);
     let q = quat.setAxisAngle([], v, deltaX);
 
     quat.multiply(p, q, p);
+    let r = mat4.fromQuat([], p);
 
-    let m = mat4.fromQuat([], p);
-
-    mat4.multiply(geo.eye.model, m, geo.eye.model);
-    mat4.multiply(geo.target.model, m, geo.target.model);
+    mat4.multiply(geo.eye.model, r, geo.eye.model);
+    mat4.multiply(geo.target.model, r, geo.target.model);
 
     mat4.getTranslation(geo.eye.translation, geo.eye.model);
     mat4.getRotation(geo.eye.quaternion, geo.eye.model);

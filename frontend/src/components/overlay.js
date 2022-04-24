@@ -289,7 +289,7 @@ class Overlay {
       const dy = lat - this.geometry.origin.latitude;
       const d = Math.sqrt(dx * dx + dy * dy);
 
-      // console.log(`overlay.js  pd = ${pd.toFixed(3)}  d = ${d.toFixed(4)}`);
+      // console.log(`pd = ${pd.toFixed(3)}  d = ${d.toFixed(4)}`);
 
       // Overlays are earth-grid, rings, highways, hi-res counties, lo-res counties, states, countries
       if (pd < 0.24 && d < 5) {

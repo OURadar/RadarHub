@@ -241,7 +241,6 @@ def _date(prefix):
     ymd = day.date.strftime(r'%Y%m%d')
     if settings.VERBOSE > 1:
         show = colorize('archive._date()', 'green')
-        show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('prefix', prefix)
         show += '   ' + color_name_value('day', ymd)
         print(show)
