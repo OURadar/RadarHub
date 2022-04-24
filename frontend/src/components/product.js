@@ -307,10 +307,10 @@ class Product extends GLView {
       localStorage.setItem("glview-origin", JSON.stringify(origin));
 
       const geo = this.geometry;
-      const range = vec3.fromValues(0, 0, common.earthRadius);
+      const v = vec3.fromValues(0, 0, common.earthRadius);
       quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0.0);
       mat4.fromQuat(geo.model, geo.quaternion);
-      mat4.translate(geo.model, geo.model, range);
+      mat4.translate(geo.model, geo.model, v);
 
       mat4.copy(geo.target.model, geo.model);
       mat4.scale(geo.target.model, geo.target.model, geo.target.scale);
