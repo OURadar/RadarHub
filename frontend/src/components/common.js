@@ -9,8 +9,18 @@
 
 import { vec3 } from "gl-matrix";
 
+// A globally-average value is usually considered to be 6,371 kilometres
+// https://en.wikipedia.org/wiki/Earth_radius
 export const earthRadius = 6371.0;
 
+/**
+ * Clamp a value to between lo and hi boundaries
+ *
+ * @param {*} x the input
+ * @param {*} lo the lower bound
+ * @param {*} hi the upper bound
+ * @returns the clamped value
+ */
 export function clamp(x, lo, hi) {
   return Math.min(Math.max(x, lo), hi);
 }
@@ -269,49 +279,67 @@ export function ndot(a, b) {
  * Show the u, v, w components of a 4 x 4 matrix
  *
  * @param {ReadonlyMat4} m input matrix
- * @param {*} precision number of decimals to show
+ * @param {*} dec number of decimals to show (opt, default = 3)
+ * @param {*} len length of string to show (opt, default = 9)
+ * @param {bool} all values (opt, default = true)
  */
-export function showMatrix(m, precision = 3) {
-  let u0 = m[0].toFixed(precision);
-  let u1 = m[1].toFixed(precision);
-  let u2 = m[2].toFixed(precision);
+export const mat4String = function (m, dec = 3, len = 9, all = true) {
+  let u0 = m[0].toFixed(dec).padStart(len, " ");
+  let u1 = m[1].toFixed(dec).padStart(len, " ");
+  let u2 = m[2].toFixed(dec).padStart(len, " ");
+  let u3 = m[3].toFixed(dec).padStart(len, " ");
 
-  let v0 = m[4].toFixed(precision);
-  let v1 = m[5].toFixed(precision);
-  let v2 = m[6].toFixed(precision);
+  let v0 = m[4].toFixed(dec).padStart(len, " ");
+  let v1 = m[5].toFixed(dec).padStart(len, " ");
+  let v2 = m[6].toFixed(dec).padStart(len, " ");
+  let v3 = m[7].toFixed(dec).padStart(len, " ");
 
-  let w0 = m[8].toFixed(precision);
-  let w1 = m[9].toFixed(precision);
-  let w2 = m[10].toFixed(precision);
+  let w0 = m[8].toFixed(dec).padStart(len, " ");
+  let w1 = m[9].toFixed(dec).padStart(len, " ");
+  let w2 = m[10].toFixed(dec).padStart(len, " ");
+  let w3 = m[11].toFixed(dec).padStart(len, " ");
 
-  console.log(`${u0} ${u1} ${u2}   ${v0} ${v1} ${v2}   ${w0} ${w1} ${w2}`);
-}
+  let t0 = m[12].toFixed(dec).padStart(len, " ");
+  let t1 = m[13].toFixed(dec).padStart(len, " ");
+  let t2 = m[14].toFixed(dec).padStart(len, " ");
+  let t3 = m[15].toFixed(dec).padStart(len, " ");
+
+  if (all)
+    return (
+      `${u0} ${u1} ${u2} ${u3}\n` +
+      `    ${v0} ${v1} ${v2} ${v3}\n` +
+      `    ${w0} ${w1} ${w2} ${w3}\n` +
+      `    ${t0} ${t1} ${t2} ${t3}`
+    );
+  else
+    return `${u0} ${u1} ${u2} ${u3}   ${v0} ${v1} ${v2} ${v3}   ${w0} ${w1} ${w2} ${w3}   ${t0} ${t1} ${t2} ${t3}`;
+};
 
 /**
  * Show the components of a 3 x 1 vector
  *
- * @param {ReadonlyVec3} m input matrix
- * @param {*} precision number of decimals to show
+ * @param {ReadonlyVec3} v input vector
+ * @param {*} dec number of decimals to show (opt, default = 3)
+ * @param {*} len length of string to show (opt, default = 9)
  */
-export function showVector(v, precision = 3) {
-  let v0 = v[0].toFixed(precision);
-  let v1 = v[1].toFixed(precision);
-  let v2 = v[2].toFixed(precision);
-
-  console.log(`${v0} ${v1} ${v2}`);
-}
+export const vec3String = function (v, dec = 3, len = 9) {
+  let v0 = v[0].toFixed(dec).padStart(len, " ");
+  let v1 = v[1].toFixed(dec).padStart(len, " ");
+  let v2 = v[2].toFixed(dec).padStart(len, " ");
+  return `${v0} ${v1} ${v2}`;
+};
 
 /**
- * Show the components of a 3 x 1 vector
+ * Show the components of a 4 x 1 vector
  *
- * @param {ReadonlyVec4} m input matrix
- * @param {*} precision number of decimals to show
+ * @param {ReadonlyVec4} v input vector
+ * @param {*} dec number of decimals to show (opt, default = 3)
+ * @param {*} len length of string to show (opt, default = 9)
  */
-export function showVector4(v, precision = 3) {
-  let v0 = v[0].toFixed(precision);
-  let v1 = v[1].toFixed(precision);
-  let v2 = v[2].toFixed(precision);
-  let v3 = v[3].toFixed(precision);
-
-  console.log(`${v0} ${v1} ${v2} ${v3}`);
-}
+export const vec4String = function (v, dec = 3, len = 9) {
+  let v0 = v[0].toFixed(dec).padStart(len, " ");
+  let v1 = v[1].toFixed(dec).padStart(len, " ");
+  let v2 = v[2].toFixed(dec).padStart(len, " ");
+  let v3 = v[3].toFixed(dec).padStart(len, " ");
+  return `${v0} ${v1} ${v2} ${v3}`;
+};

@@ -22,9 +22,6 @@ class Gesture {
     this.pointV = 0;
     this.pointD = 0;
     this.scale = 1;
-    // this.altKey = false;
-    // this.metaKey = false;
-    // this.shiftKey = false;
     this.hasTouch = false;
     this.mouseDown = false;
     this.panInProgress = false;
@@ -49,9 +46,9 @@ class Gesture {
         this.pointX = e.offsetX;
         this.pointY = e.offsetY;
         this.rect = this.element.getBoundingClientRect();
-        if (e.metaKey) {
+        if (e.altKey) {
           this.tiltInProgress = true;
-        } else if (e.altKey) {
+        } else if (e.ctrlKey) {
           this.rollInProgress = true;
         } else {
           this.panInProgress = true;
@@ -70,10 +67,10 @@ class Gesture {
         if (e.shiftKey) {
           this.panInProgress = true;
           // console.log("pan mode");
-        } else if (e.metaKey) {
+        } else if (e.altKey) {
           this.tiltInProgress = true;
           // console.log("tilt mode");
-        } else if (e.altKey) {
+        } else if (e.ctrlKey) {
           this.rollInProgress = true;
         } else {
           this.panInProgress = false;
@@ -139,7 +136,7 @@ class Gesture {
         e.offsetY < this.element.height - this.bounds.bottom
       ) {
         e.preventDefault();
-        if (e.metaKey) {
+        if (e.ctrlKey) {
           this.handleMagnify(
             delta2scale(3 * e.deltaX),
             delta2scale(-3 * e.deltaY),

@@ -285,9 +285,7 @@ class GLView extends Component {
       geo.eye.model[6]
     );
     // vec3.normalize(u, u);
-    // let u = vec3.copy([], t);
-    // vec3.normalize(u, u);
-    // common.showVector(u);
+    // console.log(common.vec3String(u));
 
     mat4.lookAt(geo.view, e, t, u);
     mat4.perspective(geo.projection, geo.fov, geo.aspect, 1, 30000);
