@@ -76,7 +76,7 @@ class Text {
               if (this.debug) {
                 console.log(
                   `Duplicate %c${label.text}%c  range = ${d.toFixed(2)} km`,
-                  "color: purple",
+                  "color: mediumpurple",
                   "color: normal"
                 );
                 console.log(label);

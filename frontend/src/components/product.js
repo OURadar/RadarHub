@@ -299,7 +299,11 @@ class Product extends GLView {
       let y0 = origin.latitude.toFixed(6);
       let x1 = viewOrigin.longitude.toFixed(6);
       let y1 = viewOrigin.latitude.toFixed(6);
-      console.log(`Origin (${x0}, ${y0}) ← (${x1}, ${y1})`);
+      console.log(
+        `Product: origin (%c${x0}, ${y0}%c) ← (${x1}, ${y1})`,
+        "color: mediumpurple",
+        "color: inherit"
+      );
       localStorage.setItem("glview-origin", JSON.stringify(origin));
 
       const geo = this.geometry;
