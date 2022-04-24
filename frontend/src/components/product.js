@@ -312,6 +312,19 @@ class Product extends GLView {
       mat4.fromQuat(geo.model, geo.quaternion);
       mat4.translate(geo.model, geo.model, range);
 
+      mat4.copy(geo.target.model, geo.model);
+      mat4.scale(geo.target.model, geo.target.model, geo.target.scale);
+      mat4.getTranslation(geo.target.translation, geo.target.model);
+      mat4.getRotation(geo.target.quaternion, geo.target.model);
+
+      const r = geo.eye.range;
+      const e = vec3.fromValues(0, -0.01, r);
+      mat4.copy(geo.eye.model, geo.model);
+      mat4.translate(geo.eye.model, geo.eye.model, e);
+      mat4.scale(geo.eye.model, geo.eye.model, [r, r, r]);
+      mat4.getTranslation(geo.eye.translation, geo.eye.model);
+      mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+
       this.geometry.origin = origin;
       this.geometry.needsUpdate = true;
       this.overlay.purge();

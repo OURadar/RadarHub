@@ -94,12 +94,12 @@ class GLView extends Component {
     mat4.getTranslation(eyeTranslation, eyeModel);
     mat4.getRotation(eyeQuaternion, eyeModel);
     mat4.getScaling(eyeScale, eyeModel);
-    mat4.fromRotationTranslationScale(
-      eyeModel,
-      eyeQuaternion,
-      eyeTranslation,
-      eyeScale
-    );
+    // mat4.fromRotationTranslationScale(
+    //   eyeModel,
+    //   eyeQuaternion,
+    //   eyeTranslation,
+    //   eyeScale
+    // );
 
     let fixView = mat4.create();
     let fixModel = mat4.create();
