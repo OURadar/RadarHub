@@ -286,29 +286,34 @@ class Product extends GLView {
       return;
     }
     // Could update this.geometry.origin
-    const viewOrigin = this.geometry.origin;
-    const origin = {
-      longitude: this.props.sweep.longitude,
-      latitude: this.props.sweep.latitude,
-    };
+    const geo = this.geometry;
+    const sweep = this.props.sweep;
     if (
-      Math.abs(viewOrigin.longitude - origin.longitude) > 0.001 ||
-      Math.abs(viewOrigin.latitude - origin.latitude) > 0.001
+      Math.abs(geo.origin.longitude - sweep.longitude) > 0.001 ||
+      Math.abs(geo.origin.latitude - sweep.latitude) > 0.001
     ) {
-      let x0 = origin.longitude.toFixed(6);
-      let y0 = origin.latitude.toFixed(6);
-      let x1 = viewOrigin.longitude.toFixed(6);
-      let y1 = viewOrigin.latitude.toFixed(6);
+      let x0 = geo.origin.longitude.toFixed(6);
+      let y0 = geo.origin.latitude.toFixed(6);
+      let x1 = sweep.longitude.toFixed(6);
+      let y1 = sweep.latitude.toFixed(6);
       console.log(
         `Product: origin (%c${x0}, ${y0}%c) ← (${x1}, ${y1})`,
         "color: mediumpurple",
         "color: inherit"
       );
-      localStorage.setItem("glview-origin", JSON.stringify(origin));
+      geo.origin.longitude = sweep.longitude;
+      geo.origin.latitude = sweep.latitude;
+      localStorage.setItem("glview-origin", JSON.stringify(geo.origin));
 
-      const geo = this.geometry;
+      const r = geo.eye.range;
       const v = vec3.fromValues(0, 0, common.earthRadius);
-      quat.fromEuler(geo.quaternion, -origin.latitude, origin.longitude, 0.0);
+      const e = vec3.fromValues(0, -0.01, r);
+      quat.fromEuler(
+        geo.quaternion,
+        -geo.origin.latitude,
+        geo.origin.longitude,
+        0.0
+      );
       mat4.fromQuat(geo.model, geo.quaternion);
       mat4.translate(geo.model, geo.model, v);
 
@@ -317,43 +322,40 @@ class Product extends GLView {
       mat4.getTranslation(geo.target.translation, geo.target.model);
       mat4.getRotation(geo.target.quaternion, geo.target.model);
 
-      const r = geo.eye.range;
-      const e = vec3.fromValues(0, -0.01, r);
       mat4.copy(geo.eye.model, geo.model);
       mat4.translate(geo.eye.model, geo.eye.model, e);
       mat4.scale(geo.eye.model, geo.eye.model, [r, r, r]);
       mat4.getTranslation(geo.eye.translation, geo.eye.model);
       mat4.getRotation(geo.eye.quaternion, geo.eye.model);
 
-      this.geometry.origin = origin;
-      this.geometry.needsUpdate = true;
+      geo.needsUpdate = true;
       this.overlay.purge();
       this.overlay.load();
     }
 
     this.assets.data = this.regl.texture({
-      shape: [this.props.sweep.nr, this.props.sweep.nb],
-      data: this.props.sweep.values,
+      shape: [sweep.nr, sweep.nb],
+      data: sweep.values,
       format: "luminance",
       type: "uint8",
     });
     this.assets.points = this.regl.buffer({
       usage: "static",
       type: "float",
-      data: this.props.sweep.points,
+      data: sweep.points,
     });
     this.assets.origins = this.regl.buffer({
       usage: "static",
       type: "float",
-      data: this.props.sweep.origins,
+      data: sweep.origins,
     });
     this.assets.elements = this.regl.elements({
       usage: "static",
       type: "uint16",
-      data: this.props.sweep.elements,
+      data: sweep.elements,
     });
-    this.assets.time = this.props.sweep.time;
-    this.assets.symbol = this.props.sweep.symbol;
+    this.assets.time = sweep.time;
+    this.assets.symbol = sweep.symbol;
     if (this.assets.colormap) {
       this.assets.complete = true;
     }
@@ -365,7 +367,7 @@ class Product extends GLView {
       );
     }
     this.setState({
-      titleString: this.props.sweep.timeString,
+      titleString: sweep.timeString,
     });
   }
 
