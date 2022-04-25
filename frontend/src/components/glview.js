@@ -507,6 +507,12 @@ class GLView extends Component {
     mat4.fromRotationTranslationScale(geo.eye.model, q, t, s);
 
     geo.needsUpdate = true;
+    if (this.props.debug) {
+      geo.message += ` roll() ${deltaX.toFixed(2)}`;
+      this.setState({
+        lastPanTime: window.performance.now(),
+      });
+    }
   }
 
   dolly(_mx, _my, m, _x, _y) {
@@ -529,6 +535,7 @@ class GLView extends Component {
 
     geo.needsUpdate = true;
     if (this.props.debug) {
+      geo.message += ` dolly() ${m.toFixed(2)}`;
       this.setState({
         lastMagnifyTime: window.performance.now(),
       });
