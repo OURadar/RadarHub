@@ -406,6 +406,7 @@ class Product extends GLView {
 
   fitToData() {
     const geo = this.geometry;
+
     // if (this.props.sweep) {
     //   const sweep = this.props.sweep;
     //   const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
@@ -416,6 +417,8 @@ class Product extends GLView {
     // } else {
     //   geo.fov = 1.0;
     // }
+
+    geo.fov = 1;
 
     const r = geo.range;
     const s = geo.eye.scale;

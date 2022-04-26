@@ -151,7 +151,7 @@ class Archive {
   // Expect something like radar = raxpol, day = Date('2013-05-20')
   count(radar, day) {
     console.log(
-      `%carchive.count()%c   day = ${day.toISOString()}`,
+      `%carchive.count()%c   day = ${day.toISOString().slice(0, 10)}`,
       "color: lightseagreen",
       "color: inherit"
     );
@@ -172,7 +172,7 @@ class Archive {
   list(radar, day, hour, symbol) {
     console.log(
       `%carchive.list()%c` +
-        `   day = ${day.toISOString()}` +
+        `   day = ${day.toISOString().slice(0, 10)}` +
         `   hour = ${hour}` +
         `   symbol = ${symbol} / ${this.grid.symbol}`,
       "color: lightseagreen",

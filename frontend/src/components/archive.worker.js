@@ -218,18 +218,17 @@ function month(radar, day) {
 
 function count(radar, day) {
   let t = day instanceof Date;
+  let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
   console.log(
-    `%carchive.worker.count()%c ${radar} ${day} (${t})`,
+    `%carchive.worker.count()%c ${radar} ${dayString} (${t})`,
     "color: tan",
     "color: inherit"
   );
-  let tmp = day.toISOString();
-  let y = parseInt(tmp.slice(0, 4));
+  let y = parseInt(dayString.slice(0, 4));
   if (y < 2012) {
     console.log("No data prior to 2013");
     return;
   }
-  let dayString = tmp.slice(0, 10).replace(/-/g, "");
   const url = `/data/count/${radar}/${dayString}/`;
   fetch(url)
     .then((response) => {
@@ -256,14 +255,14 @@ function count(radar, day) {
 }
 
 function list(radar, day, hour, symbol) {
-  console.log(
-    `%carchive.worker.list()%c ${radar} ${day.toISOString()} ${hour} ${symbol}`,
-    "color: tan",
-    "color: inherit"
-  );
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
   let hourString = hour.toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
+  console.log(
+    `%carchive.worker.list()%c ${radar} ${dateTimeString} ${symbol}`,
+    "color: tan",
+    "color: inherit"
+  );
   const url = `/data/list/${radar}/${dateTimeString}-${symbol}/`;
   fetch(url)
     .then((response) => {

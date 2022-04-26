@@ -155,13 +155,19 @@ function Browser(props) {
   const setDayHour = (newDay, newHour) => {
     let symbol = props.archive.grid.symbol;
     let t = newDay instanceof Date;
+    let n = newDay.toISOString().slice(0, 10);
+    let o = day.toISOString().slice(0, 10);
     console.log(
-      `%cbrowser.setDayHour()%c   day = ${day.toISOString()} -> ${newDay.toISOString()} (${t})   hour = ${hour} -> ${newHour}   symbol = ${symbol}`,
+      `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
       "color: deeppink",
+      "color: inherit",
+      "color: mediumpurple",
+      "color: inherit",
+      "color: mediumpurple",
       "color: inherit"
     );
     props.archive.count(radar, newDay);
-    props.archive.list(radar, newDay, newHour, symbol);
+    // props.archive.list(radar, newDay, newHour, symbol);
   };
 
   const getMonthTable = (newMonth) => {
