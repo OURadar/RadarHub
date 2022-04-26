@@ -539,6 +539,8 @@ class GLView extends Component {
   fitToData() {
     const geo = this.geometry;
 
+    geo.fov = 1;
+
     const r = geo.range;
     const s = geo.eye.scale;
     const e = vec3.fromValues(0, -0.01, r);
