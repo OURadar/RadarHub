@@ -217,7 +217,7 @@ function month(radar, day) {
 }
 
 function count(radar, day) {
-  let t = day instanceof Date;
+  let t = day instanceof Date ? "Date" : "Not Date";
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
   console.log(
     `%carchive.worker.count()%c ${radar} ${dayString} (${t})`,

@@ -146,7 +146,7 @@ function Browser(props) {
 
   const setDayHour = (newDay, newHour) => {
     let symbol = props.archive.grid.symbol;
-    let t = newDay instanceof Date;
+    let t = day instanceof Date ? "Date" : "Not Date";
     let n = newDay.toISOString().slice(0, 10);
     let o = day.toISOString().slice(0, 10);
     console.log(
@@ -189,7 +189,7 @@ function Browser(props) {
               if (newDay === null || newDay == "Invalid Date") {
                 return;
               }
-              console.log(`DatePicker ${newDay.toISOString()}`);
+              // console.log(`DatePicker ${newDay.toISOString()}`);
               setDayHour(newDay, hour);
             }}
             onOpen={() => {
