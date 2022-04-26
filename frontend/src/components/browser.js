@@ -118,14 +118,6 @@ function Browser(props) {
 
   React.useEffect(() => {
     const newButtons = Array(24);
-    if (count[hour] == 0) {
-      let best = count.findIndex((x) => x > 0);
-      if (best >= 0) {
-        console.log(`Hour ${hour} has no data, choosing ${best} ...`);
-        setDayHour(day, best);
-      }
-    }
-
     for (let k = 0; k < 24; k++) {
       const hourString = k.toString().padStart(2, "0") + ":00";
       const selected = count[k] > 0 && k == hour;
@@ -166,8 +158,9 @@ function Browser(props) {
       "color: mediumpurple",
       "color: inherit"
     );
-    props.archive.count(radar, newDay);
+    // props.archive.count(radar, newDay);
     // props.archive.list(radar, newDay, newHour, symbol);
+    props.archive.count(radar, newDay, newHour, symbol);
   };
 
   const getMonthTable = (newMonth) => {

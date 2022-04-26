@@ -242,7 +242,13 @@ function count(radar, day) {
               .slice()
               .reverse()
               .findIndex((x) => x > 0);
-          self.postMessage({ type: "count", payload: grid.hourlyAvailability });
+          self.postMessage({
+            type: "count",
+            payload: {
+              day: day,
+              hourlyAvailability: grid.hourlyAvailability,
+            },
+          });
         });
       else
         response.text().then((error) => {

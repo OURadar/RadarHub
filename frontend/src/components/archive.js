@@ -46,8 +46,23 @@ class Archive {
       if (type == "message") {
         this.showMessage(payload, 2500);
       } else if (type == "count") {
-        this.grid.hourlyAvailability = payload;
+        this.grid.hourlyAvailability = payload.hourlyAvailability;
         this.state.hourlyAvailabilityUpdating = false;
+        let hour = this.grid.hour;
+        if (hour == -1 || this.grid.hourlyAvailability[hour] == 0) {
+          let best = this.grid.hourlyAvailability.findIndex((x) => x > 0);
+          if (best >= 0) {
+            console.log(
+              `%carchive.onmessage()%c count   Hour ${hour} has no data, choosing ${best} ...`,
+              "color: lightseagreen",
+              "color: inherit"
+            );
+            hour = best;
+          } else {
+            console.log("Unexpeted results.");
+          }
+        }
+        this.list(this.radar, payload.day, hour, this.grid.symbol);
       } else if (type == "list") {
         this.state.fileListUpdating = false;
         console.log(
@@ -149,22 +164,31 @@ class Archive {
   }
 
   // Expect something like radar = raxpol, day = Date('2013-05-20')
-  count(radar, day) {
+  count(radar, day, hour, symbol) {
     console.log(
-      `%carchive.count()%c   day = ${day.toISOString().slice(0, 10)}`,
+      `%carchive.count()%c` +
+        `   day = ${day.toISOString().slice(0, 10)} ${hour} ${symbol}` +
+        `   hour = ${hour}   symbol = ${symbol}`,
       "color: lightseagreen",
       "color: inherit"
     );
     if (this.grid.day == day) {
       console.log(
-        `%carchive.count()%c same day, do nothing`,
+        `%carchive.count()%c same day, list directly`,
         "color: lightseagreen",
         "color: inherit"
       );
+      this.list(radar, day, hour, symbol);
       return;
     }
     this.state.hourlyAvailabilityUpdating = true;
-    this.worker.postMessage({ task: "count", name: radar, day: day });
+    this.worker.postMessage({
+      task: "count",
+      name: radar,
+      day: day,
+      hour: hour,
+      symbol: symbol,
+    });
     this.onupdate(this.state.tic++);
   }
 
