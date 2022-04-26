@@ -305,9 +305,7 @@ class Product extends GLView {
       geo.origin.latitude = sweep.latitude;
       localStorage.setItem("glview-origin", JSON.stringify(geo.origin));
 
-      const r = geo.eye.range;
       const v = vec3.fromValues(0, 0, common.earthRadius);
-      const e = vec3.fromValues(0, -0.01, r);
       quat.fromEuler(
         geo.quaternion,
         -geo.origin.latitude,
@@ -317,18 +315,24 @@ class Product extends GLView {
       mat4.fromQuat(geo.model, geo.quaternion);
       mat4.translate(geo.model, geo.model, v);
 
-      mat4.copy(geo.target.model, geo.model);
-      mat4.scale(geo.target.model, geo.target.model, geo.target.scale);
-      mat4.getTranslation(geo.target.translation, geo.target.model);
-      mat4.getRotation(geo.target.quaternion, geo.target.model);
+      // const r = geo.range;
+      // const s = geo.eye.scale;
+      // const e = vec3.fromValues(0, -0.01, r);
 
-      mat4.copy(geo.eye.model, geo.model);
-      mat4.translate(geo.eye.model, geo.eye.model, e);
-      mat4.scale(geo.eye.model, geo.eye.model, [r, r, r]);
-      mat4.getTranslation(geo.eye.translation, geo.eye.model);
-      mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+      // mat4.copy(geo.target.model, geo.model);
+      // mat4.scale(geo.target.model, geo.target.model, geo.target.scale);
+      // mat4.getTranslation(geo.target.translation, geo.target.model);
+      // mat4.getRotation(geo.target.quaternion, geo.target.model);
 
-      geo.needsUpdate = true;
+      // vec3.set(s, r, r, r);
+      // mat4.copy(geo.eye.model, geo.model);
+      // mat4.translate(geo.eye.model, geo.eye.model, e);
+      // mat4.scale(geo.eye.model, geo.eye.model, s);
+      // mat4.getTranslation(geo.eye.translation, geo.eye.model);
+      // mat4.getRotation(geo.eye.quaternion, geo.eye.model);
+
+      // geo.needsUpdate = true;
+      this.fitToData();
       this.overlay.purge();
       this.overlay.load();
     }
@@ -448,7 +452,7 @@ class Product extends GLView {
     const e = vec3.fromValues(0, -0.01, r);
 
     mat4.copy(geo.target.model, geo.model);
-    mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
+    mat4.scale(geo.target.model, geo.target.model, geo.target.scale);
     mat4.getTranslation(geo.target.translation, geo.target.model);
     mat4.getRotation(geo.target.quaternion, geo.target.model);
 

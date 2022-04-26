@@ -94,12 +94,6 @@ class GLView extends Component {
     mat4.getTranslation(eyeTranslation, eyeModel);
     mat4.getRotation(eyeQuaternion, eyeModel);
     mat4.getScaling(eyeScale, eyeModel);
-    // mat4.fromRotationTranslationScale(
-    //   eyeModel,
-    //   eyeQuaternion,
-    //   eyeTranslation,
-    //   eyeScale
-    // );
 
     let fixView = mat4.create();
     let fixModel = mat4.create();
@@ -171,6 +165,7 @@ class GLView extends Component {
     this.element3 = artists.element3(this.regl);
     this.michelangelo = artists.rect2(this.regl);
     // Bind some methods
+    this.updateGeometry = this.updateGeometry.bind(this);
     this.updateProjection = this.updateProjection.bind(this);
     this.draw = this.draw.bind(this);
     this.pan = this.pan.bind(this);
@@ -260,6 +255,18 @@ class GLView extends Component {
       );
     }
     return <div className="fullHeight" ref={(x) => (this.mount = x)} />;
+  }
+
+  updateGeometry(longitude, latitude) {
+    const geo = this.geometry;
+    geo.origin.longitude = longitude;
+    geo.origin.latitude = latitude;
+    quat.fromEuler(
+      geo.quaternion,
+      -geo.origin.latitude,
+      geo.origin.longitude,
+      0.0
+    );
   }
 
   updateProjection() {
@@ -528,11 +535,6 @@ class GLView extends Component {
     mat4.fromRotationTranslationScale(geo.eye.model, q, t, s);
 
     geo.needsUpdate = true;
-    if (this.props.debug) {
-      this.setState({
-        lastMagnifyTime: window.performance.now(),
-      });
-    }
   }
 
   tap(x, y) {}
@@ -570,7 +572,7 @@ class GLView extends Component {
     const e = vec3.fromValues(0, -0.01, r);
 
     mat4.copy(geo.target.model, geo.model);
-    mat4.scale(geo.target.model, geo.target.model, [0.03, 0.03, 0.03]);
+    mat4.scale(geo.target.model, geo.target.model, geo.target.scale);
     mat4.getTranslation(geo.target.translation, geo.target.model);
     mat4.getRotation(geo.target.quaternion, geo.target.model);
 
@@ -584,11 +586,6 @@ class GLView extends Component {
     mat4.getRotation(geo.eye.quaternion, geo.eye.model);
 
     geo.needsUpdate = true;
-    if (this.props.debug) {
-      this.setState({
-        lastMagnifyTime: window.performance.now(),
-      });
-    }
   }
 }
 
