@@ -118,14 +118,6 @@ function Browser(props) {
 
   React.useEffect(() => {
     const newButtons = Array(24);
-    if (count[hour] == 0) {
-      let best = count.findIndex((x) => x > 0);
-      if (best >= 0) {
-        console.log(`Hour ${hour} has no data, choosing ${best} ...`);
-        setDayHour(day, best);
-      }
-    }
-
     for (let k = 0; k < 24; k++) {
       const hourString = k.toString().padStart(2, "0") + ":00";
       const selected = count[k] > 0 && k == hour;
@@ -154,14 +146,21 @@ function Browser(props) {
 
   const setDayHour = (newDay, newHour) => {
     let symbol = props.archive.grid.symbol;
-    let t = newDay instanceof Date;
+    let t = day instanceof Date ? "Date" : "Not Date";
+    let n = newDay.toISOString().slice(0, 10);
+    let o = day.toISOString().slice(0, 10);
     console.log(
-      `%cbrowser.setDayHour()%c   day = ${day.toISOString()} -> ${newDay.toISOString()} (${t})   hour = ${hour} -> ${newHour}   symbol = ${symbol}`,
+      `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
       "color: deeppink",
+      "color: inherit",
+      "color: mediumpurple",
+      "color: inherit",
+      "color: mediumpurple",
       "color: inherit"
     );
-    props.archive.count(radar, newDay);
-    props.archive.list(radar, newDay, newHour, symbol);
+    // props.archive.count(radar, newDay);
+    // props.archive.list(radar, newDay, newHour, symbol);
+    props.archive.count(radar, newDay, newHour, symbol);
   };
 
   const getMonthTable = (newMonth) => {
@@ -190,7 +189,7 @@ function Browser(props) {
               if (newDay === null || newDay == "Invalid Date") {
                 return;
               }
-              console.log(`DatePicker ${newDay.toISOString()}`);
+              // console.log(`DatePicker ${newDay.toISOString()}`);
               setDayHour(newDay, hour);
             }}
             onOpen={() => {

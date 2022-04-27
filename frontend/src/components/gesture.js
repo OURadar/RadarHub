@@ -136,7 +136,7 @@ class Gesture {
         e.offsetY < this.element.height - this.bounds.bottom
       ) {
         e.preventDefault();
-        if (e.ctrlKey) {
+        if (e.altKey) {
           this.handleMagnify(
             delta2scale(3 * e.deltaX),
             delta2scale(-3 * e.deltaY),

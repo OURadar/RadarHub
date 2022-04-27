@@ -14,7 +14,9 @@ class Polygon {
   async load(name, geometry) {
     if (this.busy) {
       console.log("Calling Polygon.load() too frequently.");
-      return;
+      return new Promise((resolve) => {
+        resolve(null);
+      });
     }
     if (name === undefined) {
       console.log("Input for update() undefined.");

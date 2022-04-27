@@ -131,6 +131,10 @@ class Overlay {
       const overlay = overlays[k];
       if (this.layers[k] === undefined || overlay.origin) {
         const buffer = await this.polyEngine.load(overlay.file, this.geometry);
+        if (buffer === null) {
+          console.log("Poly.load() returns null.");
+          continue;
+        }
         this.layers[k] = {
           name: buffer.name,
           points: this.regl.buffer({
