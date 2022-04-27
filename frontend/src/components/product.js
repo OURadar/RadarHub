@@ -302,6 +302,10 @@ class Product extends GLView {
         "color: mediumpurple",
         "color: inherit"
       );
+      // Perhaps update geo.range to max range
+      // const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
+      // const d = Math.sqrt(1 + geo.aspect ** 2);
+      // console.log(`r = ${r}   d = ${d}`);
       this.updateOrigin(sweep.longitude, sweep.latitude);
       this.overlay.purge();
       this.overlay.load();
@@ -405,40 +409,7 @@ class Product extends GLView {
   }
 
   fitToData() {
-    const geo = this.geometry;
-
-    // if (this.props.sweep) {
-    //   const sweep = this.props.sweep;
-    //   const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
-    //   const d = Math.sqrt(1 + geo.aspect ** 2);
-    //   console.log(`r = ${r}   d = ${d}`);
-    //   geo.fov = (2.5 * r) / d / common.earthRadius;
-    //   const e = vec3.fromValues(0, 0, 0.1 * common.earthRadius);
-    // } else {
-    //   geo.fov = 1.0;
-    // }
-
-    geo.fov = 1;
-
-    const r = geo.range;
-    const s = geo.eye.scale;
-    const e = vec3.fromValues(0, -0.01, r);
-
-    mat4.copy(geo.target.model, geo.model);
-    mat4.scale(geo.target.model, geo.target.model, geo.target.scale);
-    mat4.getTranslation(geo.target.translation, geo.target.model);
-    mat4.getRotation(geo.target.quaternion, geo.target.model);
-
-    // const b = r * geo.fov;
-    // vec3.set(s, b, b, r);
-    vec3.set(s, r, r, r);
-    mat4.copy(geo.eye.model, geo.model);
-    mat4.translate(geo.eye.model, geo.eye.model, e);
-    mat4.scale(geo.eye.model, geo.eye.model, s);
-    mat4.getTranslation(geo.eye.translation, geo.eye.model);
-    mat4.getRotation(geo.eye.quaternion, geo.eye.model);
-
-    geo.needsUpdate = true;
+    super.fitToData();
     this.setState({
       spin: false,
     });
