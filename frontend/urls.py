@@ -12,6 +12,7 @@ urlpatterns = [
     path('data/header/<str:name>/', archives.header, name='data-header'),
     path('data/binary/<str:name>/', archives.binary, name='data-binary'),
     path('data/month/<str:radar>/<str:day>/', archives.month, name='data-month-json'),
+    path('data/day/<str:radar>/<str:day>/', archives.day, name='data-day-json'),
     path('data/count/<str:radar>/<str:day>/', archives.count, name='data-count-json'),
     path('data/date/<str:radar>/', archives.date, name='data-date-json'),
     path('data/load/<str:name>/', archives.load, name='data-load-binary'),

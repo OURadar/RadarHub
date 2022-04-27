@@ -87,6 +87,29 @@ def month(_, radar, day):
 
     day - a string in the forms of
           - YYYYMMDD
+          - YYYYMMDD-HH
+'''
+def day(_, radar, day):
+    show = colorize('archive.day()', 'green')
+    show += '  ' + color_name_value('radar', radar)
+    print(show)
+    prefix = radar_prefix(radar)
+    data = {
+        'count': _count(prefix, day),
+        'hour': 0,
+        'list': [],
+    }
+    payload = json.dumps(data)
+    print(payload)
+    response = HttpResponse(payload, content_type='application/json')
+    return response
+
+'''
+    radar - a string of the radar name
+          - e.g., px1000, raxpol, or px10k
+
+    day - a string in the forms of
+          - YYYYMMDD
 '''
 def _count(prefix, day):
     date = time.strftime(r'%Y-%m-%d', time.strptime(day, r'%Y%m%d'))
@@ -94,7 +117,7 @@ def _count(prefix, day):
     if d:
         d = d[0]
         return [int(n) for n in d.hourly_count.split(',')]
-    return [0 for _ in range(24)]
+    return [0] * 24
 
 def count(_, radar, day):
     if settings.VERBOSE > 1:
@@ -124,8 +147,8 @@ def count(_, radar, day):
         - YYYYMMDD-S
         - YYYYMMDD
 '''
-def _list(prefix, hour_prod):
-    c = hour_prod.split('-');
+def _list(prefix, day_hour_prod):
+    c = day_hour_prod.split('-');
     if len(c) == 1:
         c.append('0000')
     elif len(c[1]) == 2:
@@ -140,16 +163,16 @@ def _list(prefix, hour_prod):
     matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     return [o.name for o in matches]
 
-def list(_, radar, hour_prod):
+def list(_, radar, day_hour_prod):
     if settings.VERBOSE > 1:
         show = colorize('archive.list()', 'green')
-        show += '   ' + color_name_value('hour_prod', hour_prod)
+        show += '   ' + color_name_value('day_hour_prod', day_hour_prod)
         print(show)
-    if radar == 'undefined' or hour_prod == 'undefined':
+    if radar == 'undefined' or day_hour_prod == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
     prefix = radar_prefix(radar)
     data = {
-        'list': _list(prefix, hour_prod)
+        'list': _list(prefix, day_hour_prod)
     }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
