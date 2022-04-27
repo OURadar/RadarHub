@@ -7,6 +7,177 @@ const earthRadius = 6371.0;
 
 //
 
+function speed_test() {
+  console.log("===========");
+  console.log("Speed Tests");
+  console.log("===========");
+  console.log("mat4.fromTranslation() -> mat4.fromQuat() -> mat4.multiply()");
+
+  let dest = mat4.create();
+  let quatMat = mat4.create();
+  let v = vec3.fromValues(1, 2, 4);
+  let q = quat.fromValues(1, 0, 0, 0.25);
+
+  let t = performance.now();
+
+  const count = 10000000;
+
+  for (let k = 0; k < count; k++) {
+    mat4.fromTranslation(dest, v);
+    mat4.fromQuat(quatMat, q);
+    mat4.multiply(dest, dest, quatMat);
+  }
+
+  dt1 = performance.now() - t;
+  dt1 *= 1000 / count;
+
+  console.log(`Elapsed time = ${dt1.toFixed(4)} ms`);
+  console.log(dest);
+  console.log("...");
+  console.log("mat4.fromRotationTranslation()");
+
+  t = performance.now();
+
+  for (let k = 0; k < count; k++) {
+    mat4.fromRotationTranslation(dest, q, v);
+  }
+
+  dt2 = performance.now() - t;
+  dt2 *= 1000 / count;
+
+  console.log(`Elapsed time = ${dt2.toFixed(4)} ms`);
+  console.log(dest);
+
+  let ratio = dt1 / dt2;
+
+  console.log(`Ratio = ${ratio.toFixed(2)}`);
+}
+
+function dolly_test() {
+  console.log("============");
+  console.log("dolll_test()");
+  console.log("============");
+
+  let longitude = -97.422413;
+  let latitude = 35.25527;
+
+  let f = 1.2;
+  let r = 169.0;
+  let v = vec3.fromValues(0, 0, earthRadius);
+  let e = vec3.fromValues(0, 0.01, r);
+
+  // The radar
+  let model = mat4.create();
+  let quaternion = quat.create();
+  quat.fromEuler(quaternion, -latitude, longitude, 0);
+  mat4.fromQuat(model, quaternion);
+  mat4.translate(model, model, v);
+  // mat4.getTranslation(v, model);
+  // mat4.getRotation(quaternion, model);
+  // mat4.fromRotationTranslation(model, quaternion, v);
+
+  // Te target
+  let targetModel = mat4.clone(model);
+  let targetTranslation = vec3.create();
+  let targetQuaternion = quat.create();
+  let targetScale = vec3.create();
+  mat4.scale(targetModel, targetModel, [0.03, 0.03, 0.03]);
+  mat4.getTranslation(targetTranslation, targetModel);
+  mat4.getRotation(targetQuaternion, targetModel);
+  mat4.getScaling(targetScale, targetModel);
+
+  // The eye
+  let eyeModel = mat4.clone(model);
+  let eyeTranslation = vec3.create();
+  let eyeQuaternion = quat.create();
+  let eyeScale = vec3.create();
+  let b = r * f;
+  mat4.translate(eyeModel, eyeModel, e);
+  // mat4.scale(eyeModel, eyeModel, [b, b, r]);
+  // mat4.scale(eyeModel, eyeModel, [r, r, r]);
+
+  mat4.getTranslation(eyeTranslation, eyeModel);
+  mat4.getRotation(eyeQuaternion, eyeModel);
+  mat4.getScaling(eyeScale, eyeModel);
+
+  // mat4.fromRotationTranslationScale(
+  //   eyeModel,
+  //   eyeQuaternion,
+  //   eyeTranslation,
+  //   eyeScale
+  // );
+
+  geo = {
+    fov: f,
+    eye: {
+      range: r,
+      model: eyeModel,
+      quaternion: eyeQuaternion,
+      translation: eyeTranslation,
+      scale: eyeScale,
+      up: vec3.fromValues(0, 1, 0),
+    },
+    target: {
+      range: earthRadius,
+      model: targetModel,
+      quaternion: targetQuaternion,
+      translation: targetTranslation,
+      scale: targetScale,
+    },
+    view: mat4.create(),
+    projection: mat4.create(),
+  };
+
+  show(geo);
+  console.log("...");
+
+  // getRotation(eyeQuaternion, eyeModel);
+  // console.log("---");
+  // quat.normalize(eyeQuaternion, eyeQuaternion);
+
+  // fromRotationTranslationScale(
+  //   eyeModel,
+  //   eyeQuaternion,
+  //   eyeTranslation,
+  //   eyeScale
+  // );
+  mat4.fromRotationTranslation(eyeModel, eyeQuaternion, eyeTranslation);
+  mat4.scale(eyeModel, eyeModel, eyeScale);
+
+  mat4.getTranslation(eyeTranslation, eyeModel);
+  mat4.getRotation(eyeQuaternion, eyeModel);
+  mat4.getScaling(eyeScale, eyeModel);
+
+  show(geo);
+
+  console.log("...");
+
+  // fromRotationTranslationScale(
+  //   eyeModel,
+  //   eyeQuaternion,
+  //   eyeTranslation,
+  //   eyeScale
+  // );
+  mat4.fromRotationTranslation(eyeModel, eyeQuaternion, eyeTranslation);
+  mat4.scale(eyeModel, eyeModel, eyeScale);
+
+  mat4.getTranslation(eyeTranslation, eyeModel);
+  mat4.getRotation(eyeQuaternion, eyeModel);
+  mat4.getScaling(eyeScale, eyeModel);
+
+  show(geo);
+
+  // updateProjection(geo);
+
+  // console.log("---");
+
+  // dolly(geo, 1);
+
+  // console.log("---");
+
+  // show(geo);
+}
+
 function dolly(geo, m) {
   let q = geo.eye.quaternion;
   let t = geo.eye.translation;
@@ -206,229 +377,8 @@ function fromRotationTranslationScale(out, q, v, s) {
 
 //
 
-function speed_test() {
-  console.log("===========");
-  console.log("Speed Tests");
-  console.log("===========");
-  console.log("mat4.fromTranslation() -> mat4.fromQuat() -> mat4.multiply()");
+console.log("Running tests ...");
 
-  let dest = mat4.create();
-  let quatMat = mat4.create();
-  let v = vec3.fromValues(1, 2, 4);
-  let q = quat.fromValues(1, 0, 0, 0.25);
+dolly_test();
 
-  let t = performance.now();
-
-  const count = 10000000;
-
-  for (let k = 0; k < count; k++) {
-    mat4.fromTranslation(dest, v);
-    mat4.fromQuat(quatMat, q);
-    mat4.multiply(dest, dest, quatMat);
-  }
-
-  dt1 = performance.now() - t;
-
-  console.log(`Elapsed time = ${dt1.toFixed(4)} ms`);
-  console.log(dest);
-  console.log("...");
-  console.log("mat4.fromRotationTranslation()");
-
-  t = performance.now();
-
-  for (let k = 0; k < count; k++) {
-    mat4.fromRotationTranslation(dest, q, v);
-  }
-
-  dt2 = performance.now() - t;
-
-  console.log(`Elapsed time = ${dt2.toFixed(4)} ms`);
-  console.log(dest);
-
-  let ratio = dt1 / dt2;
-
-  console.log(`Ratio = ${ratio.toFixed(2)}`);
-}
-
-function dolly_test() {
-  console.log("==========");
-  console.log("dolly_test");
-  console.log("==========");
-
-  let longitude = -97.422413;
-  let latitude = 35.25527;
-
-  let f = 1.2;
-  let r = 169.0;
-  let v = vec3.fromValues(0, 0, earthRadius);
-  let e = vec3.fromValues(0, 0.01, r);
-
-  // The radar
-  let model = mat4.create();
-  let quaternion = quat.create();
-  quat.fromEuler(quaternion, -latitude, longitude, 0);
-  mat4.fromQuat(model, quaternion);
-  mat4.translate(model, model, v);
-  // mat4.getTranslation(v, model);
-  // mat4.getRotation(quaternion, model);
-  // mat4.fromRotationTranslation(model, quaternion, v);
-
-  // Te target
-  let targetModel = mat4.clone(model);
-  let targetTranslation = vec3.create();
-  let targetQuaternion = quat.create();
-  let targetScale = vec3.create();
-  mat4.scale(targetModel, targetModel, [0.03, 0.03, 0.03]);
-  mat4.getTranslation(targetTranslation, targetModel);
-  mat4.getRotation(targetQuaternion, targetModel);
-  mat4.getScaling(targetScale, targetModel);
-
-  // The eye
-  let eyeModel = mat4.clone(model);
-  let eyeTranslation = vec3.create();
-  let eyeQuaternion = quat.create();
-  let eyeScale = vec3.create();
-  let b = r * f;
-  mat4.translate(eyeModel, eyeModel, e);
-  // mat4.scale(eyeModel, eyeModel, [b, b, r]);
-  // mat4.scale(eyeModel, eyeModel, [r, r, r]);
-
-  mat4.getTranslation(eyeTranslation, eyeModel);
-  mat4.getRotation(eyeQuaternion, eyeModel);
-  mat4.getScaling(eyeScale, eyeModel);
-
-  // mat4.fromRotationTranslationScale(
-  //   eyeModel,
-  //   eyeQuaternion,
-  //   eyeTranslation,
-  //   eyeScale
-  // );
-
-  geo = {
-    fov: f,
-    eye: {
-      range: r,
-      model: eyeModel,
-      quaternion: eyeQuaternion,
-      translation: eyeTranslation,
-      scale: eyeScale,
-      up: vec3.fromValues(0, 1, 0),
-    },
-    target: {
-      range: earthRadius,
-      model: targetModel,
-      quaternion: targetQuaternion,
-      translation: targetTranslation,
-      scale: targetScale,
-    },
-    view: mat4.create(),
-    projection: mat4.create(),
-  };
-
-  show(geo);
-  console.log("---");
-
-  // getRotation(eyeQuaternion, eyeModel);
-  // console.log("---");
-  // quat.normalize(eyeQuaternion, eyeQuaternion);
-
-  // fromRotationTranslationScale(
-  //   eyeModel,
-  //   eyeQuaternion,
-  //   eyeTranslation,
-  //   eyeScale
-  // );
-  mat4.fromRotationTranslation(eyeModel, eyeQuaternion, eyeTranslation);
-  mat4.scale(eyeModel, eyeModel, eyeScale);
-
-  mat4.getTranslation(eyeTranslation, eyeModel);
-  mat4.getRotation(eyeQuaternion, eyeModel);
-  mat4.getScaling(eyeScale, eyeModel);
-
-  show(geo);
-
-  console.log("---");
-
-  fromRotationTranslationScale(
-    eyeModel,
-    eyeQuaternion,
-    eyeTranslation,
-    eyeScale
-  );
-
-  mat4.getTranslation(eyeTranslation, eyeModel);
-  mat4.getRotation(eyeQuaternion, eyeModel);
-  mat4.getScaling(eyeScale, eyeModel);
-
-  show(geo);
-
-  // updateProjection(geo);
-
-  // console.log("---");
-
-  // dolly(geo, 1);
-
-  // console.log("---");
-
-  // show(geo);
-}
-
-function recon_test() {
-  console.log("==========");
-  console.log("recon_test");
-  console.log("==========");
-
-  // Construct an abitrary model matrix
-  let m = mat4.create();
-  let q = quat.create();
-  let v = vec3.fromValues(100, 200, 300);
-  // let s = vec3.fromValues(1, 1, 2); // non-uniform
-  let s = vec3.fromValues(2, 2, 2); // uniform
-
-  // The actual construction process
-  quat.fromEuler(q, -69.42, 42.69, 5);
-  mat4.fromQuat(m, q);
-  mat4.translate(m, m, v);
-  mat4.scale(m, m, s);
-
-  // Show the values
-  console.log("m = " + mat4.string(m));
-
-  // Get the rotation, translation, and scaling
-  mat4.getRotation(q, m);
-  mat4.getTranslation(v, m);
-  mat4.getScaling(s, m);
-
-  // Reconstruct the model m from q, v, s, call this r
-  let r = mat4.fromRotationTranslationScale([], q, v, s);
-
-  console.log("...");
-
-  // Should be identical to the original m
-  const show = (m, q, v, s) => {
-    console.log("q = " + quat.string(q));
-    console.log("v = " + vec3.string(v));
-    console.log("s = " + vec3.string(s));
-    console.log("m = " + mat4.string(m));
-  };
-  show(r, q, v, s);
-
-  // Get the rotation, translation, and scaling
-  mat4.getRotation(q, m);
-  mat4.getTranslation(v, m);
-  mat4.getScaling(s, m);
-
-  // Reconstruct the model m from q, v, s, call this r
-  let r2 = mat4.fromRotationTranslationScale([], q, v, s);
-
-  console.log("...");
-
-  // Should be identical to the original m
-  show(r2, q, v, s);
-}
-
-//
-
-// speed_test();
-// dolly_test();
-recon_test();
+speed_test();
