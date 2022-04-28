@@ -87,29 +87,6 @@ def month(_, radar, day):
 
     day - a string in the forms of
           - YYYYMMDD
-          - YYYYMMDD-HH
-'''
-def day(_, radar, day):
-    show = colorize('archive.day()', 'green')
-    show += '  ' + color_name_value('radar', radar)
-    print(show)
-    prefix = radar_prefix(radar)
-    data = {
-        'count': _count(prefix, day),
-        'hour': 0,
-        'list': [],
-    }
-    payload = json.dumps(data)
-    print(payload)
-    response = HttpResponse(payload, content_type='application/json')
-    return response
-
-'''
-    radar - a string of the radar name
-          - e.g., px1000, raxpol, or px10k
-
-    day - a string in the forms of
-          - YYYYMMDD
 '''
 def _count(prefix, day):
     date = time.strftime(r'%Y-%m-%d', time.strptime(day, r'%Y%m%d'))
@@ -140,12 +117,9 @@ def count(_, radar, day):
           - e.g., px1000, raxpol, or px10k
 
     hour_prod - a string with day, hour, and product symbol in the forms of
-        - YYYYMMDD-HHMM-S
-        - YYYYMMDD-HHMM
+        - YYYYMMDD-HH00-S
         - YYYYMMDD-HH-S
-        - YYYYMMDD-HH
-        - YYYYMMDD-S
-        - YYYYMMDD
+        - YYYYMMDD-HH    (assumes Z here)
 '''
 def _list(prefix, day_hour_prod):
     c = day_hour_prod.split('-');
@@ -171,8 +145,37 @@ def list(_, radar, day_hour_prod):
     if radar == 'undefined' or day_hour_prod == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
     prefix = radar_prefix(radar)
+    c = day_hour_prod.split('-')
+    day = c[0]
+    hourly_count = _count(prefix, day)
+    if len(c) > 1:
+        hour = int(c[1][:2])
+    else:
+        hour = 0
+    if len(c) == 3:
+        prod = c[2]
+    else:
+        prod = 'Z'
+    if hourly_count[hour] == 0:
+        b = [i for i, v in enumerate(hourly_count) if v]
+        if len(b):
+            message = f'Hour {hour} has no files. Selected hour {b[0]} ...'
+            hour = b[0]
+            day_hour_prod = f'{day}-{hour:02d}00-{prod}'
+            show = colorize('archive.list()', 'green')
+            show += '   ' + color_name_value('day_hour_prod', day_hour_prod)
+            print(show)
+        else:
+            message = 'All zeros in hourly_count'
+            hour = -1
+    else:
+        message = 'okay'
+    print(day_hour_prod)
     data = {
-        'list': _list(prefix, day_hour_prod)
+        'count': _count(prefix, day),
+        'hour': hour,
+        'list': _list(prefix, day_hour_prod) if hour != -1 else [],
+        'message': message
     }
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
