@@ -274,10 +274,13 @@ function list(radar, day, hour, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
+          // console.log(buffer);
           grid.dateTimeString = dateTimeString;
           grid.day = day;
-          grid.hour = hour;
+          grid.hour = buffer.hour;
           grid.symbol = symbol;
+          grid.hourlyAvailability = buffer.count;
+          grid.latestHour = buffer.last;
           grid.fileList = buffer.list;
           grid.fileListGrouped = {};
           grid.fileList.forEach((file, index) => {

@@ -89,7 +89,7 @@ def month(_, radar, day):
           - YYYYMMDD
 '''
 def _count(prefix, day):
-    date = time.strftime(r'%Y-%m-%d', time.strptime(day, r'%Y%m%d'))
+    date = time.strftime(r'%Y-%m-%d', time.strptime(day[:8], r'%Y%m%d'))
     d = Day.objects.filter(date=date, name=prefix)
     if d:
         d = d[0]
@@ -121,8 +121,8 @@ def count(_, radar, day):
         - YYYYMMDD-HH-S
         - YYYYMMDD-HH    (assumes Z here)
 '''
-def _list(prefix, day_hour_prod):
-    c = day_hour_prod.split('-');
+def _list(prefix, day_hour_symbol):
+    c = day_hour_symbol.split('-');
     if len(c) == 1:
         c.append('0000')
     elif len(c[1]) == 2:
@@ -137,15 +137,15 @@ def _list(prefix, day_hour_prod):
     matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     return [o.name for o in matches]
 
-def list(_, radar, day_hour_prod):
+def list(_, radar, day_hour_symbol):
     if settings.VERBOSE > 1:
         show = colorize('archive.list()', 'green')
-        show += '   ' + color_name_value('day_hour_prod', day_hour_prod)
+        show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
         print(show)
-    if radar == 'undefined' or day_hour_prod == 'undefined':
+    if radar == 'undefined' or day_hour_symbol == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
     prefix = radar_prefix(radar)
-    c = day_hour_prod.split('-')
+    c = day_hour_symbol.split('-')
     day = c[0]
     hourly_count = _count(prefix, day)
     if len(c) > 1:
@@ -153,28 +153,31 @@ def list(_, radar, day_hour_prod):
     else:
         hour = 0
     if len(c) == 3:
-        prod = c[2]
+        symbol = c[2]
     else:
-        prod = 'Z'
+        symbol = 'Z'
+    hours_with_data = [i for i, v in enumerate(hourly_count) if v]
     if hourly_count[hour] == 0:
-        b = [i for i, v in enumerate(hourly_count) if v]
-        if len(b):
-            message = f'Hour {hour} has no files. Selected hour {b[0]} ...'
-            hour = b[0]
-            day_hour_prod = f'{day}-{hour:02d}00-{prod}'
-            show = colorize('archive.list()', 'green')
-            show += '   ' + color_name_value('day_hour_prod', day_hour_prod)
-            print(show)
+        if len(hours_with_data):
+            message = f'Hour {hour} has no files. Auto-select hour {hours_with_data[0]}.'
+            hour = hours_with_data[0]
+            day_hour_symbol = f'{day}-{hour:02d}00-{symbol}'
+            if settings.VERBOSE > 1:
+                show = colorize('archive.list()', 'green')
+                show += '   ' + colorize('override', 'red')
+                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
+                print(show)
         else:
             message = 'All zeros in hourly_count'
             hour = -1
     else:
         message = 'okay'
-    print(day_hour_prod)
     data = {
         'count': _count(prefix, day),
         'hour': hour,
-        'list': _list(prefix, day_hour_prod) if hour != -1 else [],
+        'last': hours_with_data[-1],
+        'list': _list(prefix, day_hour_symbol) if hour != -1 else [],
+        'symbol': symbol,
         'message': message
     }
     payload = json.dumps(data)
