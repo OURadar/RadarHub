@@ -175,7 +175,7 @@ class Archive {
     if (this.state.verbose) {
       console.log(
         `%carchive.count()%c` +
-          `   day = ${day.toISOString().slice(0, 10)} ${hour} ${symbol}` +
+          `   day = ${day.toISOString().slice(0, 10)}` +
           `   hour = ${hour}   symbol = ${symbol}`,
         "color: lightseagreen",
         "color: inherit"
@@ -193,8 +193,15 @@ class Archive {
       return;
     }
     this.state.hourlyAvailabilityUpdating = true;
+    // this.worker.postMessage({
+    //   task: "count",
+    //   name: radar,
+    //   day: day,
+    //   hour: hour,
+    //   symbol: symbol,
+    // });
     this.worker.postMessage({
-      task: "count",
+      task: "list",
       name: radar,
       day: day,
       hour: hour,
