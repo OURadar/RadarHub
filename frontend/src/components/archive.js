@@ -32,7 +32,7 @@ class Archive {
       switchingProduct: false,
       sweepLoading: false,
       loadCount: 0,
-      verbose: 0,
+      verbose: 1,
       tic: 0,
     };
     this.ageTimer = setInterval(() => this.updateAge(), 1000);
@@ -79,26 +79,30 @@ class Archive {
             "color: inherit"
           );
         }
-        let hour = this.grid.hour;
         let index = this.grid.index;
         this.grid = payload;
-        if (hour != this.grid.hour || index != this.grid.index) {
-          if (this.grid.index >= 0) {
-            this.state.loadCount = 0;
-            this.loadByIndex(this.grid.index);
-          } else if (this.grid.index == -1) {
-            let fileDayString = this.grid.latestFile.split("-")[1];
-            let gridDayString = this.grid.dateTimeString.split("-")[0];
-            console.log(`file: ${fileDayString}   grid: ${gridDayString}`);
-            if (fileDayString == gridDayString) {
-              this.state.loadCount = 0;
-              this.loadByName(this.grid.latestFile);
-            }
-          }
-        } else if (this.state.switchingProduct) {
-          this.state.loadCount = 0;
+        if (this.state.switchingProduct) {
           this.state.switchingProduct = false;
+          this.state.loadCount = 0;
+          this.grid.index = index;
           this.loadByIndex(this.grid.index);
+        } else if (this.grid.index >= 0) {
+          this.state.loadCount = 0;
+          this.loadByIndex(this.grid.index);
+        } else if (this.grid.index == -1) {
+          let fileDayString = this.grid.latestFile.split("-")[1];
+          let gridDayString = this.grid.dateTimeString.split("-")[0];
+          console.log(
+            `%carchive.onmessage()%c list` +
+              `   fileDayString: ${fileDayString}` +
+              `   gridDayString: ${gridDayString}`,
+            "color: lightseagreen",
+            "color: inherit"
+          );
+          // if (fileDayString == gridDayString) {
+          //   this.state.loadCount = 0;
+          //   this.loadByName(this.grid.latestFile);
+          // }
         }
       } else if (type == "load") {
         this.data.sweep = payload;
