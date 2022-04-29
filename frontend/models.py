@@ -216,9 +216,9 @@ class Day(models.Model):
         return [f'{day} {first:02d}:00Z', f'{day} {last:02d}:59:59.9Z']
 
     def weather_condition(self):
-        if self.blue == 0 and self.green == 0:
-            return f'unknown {self.blue} {self.green} {self.orange} {self.red}'
         cond = 0
+        if self.blue == 0 and self.green == 0:
+            print(f'{self.date} {self.blue} {self.green} {self.orange} {self.red}')
         if self.blue < 10:
             cond = 1
         elif self.green < 300:
