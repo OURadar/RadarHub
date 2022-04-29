@@ -32,7 +32,7 @@ class Archive {
       switchingProduct: false,
       sweepLoading: false,
       loadCount: 0,
-      verbose: 1,
+      verbose: 0,
       tic: 0,
     };
     this.ageTimer = setInterval(() => this.updateAge(), 1000);
