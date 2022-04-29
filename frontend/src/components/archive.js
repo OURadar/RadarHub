@@ -99,10 +99,10 @@ class Archive {
             "color: lightseagreen",
             "color: inherit"
           );
-          // if (fileDayString == gridDayString) {
-          //   this.state.loadCount = 0;
-          //   this.loadByName(this.grid.latestFile);
-          // }
+          if (fileDayString == gridDayString) {
+            this.state.loadCount = 0;
+            this.loadByName(this.grid.latestFile);
+          }
         }
       } else if (type == "load") {
         this.data.sweep = payload;
