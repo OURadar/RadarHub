@@ -42,117 +42,117 @@ class Archive {
     this.onupdate = () => {};
     this.onlist = () => {};
 
-    this.worker = new Worker("/static/frontend/archive.js?name=levi");
-    this.worker.onmessage = ({ data: { type, payload } }) => {
-      if (type == "message") {
-        this.showMessage(payload, 2500);
-      } else if (type == "count") {
-        this.grid.hourlyAvailability = payload.hourlyAvailability;
-        this.state.hourlyAvailabilityUpdating = false;
-        let hour = this.grid.hour;
-        if (hour == -1 || this.grid.hourlyAvailability[hour] == 0) {
-          let best = this.grid.hourlyAvailability.findIndex((x) => x > 0);
-          if (best >= 0) {
-            hour = best;
-            if (this.state.verbose) {
-              console.log(
-                `%carchive.onmessage()%c count   No data.  hour = ${hour} -> ${best} ...`,
-                "color: lightseagreen",
-                "color: inherit"
-              );
-            }
-          } else {
-            console.log("Unexpeted results.");
-          }
-        }
-        this.list(this.radar, payload.day, hour, this.grid.symbol);
-      } else if (type == "list") {
-        this.state.fileListUpdating = false;
-        if (this.state.verbose) {
-          console.log(
-            `%carchive.onmessage()%c list` +
-              `   ${this.grid.dateTimeString}` +
-              `   ${payload.latestFile}` +
-              `   hour = ${this.grid.hour} -> ${payload.hour}` +
-              `   index = ${this.grid.index} -> ${payload.index}`,
-            "color: lightseagreen",
-            "color: inherit"
-          );
-        }
-        let index = this.grid.index;
-        this.grid = payload;
-        if (this.state.switchingProduct) {
-          this.state.switchingProduct = false;
-          this.state.loadCount = 0;
-          this.grid.index = index;
-          this.loadByIndex(this.grid.index);
-        } else if (this.grid.index >= 0) {
-          this.state.loadCount = 0;
-          this.loadByIndex(this.grid.index);
-        } else if (this.grid.index == -1) {
-          let fileDayString = this.grid.latestFile.split("-")[1];
-          let gridDayString = this.grid.dateTimeString.split("-")[0];
-          console.log(
-            `%carchive.onmessage()%c list` +
-              `   fileDayString: ${fileDayString}` +
-              `   gridDayString: ${gridDayString}`,
-            "color: lightseagreen",
-            "color: inherit"
-          );
-          if (fileDayString == gridDayString) {
-            this.state.loadCount = 0;
-            this.loadByName(this.grid.latestFile);
-          }
-        }
-      } else if (type == "load") {
-        this.data.sweep = payload;
-        // console.log(this.data.sweep);
-        this.updateAge();
-        this.state.sweepLoading = false;
-        if (this.state.verbose) {
-          console.log(
-            `%carchive.onmessage()%c load` +
-              `   hour = ${this.grid.hour}` +
-              `   latestHour = ${this.grid.latestHour}` +
-              `   loadCount = ${this.state.loadCount}`,
-            "color: lightseagreen",
-            "color: inherit"
-          );
-        }
-        if (
-          this.grid.latestHour != this.grid.hour ||
-          this.state.loadCount > 1
-        ) {
-          this.disableLiveUpdate();
-        }
-        this.showMessage(`${payload.name} loaded`);
-      } else if (type == "month") {
-        this.grid.dailyAvailability = payload;
-        this.state.dailyAvailabilityUpdating = false;
-      } else if (type == "reset") {
-        this.showMessage(payload);
-        this.data.sweep = null;
-        this.grid.index = -1;
-        this.state.sweepLoading = false;
-      } else if (type == "state") {
-        if (payload.state == "connect") {
-          this.state.liveUpdate = true;
-        } else if (payload.state == "disconnect") {
-          this.state.liveUpdate = false;
-        }
-        this.showMessage(payload.message, 2500);
-      }
-      this.onupdate(this.state.tic++);
-    };
-
-    // console.log(this.worker.data);
-
+    this.handleMessage = this.handleMessage.bind(this);
     this.showMessage = this.showMessage.bind(this);
     this.month = this.month.bind(this);
     this.count = this.count.bind(this);
     this.list = this.list.bind(this);
     this.load = this.load.bind(this);
     this.updateAge = this.updateAge.bind(this);
+
+    this.worker = new Worker("/static/frontend/archive.js?name=leonhardt");
+    this.worker.onmessage = this.handleMessage;
+
+    // console.log(this.worker.data);
+  }
+
+  handleMessage({ data: { type, payload } }) {
+    if (type == "message") {
+      this.showMessage(payload, 2500);
+    } else if (type == "count") {
+      this.grid.hourlyAvailability = payload.hourlyAvailability;
+      this.state.hourlyAvailabilityUpdating = false;
+      let hour = this.grid.hour;
+      if (hour == -1 || this.grid.hourlyAvailability[hour] == 0) {
+        let best = this.grid.hourlyAvailability.findIndex((x) => x > 0);
+        if (best >= 0) {
+          hour = best;
+          if (this.state.verbose) {
+            console.log(
+              `%carchive.onmessage()%c count   No data.  hour = ${hour} -> ${best} ...`,
+              "color: lightseagreen",
+              "color: inherit"
+            );
+          }
+        } else {
+          console.log("Unexpeted results.");
+        }
+      }
+      this.list(this.radar, payload.day, hour, this.grid.symbol);
+    } else if (type == "list") {
+      if (this.state.verbose) {
+        console.log(
+          `%carchive.onmessage()%c list` +
+            `   ${this.grid.dateTimeString}` +
+            `   ${payload.latestFile}` +
+            `   hour = ${this.grid.hour} -> ${payload.hour}` +
+            `   index = ${this.grid.index} -> ${payload.index}`,
+          "color: lightseagreen",
+          "color: inherit"
+        );
+      }
+      let index = this.grid.index;
+      this.grid = payload;
+      if (this.state.switchingProduct) {
+        this.state.switchingProduct = false;
+        this.state.loadCount = 0;
+        this.grid.index = index;
+        this.loadByIndex(this.grid.index);
+      } else if (this.grid.index >= 0) {
+        this.state.loadCount = 0;
+        this.loadByIndex(this.grid.index);
+      } else if (this.grid.index == -1) {
+        let fileDayString = this.grid.latestFile.split("-")[1];
+        let gridDayString = this.grid.dateTimeString.split("-")[0];
+        console.log(
+          `%carchive.onmessage()%c list` +
+            `   fileDayString: ${fileDayString}` +
+            `   gridDayString: ${gridDayString}`,
+          "color: lightseagreen",
+          "color: inherit"
+        );
+        if (fileDayString == gridDayString) {
+          this.state.loadCount = 0;
+          this.loadByName(this.grid.latestFile);
+        }
+      }
+      this.state.fileListUpdating = false;
+    } else if (type == "load") {
+      this.data.sweep = payload;
+      // console.log(this.data.sweep);
+      this.updateAge();
+      this.state.sweepLoading = false;
+      if (this.state.verbose) {
+        console.log(
+          `%carchive.onmessage()%c load` +
+            `   hour = ${this.grid.hour}` +
+            `   latestHour = ${this.grid.latestHour}` +
+            `   loadCount = ${this.state.loadCount}`,
+          "color: lightseagreen",
+          "color: inherit"
+        );
+      }
+      if (this.grid.latestHour != this.grid.hour || this.state.loadCount > 1) {
+        this.disableLiveUpdate();
+      }
+      this.showMessage(`${payload.name} loaded`);
+    } else if (type == "month") {
+      this.grid.dailyAvailability = payload;
+      this.state.dailyAvailabilityUpdating = false;
+    } else if (type == "reset") {
+      this.showMessage(payload);
+      this.data.sweep = null;
+      this.grid.index = -1;
+      this.state.sweepLoading = false;
+    } else if (type == "state") {
+      if (payload.state == "connect") {
+        this.state.liveUpdate = true;
+      } else if (payload.state == "disconnect") {
+        this.state.liveUpdate = false;
+      }
+      this.showMessage(payload.message, 2500);
+    }
+    this.onupdate(this.state.tic++);
   }
 
   showMessage(message, duration = 2000) {
