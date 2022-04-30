@@ -44,16 +44,14 @@ class Archive {
 
     this.handleMessage = this.handleMessage.bind(this);
     this.showMessage = this.showMessage.bind(this);
-    this.month = this.month.bind(this);
     this.count = this.count.bind(this);
     this.list = this.list.bind(this);
     this.load = this.load.bind(this);
+    this.month = this.month.bind(this);
     this.updateAge = this.updateAge.bind(this);
 
     this.worker = new Worker("/static/frontend/archive.js?name=leonhardt");
     this.worker.onmessage = this.handleMessage;
-
-    // console.log(this.worker.data);
   }
 
   handleMessage({ data: { type, payload } }) {
