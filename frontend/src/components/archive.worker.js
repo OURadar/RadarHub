@@ -32,6 +32,7 @@ let data = {
 let state = {
   verbose: 1,
 };
+const namecolor = "#bf9140";
 
 const sweepParser = new Parser()
   .endianess("little")
@@ -137,8 +138,8 @@ function updateListWithFile(file) {
   if (state.verbose) {
     console.info(
       `%carchive.worker.updateListWithFile()%c ${file} ${day}`,
-      "color: goldenrod",
-      "color: inherit"
+      `color: ${namecolor}`,
+      ""
     );
   }
   const listHour = elements[2].slice(0, 2);
@@ -152,8 +153,8 @@ function updateListWithFile(file) {
     if (state.verbose) {
       console.info(
         `%carchive.worker.updateListWithFile()%c   ${day} ${grid.hour}`,
-        "color: goldenrod",
-        "color: inherit"
+        `color: ${namecolor}`,
+        ""
       );
     }
   }
@@ -198,8 +199,8 @@ function createSweep(name = "dummy") {
 function month(radar, day) {
   console.info(
     `%carchive.worker.month()%c ${radar} ${day}`,
-    "color: goldenrod",
-    "color: inherit"
+    `color: ${namecolor}`,
+    ""
   );
   const url = `/data/month/${radar}/${day}/`;
   fetch(url)
@@ -224,8 +225,8 @@ function count(radar, day) {
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
   console.info(
     `%carchive.worker.count()%c ${radar} ${dayString} (${t})`,
-    "color: goldenrod",
-    "color: inherit"
+    `color: ${namecolor}`,
+    ""
   );
   let y = parseInt(dayString.slice(0, 4));
   if (y < 2012) {
@@ -269,8 +270,8 @@ function list(radar, day, hour, symbol) {
   let dateTimeString = `${dayString}-${hourString}00`;
   console.info(
     `%carchive.worker.list()%c ${radar} ${dateTimeString} ${symbol}`,
-    "color: goldenrod",
-    "color: inherit"
+    `color: ${namecolor}`,
+    ""
   );
   const url = `/data/list/${radar}/${dateTimeString}-${symbol}/`;
   fetch(url)
@@ -321,7 +322,7 @@ function load(name) {
   if (state.verbose) {
     console.info(
       `%carchiver.worker.load() %c${url}`,
-      "color: goldenrod",
+      `color: ${namecolor}`,
       "color: dodgerblue"
     );
     // logger.info("archiver.worker.load()", url);
@@ -431,9 +432,9 @@ function geometry(sweep) {
 
 function catchup(radar) {
   console.info(
-    `%carchive.worker.catchup()%c radar = ${radar}`,
-    "color: goldenrod",
-    "color: inherit"
+    `%carchive.worker.catchup()%c ${radar}`,
+    `color: ${namecolor}`,
+    "color: dodgerblue"
   );
   fetch(`/data/catchup/${radar}/`).then((response) => {
     if (response.status == 200) {
@@ -443,10 +444,11 @@ function catchup(radar) {
           let day = new Date(buffer.dayISOString);
           if (state.verbose) {
             console.info(
-              `%carchive.worker.catchup()%c dateString = ${buffer.dateString}` +
+              `%carchive.worker.catchup()%c` +
+                `   dateString = ${buffer.dateString}` +
                 `   hour = ${buffer.hour}  `,
-              "color: goldenrod",
-              "color: inherit"
+              `color: ${namecolor}`,
+              ""
             );
           }
           grid.dateTimeString = buffer.dateString;
