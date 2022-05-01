@@ -9,6 +9,7 @@
 
 import { Parser } from "binary-parser";
 import { deg2rad, clamp } from "./common";
+// import { logger } from "./logger";
 
 let source = null;
 let radar;
@@ -75,10 +76,10 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
 function connect(newRadar) {
   radar = newRadar;
   if (source?.readyState == 1) {
-    console.log("Connection exists");
+    console.info("Closing existing connection ...");
     source.close();
   }
-  console.log(`Connecting live update to ${radar} ...`);
+  console.info(`Connecting live update to ${radar} ...`);
   source = new EventSource("/events/");
   source.addEventListener(radar, (event) => {
     const payload = JSON.parse(event.data);
@@ -115,7 +116,7 @@ function disconnect() {
   if (source === null || source.readyState == 2) {
     return;
   }
-  console.log("Disconnecting live update ...");
+  console.info("Disconnecting live update ...");
   source.close();
   self.postMessage({
     type: "state",
@@ -135,7 +136,7 @@ function updateListWithFile(file) {
   const scan = elements[3];
   const s = elements[1];
   const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
-  console.log(
+  console.info(
     `%carchive.worker.updateListWithFile()%c ${file} ${day}`,
     "color: tan",
     "color: inherit"
@@ -148,7 +149,7 @@ function updateListWithFile(file) {
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
     grid.day = new Date(day);
-    console.log(
+    console.info(
       `%carchive.worker.updateListWithFile()%c   ${day} ${grid.hour}`,
       "color: tan",
       "color: inherit"
@@ -158,7 +159,7 @@ function updateListWithFile(file) {
     grid.fileListGrouped[scan] = [];
   }
   if (grid.fileList.indexOf(file) > 0) {
-    console.log(`File ${file} exists.`);
+    console.warn(`File ${file} exists.`);
     return;
   }
   const index = grid.fileList.length;
@@ -193,7 +194,7 @@ function createSweep(name = "dummy") {
 }
 
 function month(radar, day) {
-  console.log(
+  console.info(
     `%carchive.worker.month()%c ${radar} ${day}`,
     "color: tan",
     "color: inherit"
@@ -212,21 +213,21 @@ function month(radar, day) {
         });
     })
     .catch((error) => {
-      console.log(`Unexpected error ${error}`);
+      console.error(`Unexpected error ${error}`);
     });
 }
 
 function count(radar, day) {
   let t = day instanceof Date ? "Date" : "Not Date";
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
-  console.log(
+  console.info(
     `%carchive.worker.count()%c ${radar} ${dayString} (${t})`,
     "color: tan",
     "color: inherit"
   );
   let y = parseInt(dayString.slice(0, 4));
   if (y < 2012) {
-    console.log("No data prior to 2013");
+    console.info("No data prior to 2013");
     return;
   }
   const url = `/data/count/${radar}/${dayString}/`;
@@ -256,7 +257,7 @@ function count(radar, day) {
         });
     })
     .catch((error) => {
-      console.log(`Unexpected error ${error}`);
+      console.error(`Unexpected error ${error}`);
     });
 }
 
@@ -264,7 +265,7 @@ function list(radar, day, hour, symbol) {
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
   let hourString = hour.toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
-  console.log(
+  console.info(
     `%carchive.worker.list()%c ${radar} ${dateTimeString} ${symbol}`,
     "color: tan",
     "color: inherit"
@@ -306,17 +307,18 @@ function list(radar, day, hour, symbol) {
         });
     })
     .catch((error) => {
-      console.log(`Unexpected error ${error}`);
+      console.error(`Unexpected error ${error}`);
     });
 }
 
 function load(name) {
   const url = `/data/load/${name}/`;
-  console.log(
+  console.info(
     `%carchiver.worker.load() %c${url}`,
     "color: tan",
     "color: dodgerblue"
   );
+  // logger.info("archiver.worker.load()", url);
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -342,13 +344,13 @@ function load(name) {
         });
       else {
         response.text().then((text) => {
-          console.log(text);
+          console.info(text);
           self.postMessage({ type: "reset", payload: text });
         });
       }
     })
     .catch((error) => {
-      console.log(`Unexpected error ${error}`);
+      console.error(`Unexpected error ${error}`);
     });
 }
 
@@ -421,7 +423,7 @@ function geometry(sweep) {
 }
 
 function catchup(radar) {
-  console.log(
+  console.info(
     `%carchive.worker.catchup()%c radar = ${radar}`,
     "color: tan",
     "color: inherit"
@@ -432,7 +434,7 @@ function catchup(radar) {
         .json()
         .then((buffer) => {
           let day = new Date(buffer.dayISOString);
-          console.log(
+          console.info(
             `%carchive.worker.catchup()%c dateString = ${buffer.dateString}` +
               `   hour = ${buffer.hour}  `,
             "color: tan",
@@ -453,7 +455,7 @@ function catchup(radar) {
             }
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
-          console.log(grid.fileListGrouped);
+          console.debug(grid.fileListGrouped);
           let scanType = "E4.0";
           if (scanType in grid.fileListGrouped) {
             grid.index = grid.fileListGrouped[scanType].slice(-1)[0].index;
@@ -467,9 +469,9 @@ function catchup(radar) {
           return radar;
         })
         .then((radar) => connect(radar))
-        .catch((error) => console.log(`Unexpected error ${error}`));
+        .catch((error) => console.error(`Unexpected error ${error}`));
     } else {
-      console.log("Unable to catch up.");
+      console.error("Unable to catch up.");
     }
   });
 }

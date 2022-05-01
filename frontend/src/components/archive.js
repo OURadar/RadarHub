@@ -50,7 +50,7 @@ class Archive {
     this.month = this.month.bind(this);
     this.updateAge = this.updateAge.bind(this);
 
-    this.worker = new Worker("/static/frontend/archive.js?name=leonhardt");
+    this.worker = new Worker("/static/frontend/archive.js?name=1");
     this.worker.onmessage = this.handleMessage;
   }
 
@@ -109,8 +109,9 @@ class Archive {
           "color: lightseagreen",
           "color: inherit"
         );
-        if (fileDayString == gridDayString) {
+        if (this.state.liveUpdate) {
           this.state.loadCount = 0;
+          console.log(`Live update with ${this.grid.latestFile}`);
           this.loadByName(this.grid.latestFile);
         }
       }
