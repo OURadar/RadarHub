@@ -5,6 +5,9 @@ import pprint
 import struct
 import datetime
 import numpy as np
+
+from functools import lru_cache
+
 from django.http import HttpResponse
 from django.conf import settings
 
@@ -187,11 +190,8 @@ def list(_, radar, day_hour_symbol):
 '''
     name - filename
 '''
-def load(_, name):
-    if settings.VERBOSE > 1:
-        show = colorize('archive.load()', 'green')
-        show += '  ' + color_name_value('name', name)
-        print(show)
+@lru_cache(maxsize=32)
+def _load(name):
     if settings.SIMULATE:
         elements = name.split('-')
         print(f'Dummy sweep {name}')
@@ -208,22 +208,18 @@ def load(_, name):
             'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]])
         }
     else:
-        # Database is indexed by date so we extract the time first for quicker search
+        # Database is indexed by date so we extract the time first for a quicker search
         s = timeFinder.search(name)[0]
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
         match = File.objects.filter(date=date).filter(name=name)
         if len(match):
             match = match[0]
-        else:
-            return HttpResponse(f'No match of {name} in database', status=202)
-
-        sweep = match.read()
+            sweep = match.read()
 
     if sweep is None:
-        return HttpResponse(f'File {name} not found', status=202)
+        return None
 
     gatewidth = 1.0e-3 * sweep['gatewidth']
-
     if gatewidth < 0.05:
         gatewidth *= 2.0;
         sweep['values'] = sweep['values'][:, ::2]
@@ -253,7 +249,18 @@ def load(_, name):
             + bytes(sweep['elevations']) \
             + bytes(sweep['azimuths']) \
             + bytes(data)
-    response = HttpResponse(payload, content_type='application/octet-stream')
+    return payload
+
+def load(_, name):
+    if settings.VERBOSE > 1:
+        show = colorize('archive.load()', 'green')
+        show += '  ' + color_name_value('name', name)
+        print(show)
+    payload = _load(name)
+    if payload is None:
+        response = HttpResponse(f'File {name} not found', status=202)
+    else:
+        response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
 def _date(prefix):
