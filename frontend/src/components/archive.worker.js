@@ -9,6 +9,7 @@
 
 import { Parser } from "binary-parser";
 import { deg2rad, clamp } from "./common";
+// import { logger } from "./logger";
 
 let source = null;
 let radar;
@@ -27,6 +28,9 @@ let grid = {
 };
 let data = {
   sweep: null,
+};
+let state = {
+  verbose: 1,
 };
 
 const sweepParser = new Parser()
@@ -75,19 +79,14 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
 function connect(newRadar) {
   radar = newRadar;
   if (source?.readyState == 1) {
-    console.log("Connection exists");
+    console.info("Closing existing connection ...");
     source.close();
   }
-  console.log(`Connecting live update to ${radar} ...`);
+  if (state.verbose) console.info(`Connecting live update to ${radar} ...`);
   source = new EventSource("/events/");
   source.addEventListener(radar, (event) => {
     const payload = JSON.parse(event.data);
     payload.files.forEach((file) => {
-      // console.log(
-      //   `%csource.onmessage()%c ${file}`,
-      //   "color: tan",
-      //   "color: #aa6611"
-      // );
       updateListWithFile(file);
     });
     grid.hourlyAvailability = payload.count;
@@ -115,7 +114,7 @@ function disconnect() {
   if (source === null || source.readyState == 2) {
     return;
   }
-  console.log("Disconnecting live update ...");
+  if (state.verbose) console.info("Disconnecting live update ...");
   source.close();
   self.postMessage({
     type: "state",
@@ -135,11 +134,13 @@ function updateListWithFile(file) {
   const scan = elements[3];
   const s = elements[1];
   const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
-  console.log(
-    `%carchive.worker.updateListWithFile()%c ${file} ${day}`,
-    "color: tan",
-    "color: inherit"
-  );
+  if (state.verbose) {
+    console.info(
+      `%carchive.worker.updateListWithFile()%c ${file} ${day}`,
+      "color: goldenrod",
+      "color: inherit"
+    );
+  }
   const listHour = elements[2].slice(0, 2);
   const dateTimeString = `${elements[1]}-${listHour}00`;
   if (grid.dateTimeString != dateTimeString) {
@@ -148,17 +149,19 @@ function updateListWithFile(file) {
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
     grid.day = new Date(day);
-    console.log(
-      `%carchive.worker.updateListWithFile()%c   ${day} ${grid.hour}`,
-      "color: tan",
-      "color: inherit"
-    );
+    if (state.verbose) {
+      console.info(
+        `%carchive.worker.updateListWithFile()%c   ${day} ${grid.hour}`,
+        "color: goldenrod",
+        "color: inherit"
+      );
+    }
   }
   if (!(scan in grid.fileListGrouped)) {
     grid.fileListGrouped[scan] = [];
   }
   if (grid.fileList.indexOf(file) > 0) {
-    console.log(`File ${file} exists.`);
+    console.warn(`File ${file} exists.`);
     return;
   }
   const index = grid.fileList.length;
@@ -193,9 +196,9 @@ function createSweep(name = "dummy") {
 }
 
 function month(radar, day) {
-  console.log(
+  console.info(
     `%carchive.worker.month()%c ${radar} ${day}`,
-    "color: tan",
+    "color: goldenrod",
     "color: inherit"
   );
   const url = `/data/month/${radar}/${day}/`;
@@ -212,21 +215,21 @@ function month(radar, day) {
         });
     })
     .catch((error) => {
-      console.log(`Unexpected error ${error}`);
+      console.error(`Unexpected error ${error}`);
     });
 }
 
 function count(radar, day) {
   let t = day instanceof Date ? "Date" : "Not Date";
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
-  console.log(
+  console.info(
     `%carchive.worker.count()%c ${radar} ${dayString} (${t})`,
-    "color: tan",
+    "color: goldenrod",
     "color: inherit"
   );
   let y = parseInt(dayString.slice(0, 4));
   if (y < 2012) {
-    console.log("No data prior to 2013");
+    console.info("No data prior to 2013");
     return;
   }
   const url = `/data/count/${radar}/${dayString}/`;
@@ -256,7 +259,7 @@ function count(radar, day) {
         });
     })
     .catch((error) => {
-      console.log(`Unexpected error ${error}`);
+      console.error(`Unexpected error ${error}`);
     });
 }
 
@@ -264,9 +267,9 @@ function list(radar, day, hour, symbol) {
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
   let hourString = hour.toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
-  console.log(
+  console.info(
     `%carchive.worker.list()%c ${radar} ${dateTimeString} ${symbol}`,
-    "color: tan",
+    "color: goldenrod",
     "color: inherit"
   );
   const url = `/data/list/${radar}/${dateTimeString}-${symbol}/`;
@@ -309,17 +312,20 @@ function list(radar, day, hour, symbol) {
         });
     })
     .catch((error) => {
-      console.log(`Unexpected error ${error}`);
+      console.error(`Unexpected error ${error}`);
     });
 }
 
 function load(name) {
   const url = `/data/load/${name}/`;
-  console.log(
-    `%carchiver.worker.load() %c${url}`,
-    "color: tan",
-    "color: dodgerblue"
-  );
+  if (state.verbose) {
+    console.info(
+      `%carchiver.worker.load() %c${url}`,
+      "color: goldenrod",
+      "color: dodgerblue"
+    );
+    // logger.info("archiver.worker.load()", url);
+  }
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -345,13 +351,13 @@ function load(name) {
         });
       else {
         response.text().then((text) => {
-          console.log(text);
+          console.info(text);
           self.postMessage({ type: "reset", payload: text });
         });
       }
     })
     .catch((error) => {
-      console.log(`Unexpected error ${error}`);
+      console.error(`Unexpected error ${error}`);
     });
 }
 
@@ -424,9 +430,9 @@ function geometry(sweep) {
 }
 
 function catchup(radar) {
-  console.log(
+  console.info(
     `%carchive.worker.catchup()%c radar = ${radar}`,
-    "color: tan",
+    "color: goldenrod",
     "color: inherit"
   );
   fetch(`/data/catchup/${radar}/`).then((response) => {
@@ -435,12 +441,14 @@ function catchup(radar) {
         .json()
         .then((buffer) => {
           let day = new Date(buffer.dayISOString);
-          console.log(
-            `%carchive.worker.catchup()%c dateString = ${buffer.dateString}` +
-              `   hour = ${buffer.hour}  `,
-            "color: tan",
-            "color: inherit"
-          );
+          if (state.verbose) {
+            console.info(
+              `%carchive.worker.catchup()%c dateString = ${buffer.dateString}` +
+                `   hour = ${buffer.hour}  `,
+              "color: goldenrod",
+              "color: inherit"
+            );
+          }
           grid.dateTimeString = buffer.dateString;
           grid.hourlyAvailability = buffer.count;
           grid.latestHour = buffer.hour;
@@ -456,7 +464,7 @@ function catchup(radar) {
             }
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
-          console.log(grid.fileListGrouped);
+          console.debug(grid.fileListGrouped);
           let scanType = "E4.0";
           if (scanType in grid.fileListGrouped) {
             grid.index = grid.fileListGrouped[scanType].slice(-1)[0].index;
@@ -470,9 +478,9 @@ function catchup(radar) {
           return radar;
         })
         .then((radar) => connect(radar))
-        .catch((error) => console.log(`Unexpected error ${error}`));
+        .catch((error) => console.error(`Unexpected error ${error}`));
     } else {
-      console.log("Unable to catch up.");
+      console.error("Unable to catch up.");
     }
   });
 }
