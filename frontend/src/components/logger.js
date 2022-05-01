@@ -14,7 +14,7 @@ export const logger = (function () {
 
       inputs.push("%c" + arguments[0] + "%c ");
       modifiers.push(
-        "display:inline-block; background-color: tan; color: black; padding: 2px 7px ; border-radius: 3px",
+        "display:inline-block; background-color: goldenrod; color: black; padding: 2px 7px ; border-radius: 3px",
         ""
       );
 

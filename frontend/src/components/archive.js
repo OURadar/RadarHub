@@ -96,7 +96,7 @@ class Archive {
         this.state.loadCount = 0;
         this.grid.index = index;
         this.loadByIndex(this.grid.index);
-      } else if (this.grid.index >= 0) {
+      } else if (this.grid.index >= 0 && index != this.grid.index) {
         this.state.loadCount = 0;
         this.loadByIndex(this.grid.index);
       } else if (this.grid.index == -1) {
@@ -105,7 +105,8 @@ class Archive {
         console.log(
           `%carchive.onmessage()%c list` +
             `   fileDayString: ${fileDayString}` +
-            `   gridDayString: ${gridDayString}`,
+            `   gridDayString: ${gridDayString}` +
+            `   loadCount = ${this.state.loadCount}`,
           "color: lightseagreen",
           "color: inherit"
         );

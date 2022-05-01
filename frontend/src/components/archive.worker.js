@@ -29,6 +29,9 @@ let grid = {
 let data = {
   sweep: null,
 };
+let state = {
+  verbose: 1,
+};
 
 const sweepParser = new Parser()
   .endianess("little")
@@ -79,16 +82,11 @@ function connect(newRadar) {
     console.info("Closing existing connection ...");
     source.close();
   }
-  console.info(`Connecting live update to ${radar} ...`);
+  if (state.verbose) console.info(`Connecting live update to ${radar} ...`);
   source = new EventSource("/events/");
   source.addEventListener(radar, (event) => {
     const payload = JSON.parse(event.data);
     payload.files.forEach((file) => {
-      // console.log(
-      //   `%csource.onmessage()%c ${file}`,
-      //   "color: tan",
-      //   "color: #aa6611"
-      // );
       updateListWithFile(file);
     });
     grid.hourlyAvailability = payload.count;
@@ -116,7 +114,7 @@ function disconnect() {
   if (source === null || source.readyState == 2) {
     return;
   }
-  console.info("Disconnecting live update ...");
+  if (state.verbose) console.info("Disconnecting live update ...");
   source.close();
   self.postMessage({
     type: "state",
@@ -136,11 +134,13 @@ function updateListWithFile(file) {
   const scan = elements[3];
   const s = elements[1];
   const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
-  console.info(
-    `%carchive.worker.updateListWithFile()%c ${file} ${day}`,
-    "color: tan",
-    "color: inherit"
-  );
+  if (state.verbose) {
+    console.info(
+      `%carchive.worker.updateListWithFile()%c ${file} ${day}`,
+      "color: goldenrod",
+      "color: inherit"
+    );
+  }
   const listHour = elements[2].slice(0, 2);
   const dateTimeString = `${elements[1]}-${listHour}00`;
   if (grid.dateTimeString != dateTimeString) {
@@ -149,11 +149,13 @@ function updateListWithFile(file) {
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
     grid.day = new Date(day);
-    console.info(
-      `%carchive.worker.updateListWithFile()%c   ${day} ${grid.hour}`,
-      "color: tan",
-      "color: inherit"
-    );
+    if (state.verbose) {
+      console.info(
+        `%carchive.worker.updateListWithFile()%c   ${day} ${grid.hour}`,
+        "color: goldenrod",
+        "color: inherit"
+      );
+    }
   }
   if (!(scan in grid.fileListGrouped)) {
     grid.fileListGrouped[scan] = [];
@@ -196,7 +198,7 @@ function createSweep(name = "dummy") {
 function month(radar, day) {
   console.info(
     `%carchive.worker.month()%c ${radar} ${day}`,
-    "color: tan",
+    "color: goldenrod",
     "color: inherit"
   );
   const url = `/data/month/${radar}/${day}/`;
@@ -222,7 +224,7 @@ function count(radar, day) {
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
   console.info(
     `%carchive.worker.count()%c ${radar} ${dayString} (${t})`,
-    "color: tan",
+    "color: goldenrod",
     "color: inherit"
   );
   let y = parseInt(dayString.slice(0, 4));
@@ -267,7 +269,7 @@ function list(radar, day, hour, symbol) {
   let dateTimeString = `${dayString}-${hourString}00`;
   console.info(
     `%carchive.worker.list()%c ${radar} ${dateTimeString} ${symbol}`,
-    "color: tan",
+    "color: goldenrod",
     "color: inherit"
   );
   const url = `/data/list/${radar}/${dateTimeString}-${symbol}/`;
@@ -313,12 +315,14 @@ function list(radar, day, hour, symbol) {
 
 function load(name) {
   const url = `/data/load/${name}/`;
-  console.info(
-    `%carchiver.worker.load() %c${url}`,
-    "color: tan",
-    "color: dodgerblue"
-  );
-  // logger.info("archiver.worker.load()", url);
+  if (state.verbose) {
+    console.info(
+      `%carchiver.worker.load() %c${url}`,
+      "color: goldenrod",
+      "color: dodgerblue"
+    );
+    // logger.info("archiver.worker.load()", url);
+  }
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -425,7 +429,7 @@ function geometry(sweep) {
 function catchup(radar) {
   console.info(
     `%carchive.worker.catchup()%c radar = ${radar}`,
-    "color: tan",
+    "color: goldenrod",
     "color: inherit"
   );
   fetch(`/data/catchup/${radar}/`).then((response) => {
@@ -434,12 +438,14 @@ function catchup(radar) {
         .json()
         .then((buffer) => {
           let day = new Date(buffer.dayISOString);
-          console.info(
-            `%carchive.worker.catchup()%c dateString = ${buffer.dateString}` +
-              `   hour = ${buffer.hour}  `,
-            "color: tan",
-            "color: inherit"
-          );
+          if (state.verbose) {
+            console.info(
+              `%carchive.worker.catchup()%c dateString = ${buffer.dateString}` +
+                `   hour = ${buffer.hour}  `,
+              "color: goldenrod",
+              "color: inherit"
+            );
+          }
           grid.dateTimeString = buffer.dateString;
           grid.hourlyAvailability = buffer.count;
           grid.latestHour = buffer.hour;
