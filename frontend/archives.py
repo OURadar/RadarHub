@@ -190,7 +190,7 @@ def list(_, radar, day_hour_symbol):
 '''
     name - filename
 '''
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=256)
 def _load(name):
     if settings.SIMULATE:
         elements = name.split('-')
