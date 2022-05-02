@@ -212,12 +212,11 @@ def _load(name):
         s = timeFinder.search(name)[0]
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
         match = File.objects.filter(date=date).filter(name=name)
-        if len(match):
-            match = match[0]
+        if match.exists():
+            match = match.first()
             sweep = match.read()
-
-    if sweep is None:
-        return None
+        else:
+            return None
 
     gatewidth = 1.0e-3 * sweep['gatewidth']
     if gatewidth < 0.05:
