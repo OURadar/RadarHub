@@ -65,7 +65,8 @@ function Browser(props) {
   const hour = props.archive.grid.hour;
   const index = props.archive.grid.index;
 
-  const [radar, setRadar] = React.useState(props.radar);
+  const radar = props.radar;
+
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
 
@@ -158,8 +159,6 @@ function Browser(props) {
       "color: mediumpurple",
       "color: inherit"
     );
-    // props.archive.count(radar, newDay);
-    // props.archive.list(radar, newDay, newHour, symbol);
     props.archive.count(radar, newDay, newHour, symbol);
   };
 
@@ -214,6 +213,7 @@ function Browser(props) {
                 </Badge>
               );
             }}
+            disableHighlightToday={true}
           />
         </LocalizationProvider>
       </div>

@@ -125,7 +125,7 @@ def count(_, radar, day):
         - YYYYMMDD-HH    (assumes Z here)
 '''
 def _list(prefix, day_hour_symbol):
-    c = day_hour_symbol.split('-');
+    c = day_hour_symbol.split('-')
     if len(c) == 1:
         c.append('0000')
     elif len(c[1]) == 2:
@@ -190,7 +190,7 @@ def list(_, radar, day_hour_symbol):
 '''
     name - filename
 '''
-@lru_cache(maxsize=256)
+@lru_cache(maxsize=512)
 def _load(name):
     if settings.SIMULATE:
         elements = name.split('-')
@@ -262,6 +262,9 @@ def load(_, name):
         response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
+'''
+    prefix - prefix of a radar, e.g., PX- for PX-1000, RAXPOL- for RaXPol
+'''
 def _date(prefix):
     if prefix is None:
         return None, None
@@ -314,6 +317,9 @@ def date(_, radar):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
+'''
+    value - Raw RhoHV values
+'''
 def rho2ind(values):
     m3 = values > 0.93
     m2 = np.logical_and(values > 0.7, ~m3)
@@ -322,6 +328,9 @@ def rho2ind(values):
     index[m3] = values[m3] * 1000.0 - 824.0
     return index
 
+'''
+    radar - Input radar name, e.g., px1000, raxpol, etc.
+'''
 def location(radar):
     if settings.VERBOSE > 1:
         show = colorize('archive.location()', 'green')
@@ -352,6 +361,9 @@ def location(radar):
         pp.pprint(origins)
     return origins[radar]
 
+'''
+    prefix - prefix of a radar, e.g., PX- for PX-1000, RAXPOL- for RaXPol
+'''
 def _file(prefix, scan='E4.0', symbol='Z'):
     day = Day.objects.filter(name=prefix).latest('date')
     last = day.last_hour_range()
@@ -362,6 +374,11 @@ def _file(prefix, scan='E4.0', symbol='Z'):
     else:
         return ''
 
+'''
+    radar - Input radar name, e.g., px1000, raxpol, etc.
+    scan - The 4-th component of filename describing the scan, e.g., E4.0, A120.0, etc.
+    symbol - The symbol of a product, e.g., Z, V, W, etc.
+'''
 def catchup(_, radar, scan='E4.0', symbol='Z'):
     show = colorize('archive.catchup()', 'green')
     show += '  ' + color_name_value('radar', radar)
