@@ -155,9 +155,8 @@ def params_from_source(source, dig=False):
                 source = source[:-1]
             folder, day_string = os.path.split(source)
             if dig:
-                files = glob.glob(f'{source}/_original/*.tar.xz')
-                if len(files):
-                    file = os.path.basename(files[0])
+                files = list_files(source)
+                file = os.path.basename(files[0]) if len(files) else None
         else:
             folder, file = os.path.split(source)
             if '_original' in folder:
@@ -193,6 +192,8 @@ def params_from_source(source, dig=False):
         source_date = datetime.datetime.strptime(day_string, r'%Y%m%d').date()
         start = datetime.datetime(source_date.year, source_date.month, source_date.day).replace(tzinfo=datetime.timezone.utc)
         date_range = [start, start + datetime.timedelta(days=1)]
+        if prefix is None:
+            print('Only day string')
     return {
         'file': file,
         'prefix': prefix,
@@ -207,7 +208,7 @@ def params_from_source(source, dig=False):
 def process_archives(id, run, lock, queue, out):
     while run.value == 1:
         task = None
-        
+
         lock.acquire()
         if not queue.empty():
             task = queue.get()
@@ -231,19 +232,23 @@ def process_archives(id, run, lock, queue, out):
     return
 
 '''
-    List .xz files in a folder
+    List .txz or .tar.xz files in a folder
 
     folder - path to list, e.g., /mnt/data/PX1000/2022/20220128
 '''
 def list_files(folder):
-    files = sorted(glob.glob(os.path.join(folder, '*.xz')))
+    files = sorted(glob.glob(os.path.join(folder, '*.tar.xz')))
+    if len(files) == 0:
+        files = sorted(glob.glob(os.path.join(folder, '*.txz')))
     if len(files) == 0:
         folder = os.path.join(folder, '_original')
-        files = sorted(glob.glob(os.path.join(folder, '*.xz')))
+        files = sorted(glob.glob(os.path.join(folder, '*.tar.xz')))
+        if len(files) == 0:
+            files = sorted(glob.glob(os.path.join(folder, '*.txz')))
     return files
 
 '''
-    Insert a folder with .tar.xz archives to the database
+    Insert a folder with .tar.xz / .txz archives to the database
 
              folder - path to insert, e.g., /mnt/data/PX1000/2022/20220128
                hour - start hour to examine
@@ -328,7 +333,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                 ramfile = f'/mnt/ramdisk/{basename}'
             else:
                 ramfile = f'{basename}'
-            shutil.copy(archive, ramfile)            
+            shutil.copy(archive, ramfile)
             task_queue.put({'archive': archive, 'ramfile': ramfile})
             while task_queue.qsize() > 2 * count:
                 time.sleep(0.1)
@@ -541,7 +546,7 @@ def build_day(source, bgor=False, verbose=0):
 
     if bgor:
         compute_bgor(day)
-    
+
     tic = time.time() - tic
 
     if verbose:
@@ -900,13 +905,14 @@ def dbtool_main():
     elif args.insert:
         if len(args.source) == 0:
             print(textwrap.dedent(f'''
-                -i needs a source folder, e.g.,
+                -i needs at least a source folder, e.g.,
 
                 { __prog__} -i /mnt/data/PX1000/2022/20220223
             '''))
             return
-        logger.info('Inserting folder(s) with .tar.xz archives')
+        logger.info('Inserting folder(s) with .txz / .tar.xz archives')
         for folder in args.source:
+            folder = folder[:-1] if folder[-1] == '/' else folder
             logger.info(f'{folder}')
             xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
     elif args.quick_insert:
@@ -917,7 +923,7 @@ def dbtool_main():
                 { __prog__} -I /mnt/data/PX1000/2022/20220223
             '''))
             return
-        logger.info('Quick inserting folder(s) with .tar.xz archives')
+        logger.info('Quick inserting folder(s) with .txz / .tar.xz archives')
         for folder in args.source:
             logger.info(f'{folder}')
             xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
