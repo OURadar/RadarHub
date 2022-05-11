@@ -217,8 +217,6 @@ class Day(models.Model):
 
     def weather_condition(self):
         cond = 0
-        if self.blue == 0 and self.green == 0:
-            print(f'{self.date} {self.blue} {self.green} {self.orange} {self.red}')
         if self.blue < 10:
             cond = 1
         elif self.green < 300:
@@ -228,5 +226,7 @@ class Day(models.Model):
                 cond = 4
             else:
                 cond = 3
+        if cond == 0:
+            print(f'Day.weather_condition() {self.date} {self.blue} {self.green} {self.orange} {self.red}')
         # print(f'{self.day_string()}  {self.__vbar__()}  {self.blue} {self.green} {self.orange} {self.red} -> {cond}')
         return cond
