@@ -19,12 +19,7 @@ from common import colorize, color_name_value, radar_prefix
 
 timeFinder = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
 
-origins = {
-    'px1000': None,
-    'raxpol': None,
-    'px10k': None,
-    'pair': None
-}
+origins = {}
 # for radar in settings.db
 
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)

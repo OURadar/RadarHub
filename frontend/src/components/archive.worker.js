@@ -30,6 +30,7 @@ let data = {
   sweep: null,
 };
 let state = {
+  scan: "E4.0",
   verbose: 1,
 };
 const namecolor = "#bf9140";
@@ -168,9 +169,9 @@ function updateListWithFile(file) {
   const index = grid.fileList.length;
   grid.fileList.push(file);
   grid.fileListGrouped[scan].push({ file: file, index: index });
-  let targetScan = "E4.0";
-  if (targetScan in grid.fileListGrouped) {
-    grid.index = grid.fileListGrouped[targetScan].slice(-1)[0].index;
+  // let targetScan = "E4.0";
+  if (state.scan in grid.fileListGrouped) {
+    grid.index = grid.fileListGrouped[state.scan].slice(-1)[0].index;
   } else {
     grid.index = -1;
   }
@@ -296,9 +297,9 @@ function list(radar, day, hour, symbol) {
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
           console.log(grid.fileListGrouped);
-          let scanType = "E4.0";
-          if (scanType in grid.fileListGrouped) {
-            grid.index = grid.fileListGrouped[scanType].slice(-1)[0].index;
+          // let state.scan = "E4.0";
+          if (state.scan in grid.fileListGrouped) {
+            grid.index = grid.fileListGrouped[state.scan].slice(-1)[0].index;
           } else {
             grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
           }
@@ -467,12 +468,14 @@ function catchup(radar) {
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
           console.debug(grid.fileListGrouped);
-          let scanType = "E4.0";
-          if (scanType in grid.fileListGrouped) {
-            grid.index = grid.fileListGrouped[scanType].slice(-1)[0].index;
+          if (state.scan in grid.fileListGrouped) {
+            grid.index = grid.fileListGrouped[state.scan].slice(-1)[0].index;
           } else {
             grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
           }
+          let file = grid.fileList[grid.index];
+          state.scan = file.split("-")[3];
+          console.log(`Setting state.scan to ${state.scan}`);
           self.postMessage({
             type: "list",
             payload: grid,
