@@ -10,7 +10,7 @@
 #  Copyright (c) 2022 Boonleng Cheong.
 #
 
-__version__ = '1.0'
+__version__ = '1.0.1'
 
 import os
 import sys
@@ -109,7 +109,13 @@ def catchup(root='/mnt/data'):
         folderYearDay = sorted(glob.glob(path))[-1]
         day = os.path.basename(folderYearDay)
         logger.info(f'{folderYear} -> {year} -> {day}')
-        file = sorted(glob.glob(f'{folderYearDay}/_original/*.tar.xz'))[-1]
+        files = sorted(glob.glob(f'{folderYearDay}/_original/*.tar.xz'))
+        if len(files) == 0:
+            files = sorted(glob.glob(f'{folderYearDay}/*.txz'))
+        if len(files) == 0:
+            logger.info('Error. No files.')
+            return
+        file = files[-1]
         logger.info(f'{file}')
         basename = os.path.basename(file)
         c = basename.split('-')
