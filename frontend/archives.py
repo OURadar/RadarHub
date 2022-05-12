@@ -25,6 +25,7 @@ origins = {
     'px10k': None,
     'pair': None
 }
+# for radar in settings.db
 
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 

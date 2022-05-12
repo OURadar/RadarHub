@@ -189,3 +189,15 @@ CHANNEL_LAYERS = {
         }
     }
 }
+
+# Radar
+file = CONFIG_DIR / 'radar.conf'
+
+if os.path.exists(file):
+    with open(file) as fid:
+        RADARS = json.load(fid)
+else:
+    RADARS = {
+        'names': ['px1000', 'raxpol', 'px10k'],
+        'prefixes': ['PX-', 'RAXPOL-', 'PX10K-']
+    }

@@ -1,0 +1,4 @@
+{
+    "radars": ["px1000", "raxpol", "px10k"],
+    "prefixes": ["PX-", "RAXPOL-", "PX10K-"]
+}
