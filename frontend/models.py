@@ -71,7 +71,7 @@ class File(models.Model):
 
     def read(self, finite=False):
         if any([ext in self.path for ext in ['tgz', 'txz', 'tar.xz']]):
-            if settings.VERBOSE:
+            if settings.VERBOSE > 1:
                 print(f'models.File.read() {self.path}')
             with tarfile.open(self.path) as aid:
                 info = tarfile.TarInfo(self.name)

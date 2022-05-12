@@ -475,6 +475,17 @@ sudo supervisorctl start all
 
 A convenient script `restart.sh` is included to restart all services in a proper sequence in order to prevent channels getting full.
 
+```shell
+sudo restart.sh
+```
+
+Optionally, you can avoid using `sudo` by changing the ownership and permission of the file `/var/run/supervisor.sock` as:
+
+```shell
+chown radarhub.radarhub /var/run/supervisor.sock
+chmod g+rwx /var/run/supervisor.sock
+```
+
 ## Django_eventstream
 
 The migrations of [django_eventstream] is stored in where the package is installed. If you are using [pyenv] to manage your [Python] versions, the migration history can be removed using the following commands
