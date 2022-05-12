@@ -34,34 +34,12 @@ django.setup()
 import dbtool
 import dailylog
 
+from django.conf import settings
 from frontend.models import File, Day
 from common import colorize, color_name_value
 
 keepReading = True
-radars = {
-    'PX-': {
-        'folder': 'PX1000',
-        'count': 0,
-        'bgor_scan': 'E4.0',
-        'bgor_step': 0,
-    },
-    'RAXPOL-': {
-        'folder': 'RaXPol',
-        'count': 0,
-        'bgor_scan': 'E4.0',
-        'bgor_step': 0,
-    },
-    'PX10K-': {
-        'folder': 'PX10k',
-        'count': 0,
-        'bgor_scan': 'E4.0',
-        'bgor_step': 0,
-    },
-    'FAKE-': {
-        'folder': 'Fake',
-        'count': 0
-    }
-}
+radars = settings.RADARS
 logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__)
 
 def signalHandler(sig, frame):

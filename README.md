@@ -126,7 +126,7 @@ On Ubuntu, run the following commands:
 
 ```shell
 sudo apt update
-sudo apt install nodejs npm libpq-dev postgresql
+sudo apt install nodejs npm libpq-dev postgresql postgresql-contrib
 ```
 
 On macOS, run the following commands:
@@ -195,6 +195,13 @@ Also, configure [PostgreSQL] to be accessible through network by adding/modifyin
 
 ```conf
 listen_addresses = '*'
+```
+
+Some servers may require a new configuration file `/etc/postgresql/12/main/pg_hba.conf` to have the following:
+
+```conf
+# TYPE DATABASE USER CIDR-ADDRESS  METHOD
+host  all  all 0.0.0.0/0 md5
 ```
 
 Back to the [Django] project, create a plain text file named `db.conf` under the folder `config`, and put the following contents in there. Replace the `_radarhub_password_` you used in setting up the [PostgreSQL] database in the text.

@@ -36,6 +36,7 @@ django.setup()
 
 import dailylog
 
+from django.conf import settings
 from frontend.models import File, Day
 from common import colorize, color_name_value
 
@@ -566,7 +567,7 @@ def check_day(source):
     logger.info(show)
     params = params_from_source(source)
     if params['prefix'] is None:
-        prefixes = ['PX-', 'PX10K-', 'RAXPOL-']
+        prefixes = list(settings.RADARS.keys())
     elif isinstance(params['prefix'], str):
         prefixes = [params['prefix']]
     else:
@@ -602,7 +603,7 @@ def check_file(source, remove=False):
     logger.info(show)
     params = params_from_source(source, dig=True)
     if params['prefix'] is None:
-        prefixes = ['PX-', 'PX10K-', 'RAXPOL-']
+        prefixes = list(settings.RADARS.keys())
     elif isinstance(params['prefix'], str):
         prefixes = [params['prefix']]
     else:
