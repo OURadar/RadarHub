@@ -125,6 +125,7 @@ class Scope extends Component {
     // User interaction
     this.gesture = new Gesture(this.canvas, this.constants.bounds);
     this.gesture.handlePan = this.pan;
+    this.gesture.handleDolly = this.magnify;
     this.gesture.handleMagnify = this.magnify;
     this.gesture.handleDoubleTap = this.fitToData;
     // Other built-in assets
