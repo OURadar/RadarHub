@@ -55,8 +55,9 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [x] 0.7 RadarKit-RadarHub communication and 3D flyover view (4/24/2022)
   - [x] 0.7.1 Improved efficiency of data retrieval (4/27/2022)
   - [x] 0.7.2 Updated behaviors of calendar badge and product switching (4/29/2022)
-  - [ ] 0.7.3 Auto adjustments for best view of PPI/RHI data
-  - [ ] 0.7.4 Streaming buffers for radial-by-radial updates
+  - [ ] 0.7.3 Introduced backend caching and external radar configuration (5/15/2022)
+  - [ ] 0.7.x Auto adjustments for best view of PPI/RHI data
+  - [ ] 0.7.x Streaming buffers for radial-by-radial updates
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Page template, UI materials, mobile version
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
@@ -72,11 +73,11 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [ ] A new version of overlay.worker
 - [ ] Caching
   - [ ] Frontend caching: archive.js
-  - [ ] Backend caching: frontend.models.py
+  - [x] Backend caching: frontend.models.py
 - [ ] Display frequency spectrum alongside scope view
 - [ ] Show online users
 - [x] High-DPI support
-- [ ] Cache sweeps using the LRU algorithm
+- [x] Cache sweeps using the LRU algorithm
 - [ ] Let users download files
 - [ ] Local/remote state
 

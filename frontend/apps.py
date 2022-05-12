@@ -14,8 +14,6 @@ from common.cosmetics import colorize
 
 worker_started = False
 
-# from common import colorize, color_name_value
-
 # show = colorize('frontend.apps.py', 'mint')
 # show += '  ' + color_name_value('DATABASES.ENGINE', settings.DATABASES['default']['ENGINE'])
 # print(show)
@@ -24,8 +22,6 @@ radar_prefix_pairs = []
 for prefix, item in settings.RADARS.items():
     radar = item['folder'].lower()
     radar_prefix_pairs.append((radar, prefix))
-
-print(radar_prefix_pairs)
 
 class FrontendConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'

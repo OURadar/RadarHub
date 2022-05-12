@@ -7,7 +7,7 @@
 #  RadarHub
 #
 #  Created by Boonleng Cheong
-#  Copyright (c) 2021 Boonleng Cheong.
+#  Copyright (c) 2021-2022 Boonleng Cheong.
 #
 
 __version__ = '1.0'
