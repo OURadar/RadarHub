@@ -86,10 +86,10 @@ def monitor(radar='px1000', prefix='PX-'):
     day = Day.objects.filter(name=prefix).last()
     if day:
         hourly_count = day.hourly_count
-        files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())        
+        files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
     else:
         hourly_count = ','.join('0' * 24)
-        print('No Day objects yet')
+        print(f'No Day objects yet for {radar} / {prefix} yet')
 
     no_day_warning = 0
     while True:
@@ -98,7 +98,7 @@ def monitor(radar='px1000', prefix='PX-'):
         if day is None:
             no_day_warning += 1
             if no_day_warning < 3 or no_day_warning % 100 == 0:
-                print('No Day objects yet')
+                print(f'No Day objects yet for {radar} / {prefix} yet')
             continue
         if hourly_count == day.hourly_count:
             continue
