@@ -24,6 +24,7 @@ SIMULATE = False
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / 'config'
+FRONTEND_DIR = BASE_DIR / 'frontend'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -192,7 +193,6 @@ CHANNEL_LAYERS = {
 
 # Radar
 file = CONFIG_DIR / 'radar.conf'
-
 if os.path.exists(file):
     with open(file) as fid:
         RADARS = json.load(fid)
@@ -217,3 +217,12 @@ else:
             'bgor_step': 0,
         }
     }
+
+# frontend/package.json
+file = FRONTEND_DIR / 'package.json'
+with open(file, 'r') as fid:
+    s = json.load(fid)
+
+VERSION = s['version']
+
+# print(f'VERSION = {VERSION}')

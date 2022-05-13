@@ -10,8 +10,6 @@
 #  Copyright (c) 2021-2022 Boonleng Cheong.
 #
 
-__version__ = '1.0'
-
 import os
 import re
 import sys
@@ -29,8 +27,6 @@ import multiprocessing
 
 import numpy as np
 
-__prog__ = os.path.basename(sys.argv[0])
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
@@ -39,6 +35,9 @@ import dailylog
 from django.conf import settings
 from frontend.models import File, Day
 from common import colorize, color_name_value
+
+__prog__ = os.path.basename(sys.argv[0])
+__version__ = settings.VERSION
 
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__)
@@ -839,7 +838,7 @@ def dbtool_main():
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='shows a sweep summary')
-    parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
+    parser.add_argument('--version', action='version', version='%(prog)s ' + settings.VERSION)
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('-z', dest='test', action='store_true', help='dev')
     args = parser.parse_args()

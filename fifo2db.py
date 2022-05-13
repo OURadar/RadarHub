@@ -10,8 +10,6 @@
 #  Copyright (c) 2022 Boonleng Cheong.
 #
 
-__version__ = '1.0.1'
-
 import os
 import sys
 import glob
@@ -26,8 +24,6 @@ import datetime
 import textwrap
 import setproctitle
 
-__prog__ = os.path.basename(sys.argv[0])
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
@@ -37,6 +33,8 @@ import dailylog
 from django.conf import settings
 from frontend.models import File, Day
 from common import colorize, color_name_value
+
+__prog__ = os.path.basename(sys.argv[0])
 
 keepReading = True
 radars = settings.RADARS
@@ -277,7 +275,7 @@ def fifo2db():
             1 - Test handling a corrupted tar archive
             2 - Test catching an exception
             '''))
-    parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
+    parser.add_argument('--version', action='version', version='%(prog)s ' + settings.VERSION)
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     args = parser.parse_args()
 
