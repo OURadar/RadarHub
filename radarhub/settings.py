@@ -96,7 +96,7 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Django_stream requires a table in the database. Using 'event' and a dbrouter for this
 # https://docs.djangoproject.com/en/4.0/topics/db/multi-db/
 
-file = CONFIG_DIR / 'db.conf'
+file = CONFIG_DIR / 'db.json'
 if os.path.exists(file):
     with open(file) as fid:
         PostgreSQL = json.load(fid)
@@ -192,7 +192,7 @@ CHANNEL_LAYERS = {
 }
 
 # Radar
-file = CONFIG_DIR / 'radar.conf'
+file = CONFIG_DIR / 'radar.json'
 if os.path.exists(file):
     with open(file) as fid:
         RADARS = json.load(fid)

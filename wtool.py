@@ -17,9 +17,9 @@ pp = pprint.PrettyPrinter(indent=1, depth=2, width=80, sort_dicts=False)
 def get_cred():
     basedir = Path(__file__).resolve().parent
 
-    config = 'config/db.conf.readwrite'
+    config = 'config/db.json.readwrite'
     if not os.path.exists(config):
-        config = 'config/db.conf'
+        config = 'config/db.json'
 
     with open(config) as fid:
         dbconf = json.load(fid)

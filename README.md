@@ -121,7 +121,7 @@ In the Javascript space, the definition is passed to the frontend upon a success
 
 ## Node.js, npm, and PostgreSQL
 
-PostgreSQL is optional if you do not wish to use [PostgreSQL] as your database backend. The repository is setup to look for the [PostgreSQL] configuration under `config/db.conf`. If this file does not exist, RadarHub falls back to using SQLite3. In that case, you may ommit `libpq` and `postgresql` in the following commands, and the section Configure PostgreSQL.
+PostgreSQL is optional if you do not wish to use [PostgreSQL] as your database backend. The repository is setup to look for the [PostgreSQL] configuration under `config/db.json`. If this file does not exist, RadarHub falls back to using SQLite3. In that case, you may ommit `libpq` and `postgresql` in the following commands, and the section Configure PostgreSQL.
 
 On Ubuntu, run the following commands:
 
@@ -205,7 +205,7 @@ Some servers may require a new configuration file `/etc/postgresql/12/main/pg_hb
 host  all  all 0.0.0.0/0 md5
 ```
 
-Back to the [Django] project, create a plain text file named `db.conf` under the folder `config`, and put the following contents in there. Replace the `_radarhub_password_` you used in setting up the [PostgreSQL] database in the text.
+Back to the [Django] project, create a plain text file named `db.json` under the folder `config`, and put the following contents in there. Replace the `_radarhub_password_` you used in setting up the [PostgreSQL] database in the text.
 
 ```json
 { "host": "localhost", "user": "radarhub", "pass": "_radarhub_password_" }
