@@ -104,26 +104,6 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Django_stream requires a table in the database. Using 'event' and a dbrouter for this
 # https://docs.djangoproject.com/en/4.0/topics/db/multi-db/
 
-# file = CONFIG_DIR / 'db.json'
-# if os.path.exists(file):
-#     with open(file) as fid:
-#         PostgreSQL = json.load(fid)
-
-#     if VERBOSE > 1:
-#         show = color_name_value('user', PostgreSQL['user'])
-#         show += '   ' + color_name_value('pass', PostgreSQL['pass'])
-#         print(show)
-
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#             'NAME': 'radarhub',
-#             'HOST': PostgreSQL['host'],
-#             'USER': PostgreSQL['user'],
-#             'PASSWORD': PostgreSQL['pass'],
-#             'PORT': '5432',
-#         }
-#     }
 if 'database' in settings:
     if VERBOSE > 1:
         show = color_name_value('user', settings['database']['user'])
@@ -215,6 +195,7 @@ CHANNEL_LAYERS = {
 }
 
 # Radar
+# RADARS = { '_PREFIX_': {'folder': '_RADAR_NAME_', 'summary': '_SCAN_' } }
 if 'radars' in settings:
     RADARS = settings['radars']
 else:
@@ -225,10 +206,6 @@ else:
         },
         'RAXPOL-': {
             'folder': 'RaXPol',
-            'summary': 'E4.0',
-        },
-        'PX10K-': {
-            'folder': 'PX10k',
             'summary': 'E4.0',
         }
     }
@@ -241,10 +218,12 @@ with open(file, 'r') as fid:
 VERSION = s['version']
 
 
-# FIFO
+# FIFO source to list for new files
+# FIFO = { 'tcp': '_IP_ADDRESS_:_PORT_' }
+# FIFO = { 'pipe': '/tmp/radarhub.fifo' }
 if 'fifo' in settings:
     FIFO = settings['fifo']
 else:
     FIFO = {
-        'tcp': '10.197.14.59:9000'
+        'pipe': '/tmp/radarhub.fifo'
     }
