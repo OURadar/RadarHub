@@ -22,6 +22,7 @@ import tarfile
 import argparse
 import datetime
 import textwrap
+import threading
 import setproctitle
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
@@ -209,7 +210,7 @@ def listen(host='10.197.14.59', port=9000):
                 k -= 1
             continue
         sock.setblocking(0)
-        logger.info('fifoshare connection established')
+        logger.info(f'fifoshare connection {host} established')
 
         # day = time.localtime(time.time()).tm_mday
         localMemory = b''
@@ -256,6 +257,11 @@ def listen(host='10.197.14.59', port=9000):
                 time.sleep(0.1)
                 k -= 1
 
+def initpipe(pipe, string):
+    time.sleep(0.169)
+    with open(pipe, 'at') as fid:
+        fid.write(string)
+
 def read(pipe='/tmp/radarhub.fifo'):
     global keepReading
     keepReading = True
@@ -266,9 +272,9 @@ def read(pipe='/tmp/radarhub.fifo'):
         except:
             raise
 
-    # os.system(f'echo -n "radarhub rocks >> {pipe}"')
-    with open(pipe, 'at') as fid:
-        fid.write('radarhub rocks')
+    # Put something into the pipe to get things moving
+    initstring = ':/radarhub/rocks'
+    threading.Thread(target=initpipe, args=(pipe,initstring,)).start()
 
     while keepReading:
         # Open the pipe
@@ -303,13 +309,16 @@ def read(pipe='/tmp/radarhub.fifo'):
                 continue
 
             logger.debug(f'read() -> {file}')
+            if file == initstring:
+                continue
 
+            # At this point, the filename is considered good
             file = os.path.expanduser(file)
-            print(file)
+            process(file)
 
+        # Out of the second keepReading loop. Maybe there was an error in select(), close and retry
         fid.close()
-
-        print('Outside of read loop.')
+        logger.info('pipe closed')
         if keepReading:
             k = 50
             while k > 0 and keepReading:
