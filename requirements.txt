@@ -2,7 +2,8 @@ django
 channels
 channels_redis
 numpy
-asgiref==3.3.4
+# asgiref==3.3.4
+asgiref
 pyparsing
 websocket_client
 netCDF4
