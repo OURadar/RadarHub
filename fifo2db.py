@@ -224,7 +224,7 @@ def listen(host='10.197.14.59', port=9000):
             elif readyToRead:
                 try:
                     r = sock.recv(1024)
-                    logger.debug('recv() -> {}'.format(r))
+                    logger.debug(f'recv() -> {r}')
                 except:
                     logger.warning('fifoshare connection interrupted.')
                     break
@@ -238,7 +238,7 @@ def listen(host='10.197.14.59', port=9000):
             localMemory += r
             files = localMemory.decode('ascii').split('\n')
             localMemory = files[-1].encode('utf')
-            logger.debug('files = {}'.format(files))
+            logger.debug(f'files = {files}')
 
             for file in files[:-1]:
                 # At this point, the filename is considered good
@@ -256,6 +256,66 @@ def listen(host='10.197.14.59', port=9000):
                 time.sleep(0.1)
                 k -= 1
 
+def read(pipe='/tmp/radarhub.fifo'):
+    global keepReading
+    keepReading = True
+
+    if not os.path.exists(pipe):
+        try:
+            os.mkfifo(pipe)
+        except:
+            raise
+
+    # os.system(f'echo -n "radarhub rocks >> {pipe}"')
+    with open(pipe, 'at') as fid:
+        fid.write('radarhub rocks')
+
+    while keepReading:
+        # Open the pipe
+        try:
+            fid = open(pipe)
+        except:
+            logger.warning('Pipe not available')
+            k = 5
+            while k > 0:
+                # logger.debug('Try again in {} second{} ... '.format(k, 's' if k > 1 else ''), end='\r')
+                s = 's' if k > 1 else ''
+                print(f'Try again in {k} second{s} ... ', end='\r')
+                time.sleep(1.0)
+                k -= 1
+            continue
+        logger.info(f'pipe {pipe} opened')
+
+        while keepReading:
+            # Check if the fid is ready to read
+            readyToRead, _, selectError = select.select([fid], [], [fid], 0.1)
+            if selectError:
+                # logger.warning('Error in select() {}'.format(selectError))
+                logger.error(f'Error in select() {selectError}')
+                break
+            elif readyToRead:
+                file = fid.read()
+                if len(file) == 0:
+                    logger.debug('fid.read() ->nothing')
+                    time.sleep(0.1)
+                    continue
+            else:
+                continue
+
+            logger.debug(f'read() -> {file}')
+
+            file = os.path.expanduser(file)
+            print(file)
+
+        fid.close()
+
+        print('Outside of read loop.')
+        if keepReading:
+            k = 50
+            while k > 0 and keepReading:
+                time.sleep(0.1)
+                k -= 1
+
 def fifo2db():
     parser = argparse.ArgumentParser(prog=__prog__,
         formatter_class=argparse.RawTextHelpFormatter,
@@ -264,11 +324,13 @@ def fifo2db():
 
         Examples:
             {__prog__} -v
-            {__prog__} -v 10.197.14.59
+            {__prog__} 10.197.14.59
+            {__prog__} -p /tmp/radarhub.fifo
         '''),
         epilog='Copyright (c) 2021-2022 Boonleng Cheong')
-    parser.add_argument('host', type=str, nargs='?', help='host to connect')
-    parser.add_argument('-p', dest='port', default=9000, help='sets the port (default = 9000)')
+    parser.add_argument('source', default=None, type=str, nargs='?', help='source to retrieve files')
+    parser.add_argument('--port', default=9000, help='sets the port (default = 9000)')
+    parser.add_argument('-p', dest='pipe', action='store_true', help='reads from a pipe')
     parser.add_argument('-t', dest='test', default=0, type=int,
         help=textwrap.dedent('''\
             runs a test
@@ -284,10 +346,11 @@ def fifo2db():
             logger.setLevel(dailylog.logging.DEBUG)
         logger.showLogOnScreen()
 
-    # Populate the default host if not specified
-    if args.host is None:
-        args.host = '10.197.14.59'
-    logger.info(color_name_value('host', args.host))
+    # Populate the default source if not specified
+    if args.source is None:
+        args.source = '10.197.14.59:9000'
+    if ':' in args.source:
+        args.source, args.port = args.source.split(':')
 
     if args.test > 0:
         logger.showLogOnScreen()
@@ -315,8 +378,13 @@ def fifo2db():
     logger.info('--- Started ---')
     logger.info(f'Using timezone {time.tzname}')
 
-    catchup()
-    listen(args.host, port=args.port)
+    if args.pipe:
+        logger.info(color_name_value('pipe', f'{args.source}'))
+        read(args.source)
+    else:
+        logger.info(color_name_value('host', f'{args.source}:{args.port}'))
+        catchup()
+        listen(args.source, port=args.port)
 
     logger.info('--- Finished ---')
 
