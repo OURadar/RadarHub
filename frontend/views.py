@@ -1,8 +1,10 @@
 from django.shortcuts import render
+from django.conf import settings
 
 from common import colorize, color_name_value
 from .archives import location
 
+default_radar = list(settings.RADARS.values())[0]['folder'].lower()
 
 # Create your views here.
 def index(request):
@@ -42,7 +44,7 @@ def archive_radar(request, radar):
     return archive_radar_profile(request, radar, False)
 
 def archive_profile(request):
-    return archive_radar_profile(request, "px1000", True)
+    return archive_radar_profile(request, default_radar, True)
 
 def archive(request):
-    return archive_radar_profile(request, "px1000", False)
+    return archive_radar_profile(request, default_radar, False)

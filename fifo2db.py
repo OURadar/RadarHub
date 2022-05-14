@@ -357,7 +357,13 @@ def fifo2db():
 
     # Populate the default source if not specified
     if args.source is None:
-        args.source = '10.197.14.59:9000'
+        if 'tcp' in settings.FIFO:
+            args.source = settings.FIFO['tcp']
+        elif 'pipe' in settings.FIFO:
+            args.source = settings.FIFO['pipe']
+            args.pipe = True
+        else:
+            args.source = '10.197.14.59:9000'
     if ':' in args.source:
         args.source, args.port = args.source.split(':')
 

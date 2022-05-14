@@ -26,6 +26,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / 'config'
 FRONTEND_DIR = BASE_DIR / 'frontend'
 
+# User settings
+file = CONFIG_DIR / 'settings.json'
+if os.path.exists(file):
+    with open(file) as fid:
+        settings = json.load(fid)
+else:
+    settings = {}
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
@@ -96,26 +104,41 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Django_stream requires a table in the database. Using 'event' and a dbrouter for this
 # https://docs.djangoproject.com/en/4.0/topics/db/multi-db/
 
-file = CONFIG_DIR / 'db.json'
-if os.path.exists(file):
-    with open(file) as fid:
-        PostgreSQL = json.load(fid)
+# file = CONFIG_DIR / 'db.json'
+# if os.path.exists(file):
+#     with open(file) as fid:
+#         PostgreSQL = json.load(fid)
 
+#     if VERBOSE > 1:
+#         show = color_name_value('user', PostgreSQL['user'])
+#         show += '   ' + color_name_value('pass', PostgreSQL['pass'])
+#         print(show)
+
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#             'NAME': 'radarhub',
+#             'HOST': PostgreSQL['host'],
+#             'USER': PostgreSQL['user'],
+#             'PASSWORD': PostgreSQL['pass'],
+#             'PORT': '5432',
+#         }
+#     }
+if 'database' in settings:
     if VERBOSE > 1:
-        show = color_name_value('user', PostgreSQL['user'])
-        show += '   ' + color_name_value('pass', PostgreSQL['pass'])
+        show = color_name_value('user', settings['database']['user'])
+        show += '   ' + color_name_value('pass', settings['database']['pass'])
         print(show)
-
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'NAME': 'radarhub',
-            'HOST': PostgreSQL['host'],
-            'USER': PostgreSQL['user'],
-            'PASSWORD': PostgreSQL['pass'],
+            'HOST': settings['database']['host'],
+            'USER': settings['database']['user'],
+            'PASSWORD': settings['database']['pass'],
             'PORT': '5432',
+            }
         }
-    }
 else:
     DATABASES = {
         'default': {
@@ -128,7 +151,7 @@ DATABASES['event'] = {
     'ENGINE': 'django.db.backends.sqlite3',
     'NAME': BASE_DIR / 'db.sqlite3',
 }
-
+print(DATABASES)
 DATABASE_ROUTERS = ['radarhub.dbrouter.DbRouter']
 
 # Password validation
@@ -192,10 +215,8 @@ CHANNEL_LAYERS = {
 }
 
 # Radar
-file = CONFIG_DIR / 'radar.json'
-if os.path.exists(file):
-    with open(file) as fid:
-        RADARS = json.load(fid)
+if 'radars' in settings:
+    RADARS = settings['radars']
 else:
     RADARS = {
         'PX-': {
@@ -218,11 +239,18 @@ else:
         }
     }
 
+
 # frontend/package.json
 file = FRONTEND_DIR / 'package.json'
 with open(file, 'r') as fid:
     s = json.load(fid)
-
 VERSION = s['version']
 
-# print(f'VERSION = {VERSION}')
+
+# FIFO
+if 'fifo' in settings:
+    FIFO = settings['fifo']
+else:
+    FIFO = {
+        'tcp': '10.197.14.59'
+    }
