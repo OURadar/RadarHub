@@ -192,6 +192,8 @@ def process(file):
         logger.warning(f'Unable to handle {archive}')
 
 def listen(host='10.197.14.59', port=9000):
+    if not isinstance(port, int):
+        port = int(port)
     global keepReading
     keepReading = True
     while keepReading:
@@ -366,6 +368,7 @@ def fifo2db():
             args.source = '10.197.14.59:9000'
     if ':' in args.source:
         args.source, args.port = args.source.split(':')
+        args.port = int(args.port)
 
     if args.test > 0:
         logger.showLogOnScreen()
@@ -393,12 +396,15 @@ def fifo2db():
     logger.info('--- Started ---')
     logger.info(f'Using timezone {time.tzname}')
 
+    catchup()
+
     if args.pipe:
-        logger.info(color_name_value('pipe', f'{args.source}'))
+        logger.info(color_name_value('pipe', args.source))
         read(args.source)
     else:
-        logger.info(color_name_value('host', f'{args.source}:{args.port}'))
-        catchup()
+        show = color_name_value('host', args.source)
+        show += '   ' + color_name_value('port', args.port)
+        logger.info(show)
         listen(args.source, port=args.port)
 
     logger.info('--- Finished ---')

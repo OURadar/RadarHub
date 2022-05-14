@@ -151,7 +151,7 @@ DATABASES['event'] = {
     'ENGINE': 'django.db.backends.sqlite3',
     'NAME': BASE_DIR / 'db.sqlite3',
 }
-print(DATABASES)
+
 DATABASE_ROUTERS = ['radarhub.dbrouter.DbRouter']
 
 # Password validation
@@ -252,5 +252,5 @@ if 'fifo' in settings:
     FIFO = settings['fifo']
 else:
     FIFO = {
-        'tcp': '10.197.14.59'
+        'tcp': '10.197.14.59:9000'
     }

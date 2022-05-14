@@ -17,8 +17,7 @@ screenlog.*
 .DS_Store
 package-lock.json
 db.sqlite3
-config/db.json
-config/radar.json
+config/settings.json
 frontend/migrations/[0-9]*.py
 reporter/simple
 reporter/secret
