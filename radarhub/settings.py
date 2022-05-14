@@ -221,21 +221,15 @@ else:
     RADARS = {
         'PX-': {
             'folder': 'PX1000',
-            'count': 0,
-            'bgor_scan': 'E4.0',
-            'bgor_step': 0,
+            'summary': 'E4.0',
         },
         'RAXPOL-': {
             'folder': 'RaXPol',
-            'count': 0,
-            'bgor_scan': 'E4.0',
-            'bgor_step': 0,
+            'summary': 'E4.0',
         },
         'PX10K-': {
             'folder': 'PX10k',
-            'count': 0,
-            'bgor_scan': 'E4.0',
-            'bgor_step': 0,
+            'summary': 'E4.0',
         }
     }
 

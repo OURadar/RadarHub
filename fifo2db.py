@@ -38,8 +38,14 @@ from common import colorize, color_name_value
 __prog__ = os.path.basename(sys.argv[0])
 
 keepReading = True
-radars = settings.RADARS
+radars = settings.RADARS.copy()
 logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__)
+
+# Populate other keys as local parameters
+for prefix, radar in radars.items():
+    radar['step'] = 0
+    radar['count'] = 0
+
 
 def signalHandler(sig, frame):
     global keepReading
@@ -47,6 +53,7 @@ def signalHandler(sig, frame):
     # Print a return line for cosmetic
     print('\r')
     logger.info('SIGINT received, finishing up ...')
+
 
 def proper(file, root='/mnt/data'):
     basename = os.path.basename(file)
@@ -60,6 +67,7 @@ def proper(file, root='/mnt/data'):
         return None
     dayTree = f'{d[0:4]}/{d}'
     return f'{root}/{sub}/{dayTree}/_original/{basename}'
+
 
 def catchupV1(file, root='/mnt/data'):
     logger.info(colorize('catchup()', 'green'))
@@ -89,6 +97,7 @@ def catchupV1(file, root='/mnt/data'):
         dbtool.xzfolder(dayFolder, hour, verbose=0)
         date += stride
         hour = 0
+
 
 def catchup(root='/mnt/data'):
     global radars
@@ -134,9 +143,10 @@ def catchup(root='/mnt/data'):
         radars[prefix]['count'] += 1
         minute = int(c[2][2:4])
         step = int(minute / 20)
-        radars[prefix]['bgor_step'] = 0 if step == 2 else step + 1
+        radars[prefix]['step'] = 0 if step == 2 else step + 1
         if logger.level > dailylog.logging.WARNING:
             print('')
+
 
 def process(file):
     global radars
@@ -177,19 +187,20 @@ def process(file):
 
     if k > 0:
         bgor = False
-        scan = radars[prefix]['bgor_scan']
+        scan = radars[prefix]['summary']
         if c[3].startswith(scan):
             step = int(date.minute / 20)
-            target = radars[prefix]['bgor_step']
+            target = radars[prefix]['step']
             logger.debug(f'{step} vs {target}')
-            if radars[prefix]['bgor_step'] == step:
-                radars[prefix]['bgor_step'] = 0 if step == 2 else radars[prefix]['bgor_step'] + 1
+            if radars[prefix]['step'] == step:
+                radars[prefix]['step'] = 0 if step == 2 else radars[prefix]['step'] + 1
                 bgor = True
         day, mode = dbtool.build_day(prefix + c[1], bgor=bgor)
         u = '+' if bgor else ''
         logger.info(f'{mode} {day.__repr__()}{u}')
     else:
         logger.warning(f'Unable to handle {archive}')
+
 
 def listen(host='10.197.14.59', port=9000):
     if not isinstance(port, int):
@@ -259,10 +270,6 @@ def listen(host='10.197.14.59', port=9000):
                 time.sleep(0.1)
                 k -= 1
 
-def initpipe(pipe, string):
-    time.sleep(0.169)
-    with open(pipe, 'at') as fid:
-        fid.write(string)
 
 def read(pipe='/tmp/radarhub.fifo'):
     global keepReading
@@ -275,6 +282,10 @@ def read(pipe='/tmp/radarhub.fifo'):
             raise
 
     # Put something into the pipe to get things moving
+    def initpipe(pipe, string):
+        time.sleep(0.169)
+        with open(pipe, 'at') as fid:
+            fid.write(string)
     initstring = ':/radarhub/rocks'
     threading.Thread(target=initpipe, args=(pipe,initstring,)).start()
 
