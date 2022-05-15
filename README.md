@@ -222,7 +222,6 @@ drwxrwxr-x 8 boonleng users 4.0K Feb  8 11:25 frontend/
 drwxrwxr-x 3 boonleng users 4.0K Feb  8 11:18 radarhub/
 drwxrwxr-x 4 boonleng users 4.0K Jan 23 10:19 reporter/
 drwxrwxr-x 2 boonleng users 4.0K Jan  6 19:53 tools/
--rw-rw-r-- 1 boonleng users 1.9K Feb  8 11:18 dailylog.py
 -rwxrwxr-x 1 boonleng users  23K Feb  8 11:18 dbtool.py*
 -rwxrwxr-x 1 boonleng users 8.0K Feb  8 11:25 file2db.py*
 -rwxrwxr-x 1 boonleng users  703 Oct  2 14:23 manage.py*

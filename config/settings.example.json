@@ -7,6 +7,7 @@
   "fifo": {
     "tcp": "10.197.14.59:9000"
   },
+  "host": "radarhub.arrc.ou.edu",
   "radars": {
     "PX-": {
       "folder": "PX1000",

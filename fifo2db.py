@@ -29,11 +29,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
 import dbtool
-import dailylog
 
 from django.conf import settings
 from frontend.models import File, Day
-from common import colorize, color_name_value
+from common import colorize, color_name_value, dailylog
 
 __prog__ = os.path.basename(sys.argv[0])
 
@@ -120,6 +119,8 @@ def catchup(root='/mnt/data'):
         files = sorted(glob.glob(f'{folderYearDay}/_original/*.tar.xz'))
         if len(files) == 0:
             files = sorted(glob.glob(f'{folderYearDay}/*.txz'))
+        if len(files) == 0:
+            files = sorted(glob.glob(f'{folderYearDay}/_original/*.txz'))
         if len(files) == 0:
             logger.info('Error. No files.')
             return

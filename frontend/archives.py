@@ -11,18 +11,17 @@ from functools import lru_cache
 from django.http import HttpResponse
 from django.conf import settings
 
-# from django.utils.dateparse import parse_datetime
-# from django.utils import timezone
-
 from .models import File, Day
-from common import colorize, color_name_value, radar_prefix
-
-timeFinder = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
+from common import colorize, color_name_value
 
 origins = {}
-# for radar in settings.db
-
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
+tf = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
+
+radar_prefix = {}
+for prefix, item in settings.RADARS.items():
+    radar = item['folder'].lower()
+    radar_prefix[radar] = prefix
 
 def binary(_, name):
     if settings.VERBOSE > 1:
@@ -66,7 +65,7 @@ def month(_, radar, day):
         return HttpResponse(f'Not a valid query.', status=500)
     y = int(day[0:4])
     m = int(day[4:6])
-    prefix = radar_prefix(radar)
+    prefix = radar_prefix[radar]
     entries = Day.objects.filter(date__year=y, date__month=m, name=prefix)
     date = datetime.date(y, m, 1)
     step = datetime.timedelta(days=1)
@@ -103,7 +102,7 @@ def count(_, radar, day):
         print(show)
     if radar == 'undefined' or day == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    prefix = radar_prefix(radar)
+    prefix = radar_prefix[radar]
     data = {
         'count': _count(prefix, day)
     }
@@ -143,7 +142,7 @@ def list(_, radar, day_hour_symbol):
         print(show)
     if radar == 'undefined' or day_hour_symbol == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    prefix = radar_prefix(radar)
+    prefix = radar_prefix[radar]
     c = day_hour_symbol.split('-')
     day = c[0]
     hourly_count = _count(prefix, day)
@@ -205,7 +204,7 @@ def _load(name):
         }
     else:
         # Database is indexed by date so we extract the time first for a quicker search
-        s = timeFinder.search(name)[0]
+        s = tf.search(name)[0]
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
         match = File.objects.filter(date=date).filter(name=name)
         if match.exists():
@@ -295,7 +294,7 @@ def date(_, radar):
         print(show)
     if radar == 'undefined':
         return HttpResponse(f'Not a valid query.', status=500)
-    prefix = radar_prefix(radar)
+    prefix = radar_prefix[radar]
     ymd, hour = _date(prefix)
     if ymd is None:
         data = {
@@ -332,7 +331,7 @@ def location(radar):
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('radar', radar)
         print(show)
-    prefix = radar_prefix(radar)
+    prefix = radar_prefix[radar]
     global origins
     ymd, hour = _date(prefix)
     if ymd is None:
@@ -379,7 +378,7 @@ def catchup(_, radar, scan='E4.0', symbol='Z'):
     show = colorize('archive.catchup()', 'green')
     show += '  ' + color_name_value('radar', radar)
     print(show)
-    prefix = radar_prefix(radar)
+    prefix = radar_prefix[radar]
     ymd, hour = _date(prefix)
     if ymd is None:
         data = {

@@ -1,3 +1,11 @@
+# frontend/consumers.py
+#
+#   RadarHub
+#   Frontend models of the data
+#
+#   Created by Boonleng Cheong
+#
+
 import os
 import re
 import tarfile
@@ -7,9 +15,6 @@ from netCDF4 import Dataset
 from django.db import models
 from django.core.validators import int_list_validator
 from django.conf import settings
-# from django.db.models.signals import post_save
-# from django.dispatch import receiver
-
 from common import colorize
 
 # Some helper functions
@@ -117,10 +122,6 @@ class File(models.Model):
                 'values': values
             }
 
-# @receiver(post_save, sender=File)
-# def post_save_file(sender, **kwargs):
-#     file = kwargs.get('instance')
-#     print(f'File {file.__repr__()} saved ...')
 
 '''
 Day
@@ -228,5 +229,4 @@ class Day(models.Model):
                 cond = 3
         if cond == 0:
             print(f'Day.weather_condition() {self.date} {self.blue} {self.green} {self.orange} {self.red}')
-        # print(f'{self.day_string()}  {self.__vbar__()}  {self.blue} {self.green} {self.orange} {self.red} -> {cond}')
         return cond

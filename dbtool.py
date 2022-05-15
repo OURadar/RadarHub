@@ -30,11 +30,9 @@ import numpy as np
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
-import dailylog
-
 from django.conf import settings
 from frontend.models import File, Day
-from common import colorize, color_name_value
+from common import colorize, color_name_value, dailylog
 
 __prog__ = os.path.basename(sys.argv[0])
 __version__ = settings.VERSION
