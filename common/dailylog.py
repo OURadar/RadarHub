@@ -5,8 +5,6 @@ import traceback
 
 logging.Formatter.converter = time.localtime
 
-__version__ = '1.0'
-
 class Logger(logging.Logger):
     def __init__(self, name, home=os.path.expanduser('~/logs')):
         super(Logger, self).__init__(name)
