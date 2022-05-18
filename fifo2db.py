@@ -65,7 +65,13 @@ def proper(file, root='/mnt/data'):
         logger.warning(f'Radar {prefix} not recognized.')
         return None
     dayTree = f'{d[0:4]}/{d}'
-    return f'{root}/{sub}/{dayTree}/_original/{basename}'
+    filename = f'{root}/{sub}/{dayTree}/_original/{basename}'
+    if not os.path.exists(filename):
+        filename = f'{root}/{sub}/{dayTree}/{basename}'
+    if not os.path.exists(filename):
+        logger.info(f'proper() Could not find {basename}')
+        filename = None
+    return filename
 
 
 def catchupV1(file, root='/mnt/data'):
@@ -163,6 +169,8 @@ def process(file):
         archive = proper(file)
     else:
         archive = file
+    if archive is None:
+        return
 
     date = datetime.datetime.strptime(c[1] + c[2], r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
 
@@ -322,6 +330,7 @@ def read(pipe='/tmp/radarhub.fifo'):
             else:
                 continue
 
+            file = file.rstrip()
             logger.debug(f'read() -> {file}')
             if file == initstring:
                 continue
