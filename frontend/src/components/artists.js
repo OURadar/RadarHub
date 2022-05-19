@@ -794,6 +794,10 @@ export function texturedElements(regl) {
       data: regl.prop("data"),
     },
 
+    depth: {
+      enable: true,
+    },
+
     blend: {
       enable: true,
       func: {
