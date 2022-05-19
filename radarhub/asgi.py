@@ -10,7 +10,8 @@ https://docs.djangoproject.com/en/3.2/howto/deployment/asgi/
 import os
 
 from django.core.asgi import get_asgi_application
-from django.conf.urls import url
+# from django.conf.urls import url
+from django.urls import path, re_path
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 
@@ -29,10 +30,10 @@ application = ProtocolTypeRouter({
     # Use django-eventstream for /events/
     # The rests go to the ASGI application (normal HTTP requests)
     'http': URLRouter([
-        url(r'^events/', AuthMiddlewareStack(
+        re_path(r'^events/', AuthMiddlewareStack(
             URLRouter(django_eventstream.routing.urlpatterns)
         ), {'channels': ['sse']}),
-        url(r'', django_asgi_app),
+        path(r'', django_asgi_app),
     ]),
 
     # WebSocket interface
