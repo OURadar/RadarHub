@@ -675,13 +675,14 @@ def find_duplicates(source, remove=False):
 '''
     Check for latest entries from each radar
 '''
-def check_latest(source):
+def check_latest(source=[]):
     show = colorize('check_latest()', 'green')
     logger.info(show)
     if len(source):
         names = [params_from_source(name)['prefix'] for name in source]
     else:
         names = ['PX-', 'PX10K-', 'RAXPOL-']
+    message = '| Last Hour | File |\n|---|---|\n'
     for name in names:
         day = Day.objects.filter(name=name).latest('date')
         last = day.last_hour_range()
@@ -689,7 +690,10 @@ def check_latest(source):
         show = colorize('last', 'orange') + colorize(' = ', 'red')
         show += '[' + colorize(last[0], 'yellow') + ', ' + colorize(last[1], 'yellow') + ']'
         show += '   ' + color_name_value('name', file.name)
+        filename = file.name.split('.')[0]
+        message += f'{last[0]} | {filename}\n'
         logger.info(show)
+    return message
 
 '''
     Compute BGOR (blue, green, orange, red) ratios
