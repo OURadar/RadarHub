@@ -73,8 +73,7 @@
       href="{% static 'css/desktop.css' %}?r={% now 'U' %}"
     />
 
-    {% endcomment %}
-    {{ params|json_script:"params" }}
+    {% endcomment %} {{ params|json_script:"params" }}
     <title>RadarHub</title>
   </head>
   <body>
@@ -84,5 +83,5 @@
     {% endcomment %}
   </body>
   <script src="{% static 'frontend/shared.js' %}"></script>
-  <script src="{% static 'frontend/main.js' %}?v={% now 'U' %}"></script>
+  <script src="{% static 'frontend/main.js' %}"></script>
 </html>

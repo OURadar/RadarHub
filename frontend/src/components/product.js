@@ -376,9 +376,6 @@ class Product extends GLView {
     this.regl.clear({
       color: this.props.colors.glview,
     });
-    const shapes = this.overlay.getDrawables();
-    if (shapes.poly) this.picaso(shapes.poly);
-    if (shapes.text) this.gogh(shapes.text);
     if (this.assets.complete)
       this.vinci({
         projection: this.geometry.projection,
@@ -394,6 +391,9 @@ class Product extends GLView {
         origins: this.assets.origins,
         elements: this.assets.elements,
       });
+    const shapes = this.overlay.getDrawables();
+    if (shapes.poly) this.picaso(shapes.poly);
+    if (shapes.text) this.gogh(shapes.text);
     if (this.dashboardTexture) {
       this.michelangelo({
         projection: this.geometry.orthoprojection,

@@ -327,12 +327,15 @@ def rho2ind(values):
     radar - Input radar name, e.g., px1000, raxpol, etc.
 '''
 def location(radar):
+    global origins
     if settings.VERBOSE > 1:
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('radar', radar)
         print(show)
-    prefix = radar_prefix[radar]
-    global origins
+    if radar in radar_prefix:
+        prefix = radar_prefix[radar]
+    else:
+        prefix = None
     ymd, hour = _date(prefix)
     if ymd is None:
         origins[radar] = {
