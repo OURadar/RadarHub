@@ -291,13 +291,7 @@ In short, add the following line to `.bash_profile`:
 export DJANGO_DEBUG=true
 ```
 
-For running [redis] using [Docker]:
-
-```shell
-docker run -p 6379:6379 -d redis:6
-```
-
-## Redis Using Systemd
+## Redis Using Systemd (Recommended)
 
 Running [Redis] through `systemd` allows you to configure the `supervisor.service`, which starts the RadarHub components, to start after the [Redis] service is active.
 
@@ -311,6 +305,33 @@ Description=Supervisor process control system for UNIX
 Documentation=http://supervisord.org
 After=redis.service
 Requires=redis.service
+ReloadPropagatedFrom=redis.service
+
+[Service]
+ExecStart=/usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
+ExecStop=/usr/bin/supervisorctl $OPTIONS shutdown
+ExecReload=/usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf $OPTIONS reload
+KillMode=process
+Restart=on-failure
+RestartSec=50s
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## Redis Using Docker
+
+For running [redis] using [Docker]:
+
+```shell
+docker run -p 6379:6379 -d redis:6
+```
+Configure through the file `/lib/systemd/system/supervisor.service` as:
+
+```conf
+[Unit]
+Description=Supervisor process control system for UNIX
+Documentation=http://supervisord.org
 ReloadPropagatedFrom=redis.service
 
 [Service]
