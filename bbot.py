@@ -24,13 +24,22 @@ bot = None
 logger = common.get_logger()
 jpowell = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
 
-def signalHandler(sig, frame):
+def signal_handler(sig, frame):
     # Print a return line for cosmetic
     print('\r')
     logger.info('SIGINT received, finishing up ...')
     bot.stop()
 
-class RadarHubBot():
+def check_logins():
+    out = os.popen('ssh ldm@bumblebee "~/Developer/revtun/lt.sh" | sed "s,\x1B\[[0-9;]*[a-zA-Z],,g"').read()
+    out = out.split('\n')[1:-2]
+    md = '| PID | User | Period | IP | Description |\n|---|---|---|---|---|\n'
+    for line in out:
+        items = line.split()
+        md += '| {} | `{}` |\n'.format(' | '.join(items[:4]), ' '.join(items[4:]))
+    return md.rstrip()
+
+class BBot():
     def __init__(self,
         name='@**BBot**',
         email='boonleng-bot@chat.arrc.ou.edu',
@@ -77,6 +86,8 @@ class RadarHubBot():
 
         if 'latest' in content:
             response = dbtool.check_latest()
+        elif 'who' in content:
+            response = check_logins()
         elif 'help' in content:
             response = '`latest` - show latest files from the radars'
         elif 'hello' in content:
@@ -97,15 +108,15 @@ if __name__ == '__main__':
     setproctitle.setproctitle(os.path.basename(sys.argv[0]))
 
 	# Catch kill signals to exit gracefully
-    signal.signal(signal.SIGINT, signalHandler)
-    signal.signal(signal.SIGTERM, signalHandler)
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     # logger.showLogOnScreen()
 
     logger.info('--- Started ---')
     logger.info(f'Using timezone {time.tzname}')
 
-    bot = RadarHubBot()
+    bot = BBot()
     bot.run()
 
     logger.info('--- Finished ---')
