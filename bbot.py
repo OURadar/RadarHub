@@ -52,7 +52,11 @@ class RadarHubBot():
             self.messenger.post('started', self.owner)
         while self.want_running:
             self.messenger.call_on_each_message_nonblock(self.onmessage)
-            time.sleep(0.1)
+            # Lower request availability to prevent DOS attack
+            k = 0
+            while self.want_running and k < 5:
+                time.sleep(0.1)
+                k += 1
         self.running = False
         if self.notify:
             self.messenger.post('ended', self.owner)
@@ -63,9 +67,6 @@ class RadarHubBot():
         self.messenger.post(f'{self.name}', self.email)
 
     def onmessage(self, message):
-        if self.messenger.is_my_message(message):
-            return
-
         if self.verbose > 1:
             jpowell.pprint(message)
 

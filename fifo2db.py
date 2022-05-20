@@ -322,22 +322,23 @@ def read(pipe='/tmp/radarhub.fifo'):
                 logger.error(f'Error in select() {selectError}')
                 break
             elif readyToRead:
-                file = fid.read()
-                if len(file) == 0:
+                files = fid.read()
+                if len(files) == 0:
                     logger.debug('fid.read() ->nothing')
                     time.sleep(0.1)
                     continue
             else:
                 continue
 
-            file = file.rstrip()
-            logger.debug(f'read() -> {file}')
-            if file == initstring:
-                continue
+            files = files.split('\n')
+            for file in files:
+                logger.debug(f'read() -> {file}')
+                if file == initstring:
+                    continue
 
-            # At this point, the filename is considered good
-            file = os.path.expanduser(file)
-            process(file)
+                # At this point, the filename is considered good
+                file = os.path.expanduser(file)
+                process(file)
 
         # Out of the second keepReading loop. Maybe there was an error in select(), close and retry
         fid.close()
