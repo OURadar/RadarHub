@@ -21,7 +21,7 @@ class Messenger(object):
         self.queue_id = None
         self.lastmsg = None
 
-    def post(self, message, channel="bots", topic="(no topic)", files=[]):
+    def post(self, message, channel="bots", subject="(no topic)", files=[]):
         if self.url is None:
             return 1
 
@@ -41,7 +41,7 @@ class Messenger(object):
 
         request = {
             'to': channel,
-            'subject': topic,
+            'subject': subject,
             'content': message.format(*fileuris) if files else message
         }
         chtype = "private" if '@' in channel else "stream"
