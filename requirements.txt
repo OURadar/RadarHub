@@ -12,4 +12,3 @@ psycopg2
 setproctitle
 oauthlib
 django-eventstream
-zulip
