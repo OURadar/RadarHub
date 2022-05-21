@@ -681,8 +681,8 @@ def check_latest(source=[], markdown=False):
     if len(source):
         names = [params_from_source(name)['prefix'] for name in source]
     else:
-        names = ['PX-', 'PX10K-', 'RAXPOL-']
-    message = '| Latest Hour | Latest Scan | Age |\n|---|---|---|\n'
+        names = settings.RADARS.keys()
+    message = '| Radars | Latest Scan | Age |\n|---|---|---|\n'
     for name in names:
         day = Day.objects.filter(name=name).latest('date')
         last = day.last_hour_range()
@@ -690,6 +690,7 @@ def check_latest(source=[], markdown=False):
         show = colorize('last', 'orange') + colorize(' = ', 'red')
         show += '[' + colorize(last[0], 'yellow') + ', ' + colorize(last[1], 'yellow') + ']'
         show += '   ' + color_name_value('name', file.name)
+        radar = settings.RADARS[name]['folder']
         filename = re.sub('-([a-zA-Z]+).nc', '', file.name)
         age = file.getAge()
         ages = ''
@@ -702,7 +703,7 @@ def check_latest(source=[], markdown=False):
             ages += f'{hours} hour{s} '
         mins = (age.seconds - 3600 * hours) // 60
         ages += f'{mins} min{s}'
-        message += f'{last[0]} | {filename} | {ages} |\n'
+        message += f'{radar} | {filename} | {ages} |\n'
         logger.info(show)
     if markdown:
         print(message)
