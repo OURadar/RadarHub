@@ -35,6 +35,9 @@ class Logger(logging.Logger):
     def showLogOnScreen(self):
         self.streamHandler.setLevel(self.level)
 
+    def hideLogOnScreen(self):
+        self.streamHandler.setLevel(logging.ERROR)
+
     def check(self):
         self.time = time.localtime(time.time())
         if self.day == self.time.tm_mday:

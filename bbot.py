@@ -38,13 +38,16 @@ def signal_handler(sig, frame):
 def check_logins():
     out = os.popen('ssh ldm@bumblebee "~/Developer/revtun/lt.sh" | sed "s,\x1B\[[0-9;]*[a-zA-Z],,g"').read()
     out = out.split('\n')[1:-2]
-    md = '| User | Period | IP | Description |\n|---|--:|--:|---|\n'
+    message = 'Showing who has established reverse-tunnel connections\n\n'
+    message += '| User | Period | IP | Description |\n|---|--:|--:|---|\n'
     for line in out:
         items = line.split()
         if items[1] == 'ldm@notty':
             continue
-        md += '| {} | {} |\n'.format(' | '.join(items[1:4]), ' '.join(items[4:]))
-    return md.rstrip()
+        name, period, ip = items[1:4]
+        info = ' '.join(items[4:])
+        message += f'| {name} | {period} | `{ip}` | {info} |\n'
+    return message.rstrip()
 
 class BBot():
     def __init__(self,
@@ -87,7 +90,7 @@ class BBot():
         if self.verbose > 1:
             pretty.pprint(message)
 
-        if message['is_me_message']:
+        if self.messenger.is_my_message(message):
             return
 
         content = message['content'].lower()
@@ -107,6 +110,9 @@ class BBot():
             response = 'Hi there :wave:'
         elif 'bye' in content:
             response = 'See you later :peace_sign:'
+        elif 'logoff':
+            self.messenger.react(message, '+1')
+            return self.stop()
         else:
             return
 

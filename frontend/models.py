@@ -74,6 +74,10 @@ class File(models.Model):
             return path
         return None
 
+    def getAge(self):
+        now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+        return now - self.date
+
     def read(self, finite=False):
         if any([ext in self.path for ext in ['tgz', 'txz', 'tar.xz']]):
             if settings.VERBOSE > 1:

@@ -675,14 +675,14 @@ def find_duplicates(source, remove=False):
 '''
     Check for latest entries from each radar
 '''
-def check_latest(source=[]):
+def check_latest(source=[], markdown=False):
     show = colorize('check_latest()', 'green')
     logger.info(show)
     if len(source):
         names = [params_from_source(name)['prefix'] for name in source]
     else:
         names = ['PX-', 'PX10K-', 'RAXPOL-']
-    message = '| Last Hour | Scan |\n|---|---|\n'
+    message = '| Latest Hour | Latest Scan | Age |\n|---|---|---|\n'
     for name in names:
         day = Day.objects.filter(name=name).latest('date')
         last = day.last_hour_range()
@@ -690,9 +690,22 @@ def check_latest(source=[]):
         show = colorize('last', 'orange') + colorize(' = ', 'red')
         show += '[' + colorize(last[0], 'yellow') + ', ' + colorize(last[1], 'yellow') + ']'
         show += '   ' + color_name_value('name', file.name)
-        filename = file.name.split('.')[0]
-        message += f'{last[0]} | {filename}\n'
+        filename = re.sub('-([a-zA-Z]+).nc', '', file.name)
+        age = file.getAge()
+        ages = ''
+        if age.days > 0:
+            s = 's' if age.days > 1 else ''
+            ages += f'{age.days} day{s} '
+        hours = age.seconds // 3600
+        if hours > 0:
+            s = 's' if hours > 1 else ''
+            ages += f'{hours} hour{s} '
+        mins = (age.seconds - 3600 * hours) // 60
+        ages += f'{mins} min{s}'
+        message += f'{last[0]} | {filename} | {ages} |\n'
         logger.info(show)
+    if markdown:
+        print(message)
     return message
 
 '''
@@ -836,6 +849,7 @@ def dbtool_main():
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('--last', action='store_true', help='shows the absolute last entry in the database')
     parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
+    parser.add_argument('--markdown', action='store_true', help='generates output in markdown')
     parser.add_argument('--no-bgor', dest='bgor', default=True, action='store_false', help='skips computing bgor')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
@@ -934,7 +948,9 @@ def dbtool_main():
         o = File.objects.last()
         logger.info(o.__repr__())
     elif args.latest:
-        check_latest(args.source)
+        if args.markdown:
+            logger.hideLogOnScreen()
+        check_latest(args.source, markdown=args.markdown)
     elif args.sweep:
         if len(args.source) == 0:
             o = File.objects.last()
