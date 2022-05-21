@@ -682,7 +682,7 @@ def check_latest(source=[]):
         names = [params_from_source(name)['prefix'] for name in source]
     else:
         names = ['PX-', 'PX10K-', 'RAXPOL-']
-    message = '| Last Hour | File |\n|---|---|\n'
+    message = '| Last Hour | Scan |\n|---|---|\n'
     for name in names:
         day = Day.objects.filter(name=name).latest('date')
         last = day.last_hour_range()

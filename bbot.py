@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #
-#  .py
+#  bbot.py
 #  Some interaction between RadarHub and Zulip
 #
 #  RadarHub
@@ -15,14 +15,19 @@ import sys
 import time
 import signal
 import pprint
+import argparse
+import textwrap
 import setproctitle
 
 import common
 import dbtool
 
+__prog__ = os.path.basename(sys.argv[0])
+__version__ = '1.0'
+
 bot = None
 logger = common.get_logger()
-jpowell = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
+pretty = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
 
 def signal_handler(sig, frame):
     # Print a return line for cosmetic
@@ -33,10 +38,12 @@ def signal_handler(sig, frame):
 def check_logins():
     out = os.popen('ssh ldm@bumblebee "~/Developer/revtun/lt.sh" | sed "s,\x1B\[[0-9;]*[a-zA-Z],,g"').read()
     out = out.split('\n')[1:-2]
-    md = '| PID | User | Period | IP | Description |\n|---|---|---|---|---|\n'
+    md = '| User | Period | IP | Description |\n|---|--:|--:|---|\n'
     for line in out:
         items = line.split()
-        md += '| {} | `{}` |\n'.format(' | '.join(items[:4]), ' '.join(items[4:]))
+        if items[1] == 'ldm@notty':
+            continue
+        md += '| {} | {} |\n'.format(' | '.join(items[1:4]), ' '.join(items[4:]))
     return md.rstrip()
 
 class BBot():
@@ -44,21 +51,22 @@ class BBot():
         name='@**BBot**',
         email='boonleng-bot@chat.arrc.ou.edu',
         owner='boonleng@ou.edu',
-        notify=True):
+        notify=True,
+        verbose=0):
         self.name = name
         self.email = email
         self.owner = owner
         self.notify = notify
+        self.verbose = verbose
         self.messenger = common.get_messenger()
         self.want_running = False
         self.running = False
-        self.verbose = 0
 
     def run(self):
         self.want_running = True
         self.running = True
         if self.notify:
-            self.messenger.post('started', self.owner)
+            self.messenger.post('Started', self.owner)
         while self.want_running:
             self.messenger.call_on_each_message_nonblock(self.onmessage)
             # Lower request availability to prevent DOS attack
@@ -68,7 +76,7 @@ class BBot():
                 k += 1
         self.running = False
         if self.notify:
-            self.messenger.post('ended', self.owner)
+            self.messenger.post('Ended', self.owner)
 
     def stop(self):
         self.want_running = False
@@ -77,7 +85,7 @@ class BBot():
 
     def onmessage(self, message):
         if self.verbose > 1:
-            jpowell.pprint(message)
+            pretty.pprint(message)
 
         if message['is_me_message']:
             return
@@ -87,9 +95,14 @@ class BBot():
         if 'latest' in content:
             response = dbtool.check_latest()
         elif 'who' in content:
+            # self.messager.react(message, 'working_on_it')
+            self.messenger.react(message, 'working_on_it')
             response = check_logins()
         elif 'help' in content:
-            response = '`latest` - show latest files from the radars'
+            response = textwrap.dedent(f'''\
+                `latest` - shows latest files from the radars
+                `who` - shows which radars have phoned home
+                ''')
         elif 'hello' in content:
             response = 'Hi there :wave:'
         elif 'bye' in content:
@@ -105,18 +118,32 @@ class BBot():
 #
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(prog=__prog__,
+        formatter_class=argparse.RawTextHelpFormatter,
+        description=textwrap.dedent(f'''\
+        BBot
+
+        Examples:
+            {__prog__} -v
+        '''),
+        epilog='Copyright (c) 2022 Boonleng Cheong')
+    parser.add_argument('--version', action='version', version=f'{__prog__} {__version__}')
+    parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
+    args = parser.parse_args()
+
     setproctitle.setproctitle(os.path.basename(sys.argv[0]))
 
 	# Catch kill signals to exit gracefully
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # logger.showLogOnScreen()
+    if args.verbose:
+        logger.showLogOnScreen()
 
     logger.info('--- Started ---')
     logger.info(f'Using timezone {time.tzname}')
 
-    bot = BBot()
+    bot = BBot(verbose=args.verbose)
     bot.run()
 
     logger.info('--- Finished ---')

@@ -26,6 +26,7 @@ echo
 systemctl status supervisor --no-pager --lines 4
 echo
 show_log_by_latest_line_count frontend 10 228
+show_log_by_latest_line_count bbot 10 228
 #show_log_by_latest_line_count backhaul 10 214
 echo -e "\033[4;38;5;214m/home/radarhub/log/backhaul.log\033[m"
 tail -n 10 /home/radarhub/log/backhaul.log

@@ -75,6 +75,12 @@ class Messenger(object):
             req['content'] = msg
         return self.client.send_message(req)
 
+    def react(self, message, emoji):
+        request = {
+            'message_id': message['id'],
+            'emoji_name': emoji
+        }
+        self.client.add_reaction(request)
 
     def call_on_each_event_nonblock(self,
         callback: Callable[[Dict[str, Any]], None],
