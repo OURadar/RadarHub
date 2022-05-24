@@ -56,7 +56,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.7.1 Improved efficiency of data retrieval (4/27/2022)
   - [x] 0.7.2 Updated behaviors of calendar badge and product switching (4/29/2022)
   - [x] 0.7.3 Introduced backend caching and external radar configuration (5/15/2022)
-  - [ ] 0.7.4 Introduced pipe ingest and txz support (5/--/2022)
+  - [x] 0.7.4 Introduced pipe ingest and txz support (5/24/2022)
   - [ ] 0.7.x Auto adjustments for best view of PPI/RHI data
   - [ ] 0.7.x Streaming buffers for radial-by-radial updates
 - [ ] 0.8 Authentication + user priviledges
