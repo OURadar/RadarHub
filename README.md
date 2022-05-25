@@ -57,8 +57,6 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.7.2 Updated behaviors of calendar badge and product switching (4/29/2022)
   - [x] 0.7.3 Introduced backend caching and external radar configuration (5/15/2022)
   - [x] 0.7.4 Introduced pipe ingest and txz support (5/24/2022)
-  - [ ] 0.7.x Auto adjustments for best view of PPI/RHI data
-  - [ ] 0.7.x Streaming buffers for radial-by-radial updates
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Page template, UI materials, mobile version
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
@@ -69,7 +67,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [ ] New abstraction layer for colorbar, title, and other static overlays.
   - [ ] Streaming buffers for radial-by-radial updates
   - [x] New camera transformation that is radar centric
-- [ ] Overlay Upgrades
+- - [ ] Auto adjustments for best view of PPI/RHI data
+        [ ] Overlay Upgrades
   - [ ] An array of arrays of text assets to reduce texture updates
   - [ ] A new version of overlay.worker
 - [ ] Caching
