@@ -3,6 +3,14 @@
 # This script generates a summary of important process and shows the
 # latest logs from selected processes
 #
+# Requirement:
+# blib-sh (https://git.arrc.ou.edu/cheo4524/blib-sh.git)
+#
+
+if [ "${1}" == "bbot" ]; then
+	export TERM=xterm-256color 
+	export SCREEN_WIDTH=120
+fi
 
 if [ -z "${BLIB_HOME}" ]; then BLIB_HOME="${HOME}/Developer/blib-sh"; fi; . ${BLIB_HOME}/blib.sh
 
