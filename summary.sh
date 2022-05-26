@@ -13,15 +13,19 @@ if [ -z "${BLIB_HOME}" ]; then BLIB_HOME="${HOME}/Developer/blib-sh"; fi; . ${BL
 ##############
 
 clear
+
 check_user_process radarhub python dgen fifoshare fiforead fifo2db | textout "Processes" seagreen
+
 if [ -f /lib/systemd/system/redis-server.service ]; then
 	echo
 	systemctl status redis --no-pager --lines 4
 fi
+
 if [ -f /lib/systemd/system/supervisor.service ]; then
 	echo
 	systemctl status supervisor --no-pager --lines 4
 fi
+
 echo
 
 # Supervisord logging
