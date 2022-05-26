@@ -40,8 +40,10 @@ fi
 
 # BLIB logging
 folder="${HOME}/logs"
-logfile=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
-echo -e "\033[1;4;38;5;45m${logfile}\033[m"
-tail -n 10 ${logfile}
-echo
+if [ -d ${folder} ]; then
+	logfile=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
+	echo -e "\033[1;4;38;5;45m${logfile}\033[m"
+	tail -n 10 ${logfile}
+	echo
+fi
 
