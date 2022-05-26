@@ -6,12 +6,6 @@
 
 if [ -z "${BLIB_HOME}" ]; then BLIB_HOME="${HOME}/Developer/blib-sh"; fi; . ${BLIB_HOME}/blib.sh
 
-folder="/home/radarhub/log"
-
-if [ ! -d ${folder} ]; then
-	folder="${HOME}/log"
-fi
-
 ##############
 #
 #   M A I N
@@ -19,14 +13,31 @@ fi
 ##############
 
 clear
-check_user_process radarhub python dgen fifoshare fiforead bbot | textout "Processes" seagreen
+check_user_process radarhub python dgen fifoshare fiforead fifo2db | textout "Processes" seagreen
+if [ -f /lib/systemd/system/redis-server.service ]; then
+	echo
+	systemctl status redis --no-pager --lines 4
+fi
+if [ -f /lib/systemd/system/supervisor.service ]; then
+	echo
+	systemctl status supervisor --no-pager --lines 4
+fi
 echo
-systemctl status redis --no-pager --lines 4
+
+# Supervisord logging
+folder="${HOME}/log"
+if [ -d ${folder} ]; then
+	show_log_by_latest_line_count frontend 10 228
+	show_log_by_latest_line_count bbot 10 228
+	#show_log_by_latest_line_count backhaul 10 214
+	echo -e "\033[4;38;5;214m/home/radarhub/log/backhaul.log\033[m"
+	tail -n 10 /home/radarhub/log/backhaul.log
+fi
+
+# BLIB logging
+folder="${HOME}/logs"
+logfile=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
+echo -e "\033[1;4;38;5;45m${logfile}\033[m"
+tail -n 10 ${logfile}
 echo
-systemctl status supervisor --no-pager --lines 4
-echo
-show_log_by_latest_line_count frontend 10 228
-show_log_by_latest_line_count bbot 10 228
-#show_log_by_latest_line_count backhaul 10 214
-echo -e "\033[4;38;5;214m/home/radarhub/log/backhaul.log\033[m"
-tail -n 10 /home/radarhub/log/backhaul.log
+
