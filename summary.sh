@@ -7,12 +7,15 @@
 # blib-sh (https://git.arrc.ou.edu/cheo4524/blib-sh.git)
 #
 
-if [ "${1}" == "bbot" ]; then
-	export TERM=xterm-256color 
-	export SCREEN_WIDTH=120
+if [ ! -z "${1}" ]; then
+	export SCREEN_WIDTH=${1}
 fi
 
 if [ -z "${BLIB_HOME}" ]; then BLIB_HOME="${HOME}/Developer/blib-sh"; fi; . ${BLIB_HOME}/blib.sh
+
+if [ -z "${TERM}" ]; then
+	export TERM=xterm-256color
+fi
 
 ##############
 #
@@ -36,18 +39,20 @@ fi
 
 echo
 
+RADARHUB_HOME="/home/radarhub"
+
 # Supervisord logging
-folder="${HOME}/log"
+folder="${RADARHUB_HOME}/log"
 if [ -d ${folder} ]; then
 	show_log_by_latest_line_count frontend 10 228
 	show_log_by_latest_line_count bbot 10 228
 	#show_log_by_latest_line_count backhaul 10 214
-	echo -e "\033[4;38;5;214m/home/radarhub/log/backhaul.log\033[m"
-	tail -n 10 /home/radarhub/log/backhaul.log
+	echo -e "\033[4;38;5;214m${RADARHUB_HOME}/log/backhaul.log\033[m"
+	tail -n 10 ${RADARHUB_HOME}/log/backhaul.log
 fi
 
 # BLIB logging
-folder="${HOME}/logs"
+folder="${RADARHUB_HOME}/logs"
 if [ -d ${folder} ]; then
 	logfile=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
 	echo -e "\033[1;4;38;5;45m${logfile}\033[m"
