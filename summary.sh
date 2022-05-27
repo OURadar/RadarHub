@@ -7,15 +7,20 @@
 # blib-sh (https://git.arrc.ou.edu/cheo4524/blib-sh.git)
 #
 
+if [[ -z "${TERM}" || "${TERM}" == "dumb" ]]; then
+	TERM=xterm-256color
+fi
+
 if [ ! -z "${1}" ]; then
-	export SCREEN_WIDTH=${1}
+	if [ "${1}" == "-" ]; then
+		TEXTOUT_FILL=FALSE
+		SCREEN_WIDTH=200
+	else
+		SCREEN_WIDTH=${1}
+	fi
 fi
 
 if [ -z "${BLIB_HOME}" ]; then BLIB_HOME="${HOME}/Developer/blib-sh"; fi; . ${BLIB_HOME}/blib.sh
-
-if [ -z "${TERM}" ]; then
-	export TERM=xterm-256color
-fi
 
 ##############
 #
