@@ -51,9 +51,9 @@ class FrontendConfig(AppConfig):
             print(show)
 
             if 'postgresql' in settings.DATABASES['default']['ENGINE']:
-                print('Using PostgreSQL ...')
+                print('Using 🐘 \033[48;5;25;38;5;15m PostgreSQL \033[m ...')
             else:
-                print('Using SQLite ...')
+                print('Using 🪶 \033[48;5;33;38;5;15m SQLite \033[m ...')
 
         global worker_started
         if worker_started:
