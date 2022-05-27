@@ -450,7 +450,7 @@ numprocs = 2
 process_name = radarhub_%(process_num)d
 autostart = true
 autorestart = true
-stdout_logfile = /home/radarhub/log/frontend.log
+stdout_logfile = /var/log/radarhub/frontend.log
 redirect_stderr = true
 priority = 1
 
@@ -461,7 +461,7 @@ environment = PYTHONUNBUFFERED=1
 command = /home/radarhub/.pyenv/shims/python /home/radarhub/app/manage.py runworker backhaul
 autostart = true
 autorestart = true
-stdout_logfile = /home/radarhub/log/backhaul.log
+stdout_logfile = /var/log/radarhub/backhaul.log
 redirect_stderr = true
 priority = 2
 
@@ -470,6 +470,8 @@ user = radarhub
 command = /home/radarhub/app/reporter/dgen
 autostart = true
 autorestart = true
+stdout_logfile = /var/log/radarhub/dgen.log
+redirect_stderr = true
 priority = 3
 ```
 
