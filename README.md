@@ -297,23 +297,21 @@ Running [Redis] through `systemd` allows you to configure the `supervisor.servic
 
 Refer to [install-redis.md](https://gist.github.com/hackedunit/a53f0b5376b3772d278078f686b04d38) for instructions to install [Redis] from source.
 
-Configure through the file `/lib/systemd/system/supervisor.service` as:
+Use the recommended setting, included here for quick reference
+
+Configure through `/etc/systemd/system/redis.service` as:
 
 ```conf
 [Unit]
-Description=Supervisor process control system for UNIX
-Documentation=http://supervisord.org
-After=redis.service
-Requires=redis.service
-ReloadPropagatedFrom=redis.service
+Description=Redis In-Memory Data Store
+After=network.target
 
 [Service]
-ExecStart=/usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
-ExecStop=/usr/bin/supervisorctl $OPTIONS shutdown
-ExecReload=/usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf $OPTIONS reload
-KillMode=process
-Restart=on-failure
-RestartSec=50s
+User=redis
+Group=redis
+ExecStart=/usr/local/bin/redis-server /etc/redis/redis.conf
+ExecStop=/usr/local/bin/redis-cli shutdown
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
@@ -325,26 +323,6 @@ For running [redis] using [Docker]:
 
 ```shell
 docker run -p 6379:6379 -d redis:6
-```
-
-Configure through the file `/lib/systemd/system/supervisor.service` as:
-
-```conf
-[Unit]
-Description=Supervisor process control system for UNIX
-Documentation=http://supervisord.org
-ReloadPropagatedFrom=redis.service
-
-[Service]
-ExecStart=/usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
-ExecStop=/usr/bin/supervisorctl $OPTIONS shutdown
-ExecReload=/usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf $OPTIONS reload
-KillMode=process
-Restart=on-failure
-RestartSec=50s
-
-[Install]
-WantedBy=multi-user.target
 ```
 
 # Developing
@@ -433,6 +411,32 @@ and enable it using shell command as:
 
 ```shell
 ln -s /etc/nginx/sites-available/radarhub /etc/nginx/sites-enabled/
+```
+
+## Supervisor Using Systemd
+
+If you configured [Redis] through `systemd`, you can set up [supervisor] to start after [redis] is available.
+
+Configure through the file `/lib/systemd/system/supervisor.service` as:
+
+```conf
+[Unit]
+Description=Supervisor process control system for UNIX
+Documentation=http://supervisord.org
+After=redis.service
+Requires=redis.service
+ReloadPropagatedFrom=redis.service
+
+[Service]
+ExecStart=/usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
+ExecStop=/usr/bin/supervisorctl $OPTIONS shutdown
+ExecReload=/usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf $OPTIONS reload
+KillMode=process
+Restart=on-failure
+RestartSec=50s
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 ## Supervisor
