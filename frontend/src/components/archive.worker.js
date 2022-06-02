@@ -170,10 +170,15 @@ function updateListWithFile(file) {
   grid.fileList.push(file);
   grid.fileListGrouped[scan].push({ file: file, index: index });
   // let targetScan = "E4.0";
-  if (state.scan in grid.fileListGrouped) {
-    grid.index = grid.fileListGrouped[state.scan].slice(-1)[0].index;
+  if (state.scan[0] == "A") {
+    console.log("RHI mode, always choose the latest.");
+    grid.index = index;
   } else {
-    grid.index = -1;
+    if (state.scan in grid.fileListGrouped) {
+      grid.index = grid.fileListGrouped[state.scan].slice(-1)[0].index;
+    } else {
+      grid.index = -1;
+    }
   }
 }
 
@@ -349,6 +354,13 @@ function load(name) {
           // console.log(
           //   `timeString = ${sweep.timeString}   symbol = ${sweep.symbol}`
           // );
+          let scan = components[3];
+          console.log(
+            `%carchive.worker.load()  %cstate.scan ${state.scan} -> ${scan}`,
+            `color: ${namecolor}`,
+            "color: dodgerblue"
+          );
+          state.scan = scan;
           self.postMessage({ type: "load", payload: sweep });
         });
       else {

@@ -150,6 +150,7 @@ class Archive {
       } else if (payload.state == "disconnect") {
         this.state.liveUpdate = false;
       }
+      console.log(`state.liveUpdate -> ${this.state.liveUpdate}`);
       this.showMessage(payload.message, 2500);
     }
     this.onupdate(this.state.tic++);
@@ -304,6 +305,9 @@ class Archive {
   }
 
   toggleLiveUpdate() {
+    console.log(
+      `toggleLiveUpdate() this.state.liveUpdate = ${this.state.liveUpdate}`
+    );
     if (this.state.liveUpdate) {
       this.disableLiveUpdate();
     } else {
