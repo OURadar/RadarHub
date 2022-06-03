@@ -806,6 +806,7 @@ def show_sweep_summary(source, markdown=False):
     logger.info(o.__repr__())
     sweep = o.read()
     if markdown:
+        np.set_printoptions(formatter={'float': '{:.1f}'.format})
         message = f'Sweep Summary of `{o.name}`\n\n'
         message += '| Key | Values |\n'
         message += '|---|---|\n'
