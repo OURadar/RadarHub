@@ -6,7 +6,7 @@
 #   Consumers that interact with frontend.User and frontend.Radar
 #   through redis channels. There is a run loop for each radar to
 #   monitor the overall data streams.
-# 
+#
 #   Created by Boonleng Cheong
 #
 
@@ -17,8 +17,8 @@
 #   |  User  |      |  Backhaul  |      |  Radar  |
 #   |        | ---> |            | ---> |         |
 #   +--------+      +------------+      +---------+
-#              text                text 
-#   
+#              text                text
+#
 
 import json
 import pprint
@@ -155,7 +155,7 @@ class Backhaul(AsyncConsumer):
                 'streams': 'h'
             }
             # Should replace with something that depends on requested streams.
-            # Proposed group name: radar + product, e.g., 
+            # Proposed group name: radar + product, e.g.,
             # - f'{radar}-h' for health
             # - f'{radar}-i' for scope iq (latest pulse)
             # - f'{radar}-z' for z (reflectivity)
@@ -399,7 +399,7 @@ class Backhaul(AsyncConsumer):
             radar_channels[radar]['payloads'].put(payload)
             radar_channels[radar]['welcome'][type] = payload
 
-    async def reset(self, message):
+    async def reset(self, message='Reset'):
         global user_channels, radar_channels
         with lock:
             if len(radar_channels):

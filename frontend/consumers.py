@@ -129,6 +129,8 @@ class Radar(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnectRadar(self, event):
+        message = event['message']
+        print(f'Radar.disconnectRadar() event.message = {message}')
         await self.send(event['message'])
         await self.close()
 

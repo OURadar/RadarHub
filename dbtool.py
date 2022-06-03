@@ -702,6 +702,7 @@ def check_latest(source=[], markdown=False):
             s = 's' if hours > 1 else ''
             ages += f'{hours} hour{s} '
         mins = (age.seconds - 3600 * hours) // 60
+        s = 's' if mins > 1 else ''
         ages += f'{mins} min{s}'
         message += f'{radar} | {filename} | {ages} |\n'
         logger.info(show)
@@ -781,7 +782,7 @@ def compute_bgor(day):
              e.g., 'RAXPOL-'
                    'PX-20130520-191000-E2.6-Z'
 '''
-def show_sweep_summary(source):
+def show_sweep_summary(source, markdown=False):
     show = colorize('show_sweep_summary()', 'green')
     show += '   ' + color_name_value('source', source)
     logger.info(show)
@@ -801,10 +802,21 @@ def show_sweep_summary(source):
             return
     else:
         logger.info(f'Retrieving last entry with prefix = {p} ...')
-        o = File.objects.filter(name__startswith=p).last()
+        o = File.objects.filter(name__startswith=p).filter(name__endswith='-Z.nc').last()
     logger.info(o.__repr__())
     sweep = o.read()
-    pp.pprint(sweep)
+    if markdown:
+        np.set_printoptions(formatter={'float': '{:.1f}'.format})
+        message = f'Sweep Summary of `{o.name}`\n\n'
+        message += '| Key | Values |\n'
+        message += '|---|---|\n'
+        for k, v in sweep.items():
+            if k == 'values':
+                continue
+            message += f'| `{k}` | {v} |\n'
+        print(message)
+    else:
+        pp.pprint(sweep)
 
 #
 
@@ -953,14 +965,14 @@ def dbtool_main():
             logger.hideLogOnScreen()
         check_latest(args.source, markdown=args.markdown)
     elif args.sweep:
+        if args.markdown:
+            logger.hideLogOnScreen()
         if len(args.source) == 0:
-            o = File.objects.last()
-            logger.info(o.show())
-            sweep = o.read()
-            pp.pprint(sweep)
+            o = File.objects.filter(name__endswith='Z.nc').last()
+            show_sweep_summary(o.name, markdown=args.markdown)
         else:
             for source in args.source:
-                show_sweep_summary(source)
+                show_sweep_summary(source, markdown=args.markdown)
     elif args.test:
         print('A placeholder for test routines')
         params = params_from_source('RAXPOL-202202*')

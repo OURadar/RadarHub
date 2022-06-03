@@ -108,9 +108,10 @@ class File(models.Model):
                 values[values < -90] = np.nan
             longitude = nc.getncattr('Longitude')
             latitude = nc.getncattr('Latitude')
+            sweepTime = nc.getncattr('Time')
             sweepElevation = nc.getncattr('Elevation')
             sweepAzimuth = nc.getncattr('Azimuth')
-            sweepTime = nc.getncattr('Time')
+            waveform = nc.getncattr('Waveform')
             gatewidth = float(nc.variables['GateWidth'][:][0])
             symbol = self.name.split('.')[-2].split('-')[-1]
             return {
@@ -120,6 +121,7 @@ class File(models.Model):
                 'sweepTime': sweepTime,
                 'sweepElevation': sweepElevation,
                 'sweepAzimuth': sweepAzimuth,
+                'waveform': waveform,
                 'gatewidth': gatewidth,
                 'elevations': elevations,
                 'azimuths': azimuths,
