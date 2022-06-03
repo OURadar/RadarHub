@@ -31,7 +31,7 @@ let data = {
 };
 let state = {
   scan: "E4.0",
-  verbose: 1,
+  verbose: 0,
 };
 const namecolor = "#bf9140";
 
@@ -327,11 +327,11 @@ function load(name) {
   const url = `/data/load/${name}/`;
   if (state.verbose) {
     console.info(
-      `%carchiver.worker.load() %c${url}`,
+      `%carchive.worker.load() %c${url}`,
       `color: ${namecolor}`,
       "color: dodgerblue"
     );
-    // logger.info("archiver.worker.load()", url);
+    // logger.info("archive.worker.load()", url);
   }
   fetch(url)
     .then((response) => {
@@ -356,7 +356,7 @@ function load(name) {
           // );
           let scan = components[3];
           console.log(
-            `%carchive.worker.load()  %cstate.scan ${state.scan} -> ${scan}`,
+            `%carchive.worker.load() %cstate.scan ${state.scan} -> ${scan}`,
             `color: ${namecolor}`,
             "color: dodgerblue"
           );
@@ -480,10 +480,15 @@ function catchup(radar) {
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
           console.debug(grid.fileListGrouped);
-          if (state.scan in grid.fileListGrouped) {
-            grid.index = grid.fileListGrouped[state.scan].slice(-1)[0].index;
+          console.debug(`state.scan = ${state.scan}`);
+          if (state.scan[0] == "A") {
+            grid.index = grid.fileList.length - 1;
           } else {
-            grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
+            if (state.scan in grid.fileListGrouped) {
+              grid.index = grid.fileListGrouped[state.scan].slice(-1)[0].index;
+            } else {
+              grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
+            }
           }
           let file = grid.fileList[grid.index];
           state.scan = file.split("-")[3];
