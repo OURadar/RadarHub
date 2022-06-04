@@ -5,6 +5,8 @@
 //  Created by Boonleng Cheong on 9/23/2021.
 //
 
+import { clamp } from "./common";
+
 class Archive {
   constructor(radar) {
     this.radar = radar;
@@ -342,6 +344,28 @@ class Archive {
       this.data.sweep.age = ageString;
       this.onupdate(this.state.tic++);
     }
+  }
+
+  navigateForward() {
+    this.worker.postMessage({ task: "forward", name: this.radar });
+  }
+
+  navigateBackward() {
+    this.worker.postMessage({ task: "backward", name: this.radar });
+  }
+
+  navigateForwardScan() {
+    this.worker.postMessage({
+      task: "forward-scan",
+      name: this.radar,
+    });
+  }
+
+  navigateBackwardScan() {
+    this.worker.postMessage({
+      task: "backward-scan",
+      name: this.radar,
+    });
   }
 }
 

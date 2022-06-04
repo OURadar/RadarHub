@@ -34,13 +34,21 @@ class App extends Component {
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
 
     window.addEventListener("keyup", (e) => {
-      //console.log(`keyup: ${e.key}`);
+      // console.log(`keyup: ${e.key}`);
       let symbol = e.key.toUpperCase();
       const styles = ["Z", "V", "W", "D", "P", "R"];
       if (styles.indexOf(symbol) != -1) {
         this.archive.switch(symbol);
       } else if (symbol == "L") {
         this.archive.toggleLiveUpdate();
+      } else if (e.key == "ArrowRight") {
+        this.archive.navigateForwardScan();
+      } else if (e.key == "ArrowLeft") {
+        this.archive.navigateBackwardScan();
+      } else if (e.key == "ArrowUp") {
+        this.archive.navigateBackward();
+      } else if (e.key == "ArrowDown") {
+        this.archive.navigateForward();
       }
     });
   }

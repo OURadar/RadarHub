@@ -23,6 +23,7 @@ let grid = {
   fileList: [],
   symbol: "Z",
   index: -1,
+  scan: "",
   hour: -1,
   day: -1,
 };
@@ -30,7 +31,6 @@ let data = {
   sweep: null,
 };
 let state = {
-  scan: "E4.0",
   verbose: 0,
 };
 const namecolor = "#bf9140";
@@ -75,6 +75,14 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
     disconnect();
   } else if (task == "catchup") {
     catchup(name);
+  } else if (task == "forward") {
+    navigateForward();
+  } else if (task == "backward") {
+    navigateBackward();
+  } else if (task == "forward-scan") {
+    navigateForwardScan();
+  } else if (task == "backward-scan") {
+    navigateBackwardScan();
   }
 };
 
@@ -170,12 +178,12 @@ function updateListWithFile(file) {
   grid.fileList.push(file);
   grid.fileListGrouped[scan].push({ file: file, index: index });
   // let targetScan = "E4.0";
-  if (state.scan[0] == "A") {
+  if (grid.scan[0] == "A") {
     console.log("RHI mode, always choose the latest.");
     grid.index = index;
   } else {
-    if (state.scan in grid.fileListGrouped) {
-      grid.index = grid.fileListGrouped[state.scan].slice(-1)[0].index;
+    if (grid.scan in grid.fileListGrouped) {
+      grid.index = grid.fileListGrouped[grid.scan].slice(-1)[0].index;
     } else {
       grid.index = -1;
     }
@@ -302,9 +310,8 @@ function list(radar, day, hour, symbol) {
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
           console.log(grid.fileListGrouped);
-          // let state.scan = "E4.0";
-          if (state.scan in grid.fileListGrouped) {
-            grid.index = grid.fileListGrouped[state.scan].slice(-1)[0].index;
+          if (grid.scan in grid.fileListGrouped) {
+            grid.index = grid.fileListGrouped[grid.scan].slice(-1)[0].index;
           } else {
             grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
           }
@@ -356,11 +363,11 @@ function load(name) {
           // );
           let scan = components[3];
           console.log(
-            `%carchive.worker.load() %cstate.scan ${state.scan} -> ${scan}`,
+            `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}`,
             `color: ${namecolor}`,
             "color: dodgerblue"
           );
-          state.scan = scan;
+          grid.scan = scan;
           self.postMessage({ type: "load", payload: sweep });
         });
       else {
@@ -480,19 +487,19 @@ function catchup(radar) {
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
           console.debug(grid.fileListGrouped);
-          console.debug(`state.scan = ${state.scan}`);
-          if (state.scan[0] == "A") {
+          console.debug(`grid.scan = ${grid.scan}`);
+          if (grid.scan[0] == "A") {
             grid.index = grid.fileList.length - 1;
           } else {
-            if (state.scan in grid.fileListGrouped) {
-              grid.index = grid.fileListGrouped[state.scan].slice(-1)[0].index;
+            if (grid.scan in grid.fileListGrouped) {
+              grid.index = grid.fileListGrouped[grid.scan].slice(-1)[0].index;
             } else {
               grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
             }
           }
           let file = grid.fileList[grid.index];
-          state.scan = file.split("-")[3];
-          console.log(`Setting state.scan to ${state.scan}`);
+          grid.scan = file.split("-")[3];
+          console.log(`Setting grid.scan to ${grid.scan}`);
           self.postMessage({
             type: "list",
             payload: grid,
@@ -521,3 +528,51 @@ function catchup(radar) {
 //   .then((data) => {
 //     console.log(data);
 //   });
+function updateGridIndex(index) {
+  console.info(
+    `%carchive.worker.updateGridIndex()%c ${grid.index} -> ${index}`,
+    `color: ${namecolor}`,
+    "color: dodgerblue"
+  );
+  if (index == grid.index) {
+    console.debug(
+      `index = ${index} == grid.index = ${grid.index}. Do nothing.`
+    );
+    return;
+  }
+  grid.index = index;
+  self.postMessage({ type: "list", payload: grid });
+  // load(grid.fileList[index]);
+}
+
+function navigateForward() {
+  let index = clamp(grid.index + 1, 0, grid.fileList.length - 1);
+  updateGridIndex(index);
+}
+
+function navigateBackward() {
+  let index = clamp(grid.index - 1, 0, grid.fileList.length - 1);
+  updateGridIndex(index);
+}
+
+function updateGridIndexByScan(delta) {
+  if (grid.fileListGrouped.length == 0) return;
+  let k = -1;
+  let ii = [];
+  grid.fileListGrouped[grid.scan].forEach(({ file, index }) => {
+    ii.push(index);
+    if (index == grid.index) {
+      k = ii.length - 1;
+    }
+  });
+  let index = ii[clamp(k + delta, 0, ii.length - 1)];
+  updateGridIndex(index);
+}
+
+function navigateForwardScan() {
+  updateGridIndexByScan(1);
+}
+
+function navigateBackwardScan() {
+  updateGridIndexByScan(-1);
+}
