@@ -16,7 +16,10 @@ from common import colorize, color_name_value
 
 origins = {}
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
-tf = re.compile(r'(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]')
+pattern_x_yyyymmdd_hhmm = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9]')
+pattern_yyyymmdd_hhmm_s = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9]-[ZVWDPR]')
+pattern_yyyymmdd_hhmm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9]')
+pattern_yyyymmdd = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])')
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
@@ -141,8 +144,12 @@ def list(_, radar, day_hour_symbol):
         show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
         print(show)
     if radar == 'undefined' or day_hour_symbol == 'undefined':
-        return HttpResponse(f'Not a valid query.', status=500)
+        return HttpResponse(f'Invalid query.', status=500)
     prefix = radar_prefix[radar]
+    if (len(day_hour_symbol) == 15 and pattern_yyyymmdd_hhmm_s.match(day_hour_symbol) is None
+        ) or (len(day_hour_symbol) == 13 and pattern_yyyymmdd_hhmm.match(day_hour_symbol) is None
+        ) or (len(day_hour_symbol) == 8 and pattern_yyyymmdd.match(day_hour_symbol) is None):
+        return HttpResponse(f'Invalid query.', status=500)
     c = day_hour_symbol.split('-')
     day = c[0]
     hourly_count = _count(prefix, day)
@@ -207,7 +214,10 @@ def _load(name):
         }
     else:
         # Database is indexed by date so we extract the time first for a quicker search
-        s = tf.search(name)[0]
+        s = pattern_x_yyyymmdd_hhmm.search(name)
+        if s is None:
+            return None
+        s = s[0]
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
         match = File.objects.filter(date=date).filter(name=name)
         if match.exists():
@@ -255,7 +265,7 @@ def load(_, name):
         print(show)
     payload = _load(name)
     if payload is None:
-        response = HttpResponse(f'File {name} not found', status=202)
+        response = HttpResponse(f'Data {name} not found', status=204)
     else:
         response = HttpResponse(payload, content_type='application/octet-stream')
     return response
