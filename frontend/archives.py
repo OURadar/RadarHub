@@ -16,9 +16,9 @@ from common import colorize, color_name_value
 
 origins = {}
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
-pattern_x_yyyymmdd_hhmm = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9]')
+pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymmdd_hhmm_s = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9]-[ZVWDPR]')
-pattern_yyyymmdd_hhmm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9]')
+pattern_yyyymmdd_hhmm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymmdd = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])')
 
 radar_prefix = {}
@@ -214,7 +214,7 @@ def _load(name):
         }
     else:
         # Database is indexed by date so we extract the time first for a quicker search
-        s = pattern_x_yyyymmdd_hhmm.search(name)
+        s = pattern_x_yyyymmdd_hhmmss.search(name)
         if s is None:
             return None
         s = s[0]
