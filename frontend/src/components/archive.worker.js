@@ -340,7 +340,9 @@ function load(name) {
     );
     // logger.info("archive.worker.load()", url);
   }
-  fetch(url)
+  fetch(url, {
+    cache: "force-cache",
+  })
     .then((response) => {
       if (response.status == 200)
         response.arrayBuffer().then((buffer) => {
