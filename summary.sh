@@ -36,38 +36,50 @@ fi
 
 echo
 
-# Supervisord logging
 if [ "${DJANGO_DEBUG}" == "true" ]; then
-	folder="${HOME}/log"
+	# Logs through common.dailylog with dailyfile = True
+	folder="${HOME}/logs"
+	if [ -d ${folder} ]; then
+		file=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
+		if [ ! -z "${file}" ]; then
+			echo -e "\033[1;4;38;5;45m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+		file=$(ls -t ${folder}/dbtool-* | sort | tail -n 1)
+		if [ ! -z "${file}" ]; then
+			echo -e "\033[1;4;38;5;45m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+	fi
 else
+	# Supervisord logging
 	folder="/var/log/radarhub"
+	if [ -d ${folder} ]; then
+		file="${folder}/frontend.log"
+		if [ -f ${file} ]; then
+			echo -e "\033[4;38;5;228m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+		file="${folder}/backhaul.log"
+		if [ -f ${file} ]; then
+			echo -e "\033[4;38;5;214m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+		file="${folder}/fifo2db.log"
+		if [ -f ${file} ]; then
+			echo -e "\033[4;38;5;45m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+		file="${folder}/dbtool.log"
+		if [ -f ${file} ]; then
+			echo -e "\033[4;38;5;45m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+	fi
 fi
-if [ -d ${folder} ]; then
-	file="${folder}/frontend.log"
-	if [ -f ${file} ]; then
-		echo -e "\033[4;38;5;228m${file}\033[m"
-		tail -n 10 ${file}
-		echo
-	fi
-	file="${folder}/backhaul.log"
-	if [ -f ${file} ]; then
-		echo -e "\033[4;38;5;214m${file}\033[m"
-		tail -n 10 ${file}
-		echo
-	fi
-	file="${folder}/fifo2db.log"
-	if [ -f ${file} ]; then
-		echo -e "\033[4;38;5;45m${file}\033[m"
-		tail -n 10 ${file}
-		echo
-	fi
-fi
-
-# Logs through common.dailylog with dailyfile = True
-# folder="${HOME}/logs"
-# if [ -d ${folder} ]; then
-# 	logfile=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
-# 	echo -e "\033[1;4;38;5;45m${logfile}\033[m"
-# 	tail -n 10 ${logfile}
-# 	echo
-# fi
