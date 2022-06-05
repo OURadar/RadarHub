@@ -18,8 +18,9 @@ origins = {}
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymmdd_hhmm_s = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9]-[ZVWDPR]')
-pattern_yyyymmdd_hhmm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
+pattern_yyyymmdd_hhmm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9]')
 pattern_yyyymmdd = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])')
+pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
@@ -64,7 +65,7 @@ def month(_, radar, day):
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         print(show)
-    if radar == 'undefined' or day == 'undefined':
+    if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
         return HttpResponse(f'Invalid query.', status=204)
     y = int(day[0:4])
     m = int(day[4:6])
@@ -103,7 +104,7 @@ def count(_, radar, day):
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         print(show)
-    if radar == 'undefined' or day == 'undefined':
+    if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymmdd.match(day) is None:
         return HttpResponse(f'Invalid query.', status=204)
     prefix = radar_prefix[radar]
     data = {
@@ -143,13 +144,13 @@ def list(_, radar, day_hour_symbol):
         show = colorize('archive.list()', 'green')
         show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
         print(show)
-    if radar == 'undefined' or day_hour_symbol == 'undefined':
+    # print(f'len = {len(day_hour_symbol)}  day_hour_symbol = {day_hour_symbol}')
+    if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined' or (
+        len(day_hour_symbol) == 15 and pattern_yyyymmdd_hhmm_s.match(day_hour_symbol) is None) or (
+        len(day_hour_symbol) == 13 and pattern_yyyymmdd_hhmm.match(day_hour_symbol) is None) or (
+        len(day_hour_symbol) == 8 and pattern_yyyymmdd.match(day_hour_symbol) is None):
         return HttpResponse(f'Invalid query.', status=204)
     prefix = radar_prefix[radar]
-    if (len(day_hour_symbol) == 15 and pattern_yyyymmdd_hhmm_s.match(day_hour_symbol) is None
-        ) or (len(day_hour_symbol) == 13 and pattern_yyyymmdd_hhmm.match(day_hour_symbol) is None
-        ) or (len(day_hour_symbol) == 8 and pattern_yyyymmdd.match(day_hour_symbol) is None):
-        return HttpResponse(f'Invalid query.', status=204)
     c = day_hour_symbol.split('-')
     day = c[0]
     hourly_count = _count(prefix, day)
