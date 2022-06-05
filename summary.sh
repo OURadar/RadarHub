@@ -37,7 +37,7 @@ fi
 echo
 
 # Supervisord logging
-if [ ${DJANGO_DEBUG} == "true" ]; then
+if [ "${DJANGO_DEBUG}" == "true" ]; then
 	folder="${HOME}/log"
 else
 	folder="/var/log/radarhub"
