@@ -43,28 +43,31 @@ else
 	folder="/var/log/radarhub"
 fi
 if [ -d ${folder} ]; then
-	# show_log_by_latest_line_count frontend 10 228
 	file="${folder}/frontend.log"
 	if [ -f ${file} ]; then
 		echo -e "\033[4;38;5;228m${file}\033[m"
 		tail -n 10 ${file}
 		echo
 	fi
-	# show_log_by_latest_line_count backhaul 10 214
 	file="${folder}/backhaul.log"
 	if [ -f ${file} ]; then
 		echo -e "\033[4;38;5;214m${file}\033[m"
 		tail -n 10 ${file}
 		echo
 	fi
+	file="${folder}/fifo2db.log"
+	if [ -f ${file} ]; then
+		echo -e "\033[4;38;5;45m${file}\033[m"
+		tail -n 10 ${file}
+		echo
+	fi
 fi
 
-# Logs through common.dailylog
-folder="${HOME}/logs"
-if [ -d ${folder} ]; then
-	logfile=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
-	echo -e "\033[1;4;38;5;45m${logfile}\033[m"
-	tail -n 10 ${logfile}
-	echo
-fi
-
+# Logs through common.dailylog with dailyfile = True
+# folder="${HOME}/logs"
+# if [ -d ${folder} ]; then
+# 	logfile=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
+# 	echo -e "\033[1;4;38;5;45m${logfile}\033[m"
+# 	tail -n 10 ${logfile}
+# 	echo
+# fi
