@@ -21,10 +21,25 @@ from common import color_name_value
 VERBOSE = 1
 SIMULATE = False
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = bool(os.getenv('DJANGO_DEBUG'))
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / 'config'
 FRONTEND_DIR = BASE_DIR / 'frontend'
+LOG_DIR = os.path.expanduser('~/logs') if DEBUG else '/var/log/radarhub'
+
+if VERBOSE > 1:
+    show = color_name_value('BASE_DIR', str(BASE_DIR)) + '\n'
+    show += color_name_value('CONFIG_DIR', str(CONFIG_DIR)) + '\n'
+    show += color_name_value('FRONTEND_DIR', str(FRONTEND_DIR)) + '\n'
+    show += color_name_value('LOG_DIR', LOG_DIR)
+    print(show)
+if not os.path.isdir(LOG_DIR):
+    show += f'Creating directory {LOG_DIR} ...'
+    print(show)
+    os.makedirs(LOG_DIR)
 
 # User settings
 file = CONFIG_DIR / 'settings.json'
@@ -43,9 +58,6 @@ file = CONFIG_DIR / 'secret-key'
 if os.path.exists(file):
     with open(file) as fid:
         SECRET_KEY = fid.read().strip()
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
 ALLOWED_HOSTS = ['*']
 

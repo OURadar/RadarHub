@@ -38,7 +38,7 @@ __prog__ = os.path.basename(sys.argv[0])
 
 keepReading = True
 radars = settings.RADARS.copy()
-logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__)
+logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__, home=settings.LOG_DIR)
 
 # Populate other keys as local parameters
 for prefix, radar in radars.items():
