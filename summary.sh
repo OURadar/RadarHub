@@ -59,13 +59,13 @@ else
 	if [ -d ${folder} ]; then
 		file="${folder}/frontend.log"
 		if [ -f ${file} ]; then
-			echo -e "\033[4;38;5;228m${file}\033[m"
+			echo -e "\033[4;38;5;45m${file}\033[m"
 			tail -n 10 ${file}
 			echo
 		fi
 		file="${folder}/backhaul.log"
 		if [ -f ${file} ]; then
-			echo -e "\033[4;38;5;214m${file}\033[m"
+			echo -e "\033[4;38;5;45m${file}\033[m"
 			tail -n 10 ${file}
 			echo
 		fi
