@@ -280,7 +280,7 @@ function count(radar, day) {
 
 function list(radar, day, hour, symbol) {
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
-  let hourString = hour.toString().padStart(2, "0");
+  let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
   console.info(
     `%carchive.worker.list()%c ${radar} ${dateTimeString} ${symbol}`,

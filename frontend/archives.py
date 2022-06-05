@@ -153,6 +153,7 @@ def list(_, radar, day_hour_symbol):
     prefix = radar_prefix[radar]
     c = day_hour_symbol.split('-')
     day = c[0]
+    # print(f'prefix = {prefix}   day = {day}')
     hourly_count = _count(prefix, day)
     if len(c) > 1:
         hour = int(c[1][:2])
