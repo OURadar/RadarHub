@@ -59,6 +59,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.7.4 Introduced pipe ingest and txz support (5/24/2022)
   - [x] 0.7.5 Introduced RHI update to the latest (6/3/2022)
   - [x] 0.7.6 Introduced navigation with arrow keys (6/4/2022)
+  - [x] 0.7.7 Adopted logrotate for log files (6/5/2022)
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Page template, UI materials, mobile version
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
@@ -523,6 +524,21 @@ The migrations of [django_eventstream] is stored in where the package is install
 folder=$(python -c "import django_eventstream; print(django_eventstream.__path__[0])")
 rm ${folder}/migrations/0*.py
 rm ${folder}/migrations/__pycache__/*.pyc
+```
+
+## Logrotate
+
+Configure the `logrotate` utility to compress and rotate out old logs automatically through `/etc/logrotate.d/radarhub` as:
+
+```conf
+/var/log/radarhub/*.log {
+	daily
+	rotate 30
+	copytruncate
+	compress
+	missingok
+	notifempty
+}
 ```
 
 Congratulations! You made it to the very end. Cheers!
