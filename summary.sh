@@ -44,11 +44,19 @@ else
 fi
 if [ -d ${folder} ]; then
 	# show_log_by_latest_line_count frontend 10 228
-	echo -e "\033[4;38;5;214m${folder}/frontend.log\033[m"
-	tail -n 10 ${folder}/frontend.log
+	file="${folder}/frontend.log"
+	if [ -f ${file} ]; then
+		echo -e "\033[4;38;5;228m${file}\033[m"
+		tail -n 10 ${file}
+		echo
+	fi
 	# show_log_by_latest_line_count backhaul 10 214
-	echo -e "\033[4;38;5;214m${folder}/backhaul.log\033[m"
-	tail -n 10 ${folder}/backhaul.log
+	file="${folder}/backhaul.log"
+	if [ -f ${file} ]; then
+		echo -e "\033[4;38;5;214m${file}\033[m"
+		tail -n 10 ${file}
+		echo
+	fi
 fi
 
 # Logs through common.dailylog
