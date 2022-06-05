@@ -8,7 +8,7 @@
 #
 
 if [ "${1}" == "bbot" ]; then
-	export TERM=xterm-256color 
+	export TERM=xterm-256color
 	export SCREEN_WIDTH=120
 fi
 
@@ -37,16 +37,21 @@ fi
 echo
 
 # Supervisord logging
-folder="${HOME}/log"
+if [ ${DJANGO_DEBUG} == "true" ]; then
+	folder="${HOME}/log"
+else
+	folder="/var/log/radarhub"
+fi
 if [ -d ${folder} ]; then
-	show_log_by_latest_line_count frontend 10 228
-	show_log_by_latest_line_count bbot 10 228
-	#show_log_by_latest_line_count backhaul 10 214
-	echo -e "\033[4;38;5;214m/home/radarhub/log/backhaul.log\033[m"
-	tail -n 10 /home/radarhub/log/backhaul.log
+	# show_log_by_latest_line_count frontend 10 228
+	echo -e "\033[4;38;5;214m${folder}/frontend.log\033[m"
+	tail -n 10 ${folder}/frontend.log
+	# show_log_by_latest_line_count backhaul 10 214
+	echo -e "\033[4;38;5;214m${folder}/backhaul.log\033[m"
+	tail -n 10 ${folder}/backhaul.log
 fi
 
-# BLIB logging
+# Logs through common.dailylog
 folder="${HOME}/logs"
 if [ -d ${folder} ]; then
 	logfile=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
