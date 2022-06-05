@@ -32,7 +32,7 @@ def binary(_, name):
         show += '   ' + color_name_value('name', name)
         print(show)
     if name == 'undefined':
-        return HttpResponse(f'Not a valid query.', status=500)
+        return HttpResponse(f'Invalid query.', status=204)
     elev = 0.5
     elev_bin = bytearray(struct.pack('f', elev));
     payload = elev_bin + b'\x00\x01\x02\x00\x00\x00\xfd\xfe\xff'
@@ -65,7 +65,7 @@ def month(_, radar, day):
         show += '   ' + color_name_value('day', day)
         print(show)
     if radar == 'undefined' or day == 'undefined':
-        return HttpResponse(f'Not a valid query.', status=500)
+        return HttpResponse(f'Invalid query.', status=204)
     y = int(day[0:4])
     m = int(day[4:6])
     prefix = radar_prefix[radar]
@@ -104,7 +104,7 @@ def count(_, radar, day):
         show += '   ' + color_name_value('day', day)
         print(show)
     if radar == 'undefined' or day == 'undefined':
-        return HttpResponse(f'Not a valid query.', status=500)
+        return HttpResponse(f'Invalid query.', status=204)
     prefix = radar_prefix[radar]
     data = {
         'count': _count(prefix, day)
@@ -144,12 +144,12 @@ def list(_, radar, day_hour_symbol):
         show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
         print(show)
     if radar == 'undefined' or day_hour_symbol == 'undefined':
-        return HttpResponse(f'Invalid query.', status=500)
+        return HttpResponse(f'Invalid query.', status=204)
     prefix = radar_prefix[radar]
     if (len(day_hour_symbol) == 15 and pattern_yyyymmdd_hhmm_s.match(day_hour_symbol) is None
         ) or (len(day_hour_symbol) == 13 and pattern_yyyymmdd_hhmm.match(day_hour_symbol) is None
         ) or (len(day_hour_symbol) == 8 and pattern_yyyymmdd.match(day_hour_symbol) is None):
-        return HttpResponse(f'Invalid query.', status=500)
+        return HttpResponse(f'Invalid query.', status=204)
     c = day_hour_symbol.split('-')
     day = c[0]
     hourly_count = _count(prefix, day)
@@ -306,7 +306,7 @@ def date(_, radar):
         show += '  ' + color_name_value('radar', radar)
         print(show)
     if radar == 'undefined':
-        return HttpResponse(f'Not a valid query.', status=500)
+        return HttpResponse(f'Invalid query.', status=204)
     prefix = radar_prefix[radar]
     ymd, hour = _date(prefix)
     if ymd is None:
