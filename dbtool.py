@@ -38,7 +38,7 @@ __prog__ = os.path.basename(sys.argv[0])
 __version__ = settings.VERSION
 
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
-logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__)
+logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__, home=settings.LOG_DIR, dailyfile=settings.DEBUG)
 
 '''
     (Deprecated)

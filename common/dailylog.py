@@ -6,12 +6,17 @@ import traceback
 logging.Formatter.converter = time.localtime
 
 class Logger(logging.Logger):
-    def __init__(self, name, home=os.path.expanduser('~/logs')):
+    def __init__(self, name, home=os.path.expanduser('~/logs'), dailyfile=True):
         super(Logger, self).__init__(name)
         self.home = home
+        self.dailyfile = dailyfile
         self.time = time.localtime(time.time())
         self.day = self.time.tm_mday
-        self.formatter = logging.Formatter('%(asctime)s : %(message)s', datefmt='%H:%M:%S')
+        if dailyfile:
+            self.formatter = logging.Formatter('%(asctime)s : %(message)s', datefmt=r'%H:%M:%S')
+        else:
+            self.formatter = logging.Formatter('%(asctime)s : %(message)s', datefmt=r'%y/%m/%d %H:%M:%S')
+        self.init = False
         handler = logging.StreamHandler()
         handler.setFormatter(self.formatter)
         handler.setLevel(logging.WARNING)
@@ -19,14 +24,17 @@ class Logger(logging.Logger):
         self.addHandler(handler)
         self.setLevel(logging.INFO)
         self.refresh()
+        self.init = True
         # print(f'self.level = {self.level}')
 
     def refresh(self):
+        if self.init and not self.dailyfile:
+            return
         for h in self.handlers:
             if isinstance(h, logging.FileHandler):
                 self.removeHandler(h)
-        date = time.strftime(r'%Y%m%d', self.time)
-        logfile = f'{self.home}/{self.name}-{date}.log'
+        postfix = time.strftime(r'-%Y%m%d', self.time) if self.dailyfile else ''
+        logfile = f'{self.home}/{self.name}{postfix}.log'
         fileHandler = logging.FileHandler(logfile, 'a')
         fileHandler.setLevel(logging.DEBUG)
         fileHandler.setFormatter(self.formatter)

@@ -44,24 +44,50 @@ fi
 
 echo
 
-RADARHUB_HOME="/home/radarhub"
-
-# Supervisord logging
-folder="${RADARHUB_HOME}/log"
-if [ -d ${folder} ]; then
-	show_log_by_latest_line_count frontend 10 228
-	show_log_by_latest_line_count bbot 10 228
-	#show_log_by_latest_line_count backhaul 10 214
-	echo -e "\033[4;38;5;214m${RADARHUB_HOME}/log/backhaul.log\033[m"
-	tail -n 10 ${RADARHUB_HOME}/log/backhaul.log
+if [ "${DJANGO_DEBUG}" == "true" ]; then
+	# Logs through common.dailylog with dailyfile = True
+	folder="${HOME}/logs"
+	if [ -d ${folder} ]; then
+		file=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
+		if [ ! -z "${file}" ]; then
+			echo -e "\033[1;4;38;5;45m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+		file=$(ls -t ${folder}/dbtool-* | sort | tail -n 1)
+		if [ ! -z "${file}" ]; then
+			echo -e "\033[1;4;38;5;45m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+	fi
+else
+	# Supervisord logging
+	folder="/var/log/radarhub"
+	if [ -d ${folder} ]; then
+		file="${folder}/frontend.log"
+		if [ -f ${file} ]; then
+			echo -e "\033[4;38;5;228m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+		file="${folder}/backhaul.log"
+		if [ -f ${file} ]; then
+			echo -e "\033[4;38;5;214m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+		file="${folder}/fifo2db.log"
+		if [ -f ${file} ]; then
+			echo -e "\033[4;38;5;45m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+		file="${folder}/dbtool.log"
+		if [ -f ${file} ]; then
+			echo -e "\033[4;38;5;45m${file}\033[m"
+			tail -n 10 ${file}
+			echo
+		fi
+	fi
 fi
-
-# BLIB logging
-folder="${RADARHUB_HOME}/logs"
-if [ -d ${folder} ]; then
-	logfile=$(ls -t ${folder}/fifo2db-* | sort | tail -n 1)
-	echo -e "\033[1;4;38;5;45m${logfile}\033[m"
-	tail -n 10 ${logfile}
-	echo
-fi
-
