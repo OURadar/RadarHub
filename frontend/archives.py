@@ -166,6 +166,9 @@ def list(_, radar, day_hour_symbol):
                 show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
                 print(show)
         else:
+            show = colorize('archive.list()', 'green')
+            show += f' hourly_count = {hourly_count}'
+            print(show)
             message = 'All zeros in hourly_count'
             hour = -1
     else:
@@ -173,7 +176,7 @@ def list(_, radar, day_hour_symbol):
     data = {
         'count': _count(prefix, day),
         'hour': hour,
-        'last': hours_with_data[-1],
+        'last': hours_with_data[-1] if len(hours_with_data) else -1,
         'list': _list(prefix, day_hour_symbol) if hour != -1 else [],
         'symbol': symbol,
         'message': message
