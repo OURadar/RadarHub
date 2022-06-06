@@ -272,7 +272,7 @@ def load(_, name):
         response = HttpResponse(f'Data {name} not found', status=204)
     else:
         payload = zlib.compress(payload)
-        response = HttpResponse(payload, content_type='application/zip')
+        response = HttpResponse(payload, content_type='application/octet-stream')
         response['Content-Encoding'] = 'deflate'
         response['Content-Length'] = len(payload)
     return response

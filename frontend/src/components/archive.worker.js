@@ -339,9 +339,7 @@ function load(name) {
       "color: dodgerblue"
     );
   }
-  fetch(url, {
-    cache: "force-cache",
-  })
+  fetch(url, { cache: "force-cache" })
     .then((response) => {
       if (response.status == 200) {
         response.arrayBuffer().then((buffer) => {
