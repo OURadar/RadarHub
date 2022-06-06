@@ -185,7 +185,6 @@ def list(_, radar, day_hour_symbol):
             hour = -1
     else:
         message = 'okay'
-    print(f'prefix = {prefix}  day_hour_symbol = {day_hour_symbol}')
     data = {
         'count': _count(prefix, day),
         'hour': hour,
