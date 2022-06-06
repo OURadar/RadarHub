@@ -272,7 +272,9 @@ def load(_, name):
     if payload is None:
         response = HttpResponse(f'Data {name} not found', status=204)
     else:
-        response = HttpResponse(payload, content_type='application/octet-stream')
+        response = HttpResponse(payload, content_type='application/zip')
+        response['Content-Encoding'] = 'deflate'
+        response['Content-Length'] = len(payload)
     return response
 
 '''
