@@ -280,7 +280,7 @@ function count(radar, day) {
 
 function list(radar, day, hour, symbol) {
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
-  let hourString = hour.toString().padStart(2, "0");
+  let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
   console.info(
     `%carchive.worker.list()%c ${radar} ${dateTimeString} ${symbol}`,
@@ -338,13 +338,10 @@ function load(name) {
       `color: ${namecolor}`,
       "color: dodgerblue"
     );
-    // logger.info("archive.worker.load()", url);
   }
-  fetch(url, {
-    cache: "force-cache",
-  })
+  fetch(url, { cache: "force-cache" })
     .then((response) => {
-      if (response.status == 200)
+      if (response.status == 200) {
         response.arrayBuffer().then((buffer) => {
           let sweep = geometry({
             ...createSweep(name),
@@ -364,15 +361,17 @@ function load(name) {
           //   `timeString = ${sweep.timeString}   symbol = ${sweep.symbol}`
           // );
           let scan = components[3];
-          console.log(
-            `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}`,
-            `color: ${namecolor}`,
-            "color: dodgerblue"
-          );
+          if (state.verbose > 1) {
+            console.debug(
+              `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}`,
+              `color: ${namecolor}`,
+              "color: dodgerblue"
+            );
+          }
           grid.scan = scan;
           self.postMessage({ type: "load", payload: sweep });
         });
-      else {
+      } else {
         response.text().then((text) => {
           console.info(text);
           self.postMessage({ type: "reset", payload: text });
@@ -488,8 +487,10 @@ function catchup(radar) {
             }
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
-          console.debug(grid.fileListGrouped);
-          console.debug(`grid.scan = ${grid.scan}`);
+          if (state.debug > 1) {
+            console.debug(grid.fileListGrouped);
+            console.debug(`grid.scan = ${grid.scan}`);
+          }
           if (grid.scan[0] == "A") {
             grid.index = grid.fileList.length - 1;
           } else {
@@ -531,15 +532,19 @@ function catchup(radar) {
 //     console.log(data);
 //   });
 function updateGridIndex(index) {
-  console.info(
-    `%carchive.worker.updateGridIndex()%c ${grid.index} -> ${index}`,
-    `color: ${namecolor}`,
-    "color: dodgerblue"
-  );
-  if (index == grid.index) {
-    console.debug(
-      `index = ${index} == grid.index = ${grid.index}. Do nothing.`
+  if (state.verbose > 1) {
+    console.info(
+      `%carchive.worker.updateGridIndex()%c ${grid.index} -> ${index}`,
+      `color: ${namecolor}`,
+      "color: dodgerblue"
     );
+  }
+  if (index == grid.index) {
+    if (state.verbose > 1) {
+      console.debug(
+        `index = ${index} == grid.index = ${grid.index}. Do nothing.`
+      );
+    }
     return;
   }
   grid.index = index;
