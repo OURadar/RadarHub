@@ -2,7 +2,8 @@ import os
 import sys
 
 from .cosmetics import *
-from .dailylog import Logger
+from .dailylog import *
+from .sanity import *
 
 __prog__ = os.path.basename(sys.argv[0])
 

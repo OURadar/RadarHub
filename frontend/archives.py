@@ -13,15 +13,12 @@ from django.http import HttpResponse
 from django.conf import settings
 
 from .models import File, Day
-from common import colorize, color_name_value
+from common import colorize, color_name_value, is_valid_time
 
 origins = {}
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
-pattern_yyyymmdd_hhmm_s = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9]-[ZVWDPR]')
-pattern_yyyymmdd_hhmm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9]')
-pattern_yyyymmdd = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])')
-pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
+invalid_query = HttpResponse(f'Invalid query.', status=204)
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
@@ -34,7 +31,7 @@ def binary(_, name):
         show += '   ' + color_name_value('name', name)
         print(show)
     if name == 'undefined':
-        return HttpResponse(f'Invalid query.', status=204)
+        return invalid_query
     elev = 0.5
     elev_bin = bytearray(struct.pack('f', elev));
     payload = elev_bin + b'\x00\x01\x02\x00\x00\x00\xfd\xfe\xff'
@@ -67,7 +64,7 @@ def month(_, radar, day):
         show += '   ' + color_name_value('day', day)
         print(show)
     if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
-        return HttpResponse(f'Invalid query.', status=204)
+        return invalid_query
     y = int(day[0:4])
     m = int(day[4:6])
     prefix = radar_prefix[radar]
@@ -105,8 +102,8 @@ def count(_, radar, day):
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         print(show)
-    if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymmdd.match(day) is None:
-        return HttpResponse(f'Invalid query.', status=204)
+    if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or not is_valid_time(day):
+        return invalid_query
     prefix = radar_prefix[radar]
     data = {
         'count': _count(prefix, day)
@@ -119,10 +116,10 @@ def count(_, radar, day):
     radar - a string of the radar name
           - e.g., px1000, raxpol, or px10k
 
-    hour_prod - a string with day, hour, and product symbol in the forms of
+    day_hour_symbol - a string with day, hour, and product symbol in the forms of
+        - YYYYMMDD         (assumes Z here)
+        - YYYYMMDD-HH00    (assumes Z here)
         - YYYYMMDD-HH00-S
-        - YYYYMMDD-HH-S
-        - YYYYMMDD-HH    (assumes Z here)
 '''
 def _list(prefix, day_hour_symbol):
     c = day_hour_symbol.split('-')
@@ -145,18 +142,18 @@ def list(_, radar, day_hour_symbol):
         show = colorize('archive.list()', 'green')
         show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
         print(show)
-    # print(f'len = {len(day_hour_symbol)}  day_hour_symbol = {day_hour_symbol}')
-    if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined' or (
-        len(day_hour_symbol) == 15 and pattern_yyyymmdd_hhmm_s.match(day_hour_symbol) is None) or (
-        len(day_hour_symbol) == 13 and pattern_yyyymmdd_hhmm.match(day_hour_symbol) is None) or (
-        len(day_hour_symbol) == 8 and pattern_yyyymmdd.match(day_hour_symbol) is None):
-        return HttpResponse(f'Invalid query.', status=204)
+    if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':
+        return invalid_query
+    if len(day_hour_symbol) not in [8, 13, 15]:
+        return invalid_query
+    if not is_valid_time(day_hour_symbol[:13]):
+        return invalid_query
     prefix = radar_prefix[radar]
     c = day_hour_symbol.split('-')
     day = c[0]
     if len(day) > 8:
         print(f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
-        return HttpResponse(f'Invalid query.', status=204)
+        return invalid_query
     hourly_count = _count(prefix, day)
     if len(c) > 1:
         hour = int(c[1][:2])
@@ -223,6 +220,8 @@ def _load(name):
         if s is None:
             return None
         s = s[0]
+        if not is_valid_time(s):
+            return None
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
         match = File.objects.filter(date=date).filter(name=name)
         if match.exists():
@@ -314,7 +313,7 @@ def date(_, radar):
         show += '  ' + color_name_value('radar', radar)
         print(show)
     if radar == 'undefined':
-        return HttpResponse(f'Invalid query.', status=204)
+        return invalid_query
     prefix = radar_prefix[radar]
     ymd, hour = _date(prefix)
     if ymd is None:
@@ -403,7 +402,7 @@ def catchup(_, radar, scan='E4.0', symbol='Z'):
     show += '  ' + color_name_value('radar', radar)
     print(show)
     if radar == 'undefined' or radar not in radar_prefix:
-        return HttpResponse(f'Invalid query.', status=204)
+        return invalid_query
     prefix = radar_prefix[radar]
     ymd, hour = _date(prefix)
     if ymd is None:

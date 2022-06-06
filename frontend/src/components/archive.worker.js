@@ -338,13 +338,12 @@ function load(name) {
       `color: ${namecolor}`,
       "color: dodgerblue"
     );
-    // logger.info("archive.worker.load()", url);
   }
   fetch(url, {
     cache: "force-cache",
   })
     .then((response) => {
-      if (response.status == 200)
+      if (response.status == 200) {
         response.arrayBuffer().then((buffer) => {
           let sweep = geometry({
             ...createSweep(name),
@@ -374,7 +373,7 @@ function load(name) {
           grid.scan = scan;
           self.postMessage({ type: "load", payload: sweep });
         });
-      else {
+      } else {
         response.text().then((text) => {
           console.info(text);
           self.postMessage({ type: "reset", payload: text });
