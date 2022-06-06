@@ -1,6 +1,7 @@
 import re
 import json
 import time
+import zlib
 import pprint
 import struct
 import datetime
@@ -272,6 +273,7 @@ def load(_, name):
     if payload is None:
         response = HttpResponse(f'Data {name} not found', status=204)
     else:
+        payload = zlib.compress(payload)
         response = HttpResponse(payload, content_type='application/zip')
         response['Content-Encoding'] = 'deflate'
         response['Content-Length'] = len(payload)
