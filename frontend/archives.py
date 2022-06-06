@@ -153,7 +153,9 @@ def list(_, radar, day_hour_symbol):
     prefix = radar_prefix[radar]
     c = day_hour_symbol.split('-')
     day = c[0]
-    # print(f'prefix = {prefix}   day = {day}')
+    if len(day) > 8:
+        print(f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
+        return HttpResponse(f'Invalid query.', status=204)
     hourly_count = _count(prefix, day)
     if len(c) > 1:
         hour = int(c[1][:2])
@@ -182,11 +184,12 @@ def list(_, radar, day_hour_symbol):
             hour = -1
     else:
         message = 'okay'
+    print(f'prefix = {prefix}  day_hour_symbol = {day_hour_symbol}')
     data = {
         'count': _count(prefix, day),
         'hour': hour,
         'last': hours_with_data[-1] if len(hours_with_data) else -1,
-        'list': _list(prefix, day_hour_symbol) if hour != -1 else [],
+        'list': _list(prefix, day_hour_symbol) if hour >= 0 else [],
         'symbol': symbol,
         'message': message
     }
@@ -396,6 +399,8 @@ def catchup(_, radar, scan='E4.0', symbol='Z'):
     show = colorize('archive.catchup()', 'green')
     show += '  ' + color_name_value('radar', radar)
     print(show)
+    if radar == 'undefined' or radar not in radar_prefix:
+        return HttpResponse(f'Invalid query.', status=204)
     prefix = radar_prefix[radar]
     ymd, hour = _date(prefix)
     if ymd is None:
