@@ -54,8 +54,9 @@ else:
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-&uc2s5)c^wy#^0l9h*v_bo9+_xum)5zk9_rg=98@@h+e6*iw63'
-file = CONFIG_DIR / 'secret-key'
+file = CONFIG_DIR / 'secret.key'
 if os.path.exists(file):
+    print(f'Using secret key from {file} ...')
     with open(file) as fid:
         SECRET_KEY = fid.read().strip()
 
