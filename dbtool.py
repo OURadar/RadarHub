@@ -803,7 +803,7 @@ def show_sweep_summary(source, markdown=False):
     else:
         logger.info(f'Retrieving last entry with prefix = {p} ...')
         o = File.objects.filter(name__startswith=p).filter(name__endswith='-Z.nc').last()
-    logger.info(o.__repr__())
+    logger.debug(o.__repr__())
     sweep = o.read()
     shape = sweep['values'].shape
     size = 56 + 2 * shape[0] * 4 + shape[0] * shape[1]
@@ -820,8 +820,9 @@ def show_sweep_summary(source, markdown=False):
         message += f'| size | {size:,d} B |\n'
         print(message)
     else:
+        print('Sweep =')
         pp.pprint(sweep)
-        print(f'shape = {shape}\nWeb payload = {size:,d} B')
+        print(f'Data shape = {shape}\nRaw size = {size:,d} B')
 
 #
 
