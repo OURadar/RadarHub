@@ -30,7 +30,7 @@ from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
 from reporter.enums import RadarHubType
-from common import colorize
+from common import colorize, color_name_value
 
 verbose = 1
 user_channels = {}
@@ -60,7 +60,7 @@ def reset():
 
 async def _runloop(radar):
     global radar_channels
-    name = colorize(radar, 'orange')
+    name = colorize(radar, 'pink')
     if verbose:
         with lock:
             print(f'runloop {name} started')
@@ -113,14 +113,19 @@ class Backhaul(AsyncConsumer):
     # When a new user connects from the GUI through User.connect()
     async def userInit(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'Backhaul.userInit() incomplete message {message}')
+            show = colorize('Backhaul.userInit()', 'green')
+            show += f' incomplete message {message}'
+            print(show)
             return
         radar = message['radar']
         channel = message['channel']
         client_ip = message['client_ip']
         if verbose:
-            name = colorize(radar, 'teal')
-            print(f'Backhaul.userInit() accepting {client_ip} for {name} ...')
+            show = colorize('Backhaul.userInit()', 'green')
+            show += ' accepting ' + colorize(client_ip, 'yellow')
+            show += ' for ' + colorize(radar, 'pink')
+            show += ' ...'
+            print(show)
         await channel_layer.send(
             channel,
             {
@@ -132,7 +137,9 @@ class Backhaul(AsyncConsumer):
     # When a user requests to connect through User.receive()
     async def userConnect(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'Backhaul.userConnect() incomplete message {message}')
+            show = colorize('Backhaul.userConnect()', 'green')
+            show += f' incomplete message {message}'
+            print(show)
             return
         radar = message['radar']
         channel = message['channel']
@@ -162,8 +169,9 @@ class Backhaul(AsyncConsumer):
             # - f'{radar}-v' for v (velocity)
             # - ...
             if verbose:
-                name = colorize(radar, 'teal')
-                print(f'{name} + {channel}')
+                show = colorize(radar, 'pink')
+                show += colorize(f' + {channel}', 'mint')
+                print(show)
                 print('user_channels =')
                 pp.pprint(user_channels)
 
@@ -191,7 +199,9 @@ class Backhaul(AsyncConsumer):
     # When a user disconnects from the GUI through User.disconnect()
     async def userDisconnect(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'Backhaul.userDisconnect() incomplete message {message}')
+            show = colorize('Backhaul.userDisconnect()', 'green')
+            show += f' incomplete message {message}'
+            print(show)
             return
         radar = message['radar']
         channel = message['channel']
@@ -203,8 +213,9 @@ class Backhaul(AsyncConsumer):
             with lock:
                 user_channels.pop(channel)
                 if verbose:
-                    name = colorize(radar, 'teal')
-                    print(f'{name} - {channel}')
+                    show = colorize(radar, 'pink')
+                    show += colorize(f' - {channel}', 'orange')
+                    print(show)
                     print('user_channels =')
                     pp.pprint(user_channels)
 
@@ -216,14 +227,19 @@ class Backhaul(AsyncConsumer):
     async def radarInit(self, message):
         # When a new radar connects from the websocket through Radar.connect()
         if message.keys() < {'radar', 'channel'}:
-            print(f'Backhaul.radarInit() incomplete message {message}')
+            show = colorize('Backhaul.radarInit()', 'green')
+            show += f' incomplete message {message}'
+            print(show)
             return
         radar = message['radar']
         channel = message['channel']
         client_ip = message['client_ip']
         if verbose:
-            name = colorize(radar, 'teal')
-            print(f'Backhaul.radarInit() accepting {name} from {client_ip} ...')
+            show = colorize('Backhaul.radarInit()', 'green')
+            show += ' accepting ' + colorize(radar, 'pink')
+            show += ' from ' + colorize(client_ip, 'yellow')
+            show += ' ...'
+            print(show)
         await channel_layer.send(
             channel,
             {
@@ -235,7 +251,9 @@ class Backhaul(AsyncConsumer):
     # When a radar requests to connect through Radar.receive()
     async def radarConnect(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'Backhaul.radarConnect() incomplete message {message}')
+            show = colorize('Backhaul.radarConnect()', 'green')
+            show += f' incomplete message {message}'
+            print(show)
             return
         radar = message['radar']
         channel = message['channel']
@@ -277,7 +295,9 @@ class Backhaul(AsyncConsumer):
     # When a radar diconnects through Radar.disconnect()
     async def radarDisconnect(self, message):
         if message.keys() < {'radar', 'channel'}:
-            print(f'Backhaul.radarDisconnect() incomplete message {message}')
+            show = colorize('Backhaul.radarDisconnect()', 'green')
+            show += f' incomplete message {message}'
+            print(show)
             return
         radar = message['radar']
         channel = message['channel']
@@ -302,7 +322,9 @@ class Backhaul(AsyncConsumer):
     # When a user interacts on the GUI through User.receive()
     async def userMessage(self, message):
         if message.keys() < {'radar', 'channel', 'command'}:
-            print(f'Backhaul.userMessage() incomplete message {message}')
+            show = colorize('Backhaul.userMessage()', 'green')
+            show += f' incomplete message {message}'
+            print(show)
             return
         radar = message['radar']
         channel = message['channel']
@@ -313,7 +335,10 @@ class Backhaul(AsyncConsumer):
         # the response is relayed to the user that triggered the Nexus event
         global radar_channels
         if radar not in radar_channels or radar_channels[radar]['channel'] is None:
-            print(f'Backhaul.userMessage() {radar} not connected')
+            show = colorize('Backhaul.userMessage()', 'green')
+            show += ' ' + colorize(radar, 'pink')
+            show += ' not connected'
+            print(show)
             await channel_layer.send(
                 channel,
                 {
@@ -332,7 +357,7 @@ class Backhaul(AsyncConsumer):
 
         if verbose:
             # with lock:
-            name = colorize(radar, 'teal')
+            name = colorize(radar, 'pink')
             text = colorize(command, 'green')
             print(f'Backhaul.userMessage() {name} {text} ({command_queue.qsize()}) ({tic})')
 
@@ -351,7 +376,9 @@ class Backhaul(AsyncConsumer):
     # When a radar sends home a payload through Radar.receive()
     async def radarMessage(self, message):
         if message.keys() < {'radar', 'channel', 'payload'}:
-            print(f'Backhaul.radarMessage() incomplete message {message}')
+            show = colorize('Backhaul.radarMessage()', 'green')
+            show += f' incomplete message {message}'
+            print(show)
             return
 
         radar = message['radar']
@@ -378,10 +405,10 @@ class Backhaul(AsyncConsumer):
         if type == RadarHubType.Response:
             if verbose:
                 with lock:
-                    name = colorize(radar, 'teal')
+                    name = colorize(radar, 'pink')
                     show = colorize(payload[1:].decode('utf-8'), 'green')
                     print(f'Backhaul.radarMessage() {name} {show}')
-            # Relay the response to the user, FIFO
+            # Relay the response to the user, FIFO style
             command_queue = radar_channels[radar]['commands']
             user = command_queue.get()
             await channel_layer.send(

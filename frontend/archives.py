@@ -18,6 +18,7 @@ from common import colorize, color_name_value, is_valid_time
 origins = {}
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
+pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 invalid_query = HttpResponse(f'Invalid query.', status=204)
 
 radar_prefix = {}

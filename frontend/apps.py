@@ -55,6 +55,11 @@ class FrontendConfig(AppConfig):
             else:
                 print('Using 🪶 \033[48;5;29;38;5;15m SQLite \033[m ...')
 
+            if 'django-insecure' not in settings.SECRET_KEY:
+                print('Using 🔒 \033[48;5;22;38;5;15m settings.json \033[m secret key ...')
+            else:
+                print('Using 🔓 \033[48;5;88;38;5;15m insecure \033[m secret key ...')
+
         global worker_started
         if worker_started:
             show = color_name_value('worker_started', worker_started)
