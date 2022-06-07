@@ -7,6 +7,8 @@ import {
   Fullscreen,
   WebAsset,
   AccountCircle,
+  LightMode,
+  DarkMode,
 } from "@mui/icons-material";
 
 import { Notification } from "./notification";
@@ -46,7 +48,7 @@ export function TopBar(props) {
     notify = <Notification message={props.ingest.response || message} />;
   } else {
     online = "offline";
-    status = <StatusBody message="Some text" />;
+    status = <StatusBody message={`Some text / props.mode = ${props.mode}`} />;
     notify = <Notification message={message} />;
   }
   return (
@@ -69,11 +71,21 @@ export function TopBar(props) {
               setMessage("");
             }, 3500);
           }}
+          handleModeChange={props.handleModeChange}
+          mode={props.mode}
         />
       </div>
     </div>
   );
 }
+
+TopBar.defaultProps = {
+  ingest: null,
+  mode: "light",
+  handleModeChange: () => {
+    console.log(`handleModeChange()`);
+  },
+};
 
 export function Console(props) {
   const [fullscreen, setFullscreen] = React.useState(
@@ -106,6 +118,15 @@ export function Console(props) {
             )}
           </IconButton>
         )}
+        <IconButton
+          aria-label="Change Mode"
+          onClick={props.handleModeChange}
+          size="large"
+        >
+          {(props.mode == "light" && (
+            <LightMode style={{ color: "white" }} />
+          )) || <DarkMode style={{ color: "white" }} />}
+        </IconButton>
         <IconButton
           aria-label="Account"
           onClick={() => {

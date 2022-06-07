@@ -6,8 +6,12 @@
 //
 
 import React, { Component } from "react";
+import { ThemeProvider } from "@mui/material/styles";
 import { colorDict, makeTheme } from "./theme";
-import { detectMob, clamp } from "./common";
+import { detectMob } from "./common";
+import { TopBar } from "./topbar";
+import { GLView } from "./glview";
+import { Archive } from "./archive";
 
 class App extends Component {
   constructor(props) {
@@ -17,7 +21,15 @@ class App extends Component {
       theme: makeTheme(),
       time: new Date("2013-05-20T19:00"),
     };
+    console.log(`colors.name = ${this.state.colors.name}`);
     this.isMobile = detectMob();
+    this.archive = new Archive(props.radar);
+    this.archive.onupdate = (_dontcare) => {
+      this.forceUpdate();
+    };
+    this.overlayLoaded = false;
+    this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
+    this.handleModeChange = this.handleModeChange.bind(this);
   }
   static defaultProps = {
     radar: "radar",
@@ -30,7 +42,51 @@ class App extends Component {
     autoLoad: true,
   };
 
-  componentDidMount() {}
+  componentDidMount() {
+    // Get notified when the desktop theme is changed
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        let mode = e.matches ? "dark" : "light";
+        this.setState({
+          colors: colorDict(mode),
+          theme: makeTheme(mode),
+        });
+      });
+  }
+
+  render() {
+    return (
+      <ThemeProvider theme={this.state.theme}>
+        <TopBar
+          mode={this.state.colors.name}
+          ingest={this.ingest}
+          isMobile={this.isMobile}
+          handleModeChange={this.handleModeChange}
+        />
+        <GLView
+          sweep={this.archive.data.sweep}
+          colors={this.state.colors}
+          debug={true}
+          showStats={true}
+        />
+      </ThemeProvider>
+    );
+  }
+
+  handleOverlayLoaded() {
+    console.log(`App8.handleOverlayLoaded()`);
+    this.overlayLoaded = true;
+  }
+
+  handleModeChange() {
+    let mode = this.state.colors.name == "light" ? "dark" : "light";
+    console.log(`App8.handleModeChange() -> ${mode}`);
+    this.setState({
+      colors: colorDict(mode),
+      theme: makeTheme(mode),
+    });
+  }
 }
 
 export default App;
