@@ -177,7 +177,9 @@ def list(_, radar, day_hour_symbol):
                 print(show)
         else:
             show = colorize('archive.list()', 'green')
-            show += f' hourly_count = {hourly_count}'
+            show += '   ' + color_name_value('radar', radar)
+            show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
+            show += '   ' + color_name_value('hourly_count', '0\'s')
             print(show)
             message = 'All zeros in hourly_count'
             hour = -1
