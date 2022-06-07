@@ -53,11 +53,15 @@ else:
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&uc2s5)c^wy#^0l9h*v_bo9+_xum)5zk9_rg=98@@h+e6*iw63'
-file = CONFIG_DIR / 'secret.key'
-if os.path.exists(file):
-    with open(file) as fid:
-        SECRET_KEY = fid.read().strip()
+if 'secret' in settings:
+    SECRET_KEY = settings['secret']
+else:
+    file = CONFIG_DIR / 'secret.key'
+    if os.path.exists(file):
+        with open(file) as fid:
+            SECRET_KEY = fid.read().strip()
+    else:
+        SECRET_KEY = 'django-insecure-5zk9_rg=98@@h+e6*iw63l9h*v_bo9+_xum)'
 
 ALLOWED_HOSTS = ['*']
 
