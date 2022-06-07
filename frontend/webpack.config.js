@@ -10,6 +10,10 @@ module.exports = {
       import: "./src/main.js",
       dependOn: "shared",
     },
+    dev: {
+      import: "./src/dev.js",
+      dependOn: "shared",
+    },
     shared: [
       "react",
       "react-dom",

@@ -243,3 +243,10 @@ else:
     FIFO = {
         'pipe': '/tmp/radarhub.fifo'
     }
+
+# LDAP stuff
+AUTHENTICATION_BACKENDS = [
+    'django_auth_ldap.backend.LDAPBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+AUTH_LDAP_SERVER_URI = 'ldap://dcv01.arrc.ou.edu'
