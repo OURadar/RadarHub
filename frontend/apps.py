@@ -56,7 +56,7 @@ class FrontendConfig(AppConfig):
                 print('Using 🪶 \033[48;5;29;38;5;15m SQLite \033[m ...')
 
             if 'django-insecure' not in settings.SECRET_KEY:
-                print('Using 🔒 \033[48;5;28;38;5;15m user \033[m secret key ...')
+                print('Using 🔒 \033[48;5;22;38;5;15m settings.json \033[m secret key ...')
             else:
                 print('Using 🔓 \033[48;5;88;38;5;15m insecure \033[m secret key ...')
 
