@@ -18,7 +18,7 @@ def index(request):
 def control_radar(request, radar):
     show = colorize('views.control()', 'green')
     show += '   ' + color_name_value('radar', radar)
-    print(show)
+    logger.info(show)
     origin = location(radar)
     obj = {'radar': radar, 'origin': origin, 'a': 1, 'b': 2}
     return render(request, 'frontend/index.html', {'params': obj})
@@ -38,7 +38,6 @@ def archive_radar_profile(request, radar, profileGL):
     show = colorize('views.archive()', 'green')
     show += '   ' + color_name_value('radar', radar)
     show += '   ' + color_name_value('profileGL', profileGL)
-    # print(show)
     logger.info(show)
     origin = location(radar)
     obj = {'radar': radar, 'origin': origin, 'profileGL': profileGL}

@@ -60,25 +60,31 @@ else
 		file="${folder}/frontend.log"
 		if [ -f ${file} ]; then
 			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 10 ${file}
+			tail -n 7 ${file}
 			echo
 		fi
 		file="${folder}/backhaul.log"
 		if [ -f ${file} ]; then
 			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 10 ${file}
+			tail -n 7 ${file}
+			echo
+		fi
+		file="${folder}/access.log"
+		if [ -f ${file} ]; then
+			echo -e "\033[4;38;5;45m${file}\033[m"
+			tail -n 7 ${file}
 			echo
 		fi
 		file="${folder}/fifo2db.log"
 		if [ -f ${file} ]; then
 			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 10 ${file}
+			tail -n 7 ${file}
 			echo
 		fi
 		file="${folder}/dbtool.log"
 		if [ -f ${file} ]; then
 			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 10 ${file}
+			tail -n 7 ${file}
 			echo
 		fi
 	fi

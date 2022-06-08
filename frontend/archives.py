@@ -4,6 +4,7 @@ import time
 import zlib
 import pprint
 import struct
+import logging
 import datetime
 import numpy as np
 
@@ -16,10 +17,11 @@ from .models import File, Day
 from common import colorize, color_name_value, is_valid_time
 
 origins = {}
+logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
+
 pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
-
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
 invalid_query = HttpResponse(f'Invalid query', status=204)
@@ -34,7 +36,7 @@ def binary(_, name):
     if settings.VERBOSE > 1:
         show = colorize('binary()', 'green')
         show += '   ' + color_name_value('name', name)
-        print(show)
+        logging.debug(show)
     if name == 'undefined':
         return invalid_query
     elev = 0.5
@@ -49,7 +51,7 @@ def header(_, name):
     if settings.VERBOSE > 1:
         show = colorize('header()', 'green')
         show += '   ' + color_name_value('name', name)
-        print(show)
+        logging.debug(show)
     data = {'elev': 0.5, 'count': 2000}
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -59,10 +61,10 @@ def bad_intention(request):
     # if settings.DEBUG:
     #     return False
     if pattern_bad_agents.match(request.headers['User-Agent']):
-        print(request.headers)
+        logging.info(request.headers)
         return True
     if 'Referer' not in request.headers and 'Connection' not in request.headers:
-        print(request.headers)
+        logging.info(request.headers)
         return True
     return False
 
@@ -78,7 +80,7 @@ def month(request, radar, day):
         show = colorize('archive.month()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
-        print(show)
+        logging.debug(show)
     if bad_intention(request):
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
@@ -119,7 +121,7 @@ def count(request, radar, day):
         show = colorize('archive.count()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
-        print(show)
+        logging.debug(show)
     if bad_intention(request):
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or not is_valid_time(day):
@@ -161,7 +163,7 @@ def list(request, radar, day_hour_symbol):
     if settings.VERBOSE > 1:
         show = colorize('archive.list()', 'green')
         show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
-        print(show)
+        logging.debug(show)
     if bad_intention(request):
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':
@@ -174,7 +176,7 @@ def list(request, radar, day_hour_symbol):
     c = day_hour_symbol.split('-')
     day = c[0]
     if len(day) > 8:
-        print(f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
+        logging.warning(f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
         return invalid_query
     hourly_count = _count(prefix, day)
     if len(c) > 1:
@@ -195,13 +197,13 @@ def list(request, radar, day_hour_symbol):
                 show = colorize('archive.list()', 'green')
                 show += '   ' + colorize('override', 'red')
                 show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
-                print(show)
+                logging.debug(show)
         else:
             show = colorize('archive.list()', 'green')
             show += '   ' + color_name_value('radar', radar)
             show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
             show += '   ' + color_name_value('hourly_count', '0\'s')
-            print(show)
+            logging.warning(show)
             message = 'All zeros in hourly_count'
             hour = -1
     else:
@@ -225,7 +227,7 @@ def list(request, radar, day_hour_symbol):
 def _load(name):
     if settings.SIMULATE:
         elements = name.split('-')
-        print(f'Dummy sweep {name}')
+        logging.info(f'Dummy sweep {name}')
         sweep = {
             'symbol': elements[4] if len(elements) > 4 else "Z",
             'longitude': -97.422413,
@@ -290,7 +292,7 @@ def load(request, name):
     if settings.VERBOSE > 1:
         show = colorize('archive.load()', 'green')
         show += '  ' + color_name_value('name', name)
-        print(show)
+        logging.debug(show)
     if bad_intention(request):
         return forbidden_request
     payload = _load(name + '.nc')
@@ -314,21 +316,21 @@ def _date(prefix):
     else:
         show = colorize('archive.date()', 'green')
         show += '  ' + colorize('Empty Day table.', 'white')
-        print(show)
+        logger.warning(show)
         return None, None
     ymd = day.date.strftime(r'%Y%m%d')
     if settings.VERBOSE > 1:
         show = colorize('archive._date()', 'green')
         show += '   ' + color_name_value('prefix', prefix)
         show += '   ' + color_name_value('day', ymd)
-        print(show)
+        logger.info(show)
     hour = day.last_hour()
     if hour is None:
         show = colorize('archive._date()', 'green')
         show += '  ' + colorize(' WARNING ', 'warning')
         show += '  ' + colorize(f'Day {day.date} with', 'white')
         show += color_name_value(' .hourly_count', 'zeros')
-        print(show)
+        logger.warning(show)
         return None, None
     return ymd, hour
 
@@ -336,7 +338,7 @@ def date(request, radar):
     if settings.VERBOSE > 1:
         show = colorize('archive.date()', 'green')
         show += '  ' + color_name_value('radar', radar)
-        print(show)
+        logging.debug(show)
     if bad_intention(request):
         return forbidden_request
     if radar == 'undefined':
@@ -378,7 +380,7 @@ def location(radar):
     if settings.VERBOSE > 1:
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('radar', radar)
-        print(show)
+        logging.debug(show)
     if radar in radar_prefix:
         prefix = radar_prefix[radar]
     else:
@@ -402,7 +404,8 @@ def location(radar):
                 'last': ymd_hm
             }
     if settings.VERBOSE > 1:
-        print(colorize('archive.location()', 'green'))
+        logger.debug(colorize('archive.location()', 'green'))
+        logger.debug(f'origins = {origins}')
         pp.pprint(origins)
     return origins[radar]
 
@@ -428,7 +431,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
     if settings.VERBOSE > 1:
         show = colorize('archive.catchup()', 'green')
         show += '  ' + color_name_value('radar', radar)
-        print(show)
+        logging.debug(show)
     if bad_intention(request):
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix:
