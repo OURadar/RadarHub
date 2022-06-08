@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render
 from django.conf import settings
 
@@ -5,6 +7,7 @@ from common import colorize, color_name_value
 from .archives import location
 
 default_radar = list(settings.RADARS.values())[0]['folder'].lower()
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 def index(request):
@@ -35,7 +38,8 @@ def archive_radar_profile(request, radar, profileGL):
     show = colorize('views.archive()', 'green')
     show += '   ' + color_name_value('radar', radar)
     show += '   ' + color_name_value('profileGL', profileGL)
-    print(show)
+    # print(show)
+    logger.info(show)
     origin = location(radar)
     obj = {'radar': radar, 'origin': origin, 'profileGL': profileGL}
     return render(request, 'frontend/archive.html', {'params': obj})
