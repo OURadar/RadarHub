@@ -244,6 +244,9 @@ else:
         'pipe': '/tmp/radarhub.fifo'
     }
 
+# Prevent HttpResponse 301 for permanent forwards
+APPEND_SLASH = False
+
 # LDAP stuff
 AUTHENTICATION_BACKENDS = [
     'django_auth_ldap.backend.LDAPBackend',
