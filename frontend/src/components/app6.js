@@ -75,16 +75,17 @@ class App extends Component {
         });
       });
     if (!this.isMobile) {
+      const wm = 280;
       var w = localStorage.getItem("split-archive-w");
       if (w) {
-        w = clamp(parseFloat(JSON.parse(w)), 310, window.innerWidth - 400);
+        w = clamp(parseFloat(JSON.parse(w)), wm, window.innerWidth - 400);
       } else {
-        w = 310;
+        w = wm;
       }
       let v = (w / window.innerWidth) * 100;
       Split(["#left", "#right"], {
         sizes: [100 - v, v],
-        minSize: [400, 310],
+        minSize: [400, wm],
         expandToMin: true,
         elementStyle: (_dimension, elementSize, _gutterSize, index) => {
           if (index == 0)

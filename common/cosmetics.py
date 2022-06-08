@@ -1,11 +1,11 @@
 #
 #   RadarHub
-# 
+#
 #   Created by Boonleng Cheong
 #
 
 colors = {
-    'red': 9,
+    'red': 196,
     'orange': 214,
     'yellow': 227,
     'green': 118,
@@ -14,7 +14,7 @@ colors = {
     'cyan': 14,
     'blue': 33,
     'pink': 170,
-    'purple': 134,
+    'purple': 141,
     'white': 15
 }
 

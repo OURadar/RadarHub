@@ -339,6 +339,7 @@ function load(name) {
       "color: dodgerblue"
     );
   }
+  grid.index = grid.fileList.indexOf(name);
   fetch(url, { cache: "force-cache" })
     .then((response) => {
       if (response.status == 200) {

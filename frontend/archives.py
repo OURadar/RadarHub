@@ -59,11 +59,12 @@ def bad_intention(request):
     # if settings.DEBUG:
     #     return False
     # print(dir(request))
-    show = color_name_value('request.path', request.path) + '\n'
-    show += color_name_value('request.method', request.method) + '\n'
-    show += color_name_value('request.user', request.user) + '\n'
-    show += color_name_value('request.headers', request.headers) + '\n'
-    print(show)
+    if settings.DEBUG:
+        show = color_name_value('request.path', request.path) + '\n'
+        show += color_name_value('request.method', request.method) + '\n'
+        show += color_name_value('request.user', request.user) + '\n'
+        show += color_name_value('request.headers', request.headers) + '\n'
+        print(show)
 
     # print(request.headers)
     if pattern_bad_agents.match(request.headers['User-Agent']):
@@ -261,12 +262,12 @@ def _load(name):
             sweep = match.read()
         else:
             return None
-
+    # Down-sample the sweep if the gate spacing is too fine
     gatewidth = 1.0e-3 * sweep['gatewidth']
     if gatewidth < 0.05:
         gatewidth *= 2.0;
         sweep['values'] = sweep['values'][:, ::2]
-
+    # Pack the data
     head = struct.pack('hhhhddddffff', *sweep['values'].shape, 0, 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
         sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)
@@ -285,8 +286,7 @@ def _load(name):
         values = rho2ind(sweep['values'])
     else:
         values = sweep['values']
-    # Map to closest integer, 0 is transparent, 1+ is finite.
-    # np.nan will be converted to 0 during np.float -> np.uint8
+    # Map to integers: 0 = transparent; 1+ = finite; np.nan -> 0 during np.float -> np.uint8
     data = np.array(np.clip(np.round(values), 1.0, 255.0), dtype=np.uint8)
     payload = bytes(head) \
             + bytes(sweep['elevations']) \
@@ -433,9 +433,10 @@ def _file(prefix, scan='E4.0', symbol='Z'):
     symbol - The symbol of a product, e.g., Z, V, W, etc.
 '''
 def catchup(request, radar, scan='E4.0', symbol='Z'):
-    show = colorize('archive.catchup()', 'green')
-    show += '  ' + color_name_value('radar', radar)
-    print(show)
+    if settings.VERBOSE > 1:
+        show = colorize('archive.catchup()', 'green')
+        show += '  ' + color_name_value('radar', radar)
+        print(show)
     if bad_intention(request):
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix:
