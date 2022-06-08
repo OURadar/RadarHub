@@ -58,6 +58,14 @@ def header(_, name):
 def bad_intention(request):
     # if settings.DEBUG:
     #     return False
+    # print(dir(request))
+    show = color_name_value('request.path', request.path) + '\n'
+    show += color_name_value('request.method', request.method) + '\n'
+    show += color_name_value('request.user', request.user) + '\n'
+    show += color_name_value('request.headers', request.headers) + '\n'
+    print(show)
+
+    # print(request.headers)
     if pattern_bad_agents.match(request.headers['User-Agent']):
         print(request.headers)
         return True

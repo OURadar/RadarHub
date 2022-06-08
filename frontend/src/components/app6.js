@@ -30,8 +30,8 @@ class App extends Component {
       this.forceUpdate();
     };
     this.overlayLoaded = false;
-
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
+    this.handleModeChange = this.handleModeChange.bind(this);
 
     window.addEventListener("keyup", (e) => {
       // console.log(`keyup: ${e.key}`);
@@ -52,7 +52,6 @@ class App extends Component {
       }
     });
   }
-
   static defaultProps = {
     radar: "radar",
     origin: {
@@ -69,17 +68,11 @@ class App extends Component {
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", (e) => {
-        if (e.matches) {
-          this.setState({
-            colors: colorDict("dark"),
-            theme: makeTheme("dark"),
-          });
-        } else {
-          this.setState({
-            colors: colorDict("light"),
-            theme: makeTheme("light"),
-          });
-        }
+        let mode = e.matches ? "dark" : "light";
+        this.setState({
+          colors: colorDict(mode),
+          theme: makeTheme(mode),
+        });
       });
     if (!this.isMobile) {
       var w = localStorage.getItem("split-archive-w");
@@ -133,7 +126,12 @@ class App extends Component {
       );
     return (
       <ThemeProvider theme={this.state.theme}>
-        <TopBar ingest={this.archive} />
+        <TopBar
+          mode={this.state.colors.name}
+          ingest={this.archive}
+          isMobile={this.isMobile}
+          handleModeChange={this.handleModeChange}
+        />
         <div id="flex">
           <div id="left">
             <div>
@@ -160,6 +158,15 @@ class App extends Component {
   handleOverlayLoaded() {
     console.log(`App6.handleOverlayLoaded()`);
     this.overlayLoaded = true;
+  }
+
+  handleModeChange() {
+    let mode = this.state.colors.name == "light" ? "dark" : "light";
+    console.log(`App8.handleModeChange() -> ${mode}`);
+    this.setState({
+      colors: colorDict(mode),
+      theme: makeTheme(mode),
+    });
   }
 }
 
