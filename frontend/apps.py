@@ -113,7 +113,7 @@ def monitor(radar='px1000', prefix='PX-'):
         if len(delta) == 0:
             continue
         payload = {
-            'files':  [file.name for file in delta],
+            'files':  [file.name.rstrip('.nc') for file in delta],
             'count': [int(c) for c in hourly_count.split(',')],
             'time': datetime.datetime.utcnow().isoformat()
         }
