@@ -425,9 +425,10 @@ def _file(prefix, scan='E4.0', symbol='Z'):
     symbol - The symbol of a product, e.g., Z, V, W, etc.
 '''
 def catchup(request, radar, scan='E4.0', symbol='Z'):
-    show = colorize('archive.catchup()', 'green')
-    show += '  ' + color_name_value('radar', radar)
-    print(show)
+    if settings.VERBOSE > 1:
+        show = colorize('archive.catchup()', 'green')
+        show += '  ' + color_name_value('radar', radar)
+        print(show)
     if bad_intention(request):
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix:
