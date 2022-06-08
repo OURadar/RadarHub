@@ -56,8 +56,10 @@ def header(_, name):
     return response
 
 def bad_intention(request):
-    # print(request.headers)
+    # if settings.DEBUG:
+    #     return False
     if pattern_bad_agents.match(request.headers['User-Agent']):
+        print(request.headers)
         return True
     if 'Referer' not in request.headers and 'Connection' not in request.headers:
         print(request.headers)
@@ -153,7 +155,7 @@ def _list(prefix, day_hour_symbol):
     ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
     date_range = [ss, ee]
     matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
-    return [o.name for o in matches]
+    return [o.name.rstrip('.nc') for o in matches]
 
 def list(request, radar, day_hour_symbol):
     if settings.VERBOSE > 1:
@@ -291,7 +293,7 @@ def load(request, name):
         print(show)
     if bad_intention(request):
         return forbidden_request
-    payload = _load(name)
+    payload = _load(name + '.nc')
     if payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
     payload = zlib.compress(payload)
@@ -391,7 +393,7 @@ def location(radar):
     else:
         ymd_hm = f'{ymd}-{hour:02d}00'
         if radar not in origins or origins[radar] is None or origins[radar]['last'] != ymd_hm:
-            name = _list(prefix, ymd_hm)[-1]
+            name = _list(prefix, ymd_hm)[-1] + '.nc'
             file = File.objects.filter(name=name).first()
             data = file.read()
             origins[radar] = {
