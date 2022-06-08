@@ -16,8 +16,13 @@ from django.conf import settings
 from .models import File, Day
 from common import colorize, color_name_value, is_valid_time
 
-origins = {}
 logger = logging.getLogger(__name__)
+if settings.VERBOSE:
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
+
+origins = {}
+
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
 pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
@@ -160,10 +165,9 @@ def _list(prefix, day_hour_symbol):
     return [o.name.rstrip('.nc') for o in matches]
 
 def list(request, radar, day_hour_symbol):
-    if settings.VERBOSE > 1:
-        show = colorize('archive.list()', 'green')
-        show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
-        logging.debug(show)
+    show = colorize('archive.list()', 'green')
+    show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
+    logging.debug(show)
     if bad_intention(request):
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':

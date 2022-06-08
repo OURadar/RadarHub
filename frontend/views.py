@@ -6,8 +6,12 @@ from django.conf import settings
 from common import colorize, color_name_value
 from .archives import location
 
-default_radar = list(settings.RADARS.values())[0]['folder'].lower()
 logger = logging.getLogger(__name__)
+if settings.VERBOSE:
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
+
+default_radar = list(settings.RADARS.values())[0]['folder'].lower()
 
 # Create your views here.
 def index(request):
@@ -32,7 +36,7 @@ def archive_radar_profile(request, radar, profileGL):
     if radar == 'favicon.ico':
         show = colorize('views.archive()', 'red')
         show += '   ' + color_name_value('radar', radar)
-        print(show)
+        logger.warning(show)
         return render(request, 'static/images/favicon.ico')
 
     show = colorize('views.archive()', 'green')
