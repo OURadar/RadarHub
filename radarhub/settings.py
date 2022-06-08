@@ -243,3 +243,5 @@ else:
     FIFO = {
         'pipe': '/tmp/radarhub.fifo'
     }
+
+APPEND_SLASH = False

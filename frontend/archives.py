@@ -19,7 +19,9 @@ origins = {}
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
-invalid_query = HttpResponse(f'Invalid query.', status=204)
+invalid_query = HttpResponse(f'Invalid query', status=204)
+forbidden_request = HttpResponse(f'Forbidden. A mistake? Contact us.', status=403)
+pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
@@ -51,6 +53,15 @@ def header(_, name):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
+def bad_intention(request):
+    # print(request.headers)
+    if pattern_bad_agents.match(request.headers['User-Agent']):
+        return True
+    if 'Referer' not in request.headers and 'Connection' not in request.headers:
+        print(request.headers)
+        return True
+    return False
+
 '''
     radar - a string of the radar name
           - e.g., px1000, raxpol, or px10k
@@ -58,12 +69,14 @@ def header(_, name):
     day - a string in the forms of
           - YYYYMM
 '''
-def month(_, radar, day):
+def month(request, radar, day):
     if settings.VERBOSE > 1:
         show = colorize('archive.month()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         print(show)
+    if bad_intention(request):
+        return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
         return invalid_query
     y = int(day[0:4])
@@ -97,12 +110,14 @@ def _count(prefix, day):
         return [int(n) for n in d.hourly_count.split(',')]
     return [0] * 24
 
-def count(_, radar, day):
+def count(request, radar, day):
     if settings.VERBOSE > 1:
         show = colorize('archive.count()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         print(show)
+    if bad_intention(request):
+        return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or not is_valid_time(day):
         return invalid_query
     prefix = radar_prefix[radar]
@@ -138,11 +153,13 @@ def _list(prefix, day_hour_symbol):
     matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     return [o.name for o in matches]
 
-def list(_, radar, day_hour_symbol):
+def list(request, radar, day_hour_symbol):
     if settings.VERBOSE > 1:
         show = colorize('archive.list()', 'green')
         show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
         print(show)
+    if bad_intention(request):
+        return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':
         return invalid_query
     if len(day_hour_symbol) not in [8, 13, 15]:
@@ -265,19 +282,20 @@ def _load(name):
             + bytes(data)
     return payload
 
-def load(_, name):
+def load(request, name):
     if settings.VERBOSE > 1:
         show = colorize('archive.load()', 'green')
         show += '  ' + color_name_value('name', name)
         print(show)
+    if bad_intention(request):
+        return forbidden_request
     payload = _load(name)
     if payload is None:
-        response = HttpResponse(f'Data {name} not found', status=204)
-    else:
-        payload = zlib.compress(payload)
-        response = HttpResponse(payload, content_type='application/octet-stream')
-        response['Content-Encoding'] = 'deflate'
-        response['Content-Length'] = len(payload)
+        return HttpResponse(f'Data {name} not found', status=204)
+    payload = zlib.compress(payload)
+    response = HttpResponse(payload, content_type='application/octet-stream')
+    response['Content-Encoding'] = 'deflate'
+    response['Content-Length'] = len(payload)
     return response
 
 '''
@@ -310,11 +328,13 @@ def _date(prefix):
         return None, None
     return ymd, hour
 
-def date(_, radar):
+def date(request, radar):
     if settings.VERBOSE > 1:
         show = colorize('archive.date()', 'green')
         show += '  ' + color_name_value('radar', radar)
         print(show)
+    if bad_intention(request):
+        return forbidden_request
     if radar == 'undefined':
         return invalid_query
     prefix = radar_prefix[radar]
@@ -400,10 +420,12 @@ def _file(prefix, scan='E4.0', symbol='Z'):
     scan - The 4-th component of filename describing the scan, e.g., E4.0, A120.0, etc.
     symbol - The symbol of a product, e.g., Z, V, W, etc.
 '''
-def catchup(_, radar, scan='E4.0', symbol='Z'):
+def catchup(request, radar, scan='E4.0', symbol='Z'):
     show = colorize('archive.catchup()', 'green')
     show += '  ' + color_name_value('radar', radar)
     print(show)
+    if bad_intention(request):
+        return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix:
         return invalid_query
     prefix = radar_prefix[radar]

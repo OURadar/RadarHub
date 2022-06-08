@@ -13,7 +13,7 @@ def index(request):
 #
 
 def control_radar(request, radar):
-    show = colorize('control_radar()', 'green')
+    show = colorize('frontend.views.control()', 'green')
     show += '   ' + color_name_value('radar', radar)
     print(show)
     origin = location(radar)
@@ -27,12 +27,12 @@ def control(request):
 
 def archive_radar_profile(request, radar, profileGL):
     if radar == 'favicon.ico':
-        show = colorize('archive_radar_profile()', 'red')
+        show = colorize('frontend.views.archive()', 'red')
         show += '   ' + color_name_value('radar', radar)
         print(show)
         return render(request, 'static/images/favicon.ico')
 
-    show = colorize('archive_radar_profile()', 'green')
+    show = colorize('frontend.views.archive()', 'green')
     show += '   ' + color_name_value('radar', radar)
     show += '   ' + color_name_value('profileGL', profileGL)
     print(show)
