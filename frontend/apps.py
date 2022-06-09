@@ -14,9 +14,6 @@ from common import color_name_value
 from common.cosmetics import colorize
 
 logger = logging.getLogger('frontend')
-if settings.VERBOSE and len(logger.handlers) == 0:
-    logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
 worker_started = False
 
@@ -36,6 +33,10 @@ class FrontendConfig(AppConfig):
 
         if not tableExists():
             return
+
+        if settings.VERBOSE and len(logger.handlers) == 0:
+            logger.addHandler(logging.StreamHandler())
+            logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
         # Look for RUN_MAIN == "true" in development mode. Otherwise, it should None
         run_main = os.environ.get('RUN_MAIN', None)

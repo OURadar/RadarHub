@@ -16,12 +16,15 @@
 
 import json
 import pprint
+import logging
 
 from channels.layers import get_channel_layer
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from reporter.enums import RadarHubType
 from common import colorize
+
+logger = logging.getLogger('frontend')
 
 verbose = 0
 tic = 0

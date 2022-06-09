@@ -7,9 +7,6 @@ from common import colorize, color_name_value
 from .archives import location
 
 logger = logging.getLogger('frontend')
-if settings.VERBOSE and len(logger.handlers) == 0:
-    logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
 default_radar = list(settings.RADARS.values())[0]['folder'].lower()
 
