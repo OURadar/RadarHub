@@ -180,7 +180,7 @@ class Backhaul(AsyncConsumer):
             show = colorize(radar, 'pink')
             show += colorize(f' + {channel}', 'mint')
             logger.info(show)
-            if settings.VERBOSE:
+            if settings.DEBUG and settings.VERBOSE:
                 print('user_channels =')
                 pp.pprint(user_channels)
 
