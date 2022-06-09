@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 # Create your views here.
 def index(request):
-    return render(request, 'frontend/nothing.html')
+    return render(request, 'frontend/intro.html')
 
 def dev(request):
     return render(request, 'frontend/index-dev.html')
