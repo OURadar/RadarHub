@@ -1,6 +1,7 @@
 django
 channels
 channels_redis
+Twisted[tls,http2]
 numpy
 # asgiref==3.3.4
 asgiref

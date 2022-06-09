@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import time
 import logging
@@ -71,6 +72,12 @@ class FrontendConfig(AppConfig):
             return
 
         worker_started = True
+
+        if 'daphne' in prog:
+            tid = re.search(r'(?<=/daphne)[0-9]{1,2}(?=.sock)', prog)
+            tid = tid[0] != '0' if tid else False
+            if tid:
+                return
 
         for radar_prefix in radar_prefix_pairs:
             if settings.SIMULATE:
