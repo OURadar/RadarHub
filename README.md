@@ -453,24 +453,24 @@ user = radarhub
 directory = /home/radarhub/app
 environment = PYTHONUNBUFFERED=1
 socket = tcp://localhost:8000
-command = /home/radarhub/.pyenv/shims/python -m daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log - --proxy-headers radarhub.asgi:application
+command = /home/radarhub/.pyenv/shims/python -m daphne -u /run/daphne/daphne%(process_num)d.sock --fd 0 --access-log /var/log/radarhub/access.log --proxy-headers radarhub.asgi:application
 numprocs = 2
 process_name = radarhub_%(process_num)d
 autostart = true
 autorestart = true
-stdout_logfile = /var/log/radarhub/frontend.log
 redirect_stderr = true
+stdout_logfile = /var/log/radarhub/frontend.log
 priority = 1
 
 [program:radarhub.backhaul]
 user = radarhub
 directory = /home/radarhub/app
 environment = PYTHONUNBUFFERED=1
-command = /home/radarhub/.pyenv/shims/python /home/radarhub/app/manage.py runworker backhaul
+command = /home/radarhub/.pyenv/shims/python manage.py runworker backhaul
 autostart = true
 autorestart = true
-stdout_logfile = /var/log/radarhub/backhaul.log
 redirect_stderr = true
+stdout_logfile = /var/log/radarhub/backhaul.log
 priority = 2
 
 [program:radarhub.dgen]
@@ -478,8 +478,8 @@ user = radarhub
 command = /home/radarhub/app/reporter/dgen
 autostart = true
 autorestart = true
-stdout_logfile = /var/log/radarhub/dgen.log
 redirect_stderr = true
+stdout_logfile = /var/log/radarhub/dgen.log
 priority = 3
 ```
 
@@ -493,7 +493,7 @@ sudo chown radarhub.radarhub /run/daphne/
 Configure the file to be created at each boot through `/usr/lib/tmpfiles.d/daphne.conf` as:
 
 ```conf
-d /run/daphne 0755 radarhub radarhub
+d /run/daphne 0775 radarhub radarhub
 ```
 
 Start the service as:

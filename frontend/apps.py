@@ -1,6 +1,8 @@
 import os
+import re
 import sys
 import time
+import logging
 import datetime
 import threading
 
@@ -12,11 +14,9 @@ from django_eventstream import send_event
 from common import color_name_value
 from common.cosmetics import colorize
 
-worker_started = False
+logger = logging.getLogger('frontend')
 
-# show = colorize('frontend.apps.py', 'mint')
-# show += '  ' + color_name_value('DATABASES.ENGINE', settings.DATABASES['default']['ENGINE'])
-# print(show)
+worker_started = False
 
 radar_prefix_pairs = []
 for prefix, item in settings.RADARS.items():
@@ -32,41 +32,52 @@ class FrontendConfig(AppConfig):
         if 'runserver' not in prog and 'daphne' not in prog:
             return
 
-        if not tableExists():
+        if not tableEventExists():
             return
+
+        if settings.DEBUG and settings.VERBOSE:
+            logger.addHandler(logging.StreamHandler())
+            logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
+
+        if 'daphne' in prog:
+            prog = 'daphne ' + ' '.join(sys.argv[1:6])
 
         # Look for RUN_MAIN == "true" in development mode. Otherwise, it should None
         run_main = os.environ.get('RUN_MAIN', None)
-        if settings.VERBOSE:
-            show = colorize(prog, 'teal')
-            show += '   ' + color_name_value('run_main', run_main)
-            print(show)
+        show = colorize(prog, 'teal')
+        show += '   ' + color_name_value('run_main', run_main)
+        logger.info(show)
         if 'runserver' in prog and run_main is None:
             return
 
-        if settings.VERBOSE:
-            show = color_name_value('DEBUG', settings.DEBUG)
-            show += '   ' + color_name_value('SIMULATE', settings.SIMULATE)
-            show += '   ' + color_name_value('VERBOSE', settings.VERBOSE)
-            print(show)
+        show = color_name_value('DEBUG', settings.DEBUG)
+        show += '   ' + color_name_value('SIMULATE', settings.SIMULATE)
+        show += '   ' + color_name_value('VERBOSE', settings.VERBOSE)
+        logger.info(show)
 
-            if 'postgresql' in settings.DATABASES['default']['ENGINE']:
-                print('Using 🐘 \033[48;5;25;38;5;15m PostgreSQL \033[m ...')
-            else:
-                print('Using 🪶 \033[48;5;29;38;5;15m SQLite \033[m ...')
+        if 'postgresql' in settings.DATABASES['default']['ENGINE']:
+            logger.info('Using 🐘 \033[48;5;25;38;5;15m PostgreSQL \033[m ...')
+        else:
+            logger.info('Using 🪶 \033[48;5;29;38;5;15m SQLite \033[m ...')
 
-            if 'django-insecure' not in settings.SECRET_KEY:
-                print('Using 🔒 \033[48;5;22;38;5;15m settings.json \033[m secret key ...')
-            else:
-                print('Using 🔓 \033[48;5;88;38;5;15m insecure \033[m secret key ...')
+        if 'django-insecure' not in settings.SECRET_KEY:
+            logger.info('Using 🔒 \033[48;5;22;38;5;15m settings.json \033[m secret key ...')
+        else:
+            logger.info('Using 🔓 \033[48;5;88;38;5;15m insecure \033[m secret key ...')
 
         global worker_started
         if worker_started:
             show = color_name_value('worker_started', worker_started)
-            print(f'Already has a worker   {show}')
+            logger.info(f'Already has a worker   {show}')
             return
 
         worker_started = True
+
+        if 'daphne' in prog:
+            tid = re.search(r'(?<=/daphne)[0-9]{1,2}(?=.sock)', prog)
+            bail = tid[0] != '0' if tid else False
+            if bail:
+                return
 
         for radar_prefix in radar_prefix_pairs:
             if settings.SIMULATE:
@@ -77,10 +88,10 @@ class FrontendConfig(AppConfig):
             thread.start()
 
 def monitor(radar='px1000', prefix='PX-'):
-    show = colorize('frontend.apps.monitor()', 'green')
+    show = colorize('apps.monitor()', 'green')
     show += '   ' + color_name_value('radar', radar)
     show += '   ' + color_name_value('prefix', prefix)
-    print(show)
+    logger.info(show)
 
     from .models import Day, File
 
@@ -92,7 +103,7 @@ def monitor(radar='px1000', prefix='PX-'):
         files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
     else:
         hourly_count = ','.join('0' * 24)
-        print(f'No Day objects yet for {radar} / {prefix} yet')
+        logger.info(f'No Day objects yet for {radar} / {prefix} yet')
 
     no_day_warning = 0
     while True:
@@ -101,7 +112,7 @@ def monitor(radar='px1000', prefix='PX-'):
         if day is None:
             no_day_warning += 1
             if no_day_warning < 3 or no_day_warning % 100 == 0:
-                print(f'No Day objects yet for {radar} / {prefix} yet')
+                logger.info(f'No Day objects yet for {radar} / {prefix} yet')
             continue
         if hourly_count == day.hourly_count:
             continue
@@ -121,11 +132,10 @@ def monitor(radar='px1000', prefix='PX-'):
         files = latest_files
 
 def simulate(radar='px1000', prefix='PX-'):
-    show = colorize('frontend.apps.simulate()', 'green')
-    print(f'{show} started')
+    show = colorize('apps.simulate()', 'green')
+    logger.info(f'{show} started')
 
-    hourly_count = [0 for _ in range(24)]
-    # sweep_time = datetime.datetime.utcnow()
+    hourly_count = [0] * 24
     sweep_time = datetime.datetime(2022, 3, 10, 23, 50, 12)
     sweep_day = sweep_time.day
 
@@ -137,7 +147,7 @@ def simulate(radar='px1000', prefix='PX-'):
         time_string = sweep_time.strftime(r'%Y%m%d-%H%M%S')
         if sweep_day != sweep_time.day:
             sweep_day = sweep_time.day
-            hourly_count = [0 for _ in range(24)]
+            hourly_count = [0] * 24
         files = []
         if tic % block == 0:
             scan = scans[int(tic / block) % len(scans)]
@@ -150,25 +160,25 @@ def simulate(radar='px1000', prefix='PX-'):
                 'count': hourly_count,
                 'time': sweep_time.isoformat()
             }
-            print(f'{time_string}-{scan}  {hourly_count}')
+            logger.info(f'{time_string}-{scan}  {hourly_count}')
             send_event('sse', 'message', payload)
         time.sleep(2.5)
         tic += 1
 
-def tableExists():
+def tableEventExists():
     from django.db import DatabaseError
     from django_eventstream.models import Event
     try:
-        # Make sure the table exists
+        # Make sure the table exists, even if it's empty
         Event.objects.count()
         return True
     except DatabaseError:
-        print('DatabaseError. Need to make the Event table.')
-        print('Run manage.py makemigrations && manage.py migrate --database=event')
+        logger.error('DatabaseError. Need to make a new table Event.')
+        logger.error('Run manage.py makemigrations && manage.py migrate --database=event')
         return False
 
 def announce(sender, **kwargs):
     file = kwargs['instance']
-    show = colorize('frontend.announce()', 'green')
-    print(f'{show} {file.name}')
+    show = colorize('announce()', 'green')
+    logger.info(f'{show} {file.name}')
     send_event('sse', 'file', file.name)

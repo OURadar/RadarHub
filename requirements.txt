@@ -1,14 +1,15 @@
 django
 channels
 channels_redis
-numpy
-# asgiref==3.3.4
+Twisted[tls,http2]
 asgiref
 pyparsing
 websocket_client
-netCDF4
-tqdm
 psycopg2
 setproctitle
 oauthlib
 django-eventstream
+daphne
+tqdm
+numpy
+netCDF4

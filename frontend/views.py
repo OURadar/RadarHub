@@ -6,8 +6,9 @@ from django.conf import settings
 from common import colorize, color_name_value
 from .archives import location
 
+logger = logging.getLogger('frontend')
+
 default_radar = list(settings.RADARS.values())[0]['folder'].lower()
-logger = logging.getLogger(__name__)
 
 # Create your views here.
 def index(request):
@@ -19,10 +20,9 @@ def dev(request):
 #
 
 def control_radar(request, radar):
-    if settings.DEBUG:
-        show = colorize('views.control()', 'green')
-        show += '   ' + color_name_value('radar', radar)
-        print(show)
+    show = colorize('views.control()', 'green')
+    show += '   ' + color_name_value('radar', radar)
+    logger.info(show)
     origin = location(radar)
     obj = {'radar': radar, 'origin': origin, 'a': 1, 'b': 2}
     return render(request, 'frontend/control.html', {'params': obj})
@@ -36,7 +36,7 @@ def archive_radar_profile(request, radar, profileGL):
     if radar == 'favicon.ico':
         show = colorize('views.archive()', 'red')
         show += '   ' + color_name_value('radar', radar)
-        print(show)
+        logger.warning(show)
         return render(request, 'static/images/favicon.ico')
     # if settings.DEBUG:
     show = colorize('views.archive()', 'green')
