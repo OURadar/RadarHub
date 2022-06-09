@@ -14,7 +14,7 @@ from common import color_name_value
 from common.cosmetics import colorize
 
 logger = logging.getLogger(__name__)
-if settings.VERBOSE:
+if settings.DEBUG:
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
