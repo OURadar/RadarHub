@@ -13,8 +13,8 @@ from django_eventstream import send_event
 from common import color_name_value
 from common.cosmetics import colorize
 
-logger = logging.getLogger(__name__)
-if settings.DEBUG:
+logger = logging.getLogger('frontend')
+if settings.VERBOSE and len(logger.handlers) == 0:
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 

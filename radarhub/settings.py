@@ -246,13 +246,13 @@ else:
 
 APPEND_SLASH = False
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{'
-        }
-    }
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'formatters': {
+#         'simple': {
+#             'format': '{levelname} {message}',
+#             'style': '{'
+#         }
+#     }
+# }

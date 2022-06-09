@@ -35,7 +35,7 @@ from channels.consumer import AsyncConsumer
 from reporter.enums import RadarHubType
 from common import colorize, color_name_value
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('backhaul')
 if settings.VERBOSE:
     console = logging.StreamHandler()
     console.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s'))
