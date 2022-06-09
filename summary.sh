@@ -88,17 +88,16 @@ function overview() {
 function follow() {
 	args=""
 	folder=${var_log}
-	for item in "frontend" "access"; do
+	for item in "frontend" "access" "backhaul"; do
 		file="${folder}/${item}.log"
-		echo "item = ${item} -> file = ${file}"
 		if [ -f ${file} ]; then
 			args="${args} -f ${file}"
 		fi
 	done
-	if [ ! -z ${args} ]; then
+	if [ ! -z "${args}" ]; then
 		args=${args% }
 		command="tail -f ${args% }"
-		echo ${command}
+		echo -e "\033[38;5;45m${command}\033[m"
 		eval ${command}
 	fi
 }
