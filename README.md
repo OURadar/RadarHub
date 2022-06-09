@@ -78,6 +78,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [ ] Caching
   - [ ] Frontend caching: archive.js
   - [x] Backend caching: frontend.models.py
+- [ ] Infinite scrolling in data browser
 - [ ] Display frequency spectrum alongside scope view
 - [ ] Show online users
 - [x] High-DPI support
