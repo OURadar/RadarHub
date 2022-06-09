@@ -36,12 +36,6 @@ from reporter.enums import RadarHubType
 from common import colorize, color_name_value
 
 logger = logging.getLogger('backhaul')
-if settings.VERBOSE:
-    console = logging.StreamHandler()
-    console.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s'))
-    console.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
-    logger.addHandler(console)
-    logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
 user_channels = {}
 radar_channels = {}

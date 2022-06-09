@@ -18,6 +18,8 @@ import json
 import pprint
 import logging
 
+from django.conf import settings
+
 from channels.layers import get_channel_layer
 from channels.generic.websocket import AsyncWebsocketConsumer
 
@@ -26,7 +28,6 @@ from common import colorize
 
 logger = logging.getLogger('frontend')
 
-verbose = 0
 tic = 0
 
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
@@ -39,7 +40,7 @@ class Null(AsyncWebsocketConsumer):
 class Radar(AsyncWebsocketConsumer):
     async def connect(self):
         if 'radar' not in self.scope['url_route']['kwargs']:
-            print('Keyword "radar" is expected.')
+            logger.error('Keyword "radar" is expected.')
             return await self.close()
         self.radar = self.scope['url_route']['kwargs']['radar']
         self.client_ip = self.scope['client'][0]
@@ -62,8 +63,7 @@ class Radar(AsyncWebsocketConsumer):
                 'channel': self.channel_name
             }
         )
-        if verbose:
-            print(f'radar {self.radar} disconnected {code}.')
+        logger.info(f'radar {self.radar} disconnected {code}.')
 
     # Receive message from a radar through frontend
     # Type 1 - JSON {"radar":"px1000","command":"radarConnect"}
@@ -77,12 +77,12 @@ class Radar(AsyncWebsocketConsumer):
         if bytes_data is None or len(bytes_data) == 0:
             return
 
-        if verbose > 1:
+        if settings.VERBOSE > 1:
             show = bytes_data
             if len(show) > 30:
                 show = f'{bytes_data[:25]} ... {bytes_data[-5:]}'
             show = colorize(show, 'green')
-            print(f'Radar.receive() {self.radar} {show} ({len(bytes_data)})')
+            logger.debug(f'Radar.receive() {self.radar} {show} ({len(bytes_data)})')
 
         type = bytes_data[0]
 
@@ -93,17 +93,17 @@ class Radar(AsyncWebsocketConsumer):
             try:
                 request = json.loads(text)
             except:
-                print(f'Radar.receive() invalid JSON = {text}')
+                logger.error(f'Radar.receive() invalid JSON = {text}')
                 return
 
             if request.keys() < {'radar', 'command'}:
-                print(f'Radar.receive() incomplete message {text}')
+                logger.error(f'Radar.receive() incomplete message {text}')
                 return
 
             radar = request['radar']
             if radar != self.radar:
                 text = colorize('BUG', 'red')
-                print(f'{text} radar = {radar} != self.radar = {self.radar}')
+                logger.error(f'{text} radar = {radar} != self.radar = {self.radar}')
                 return
 
             await self.channel_layer.send(
@@ -133,7 +133,7 @@ class Radar(AsyncWebsocketConsumer):
 
     async def disconnectRadar(self, event):
         message = event['message']
-        print(f'Radar.disconnectRadar() event.message = {message}')
+        logger.info(f'Radar.disconnectRadar() event.message = {message}')
         await self.send(event['message'])
         await self.close()
 
@@ -144,7 +144,7 @@ class Radar(AsyncWebsocketConsumer):
 class User(AsyncWebsocketConsumer):
     async def connect(self):
         if 'radar' not in self.scope['url_route']['kwargs']:
-            print('Keyword "radar" is expected.')
+            logger.error('Keyword "radar" is expected.')
             return await self.close()
         self.radar = self.scope['url_route']['kwargs']['radar']
         self.client_ip = self.scope['client'][0]
@@ -169,8 +169,7 @@ class User(AsyncWebsocketConsumer):
             }
         )
 
-        if verbose:
-            print(f'user for {self.radar} disconnected {code}.')
+        logger.info(f'user for {self.radar} disconnected {code}.')
 
     # Receive message from frontend, which relays commands from the web app, serialized JSON data.
     async def receive(self, text_data=None):
@@ -180,26 +179,25 @@ class User(AsyncWebsocketConsumer):
         try:
             request = json.loads(text_data)
         except:
-            print(f'User.receive() json.loads() failed.')
+            logger.error(f'User.receive() json.loads() failed.')
             return
 
         if request.keys() < {'radar', 'command'}:
-            print(f'User.receive() incomplete message {request}')
+            logger.error(f'User.receive() incomplete message {request}')
             return
 
         radar = request['radar']
         if radar != self.radar:
             text = colorize('BUG', 'red')
-            print(f'{text}: radar = {radar} != self.radar = {self.radar}')
+            logger.warning(f'{text}: radar = {radar} != self.radar = {self.radar}')
 
         if get_channel_layer() != self.channel_layer:
-            print(colorize('Channel layer changed', 'red'))
+            logger.warning(colorize('Channel layer changed', 'red'))
 
         global tic
 
-        if verbose:
-            text = colorize(text_data, 'green')
-            print(f'User.receive() {text} ({tic})')
+        text = colorize(text_data, 'green')
+        logger.info(f'User.receive() {text} ({tic})')
 
         tic += 1
 

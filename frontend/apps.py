@@ -34,9 +34,12 @@ class FrontendConfig(AppConfig):
         if not tableExists():
             return
 
-        if settings.VERBOSE and len(logger.handlers) == 0:
+        if settings.DEBUG and settings.VERBOSE:
             logger.addHandler(logging.StreamHandler())
             logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
+
+        if 'daphne' in prog:
+            prog = 'daphne ' + ' '.join(sys.argv[1:6])
 
         # Look for RUN_MAIN == "true" in development mode. Otherwise, it should None
         run_main = os.environ.get('RUN_MAIN', None)
