@@ -37,7 +37,10 @@ from common import colorize, color_name_value
 
 logger = logging.getLogger(__name__)
 if settings.VERBOSE:
-    logger.addHandler(logging.StreamHandler())
+    console = logging.StreamHandler()
+    console.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s'))
+    console.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
+    logger.addHandler(console)
     logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
 user_channels = {}
@@ -221,7 +224,7 @@ class Backhaul(AsyncConsumer):
                 show = colorize(radar, 'pink')
                 show += colorize(f' - {channel}', 'orange')
                 logger.info(show)
-                if settings.VERBOSE:
+                if settings.DEBUG and settings.VERBOSE:
                     print('user_channels =')
                     pp.pprint(user_channels)
 
@@ -244,7 +247,7 @@ class Backhaul(AsyncConsumer):
         show += ' accepting ' + colorize(radar, 'pink')
         show += ' from ' + colorize(client_ip, 'yellow')
         show += ' ...'
-        print(show)
+        logger.info(show)
         await channel_layer.send(
             channel,
             {
@@ -258,7 +261,7 @@ class Backhaul(AsyncConsumer):
         if message.keys() < {'radar', 'channel'}:
             show = colorize('Backhaul.radarConnect()', 'green')
             show += f' incomplete message {message}'
-            print(show)
+            logger.warning(show)
             return
         radar = message['radar']
         channel = message['channel']
@@ -284,7 +287,7 @@ class Backhaul(AsyncConsumer):
             }
             name = colorize(radar, 'pink')
             logger.info(f'Added {name}')
-            if settings.VERBOSE:
+            if settings.DEBUG and settings.VERBOSE:
                 print('radar_channels =')
                 pp.pprint(radar_channels)
 
@@ -316,7 +319,7 @@ class Backhaul(AsyncConsumer):
                 radar_channels[radar]['payloads'].join()
                 name = colorize(radar, 'pink')
                 logger.info(f'Removed {name}')
-                if settings.VERBOSE:
+                if settings.DEBUG and settings.VERBOSE:
                     print('radar_channels =')
                     pp.pprint(radar_channels)
         elif radar not in radar_channels:
@@ -452,7 +455,7 @@ class Backhaul(AsyncConsumer):
                         radar['commands'] = None
                         radar['payloads'] = None
 
-                if settings.VERBOSE:
+                if settings.DEBUG and settings.VERBOSE:
                     print('radar_channels =')
                     pp.pprint(radar_channels)
 
