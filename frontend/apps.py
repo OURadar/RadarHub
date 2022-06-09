@@ -75,8 +75,8 @@ class FrontendConfig(AppConfig):
 
         if 'daphne' in prog:
             tid = re.search(r'(?<=/daphne)[0-9]{1,2}(?=.sock)', prog)
-            tid = tid[0] != '0' if tid else False
-            if tid:
+            bail = tid[0] != '0' if tid else False
+            if bail:
                 return
 
         for radar_prefix in radar_prefix_pairs:

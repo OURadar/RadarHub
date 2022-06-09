@@ -280,7 +280,7 @@ class Backhaul(AsyncConsumer):
                 'welcome': {}
             }
             name = colorize(radar, 'pink')
-            logger.info(f'Added {name}')
+            logger.info(f'Radar {name} added to radar_channels')
             if settings.DEBUG and settings.VERBOSE:
                 print('radar_channels =')
                 pp.pprint(radar_channels)
@@ -312,7 +312,7 @@ class Backhaul(AsyncConsumer):
                 radar_channels[radar]['commands'].join()
                 radar_channels[radar]['payloads'].join()
                 name = colorize(radar, 'pink')
-                logger.info(f'Removed {name}')
+                logger.info(f'Radar {name} removed from radar_channels')
                 if settings.DEBUG and settings.VERBOSE:
                     print('radar_channels =')
                     pp.pprint(radar_channels)
