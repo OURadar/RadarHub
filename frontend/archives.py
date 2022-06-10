@@ -26,8 +26,8 @@ pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2]
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
-invalid_query = HttpResponse(f'Invalid query', status=204)
-forbidden_request = HttpResponse(f'Forbidden. A mistake? Contact us.', status=403)
+invalid_query = HttpResponse(f'Invalid Query', status=204)
+forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell.', status=403)
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():

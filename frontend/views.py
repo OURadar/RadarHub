@@ -3,7 +3,7 @@ import logging
 from django.shortcuts import render
 from django.conf import settings
 
-from common import colorize, color_name_value
+from common import colorize, color_name_value, get_client_ip
 from .archives import location
 
 logger = logging.getLogger('frontend')
@@ -36,13 +36,17 @@ def archive_radar_profile(request, radar, profileGL):
         logger.warning(show)
         return render(request, 'static/images/favicon.ico')
 
+    ip = get_client_ip(request)
+
     show = colorize('views.archive()', 'green')
     show += '   ' + color_name_value('radar', radar)
-    show += '   ' + color_name_value('profileGL', profileGL)
+    show += '   ' + color_name_value('ip', ip)
+    if settings.DEBUG and settings.VERBOSE:
+        show += '   ' + color_name_value('profileGL', profileGL)
     logger.info(show)
     origin = location(radar)
-    obj = {'radar': radar, 'origin': origin, 'profileGL': profileGL}
-    return render(request, 'frontend/archive.html', {'params': obj})
+    params = {'radar': radar, 'origin': origin, 'profileGL': profileGL}
+    return render(request, 'frontend/archive.html', {'params': params})
 
 def archive_radar(request, radar):
     return archive_radar_profile(request, radar, False)
