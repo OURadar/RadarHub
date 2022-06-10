@@ -11,7 +11,7 @@ class BackhaulConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'backhaul'
 
-    def read(self):
+    def ready(self):
         prog = ' '.join(sys.argv[:3])
         if 'runworker' not in prog:
             return
@@ -22,3 +22,7 @@ class BackhaulConfig(AppConfig):
             console.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
             logger.addHandler(console)
             logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
+
+        from . import consumers
+
+        consumers.reset()

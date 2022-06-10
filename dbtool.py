@@ -683,7 +683,10 @@ def check_latest(source=[], markdown=False):
         names = settings.RADARS.keys()
     message = '| Radars | Latest Scan | Age |\n|---|---|---|\n'
     for name in names:
-        day = Day.objects.filter(name=name).latest('date')
+        day = Day.objects.filter(name=name)
+        if day.count() == 0:
+            continue
+        day = day.latest('date')
         last = day.last_hour_range()
         file = File.objects.filter(name__startswith=name, date__range=last).latest('date')
         show = colorize('last', 'orange') + colorize(' = ', 'red')
