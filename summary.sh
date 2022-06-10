@@ -96,7 +96,7 @@ function follow() {
 	done
 	if [ ! -z "${args}" ]; then
 		args=${args% }
-		command="tail -f ${args% }"
+		command="tail ${args# }"
 		echo -e "\033[38;5;45m${command}\033[m"
 		eval ${command}
 	fi

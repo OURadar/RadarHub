@@ -23,6 +23,8 @@ class BackhaulConfig(AppConfig):
             logger.addHandler(console)
             logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
+        logger.debug('Resetting Backhaul consumers ...')
+
         from . import consumers
 
         consumers.reset()
