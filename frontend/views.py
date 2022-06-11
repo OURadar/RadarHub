@@ -14,11 +14,13 @@ default_radar = list(settings.RADARS.values())[0]['folder'].lower()
 def index(request):
     return render(request, 'frontend/nothing.html')
 
-#
+# Control
 
 def control_radar(request, radar):
+    ip = get_client_ip(request)
     show = colorize('views.control()', 'green')
     show += '   ' + color_name_value('radar', radar)
+    show += '   ' + color_name_value('ip', ip)
     logger.info(show)
     origin = location(radar)
     obj = {'radar': radar, 'origin': origin, 'a': 1, 'b': 2}
@@ -27,17 +29,16 @@ def control_radar(request, radar):
 def control(request):
     return control_radar(request, "demo")
 
-#
+# Archive
 
 def archive_radar_profile(request, radar, profileGL):
+    ip = get_client_ip(request)
     if radar == 'favicon.ico':
         show = colorize('views.archive()', 'red')
         show += '   ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('ip', ip)
         logger.warning(show)
         return render(request, 'static/images/favicon.ico')
-
-    ip = get_client_ip(request)
-
     show = colorize('views.archive()', 'green')
     show += '   ' + color_name_value('radar', radar)
     show += '   ' + color_name_value('ip', ip)
