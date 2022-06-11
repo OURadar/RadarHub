@@ -1,9 +1,22 @@
 import os
 import time
 import logging
+import textwrap
 import traceback
 
 logging.Formatter.converter = time.localtime
+
+
+# Adopted from
+# https://stackoverflow.com/questions/58590731/how-to-indent-multiline-message-printed-by-python-loggerclass MultiLineFormatter(logging.Formatter):
+class MultiLineFormatter(logging.Formatter):
+    def format(self, record):
+        message = record.msg
+        record.msg = ''
+        header = super().format(record)
+        msg = textwrap.indent(message, ' ' * len(header)).lstrip()
+        record.msg = message
+        return header + msg
 
 class Logger(logging.Logger):
     def __init__(self, name, home=os.path.expanduser('~/logs'), dailyfile=True):
@@ -13,9 +26,9 @@ class Logger(logging.Logger):
         self.time = time.localtime(time.time())
         self.day = self.time.tm_mday
         if dailyfile:
-            self.formatter = logging.Formatter('%(asctime)s : %(message)s', datefmt=r'%H:%M:%S')
+            self.formatter = MultiLineFormatter('%(asctime)s : %(message)s', datefmt=r'%H:%M:%S')
         else:
-            self.formatter = logging.Formatter('%(asctime)s : %(message)s', datefmt=r'%y/%m/%d %H:%M:%S')
+            self.formatter = MultiLineFormatter('%(asctime)s : %(message)s', datefmt=r'%y/%m/%d %H:%M:%S')
         self.init = False
         handler = logging.StreamHandler()
         handler.setFormatter(self.formatter)

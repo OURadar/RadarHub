@@ -17,8 +17,7 @@ urlpatterns = [
     path('data/load/<str:name>/', archives.load, name='data-load-binary'),
     path('data/catchup/<str:radar>/', archives.catchup, name='data-catchup-json'),
     path('archive/', views.archive, name='archive'),
-    # path('<str:radar>/', views.archive_radar, name='archive'),
-    # path('<str:radar>/', views.radar, name='radar'),
+    path('visitors/', archives.visitors, name='visitors'),
     path('', views.archive, name='archive'),
     # path('', views.index, name='index'),
 ]

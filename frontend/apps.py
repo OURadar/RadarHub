@@ -70,7 +70,6 @@ class FrontendConfig(AppConfig):
             show = color_name_value('worker_started', worker_started)
             logger.info(f'Already has a worker   {show}')
             return
-
         worker_started = True
 
         if 'daphne' in prog:

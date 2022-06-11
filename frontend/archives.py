@@ -14,7 +14,7 @@ from django.http import HttpResponse
 from django.conf import settings
 
 from .models import File, Day
-from common import colorize, color_name_value, is_valid_time
+from common import colorize, color_name_value, is_valid_time, get_client_ip
 
 logger = logging.getLogger('frontend')
 
@@ -33,6 +33,8 @@ radar_prefix = {}
 for prefix, item in settings.RADARS.items():
     radar = item['folder'].lower()
     radar_prefix[radar] = prefix
+
+visitor_stats = {}
 
 def binary(_, name):
     if settings.VERBOSE > 1:
@@ -60,6 +62,13 @@ def header(_, name):
     return response
 
 def bad_intention(request):
+    ip = get_client_ip(request)
+
+    global visitor_stats
+    if ip not in visitor_stats:
+        print(f'ip = {ip}')
+        print(request.headers.__str__())
+        visitor_stats[ip] = request.headers.__str__()
     # if settings.DEBUG:
     #     return False
     if pattern_bad_agents.match(request.headers['User-Agent']):
@@ -69,6 +78,12 @@ def bad_intention(request):
         logging.info(request.headers)
         return True
     return False
+
+def visitors(request):
+    global visitor_stats
+    payload = json.dumps(visitor_stats)
+    response = HttpResponse(payload, content_type='application/json')
+    return response
 
 '''
     radar - a string of the radar name
