@@ -66,10 +66,11 @@ def bad_intention(request):
     ip = get_client_ip(request)
     if ip not in visitor_stats:
         headers = dict(request.headers)
-        if 'Cookie' in headers:
-            headers['Cookie'] = headers['Cookie'][:69] + ' ...'
+        headers.pop('Cookie', None)
         visitor_stats[ip] = headers
         logging.info(pp.pformat(visitor_stats[ip]))
+    elif visitor_stats[ip]['User-Agent'] != request.headers['User-Agent']:
+        visitor_stats[ip]['User-Agent'] = request.headers['User-Agent']
     # if settings.DEBUG:
     #     return False
     if pattern_bad_agents.match(request.headers['User-Agent']):
