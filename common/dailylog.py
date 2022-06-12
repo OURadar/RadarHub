@@ -10,13 +10,19 @@ logging.Formatter.converter = time.localtime
 # Adopted from
 # https://stackoverflow.com/questions/58590731/how-to-indent-multiline-message-printed-by-python-loggerclass MultiLineFormatter(logging.Formatter):
 class MultiLineFormatter(logging.Formatter):
+    def get_header_length(self, record):
+        return len(super().format(logging.LogRecord(
+            name=record.name,
+            level=record.levelno,
+            pathname=record.pathname,
+            lineno=record.lineno,
+            msg='', args=(), exc_info=None
+        )))
+
     def format(self, record):
-        message = record.msg
-        record.msg = ''
-        header = super().format(record)
-        msg = textwrap.indent(message, ' ' * len(header)).lstrip()
-        record.msg = message
-        return header + msg
+        indent = ' ' * self.get_header_length(record)
+        head, *trailing = super().format(record).splitlines(True)
+        return head + ''.join(indent + line for line in trailing)
 
 class Logger(logging.Logger):
     def __init__(self, name, home=os.path.expanduser('~/logs'), dailyfile=True):
