@@ -37,9 +37,7 @@ class FrontendConfig(AppConfig):
             return
 
         if settings.DEBUG and settings.VERBOSE:
-            console = logging.StreamHandler()
-            console.setFormatter(MultiLineFormatter('%(asctime)s %(levelname)-8s %(message)s'))
-            logger.addHandler(console)
+            logger.addHandler(logging.StreamHandler())
             logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
         if 'daphne' in prog:
@@ -52,6 +50,10 @@ class FrontendConfig(AppConfig):
         logger.info(show)
         if 'runserver' in prog and run_main is None:
             return
+
+        root_logger = logging.getLogger()
+        for h in root_logger.handlers:
+            h.setFormatter(MultiLineFormatter('%(asctime)s %(levelname)-8s %(message)s'))
 
         show = color_name_value('DEBUG', settings.DEBUG)
         show += '   ' + color_name_value('SIMULATE', settings.SIMULATE)
