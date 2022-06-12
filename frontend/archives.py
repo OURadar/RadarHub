@@ -20,7 +20,7 @@ logger = logging.getLogger('frontend')
 
 origins = {}
 
-pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
+pp = pprint.PrettyPrinter(indent=1, depth=2, width=120, sort_dicts=False)
 
 pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
@@ -62,13 +62,12 @@ def header(_, name):
     return response
 
 def bad_intention(request):
-    ip = get_client_ip(request)
-
     global visitor_stats
+    ip = get_client_ip(request)
     if ip not in visitor_stats:
         print(f'ip = {ip}')
         print(request.headers.__str__())
-        visitor_stats[ip] = request.headers.__str__()
+        visitor_stats[ip] = dict(request.headers)
     # if settings.DEBUG:
     #     return False
     if pattern_bad_agents.match(request.headers['User-Agent']):
@@ -81,7 +80,7 @@ def bad_intention(request):
 
 def visitors(request):
     global visitor_stats
-    payload = json.dumps(visitor_stats)
+    payload = pp.pformat(visitor_stats)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
