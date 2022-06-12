@@ -25,7 +25,8 @@ logger = logging.getLogger('frontend')
 np.set_printoptions(precision=2, threshold=5, linewidth=120)
 match_day = re.compile(r'([12][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])').match
 vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585', '\U00002586', '\U00002587']
-emptySweep = {
+super_numbers = [' ', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁺', '⁻', '⁼', '⁽', '⁾']
+empty_sweep = {
     'symbol': 'U',
     'longitude': 0.0,
     'latitude': 0.0,
@@ -107,11 +108,11 @@ class File(models.Model):
                         return self._read(fid, finite=finite)
             except:
                 logger.error(f'Error opening archive {self.path}')
-                return emptySweep
+                return empty_sweep
         else:
             fullpath = self.getFullpath()
             if fullpath is None:
-                return emptySweep
+                return empty_sweep
             with open(fullpath, 'rb') as fid:
                 return self._read(fid, finite=finite)
 
@@ -150,7 +151,7 @@ class File(models.Model):
                 }
         except:
             logger.error(f'Error reading {self.name}')
-            return emptySweep
+            return empty_sweep
 
 
 '''
@@ -195,6 +196,9 @@ class Day(models.Model):
         elif long:
             return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
         else:
+            # hh = [int(x) for x in self.hourly_count.split(',')]
+            # dd = [super_numbers[(x // 100)] + f'{(x % 100):02d}' for x in hh]
+            # counts = ''.join(dd)
             counts = ' '.join([f'{n:>3}' for n in self.hourly_count.split(',')])
             show = f'{self.name}{date} {counts} {self.__vbar__()}'
         return show
