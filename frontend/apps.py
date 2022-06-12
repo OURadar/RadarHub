@@ -13,6 +13,7 @@ from django_eventstream import send_event
 
 from common import color_name_value
 from common.cosmetics import colorize
+from common.dailylog import MultiLineFormatter
 
 logger = logging.getLogger('frontend')
 
@@ -36,7 +37,9 @@ class FrontendConfig(AppConfig):
             return
 
         if settings.DEBUG and settings.VERBOSE:
-            logger.addHandler(logging.StreamHandler())
+            console = logging.StreamHandler()
+            console.setFormatter(MultiLineFormatter('%(asctime)s %(levelname)-8s %(message)s'))
+            logger.addHandler(console)
             logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
         if 'daphne' in prog:

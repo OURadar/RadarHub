@@ -16,7 +16,7 @@ class BackhaulConfig(AppConfig):
         if 'runworker' not in prog:
             return
 
-        if settings.DEBUG and settings.VERBOSE:
+        if settings.VERBOSE:
             console = logging.StreamHandler()
             console.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(message)s'))
             console.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
