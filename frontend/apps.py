@@ -36,7 +36,8 @@ class FrontendConfig(AppConfig):
         if not tableExists():
             return
 
-        if settings.DEBUG and settings.VERBOSE:
+        # if settings.DEBUG and settings.VERBOSE:
+        if len(logger.handlers) == 0:
             logger.addHandler(logging.StreamHandler())
             logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
@@ -54,6 +55,7 @@ class FrontendConfig(AppConfig):
         root_logger = logging.getLogger()
         for h in root_logger.handlers:
             h.setFormatter(MultiLineFormatter('%(asctime)s %(levelname)-8s %(message)s'))
+            h.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
         show = color_name_value('DEBUG', settings.DEBUG)
         show += '   ' + color_name_value('SIMULATE', settings.SIMULATE)
