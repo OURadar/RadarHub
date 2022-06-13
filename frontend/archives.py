@@ -21,7 +21,7 @@ logger = logging.getLogger('frontend')
 
 origins = {}
 
-pp = pprint.PrettyPrinter(indent=1, depth=2, width=80, sort_dicts=False)
+pp = pprint.PrettyPrinter(indent=1, depth=3, width=80, sort_dicts=False)
 
 pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
@@ -65,13 +65,18 @@ def header(_, name):
     return response
 
 def screen(request):
+    global visitor_stats
+    global monitor_thread
     ip = get_client_ip(request)
     if ip not in visitor_stats:
         headers = dict(request.headers)
         headers.pop('Cookie', None)
-        visitor_stats[ip] = headers
-    elif visitor_stats[ip]['User-Agent'] != request.headers['User-Agent']:
-        visitor_stats[ip]['User-Agent'] = request.headers['User-Agent']
+        visitor_stats[ip] = {'bandwidth': 0, 'headers': headers}
+    elif visitor_stats[ip]['headers']['User-Agent'] != request.headers['User-Agent']:
+        visitor_stats[ip]['headers']['User-Agent'] = request.headers['User-Agent']
+    if monitor_thread is None:
+        monitor_thread = threading.Thread(target=monitor)
+        monitor_thread.start()
     malicious = False
     if pattern_bad_agents.match(request.headers['User-Agent']):
         malicious = True
@@ -79,33 +84,13 @@ def screen(request):
         malicious = True
     return ip, malicious
 
-def bad_intention(request):
-    global visitor_stats
-    global monitor_thread
-    ip = get_client_ip(request)
-    if ip not in visitor_stats:
-        headers = dict(request.headers)
-        headers.pop('Cookie', None)
-        visitor_stats[ip] = headers
-        logging.info(pp.pformat(visitor_stats[ip]))
-    elif visitor_stats[ip]['User-Agent'] != request.headers['User-Agent']:
-        visitor_stats[ip]['User-Agent'] = request.headers['User-Agent']
-    if monitor_thread is None:
-        monitor_thread = threading.Thread(target=monitor)
-        monitor_thread.start()
-    # if settings.DEBUG:
-    #     return False
-    if pattern_bad_agents.match(request.headers['User-Agent']):
-        logging.info(request.headers)
-        return True
-    if 'Referer' not in request.headers and 'Connection' not in request.headers:
-        logging.info(request.headers)
-        return True
-    return False
-
-def visitors(request):
-    global visitor_stats
-    payload = pp.pformat(visitor_stats)
+def visitors(_):
+    # global visitor_stats
+    # payload = pp.pformat(visitor_stats)
+    stats = []
+    for visitor in Visitor.objects.all():
+        stats.append(visitor.dict())
+    payload = pp.pformat(stats)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
@@ -117,12 +102,14 @@ def visitors(request):
           - YYYYMM
 '''
 def month(request, radar, day):
+    global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.month()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         logging.debug(show)
-    if bad_intention(request):
+    ip, malicious = screen(request)
+    if malicious:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
         return invalid_query
@@ -139,6 +126,7 @@ def month(request, radar, day):
         array[key] = entry.weather_condition() if entry else 0
         date += step
     payload = json.dumps(array)
+    visitor_stats[ip]['bandwidth'] += len(payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
@@ -158,12 +146,14 @@ def _count(prefix, day):
     return [0] * 24
 
 def count(request, radar, day):
+    global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.count()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         logging.debug(show)
-    if bad_intention(request):
+    ip, malicious = screen(request)
+    if malicious:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or not is_valid_time(day):
         return invalid_query
@@ -172,6 +162,7 @@ def count(request, radar, day):
         'count': _count(prefix, day)
     }
     payload = json.dumps(data)
+    visitor_stats[ip]['bandwidth'] += len(payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
@@ -201,10 +192,12 @@ def _list(prefix, day_hour_symbol):
     return [o.name.rstrip('.nc') for o in matches]
 
 def list(request, radar, day_hour_symbol):
+    global visitor_stats
     show = colorize('archive.list()', 'green')
     show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
     logging.debug(show)
-    if bad_intention(request):
+    ip, malicious = screen(request)
+    if malicious:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':
         return invalid_query
@@ -257,6 +250,7 @@ def list(request, radar, day_hour_symbol):
         'message': message
     }
     payload = json.dumps(data)
+    visitor_stats[ip]['bandwidth'] += len(payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
@@ -329,11 +323,13 @@ def _load(name):
     return payload
 
 def load(request, name):
+    global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.load()', 'green')
         show += '  ' + color_name_value('name', name)
         logging.debug(show)
-    if bad_intention(request):
+    ip, malicious = screen(request)
+    if malicious:
         return forbidden_request
     payload = _load(name + '.nc')
     if payload is None:
@@ -342,6 +338,7 @@ def load(request, name):
     response = HttpResponse(payload, content_type='application/octet-stream')
     response['Content-Encoding'] = 'deflate'
     response['Content-Length'] = len(payload)
+    visitor_stats[ip]['bandwidth'] += len(payload)
     return response
 
 '''
@@ -375,13 +372,15 @@ def _date(prefix):
     return ymd, hour
 
 def date(request, radar):
+    global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.date()', 'green')
         show += '  ' + color_name_value('radar', radar)
         logging.debug(show)
-    if bad_intention(request):
+    ip, malicious = screen(request)
+    if malicious:
         return forbidden_request
-    if radar == 'undefined':
+    if radar == 'undefined' or radar not in radar_prefix:
         return invalid_query
     prefix = radar_prefix[radar]
     ymd, hour = _date(prefix)
@@ -398,6 +397,7 @@ def date(request, radar):
             'hour': hour,
         }
     payload = json.dumps(data)
+    visitor_stats[ip]['bandwidth'] += len(payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
@@ -472,7 +472,8 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         show = colorize('archive.catchup()', 'green')
         show += '  ' + color_name_value('radar', radar)
         logging.debug(show)
-    if bad_intention(request):
+    ip, bad = screen(request)
+    if bad:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix:
         return invalid_query
@@ -494,8 +495,8 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         data['count'] = _count(prefix, ymd)
         data['file'] = _file(prefix, scan, symbol)
         data['list'] = _list(prefix, f'{dateString}-{symbol}')
-
     payload = json.dumps(data)
+    visitor_stats[ip]['bandwidth'] += len(payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
@@ -506,16 +507,18 @@ def monitor():
         for ip, stats in visitor_stats.items():
             # print(f'ip = {ip}')
             # pp.pprint(stats)
-            user_agent = stats['User-Agent'] if 'User-Agent' in stats else ''
-            print(f'user_agent = {user_agent} ({len(user_agent)})')
+            user_agent = stats['headers']['User-Agent'] if 'User-Agent' in stats['headers'] else 'Unknown'
             match = Visitor.objects.filter(ip=ip)
             if match.exists():
                 if match.count() > 1:
                     logger.error(f'More than one entries for {ip}')
                 visitor = match.first()
+                visitor.count += 1
+                visitor.user_agent = user_agent
             else:
-                visitor = Visitor.objects.create(ip=ip, count=0)
-            visitor.count += 1
-            visitor.user_agent = user_agent
-            # visitor.save()
+                visitor = Visitor.objects.create(ip=ip, count=1, user_agent=user_agent)
+            visitor.bandwidth += stats['bandwidth']
+            stats['bandwidth'] = 0
+            visitor.save()
+        # pp.pprint(visitor_stats)
         time.sleep(10)

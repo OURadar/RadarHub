@@ -277,3 +277,14 @@ class Visitor(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=['ip', ])]
+
+    def __repr__(self):
+        return f'{self.ip} : {self.count} : {self.bandwidth} : {self.user_agent}'
+
+    def dict(self):
+        return {
+            'ip': self.ip,
+            'count': self.count,
+            'bandwidth': self.bandwidth,
+            'user_agent': self.user_agent
+        }
