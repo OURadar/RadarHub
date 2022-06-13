@@ -18,6 +18,7 @@ urlpatterns = [
     path('data/catchup/<str:radar>/', archives.catchup, name='data-catchup-json'),
     path('archive/', views.archive, name='archive'),
     path('visitors/', archives.visitors, name='visitors'),
+    path('robots.txt', views.robots_txt),
     path('', views.archive, name='archive'),
     # path('', views.index, name='index'),
 ]

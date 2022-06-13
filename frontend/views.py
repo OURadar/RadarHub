@@ -2,6 +2,8 @@ import logging
 
 from django.shortcuts import render
 from django.conf import settings
+from django.http import HttpResponse
+from django.views.decorators.http import require_GET
 
 from common import colorize, color_name_value, get_client_ip
 from .archives import location
@@ -57,3 +59,14 @@ def archive_profile(request):
 
 def archive(request):
     return archive_radar_profile(request, default_radar, False)
+
+#
+
+@require_GET
+def robots_txt(request):
+    lines = [
+        'User-Agent: *',
+        'Disallow: /private/',
+        'Disallow: /junk/',
+    ]
+    return HttpResponse('\n'.join(lines), content_type='text/plain')

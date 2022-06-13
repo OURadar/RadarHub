@@ -5,4 +5,4 @@ if [[ ${HOSTNAME} == "dwv05" ]]; then
     exit
 fi
 
-rsync -av dwv05:/home/radarhub/app/frontend/static/maps .
+rsync -av ../static/maps radarhub@dwv05:/home/radarhub/app/frontend/static/
