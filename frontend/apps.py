@@ -36,8 +36,12 @@ class FrontendConfig(AppConfig):
         if not tableExists():
             return
 
-        # if settings.DEBUG and settings.VERBOSE:
-        if len(logger.handlers) == 0:
+        root_logger = logging.getLogger()
+        if len(root_logger.handlers):
+            for h in root_logger.handlers:
+                h.setFormatter(MultiLineFormatter('%(asctime)s %(levelname)-8s %(message)s'))
+                h.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
+        elif settings.DEBUG and settings.VERBOSE:
             logger.addHandler(logging.StreamHandler())
             logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
@@ -52,17 +56,12 @@ class FrontendConfig(AppConfig):
         if 'runserver' in prog and run_main is None:
             return
 
-        root_logger = logging.getLogger()
-        for h in root_logger.handlers:
-            h.setFormatter(MultiLineFormatter('%(asctime)s %(levelname)-8s %(message)s'))
-            h.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
-
         show = color_name_value('DEBUG', settings.DEBUG)
         show += '   ' + color_name_value('SIMULATE', settings.SIMULATE)
         show += '   ' + color_name_value('VERBOSE', settings.VERBOSE)
         logger.info(show)
 
-        if 'postgresql' in settings.DATABASES['default']['ENGINE']:
+        if 'postgresql' in settings.DATABASES['data']['ENGINE']:
             logger.info('Using 🐘 \033[48;5;25;38;5;15m PostgreSQL \033[m ...')
         else:
             logger.info('Using 🪶 \033[48;5;29;38;5;15m SQLite \033[m ...')

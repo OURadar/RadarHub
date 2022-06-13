@@ -256,6 +256,7 @@ To login remotely, use:
 ```shell
 psql -h localhost -U radarhub -W
 psql -h dwv05 -U radarhub -W
+psql -h dwv05 -U radarhub -d radarhub -W
 ```
 
 Once in the `psql` terminal, some of these could be useful:
