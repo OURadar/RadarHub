@@ -1,8 +1,8 @@
 import logging
 
 from django.shortcuts import render
-from django.conf import settings
 from django.http import HttpResponse
+from django.conf import settings
 from django.views.decorators.http import require_GET
 
 from common import colorize, color_name_value, get_client_ip
@@ -66,7 +66,8 @@ def archive(request):
 def robots_txt(request):
     lines = [
         'User-Agent: *',
-        'Disallow: /private/',
-        'Disallow: /junk/',
+        'Disallow: /archive/',
+        'Disallow: /control/',
+        'Disallow: /data/',
     ]
     return HttpResponse('\n'.join(lines), content_type='text/plain')
