@@ -273,6 +273,7 @@ class Visitor(models.Model):
     ip = models.GenericIPAddressField()
     count = models.PositiveIntegerField(default=0)
     bandwidth = models.PositiveIntegerField(default=0)
+    user_agent = models.CharField(max_length=256, default='')
 
     class Meta:
         indexes = [models.Index(fields=['ip', ])]

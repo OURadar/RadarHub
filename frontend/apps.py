@@ -61,7 +61,7 @@ class FrontendConfig(AppConfig):
         show += '   ' + color_name_value('VERBOSE', settings.VERBOSE)
         logger.info(show)
 
-        if 'postgresql' in settings.DATABASES['data']['ENGINE']:
+        if 'data' in settings.DATABASES and 'postgresql' in settings.DATABASES['data']['ENGINE']:
             logger.info('Using 🐘 \033[48;5;25;38;5;15m PostgreSQL \033[m ...')
         else:
             logger.info('Using 🪶 \033[48;5;29;38;5;15m SQLite \033[m ...')

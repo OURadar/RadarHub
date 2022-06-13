@@ -6,6 +6,7 @@ import pprint
 import struct
 import logging
 import datetime
+import threading
 import numpy as np
 
 from functools import lru_cache
@@ -13,7 +14,7 @@ from functools import lru_cache
 from django.http import HttpResponse
 from django.conf import settings
 
-from .models import File, Day
+from .models import File, Day, Visitor
 from common import colorize, color_name_value, is_valid_time, get_client_ip
 
 logger = logging.getLogger('frontend')
@@ -35,6 +36,8 @@ for prefix, item in settings.RADARS.items():
     radar_prefix[radar] = prefix
 
 visitor_stats = {}
+
+monitor_thread = None
 
 def binary(_, name):
     if settings.VERBOSE > 1:
@@ -61,8 +64,24 @@ def header(_, name):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
+def screen(request):
+    ip = get_client_ip(request)
+    if ip not in visitor_stats:
+        headers = dict(request.headers)
+        headers.pop('Cookie', None)
+        visitor_stats[ip] = headers
+    elif visitor_stats[ip]['User-Agent'] != request.headers['User-Agent']:
+        visitor_stats[ip]['User-Agent'] = request.headers['User-Agent']
+    malicious = False
+    if pattern_bad_agents.match(request.headers['User-Agent']):
+        malicious = True
+    if 'Referer' not in request.headers and 'Connection' not in request.headers:
+        malicious = True
+    return ip, malicious
+
 def bad_intention(request):
     global visitor_stats
+    global monitor_thread
     ip = get_client_ip(request)
     if ip not in visitor_stats:
         headers = dict(request.headers)
@@ -71,6 +90,9 @@ def bad_intention(request):
         logging.info(pp.pformat(visitor_stats[ip]))
     elif visitor_stats[ip]['User-Agent'] != request.headers['User-Agent']:
         visitor_stats[ip]['User-Agent'] = request.headers['User-Agent']
+    if monitor_thread is None:
+        monitor_thread = threading.Thread(target=monitor)
+        monitor_thread.start()
     # if settings.DEBUG:
     #     return False
     if pattern_bad_agents.match(request.headers['User-Agent']):
@@ -476,3 +498,24 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
     return response
+
+def monitor():
+    show = colorize('archives.monitor()', 'green')
+    print(show)
+    while True:
+        for ip, stats in visitor_stats.items():
+            # print(f'ip = {ip}')
+            # pp.pprint(stats)
+            user_agent = stats['User-Agent'] if 'User-Agent' in stats else ''
+            print(f'user_agent = {user_agent} ({len(user_agent)})')
+            match = Visitor.objects.filter(ip=ip)
+            if match.exists():
+                if match.count() > 1:
+                    logger.error(f'More than one entries for {ip}')
+                visitor = match.first()
+            else:
+                visitor = Visitor.objects.create(ip=ip, count=0)
+            visitor.count += 1
+            visitor.user_agent = user_agent
+            # visitor.save()
+        time.sleep(10)
