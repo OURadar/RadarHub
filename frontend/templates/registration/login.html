@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {% load static %}
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+    <meta name="apple-mobile-web-app-status-bar-style" content="translucent" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="rgb(5, 111, 146)" />
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    <link
+      href="{% static 'images/iradar-icon-57x57.png' %}"
+      sizes="57x57"
+      rel="apple-touch-icon"
+    />
+    <link
+      href="{% static 'images/iradar-icon-72x72.png' %}"
+      sizes="72x72"
+      rel="apple-touch-icon"
+    />
+    <link
+      href="{% static 'images/iradar-icon-114x114.png' %}"
+      sizes="114x114"
+      rel="apple-touch-icon"
+    />
+    <link
+      href="{% static 'images/iradar-icon-144x144.png' %}"
+      sizes="144x144"
+      rel="apple-touch-icon"
+    />
+    <link
+      rel="shortcut icon"
+      type="image/png"
+      href="{% static 'images/favicon.ico' %}"
+    />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen and (min-device-width: 550px)"
+      href="{% static 'css/desktop.css' %}"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen and (max-device-width: 550px)"
+      href="{% static 'css/mobile.css' %}"
+    />
+    <title>RadarHub</title>
+  </head>
+  <body>
+    <h2>Log In</h2>
+    <form method="post">
+    {% csrf_token %} {{ form.as_p }}
+    <button type="submit">Log In</button>
+    </form>
+  </body>
+</html>

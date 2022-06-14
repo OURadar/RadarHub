@@ -13,3 +13,5 @@ daphne
 tqdm
 numpy
 netCDF4
+django-auth-ldap
+
