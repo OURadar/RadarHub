@@ -28,7 +28,7 @@ pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
 invalid_query = HttpResponse(f'Invalid Query', status=204)
-forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell.', status=403)
+forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell Us.', status=403)
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
@@ -36,8 +36,8 @@ for prefix, item in settings.RADARS.items():
     radar_prefix[radar] = prefix
 
 visitor_stats = {}
-
-monitor_thread = None
+visitor_stats_access = threading.Lock()
+visitor_stats_monitor_thread = None
 
 def binary(_, name):
     if settings.VERBOSE > 1:
@@ -66,7 +66,7 @@ def header(_, name):
 
 def screen(request):
     global visitor_stats
-    global monitor_thread
+    global visitor_stats_monitor_thread
     ip = get_client_ip(request)
     if ip not in visitor_stats:
         headers = dict(request.headers)
@@ -79,9 +79,9 @@ def screen(request):
             visitor['headers']['User-Agent'] = request.headers['User-Agent']
         visitor['count'] += 1
         visitor['last_visited'] = datetime.datetime.today().replace(tzinfo=datetime.timezone.utc)
-    if monitor_thread is None:
-        monitor_thread = threading.Thread(target=monitor)
-        monitor_thread.start()
+    if visitor_stats_monitor_thread is None:
+        visitor_stats_monitor_thread = threading.Thread(target=monitor)
+        visitor_stats_monitor_thread.start()
     malicious = False
     if pattern_bad_agents.match(request.headers['User-Agent']):
         malicious = True
@@ -507,8 +507,10 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
 
 def monitor():
     show = colorize('archives.monitor()', 'green')
-    print(show)
+    show += '  ' + color_name_value('Visitor.objects.count()', Visitor.objects.count())
+    logger.info(show)
     while True:
+        visitor_stats_access.acquire()
         for ip, stats in visitor_stats.items():
             user_agent = stats['headers']['User-Agent'] if 'User-Agent' in stats['headers'] else 'Unknown'
             match = Visitor.objects.filter(ip=ip)
@@ -530,4 +532,5 @@ def monitor():
             stats['bandwidth'] = 0
             stats['count'] = 0
             visitor.save()
-        time.sleep(10)
+        visitor_stats_access.release()
+        time.sleep(3)

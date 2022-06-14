@@ -16,6 +16,9 @@ default_radar = list(settings.RADARS.values())[0]['folder'].lower()
 def index(request):
     return render(request, 'frontend/nothing.html')
 
+def dev(request):
+    return render(request, 'frontend/index-dev.html')
+
 # Control
 
 def control_radar(request, radar):
