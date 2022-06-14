@@ -280,7 +280,8 @@ class Visitor(models.Model):
         indexes = [models.Index(fields=['ip', ])]
 
     def __repr__(self):
-        return f'{self.ip} : {self.count} : {self.bandwidth} : {self.last_visited}'
+        time_str = self.last_visited.strftime('%Y/%m/%d %H:%M')
+        return f'{self.ip} : {self.count} : {self.bandwidth} : {time_str}'
 
     def dict(self):
         return {
