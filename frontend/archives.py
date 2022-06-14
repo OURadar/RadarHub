@@ -331,7 +331,7 @@ def load(request, name):
     global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.load()', 'green')
-        show += '  ' + color_name_value('name', name)
+        show += '   ' + color_name_value('name', name)
         logging.debug(show)
     ip, malicious = screen(request)
     if malicious:
@@ -357,7 +357,7 @@ def _date(prefix):
         day = day.latest('date')
     else:
         show = colorize('archive.date()', 'green')
-        show += '  ' + colorize('Empty Day table.', 'white')
+        show += '   ' + colorize('Empty Day table.', 'white')
         logger.warning(show)
         return None, None
     ymd = day.date.strftime(r'%Y%m%d')
@@ -369,8 +369,8 @@ def _date(prefix):
     hour = day.last_hour()
     if hour is None:
         show = colorize('archive._date()', 'green')
-        show += '  ' + colorize(' WARNING ', 'warning')
-        show += '  ' + colorize(f'Day {day.date} with', 'white')
+        show += '   ' + colorize(' WARNING ', 'warning')
+        show += '   ' + colorize(f'Day {day.date} with', 'white')
         show += color_name_value(' .hourly_count', 'zeros')
         logger.warning(show)
         return None, None
@@ -380,7 +380,7 @@ def date(request, radar):
     global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.date()', 'green')
-        show += '  ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('radar', radar)
         logging.debug(show)
     ip, malicious = screen(request)
     if malicious:
@@ -475,7 +475,7 @@ def _file(prefix, scan='E4.0', symbol='Z'):
 def catchup(request, radar, scan='E4.0', symbol='Z'):
     if settings.VERBOSE > 1:
         show = colorize('archive.catchup()', 'green')
-        show += '  ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('radar', radar)
         logging.debug(show)
     ip, bad = screen(request)
     if bad:
@@ -507,7 +507,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
 
 def monitor():
     show = colorize('archives.monitor()', 'green')
-    show += '  ' + color_name_value('Visitor.objects.count()', Visitor.objects.count())
+    show += '   ' + color_name_value('Visitor.objects.count()', Visitor.objects.count())
     logger.info(show)
     while True:
         visitor_stats_access.acquire()

@@ -14,7 +14,7 @@ default_radar = list(settings.RADARS.values())[0]['folder'].lower()
 
 # Create your views here.
 def index(request):
-    return render(request, 'frontend/nothing.html')
+    return render(request, 'frontend/intro.html')
 
 def dev(request):
     return render(request, 'frontend/index-dev.html')
