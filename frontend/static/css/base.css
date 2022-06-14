@@ -1,4 +1,4 @@
-/* 
+/*
 General style sheet
 Copyright Boonleng Cheong
 */
@@ -44,6 +44,7 @@ Copyright Boonleng Cheong
     --overlay-background: #ffffffe8;
     --button-hover: rgba(0, 0, 16, 0.06);
     --map-background: #f9f5ed;
+    --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
   }
 }
 @media (prefers-color-scheme: dark) {
@@ -78,6 +79,7 @@ Copyright Boonleng Cheong
     --overlay-background: #1e1e1ee8;
     --button-hover: rgba(248, 248, 255, 0.15);
     --map-background: #22252a;
+    --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
   }
 }
 
@@ -107,6 +109,22 @@ canvas {
   font-family: "LabelFont";
 }
 
+.backgrad {
+  background: #5c258d;
+  background: var(--background-gradient);
+  box-sizing: border-box;
+  color: white;
+  height: 100vh;
+  padding-top: 20%;
+  text-align: center;
+  width: 100%;
+}
+.extraLarge {
+  font-size: 100px;
+}
+.subtitle {
+  font-size: 24px;
+}
 .fill {
   width: 100%;
   height: 100%;
