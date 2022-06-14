@@ -274,17 +274,19 @@ class Visitor(models.Model):
     count = models.PositiveIntegerField(default=0)
     bandwidth = models.PositiveIntegerField(default=0)
     user_agent = models.CharField(max_length=256, default='')
+    last_visited = models.DateTimeField()
 
     class Meta:
         indexes = [models.Index(fields=['ip', ])]
 
     def __repr__(self):
-        return f'{self.ip} : {self.count} : {self.bandwidth} : {self.user_agent}'
+        return f'{self.ip} : {self.count} : {self.bandwidth} : {self.last_visited}'
 
     def dict(self):
         return {
             'ip': self.ip,
             'count': self.count,
             'bandwidth': self.bandwidth,
-            'user_agent': self.user_agent
+            'user_agent': self.user_agent,
+            'last_visited': self.last_visited
         }

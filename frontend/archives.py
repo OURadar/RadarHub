@@ -71,9 +71,14 @@ def screen(request):
     if ip not in visitor_stats:
         headers = dict(request.headers)
         headers.pop('Cookie', None)
-        visitor_stats[ip] = {'bandwidth': 0, 'headers': headers}
-    elif visitor_stats[ip]['headers']['User-Agent'] != request.headers['User-Agent']:
-        visitor_stats[ip]['headers']['User-Agent'] = request.headers['User-Agent']
+        visitor = {'bandwidth': 0, 'headers': headers, 'count': 1, 'last_visited': datetime.datetime.today()}
+        visitor_stats[ip] = visitor
+    else:
+        visitor = visitor_stats[ip]
+        if visitor['headers']['User-Agent'] != request.headers['User-Agent']:
+            visitor['headers']['User-Agent'] = request.headers['User-Agent']
+        visitor['count'] += 1
+        visitor['last_visited'] = datetime.datetime.today().replace(tzinfo=datetime.timezone.utc)
     if monitor_thread is None:
         monitor_thread = threading.Thread(target=monitor)
         monitor_thread.start()
@@ -505,20 +510,24 @@ def monitor():
     print(show)
     while True:
         for ip, stats in visitor_stats.items():
-            # print(f'ip = {ip}')
-            # pp.pprint(stats)
             user_agent = stats['headers']['User-Agent'] if 'User-Agent' in stats['headers'] else 'Unknown'
             match = Visitor.objects.filter(ip=ip)
             if match.exists():
                 if match.count() > 1:
-                    logger.error(f'More than one entries for {ip}')
+                    logger.error(f'More than one entries for {ip}, choosing the first ...')
                 visitor = match.first()
-                visitor.count += 1
                 visitor.user_agent = user_agent
+                visitor.count += stats['count']
+                visitor.bandwidth += stats['bandwidth']
+                visitor.last_visited = stats['last_visited']
             else:
-                visitor = Visitor.objects.create(ip=ip, count=1, user_agent=user_agent)
-            visitor.bandwidth += stats['bandwidth']
+                visitor = Visitor.objects.create(
+                    ip=ip,
+                    user_agent=user_agent,
+                    count=stats['count'],
+                    bandwidth=stats['bandwidth'],
+                    last_visited=stats['last_visited'])
             stats['bandwidth'] = 0
+            stats['count'] = 0
             visitor.save()
-        # pp.pprint(visitor_stats)
         time.sleep(10)
