@@ -35,7 +35,6 @@ from frontend.models import File, Day
 from common import colorize, color_name_value, dailylog
 
 __prog__ = os.path.basename(sys.argv[0])
-__version__ = settings.VERSION
 
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__, home=settings.LOG_DIR, dailyfile=settings.DEBUG)
@@ -684,7 +683,10 @@ def check_latest(source=[], markdown=False):
         names = settings.RADARS.keys()
     message = '| Radars | Latest Scan | Age |\n|---|---|---|\n'
     for name in names:
-        day = Day.objects.filter(name=name).latest('date')
+        day = Day.objects.filter(name=name)
+        if day.count() == 0:
+            continue
+        day = day.latest('date')
         last = day.last_hour_range()
         file = File.objects.filter(name__startswith=name, date__range=last).latest('date')
         show = colorize('last', 'orange') + colorize(' = ', 'red')

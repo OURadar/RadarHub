@@ -120,33 +120,26 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 # Django_stream requires a table in the database. Using 'event' and a dbrouter for this
 # https://docs.djangoproject.com/en/4.0/topics/db/multi-db/
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
 if 'database' in settings:
     if VERBOSE > 1:
         show = color_name_value('user', settings['database']['user'])
         show += '   ' + color_name_value('pass', settings['database']['pass'])
         print(show)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': 'radarhub',
-            'HOST': settings['database']['host'],
-            'USER': settings['database']['user'],
-            'PASSWORD': settings['database']['pass'],
-            'PORT': '5432',
-            }
-        }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+    DATABASES['data'] = {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'radarhub',
+        'HOST': settings['database']['host'],
+        'USER': settings['database']['user'],
+        'PASSWORD': settings['database']['pass'],
+        'PORT': '5432',
     }
-
-DATABASES['event'] = {
-    'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': BASE_DIR / 'db.sqlite3',
-}
 
 DATABASE_ROUTERS = ['radarhub.dbrouter.DbRouter']
 
@@ -187,6 +180,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# STATIC_URL = '/'
+
+# STATIC_ROOT = "/var/www/radarhub/static/"
+
+# STATICFILES_DIRS = [
+#     BASE_DIR / "static"
+# ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

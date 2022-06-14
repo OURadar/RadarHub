@@ -8,6 +8,7 @@
 
 import os
 import re
+import logging
 import tarfile
 import datetime
 import numpy as np
@@ -17,11 +18,27 @@ from django.core.validators import int_list_validator
 from django.conf import settings
 from common import colorize
 
+logger = logging.getLogger('frontend')
+
 # Some helper functions
 
 np.set_printoptions(precision=2, threshold=5, linewidth=120)
 match_day = re.compile(r'([12][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])').match
 vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585', '\U00002586', '\U00002587']
+super_numbers = [' ', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁺', '⁻', '⁼', '⁽', '⁾']
+empty_sweep = {
+    'symbol': 'U',
+    'longitude': 0.0,
+    'latitude': 0.0,
+    'sweepTime': 0,
+    'sweepElevation': 0.0,
+    'sweepAzimuth': 0.0,
+    'waveform': '',
+    'gatewidth': 1.0,
+    'elevations': np.empty((0, 0), dtype=np.float32),
+    'azimuths': np.empty((0, 0), dtype=np.float32),
+    'values': np.empty((0, 0), dtype=np.float32)
+}
 
 def valid_day(day):
     return match_day(day) is not None
@@ -30,7 +47,6 @@ def valid_day(day):
 
 '''
 File
-
  - name = filename of the sweep, e.g., PX-20130520-191000-E2.6-Z.nc
  - path = absolute path of the data, e.g., /mnt/data/PX1000/2013/20130520/_original/PX-20130520-191000-E2.6.tar.xz
  - date = date in database native format (UTC)
@@ -82,51 +98,60 @@ class File(models.Model):
         if any([ext in self.path for ext in ['tgz', 'txz', 'tar.xz']]):
             if settings.VERBOSE > 1:
                 print(f'models.File.read() {self.path}')
-            with tarfile.open(self.path) as aid:
-                info = tarfile.TarInfo(self.name)
-                info.size = self.size
-                info.offset = self.offset
-                info.offset_data = self.offset_data
-                with aid.extractfile(info) as fid:
-                    return self._read(fid, finite=finite)
+            try:
+                with tarfile.open(self.path) as aid:
+                    info = tarfile.TarInfo(self.name)
+                    info.size = self.size
+                    info.offset = self.offset
+                    info.offset_data = self.offset_data
+                    with aid.extractfile(info) as fid:
+                        return self._read(fid, finite=finite)
+            except:
+                logger.error(f'Error opening archive {self.path}')
+                return empty_sweep
         else:
             fullpath = self.getFullpath()
             if fullpath is None:
-                return None
+                return empty_sweep
             with open(fullpath, 'rb') as fid:
                 return self._read(fid, finite=finite)
 
     def _read(self, fid, finite=False):
-        with Dataset('memory', mode='r', memory=fid.read()) as nc:
-            name = nc.getncattr('TypeName')
-            elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
-            azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
-            values = np.array(nc.variables[name][:], dtype=np.float32)
-            if finite:
-                values = np.nan_to_num(values)
-            else:
-                values[values < -90] = np.nan
-            longitude = nc.getncattr('Longitude')
-            latitude = nc.getncattr('Latitude')
-            sweepTime = nc.getncattr('Time')
-            sweepElevation = nc.getncattr('Elevation')
-            sweepAzimuth = nc.getncattr('Azimuth')
-            waveform = nc.getncattr('Waveform')
-            gatewidth = float(nc.variables['GateWidth'][:][0])
-            symbol = self.name.split('.')[-2].split('-')[-1]
-            return {
-                'symbol': symbol,
-                'longitude': longitude,
-                'latitude': latitude,
-                'sweepTime': sweepTime,
-                'sweepElevation': sweepElevation,
-                'sweepAzimuth': sweepAzimuth,
-                'waveform': waveform,
-                'gatewidth': gatewidth,
-                'elevations': elevations,
-                'azimuths': azimuths,
-                'values': values
-            }
+        try:
+            with Dataset('memory', mode='r', memory=fid.read()) as nc:
+                attrs = nc.ncattrs()
+                name = nc.getncattr('TypeName')
+                elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
+                azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
+                values = np.array(nc.variables[name][:], dtype=np.float32)
+                if finite:
+                    values = np.nan_to_num(values)
+                else:
+                    values[values < -90] = np.nan
+                longitude = nc.getncattr('Longitude')
+                latitude = nc.getncattr('Latitude')
+                sweepTime = nc.getncattr('Time')
+                sweepElevation = nc.getncattr('Elevation')
+                sweepAzimuth = nc.getncattr('Azimuth')
+                waveform = nc.getncattr('Waveform') if 'Waveform' in attrs else ''
+                gatewidth = float(nc.variables['GateWidth'][:][0])
+                symbol = self.name.split('.')[-2].split('-')[-1]
+                return {
+                    'symbol': symbol,
+                    'longitude': longitude,
+                    'latitude': latitude,
+                    'sweepTime': sweepTime,
+                    'sweepElevation': sweepElevation,
+                    'sweepAzimuth': sweepAzimuth,
+                    'waveform': waveform,
+                    'gatewidth': gatewidth,
+                    'elevations': elevations,
+                    'azimuths': azimuths,
+                    'values': values
+                }
+        except:
+            logger.error(f'Error reading {self.name}')
+            return empty_sweep
 
 
 '''
@@ -171,6 +196,9 @@ class Day(models.Model):
         elif long:
             return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
         else:
+            # hh = [int(x) for x in self.hourly_count.split(',')]
+            # dd = [super_numbers[(x // 100)] + f'{(x % 100):02d}' for x in hh]
+            # counts = ''.join(dd)
             counts = ' '.join([f'{n:>3}' for n in self.hourly_count.split(',')])
             show = f'{self.name}{date} {counts} {self.__vbar__()}'
         return show
@@ -236,3 +264,30 @@ class Day(models.Model):
         if cond == 0:
             print(f'Day.weather_condition() {self.date} {self.blue} {self.green} {self.orange} {self.red}')
         return cond
+
+'''
+    Visitor
+'''
+
+class Visitor(models.Model):
+    ip = models.GenericIPAddressField()
+    count = models.PositiveIntegerField(default=0)
+    bandwidth = models.PositiveIntegerField(default=0)
+    user_agent = models.CharField(max_length=256, default='')
+    last_visited = models.DateTimeField()
+
+    class Meta:
+        indexes = [models.Index(fields=['ip', ])]
+
+    def __repr__(self):
+        time_str = self.last_visited.strftime('%Y/%m/%d %H:%M')
+        return f'{self.ip} : {self.count} : {self.bandwidth} : {time_str}'
+
+    def dict(self):
+        return {
+            'ip': self.ip,
+            'count': self.count,
+            'bandwidth': self.bandwidth,
+            'user_agent': self.user_agent,
+            'last_visited': self.last_visited
+        }

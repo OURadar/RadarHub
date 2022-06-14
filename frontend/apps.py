@@ -13,6 +13,7 @@ from django_eventstream import send_event
 
 from common import color_name_value
 from common.cosmetics import colorize
+from common.dailylog import MultiLineFormatter
 
 logger = logging.getLogger('frontend')
 
@@ -35,7 +36,12 @@ class FrontendConfig(AppConfig):
         if not tableEventExists():
             return
 
-        if settings.DEBUG and settings.VERBOSE:
+        root_logger = logging.getLogger()
+        if len(root_logger.handlers):
+            for h in root_logger.handlers:
+                h.setFormatter(MultiLineFormatter('%(asctime)s %(levelname)-8s %(message)s'))
+                h.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
+        elif settings.DEBUG and settings.VERBOSE:
             logger.addHandler(logging.StreamHandler())
             logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
@@ -55,7 +61,7 @@ class FrontendConfig(AppConfig):
         show += '   ' + color_name_value('VERBOSE', settings.VERBOSE)
         logger.info(show)
 
-        if 'postgresql' in settings.DATABASES['default']['ENGINE']:
+        if 'data' in settings.DATABASES and 'postgresql' in settings.DATABASES['data']['ENGINE']:
             logger.info('Using 🐘 \033[48;5;25;38;5;15m PostgreSQL \033[m ...')
         else:
             logger.info('Using 🪶 \033[48;5;29;38;5;15m SQLite \033[m ...')
@@ -70,7 +76,6 @@ class FrontendConfig(AppConfig):
             show = color_name_value('worker_started', worker_started)
             logger.info(f'Already has a worker   {show}')
             return
-
         worker_started = True
 
         if 'daphne' in prog:

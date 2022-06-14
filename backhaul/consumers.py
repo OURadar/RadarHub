@@ -44,10 +44,6 @@ payload_types = json.dumps({e.name: e.value for e in RadarHubType})
 lock = threading.Lock()
 tic = 0
 
-with open('frontend/package.json') as fid:
-    tmp = json.load(fid)
-    __version__ = tmp['version']
-
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
 
 async def _reset():
@@ -291,7 +287,7 @@ class Backhaul(AsyncConsumer):
             channel,
             {
                 'type': 'messageRadar',
-                'message': f'Hello {radar}. Welcome to the RadarHub v{__version__}'
+                'message': f'Hello {radar}. Welcome to the RadarHub v{settings.VERSION}'
             }
         )
 

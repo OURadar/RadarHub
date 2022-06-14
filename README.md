@@ -61,6 +61,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.7.6 Introduced navigation with arrow keys (6/4/2022)
   - [x] 0.7.7 Adopted logrotate and improved URL sanity check (6/6/2022)
   - [x] 0.7.8 Added simple detection of illicit requests (6/7/2022)
+  - [x] 0.7.9 Improved navigation by arrow keys (6/8/2022)
+  - [x] 0.7.10 Added visitor screening and logging (6/12/2022)
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Page template, UI materials, mobile version
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
@@ -78,6 +80,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 - [ ] Caching
   - [ ] Frontend caching: archive.js
   - [x] Backend caching: frontend.models.py
+- [ ] Infinite scrolling in data browser
 - [ ] Display frequency spectrum alongside scope view
 - [ ] Show online users
 - [x] High-DPI support
@@ -253,6 +256,7 @@ To login remotely, use:
 ```shell
 psql -h localhost -U radarhub -W
 psql -h dwv05 -U radarhub -W
+psql -h dwv05 -U radarhub -d radarhub -W
 ```
 
 Once in the `psql` terminal, some of these could be useful:
