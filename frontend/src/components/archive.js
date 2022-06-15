@@ -52,7 +52,7 @@ class Archive {
     this.month = this.month.bind(this);
     this.updateAge = this.updateAge.bind(this);
 
-    this.worker = new Worker("/static/frontend/archive.js?name=1");
+    this.worker = new Worker("/static/frontend/archive.js?d=220614.1");
     this.worker.onmessage = this.handleMessage;
   }
 
