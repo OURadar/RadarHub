@@ -28,8 +28,8 @@ def control_radar(request, radar):
     show += '   ' + color_name_value('ip', ip)
     logger.info(show)
     origin = location(radar)
-    obj = {'radar': radar, 'origin': origin, 'a': 1, 'b': 2}
-    return render(request, 'frontend/index.html', {'params': obj})
+    params = {'radar': radar, 'origin': origin, 'a': 1, 'b': 2}
+    return render(request, 'frontend/index.html', {'params': params})
 
 def control(request):
     return control_radar(request, "demo")

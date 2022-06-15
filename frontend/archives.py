@@ -512,6 +512,8 @@ def monitor():
     while True:
         visitor_stats_access.acquire()
         for ip, stats in visitor_stats.items():
+            if stats['count'] == 0 and stats['bandwidth'] == 0:
+                continue
             user_agent = stats['headers']['User-Agent'] if 'User-Agent' in stats['headers'] else 'Unknown'
             match = Visitor.objects.filter(ip=ip)
             if match.exists():
