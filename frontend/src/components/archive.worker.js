@@ -287,6 +287,28 @@ function list(radar, day, hour, symbol) {
     `color: ${namecolor}`,
     ""
   );
+  if (dateTimeString == grid.dateTimeString) {
+    let currentFileList = grid.fileList;
+    grid.fileList = [];
+    grid.fileListGrouped = {};
+    currentFileList.forEach((file, index) => {
+      let elements = file.split("-");
+      elements[4] = symbol;
+      file = elements.join("-");
+      grid.fileList.push(file);
+      let scanType = elements[3];
+      if (!(scanType in grid.fileListGrouped)) {
+        grid.fileListGrouped[scanType] = [];
+      }
+      grid.fileListGrouped[scanType].push({ file: file, index: index });
+    });
+    grid.symbol = symbol;
+    self.postMessage({
+      type: "list",
+      payload: grid,
+    });
+    return;
+  }
   const url = `/data/list/${radar}/${dateTimeString}-${symbol}/`;
   fetch(url)
     .then((response) => {
