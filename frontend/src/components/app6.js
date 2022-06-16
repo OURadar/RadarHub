@@ -41,14 +41,16 @@ class App extends Component {
         this.archive.switch(symbol);
       } else if (symbol == "L") {
         this.archive.toggleLiveUpdate();
-      } else if (e.key == "ArrowRight") {
-        this.archive.navigateForwardScan();
-      } else if (e.key == "ArrowLeft") {
-        this.archive.navigateBackwardScan();
-      } else if (e.key == "ArrowUp") {
-        this.archive.navigateBackward();
-      } else if (e.key == "ArrowDown") {
-        this.archive.navigateForward();
+      } else if (e.target == document.body) {
+        if (e.key == "ArrowRight") {
+          this.archive.navigateForwardScan();
+        } else if (e.key == "ArrowLeft") {
+          this.archive.navigateBackwardScan();
+        } else if (e.key == "ArrowUp") {
+          this.archive.navigateBackward();
+        } else if (e.key == "ArrowDown") {
+          this.archive.navigateForward();
+        }
       }
     });
   }

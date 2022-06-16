@@ -159,6 +159,9 @@ function Browser(props) {
       "color: mediumpurple",
       "color: inherit"
     );
+    if (parseInt(n.slice(0, 4)) < 2000) {
+      return;
+    }
     props.archive.count(radar, newDay, newHour, symbol);
   };
 
