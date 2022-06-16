@@ -31,7 +31,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
 from django.conf import settings
-from frontend.models import File, Day
+from frontend.models import File, Day, Visitor
 from common import colorize, color_name_value, dailylog
 
 __prog__ = os.path.basename(sys.argv[0])
@@ -826,6 +826,20 @@ def show_sweep_summary(source, markdown=False):
         pp.pprint(sweep)
         print(f'Data shape = {shape}\nRaw size = {size:,d} B')
 
+'''
+| IP Address      |          Usage |      OS / Browser | Last Visited     |
+| --------------- | -------------- | ----------------- | ---------------- |
+| 98.168.138.9    |      123,367 B |  Windows / Chrome | 2022/06/15 17:42 |
+'''
+
+def show_visitor_log():
+    print('| IP Address      |          Usage |      OS / Browser | Last Visited     |')
+    print('| --------------- | -------------- | ----------------- | ---------------- |')
+    for visitor in Visitor.objects.all().order_by('-last_visited'):
+        agent = f'{visitor.machine()} / {visitor.browser()}'
+        time_string = visitor.last_visited_time_string()
+        print(f'| {visitor.ip:15} | {visitor.bandwidth:12,} B | {agent:>17} | {time_string} |')
+
 #
 
 def dbtool_main():
@@ -875,8 +889,9 @@ def dbtool_main():
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='shows a sweep summary')
-    parser.add_argument('--version', action='version', version='%(prog)s ' + settings.VERSION)
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
+    parser.add_argument('--version', action='version', version='%(prog)s ' + settings.VERSION)
+    parser.add_argument('--visitor', dest='visitor', action='store_true', help='shows visitor log')
     parser.add_argument('-z', dest='test', action='store_true', help='dev')
     args = parser.parse_args()
 
@@ -985,6 +1000,10 @@ def dbtool_main():
         print('A placeholder for test routines')
         params = params_from_source('RAXPOL-202202*')
         pp.pprint(params)
+    elif args.visitor:
+        if args.markdown:
+            logger.hideLogOnScreen()
+        show_visitor_log()
     else:
         parser.print_help(sys.stderr)
 

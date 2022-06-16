@@ -19,6 +19,10 @@ from django.conf import settings
 from common import colorize
 
 logger = logging.getLogger('frontend')
+pattern_firefox = re.compile(r'(?<=.)Firefox/[0-9.]{1,10}')
+pattern_chrome = re.compile(r'(?<=.)Chrome/[0-9.]{1,10}')
+pattern_safari = re.compile(r'(?<=.)Safari/[0-9.]{1,10}')
+pattern_opera = re.compile(r'(?<=.)Opera/[0-9.]{1,10}')
 
 # Some helper functions
 
@@ -280,8 +284,31 @@ class Visitor(models.Model):
         indexes = [models.Index(fields=['ip', ])]
 
     def __repr__(self):
-        time_str = self.last_visited.strftime('%Y/%m/%d %H:%M')
-        return f'{self.ip} : {self.count} : {self.bandwidth} : {time_str}'
+        time_string = self.last_visited_time_string()
+        return f'{self.ip} : {self.count} : {self.bandwidth} : {time_string}'
+
+    def last_visited_time_string(self):
+        return self.last_visited.strftime(r'%Y/%m/%d %H:%M')
+
+    def machine(self):
+        if 'Linux' in self.user_agent:
+            return 'Linux'
+        if 'Windows' in self.user_agent:
+            return 'Windows'
+        if 'Macintosh' in self.user_agent:
+            return 'macOS'
+        return 'Unknown'
+
+    def browser(self):
+        if pattern_firefox.findall(self.user_agent):
+            return 'Firefox'
+        if pattern_chrome.findall(self.user_agent):
+            return 'Chrome'
+        if pattern_safari.findall(self.user_agent):
+            return 'Safari'
+        if pattern_opera.findall(self.user_agent):
+            return 'Opera'
+        return 'Unknown'
 
     def dict(self):
         return {
