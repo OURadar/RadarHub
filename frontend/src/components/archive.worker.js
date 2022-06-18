@@ -39,16 +39,17 @@ const sweepParser = new Parser()
   .endianess("little")
   .uint16("nb")
   .uint16("nr")
-  .uint16("reserved1")
-  .uint16("reserved2")
+  .uint16("nx")
+  .uint16("reserved")
   .doublele("time")
   .doublele("longitude")
   .doublele("latitude")
-  .doublele("reserved3")
+  .doublele("doubleReserved")
   .floatle("scanElevation")
   .floatle("scanAzimuth")
   .floatle("rangeStart")
   .floatle("rangeSpacing")
+  .string("info", { length: "nx" })
   .array("elevations", { type: "floatle", length: "nb" })
   .array("azimuths", { type: "floatle", length: "nb" })
   .array("values", {
@@ -196,6 +197,7 @@ function createSweep(name = "dummy") {
     name,
     nb: 4,
     nr: 3,
+    nx: 0,
     time: 42,
     timeString: "1970/01/01 00:00:42 UTC",
     symbol: "U",
@@ -380,6 +382,10 @@ function load(name) {
             `${components[2].slice(2, 4)}:` +
             `${components[2].slice(4, 6)} UTC`;
           sweep.symbol = components[4].split(".")[0];
+          sweep.info = JSON.parse(sweep.info);
+          sweep.infoString =
+            `Gatewidth: ${sweep.info.gatewidth} m \n` +
+            `Waveform: ${sweep.info.waveform}`;
           // console.log(
           //   `timeString = ${sweep.timeString}   symbol = ${sweep.symbol}`
           // );

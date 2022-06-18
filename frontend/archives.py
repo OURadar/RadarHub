@@ -301,8 +301,12 @@ def _load(name):
     if gatewidth < 0.05:
         gatewidth *= 2.0;
         sweep['values'] = sweep['values'][:, ::2]
+    info = json.dumps({
+        'gatewidth': sweep['gatewidth'],
+        'waveform': sweep['waveform']
+    })
 
-    head = struct.pack('hhhhddddffff', *sweep['values'].shape, 0, 0,
+    head = struct.pack('hhhhddddffff', *sweep['values'].shape, len(info), 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
         sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)
     symbol = sweep['symbol']
@@ -324,6 +328,7 @@ def _load(name):
     # np.nan will be converted to 0 during np.float -> np.uint8
     data = np.array(np.clip(np.round(values), 1.0, 255.0), dtype=np.uint8)
     payload = bytes(head) \
+            + bytes(info, 'utf-8') \
             + bytes(sweep['elevations']) \
             + bytes(sweep['azimuths']) \
             + bytes(data)

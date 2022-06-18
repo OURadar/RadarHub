@@ -7,12 +7,12 @@ import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
-import LocalizationProvider from "@mui/lab/LocalizationProvider";
-import DatePicker from "@mui/lab/DatePicker";
-import PickersDay from "@mui/lab/PickersDay";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 
 import { SectionHeader } from "./section-header";
-import { getMonth } from "date-fns";
+// import { getMonth } from "date-fns";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 const Item = memo(({ data, index, style }) => {
@@ -198,7 +198,7 @@ function Browser(props) {
               getMonthTable(day);
             }}
             renderInput={(params) => <TextField {...params} />}
-            renderDay={(day, _value, DayComponentProps) => {
+            renderDay={(day, _selectedDay, pickersDayProps) => {
               let key = day.toISOString().slice(0, 10);
               let num =
                 key in props.archive.grid.dailyAvailability
@@ -212,7 +212,7 @@ function Browser(props) {
                   overlap="circular"
                   variant={variant}
                 >
-                  <PickersDay {...DayComponentProps} />
+                  <PickersDay {...pickersDayProps} />
                 </Badge>
               );
             }}
