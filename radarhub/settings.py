@@ -140,6 +140,8 @@ if 'database' in settings:
         'PASSWORD': settings['database']['pass'],
         'PORT': '5432',
     }
+else:
+    DATABASES['data'] = DATABASES['default']
 
 DATABASE_ROUTERS = ['radarhub.dbrouter.DbRouter']
 
