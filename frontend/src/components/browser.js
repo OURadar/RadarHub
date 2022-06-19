@@ -67,7 +67,7 @@ function Browser(props) {
 
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
-  const [value, setValue] = React.useState(new Date());
+  const [value, setValue] = React.useState(day);
 
   // console.log(`hour = ${hour}`);
   const setElements = (elements) => {
@@ -137,6 +137,7 @@ function Browser(props) {
       );
     }
     setHourButtons(newButtons);
+    setValue(day);
   }, [day, hour, count]);
 
   // View did mount
