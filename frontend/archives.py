@@ -44,7 +44,7 @@ def binary(_, name):
     if settings.VERBOSE > 1:
         show = colorize('binary()', 'green')
         show += '   ' + color_name_value('name', name)
-        logging.debug(show)
+        logger.debug(show)
     if name == 'undefined':
         return invalid_query
     elev = 0.5
@@ -59,7 +59,7 @@ def header(_, name):
     if settings.VERBOSE > 1:
         show = colorize('header()', 'green')
         show += '   ' + color_name_value('name', name)
-        logging.debug(show)
+        logger.debug(show)
     data = {'elev': 0.5, 'count': 2000}
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -114,7 +114,7 @@ def month(request, radar, day):
         show = colorize('archive.month()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
-        logging.debug(show)
+        logger.debug(show)
     ip, malicious = screen(request)
     if malicious:
         return forbidden_request
@@ -158,7 +158,7 @@ def count(request, radar, day):
         show = colorize('archive.count()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
-        logging.debug(show)
+        logger.debug(show)
     ip, malicious = screen(request)
     if malicious:
         return forbidden_request
@@ -202,7 +202,7 @@ def list(request, radar, day_hour_symbol):
     global visitor_stats
     show = colorize('archive.list()', 'green')
     show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
-    logging.debug(show)
+    logger.debug(show)
     ip, malicious = screen(request)
     if malicious:
         return forbidden_request
@@ -216,7 +216,7 @@ def list(request, radar, day_hour_symbol):
     c = day_hour_symbol.split('-')
     day = c[0]
     if len(day) > 8:
-        logging.warning(f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
+        logger.warning(f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
         return invalid_query
     hourly_count = _count(prefix, day)
     if len(c) > 1:
@@ -237,13 +237,13 @@ def list(request, radar, day_hour_symbol):
                 show = colorize('archive.list()', 'green')
                 show += '   ' + colorize('override', 'red')
                 show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
-                logging.debug(show)
+                logger.debug(show)
         else:
             show = colorize('archive.list()', 'green')
             show += '   ' + color_name_value('radar', radar)
             show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
             show += '   ' + color_name_value('hourly_count', '0\'s')
-            logging.warning(show)
+            logger.warning(show)
             message = 'All zeros in hourly_count'
             hour = -1
     else:
@@ -268,7 +268,7 @@ def list(request, radar, day_hour_symbol):
 def _load(name):
     if settings.SIMULATE:
         elements = name.split('-')
-        logging.info(f'Dummy sweep {name}')
+        logger.info(f'Dummy sweep {name}')
         sweep = {
             'symbol': elements[4] if len(elements) > 4 else "Z",
             'longitude': -97.422413,
@@ -339,7 +339,7 @@ def load(request, name):
     if settings.VERBOSE > 1:
         show = colorize('archive.load()', 'green')
         show += '   ' + color_name_value('name', name)
-        logging.debug(show)
+        logger.debug(show)
     ip, malicious = screen(request)
     if malicious:
         return forbidden_request
@@ -388,7 +388,7 @@ def date(request, radar):
     if settings.VERBOSE > 1:
         show = colorize('archive.date()', 'green')
         show += '   ' + color_name_value('radar', radar)
-        logging.debug(show)
+        logger.debug(show)
     ip, malicious = screen(request)
     if malicious:
         return forbidden_request
@@ -432,7 +432,7 @@ def location(radar):
     if settings.VERBOSE > 1:
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('radar', radar)
-        logging.debug(show)
+        logger.debug(show)
     if radar in radar_prefix:
         prefix = radar_prefix[radar]
     else:
@@ -483,7 +483,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
     if settings.VERBOSE > 1:
         show = colorize('archive.catchup()', 'green')
         show += '   ' + color_name_value('radar', radar)
-        logging.debug(show)
+        logger.debug(show)
     ip, bad = screen(request)
     if bad:
         return forbidden_request
