@@ -372,7 +372,6 @@ function load(name) {
             ...createSweep(name),
             ...sweepParser.parse(new Uint8Array(buffer)),
           });
-          // console.log(sweep);
           let components = sweep.name.split("-");
           sweep.timeString =
             `${components[1].slice(0, 4)}/` +
@@ -384,7 +383,7 @@ function load(name) {
           sweep.symbol = components[4].split(".")[0];
           sweep.info = JSON.parse(sweep.info);
           sweep.infoString =
-            `Gatewidth: ${sweep.info.gatewidth} m \n` +
+            `Gatewidth: ${sweep.info.gatewidth} m\n` +
             `Waveform: ${sweep.info.waveform}`;
           // console.log(
           //   `timeString = ${sweep.timeString}   symbol = ${sweep.symbol}`
@@ -398,6 +397,14 @@ function load(name) {
             );
           }
           grid.scan = scan;
+          if (sweep.nb == 0 || sweep.nr == 0) {
+            console.log(sweep);
+            self.postMessage({
+              type: "message",
+              payload: `Failed to load ${name}`,
+            });
+            return;
+          }
           self.postMessage({ type: "load", payload: sweep });
         });
       } else {

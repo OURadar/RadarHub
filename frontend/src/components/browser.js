@@ -6,13 +6,12 @@ import Box from "@mui/material/Box";
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import AdapterDateFns from "@mui/lab/AdapterDateFns";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 
 import { SectionHeader } from "./section-header";
-// import { getMonth } from "date-fns";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 const Item = memo(({ data, index, style }) => {
@@ -64,11 +63,11 @@ function Browser(props) {
   const day = props.archive.grid.day;
   const hour = props.archive.grid.hour;
   const index = props.archive.grid.index;
-
   const radar = props.radar;
 
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
+  const [value, setValue] = React.useState(new Date());
 
   // console.log(`hour = ${hour}`);
   const setElements = (elements) => {
@@ -178,7 +177,7 @@ function Browser(props) {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
             label="Date"
-            value={day}
+            value={value}
             onYearChange={(newDay) => {
               getMonthTable(newDay);
             }}
@@ -187,12 +186,15 @@ function Browser(props) {
                 getMonthTable(newDay);
               }
             }}
-            onChange={(newDay) => {
-              if (newDay === null || newDay == "Invalid Date") {
-                return;
+            onChange={(newValue) => {
+              setValue(newValue);
+              if (
+                !isNaN(newValue) &&
+                newValue instanceof Date &&
+                newValue.getFullYear() > 2000
+              ) {
+                setDayHour(newValue, hour);
               }
-              // console.log(`DatePicker ${newDay.toISOString()}`);
-              setDayHour(newDay, hour);
             }}
             onOpen={() => {
               getMonthTable(day);
