@@ -832,13 +832,29 @@ def show_sweep_summary(source, markdown=False):
 | 98.168.138.9    |      123,367 B |  Windows / Chrome | 2022/06/15 17:42 |
 '''
 
-def show_visitor_log():
-    print('| IP Address      |          Usage |      OS / Browser | Last Visited     |')
-    print('| --------------- | -------------- | ----------------- | ---------------- |')
+def show_visitor_log(markdown=False):
+    import maxminddb
+    fid = maxminddb.open_database(settings.IP_DATABASE)
+    print('| IP Address      |          Usage |      OS / Browser | Last Visited     | Origin                         |')
+    print('| --------------- | -------------- | ----------------- | ---------------- | ------------------------------ |')
+    pattern = re.compile(' \(.*\)')
     for visitor in Visitor.objects.all().order_by('-last_visited'):
         agent = f'{visitor.machine()} / {visitor.browser()}'
         time_string = visitor.last_visited_time_string()
-        print(f'| {visitor.ip:15} | {visitor.bandwidth:12,} B | {agent:>17} | {time_string} |')
+        if visitor.ip[:6] in [ '10.203', '10.206', '10.194', '10.197', '10.196' ]:
+            origin = 'OU / VPN'
+        else:
+            info = fid.get(visitor.ip)
+            if info:
+                city = pattern.sub('', info['city']['names']['en'])
+                country = info['country']['names']['en']
+                origin = f'{city}, {country}'
+            else:
+                origin = '-'
+        if markdown:
+            print(f'| `{visitor.ip}` | `{visitor.bandwidth:,} B` | {agent} | {time_string} | {origin} |')
+        else:
+            print(f'| {visitor.ip:15} | {visitor.bandwidth:12,} B | {agent:>17} | {time_string} | {origin:30} |')
 
 #
 
@@ -1003,7 +1019,7 @@ def dbtool_main():
     elif args.visitor:
         if args.markdown:
             logger.hideLogOnScreen()
-        show_visitor_log()
+        show_visitor_log(markdown=args.markdown)
     else:
         parser.print_help(sys.stderr)
 

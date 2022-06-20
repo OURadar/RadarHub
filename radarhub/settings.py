@@ -266,3 +266,5 @@ LOGGING = {
         },
     }
 }
+
+IP_DATABASE = BASE_DIR / 'dbip-city-lite-2022-06.mmdb'

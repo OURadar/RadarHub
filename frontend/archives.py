@@ -264,7 +264,7 @@ def list(request, radar, day_hour_symbol):
 '''
     name - filename
 '''
-@lru_cache(maxsize=512)
+@lru_cache(maxsize=1000)
 def _load(name):
     if settings.SIMULATE:
         elements = name.split('-')
@@ -277,6 +277,7 @@ def _load(name):
             'sweepElevation': float(elements[3][1:]) if "E" in elements[3] else 0.0,
             'sweepAzimuth': float(elements[3][1:]) if "A" in elements[3] else 4.0,
             'gatewidth': 60.0,
+            'waveform': 's01',
             'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=float),
             'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=float),
             'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]])
@@ -285,8 +286,9 @@ def _load(name):
         # Database is indexed by date so we extract the time first for a quicker search
         s = pattern_x_yyyymmdd_hhmmss.search(name)
         if s is None:
+            logger.warning(f'Bad filename {name}')
             return None
-        s = s[0]
+        s = s.group(0)
         if not is_valid_time(s):
             return None
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'

@@ -13,3 +13,4 @@ daphne
 tqdm
 numpy
 netCDF4
+maxminddb
