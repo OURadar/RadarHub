@@ -833,24 +833,29 @@ def show_sweep_summary(source, markdown=False):
 '''
 
 def show_visitor_log(markdown=False):
-    import maxminddb
-    fid = maxminddb.open_database(settings.IP_DATABASE)
+    if os.path.exists(settings.IP_DATABASE):
+        import maxminddb
+        fid = maxminddb.open_database(settings.IP_DATABASE)
+        def get_location(ip):
+            pattern = re.compile(' \(.*\)')
+            if ip[:6] in [ '10.203', '10.206', '10.194', '10.197', '10.196' ]:
+                return 'OU / VPN'
+            else:
+                info = fid.get(ip)
+                if info:
+                    city = pattern.sub('', info['city']['names']['en'])
+                    country = info['country']['names']['en']
+                    return f'{city}, {country}'
+            return '-'
+    else:
+        def get_location(_):
+            return '-'
     print('| IP Address      |          Usage |      OS / Browser | Last Visited     | Origin                         |')
     print('| --------------- | -------------- | ----------------- | ---------------- | ------------------------------ |')
-    pattern = re.compile(' \(.*\)')
     for visitor in Visitor.objects.all().order_by('-last_visited'):
         agent = f'{visitor.machine()} / {visitor.browser()}'
         time_string = visitor.last_visited_time_string()
-        if visitor.ip[:6] in [ '10.203', '10.206', '10.194', '10.197', '10.196' ]:
-            origin = 'OU / VPN'
-        else:
-            info = fid.get(visitor.ip)
-            if info:
-                city = pattern.sub('', info['city']['names']['en'])
-                country = info['country']['names']['en']
-                origin = f'{city}, {country}'
-            else:
-                origin = '-'
+        origin = get_location(visitor.ip)
         if markdown:
             print(f'| `{visitor.ip}` | `{visitor.bandwidth:,} B` | {agent} | {time_string} | {origin} |')
         else:
