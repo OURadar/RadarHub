@@ -40,26 +40,21 @@ visitor_stats = {}
 visitor_stats_access = threading.Lock()
 visitor_stats_monitor_thread = None
 
-def binary(_, name):
-    if settings.VERBOSE > 1:
-        show = colorize('binary()', 'green')
-        show += '   ' + color_name_value('name', name)
-        logger.debug(show)
-    if name == 'undefined':
-        return invalid_query
-    elev = 0.5
-    elev_bin = bytearray(struct.pack('f', elev));
-    payload = elev_bin + b'\x00\x01\x02\x00\x00\x00\xfd\xfe\xff'
-    if not isinstance(payload, bytes):
-        payload = bytes(payload);
+def binary(request, name):
+    ip, malicious = screen(request)
+    show = colorize('binary()', 'green')
+    show += '   ' + color_name_value('name', name)
+    show += '   ' + color_name_value('ip', ip)
+    show += '   ' + color_name_value('malicious', malicious)
+    logger.info(show)
+    payload = b'\x01\x02\x03\x04\x05\x06\x07\x08'
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
 def header(_, name):
-    if settings.VERBOSE > 1:
-        show = colorize('header()', 'green')
-        show += '   ' + color_name_value('name', name)
-        logger.debug(show)
+    show = colorize('header()', 'green')
+    show += '   ' + color_name_value('name', name)
+    logger.debug(show)
     data = {'elev': 0.5, 'count': 2000}
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -68,22 +63,24 @@ def header(_, name):
 def screen(request):
     global visitor_stats
     global visitor_stats_monitor_thread
+    headers = dict(request.headers)
+    headers.pop('Cookie', None)
     ip = get_client_ip(request)
     if ip not in visitor_stats:
-        headers = dict(request.headers)
-        headers.pop('Cookie', None)
         visitor = {'bandwidth': 0, 'headers': headers, 'count': 1, 'last_visited': datetime.datetime.today()}
         visitor_stats[ip] = visitor
     else:
         visitor = visitor_stats[ip]
-        if visitor['headers']['User-Agent'] != request.headers['User-Agent']:
-            visitor['headers']['User-Agent'] = request.headers['User-Agent']
+        if visitor['headers']['User-Agent'] != headers['User-Agent']:
+            visitor['headers']['User-Agent'] = headers['User-Agent']
         visitor['count'] += 1
         visitor['last_visited'] = datetime.datetime.today().replace(tzinfo=datetime.timezone.utc)
     if visitor_stats_monitor_thread is None:
         visitor_stats_monitor_thread = threading.Thread(target=monitor)
         visitor_stats_monitor_thread.start()
     malicious = False
+    # if 'Accept-Encoding' not in headers or 'deflate' not in headers['Accept-Encoding']:
+    #     malicious = True
     # if pattern_bad_agents.match(request.headers['User-Agent']):
     #     malicious = True
     # if 'Referer' not in request.headers and 'Connection' not in request.headers:
