@@ -84,10 +84,10 @@ def screen(request):
         visitor_stats_monitor_thread = threading.Thread(target=monitor)
         visitor_stats_monitor_thread.start()
     malicious = False
-    if pattern_bad_agents.match(request.headers['User-Agent']):
-        malicious = True
-    if 'Referer' not in request.headers and 'Connection' not in request.headers:
-        malicious = True
+    # if pattern_bad_agents.match(request.headers['User-Agent']):
+    #     malicious = True
+    # if 'Referer' not in request.headers and 'Connection' not in request.headers:
+    #     malicious = True
     return ip, malicious
 
 def visitors(_):
@@ -282,9 +282,10 @@ def _load(name):
             'sweepAzimuth': float(elements[3][1:]) if "A" in elements[3] else 4.0,
             'gatewidth': 60.0,
             'waveform': 's01',
-            'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=float),
-            'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=float),
-            'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]])
+            'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=np.float32),
+            'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=np.float32),
+            'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]]),
+            'u8': np.array([[64, 108, 62], [42, 52, 46], [82, 92, 82], [112, 122, 132]], dtype=np.uint8)
         }
     else:
         # Database is indexed by date so we extract the time first for a quicker search
@@ -306,38 +307,20 @@ def _load(name):
     gatewidth = 1.0e-3 * sweep['gatewidth']
     if gatewidth < 0.05:
         gatewidth *= 2.0;
-        sweep['values'] = sweep['values'][:, ::2]
+        sweep['u8'] = sweep['u8'][:, ::2]
     info = json.dumps({
         'gatewidth': sweep['gatewidth'],
         'waveform': sweep['waveform']
     })
 
-    head = struct.pack('hhhhddddffff', *sweep['values'].shape, len(info), 0,
+    head = struct.pack('hhhhddddffff', *sweep['u8'].shape, len(info), 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
         sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)
-    symbol = sweep['symbol']
-    if symbol == 'Z':
-        values = sweep['values'] * 2.0 + 64.0
-    elif symbol == 'V':
-        values = sweep['values'] * 2.0 + 128.0
-    elif symbol == 'W':
-        values = sweep['values'] * 20.0
-    elif symbol == 'D':
-        values = sweep['values'] * 10.0 + 100.0
-    elif symbol == 'P':
-        values = sweep['values'] * 128.0 / np.pi + 128.0
-    elif symbol == 'R':
-        values = rho2ind(sweep['values'])
-    else:
-        values = sweep['values']
-    # Map to closest integer, 0 is transparent, 1+ is finite.
-    # np.nan will be converted to 0 during np.float -> np.uint8
-    data = np.array(np.clip(np.round(values), 1.0, 255.0), dtype=np.uint8)
     payload = bytes(head) \
             + bytes(info, 'utf-8') \
             + bytes(sweep['elevations']) \
             + bytes(sweep['azimuths']) \
-            + bytes(data)
+            + bytes(sweep['u8'])
     return payload
 
 def load(request, name):
@@ -418,17 +401,6 @@ def date(request, radar):
     visitor_stats[ip]['bandwidth'] += len(payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
-
-'''
-    value - Raw RhoHV values
-'''
-def rho2ind(values):
-    m3 = values > 0.93
-    m2 = np.logical_and(values > 0.7, ~m3)
-    index = values * 52.8751
-    index[m2] = values[m2] * 300.0 - 173.0
-    index[m3] = values[m3] * 1000.0 - 824.0
-    return index
 
 '''
     radar - Input radar name, e.g., px1000, raxpol, etc.

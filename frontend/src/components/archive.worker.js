@@ -553,20 +553,6 @@ function catchup(radar) {
   });
 }
 
-// fetch("/data/binary/PX-20200520-060102")
-//   .then((resp) => resp.arrayBuffer())
-//   .then((data) => {
-//     var elev = new Float32Array(data.slice(0, 4));
-//     var bytes = new Uint8Array(data.slice(4));
-//     console.log(`elev = ${elev}`);
-//     console.log(bytes);
-//   });
-
-// fetch("/data/header/PX-20130520-191140-E2.6-Z.nc/")
-//   .then((resp) => resp.json())
-//   .then((data) => {
-//     console.log(data);
-//   });
 function updateGridIndex(index) {
   if (state.verbose > 1) {
     console.info(

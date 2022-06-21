@@ -47,6 +47,17 @@ empty_sweep = {
 def valid_day(day):
     return match_day(day) is not None
 
+'''
+    value - Raw RhoHV values
+'''
+def rho2ind(values):
+    m3 = values > 0.93
+    m2 = np.logical_and(values > 0.7, ~m3)
+    index = values * 52.8751
+    index[m2] = values[m2] * 300.0 - 173.0
+    index[m3] = values[m3] * 1000.0 - 824.0
+    return index
+
 # Create your models here.
 
 '''
@@ -123,8 +134,16 @@ class File(models.Model):
     def _read(self, fid, finite=False):
         try:
             with Dataset('memory', mode='r', memory=fid.read()) as nc:
-                attrs = nc.ncattrs()
+                symbol = self.name.split('.')[-2].split('-')[-1]
                 name = nc.getncattr('TypeName')
+                longitude = nc.getncattr('Longitude')
+                latitude = nc.getncattr('Latitude')
+                sweepTime = nc.getncattr('Time')
+                sweepElevation = nc.getncattr('Elevation')
+                sweepAzimuth = nc.getncattr('Azimuth')
+                attrs = nc.ncattrs()
+                waveform = nc.getncattr('Waveform') if 'Waveform' in attrs else ''
+                gatewidth = float(nc.variables['GateWidth'][:][0])
                 elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
                 azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
                 values = np.array(nc.variables[name][:], dtype=np.float32)
@@ -132,14 +151,23 @@ class File(models.Model):
                     values = np.nan_to_num(values)
                 else:
                     values[values < -90] = np.nan
-                longitude = nc.getncattr('Longitude')
-                latitude = nc.getncattr('Latitude')
-                sweepTime = nc.getncattr('Time')
-                sweepElevation = nc.getncattr('Elevation')
-                sweepAzimuth = nc.getncattr('Azimuth')
-                waveform = nc.getncattr('Waveform') if 'Waveform' in attrs else ''
-                gatewidth = float(nc.variables['GateWidth'][:][0])
-                symbol = self.name.split('.')[-2].split('-')[-1]
+                if symbol == 'Z':
+                    u8 = values * 2.0 + 64.0
+                elif symbol == 'V':
+                    u8 = values * 2.0 + 128.0
+                elif symbol == 'W':
+                    u8 = values * 20.0
+                elif symbol == 'D':
+                    u8 = values * 10.0 + 100.0
+                elif symbol == 'P':
+                    u8 = values * 128.0 / np.pi + 128.0
+                elif symbol == 'R':
+                    u8 = rho2ind(values)
+                else:
+                    u8 = values
+                # Map to closest integer, 0 is transparent, 1+ is finite.
+                # np.nan will be converted to 0 during np.float32 -> np.uint8
+                u8 = np.array(np.clip(np.round(u8), 1.0, 255.0), dtype=np.uint8)
                 return {
                     'symbol': symbol,
                     'longitude': longitude,
@@ -151,7 +179,8 @@ class File(models.Model):
                     'gatewidth': gatewidth,
                     'elevations': elevations,
                     'azimuths': azimuths,
-                    'values': values
+                    'values': values,
+                    'u8': u8
                 }
         except:
             logger.error(f'Error reading {self.name}')

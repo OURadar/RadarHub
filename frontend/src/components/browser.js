@@ -179,9 +179,8 @@ function Browser(props) {
           <DatePicker
             label="Date"
             value={value}
-            onYearChange={(newDay) => {
-              getMonthTable(newDay);
-            }}
+            onOpen={() => getMonthTable(day)}
+            onYearChange={(newDay) => getMonthTable(newDay)}
             onMonthChange={(newDay) => {
               if (day != newDay) {
                 getMonthTable(newDay);
@@ -196,9 +195,6 @@ function Browser(props) {
               ) {
                 setDayHour(newValue, hour);
               }
-            }}
-            onOpen={() => {
-              getMonthTable(day);
             }}
             renderInput={(params) => <TextField {...params} />}
             renderDay={(day, _selectedDay, pickersDayProps) => {
