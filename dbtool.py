@@ -839,7 +839,7 @@ def show_visitor_log(markdown=False, show_city=False):
         def get_location(ip, show_city=False):
             pattern = re.compile(' \(.*\)')
             if ip[:3] == '10.':
-                return 'OU / VPN'
+                return 'OU Internal / VPN'
             else:
                 info = fid.get(ip)
                 if info:
@@ -854,16 +854,18 @@ def show_visitor_log(markdown=False, show_city=False):
     else:
         def get_location(_):
             return '-'
-    print('| IP Address      |    Usage (B) |   Count |      OS / Browser | Last Visited     | Location                                   |')
-    print('| --------------- |------------- | ------- | ----------------- | ---------------- | ------------------------------------------ |')
+    print('| IP Address      |      Usage (B) |     Count |      OS / Browser | Last Visited     | Location                                   |')
+    print('| --------------- |--------------- | --------- | ----------------- | ---------------- | ------------------------------------------ |')
     def show_visitor(visitor, markdown):
         agent = f'{visitor.machine()} / {visitor.browser()}'
+        if agent == 'Unknown / Unknown':
+            agent = visitor.user_agent.split()[0]
         time_string = visitor.last_visited_time_string()
         origin = get_location(visitor.ip, show_city=show_city)
         if markdown:
             print(f'| `{visitor.ip}` | `{visitor.bandwidth:,}` | `{visitor.count}` | {agent} | {time_string} | {origin} |')
         else:
-            print(f'| {visitor.ip:15} | {visitor.bandwidth:12,} | {visitor.count:7,} | {agent:>17} | {time_string} | {origin:42} |')
+            print(f'| {visitor.ip:15} | {visitor.bandwidth:14,} | {visitor.count:9,} | {agent:>17} | {time_string} | {origin:42} |')
     for visitor in Visitor.objects.exclude(ip__startswith='10.').order_by('-last_visited'):
         show_visitor(visitor, markdown=markdown)
     for visitor in Visitor.objects.filter(ip__startswith='10.').order_by('-last_visited'):
@@ -921,7 +923,7 @@ def dbtool_main():
     parser.add_argument('--show-city', action='store_true', help='shows city of IP location')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + settings.VERSION)
-    parser.add_argument('--visitor', dest='visitor', action='store_true', help='shows visitor log')
+    parser.add_argument('-V', '--visitor', action='store_true', help='shows visitor log')
     parser.add_argument('-z', dest='test', action='store_true', help='dev')
     args = parser.parse_args()
 
