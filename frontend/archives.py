@@ -257,8 +257,12 @@ def list(request, radar, day_hour_symbol):
         'message': message
     }
     payload = json.dumps(data)
-    visitor_stats[ip]['bandwidth'] += len(payload)
+    payload = bytes(payload, 'utf-8')
+    payload = zlib.compress(payload)
     response = HttpResponse(payload, content_type='application/json')
+    response['Content-Encoding'] = 'deflate'
+    response['Content-Length'] = len(payload)
+    visitor_stats[ip]['bandwidth'] += len(payload)
     return response
 
 '''
@@ -510,8 +514,12 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         data['file'] = _file(prefix, scan, symbol)
         data['list'] = _list(prefix, f'{dateString}-{symbol}')
     payload = json.dumps(data)
-    visitor_stats[ip]['bandwidth'] += len(payload)
+    payload = bytes(payload, 'utf-8')
+    payload = zlib.compress(payload)
     response = HttpResponse(payload, content_type='application/json')
+    response['Content-Encoding'] = 'deflate'
+    response['Content-Length'] = len(payload)
+    visitor_stats[ip]['bandwidth'] += len(payload)
     return response
 
 def monitor():

@@ -827,9 +827,9 @@ def show_sweep_summary(source, markdown=False):
         print(f'Data shape = {shape}\nRaw size = {size:,d} B')
 
 '''
-| IP Address      |          Usage |      OS / Browser | Last Visited     |
+| IP Address      |      Usage (B) |      OS / Browser | Last Visited     |
 | --------------- | -------------- | ----------------- | ---------------- |
-| 98.168.138.9    |      123,367 B |  Windows / Chrome | 2022/06/15 17:42 |
+| 98.168.138.9    |        123,367 |  Windows / Chrome | 2022/06/15 17:42 |
 '''
 
 def show_visitor_log(markdown=False):
@@ -850,8 +850,8 @@ def show_visitor_log(markdown=False):
     else:
         def get_location(_):
             return '-'
-    print('| IP Address      |          Usage |      OS / Browser | Last Visited     | Origin                         |')
-    print('| --------------- | -------------- | ----------------- | ---------------- | ------------------------------ |')
+    print('| IP Address      |    Usage (B) |      OS / Browser | Last Visited     | Origin                         |')
+    print('| --------------- |------------- | ----------------- | ---------------- | ------------------------------ |')
     for visitor in Visitor.objects.all().order_by('-last_visited'):
         agent = f'{visitor.machine()} / {visitor.browser()}'
         time_string = visitor.last_visited_time_string()
@@ -859,7 +859,7 @@ def show_visitor_log(markdown=False):
         if markdown:
             print(f'| `{visitor.ip}` | `{visitor.bandwidth:,} B` | {agent} | {time_string} | {origin} |')
         else:
-            print(f'| {visitor.ip:15} | {visitor.bandwidth:12,} B | {agent:>17} | {time_string} | {origin:30} |')
+            print(f'| {visitor.ip:15} | {visitor.bandwidth:12,} | {agent:>17} | {time_string} | {origin:30} |')
 
 #
 

@@ -213,6 +213,7 @@ class Day(models.Model):
             i = min(7, int(s / 100))
             b += colorize(vbar[i], c, end='')
         b += '\033[m'
+        b += ' ' + str(self.weather_condition())
         return b
 
     def show(self, long=False, short=False):
@@ -258,7 +259,7 @@ class Day(models.Model):
         cond = 0
         if self.blue < 10:
             cond = 1
-        elif self.green < 300:
+        elif self.green < 300 and self.orange < 200:
             cond = 2
         elif self.green / self.blue > 1:
             if self.red / self.green >= 0.1:
