@@ -827,39 +827,47 @@ def show_sweep_summary(source, markdown=False):
         print(f'Data shape = {shape}\nRaw size = {size:,d} B')
 
 '''
-| IP Address      |      Usage (B) |      OS / Browser | Last Visited     |
-| --------------- | -------------- | ----------------- | ---------------- |
-| 98.168.138.9    |        123,367 |  Windows / Chrome | 2022/06/15 17:42 |
+| IP Address      |    Usage (B) |   Count |      OS / Browser | Last Visited     | Location                                   |
+| --------------- |------------- | ------- | ----------------- | ---------------- | ------------------------------------------ |
+| 107.77.220.225  |      189,884 |      11 |    macOS / Safari | 2022/06/17 17:11 | Dallas, Texas, United States               |
 '''
 
-def show_visitor_log(markdown=False):
+def show_visitor_log(markdown=False, show_city=False):
     if os.path.exists(settings.IP_DATABASE):
         import maxminddb
         fid = maxminddb.open_database(settings.IP_DATABASE)
-        def get_location(ip):
+        def get_location(ip, show_city=False):
             pattern = re.compile(' \(.*\)')
-            if ip[:6] in [ '10.203', '10.206', '10.194', '10.197', '10.196' ]:
+            if ip[:3] == '10.':
                 return 'OU / VPN'
             else:
                 info = fid.get(ip)
                 if info:
-                    city = pattern.sub('', info['city']['names']['en'])
                     country = info['country']['names']['en']
-                    return f'{city}, {country}'
+                    state = info['subdivisions'][0]['names']['en']
+                    origin = f'{state}, {country}'
+                    if show_city:
+                        city = pattern.sub('', info['city']['names']['en'])
+                        origin = f'{city}, ' + origin
+                    return origin
             return '-'
     else:
         def get_location(_):
             return '-'
-    print('| IP Address      |    Usage (B) |      OS / Browser | Last Visited     | Origin                         |')
-    print('| --------------- |------------- | ----------------- | ---------------- | ------------------------------ |')
-    for visitor in Visitor.objects.all().order_by('-last_visited'):
+    print('| IP Address      |    Usage (B) |   Count |      OS / Browser | Last Visited     | Location                                   |')
+    print('| --------------- |------------- | ------- | ----------------- | ---------------- | ------------------------------------------ |')
+    def show_visitor(visitor, markdown):
         agent = f'{visitor.machine()} / {visitor.browser()}'
         time_string = visitor.last_visited_time_string()
-        origin = get_location(visitor.ip)
+        origin = get_location(visitor.ip, show_city=show_city)
         if markdown:
-            print(f'| `{visitor.ip}` | `{visitor.bandwidth:,} B` | {agent} | {time_string} | {origin} |')
+            print(f'| `{visitor.ip}` | `{visitor.bandwidth:,}` | `{visitor.count}` | {agent} | {time_string} | {origin} |')
         else:
-            print(f'| {visitor.ip:15} | {visitor.bandwidth:12,} | {agent:>17} | {time_string} | {origin:30} |')
+            print(f'| {visitor.ip:15} | {visitor.bandwidth:12,} | {visitor.count:7,} | {agent:>17} | {time_string} | {origin:42} |')
+    for visitor in Visitor.objects.exclude(ip__startswith='10.').order_by('-last_visited'):
+        show_visitor(visitor, markdown=markdown)
+    for visitor in Visitor.objects.filter(ip__startswith='10.').order_by('-last_visited'):
+        show_visitor(visitor, markdown=markdown)
 
 #
 
@@ -910,6 +918,7 @@ def dbtool_main():
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='shows a sweep summary')
+    parser.add_argument('--show-city', action='store_true', help='shows city of IP location')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + settings.VERSION)
     parser.add_argument('--visitor', dest='visitor', action='store_true', help='shows visitor log')
@@ -1024,7 +1033,7 @@ def dbtool_main():
     elif args.visitor:
         if args.markdown:
             logger.hideLogOnScreen()
-        show_visitor_log(markdown=args.markdown)
+        show_visitor_log(markdown=args.markdown, show_city=args.show_city)
     else:
         parser.print_help(sys.stderr)
 
