@@ -64,6 +64,7 @@ def rho2ind(values):
 
 '''
 File
+
  - name = filename of the sweep, e.g., PX-20130520-191000-E2.6-Z.nc
  - path = absolute path of the data, e.g., /mnt/data/PX1000/2013/20130520/_original/PX-20130520-191000-E2.6.tar.xz
  - date = date in database native format (UTC)
@@ -72,7 +73,8 @@ File
  - offset_data = offset_data of the .nc file (from tarinfo)
 
  - show() - shows the self representation on screen
- - get_fullPath() - returns full path of the archive that contains the file
+ - get_path() - returns full path of the archive that contains the file
+ - get_age() - returns the current age of the file
  - read() - reads from a plain path or a .tgz / .txz / .tar.xz archive using _read()
  - _read() - reads from a file object, returns a dictionary with the data
 '''
@@ -204,9 +206,13 @@ Day
  - hourly_count = number of volumes of each hour
 
  - show() - shows a few instance variables
+ - fix_date() - ensures the date is a datetime.date object
  - first_hour() - returns the first hour with data (int)
  - last_hour() - returns the last hour with data (int)
- - last_date_range() - returns the last hour as range, e.g., ['2022-01-21 00:00:00Z', '2022-01-21 00:59:59.9Z]
+ - day_string() - returns a day string in YYYY-MM-DD format
+ - last_hour_range() - returns the last hour as a range, e.g., ['2022-01-21 03:00:00Z', '2022-01-21 03:59:59.9Z]
+ - day_range() - returns the day as a range, e.g., ['2022-01-21 00:00:00Z', '2022-01-21 23:59:59.9Z]
+ - weather_condition() - returns one of these: 1-HAS_DATA, 2-HAS_CLEAR_AIR, 3-HAS_RAIN, 4-HAS_INTENSE_RAIN
 '''
 class Day(models.Model):
     date = models.DateField()
@@ -269,7 +275,7 @@ class Day(models.Model):
         if self.date is None:
             return None
         self.fix_date()
-        return self.date.strftime('%Y-%m-%d')
+        return self.date.strftime(f'%Y-%m-%d')
 
     def last_hour_range(self):
         if self.date is None:
@@ -303,7 +309,17 @@ class Day(models.Model):
         return cond
 
 '''
-    Visitor
+Visitor
+
+ - ip = IP address of the visitor
+ - count = total number of screening
+ - bandwidth = estimated data usage
+ - user_agent = the last inspected OS / browser
+ - last_visitor = last visited date time
+
+ - machine() - returns the OS
+ - browser() - returns the browser
+ - dict() - returns self as a dictionary
 '''
 
 class Visitor(models.Model):
