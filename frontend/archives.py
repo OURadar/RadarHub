@@ -224,12 +224,12 @@ def list(request, radar, day_hour_symbol):
         symbol = c[2]
     else:
         symbol = 'Z'
+    day_hour_symbol = f'{day}-{hour:02d}00-{symbol}'
     hours_with_data = [i for i, v in enumerate(hourly_count) if v]
     if hourly_count[hour] == 0:
         if len(hours_with_data):
             message = f'Hour {hour} has no files. Auto-select hour {hours_with_data[0]}.'
             hour = hours_with_data[0]
-            day_hour_symbol = f'{day}-{hour:02d}00-{symbol}'
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
                 show += '   ' + colorize('override', 'red')
