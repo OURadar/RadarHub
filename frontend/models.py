@@ -38,8 +38,8 @@ empty_sweep = {
     'sweepTime': 1369071296.0,
     'sweepElevation': 0.5,
     'sweepAzimuth': 42.0,
-    'waveform': 's0',
     'gatewidth': 15.0,
+    'waveform': 's0',
     'elevations': np.empty((0, 0), dtype=np.float32),
     'azimuths': np.empty((0, 0), dtype=np.float32),
     'values': np.empty((0, 0), dtype=np.float32),
@@ -71,8 +71,9 @@ File
  - offset = offset of the .nc file (from tarinfo)
  - offset_data = offset_data of the .nc file (from tarinfo)
 
- - getFullPath() - returns full path of the archive that contains the file
- - read() - reads from a plain path or a .tar / .tar.xz archive using _read()
+ - show() - shows the self representation on screen
+ - get_fullPath() - returns full path of the archive that contains the file
+ - read() - reads from a plain path or a .tgz / .txz / .tar.xz archive using _read()
  - _read() - reads from a file object, returns a dictionary with the data
 '''
 class File(models.Model):
@@ -93,7 +94,7 @@ class File(models.Model):
     def show(self):
         print(self.__repr__())
 
-    def getFullpath(self, search=True):
+    def get_path(self, search=True):
         path = os.path.join(self.path, self.name)
         if os.path.exists(path):
             return path
@@ -107,7 +108,7 @@ class File(models.Model):
             return path
         return None
 
-    def getAge(self):
+    def get_age(self):
         now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
         return now - self.date
 
@@ -127,10 +128,10 @@ class File(models.Model):
                 logger.error(f'Error opening archive {self.path}')
                 return empty_sweep
         else:
-            fullpath = self.getFullpath()
-            if fullpath is None:
+            source = self.get_path()
+            if source is None:
                 return empty_sweep
-            with open(fullpath, 'rb') as fid:
+            with open(source, 'rb') as fid:
                 return self._read(fid, finite=finite)
 
     def _read(self, fid, finite=False):
