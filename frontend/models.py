@@ -37,11 +37,12 @@ empty_sweep = {
     'sweepTime': 0,
     'sweepElevation': 0.0,
     'sweepAzimuth': 0.0,
-    'waveform': '',
+    'waveform': 's0',
     'gatewidth': 1.0,
     'elevations': np.empty((0, 0), dtype=np.float32),
     'azimuths': np.empty((0, 0), dtype=np.float32),
-    'values': np.empty((0, 0), dtype=np.float32)
+    'values': np.empty((0, 0), dtype=np.float32),
+    'u8': np.empty((0, 0), dtype=np.uint8)
 }
 
 def valid_day(day):
