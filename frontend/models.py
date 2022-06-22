@@ -8,6 +8,7 @@
 
 import os
 import re
+import time
 import logging
 import tarfile
 import datetime
@@ -32,13 +33,13 @@ vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585
 super_numbers = [' ', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁺', '⁻', '⁼', '⁽', '⁾']
 empty_sweep = {
     'symbol': 'U',
-    'longitude': 0.0,
-    'latitude': 0.0,
-    'sweepTime': 0,
-    'sweepElevation': 0.0,
-    'sweepAzimuth': 0.0,
+    'longitude': -97.422413,
+    'latitude': 35.25527,
+    'sweepTime': 1369071296.0,
+    'sweepElevation': 0.5,
+    'sweepAzimuth': 42.0,
     'waveform': 's0',
-    'gatewidth': 1.0,
+    'gatewidth': 15.0,
     'elevations': np.empty((0, 0), dtype=np.float32),
     'azimuths': np.empty((0, 0), dtype=np.float32),
     'values': np.empty((0, 0), dtype=np.float32),
