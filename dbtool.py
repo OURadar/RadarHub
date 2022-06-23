@@ -694,7 +694,7 @@ def check_latest(source=[], markdown=False):
         show += '   ' + color_name_value('name', file.name)
         radar = settings.RADARS[name]['folder']
         filename = re.sub('-([a-zA-Z]+).nc', '', file.name)
-        age = file.getAge()
+        age = file.get_age()
         ages = ''
         if age.days > 0:
             s = 's' if age.days > 1 else ''
