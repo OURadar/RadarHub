@@ -368,11 +368,11 @@ class Visitor(models.Model):
             return 'Opera'
         return 'Unknown'
 
-    def dict(self):
+    def dict(self, num2str=True):
         return {
             'ip': self.ip,
-            'count': self.count,
-            'bandwidth': self.bandwidth,
+            'count': f'{self.count:,d}' if num2str else self.count,
+            'bandwidth': f'{self.bandwidth:,d}' if num2str else self.bandwidth,
             'user_agent': self.user_agent,
             'last_visited': self.last_visited
         }

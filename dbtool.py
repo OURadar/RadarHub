@@ -863,7 +863,7 @@ def show_visitor_log(markdown=False, show_city=False):
         time_string = visitor.last_visited_time_string()
         origin = get_location(visitor.ip, show_city=show_city)
         if markdown:
-            print(f'| `{visitor.ip}` | `{visitor.bandwidth:,}` | `{visitor.count}` | {agent} | {time_string} | {origin} |')
+            print(f'| `{visitor.ip}` | `{visitor.bandwidth:,}` | `{visitor.count:,}` | {agent} | {time_string} | {origin} |')
         else:
             print(f'| {visitor.ip:15} | {visitor.bandwidth:14,} | {visitor.count:9,} | {agent:>17} | {time_string} | {origin:42} |')
     for visitor in Visitor.objects.exclude(ip__startswith='10.').order_by('-last_visited'):

@@ -21,12 +21,11 @@ logger = logging.getLogger('frontend')
 
 origins = {}
 
-pp = pprint.PrettyPrinter(indent=1, depth=3, width=80, sort_dicts=False, underscore_numbers=True)
+pp = pprint.PrettyPrinter(indent=1, depth=3, width=80, sort_dicts=False)
 
 pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
-pattern_underscore_numbers = re.compile(r'([0-9])_([0-9])')
 
 invalid_query = HttpResponse(f'Invalid Query', status=204)
 forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell Us.', status=403)
@@ -94,7 +93,6 @@ def visitors(_):
     for visitor in Visitor.objects.all():
         stats.append(visitor.dict())
     payload = pp.pformat(stats)
-    payload = pattern_underscore_numbers.sub(r'\1,\2', payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
