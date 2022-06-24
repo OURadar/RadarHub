@@ -98,7 +98,7 @@ class Archive {
         this.state.loadCount = 0;
         this.grid.index = index;
         this.loadByIndex(this.grid.index);
-      } else if (this.grid.index >= 0 && index != this.grid.index) {
+      } else if (this.grid.index >= 0) {
         this.state.loadCount = 0;
         this.loadByIndex(this.grid.index);
       } else if (this.grid.index == -1) {

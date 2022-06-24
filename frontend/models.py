@@ -305,7 +305,8 @@ class Day(models.Model):
             else:
                 cond = 3
         if cond == 0:
-            print(f'Day.weather_condition() {self.date} {self.blue} {self.green} {self.orange} {self.red}')
+            print(f'Day.weather_condition() {self.date} b:{self.blue} g:{self.green} o:{self.orange} r:{self.red} -> {cond} -> 1')
+            cond = 1
         return cond
 
 '''
