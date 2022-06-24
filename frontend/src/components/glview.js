@@ -501,7 +501,7 @@ class GLView extends Component {
     let s = geo.eye.scale;
     let d = vec3.subtract([], t, geo.target.translation);
     let r = vec3.length(d);
-    let n = common.clamp(r / m, 10, 1.2 * common.earthRadius);
+    let n = common.clamp(r / m, 5, 1.2 * common.earthRadius);
     vec3.scale(d, d, n / r);
 
     // let b = r * geo.fov;
