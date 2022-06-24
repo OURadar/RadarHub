@@ -515,6 +515,7 @@ function catchup(radar) {
           grid.fileList = buffer.list;
           grid.hour = buffer.hour;
           grid.day = day;
+          grid.fileListGrouped = {};
           grid.fileList.forEach((file, index) => {
             let elements = file.split("-");
             let scanType = elements[3];
@@ -523,22 +524,24 @@ function catchup(radar) {
             }
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
-          if (state.debug > 1) {
-            console.debug(grid.fileListGrouped);
-            console.debug(`grid.scan = ${grid.scan}`);
+          if (state.verbose > 1) {
+            console.info(grid.fileList);
+            console.info(grid.fileListGrouped);
+            console.info(`grid.scan = ${grid.scan}`);
+            console.info(`grid.index = ${grid.index}`);
           }
           if (grid.scan[0] == "A") {
             grid.index = grid.fileList.length - 1;
+          } else if (grid.scan in grid.fileListGrouped) {
+            grid.index = grid.fileListGrouped[grid.scan].slice(-1)[0].index;
           } else {
-            if (grid.scan in grid.fileListGrouped) {
-              grid.index = grid.fileListGrouped[grid.scan].slice(-1)[0].index;
-            } else {
-              grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
-            }
+            grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
           }
-          let file = grid.fileList[grid.index];
-          grid.scan = file.split("-")[3];
-          console.log(`Setting grid.scan to ${grid.scan}`);
+          if (grid.index >= 0) {
+            let file = grid.fileList[grid.index];
+            grid.scan = file.split("-")[3];
+            console.log(`Setting grid.scan to ${grid.scan}`);
+          }
           self.postMessage({
             type: "list",
             payload: grid,
