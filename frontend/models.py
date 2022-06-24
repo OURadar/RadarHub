@@ -340,16 +340,21 @@ class Visitor(models.Model):
         return self.last_visited.strftime(r'%Y/%m/%d %H:%M')
 
     def machine(self):
-        if 'Windows' in self.user_agent:
-            return 'Windows'
+        # Could just use this: http://www.useragentstring.com/pages/api.php
         if 'Macintosh' in self.user_agent:
             return 'macOS'
+        if 'Windows' in self.user_agent:
+            return 'Windows'
+        if 'Linux' in self.user_agent:
+            return 'Linux'
         if 'iPhone' in self.user_agent:
             return 'iOS'
         if 'iPad' in self.user_agent:
             return 'iPadOS'
-        if 'Linux' in self.user_agent:
-            return 'Linux'
+        if 'Chrome OS' in self.user_agent:
+            return 'Chrome OS'
+        if 'Search Bot' in self.user_agent:
+            return 'Search Bot'
         return 'Unknown'
 
     def browser(self):
