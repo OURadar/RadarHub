@@ -1,21 +1,17 @@
 django
+django-eventstream
+django-auth-ldap
+Twisted[tls,http2]
+psycopg2
+asgiref
 channels
 channels_redis
-Twisted[tls,http2]
-asgiref
-pyparsing
 websocket_client
-psycopg2
+pyparsing
 setproctitle
 oauthlib
-django-eventstream
 daphne
 tqdm
 numpy
 netCDF4
-<<<<<<< HEAD
-django-auth-ldap
-
-=======
 maxminddb
->>>>>>> master
