@@ -8,7 +8,6 @@ channels
 channels_redis
 websocket_client
 pyparsing
-setproctitle
 oauthlib
 daphne
 tqdm
