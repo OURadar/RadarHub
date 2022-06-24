@@ -195,6 +195,14 @@ h3 {
   display: block;
   height: 5px;
 }
+.spacer10 {
+  display: block;
+  height: 10px;
+}
+.spacer25 {
+  display: block;
+  height: 25px;
+}
 
 .sampleContainer {
   margin: -5px;
@@ -474,4 +482,20 @@ h3 {
 
 .offline {
   background-color: var(--orange);
+}
+
+a.radarButton {
+  border-radius: 5px;
+  color: white;
+  display: inline-block;
+  font-size: 24pt;
+  margin: 10px;
+  padding: 10px 20px;
+  text-decoration: none;
+  transition: background-color linear 0.3s;
+}
+
+a.radarButton:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  transition: background-color linear 0.3s;
 }
