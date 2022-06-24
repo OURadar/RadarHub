@@ -6,7 +6,6 @@ asgiref
 pyparsing
 websocket_client
 psycopg2
-setproctitle
 oauthlib
 django-eventstream
 daphne
