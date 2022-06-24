@@ -39,16 +39,17 @@ const sweepParser = new Parser()
   .endianess("little")
   .uint16("nb")
   .uint16("nr")
-  .uint16("reserved1")
-  .uint16("reserved2")
+  .uint16("nx")
+  .uint16("reserved")
   .doublele("time")
   .doublele("longitude")
   .doublele("latitude")
-  .doublele("reserved3")
+  .doublele("doubleReserved")
   .floatle("scanElevation")
   .floatle("scanAzimuth")
   .floatle("rangeStart")
   .floatle("rangeSpacing")
+  .string("info", { length: "nx" })
   .array("elevations", { type: "floatle", length: "nb" })
   .array("azimuths", { type: "floatle", length: "nb" })
   .array("values", {
@@ -196,6 +197,7 @@ function createSweep(name = "dummy") {
     name,
     nb: 4,
     nr: 3,
+    nx: 0,
     time: 42,
     timeString: "1970/01/01 00:00:42 UTC",
     symbol: "U",
@@ -287,6 +289,28 @@ function list(radar, day, hour, symbol) {
     `color: ${namecolor}`,
     ""
   );
+  if (dateTimeString == grid.dateTimeString) {
+    let currentFileList = grid.fileList;
+    grid.fileList = [];
+    grid.fileListGrouped = {};
+    currentFileList.forEach((file, index) => {
+      let elements = file.split("-");
+      elements[4] = symbol;
+      file = elements.join("-");
+      grid.fileList.push(file);
+      let scanType = elements[3];
+      if (!(scanType in grid.fileListGrouped)) {
+        grid.fileListGrouped[scanType] = [];
+      }
+      grid.fileListGrouped[scanType].push({ file: file, index: index });
+    });
+    grid.symbol = symbol;
+    self.postMessage({
+      type: "list",
+      payload: grid,
+    });
+    return;
+  }
   const url = `/data/list/${radar}/${dateTimeString}-${symbol}/`;
   fetch(url)
     .then((response) => {
@@ -348,7 +372,6 @@ function load(name) {
             ...createSweep(name),
             ...sweepParser.parse(new Uint8Array(buffer)),
           });
-          // console.log(sweep);
           let components = sweep.name.split("-");
           sweep.timeString =
             `${components[1].slice(0, 4)}/` +
@@ -358,6 +381,10 @@ function load(name) {
             `${components[2].slice(2, 4)}:` +
             `${components[2].slice(4, 6)} UTC`;
           sweep.symbol = components[4].split(".")[0];
+          sweep.info = JSON.parse(sweep.info);
+          sweep.infoString =
+            `Gatewidth: ${sweep.info.gatewidth} m\n` +
+            `Waveform: ${sweep.info.waveform}`;
           // console.log(
           //   `timeString = ${sweep.timeString}   symbol = ${sweep.symbol}`
           // );
@@ -370,6 +397,14 @@ function load(name) {
             );
           }
           grid.scan = scan;
+          if (sweep.nb == 0 || sweep.nr == 0) {
+            console.log(sweep);
+            self.postMessage({
+              type: "message",
+              payload: `Failed to load ${name}`,
+            });
+            return;
+          }
           self.postMessage({ type: "load", payload: sweep });
         });
       } else {
@@ -518,20 +553,6 @@ function catchup(radar) {
   });
 }
 
-// fetch("/data/binary/PX-20200520-060102")
-//   .then((resp) => resp.arrayBuffer())
-//   .then((data) => {
-//     var elev = new Float32Array(data.slice(0, 4));
-//     var bytes = new Uint8Array(data.slice(4));
-//     console.log(`elev = ${elev}`);
-//     console.log(bytes);
-//   });
-
-// fetch("/data/header/PX-20130520-191140-E2.6-Z.nc/")
-//   .then((resp) => resp.json())
-//   .then((data) => {
-//     console.log(data);
-//   });
 function updateGridIndex(index) {
   if (state.verbose > 1) {
     console.info(

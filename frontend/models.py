@@ -8,6 +8,7 @@
 
 import os
 import re
+import time
 import logging
 import tarfile
 import datetime
@@ -19,6 +20,10 @@ from django.conf import settings
 from common import colorize
 
 logger = logging.getLogger('frontend')
+pattern_firefox = re.compile(r'(?<=.)Firefox/[0-9.]{1,10}')
+pattern_chrome = re.compile(r'(?<=.)Chrome/[0-9.]{1,10}')
+pattern_safari = re.compile(r'(?<=.)Safari/[0-9.]{1,10}')
+pattern_opera = re.compile(r'(?<=.)Opera/[0-9.]{1,10}')
 
 # Some helper functions
 
@@ -28,25 +33,38 @@ vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585
 super_numbers = [' ', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁺', '⁻', '⁼', '⁽', '⁾']
 empty_sweep = {
     'symbol': 'U',
-    'longitude': 0.0,
-    'latitude': 0.0,
-    'sweepTime': 0,
-    'sweepElevation': 0.0,
-    'sweepAzimuth': 0.0,
-    'waveform': '',
-    'gatewidth': 1.0,
+    'longitude': -97.422413,
+    'latitude': 35.25527,
+    'sweepTime': 1369071296.0,
+    'sweepElevation': 0.5,
+    'sweepAzimuth': 42.0,
+    'gatewidth': 15.0,
+    'waveform': 's0',
     'elevations': np.empty((0, 0), dtype=np.float32),
     'azimuths': np.empty((0, 0), dtype=np.float32),
-    'values': np.empty((0, 0), dtype=np.float32)
+    'values': np.empty((0, 0), dtype=np.float32),
+    'u8': np.empty((0, 0), dtype=np.uint8)
 }
 
 def valid_day(day):
     return match_day(day) is not None
 
+'''
+    value - Raw RhoHV values
+'''
+def rho2ind(values):
+    m3 = values > 0.93
+    m2 = np.logical_and(values > 0.7, ~m3)
+    index = values * 52.8751
+    index[m2] = values[m2] * 300.0 - 173.0
+    index[m3] = values[m3] * 1000.0 - 824.0
+    return index
+
 # Create your models here.
 
 '''
 File
+
  - name = filename of the sweep, e.g., PX-20130520-191000-E2.6-Z.nc
  - path = absolute path of the data, e.g., /mnt/data/PX1000/2013/20130520/_original/PX-20130520-191000-E2.6.tar.xz
  - date = date in database native format (UTC)
@@ -54,8 +72,10 @@ File
  - offset = offset of the .nc file (from tarinfo)
  - offset_data = offset_data of the .nc file (from tarinfo)
 
- - getFullPath() - returns full path of the archive that contains the file
- - read() - reads from a plain path or a .tar / .tar.xz archive using _read()
+ - show() - shows the self representation on screen
+ - get_path() - returns full path of the archive that contains the file
+ - get_age() - returns the current age of the file
+ - read() - reads from a plain path or a .tgz / .txz / .tar.xz archive using _read()
  - _read() - reads from a file object, returns a dictionary with the data
 '''
 class File(models.Model):
@@ -76,7 +96,7 @@ class File(models.Model):
     def show(self):
         print(self.__repr__())
 
-    def getFullpath(self, search=True):
+    def get_path(self, search=True):
         path = os.path.join(self.path, self.name)
         if os.path.exists(path):
             return path
@@ -90,7 +110,7 @@ class File(models.Model):
             return path
         return None
 
-    def getAge(self):
+    def get_age(self):
         now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
         return now - self.date
 
@@ -110,17 +130,25 @@ class File(models.Model):
                 logger.error(f'Error opening archive {self.path}')
                 return empty_sweep
         else:
-            fullpath = self.getFullpath()
-            if fullpath is None:
+            source = self.get_path()
+            if source is None:
                 return empty_sweep
-            with open(fullpath, 'rb') as fid:
+            with open(source, 'rb') as fid:
                 return self._read(fid, finite=finite)
 
     def _read(self, fid, finite=False):
         try:
             with Dataset('memory', mode='r', memory=fid.read()) as nc:
-                attrs = nc.ncattrs()
+                symbol = self.name.split('.')[-2].split('-')[-1]
                 name = nc.getncattr('TypeName')
+                longitude = nc.getncattr('Longitude')
+                latitude = nc.getncattr('Latitude')
+                sweepTime = nc.getncattr('Time')
+                sweepElevation = nc.getncattr('Elevation')
+                sweepAzimuth = nc.getncattr('Azimuth')
+                attrs = nc.ncattrs()
+                waveform = nc.getncattr('Waveform') if 'Waveform' in attrs else ''
+                gatewidth = float(nc.variables['GateWidth'][:][0])
                 elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
                 azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
                 values = np.array(nc.variables[name][:], dtype=np.float32)
@@ -128,14 +156,23 @@ class File(models.Model):
                     values = np.nan_to_num(values)
                 else:
                     values[values < -90] = np.nan
-                longitude = nc.getncattr('Longitude')
-                latitude = nc.getncattr('Latitude')
-                sweepTime = nc.getncattr('Time')
-                sweepElevation = nc.getncattr('Elevation')
-                sweepAzimuth = nc.getncattr('Azimuth')
-                waveform = nc.getncattr('Waveform') if 'Waveform' in attrs else ''
-                gatewidth = float(nc.variables['GateWidth'][:][0])
-                symbol = self.name.split('.')[-2].split('-')[-1]
+                if symbol == 'Z':
+                    u8 = values * 2.0 + 64.0
+                elif symbol == 'V':
+                    u8 = values * 2.0 + 128.0
+                elif symbol == 'W':
+                    u8 = values * 20.0
+                elif symbol == 'D':
+                    u8 = values * 10.0 + 100.0
+                elif symbol == 'P':
+                    u8 = values * 128.0 / np.pi + 128.0
+                elif symbol == 'R':
+                    u8 = rho2ind(values)
+                else:
+                    u8 = values
+                # Map to closest integer, 0 is transparent, 1+ is finite.
+                # np.nan will be converted to 0 during np.float32 -> np.uint8
+                u8 = np.array(np.clip(np.round(u8), 1.0, 255.0), dtype=np.uint8)
                 return {
                     'symbol': symbol,
                     'longitude': longitude,
@@ -147,7 +184,8 @@ class File(models.Model):
                     'gatewidth': gatewidth,
                     'elevations': elevations,
                     'azimuths': azimuths,
-                    'values': values
+                    'values': values,
+                    'u8': u8
                 }
         except:
             logger.error(f'Error reading {self.name}')
@@ -168,9 +206,13 @@ Day
  - hourly_count = number of volumes of each hour
 
  - show() - shows a few instance variables
+ - fix_date() - ensures the date is a datetime.date object
  - first_hour() - returns the first hour with data (int)
  - last_hour() - returns the last hour with data (int)
- - last_date_range() - returns the last hour as range, e.g., ['2022-01-21 00:00:00Z', '2022-01-21 00:59:59.9Z]
+ - day_string() - returns a day string in YYYY-MM-DD format
+ - last_hour_range() - returns the last hour as a range, e.g., ['2022-01-21 03:00:00Z', '2022-01-21 03:59:59.9Z]
+ - day_range() - returns the day as a range, e.g., ['2022-01-21 00:00:00Z', '2022-01-21 23:59:59.9Z]
+ - weather_condition() - returns one of these: 1-HAS_DATA, 2-HAS_CLEAR_AIR, 3-HAS_RAIN, 4-HAS_INTENSE_RAIN
 '''
 class Day(models.Model):
     date = models.DateField()
@@ -209,6 +251,7 @@ class Day(models.Model):
             i = min(7, int(s / 100))
             b += colorize(vbar[i], c, end='')
         b += '\033[m'
+        b += ' ' + str(self.weather_condition())
         return b
 
     def show(self, long=False, short=False):
@@ -232,7 +275,7 @@ class Day(models.Model):
         if self.date is None:
             return None
         self.fix_date()
-        return self.date.strftime('%Y-%m-%d')
+        return self.date.strftime(f'%Y-%m-%d')
 
     def last_hour_range(self):
         if self.date is None:
@@ -254,7 +297,7 @@ class Day(models.Model):
         cond = 0
         if self.blue < 10:
             cond = 1
-        elif self.green < 300:
+        elif self.green < 300 and self.orange < 200:
             cond = 2
         elif self.green / self.blue > 1:
             if self.red / self.green >= 0.1:
@@ -266,7 +309,17 @@ class Day(models.Model):
         return cond
 
 '''
-    Visitor
+Visitor
+
+ - ip = IP address of the visitor
+ - count = total number of screening
+ - bandwidth = estimated data usage
+ - user_agent = the last inspected OS / browser
+ - last_visitor = last visited date time
+
+ - machine() - returns the OS
+ - browser() - returns the browser
+ - dict() - returns self as a dictionary
 '''
 
 class Visitor(models.Model):
@@ -280,8 +333,40 @@ class Visitor(models.Model):
         indexes = [models.Index(fields=['ip', ])]
 
     def __repr__(self):
-        time_str = self.last_visited.strftime('%Y/%m/%d %H:%M')
-        return f'{self.ip} : {self.count} : {self.bandwidth} : {time_str}'
+        time_string = self.last_visited_time_string()
+        return f'{self.ip} : {self.count} : {self.bandwidth} : {time_string}'
+
+    def last_visited_time_string(self):
+        return self.last_visited.strftime(r'%Y/%m/%d %H:%M')
+
+    def machine(self):
+        # Could just use this: http://www.useragentstring.com/pages/api.php
+        if 'Macintosh' in self.user_agent:
+            return 'macOS'
+        if 'Windows' in self.user_agent:
+            return 'Windows'
+        if 'Linux' in self.user_agent:
+            return 'Linux'
+        if 'iPhone' in self.user_agent:
+            return 'iOS'
+        if 'iPad' in self.user_agent:
+            return 'iPadOS'
+        if 'Chrome OS' in self.user_agent:
+            return 'Chrome OS'
+        if 'Search Bot' in self.user_agent:
+            return 'Search Bot'
+        return 'Unknown'
+
+    def browser(self):
+        if pattern_firefox.findall(self.user_agent):
+            return 'Firefox'
+        if pattern_chrome.findall(self.user_agent):
+            return 'Chrome'
+        if pattern_safari.findall(self.user_agent):
+            return 'Safari'
+        if pattern_opera.findall(self.user_agent):
+            return 'Opera'
+        return 'Unknown'
 
     def dict(self):
         return {

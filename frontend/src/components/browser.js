@@ -6,13 +6,12 @@ import Box from "@mui/material/Box";
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import AdapterDateFns from "@mui/lab/AdapterDateFns";
-import LocalizationProvider from "@mui/lab/LocalizationProvider";
-import DatePicker from "@mui/lab/DatePicker";
-import PickersDay from "@mui/lab/PickersDay";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 
 import { SectionHeader } from "./section-header";
-import { getMonth } from "date-fns";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 const Item = memo(({ data, index, style }) => {
@@ -64,11 +63,11 @@ function Browser(props) {
   const day = props.archive.grid.day;
   const hour = props.archive.grid.hour;
   const index = props.archive.grid.index;
-
   const radar = props.radar;
 
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
+  const [value, setValue] = React.useState(day);
 
   // console.log(`hour = ${hour}`);
   const setElements = (elements) => {
@@ -138,6 +137,7 @@ function Browser(props) {
       );
     }
     setHourButtons(newButtons);
+    setValue(day);
   }, [day, hour, count]);
 
   // View did mount
@@ -159,6 +159,9 @@ function Browser(props) {
       "color: mediumpurple",
       "color: inherit"
     );
+    if (parseInt(n.slice(0, 4)) < 2000) {
+      return;
+    }
     props.archive.count(radar, newDay, newHour, symbol);
   };
 
@@ -175,27 +178,26 @@ function Browser(props) {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
             label="Date"
-            value={day}
-            onYearChange={(newDay) => {
-              getMonthTable(newDay);
-            }}
+            value={value}
+            onOpen={() => getMonthTable(day)}
+            onYearChange={(newDay) => getMonthTable(newDay)}
             onMonthChange={(newDay) => {
               if (day != newDay) {
                 getMonthTable(newDay);
               }
             }}
-            onChange={(newDay) => {
-              if (newDay === null || newDay == "Invalid Date") {
-                return;
+            onChange={(newValue) => {
+              setValue(newValue);
+              if (
+                !isNaN(newValue) &&
+                newValue instanceof Date &&
+                newValue.getFullYear() > 2000
+              ) {
+                setDayHour(newValue, hour);
               }
-              // console.log(`DatePicker ${newDay.toISOString()}`);
-              setDayHour(newDay, hour);
-            }}
-            onOpen={() => {
-              getMonthTable(day);
             }}
             renderInput={(params) => <TextField {...params} />}
-            renderDay={(day, _value, DayComponentProps) => {
+            renderDay={(day, _selectedDay, pickersDayProps) => {
               let key = day.toISOString().slice(0, 10);
               let num =
                 key in props.archive.grid.dailyAvailability
@@ -209,7 +211,7 @@ function Browser(props) {
                   overlap="circular"
                   variant={variant}
                 >
-                  <PickersDay {...DayComponentProps} />
+                  <PickersDay {...pickersDayProps} />
                 </Badge>
               );
             }}

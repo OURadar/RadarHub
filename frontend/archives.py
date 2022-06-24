@@ -21,14 +21,15 @@ logger = logging.getLogger('frontend')
 
 origins = {}
 
-pp = pprint.PrettyPrinter(indent=1, depth=3, width=80, sort_dicts=False)
+pp = pprint.PrettyPrinter(indent=1, depth=3, width=80, sort_dicts=False, underscore_numbers=True)
 
 pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
+pattern_underscore_numbers = re.compile(r'([0-9])_([0-9])')
 
 invalid_query = HttpResponse(f'Invalid Query', status=204)
-forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell.', status=403)
+forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell Us.', status=403)
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
@@ -36,29 +37,24 @@ for prefix, item in settings.RADARS.items():
     radar_prefix[radar] = prefix
 
 visitor_stats = {}
+visitor_stats_access = threading.Lock()
+visitor_stats_monitor_thread = None
 
-monitor_thread = None
-
-def binary(_, name):
-    if settings.VERBOSE > 1:
-        show = colorize('binary()', 'green')
-        show += '   ' + color_name_value('name', name)
-        logging.debug(show)
-    if name == 'undefined':
-        return invalid_query
-    elev = 0.5
-    elev_bin = bytearray(struct.pack('f', elev));
-    payload = elev_bin + b'\x00\x01\x02\x00\x00\x00\xfd\xfe\xff'
-    if not isinstance(payload, bytes):
-        payload = bytes(payload);
+def binary(request, name):
+    ip, malicious = screen(request)
+    show = colorize('binary()', 'green')
+    show += '   ' + color_name_value('name', name)
+    show += '   ' + color_name_value('ip', ip)
+    show += '   ' + color_name_value('malicious', malicious)
+    logger.info(show)
+    payload = b'\x01\x02\x03\x04\x05\x06\x07\x08'
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
 def header(_, name):
-    if settings.VERBOSE > 1:
-        show = colorize('header()', 'green')
-        show += '   ' + color_name_value('name', name)
-        logging.debug(show)
+    show = colorize('header()', 'green')
+    show += '   ' + color_name_value('name', name)
+    logger.debug(show)
     data = {'elev': 0.5, 'count': 2000}
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type='application/json')
@@ -66,27 +62,29 @@ def header(_, name):
 
 def screen(request):
     global visitor_stats
-    global monitor_thread
+    global visitor_stats_monitor_thread
+    headers = dict(request.headers)
+    headers.pop('Cookie', None)
     ip = get_client_ip(request)
     if ip not in visitor_stats:
-        headers = dict(request.headers)
-        headers.pop('Cookie', None)
         visitor = {'bandwidth': 0, 'headers': headers, 'count': 1, 'last_visited': datetime.datetime.today()}
         visitor_stats[ip] = visitor
     else:
         visitor = visitor_stats[ip]
-        if visitor['headers']['User-Agent'] != request.headers['User-Agent']:
-            visitor['headers']['User-Agent'] = request.headers['User-Agent']
+        if visitor['headers']['User-Agent'] != headers['User-Agent']:
+            visitor['headers']['User-Agent'] = headers['User-Agent']
         visitor['count'] += 1
         visitor['last_visited'] = datetime.datetime.today().replace(tzinfo=datetime.timezone.utc)
-    if monitor_thread is None:
-        monitor_thread = threading.Thread(target=monitor)
-        monitor_thread.start()
+    if visitor_stats_monitor_thread is None:
+        visitor_stats_monitor_thread = threading.Thread(target=monitor)
+        visitor_stats_monitor_thread.start()
     malicious = False
-    if pattern_bad_agents.match(request.headers['User-Agent']):
-        malicious = True
-    if 'Referer' not in request.headers and 'Connection' not in request.headers:
-        malicious = True
+    # if 'Accept-Encoding' not in headers or 'deflate' not in headers['Accept-Encoding']:
+    #     malicious = True
+    # if pattern_bad_agents.match(request.headers['User-Agent']):
+    #     malicious = True
+    # if 'Referer' not in request.headers and 'Connection' not in request.headers:
+    #     malicious = True
     return ip, malicious
 
 def visitors(_):
@@ -96,6 +94,7 @@ def visitors(_):
     for visitor in Visitor.objects.all():
         stats.append(visitor.dict())
     payload = pp.pformat(stats)
+    payload = pattern_underscore_numbers.sub(r'\1,\2', payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
@@ -112,7 +111,7 @@ def month(request, radar, day):
         show = colorize('archive.month()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
-        logging.debug(show)
+        logger.debug(show)
     ip, malicious = screen(request)
     if malicious:
         return forbidden_request
@@ -156,7 +155,7 @@ def count(request, radar, day):
         show = colorize('archive.count()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
-        logging.debug(show)
+        logger.debug(show)
     ip, malicious = screen(request)
     if malicious:
         return forbidden_request
@@ -200,7 +199,7 @@ def list(request, radar, day_hour_symbol):
     global visitor_stats
     show = colorize('archive.list()', 'green')
     show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
-    logging.debug(show)
+    logger.debug(show)
     ip, malicious = screen(request)
     if malicious:
         return forbidden_request
@@ -214,7 +213,7 @@ def list(request, radar, day_hour_symbol):
     c = day_hour_symbol.split('-')
     day = c[0]
     if len(day) > 8:
-        logging.warning(f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
+        logger.warning(f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
         return invalid_query
     hourly_count = _count(prefix, day)
     if len(c) > 1:
@@ -225,23 +224,23 @@ def list(request, radar, day_hour_symbol):
         symbol = c[2]
     else:
         symbol = 'Z'
+    day_hour_symbol = f'{day}-{hour:02d}00-{symbol}'
     hours_with_data = [i for i, v in enumerate(hourly_count) if v]
     if hourly_count[hour] == 0:
         if len(hours_with_data):
             message = f'Hour {hour} has no files. Auto-select hour {hours_with_data[0]}.'
             hour = hours_with_data[0]
-            day_hour_symbol = f'{day}-{hour:02d}00-{symbol}'
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
                 show += '   ' + colorize('override', 'red')
                 show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
-                logging.debug(show)
+                logger.debug(show)
         else:
             show = colorize('archive.list()', 'green')
             show += '   ' + color_name_value('radar', radar)
             show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
             show += '   ' + color_name_value('hourly_count', '0\'s')
-            logging.warning(show)
+            logger.warning(show)
             message = 'All zeros in hourly_count'
             hour = -1
     else:
@@ -255,18 +254,22 @@ def list(request, radar, day_hour_symbol):
         'message': message
     }
     payload = json.dumps(data)
-    visitor_stats[ip]['bandwidth'] += len(payload)
+    payload = bytes(payload, 'utf-8')
+    payload = zlib.compress(payload)
     response = HttpResponse(payload, content_type='application/json')
+    response['Content-Encoding'] = 'deflate'
+    response['Content-Length'] = len(payload)
+    visitor_stats[ip]['bandwidth'] += len(payload)
     return response
 
 '''
     name - filename
 '''
-@lru_cache(maxsize=512)
+@lru_cache(maxsize=1000)
 def _load(name):
     if settings.SIMULATE:
         elements = name.split('-')
-        logging.info(f'Dummy sweep {name}')
+        logger.info(f'Dummy sweep {name}')
         sweep = {
             'symbol': elements[4] if len(elements) > 4 else "Z",
             'longitude': -97.422413,
@@ -274,17 +277,20 @@ def _load(name):
             'sweepTime': time.mktime(time.strptime(elements[1] + elements[2], r'%Y%m%d%H%M%S')),
             'sweepElevation': float(elements[3][1:]) if "E" in elements[3] else 0.0,
             'sweepAzimuth': float(elements[3][1:]) if "A" in elements[3] else 4.0,
-            'gatewidth': 60.0,
-            'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=float),
-            'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=float),
-            'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]])
+            'gatewidth': 150.0,
+            'waveform': 's01',
+            'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=np.float32),
+            'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=np.float32),
+            'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]], dtype=np.float32),
+            'u8': np.array([[64, 108, 62], [42, 52, 46], [82, 92, 82], [112, 122, 132]], dtype=np.uint8)
         }
     else:
         # Database is indexed by date so we extract the time first for a quicker search
         s = pattern_x_yyyymmdd_hhmmss.search(name)
         if s is None:
+            logger.warning(f'Bad filename {name}')
             return None
-        s = s[0]
+        s = s.group(0)
         if not is_valid_time(s):
             return None
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
@@ -298,40 +304,28 @@ def _load(name):
     gatewidth = 1.0e-3 * sweep['gatewidth']
     if gatewidth < 0.05:
         gatewidth *= 2.0;
-        sweep['values'] = sweep['values'][:, ::2]
-    # Pack the data
-    head = struct.pack('hhhhddddffff', *sweep['values'].shape, 0, 0,
+        sweep['u8'] = sweep['u8'][:, ::2]
+    info = json.dumps({
+        'gatewidth': sweep['gatewidth'],
+        'waveform': sweep['waveform']
+    })
+
+    head = struct.pack('hhhhddddffff', *sweep['u8'].shape, len(info), 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
         sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)
-    symbol = sweep['symbol']
-    if symbol == 'Z':
-        values = sweep['values'] * 2.0 + 64.0
-    elif symbol == 'V':
-        values = sweep['values'] * 2.0 + 128.0
-    elif symbol == 'W':
-        values = sweep['values'] * 20.0
-    elif symbol == 'D':
-        values = sweep['values'] * 10.0 + 100.0
-    elif symbol == 'P':
-        values = sweep['values'] * 128.0 / np.pi + 128.0
-    elif symbol == 'R':
-        values = rho2ind(sweep['values'])
-    else:
-        values = sweep['values']
-    # Map to integers: 0 = transparent; 1+ = finite; np.nan -> 0 during np.float -> np.uint8
-    data = np.array(np.clip(np.round(values), 1.0, 255.0), dtype=np.uint8)
     payload = bytes(head) \
+            + bytes(info, 'utf-8') \
             + bytes(sweep['elevations']) \
             + bytes(sweep['azimuths']) \
-            + bytes(data)
+            + bytes(sweep['u8'])
     return payload
 
 def load(request, name):
     global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.load()', 'green')
-        show += '  ' + color_name_value('name', name)
-        logging.debug(show)
+        show += '   ' + color_name_value('name', name)
+        logger.debug(show)
     ip, malicious = screen(request)
     if malicious:
         return forbidden_request
@@ -356,7 +350,7 @@ def _date(prefix):
         day = day.latest('date')
     else:
         show = colorize('archive.date()', 'green')
-        show += '  ' + colorize('Empty Day table.', 'white')
+        show += '   ' + colorize('Empty Day table.', 'white')
         logger.warning(show)
         return None, None
     ymd = day.date.strftime(r'%Y%m%d')
@@ -368,8 +362,8 @@ def _date(prefix):
     hour = day.last_hour()
     if hour is None:
         show = colorize('archive._date()', 'green')
-        show += '  ' + colorize(' WARNING ', 'warning')
-        show += '  ' + colorize(f'Day {day.date} with', 'white')
+        show += '   ' + colorize(' WARNING ', 'warning')
+        show += '   ' + colorize(f'Day {day.date} with', 'white')
         show += color_name_value(' .hourly_count', 'zeros')
         logger.warning(show)
         return None, None
@@ -379,8 +373,8 @@ def date(request, radar):
     global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.date()', 'green')
-        show += '  ' + color_name_value('radar', radar)
-        logging.debug(show)
+        show += '   ' + color_name_value('radar', radar)
+        logger.debug(show)
     ip, malicious = screen(request)
     if malicious:
         return forbidden_request
@@ -406,17 +400,6 @@ def date(request, radar):
     return response
 
 '''
-    value - Raw RhoHV values
-'''
-def rho2ind(values):
-    m3 = values > 0.93
-    m2 = np.logical_and(values > 0.7, ~m3)
-    index = values * 52.8751
-    index[m2] = values[m2] * 300.0 - 173.0
-    index[m3] = values[m3] * 1000.0 - 824.0
-    return index
-
-'''
     radar - Input radar name, e.g., px1000, raxpol, etc.
 '''
 def location(radar):
@@ -424,7 +407,7 @@ def location(radar):
     if settings.VERBOSE > 1:
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('radar', radar)
-        logging.debug(show)
+        logger.debug(show)
     if radar in radar_prefix:
         prefix = radar_prefix[radar]
     else:
@@ -474,8 +457,8 @@ def _file(prefix, scan='E4.0', symbol='Z'):
 def catchup(request, radar, scan='E4.0', symbol='Z'):
     if settings.VERBOSE > 1:
         show = colorize('archive.catchup()', 'green')
-        show += '  ' + color_name_value('radar', radar)
-        logging.debug(show)
+        show += '   ' + color_name_value('radar', radar)
+        logger.debug(show)
     ip, bad = screen(request)
     if bad:
         return forbidden_request
@@ -500,15 +483,23 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         data['file'] = _file(prefix, scan, symbol)
         data['list'] = _list(prefix, f'{dateString}-{symbol}')
     payload = json.dumps(data)
-    visitor_stats[ip]['bandwidth'] += len(payload)
+    payload = bytes(payload, 'utf-8')
+    payload = zlib.compress(payload)
     response = HttpResponse(payload, content_type='application/json')
+    response['Content-Encoding'] = 'deflate'
+    response['Content-Length'] = len(payload)
+    visitor_stats[ip]['bandwidth'] += len(payload)
     return response
 
 def monitor():
     show = colorize('archives.monitor()', 'green')
-    print(show)
+    show += '   ' + color_name_value('Visitor.objects.count()', Visitor.objects.count())
+    logger.info(show)
     while True:
+        visitor_stats_access.acquire()
         for ip, stats in visitor_stats.items():
+            if stats['count'] == 0 and stats['bandwidth'] == 0:
+                continue
             user_agent = stats['headers']['User-Agent'] if 'User-Agent' in stats['headers'] else 'Unknown'
             match = Visitor.objects.filter(ip=ip)
             if match.exists():
@@ -529,4 +520,5 @@ def monitor():
             stats['bandwidth'] = 0
             stats['count'] = 0
             visitor.save()
-        time.sleep(10)
+        visitor_stats_access.release()
+        time.sleep(3)

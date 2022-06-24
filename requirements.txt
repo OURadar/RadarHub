@@ -13,5 +13,9 @@ daphne
 tqdm
 numpy
 netCDF4
+<<<<<<< HEAD
 django-auth-ldap
 
+=======
+maxminddb
+>>>>>>> master

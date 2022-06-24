@@ -50,13 +50,13 @@
       media="screen and (max-device-width: 550px)"
       href="{% static 'css/mobile.css' %}"
     />
-    {{ params|json_script:"params" }}
     <title>RadarHub</title>
   </head>
   <body>
     <div class="backgrad">
       <div class="extraLarge">RadarHub</div>
-      <h3>Coming soon ...</h3>
-    </div>
+      <div class="spacer25"></div>
+      <a class="radarButton" href="/archive/px1000/">PX-1000</a>
+      <a class="radarButton" href="/archive/raxpol/">RaXPol</a>
   </body>
 </html>
