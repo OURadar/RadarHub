@@ -233,7 +233,7 @@ class Day(models.Model):
         elif long:
             return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
         else:
-            counts = ' '.join([f'{n:>3}' for n in self.hourly_count.split(',')])
+            counts = ''.join([f'{n:>4}' for n in self.hourly_count.split(',')])
             show = f'{self.name}{date} {counts} {self.__vbar__()}'
         return show
 

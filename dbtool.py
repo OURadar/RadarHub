@@ -781,7 +781,7 @@ def compute_bgor(day):
     r = 1000 * r / o if r else 0
     o = 1000 * o / g if o else 0
     g = 1000 * g / b if g else 0
-    b = 1000 * b / total if b else 0
+    b = 10000 * b / total if b else 0
     # print(f'total = {total}  b = {b}  g = {g}  o = {o}  r = {r}')
     day.blue = int(b)
     day.green = int(g)
