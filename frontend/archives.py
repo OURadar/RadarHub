@@ -239,6 +239,7 @@ def list(request, radar, day_hour_symbol):
         if len(hours_with_data):
             message = f'Hour {hour} has no files. Auto-select hour {hours_with_data[0]}.'
             hour = hours_with_data[0]
+            day_hour_symbol = f'{day}-{hour:02d}00-{symbol}'
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
                 show += '   ' + colorize('override', 'red')
