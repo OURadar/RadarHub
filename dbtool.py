@@ -871,8 +871,8 @@ def show_visitor_log(markdown=False, show_city=False):
     else:
         def get_location(_):
             return '-'
-    print('| IP Address      |    Payload (B) |  Bandwidth (B) |     Count |      OS / Browser | Last Visited     | Location                                   |')
-    print('| --------------- |--------------- |--------------- | --------- | ----------------- | ---------------- | ------------------------------------------ |')
+    print('| IP Address      |    Payload (B) |  Bandwidth (B) |     Count |      OS / Browser | Last Visited     | Location                       |')
+    print('| --------------- |--------------- |--------------- | --------- | ----------------- | ---------------- | ------------------------------ |')
     def show_visitor(visitor, markdown):
         agent = f'{visitor.machine()} / {visitor.browser()}'
         if agent == 'Unknown / Unknown':
@@ -882,7 +882,7 @@ def show_visitor_log(markdown=False, show_city=False):
         if markdown:
             print(f'| `{visitor.ip}` | `{visitor.payload:,}` | `{visitor.bandwidth:,}` | `{visitor.count:,}` | {agent} | {time_string} | {origin} |')
         else:
-            print(f'| {visitor.ip:15} | {visitor.payload:14,} | {visitor.bandwidth:14,} | {visitor.count:9,} | {agent:>17} | {time_string} | {origin:42} |')
+            print(f'| {visitor.ip:15} | {visitor.payload:14,} | {visitor.bandwidth:14,} | {visitor.count:9,} | {agent:>17} | {time_string} | {origin:30} |')
     for visitor in Visitor.objects.exclude(ip__startswith='10.').order_by('-last_visited'):
         show_visitor(visitor, markdown=markdown)
     for visitor in Visitor.objects.filter(ip__startswith='10.').order_by('-last_visited'):

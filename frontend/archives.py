@@ -66,7 +66,7 @@ def screen(request):
     headers.pop('Cookie', None)
     ip = get_client_ip(request)
     if ip not in visitor_stats:
-        visitor = {'bandwidth': 0, 'headers': headers, 'count': 1, 'last_visited': datetime.datetime.today()}
+        visitor = {'payload': 0, 'bandwidth': 0, 'headers': headers, 'count': 1, 'last_visited': datetime.datetime.today()}
         visitor_stats[ip] = visitor
     else:
         visitor = visitor_stats[ip]
@@ -87,11 +87,12 @@ def screen(request):
     return ip, malicious
 
 def http_response(ip, payload):
+    global visitor_stats
     visitor_stats[ip]['payload'] += len(payload)
     net_payload = zlib.compress(payload)
     net_size = len(net_payload)
     visitor_stats[ip]['bandwidth'] += net_size
-    response = HttpResponse(payload, content_type='application/octet-stream')
+    response = HttpResponse(net_payload, content_type='application/octet-stream')
     response['Content-Encoding'] = 'deflate'
     response['Content-Length'] = net_size
     return response
@@ -263,12 +264,7 @@ def list(request, radar, day_hour_symbol):
     }
     payload = json.dumps(data)
     payload = bytes(payload, 'utf-8')
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    payload = zlib.compress(payload)
-    response = HttpResponse(payload, content_type='application/json')
-    response['Content-Encoding'] = 'deflate'
-    response['Content-Length'] = len(payload)
-    return response
+    return http_response(ip, payload)
 
 '''
     name - filename
@@ -341,13 +337,6 @@ def load(request, name):
     if payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
     return http_response(ip, payload)
-    # visitor_stats[ip]['payload'] += len(payload)
-    # payload = zlib.compress(payload)
-    # response = HttpResponse(payload, content_type='application/octet-stream')
-    # response['Content-Encoding'] = 'deflate'
-    # response['Content-Length'] = len(payload)
-    # visitor_stats[ip]['bandwidth'] += len(payload)
-    # return response
 
 '''
     prefix - prefix of a radar, e.g., PX- for PX-1000, RAXPOL- for RaXPol
@@ -495,13 +484,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         data['list'] = _list(prefix, f'{dateString}-{symbol}')
     payload = json.dumps(data)
     payload = bytes(payload, 'utf-8')
-    visitor_stats[ip]['payload'] += len(payload)
-    payload = zlib.compress(payload)
-    response = HttpResponse(payload, content_type='application/json')
-    response['Content-Encoding'] = 'deflate'
-    response['Content-Length'] = len(payload)
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    return response
+    return http_response(ip, payload)
 
 def monitor():
     show = colorize('archives.monitor()', 'green')
