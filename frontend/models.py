@@ -231,12 +231,12 @@ class Day(models.Model):
         self.fix_date()
         date = self.date.strftime(r'%Y%m%d') if self.date else '00000000'
         if short:
-            return self.name + self.date.strftime(r'%Y%m%d')
+            return self.name + date
         elif long:
             return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
         else:
             counts = ''.join([f'{n:>4}' for n in self.hourly_count.split(',')])
-            show = f'{self.name}{date} {self.__vbar__()} {counts}'
+            show = f'{date} {self.__vbar__()} {counts}'
         return show
 
     def __vbar__(self):

@@ -594,6 +594,9 @@ def check_day(source):
         else:
             dd = []
         if len(dd):
+            if len(prefixes) > 1:
+                show = color_name_value('prefix', name)
+                logger.info(show)
             for d in dd:
                 ddd.append(d)
                 logger.info(f'R {d.__repr__()}')
