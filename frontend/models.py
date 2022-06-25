@@ -310,7 +310,8 @@ Visitor
 
  - ip = IP address of the visitor
  - count = total number of screening
- - bandwidth = estimated data usage
+ - payload = raw payload size
+ - bandwidth = estimated network bandwidth usage
  - user_agent = the last inspected OS / browser
  - last_visitor = last visited date time
 
@@ -322,6 +323,7 @@ Visitor
 class Visitor(models.Model):
     ip = models.GenericIPAddressField()
     count = models.PositiveIntegerField(default=0)
+    payload = models.PositiveIntegerField(default=0)
     bandwidth = models.PositiveIntegerField(default=0)
     user_agent = models.CharField(max_length=256, default='')
     last_visited = models.DateTimeField()

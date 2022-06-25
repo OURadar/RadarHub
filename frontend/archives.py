@@ -86,6 +86,16 @@ def screen(request):
     #     malicious = True
     return ip, malicious
 
+def http_response(ip, payload):
+    visitor_stats[ip]['payload'] += len(payload)
+    net_payload = zlib.compress(payload)
+    net_size = len(net_payload)
+    visitor_stats[ip]['bandwidth'] += net_size
+    response = HttpResponse(payload, content_type='application/octet-stream')
+    response['Content-Encoding'] = 'deflate'
+    response['Content-Length'] = net_size
+    return response
+
 def visitors(_):
     # global visitor_stats
     # payload = pp.pformat(visitor_stats)
@@ -253,11 +263,11 @@ def list(request, radar, day_hour_symbol):
     }
     payload = json.dumps(data)
     payload = bytes(payload, 'utf-8')
+    visitor_stats[ip]['bandwidth'] += len(payload)
     payload = zlib.compress(payload)
     response = HttpResponse(payload, content_type='application/json')
     response['Content-Encoding'] = 'deflate'
     response['Content-Length'] = len(payload)
-    visitor_stats[ip]['bandwidth'] += len(payload)
     return response
 
 '''
@@ -330,12 +340,14 @@ def load(request, name):
     payload = _load(name + '.nc')
     if payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
-    payload = zlib.compress(payload)
-    response = HttpResponse(payload, content_type='application/octet-stream')
-    response['Content-Encoding'] = 'deflate'
-    response['Content-Length'] = len(payload)
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    return response
+    return http_response(ip, payload)
+    # visitor_stats[ip]['payload'] += len(payload)
+    # payload = zlib.compress(payload)
+    # response = HttpResponse(payload, content_type='application/octet-stream')
+    # response['Content-Encoding'] = 'deflate'
+    # response['Content-Length'] = len(payload)
+    # visitor_stats[ip]['bandwidth'] += len(payload)
+    # return response
 
 '''
     prefix - prefix of a radar, e.g., PX- for PX-1000, RAXPOL- for RaXPol
@@ -393,6 +405,7 @@ def date(request, radar):
             'hour': hour,
         }
     payload = json.dumps(data)
+    visitor_stats[ip]['payload'] += len(payload)
     visitor_stats[ip]['bandwidth'] += len(payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
@@ -482,6 +495,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         data['list'] = _list(prefix, f'{dateString}-{symbol}')
     payload = json.dumps(data)
     payload = bytes(payload, 'utf-8')
+    visitor_stats[ip]['payload'] += len(payload)
     payload = zlib.compress(payload)
     response = HttpResponse(payload, content_type='application/json')
     response['Content-Encoding'] = 'deflate'
