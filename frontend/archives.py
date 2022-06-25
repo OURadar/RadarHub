@@ -504,6 +504,7 @@ def monitor():
                 visitor = match.first()
                 visitor.user_agent = user_agent
                 visitor.count += stats['count']
+                visitor.payload += stats['payload']
                 visitor.bandwidth += stats['bandwidth']
                 visitor.last_visited = stats['last_visited']
             else:
@@ -511,9 +512,11 @@ def monitor():
                     ip=ip,
                     user_agent=user_agent,
                     count=stats['count'],
+                    payload=stats['payload'],
                     bandwidth=stats['bandwidth'],
                     last_visited=stats['last_visited'])
             stats['bandwidth'] = 0
+            stats['payload'] = 0
             stats['count'] = 0
             visitor.save()
         visitor_stats_access.release()
