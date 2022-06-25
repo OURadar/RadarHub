@@ -38,6 +38,14 @@ __prog__ = os.path.basename(sys.argv[0])
 
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__, home=settings.LOG_DIR, dailyfile=settings.DEBUG)
+pattern_yyyy = re.compile(r'20[0-9][0-9]')
+pattern_yyyymmdd = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])')
+pattern_x_yyyymmdd = re.compile(r'(?<=[-/])20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])')
+
+radar_prefix = {}
+for prefix, item in settings.RADARS.items():
+    radar = item['folder']
+    radar_prefix[radar] = prefix
 
 '''
     (Deprecated)
@@ -170,16 +178,22 @@ def params_from_source(source, dig=False):
                 print(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]} (*)')
                 day_string = c[1]
             source_datetime = datetime.datetime.strptime(time_string, r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+        else:
+            print(f'folder = {folder}')
+            elements = folder.split('/')
+            name, year = elements[-2], elements[-1]
+            if pattern_yyyy.match(year) and name in radar_prefix:
+                prefix = radar_prefix[name]
     elif '/' in source:
         logger.error(f'Error. Folder {source} does not exist')
-        day_string = re.search(r'(?<=[-/])20[0-9][0-9][012][0-9][0-3][0-9]', source)
+        day_string = pattern_x_yyyymmdd.search(source)
         if day_string:
             day_string = day_string.group(0)
     elif '-' in source:
         prefix, day_string = source.split('-')
         prefix += '-'
     else:
-        day_string = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', source)
+        day_string = pattern_yyyymmdd.search(source)
         if day_string:
             day_string = day_string.group(0)
         else:
@@ -264,9 +278,9 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
 
     use_mp = 'linux' in sys.platform
     basename = os.path.basename(folder)
-    s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', basename)
+    s = pattern_yyyymmdd.search(basename)
     if s:
-        s = s[0]
+        s = s.group(0)
     else:
         logger.info(f'Error searching YYYYMMDD in folder name {basename}')
         return
@@ -729,8 +743,11 @@ def compute_bgor(day):
     if files.count() == 0:
         return
     scans = [file.name.split('-')[3] for file in files]
-    scans = np.unique(scans)
+    scans = list(np.unique(scans))
+    if 'E0.0' in scans:
+        scans.remove('E0.0')
     scan = 'E4.0' if 'E4.0' in scans else scans[0]
+    logger.debug(f'scans = {scans}  selected scan = {scan}')
 
     b = 0
     g = 0
@@ -933,6 +950,7 @@ def dbtool_main():
         logger.showLogOnScreen()
         if args.verbose > 1:
             logger.setLevel(dailylog.logging.DEBUG)
+            logger.streamHandler.setLevel(dailylog.logging.DEBUG)
 
     if '*' in args.source:
         logger.info('Expanding asterisk ...')
