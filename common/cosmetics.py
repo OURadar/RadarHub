@@ -1,6 +1,6 @@
 #
 #   RadarHub
-# 
+#
 #   Created by Boonleng Cheong
 #
 
@@ -15,7 +15,9 @@ colors = {
     'blue': 33,
     'pink': 170,
     'purple': 134,
-    'white': 15
+    'white': 15,
+    'gray': 239,
+    'black': 232
 }
 
 highlights = {

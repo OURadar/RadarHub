@@ -6,23 +6,25 @@
 #   Created by Boonleng Cheong
 #
 
+import datetime
+import logging
 import os
 import re
-import logging
 import tarfile
-import datetime
+
 import numpy as np
-from netCDF4 import Dataset
-from django.db import models
-from django.core.validators import int_list_validator
-from django.conf import settings
 from common import colorize
+from django.conf import settings
+from django.core.validators import int_list_validator
+from django.db import models
+from netCDF4 import Dataset
 
 logger = logging.getLogger('frontend')
 pattern_firefox = re.compile(r'(?<=.)Firefox/[0-9.]{1,10}')
 pattern_chrome = re.compile(r'(?<=.)Chrome/[0-9.]{1,10}')
 pattern_safari = re.compile(r'(?<=.)Safari/[0-9.]{1,10}')
 pattern_opera = re.compile(r'(?<=.)Opera/[0-9.]{1,10}')
+dot_colors = ['black', 'gray', 'blue', 'green', 'orange']
 
 # Some helper functions
 
@@ -234,16 +236,16 @@ class Day(models.Model):
             return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
         else:
             counts = ''.join([f'{n:>4}' for n in self.hourly_count.split(',')])
-            show = f'{self.name}{date} {counts} {self.__vbar__()}'
+            show = f'{self.name}{date} {self.__vbar__()} {counts}'
         return show
 
     def __vbar__(self):
-        b = '\033[48;5;238m'
+        b = colorize('●', dot_colors[self.weather_condition()])
+        b += ' \033[48;5;238m'
         for s, c in [(self.blue, 'blue'), (self.green, 'green'), (self.orange, 'orange'), (self.red, 'red')]:
             i = min(7, int(s / 100))
             b += colorize(vbar[i], c, end='')
         b += '\033[m'
-        b += ' ' + str(self.weather_condition())
         return b
 
     def show(self, long=False, short=False):
