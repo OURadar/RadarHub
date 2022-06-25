@@ -8,7 +8,6 @@
 
 import os
 import re
-import time
 import logging
 import tarfile
 import datetime
@@ -28,7 +27,6 @@ pattern_opera = re.compile(r'(?<=.)Opera/[0-9.]{1,10}')
 # Some helper functions
 
 np.set_printoptions(precision=2, threshold=5, linewidth=120)
-match_day = re.compile(r'([12][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])').match
 vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585', '\U00002586', '\U00002587']
 super_numbers = [' ', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁺', '⁻', '⁼', '⁽', '⁾']
 empty_sweep = {
@@ -45,9 +43,6 @@ empty_sweep = {
     'values': np.empty((0, 0), dtype=np.float32),
     'u8': np.empty((0, 0), dtype=np.uint8)
 }
-
-def valid_day(day):
-    return match_day(day) is not None
 
 '''
     value - Raw RhoHV values
@@ -238,9 +233,6 @@ class Day(models.Model):
         elif long:
             return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
         else:
-            # hh = [int(x) for x in self.hourly_count.split(',')]
-            # dd = [super_numbers[(x // 100)] + f'{(x % 100):02d}' for x in hh]
-            # counts = ''.join(dd)
             counts = ' '.join([f'{n:>3}' for n in self.hourly_count.split(',')])
             show = f'{self.name}{date} {counts} {self.__vbar__()}'
         return show
@@ -261,7 +253,11 @@ class Day(models.Model):
         if self.date is None:
             return
         if not isinstance(self.date, datetime.date):
-            self.date = datetime.date.fromisoformat(self.date) if valid_day(self.date) else None
+            try:
+                self.date = datetime.date.fromisoformat(self.date)
+            except:
+                logger.warning(f'fix_date() Unable to fix {self.date}')
+                self.date = None
 
     def first_hour(self):
         hours = [k for k, e in enumerate(self.hourly_count.split(',')) if e != '0']
@@ -305,7 +301,7 @@ class Day(models.Model):
             else:
                 cond = 3
         if cond == 0:
-            print(f'Day.weather_condition() {self.date} b:{self.blue} g:{self.green} o:{self.orange} r:{self.red} -> {cond} -> 1')
+            logger.info(f'Day.weather_condition() {self.date} b:{self.blue} g:{self.green} o:{self.orange} r:{self.red} -> {cond} -> 1')
             cond = 1
         return cond
 

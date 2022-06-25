@@ -540,7 +540,7 @@ function catchup(radar) {
           if (grid.index >= 0) {
             let file = grid.fileList[grid.index];
             grid.scan = file.split("-")[3];
-            console.log(`Setting grid.scan to ${grid.scan}`);
+            console.debug(`Setting grid.scan to ${grid.scan}`);
           }
           self.postMessage({
             type: "list",
