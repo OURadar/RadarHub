@@ -291,7 +291,7 @@ class Day(models.Model):
 
     def weather_condition(self):
         cond = 0
-        if self.blue < 10:
+        if self.blue < 100:
             cond = 1
         elif self.green < 300 and self.orange < 200:
             cond = 2
