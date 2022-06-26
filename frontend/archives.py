@@ -86,14 +86,15 @@ def screen(request):
     #     malicious = True
     return ip, malicious
 
-def http_response(ip, payload):
+def http_response(ip, payload, cache=False):
     global visitor_stats
     visitor_stats[ip]['payload'] += len(payload)
     net_payload = zlib.compress(payload)
     net_size = len(net_payload)
     visitor_stats[ip]['bandwidth'] += net_size
     response = HttpResponse(net_payload, content_type='application/octet-stream')
-    response['Cache-Control'] = 'max-age=31536000'
+    if cache:
+        response['Cache-Control'] = 'max-age=31536000'
     response['Content-Encoding'] = 'deflate'
     response['Content-Length'] = net_size
     return response
@@ -339,7 +340,7 @@ def load(request, name):
     payload = _load(name + '.nc')
     if payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
-    return http_response(ip, payload)
+    return http_response(ip, payload, cache=True)
 
 '''
     prefix - prefix of a radar, e.g., PX- for PX-1000, RAXPOL- for RaXPol

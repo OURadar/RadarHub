@@ -56,7 +56,7 @@ def compress(dir, args):
         friends = [file for file in files if prefix in file]
         outfile = os.path.join(args.dest, f'{prefix}.tar.xz')
         infiles.append(friends)
-        outfiles.append(outfile) 
+        outfiles.append(outfile)
 
     parameters = zip(outfiles, infiles)
     with multiprocessing.Pool(args.count) as pool:
@@ -327,6 +327,7 @@ def main():
         Examples:
             tarsplit.py /mnt/data/PX1000/2013/20130520/20130520.tgz
             tarsplit.py -v /mnt/data/PX1000/2013/20130520/20130520.tgz
+            tarsplit.py -t /mnt/data/RaXPol/2018/20180608
         '''))
     parser.add_argument('sources', metavar='sources', type=str, nargs='+',
         help='sources to process')
@@ -335,7 +336,7 @@ def main():
     parser.add_argument('-d', dest='dest', default=None,
         help='destination of the split files')
     parser.add_argument('-e', dest='existing', action='store_true', default=False,
-        help='use existing extracted folder')    
+        help='use existing extracted folder')
     parser.add_argument('-n', dest='run', action='store_false', default=True,
         help='no true execution, just a dry run')
     parser.add_argument('-s', dest='system', action='store_true', default=False,
@@ -372,14 +373,14 @@ def main():
             src_folder = os.path.join(day, '_original_tgz')
             dst_folder = os.path.join(day, '_original')
             if os.path.exists(src_folder) and os.path.exists(dst_folder):
-                print('Processed before')
+                print(f'Folder {day} processed before')
                 continue
             if os.path.exists(dst_folder) and not os.path.exists(src_folder):
                 os.rename(dst_folder, src_folder)
                 os.makedirs(dst_folder)
             archives = glob.glob(os.path.join(src_folder, '*.tgz'))
             if len(archives) == 0:
-                print('Nothing to transcode')
+                print(f'Folder {day} has nothing to transcode')
                 continue
             dest = os.path.join(day, '_original')
             if not os.path.exists(dest):

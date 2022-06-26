@@ -482,7 +482,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         logger.info(f'Bulk create {t:.2f} sec ({a:,.0f} files / sec)')
 
     # Make a Day entry
-    build_day(folder)
+    build_day(folder, bgor=True)
 
     e = time.time() - e
     a = len(archives) / e
