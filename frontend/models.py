@@ -349,7 +349,7 @@ class Visitor(models.Model):
     def last_visited_time_string(self):
         return self.last_visited.strftime(r'%Y/%m/%d %H:%M')
 
-    def retrieve(self, reload=False):
+    def user_agent_string(self, reload=False):
         def _replace_os_string(key):
             oses = {'OS X': 'macOS', 'iPhone OS': 'iOS'}
             return oses[key] if key in oses else key
@@ -371,7 +371,7 @@ class Visitor(models.Model):
                     user_agent_strings[self.user_agent] = agent
                     with open(settings.USER_AGENT_TABLE, 'w') as fid:
                         json.dump(user_agent_strings, fid)
-                    return self.retrieve()
+                    return self.user_agent_string()
             except:
                 pass
         return 'Unknown / Unknown'

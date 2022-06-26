@@ -878,8 +878,7 @@ def show_visitor_log(markdown=False, show_city=False):
     print('| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |')
     print('| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |')
     def show_visitor(visitor, markdown):
-        # agent = f'{visitor.machine()} / {visitor.browser()}'
-        agent = visitor.retrieve()
+        agent = visitor.user_agent_string()
         if agent == 'Unknown / Unknown':
             agent = visitor.user_agent.split()[0]
         date_string = visitor.last_visited_date_string()
