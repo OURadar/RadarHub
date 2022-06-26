@@ -20,10 +20,11 @@ from django.db import models
 from netCDF4 import Dataset
 
 logger = logging.getLogger('frontend')
-pattern_firefox = re.compile(r'(?<=.)Firefox/[0-9.]{1,10}')
-pattern_chrome = re.compile(r'(?<=.)Chrome/[0-9.]{1,10}')
-pattern_safari = re.compile(r'(?<=.)Safari/[0-9.]{1,10}')
-pattern_opera = re.compile(r'(?<=.)Opera/[0-9.]{1,10}')
+pattern_firefox = re.compile(r'(?<=.)Firefox/[0-9.]{1,15}')
+pattern_chrome = re.compile(r'(?<=.)Chrome/[0-9.]{1,15}')
+pattern_safari = re.compile(r'(?<=.)Safari/[0-9.]{1,15}')
+pattern_opera = re.compile(r'(?<=.)Opera/[0-9.]{1,15}')
+pattern_edge = re.compile(r'(?<=.)Edge/[0-9.]{1,15}')
 dot_colors = ['black', 'gray', 'blue', 'green', 'orange']
 
 # Some helper functions
@@ -235,7 +236,12 @@ class Day(models.Model):
         elif format == 'long':
             return f'{self.name}{date} B:{self.blue} G:{self.green} O:{self.orange} R:{self.red} {self.count} {self.hourly_count}'
         else:
-            counts = ''.join([f'{n:>4}' for n in self.hourly_count.split(',')])
+            def _int2str(num):
+                q = num // 1000
+                r = num % 1000
+                s = super_numbers[q] + str(r)
+                return f'{s:>4}'
+            counts = ''.join([_int2str(int(n)) for n in self.hourly_count.split(',')])
             show = f'{date} {self.__vbar__()} {counts}'
         return show
 
@@ -359,14 +365,16 @@ class Visitor(models.Model):
         return 'Unknown'
 
     def browser(self):
+        if pattern_edge.findall(self.user_agent):
+            return 'Edge'
+        if pattern_opera.findall(self.user_agent):
+            return 'Opera'
         if pattern_firefox.findall(self.user_agent):
             return 'Firefox'
         if pattern_chrome.findall(self.user_agent):
             return 'Chrome'
         if pattern_safari.findall(self.user_agent):
             return 'Safari'
-        if pattern_opera.findall(self.user_agent):
-            return 'Opera'
         return 'Unknown'
 
     def dict(self, num2str=True):
