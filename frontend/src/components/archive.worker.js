@@ -333,7 +333,7 @@ function list(radar, day, hour, symbol) {
             }
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
-          console.log(grid.fileListGrouped);
+          //console.log(grid.fileListGrouped);
           if (grid.scan in grid.fileListGrouped) {
             grid.index = grid.fileListGrouped[grid.scan].slice(-1)[0].index;
           } else {
@@ -343,6 +343,9 @@ function list(radar, day, hour, symbol) {
             type: "list",
             payload: grid,
           });
+          if (grid.hour < 0) {
+            self.postMessage({ type: "message", payload: "No Data" });
+          }
         });
       else
         response.text().then((response) => {

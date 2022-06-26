@@ -246,12 +246,13 @@ def list(request, radar, day_hour_symbol):
                 show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
                 logger.debug(show)
         else:
-            show = colorize('archive.list()', 'green')
-            show += '   ' + color_name_value('radar', radar)
-            show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
-            show += '   ' + color_name_value('hourly_count', '0\'s')
-            logger.warning(show)
-            message = 'All zeros in hourly_count'
+            if settings.VERBOSE > 1:
+                show = colorize('archive.list()', 'green')
+                show += '   ' + color_name_value('radar', radar)
+                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
+                show += '   ' + color_name_value('hourly_count', '0\'s')
+                logger.debug(show)
+            message = 'empty'
             hour = -1
     else:
         message = 'okay'

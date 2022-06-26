@@ -102,6 +102,10 @@ class Archive {
         this.state.loadCount = 0;
         this.loadByIndex(this.grid.index);
       } else if (this.grid.index == -1) {
+        if (this.grid.latestFile == "") {
+          this.state.fileListUpdating = false;
+          return;
+        }
         let fileDayString = this.grid.latestFile.split("-")[1];
         let gridDayString = this.grid.dateTimeString.split("-")[0];
         console.log(
