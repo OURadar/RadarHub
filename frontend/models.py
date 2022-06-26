@@ -312,8 +312,8 @@ Visitor
 
  - ip = IP address of the visitor
  - count = total number of screening
- - payload = raw payload size
- - bandwidth = estimated network bandwidth usage
+ - payload = raw payload size (B)
+ - bandwidth = network bandwidth usage (B)
  - user_agent = the last inspected OS / browser
  - last_visitor = last visited date time
 
@@ -373,6 +373,7 @@ class Visitor(models.Model):
         return {
             'ip': self.ip,
             'count': f'{self.count:,d}' if num2str else self.count,
+            'payload': f'{self.payload:,d}' if num2str else self.payload,
             'bandwidth': f'{self.bandwidth:,d}' if num2str else self.bandwidth,
             'user_agent': self.user_agent,
             'last_visited': self.last_visited
