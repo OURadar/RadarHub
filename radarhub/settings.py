@@ -269,4 +269,6 @@ LOGGING = {
 
 IP_DATABASE = BASE_DIR / 'dbip-city-lite-2022-06.mmdb'
 
+USER_AGENT_TABLE = BASE_DIR / 'user-agent-strings.json'
+
 CSRF_TRUSTED_ORIGINS = ['https://radarhub.arrc.ou.edu']

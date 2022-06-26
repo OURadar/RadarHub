@@ -6,13 +6,15 @@
 #   Created by Boonleng Cheong
 #
 
-import datetime
-import logging
 import os
-import re
+import json
+import logging
 import tarfile
+import datetime
+import urllib.request
 
 import numpy as np
+
 from common import colorize
 from django.conf import settings
 from django.core.validators import int_list_validator
@@ -20,12 +22,10 @@ from django.db import models
 from netCDF4 import Dataset
 
 logger = logging.getLogger('frontend')
-pattern_firefox = re.compile(r'(?<=.)Firefox/[0-9.]{1,15}')
-pattern_chrome = re.compile(r'(?<=.)Chrome/[0-9.]{1,15}')
-pattern_safari = re.compile(r'(?<=.)Safari/[0-9.]{1,15}')
-pattern_opera = re.compile(r'(?<=.)Opera/[0-9.]{1,15}')
-pattern_edge = re.compile(r'(?<=.)Edge/[0-9.]{1,15}')
 dot_colors = ['black', 'gray', 'blue', 'green', 'orange']
+user_agent_strings = {}
+with open(settings.USER_AGENT_TABLE, 'r') as fid:
+    user_agent_strings = json.load(fid)
 
 # Some helper functions
 
@@ -343,39 +343,38 @@ class Visitor(models.Model):
         time_string = self.last_visited_time_string()
         return f'{self.ip} : {self.count} : {self.bandwidth} : {time_string}'
 
+    def last_visited_date_string(self):
+        return self.last_visited.strftime(r'%Y/%m/%d')
+
     def last_visited_time_string(self):
         return self.last_visited.strftime(r'%Y/%m/%d %H:%M')
 
-    def machine(self):
-        # Could just use this: http://www.useragentstring.com/pages/api.php
-        if 'Macintosh' in self.user_agent:
-            return 'macOS'
-        if 'Windows' in self.user_agent:
-            return 'Windows'
-        if 'Linux' in self.user_agent:
-            return 'Linux'
-        if 'iPhone' in self.user_agent:
-            return 'iOS'
-        if 'iPad' in self.user_agent:
-            return 'iPadOS'
-        if 'Chrome OS' in self.user_agent:
-            return 'Chrome OS'
-        if 'Search Bot' in self.user_agent:
-            return 'Search Bot'
-        return 'Unknown'
-
-    def browser(self):
-        if pattern_edge.findall(self.user_agent):
-            return 'Edge'
-        if pattern_opera.findall(self.user_agent):
-            return 'Opera'
-        if pattern_firefox.findall(self.user_agent):
-            return 'Firefox'
-        if pattern_chrome.findall(self.user_agent):
-            return 'Chrome'
-        if pattern_safari.findall(self.user_agent):
-            return 'Safari'
-        return 'Unknown'
+    def retrieve(self, reload=False):
+        def _replace_os_string(key):
+            oses = {'OS X': 'macOS', 'iPhone OS': 'iOS'}
+            return oses[key] if key in oses else key
+        # API reference: http://www.useragentstring.com/pages/api.php
+        global user_agent_strings
+        if self.user_agent in user_agent_strings and not reload:
+            agent = user_agent_strings[self.user_agent]
+            machine = _replace_os_string(agent['os_name'])
+            browser = agent['agent_name']
+            return f'{machine} / {browser}'
+        else:
+            s = self.user_agent.replace(' ', r'%20')
+            try:
+                url = f'http://www.useragentstring.com/?uas={s}&getJSON=agent_type-agent_name-agent_version-os_name'
+                logger.info(f'New browser {self.user_agent} ...')
+                response = urllib.request.urlopen(url)
+                if response.status == 200:
+                    agent = json.loads(response.readline())
+                    user_agent_strings[self.user_agent] = agent
+                    with open(settings.USER_AGENT_TABLE, 'w') as fid:
+                        json.dump(user_agent_strings, fid)
+                    return self.retrieve()
+            except:
+                pass
+        return 'Unknown / Unknown'
 
     def dict(self, num2str=True):
         return {

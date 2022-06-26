@@ -875,18 +875,19 @@ def show_visitor_log(markdown=False, show_city=False):
     else:
         def get_location(_):
             return '-'
-    print('| IP Address      |    Payload (B) |  Bandwidth (B) |     Count |      OS / Browser | Last Visited     | Location                       |')
-    print('| --------------- |--------------- |--------------- | --------- | ----------------- | ---------------- | ------------------------------ |')
+    print('| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |')
+    print('| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |')
     def show_visitor(visitor, markdown):
-        agent = f'{visitor.machine()} / {visitor.browser()}'
+        # agent = f'{visitor.machine()} / {visitor.browser()}'
+        agent = visitor.retrieve()
         if agent == 'Unknown / Unknown':
             agent = visitor.user_agent.split()[0]
-        time_string = visitor.last_visited_time_string()
+        date_string = visitor.last_visited_date_string()
         origin = get_location(visitor.ip, show_city=show_city)
         if markdown:
-            print(f'| `{visitor.ip}` | `{visitor.payload:,}` | `{visitor.bandwidth:,}` | `{visitor.count:,}` | {agent} | {time_string} | {origin} |')
+            print(f'| `{visitor.ip}` | `{visitor.payload:,}` | `{visitor.bandwidth:,}` | `{visitor.count:,}` | {agent} | {date_string} | {origin} |')
         else:
-            print(f'| {visitor.ip:15} | {visitor.payload:14,} | {visitor.bandwidth:14,} | {visitor.count:9,} | {agent:>17} | {time_string} | {origin:30} |')
+            print(f'| {visitor.ip:15} | {visitor.payload:16,} | {visitor.bandwidth:16,} | {visitor.count:9,} | {agent:>20} | {date_string} | {origin:30} |')
     for visitor in Visitor.objects.exclude(ip__startswith='10.').order_by('-last_visited'):
         show_visitor(visitor, markdown=markdown)
     for visitor in Visitor.objects.filter(ip__startswith='10.').order_by('-last_visited'):
