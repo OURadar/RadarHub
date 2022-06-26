@@ -571,7 +571,7 @@ def build_day(source, bgor=False, verbose=0):
 
     source - common source pattern (see params_from_source())
 '''
-def check_day(source):
+def check_day(source, format=''):
     show = colorize('check_day()', 'green')
     show += '   ' + color_name_value('source', source)
     logger.info(show)
@@ -599,7 +599,8 @@ def check_day(source):
                 logger.info(show)
             for d in dd:
                 ddd.append(d)
-                logger.info(f'R {d.__repr__()}')
+                show = d.__repr__(format=format)
+                logger.info(f'R {show}')
     if len(ddd) == 0:
         logger.info(f'E {source} does not exist')
     return ddd
@@ -734,7 +735,7 @@ def check_latest(source=[], markdown=False):
 '''
 def compute_bgor(day):
     show = colorize('compute_bgor()', 'green')
-    show += '   ' + color_name_value('day', day.__repr__(short=True))
+    show += '   ' + color_name_value('day', day.__repr__(format='short'))
     logger.info(show)
 
     day_datetime = datetime.datetime(day.date.year, day.date.month, day.date.day).replace(tzinfo=datetime.timezone.utc)
@@ -902,6 +903,8 @@ def dbtool_main():
         Examples:
             {__prog__} -c 20220127
             {__prog__} -c PX-202201*
+            {__prog__} -c RAXPOL-202206*
+            {__prog__} -c --format=long RAXPOL-20220603
             {__prog__} -d PX-20220226
             {__prog__} -d RAXPOL-20220225
             {__prog__} -d /mnt/data/PX1000/2022/20220226
@@ -931,6 +934,7 @@ def dbtool_main():
     parser.add_argument('-C', dest='check_file', action='store_true', help='checks entries from the File table')
     parser.add_argument('-d', dest='build_day', action='store_true', help='builds a Day entry')
     parser.add_argument('-f', dest='find_duplicates', action='store_true', help='finds duplicate File entries in the database')
+    parser.add_argument('--format', default='pretty', choices=['short', 'long', 'pretty'], help='sets output format (default=pretty)')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('--last', action='store_true', help='shows the absolute last entry in the database')
@@ -972,7 +976,7 @@ def dbtool_main():
             '''))
             return
         for day in args.source:
-            check_day(day)
+            check_day(day, format=args.format)
     elif args.check_file:
         if len(args.source) == 0:
             print(textwrap.dedent(f'''

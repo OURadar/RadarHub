@@ -227,13 +227,13 @@ class Day(models.Model):
         indexes = [models.Index(fields=['date', ]),
                    models.Index(fields=['name', ])]
 
-    def __repr__(self, long=False, short=False):
+    def __repr__(self, format='pretty'):
         self.fix_date()
         date = self.date.strftime(r'%Y%m%d') if self.date else '00000000'
-        if short:
+        if format == 'short':
             return self.name + date
-        elif long:
-            return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
+        elif format == 'long':
+            return f'{self.name}{date} B:{self.blue} G:{self.green} O:{self.orange} R:{self.red} {self.count} {self.hourly_count}'
         else:
             counts = ''.join([f'{n:>4}' for n in self.hourly_count.split(',')])
             show = f'{date} {self.__vbar__()} {counts}'
@@ -248,8 +248,8 @@ class Day(models.Model):
         b += '\033[m'
         return b
 
-    def show(self, long=False, short=False):
-        print(self.__repr__(long=long, short=short))
+    def show(self, format=''):
+        print(self.__repr__(format=format))
 
     def fix_date(self):
         if self.date is None:
