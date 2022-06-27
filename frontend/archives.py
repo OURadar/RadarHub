@@ -146,6 +146,8 @@ def month(request, radar, day):
     return response
 
 '''
+    Count of data - returns an array of 24 elements
+
     radar - a string of the radar name
           - e.g., px1000, raxpol, or px10k
 
@@ -182,6 +184,8 @@ def count(request, radar, day):
     return response
 
 '''
+    List of files - returns an array of strings
+
     radar - a string of the radar name
           - e.g., px1000, raxpol, or px10k
 
@@ -271,6 +275,8 @@ def list(request, radar, day_hour_symbol):
     return http_response(ip, payload)
 
 '''
+    Load a sweep - returns a dictionary
+
     name - filename
 '''
 @lru_cache(maxsize=1000)
@@ -343,9 +349,11 @@ def load(request, name):
     return http_response(ip, payload, cache=True)
 
 '''
+    Latest date - returns the latest YYYYMMDD and HH
+
     prefix - prefix of a radar, e.g., PX- for PX-1000, RAXPOL- for RaXPol
 '''
-def _date(prefix):
+def latest(prefix):
     if prefix is None:
         return None, None
     day = Day.objects.filter(name=prefix)
@@ -358,13 +366,13 @@ def _date(prefix):
         return None, None
     ymd = day.date.strftime(r'%Y%m%d')
     if settings.VERBOSE > 1:
-        show = colorize('archive._date()', 'green')
+        show = colorize('archive.latest()', 'green')
         show += '   ' + color_name_value('prefix', prefix)
         show += '   ' + color_name_value('day', ymd)
         logger.info(show)
     hour = day.last_hour()
     if hour is None:
-        show = colorize('archive._date()', 'green')
+        show = colorize('archive.latest()', 'green')
         show += '   ' + colorize(' WARNING ', 'warning')
         show += '   ' + colorize(f'Day {day.date} with', 'white')
         show += color_name_value(' .hourly_count', 'zeros')
@@ -372,38 +380,10 @@ def _date(prefix):
         return None, None
     return ymd, hour
 
-def date(request, radar):
-    global visitor_stats
-    if settings.VERBOSE > 1:
-        show = colorize('archive.date()', 'green')
-        show += '   ' + color_name_value('radar', radar)
-        logger.debug(show)
-    ip, malicious = screen(request)
-    if malicious:
-        return forbidden_request
-    if radar == 'undefined' or radar not in radar_prefix:
-        return invalid_query
-    prefix = radar_prefix[radar]
-    ymd, hour = _date(prefix)
-    if ymd is None:
-        data = {
-            'dateString': '19700101-0000',
-            'dayISOString': '1970/01/01',
-            'hour': 0,
-        }
-    else:
-        data = {
-            'dateString': f'{ymd}-{hour:02d}00',
-            'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
-            'hour': hour,
-        }
-    payload = json.dumps(data)
-    visitor_stats[ip]['payload'] += len(payload)
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    response = HttpResponse(payload, content_type='application/json')
-    return response
 
 '''
+    Location - returns a dictionary with latitude, longitude
+
     radar - Input radar name, e.g., px1000, raxpol, etc.
 '''
 def location(radar):
@@ -416,7 +396,7 @@ def location(radar):
         prefix = radar_prefix[radar]
     else:
         prefix = None
-    ymd, hour = _date(prefix)
+    ymd, hour = latest(prefix)
     if ymd is None:
         origins[radar] = {
           'longitude': -97.422413,
@@ -469,7 +449,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
     if radar == 'undefined' or radar not in radar_prefix:
         return invalid_query
     prefix = radar_prefix[radar]
-    ymd, hour = _date(prefix)
+    ymd, hour = latest(prefix)
     if ymd is None:
         data = {
             'dateString': '19700101-0000',
