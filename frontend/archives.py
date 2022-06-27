@@ -94,7 +94,7 @@ def http_response(ip, payload, cache=False):
     visitor_stats[ip]['bandwidth'] += net_size
     response = HttpResponse(net_payload, content_type='application/octet-stream')
     if cache:
-        response['Cache-Control'] = 'max-age=31536000'
+        response['Cache-Control'] = 'max-age=604800'
     response['Content-Encoding'] = 'deflate'
     response['Content-Length'] = net_size
     return response

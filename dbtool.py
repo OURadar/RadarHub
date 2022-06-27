@@ -204,7 +204,8 @@ def params_from_source(source, dig=False):
         start = datetime.datetime(source_date.year, source_date.month, source_date.day).replace(tzinfo=datetime.timezone.utc)
         date_range = [start, start + datetime.timedelta(days=1)]
         if prefix is None:
-            print('Only day string')
+            show = colorize('params_from_source()', 'green')
+            logger.debug(f'{show} Only day string from {source}')
     return {
         'file': file,
         'prefix': prefix,
@@ -592,7 +593,7 @@ def check_day(source, format=''):
         elif date_range:
             dd = Day.objects.filter(name=name, date__range=date_range).order_by('date')
         else:
-            dd = []
+            dd = Day.objects.filter(name=name).order_by('date')
         if len(dd):
             if len(prefixes) > 1:
                 show = color_name_value('prefix', name)
@@ -904,7 +905,8 @@ def dbtool_main():
             {__prog__} -c 20220127
             {__prog__} -c PX-202201*
             {__prog__} -c RAXPOL-202206*
-            {__prog__} -c --format=long RAXPOL-20220603
+            {__prog__} -c --format=pretty RAXPOL-20220603
+            {__prog__} -c RAXPOL-*
             {__prog__} -d PX-20220226
             {__prog__} -d RAXPOL-20220225
             {__prog__} -d /mnt/data/PX1000/2022/20220226
@@ -934,7 +936,7 @@ def dbtool_main():
     parser.add_argument('-C', dest='check_file', action='store_true', help='checks entries from the File table')
     parser.add_argument('-d', dest='build_day', action='store_true', help='builds a Day entry')
     parser.add_argument('-f', dest='find_duplicates', action='store_true', help='finds duplicate File entries in the database')
-    parser.add_argument('--format', default='pretty', choices=['short', 'long', 'pretty'], help='sets output format (default=pretty)')
+    parser.add_argument('--format', default='pretty', choices=['raw', 'short', 'pretty'], help='sets output format (default=pretty)')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('--last', action='store_true', help='shows the absolute last entry in the database')

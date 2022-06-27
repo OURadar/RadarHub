@@ -231,10 +231,11 @@ class Day(models.Model):
     def __repr__(self, format='pretty'):
         self.fix_date()
         date = self.date.strftime(r'%Y%m%d') if self.date else '00000000'
+        dot = colorize('●', dot_colors[self.weather_condition()])
         if format == 'short':
             return self.name + date
-        elif format == 'long':
-            return f'{self.name}{date} B:{self.blue} G:{self.green} O:{self.orange} R:{self.red} {self.count} {self.hourly_count}'
+        elif format == 'raw':
+            return f'{self.name}{date} {dot} {self.blue},{self.green},{self.orange},{self.red} {self.count} {self.hourly_count} ({len(self.hourly_count)})'
         else:
             def _int2str(num):
                 q = num // 1000
@@ -242,12 +243,11 @@ class Day(models.Model):
                 s = super_numbers[q] + str(r)
                 return f'{s:>4}'
             counts = ''.join([_int2str(int(n)) for n in self.hourly_count.split(',')])
-            show = f'{date} {self.__vbar__()} {counts}'
+            show = f'{date} {dot} {self.__vbar__()} {counts}'
         return show
 
     def __vbar__(self):
-        b = colorize('●', dot_colors[self.weather_condition()])
-        b += ' \033[48;5;238m'
+        b = '\033[48;5;238m'
         for s, c in [(self.blue, 'blue'), (self.green, 'green'), (self.orange, 'orange'), (self.red, 'red')]:
             i = min(7, int(s / 100))
             b += colorize(vbar[i], c, end='')
@@ -308,8 +308,10 @@ class Day(models.Model):
                 cond = 4
             else:
                 cond = 3
+        else:
+            cond = 1
         if cond == 0:
-            logger.info(f'Day.weather_condition() {self.date} b:{self.blue} g:{self.green} o:{self.orange} r:{self.red} -> {cond} -> 1')
+            logger.info(f'Day.weather_condition() {self.name}{self.date} b:{self.blue} g:{self.green} o:{self.orange} r:{self.red} -> {cond} -> 1')
             cond = 1
         return cond
 
