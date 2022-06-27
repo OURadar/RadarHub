@@ -179,7 +179,7 @@ def params_from_source(source, dig=False):
                 day_string = c[1]
             source_datetime = datetime.datetime.strptime(time_string, r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
         else:
-            print(f'folder = {folder}')
+            logger.info(f'Parent year folder = {folder}')
             elements = folder.split('/')
             name, year = elements[-2], elements[-1]
             if pattern_yyyy.match(year) and name in radar_prefix:
@@ -291,8 +291,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         return
 
     if not check_db:
-        name = os.path.basename(raw_archives[0]).split('-')[0] + '-'
-        d = check_day(s, name=name)
+        d = check_day(folder)
         if d:
             d = d[0]
             logger.warning(f'WARNING: There are already {d.count:,d} entries.')
@@ -412,6 +411,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                         c = name.split('-')
                         date = datetime.datetime.strptime(c[1] + c[2], r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
                     x = File.objects.create(name=name, path=archive, date=date, size=size, offset=offset, offset_data=offset_data)
+                    count_create += 1
                 logger.debug(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
                 if mode != 'I':
                     if save:
@@ -436,7 +436,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                 count_ignore += ci;
             if count_create > 0 or count_update > 0:
                 files = [s for symbols in array_of_files for s in symbols]
-                logger.info(f'Updating database ... {len(files)} entries')
+                logger.info(f'Updating database ... {len(files):,d} entries')
                 File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'], batch_size=1000)
             else:
                 logger.info('No new File entries')
@@ -602,7 +602,7 @@ def check_day(source, format=''):
                 show = d.__repr__(format=format)
                 logger.info(f'R {show}')
     if len(ddd) == 0:
-        logger.info(f'E {source} does not exist')
+        logger.info(f'Day entry of {source} does not exist')
     return ddd
 
 '''

@@ -136,20 +136,24 @@ def readwrite(params):
 
     d = time.time()
 
-    with tarfile.open(archive) as source:
-        with tarfile.open(outfile, 'w|xz') as out:
-            for file in infiles:
-                fid = source.extractfile(file)
-                info = tarfile.TarInfo(os.path.basename(file.name))
-                info.size = file.size
-                info.mode = file.mode
-                info.type = file.type
-                info.mtime = file.mtime
-                info.uname = file.uname
-                info.gname = file.gname
-                info.uid = file.uid
-                info.gid = file.gid
-                out.addfile(info, fid)
+    try:
+        with tarfile.open(archive) as source:
+            with tarfile.open(outfile, 'w|xz') as out:
+                for file in infiles:
+                    fid = source.extractfile(file)
+                    info = tarfile.TarInfo(os.path.basename(file.name))
+                    info.size = file.size
+                    info.mode = file.mode
+                    info.type = file.type
+                    info.mtime = file.mtime
+                    info.uname = file.uname
+                    info.gname = file.gname
+                    info.uid = file.uid
+                    info.gid = file.gid
+                    out.addfile(info, fid)
+    except:
+        print(f'{archive} failed to open')
+        pass
 
     d = time.time() - d
 
@@ -262,22 +266,25 @@ def extractdays(args):
                 print(f'{now()} : {archive} -> {ramfile}')
                 print(f'{now()} : {outfile}')
             if args.run:
-                with tarfile.open(ramfile) as source:
-                    with tarfile.open(outfile, 'w') as out:
-                        for file in source.getmembers():
-                            fid = source.extractfile(file)
-                            info = tarfile.TarInfo(os.path.basename(file.name))
-                            info.size = file.size
-                            info.mode = file.mode
-                            info.type = file.type
-                            info.mtime = file.mtime
-                            info.uname = file.uname
-                            info.gname = file.gname
-                            info.uid = file.uid
-                            info.gid = file.gid
-                            out.addfile(info, fid)
-                            if args.verbose > 1:
-                                print(f'{now()} : {file}')
+                try:
+                    with tarfile.open(ramfile) as source:
+                        with tarfile.open(outfile, 'w') as out:
+                            for file in source.getmembers():
+                                fid = source.extractfile(file)
+                                info = tarfile.TarInfo(os.path.basename(file.name))
+                                info.size = file.size
+                                info.mode = file.mode
+                                info.type = file.type
+                                info.mtime = file.mtime
+                                info.uname = file.uname
+                                info.gname = file.gname
+                                info.uid = file.uid
+                                info.gid = file.gid
+                                out.addfile(info, fid)
+                                if args.verbose > 1:
+                                    print(f'{now()} : {file}')
+                except:
+                    pass
             os.remove(ramfile)
             count += 1
 

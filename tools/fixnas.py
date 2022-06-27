@@ -36,9 +36,14 @@ def fix_path(source, verbose=0):
             else:
                 print(f'{original} is empty')
     else:
-        archives = glob.glob(f'{day_folder}/*.tgz')
+        archives = glob.glob(f'{day_folder}/[A-Z]*.tgz')
         if len(archives):
-            print(f'{day_folder} needs _original')
+            cmd = f'mkdir {original}'
+            print(cmd)
+            os.system(cmd)
+            cmd = f'mv {day_folder}/[A-Z]*.tgz {original}'
+            print(cmd)
+            os.system(cmd)
         else:
             print(f'{day_folder} unexpected')
 
@@ -53,6 +58,7 @@ if __name__ == '__main__':
 
         Examples:
             {__prog__} /mnt/data/PX1000/2013/201305*
+            {__prog__} /mnt/data/RaXPol/2018/2*
         '''),
         epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
