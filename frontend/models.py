@@ -308,8 +308,8 @@ class Day(models.Model):
                 cond = 4
             else:
                 cond = 3
-        else:
-            cond = 1
+        elif self.blue >= 100:
+            cond = 2
         if cond == 0:
             logger.info(f'Day.weather_condition() {self.name}{self.date} b:{self.blue} g:{self.green} o:{self.orange} r:{self.red} -> {cond} -> 1')
             cond = 1
