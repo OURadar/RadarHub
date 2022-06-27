@@ -44,11 +44,11 @@ class Colorbar {
     }
     if (this.tic++ == 0) {
       //console.log(`this.tic = ${this.tic}`);
-      return fetch("/static/blob/helveticaneue/HelveticaNeueMed.ttf").then(
-        () => {
-          return this.makeBuffer(configs, colors);
-        }
-      );
+      return fetch("/static/blob/helveticaneue/HelveticaNeueMed.ttf", {
+        cache: "force-cache",
+      }).then(() => {
+        return this.makeBuffer(configs, colors);
+      });
     }
     return this.makeBuffer(configs, colors);
   }

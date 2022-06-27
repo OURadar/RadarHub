@@ -978,6 +978,8 @@ def dbtool_main():
             '''))
             return
         for day in args.source:
+            if args.build_day:
+                build_day(day, bgor=args.bgor)
             check_day(day, format=args.format)
     elif args.check_file:
         if len(args.source) == 0:
