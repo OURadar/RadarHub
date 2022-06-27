@@ -88,7 +88,7 @@ function overview() {
 function follow() {
 	args=""
 	folder=${var_log}
-	for item in "frontend" "access" "backhaul"; do
+	for item in "frontend" "access" "backhaul" "fifo2db"; do
 		file="${folder}/${item}.log"
 		if [ -f ${file} ]; then
 			args="${args} -f ${file}"
