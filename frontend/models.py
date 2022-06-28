@@ -22,17 +22,20 @@ from django.db import models
 from netCDF4 import Dataset
 
 logger = logging.getLogger('frontend')
+
 dot_colors = ['black', 'gray', 'blue', 'green', 'orange']
+
 user_agent_strings = {}
 if os.path.exists(settings.USER_AGENT_TABLE):
     with open(settings.USER_AGENT_TABLE, 'r') as fid:
         user_agent_strings = json.load(fid)
 
-# Some helper functions
-
 np.set_printoptions(precision=2, threshold=5, linewidth=120)
+
 vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585', '\U00002586', '\U00002587']
+
 super_numbers = [' ', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁺', '⁻', '⁼', '⁽', '⁾']
+
 empty_sweep = {
     'symbol': 'U',
     'longitude': -97.422413,
@@ -47,6 +50,23 @@ empty_sweep = {
     'values': np.empty((0, 0), dtype=np.float32),
     'u8': np.empty((0, 0), dtype=np.uint8)
 }
+
+dummy_sweep = {
+    'symbol': "Z",
+    'longitude': -97.422413,
+    'latitude': 35.25527,
+    'sweepTime': 1369071296.0,
+    'sweepElevation': 4.0,
+    'sweepAzimuth': 42.0,
+    'gatewidth': 150.0,
+    'waveform': 's01',
+    'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=np.float32),
+    'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=np.float32),
+    'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]], dtype=np.float32),
+    'u8': np.array([[64, 108, 62], [42, 52, 46], [82, 92, 82], [112, 122, 132]], dtype=np.uint8)
+}
+
+# Some helper functions
 
 '''
     value - Raw RhoHV values
@@ -74,7 +94,7 @@ File
  - show() - shows the self representation on screen
  - get_path() - returns full path of the archive that contains the file
  - get_age() - returns the current age of the file
- - read() - reads from a plain path or a .tgz / .txz / .tar.xz archive using _read()
+ - read() - reads from a plain path or a .tgz / .txz / .tar.xz archive using _read() and returns a sweep
  - _read() - reads from a file object, returns a dictionary with the data
 '''
 class File(models.Model):
@@ -190,6 +210,15 @@ class File(models.Model):
             logger.error(f'Error reading {self.name}')
             return empty_sweep
 
+    @staticmethod
+    def dummy_sweep(name='PX-20130520-123456-Z.nc'):
+        parts = name.split('-')
+        sweep = dummy_sweep.copy()
+        sweep['symbol'] = parts[4] if len(parts) > 4 else "Z"
+        sweep['sweepTime'] = datetime.datetime.strptime(parts[1] + parts[2], r'%Y%m%d%H%M%S').timestamp()
+        sweep['sweepElevation'] = float(parts[3][1:]) if "E" in parts[3] else 0.0
+        sweep['sweepAzimuth'] = float(parts[3][1:]) if "A" in parts[3] else 42.0
+        return sweep
 
 '''
 Day

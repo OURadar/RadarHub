@@ -7,7 +7,6 @@ import struct
 import logging
 import datetime
 import threading
-import numpy as np
 
 from functools import lru_cache
 
@@ -282,22 +281,8 @@ def list(request, radar, day_hour_symbol):
 @lru_cache(maxsize=1000)
 def _load(name):
     if settings.SIMULATE:
-        elements = name.split('-')
         logger.info(f'Dummy sweep {name}')
-        sweep = {
-            'symbol': elements[4] if len(elements) > 4 else "Z",
-            'longitude': -97.422413,
-            'latitude': 35.25527,
-            'sweepTime': time.mktime(time.strptime(elements[1] + elements[2], r'%Y%m%d%H%M%S')),
-            'sweepElevation': float(elements[3][1:]) if "E" in elements[3] else 0.0,
-            'sweepAzimuth': float(elements[3][1:]) if "A" in elements[3] else 4.0,
-            'gatewidth': 150.0,
-            'waveform': 's01',
-            'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=np.float32),
-            'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=np.float32),
-            'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]], dtype=np.float32),
-            'u8': np.array([[64, 108, 62], [42, 52, 46], [82, 92, 82], [112, 122, 132]], dtype=np.uint8)
-        }
+        sweep = File.dummy_sweep(name)
     else:
         # Database is indexed by date so we extract the time first for a quicker search
         s = pattern_x_yyyymmdd_hhmmss.search(name)
