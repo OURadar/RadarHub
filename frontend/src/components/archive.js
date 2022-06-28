@@ -5,8 +5,6 @@
 //  Created by Boonleng Cheong on 9/23/2021.
 //
 
-import { clamp } from "./common";
-
 class Archive {
   constructor(radar) {
     this.radar = radar;

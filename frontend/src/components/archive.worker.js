@@ -437,13 +437,12 @@ function geometry(sweep) {
   const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
   if (scan[0] == "E") {
     sweep.isRHI = false;
-    const e = deg2rad(sweep.scanElevation);
-    const ce = Math.cos(e);
-    const se = Math.sin(e);
     const ii = clamp(sweep.nb / 2, 0, sweep.nb - 1);
     const da = sweep.azimuths[ii] - sweep.azimuths[ii - 1];
-    const az = sweep.azimuths[sweep.nb - 1] + da;
-    sweep.azimuths.push(az);
+    const el_pad = sweep.elevations[sweep.nb - 1];
+    const az_pad = sweep.azimuths[sweep.nb - 1] + da;
+    sweep.elevations.push(el_pad);
+    sweep.azimuths.push(az_pad);
     for (let k = 0; k < sweep.nb + 1; k++) {
       const a = deg2rad(sweep.azimuths[k]);
       const v = k / sweep.nb;
@@ -460,17 +459,19 @@ function geometry(sweep) {
     }
   } else if (scan[0] == "A") {
     sweep.isRHI = true;
-    const a = deg2rad(sweep.scanAzimuth);
-    const ca = Math.cos(a);
-    const sa = Math.sin(a);
-    const ii = sweep.nb - 1;
+    const ii = clamp(sweep.nb / 2, 0, sweep.nb - 1);
     const de = sweep.elevations[ii] - sweep.elevations[ii - 1];
-    const el = sweep.elevations[sweep.nb - 1] + de;
-    sweep.elevations.push(el);
+    const el_pad = sweep.elevations[sweep.nb - 1] + de;
+    const az_pad = sweep.azimuths[sweep.nb - 1];
+    sweep.elevations.push(el_pad);
+    sweep.azimuths.push(az_pad);
     for (let k = 0; k < sweep.nb + 1; k++) {
       const e = deg2rad(sweep.elevations[k]);
+      const a = deg2rad(sweep.azimuths[k]);
       const ce = Math.cos(e);
       const se = Math.sin(e);
+      const ca = Math.cos(a);
+      const sa = Math.sin(a);
       const v = k / sweep.nb;
       const x = ce * sa;
       const y = ce * ca;
