@@ -444,10 +444,15 @@ function geometry(sweep) {
     sweep.elevations.push(el_pad);
     sweep.azimuths.push(az_pad);
     for (let k = 0; k < sweep.nb + 1; k++) {
+      const e = deg2rad(sweep.elevations[k]);
       const a = deg2rad(sweep.azimuths[k]);
+      const ce = Math.cos(e);
+      const se = Math.sin(e);
+      const ca = Math.cos(a);
+      const sa = Math.sin(a);
       const v = k / sweep.nb;
-      const x = ce * Math.sin(a);
-      const y = ce * Math.cos(a);
+      const x = ce * sa;
+      const y = ce * ca;
       points.push(rs * x, rs * y, rs * se);
       points.push(re * x, re * y, re * se);
       origins.push(0, v);
