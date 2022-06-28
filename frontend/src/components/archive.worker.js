@@ -430,65 +430,50 @@ function dummy() {
 
 function geometry(sweep) {
   let scan = sweep["name"].split("-")[3];
+  const rs = sweep.rangeStart;
+  const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
+  let el_pad = 0.0;
+  let az_pad = 0.0;
+  const ii = clamp(sweep.nb / 2, 0, sweep.nb - 1);
+  if (scan[0] == "E") {
+    sweep.isRHI = false;
+    const da = sweep.azimuths[ii] - sweep.azimuths[ii - 1];
+    el_pad = sweep.elevations[sweep.nb - 1];
+    az_pad = sweep.azimuths[sweep.nb - 1] + da;
+  } else if (scan[0] == "A") {
+    sweep.isRHI = true;
+    const de = sweep.elevations[ii] - sweep.elevations[ii - 1];
+    el_pad = sweep.elevations[sweep.nb - 1] + de;
+    az_pad = sweep.azimuths[sweep.nb - 1];
+  } else {
+    const da = sweep.azimuths[ii] - sweep.azimuths[ii - 1];
+    const de = sweep.elevations[ii] - sweep.elevations[ii - 1];
+    el_pad = sweep.elevations[sweep.nb - 1] + de;
+    az_pad = sweep.azimuths[sweep.nb - 1] + da;
+  }
+  sweep.elevations.push(el_pad);
+  sweep.azimuths.push(az_pad);
   let points = [];
   let origins = [];
   let elements = [];
-  const rs = sweep.rangeStart;
-  const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
-  if (scan[0] == "E") {
-    sweep.isRHI = false;
-    const ii = clamp(sweep.nb / 2, 0, sweep.nb - 1);
-    const da = sweep.azimuths[ii] - sweep.azimuths[ii - 1];
-    const el_pad = sweep.elevations[sweep.nb - 1];
-    const az_pad = sweep.azimuths[sweep.nb - 1] + da;
-    sweep.elevations.push(el_pad);
-    sweep.azimuths.push(az_pad);
-    for (let k = 0; k < sweep.nb + 1; k++) {
-      const e = deg2rad(sweep.elevations[k]);
-      const a = deg2rad(sweep.azimuths[k]);
-      const ce = Math.cos(e);
-      const se = Math.sin(e);
-      const ca = Math.cos(a);
-      const sa = Math.sin(a);
-      const v = k / sweep.nb;
-      const x = ce * sa;
-      const y = ce * ca;
-      points.push(rs * x, rs * y, rs * se);
-      points.push(re * x, re * y, re * se);
-      origins.push(0, v);
-      origins.push(1, v);
-    }
-    for (let o = 2, l = 2 * sweep.nb; o <= l; o += 2) {
-      elements.push(o - 2, o - 1, o);
-      elements.push(o - 1, o, o + 1);
-    }
-  } else if (scan[0] == "A") {
-    sweep.isRHI = true;
-    const ii = clamp(sweep.nb / 2, 0, sweep.nb - 1);
-    const de = sweep.elevations[ii] - sweep.elevations[ii - 1];
-    const el_pad = sweep.elevations[sweep.nb - 1] + de;
-    const az_pad = sweep.azimuths[sweep.nb - 1];
-    sweep.elevations.push(el_pad);
-    sweep.azimuths.push(az_pad);
-    for (let k = 0; k < sweep.nb + 1; k++) {
-      const e = deg2rad(sweep.elevations[k]);
-      const a = deg2rad(sweep.azimuths[k]);
-      const ce = Math.cos(e);
-      const se = Math.sin(e);
-      const ca = Math.cos(a);
-      const sa = Math.sin(a);
-      const v = k / sweep.nb;
-      const x = ce * sa;
-      const y = ce * ca;
-      points.push(rs * x, rs * y, rs * se);
-      points.push(re * x, re * y, re * se);
-      origins.push(0, v);
-      origins.push(1, v);
-    }
-    for (let o = 2, l = 2 * sweep.nb; o <= l; o += 2) {
-      elements.push(o - 2, o - 1, o);
-      elements.push(o - 1, o, o + 1);
-    }
+  for (let k = 0; k < sweep.nb + 1; k++) {
+    const e = deg2rad(sweep.elevations[k]);
+    const a = deg2rad(sweep.azimuths[k]);
+    const ce = Math.cos(e);
+    const se = Math.sin(e);
+    const ca = Math.cos(a);
+    const sa = Math.sin(a);
+    const v = k / sweep.nb;
+    const x = ce * sa;
+    const y = ce * ca;
+    points.push(rs * x, rs * y, rs * se);
+    points.push(re * x, re * y, re * se);
+    origins.push(0, v);
+    origins.push(1, v);
+  }
+  for (let o = 2, l = 2 * sweep.nb; o <= l; o += 2) {
+    elements.push(o - 2, o - 1, o);
+    elements.push(o - 1, o, o + 1);
   }
   sweep.points = points;
   sweep.origins = origins;
