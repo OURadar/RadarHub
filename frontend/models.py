@@ -24,8 +24,9 @@ from netCDF4 import Dataset
 logger = logging.getLogger('frontend')
 dot_colors = ['black', 'gray', 'blue', 'green', 'orange']
 user_agent_strings = {}
-with open(settings.USER_AGENT_TABLE, 'r') as fid:
-    user_agent_strings = json.load(fid)
+if os.path.exists(settings.USER_AGENT_TABLE):
+    with open(settings.USER_AGENT_TABLE, 'r') as fid:
+        user_agent_strings = json.load(fid)
 
 # Some helper functions
 

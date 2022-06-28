@@ -95,10 +95,10 @@ def proc_archive(archive, ramfile=None):
 
 '''
     (Deprecated)
-    First revision of xzfolder, only kept here for simple illustration
+    First revision of xz_folder, only kept here for simple illustration
 '''
-def xzfolder_v1(folder):
-    print(f'xzfolder_v1: {folder}')
+def xz_folder_v1(folder):
+    print(f'xz_folder_v1: {folder}')
     archives = list_files(folder)
     if len(archives) == 0:
         print('Unable to continue.')
@@ -175,11 +175,11 @@ def params_from_source(source, dig=False):
             prefix = c[0] + '-'
             time_string = c[1] + c[2]
             if day_string != c[1]:
-                print(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]} (*)')
+                logger.warning(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]} (*)')
                 day_string = c[1]
             source_datetime = datetime.datetime.strptime(time_string, r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
         else:
-            logger.info(f'Parent year folder = {folder}')
+            logger.debug(f'Parent year folder = {folder}')
             elements = folder.split('/')
             name, year = elements[-2], elements[-1]
             if pattern_yyyy.match(year) and name in radar_prefix:
@@ -268,14 +268,12 @@ def list_files(folder):
     use_bulk_update - use django's bulk update/create functions
             verbose - verbosity level
 '''
-def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
-    if verbose:
-        show = colorize('xzfolder()', 'green')
-        show += '   ' + color_name_value('folder', folder)
-        show += '   ' + color_name_value('hour', hour)
-        show += '   ' + color_name_value('check_db', check_db)
-        show += '   ' + color_name_value('use_bulk_update', use_bulk_update)
-        logger.debug(show)
+def xz_folder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
+    show = colorize('xz_folder()', 'green')
+    show += '   ' + color_name_value('folder', folder)
+    show += '   ' + color_name_value('check_db', check_db)
+    show += '   ' + color_name_value('use_bulk_update', use_bulk_update)
+    logger.info(show)
 
     use_mp = 'linux' in sys.platform
     basename = os.path.basename(folder)
@@ -295,8 +293,9 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         d = check_day(folder)
         if d:
             d = d[0]
-            logger.warning(f'WARNING: There are already {d.count:,d} entries.')
-            logger.warning(f'WARNING: Quick insert will result in duplicates. Try -i instead.')
+            show = colorize(' WARNING ', 'warning')
+            logger.warning(f'{show} There are already {d.count:,d} entries.')
+            logger.warning(f'{show} Quick insert will result in duplicates. Try -i instead.')
             ans = input('Do you still want to continue (y/[n])? ')
             if not ans == 'y':
                 logger.info('Whew. Nothing happend.')
@@ -875,7 +874,7 @@ def show_visitor_log(markdown=False, show_city=False):
             return '-'
     else:
         def get_location(_):
-            return '-'
+            return '- (no IP database) -'
     print('| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |')
     print('| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |')
     def show_visitor(visitor, markdown):
@@ -1026,8 +1025,9 @@ def dbtool_main():
         logger.info('Inserting folder(s) with .txz / .tar.xz archives')
         for folder in args.source:
             folder = folder[:-1] if folder[-1] == '/' else folder
-            logger.info(f'{folder}')
-            xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
+            if len(args.source) > 1:
+                logger.info('...')
+            xz_folder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
     elif args.quick_insert:
         if len(args.source) == 0:
             print(textwrap.dedent(f'''
@@ -1038,8 +1038,10 @@ def dbtool_main():
             return
         logger.info('Quick inserting folder(s) with .txz / .tar.xz archives')
         for folder in args.source:
-            logger.info(f'{folder}')
-            xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
+            if len(args.source) > 1:
+                logger.info('...')
+            folder = folder[:-1] if folder[-1] == '/' else folder
+            xz_folder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
     elif args.last:
         logger.info('Retrieving the absolute last entry ...')
         o = File.objects.last()
