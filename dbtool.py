@@ -31,13 +31,23 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
 from django.conf import settings
+
 from frontend.models import File, Day, Visitor
+
 from common import colorize, color_name_value, dailylog
 
 __prog__ = os.path.basename(sys.argv[0])
 
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__, home=settings.LOG_DIR, dailyfile=settings.DEBUG)
+pattern_yyyy = re.compile(r'20[0-9][0-9]')
+pattern_yyyymmdd = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])')
+pattern_x_yyyymmdd = re.compile(r'(?<=[-/])20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])')
+
+radar_prefix = {}
+for prefix, item in settings.RADARS.items():
+    radar = item['folder']
+    radar_prefix[radar] = prefix
 
 '''
     (Deprecated)
@@ -87,10 +97,10 @@ def proc_archive(archive, ramfile=None):
 
 '''
     (Deprecated)
-    First revision of xzfolder, only kept here for simple illustration
+    First revision of xz_folder, only kept here for simple illustration
 '''
-def xzfolder_v1(folder):
-    print(f'xzfolder_v1: {folder}')
+def xz_folder_v1(folder):
+    print(f'xz_folder_v1: {folder}')
     archives = list_files(folder)
     if len(archives) == 0:
         print('Unable to continue.')
@@ -167,19 +177,25 @@ def params_from_source(source, dig=False):
             prefix = c[0] + '-'
             time_string = c[1] + c[2]
             if day_string != c[1]:
-                print(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]} (*)')
+                logger.warning(f'Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]} (*)')
                 day_string = c[1]
             source_datetime = datetime.datetime.strptime(time_string, r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
+        else:
+            logger.debug(f'Parent year folder = {folder}')
+            elements = folder.split('/')
+            name, year = elements[-2], elements[-1]
+            if pattern_yyyy.match(year) and name in radar_prefix:
+                prefix = radar_prefix[name]
     elif '/' in source:
         logger.error(f'Error. Folder {source} does not exist')
-        day_string = re.search(r'(?<=[-/])20[0-9][0-9][012][0-9][0-3][0-9]', source)
+        day_string = pattern_x_yyyymmdd.search(source)
         if day_string:
             day_string = day_string.group(0)
     elif '-' in source:
         prefix, day_string = source.split('-')
         prefix += '-'
     else:
-        day_string = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', source)
+        day_string = pattern_yyyymmdd.search(source)
         if day_string:
             day_string = day_string.group(0)
         else:
@@ -190,7 +206,8 @@ def params_from_source(source, dig=False):
         start = datetime.datetime(source_date.year, source_date.month, source_date.day).replace(tzinfo=datetime.timezone.utc)
         date_range = [start, start + datetime.timedelta(days=1)]
         if prefix is None:
-            print('Only day string')
+            show = colorize('params_from_source()', 'green')
+            logger.debug(f'{show} Only day string from {source}')
     return {
         'file': file,
         'prefix': prefix,
@@ -253,20 +270,18 @@ def list_files(folder):
     use_bulk_update - use django's bulk update/create functions
             verbose - verbosity level
 '''
-def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
-    if verbose:
-        show = colorize('xzfolder()', 'green')
-        show += '   ' + color_name_value('folder', folder)
-        show += '   ' + color_name_value('hour', hour)
-        show += '   ' + color_name_value('check_db', check_db)
-        show += '   ' + color_name_value('use_bulk_update', use_bulk_update)
-        logger.debug(show)
+def xz_folder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
+    show = colorize('xz_folder()', 'green')
+    show += '   ' + color_name_value('folder', folder)
+    show += '   ' + color_name_value('check_db', check_db)
+    show += '   ' + color_name_value('use_bulk_update', use_bulk_update)
+    logger.info(show)
 
     use_mp = 'linux' in sys.platform
     basename = os.path.basename(folder)
-    s = re.search(r'20[0-9][0-9][012][0-9][0-3][0-9]', basename)
+    s = pattern_yyyymmdd.search(basename)
     if s:
-        s = s[0]
+        s = s.group(0)
     else:
         logger.info(f'Error searching YYYYMMDD in folder name {basename}')
         return
@@ -277,12 +292,12 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         return
 
     if not check_db:
-        name = os.path.basename(raw_archives[0]).split('-')[0] + '-'
-        d = check_day(s, name=name)
+        d = check_day(folder)
         if d:
             d = d[0]
-            logger.warning(f'WARNING: There are already {d.count:,d} entries.')
-            logger.warning(f'WARNING: Quick insert will result in duplicates. Try -i instead.')
+            show = colorize(' WARNING ', 'warning')
+            logger.warning(f'{show} There are already {d.count:,d} entries.')
+            logger.warning(f'{show} Quick insert will result in duplicates. Try -i instead.')
             ans = input('Do you still want to continue (y/[n])? ')
             if not ans == 'y':
                 logger.info('Whew. Nothing happend.')
@@ -398,6 +413,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                         c = name.split('-')
                         date = datetime.datetime.strptime(c[1] + c[2], r'%Y%m%d%H%M%S').replace(tzinfo=datetime.timezone.utc)
                     x = File.objects.create(name=name, path=archive, date=date, size=size, offset=offset, offset_data=offset_data)
+                    count_create += 1
                 logger.debug(f'{mode} : {name} {offset} {offset_data} {size} {archive}')
                 if mode != 'I':
                     if save:
@@ -422,7 +438,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
                 count_ignore += ci;
             if count_create > 0 or count_update > 0:
                 files = [s for symbols in array_of_files for s in symbols]
-                logger.info(f'Updating database ... {len(files)} entries')
+                logger.info(f'Updating database ... {len(files):,d} entries')
                 File.objects.bulk_update(files, ['name', 'path', 'date', 'size', 'offset', 'offset_data'], batch_size=1000)
             else:
                 logger.info('No new File entries')
@@ -468,7 +484,7 @@ def xzfolder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         logger.info(f'Bulk create {t:.2f} sec ({a:,.0f} files / sec)')
 
     # Make a Day entry
-    build_day(folder)
+    build_day(folder, bgor=True)
 
     e = time.time() - e
     a = len(archives) / e
@@ -557,7 +573,7 @@ def build_day(source, bgor=False, verbose=0):
 
     source - common source pattern (see params_from_source())
 '''
-def check_day(source):
+def check_day(source, format=''):
     show = colorize('check_day()', 'green')
     show += '   ' + color_name_value('source', source)
     logger.info(show)
@@ -578,13 +594,17 @@ def check_day(source):
         elif date_range:
             dd = Day.objects.filter(name=name, date__range=date_range).order_by('date')
         else:
-            dd = []
+            dd = Day.objects.filter(name=name).order_by('date')
         if len(dd):
+            if len(prefixes) > 1:
+                show = color_name_value('prefix', name)
+                logger.info(show)
             for d in dd:
                 ddd.append(d)
-                logger.info(f'R {d.__repr__()}')
+                show = d.__repr__(format=format)
+                logger.info(f'R {show}')
     if len(ddd) == 0:
-        logger.info(f'E {source} does not exist')
+        logger.info(f'Day entry of {source} does not exist')
     return ddd
 
 '''
@@ -717,7 +737,7 @@ def check_latest(source=[], markdown=False):
 '''
 def compute_bgor(day):
     show = colorize('compute_bgor()', 'green')
-    show += '   ' + color_name_value('day', day.__repr__(short=True))
+    show += '   ' + color_name_value('day', day.__repr__(format='short'))
     logger.info(show)
 
     day_datetime = datetime.datetime(day.date.year, day.date.month, day.date.day).replace(tzinfo=datetime.timezone.utc)
@@ -729,8 +749,11 @@ def compute_bgor(day):
     if files.count() == 0:
         return
     scans = [file.name.split('-')[3] for file in files]
-    scans = np.unique(scans)
+    scans = list(np.unique(scans))
+    if 'E0.0' in scans and len(scans) > 1:
+        scans.remove('E0.0')
     scan = 'E4.0' if 'E4.0' in scans else scans[0]
+    logger.debug(f'scans = {scans}  selected scan = {scan}')
 
     b = 0
     g = 0
@@ -764,7 +787,7 @@ def compute_bgor(day):
     r = 1000 * r / o if r else 0
     o = 1000 * o / g if o else 0
     g = 1000 * g / b if g else 0
-    b = 1000 * b / total if b else 0
+    b = 10000 * b / total if b else 0
     # print(f'total = {total}  b = {b}  g = {g}  o = {o}  r = {r}')
     day.blue = int(b)
     day.green = int(g)
@@ -827,9 +850,12 @@ def show_sweep_summary(source, markdown=False):
         print(f'Data shape = {shape}\nRaw size = {size:,d} B')
 
 '''
-| IP Address      |    Usage (B) |   Count |      OS / Browser | Last Visited     | Location                                   |
-| --------------- |------------- | ------- | ----------------- | ---------------- | ------------------------------------------ |
-| 107.77.220.225  |      189,884 |      11 |    macOS / Safari | 2022/06/17 17:11 | Dallas, Texas, United States               |
+
+    Shows visitor summary
+
+    | IP Address      |    Usage (B) |   Count |      OS / Browser | Last Visited     | Location                                   |
+    | --------------- |------------- | ------- | ----------------- | ---------------- | ------------------------------------------ |
+    | 107.77.220.225  |      189,884 |      11 |    macOS / Safari | 2022/06/17 17:11 | Dallas, Texas, United States               |
 '''
 
 def show_visitor_log(markdown=False, show_city=False):
@@ -853,24 +879,59 @@ def show_visitor_log(markdown=False, show_city=False):
             return '-'
     else:
         def get_location(_):
-            return '-'
-    print('| IP Address      |      Usage (B) |     Count |      OS / Browser | Last Visited     | Location                                   |')
-    print('| --------------- |--------------- | --------- | ----------------- | ---------------- | ------------------------------------------ |')
+            return '- (no IP database) -'
+    print('| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |')
+    print('| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |')
     def show_visitor(visitor, markdown):
-        agent = f'{visitor.machine()} / {visitor.browser()}'
+        agent = visitor.user_agent_string()
         if agent == 'Unknown / Unknown':
             agent = visitor.user_agent.split()[0]
-        time_string = visitor.last_visited_time_string()
+        date_string = visitor.last_visited_date_string()
         origin = get_location(visitor.ip, show_city=show_city)
         if markdown:
-            print(f'| `{visitor.ip}` | `{visitor.bandwidth:,}` | `{visitor.count:,}` | {agent} | {time_string} | {origin} |')
+            print(f'| `{visitor.ip}` | `{visitor.payload:,}` | `{visitor.bandwidth:,}` | `{visitor.count:,}` | {agent} | {date_string} | {origin} |')
         else:
-            print(f'| {visitor.ip:15} | {visitor.bandwidth:14,} | {visitor.count:9,} | {agent:>17} | {time_string} | {origin:42} |')
+            print(f'| {visitor.ip:15} | {visitor.payload:16,} | {visitor.bandwidth:16,} | {visitor.count:9,} | {agent:>20} | {date_string} | {origin:30} |')
     for visitor in Visitor.objects.exclude(ip__startswith='10.').order_by('-last_visited'):
         show_visitor(visitor, markdown=markdown)
     for visitor in Visitor.objects.filter(ip__startswith='10.').order_by('-last_visited'):
         show_visitor(visitor, markdown=markdown)
 
+def check_path(folder):
+    original = os.path.join(folder, '_original')
+    original_tgz = os.path.join(folder, '_original_tgz')
+    if os.path.exists(original) and os.path.exists(original_tgz):
+        archives = glob.glob(f'{original}/*.tar.xz')
+        if len(archives):
+            # print(f'{original_tgz} is safe to remove')
+            cmd = f'rm -rf {original_tgz}'
+            print(cmd)
+            # os.system(cmd)
+    elif os.path.exists(original):
+        archives = glob.glob(f'{original}/[A-Z]*.tar.xz')
+        if len(archives):
+            print(f'{original} ' + colorize('ok', 'green'))
+            return
+        archives = glob.glob(f'{original}/[A-Z]*.tgz')
+        if len(archives):
+            print(f'{original} ' + colorize('contains .tgz files', 'orange'))
+        else:
+            files = glob.glob(f'{original}/*.*')
+            if len(files):
+                print(f'{original} ' + colorize('ontains something else', 'orange'))
+            else:
+                print(f'{original} ' + colorize('empty', 'orange'))
+    else:
+        archives = glob.glob(f'{folder}/[A-Z]*.tgz')
+        if len(archives):
+            cmd = f'mkdir {original}'
+            print(cmd)
+            # os.system(cmd)
+            cmd = f'mv {folder}/[A-Z]*.tgz {original}'
+            print(cmd)
+            # os.system(cmd)
+        else:
+            print(f'{folder} structure unexpected')
 #
 
 def dbtool_main():
@@ -882,6 +943,9 @@ def dbtool_main():
         Examples:
             {__prog__} -c 20220127
             {__prog__} -c PX-202201*
+            {__prog__} -c RAXPOL-202206*
+            {__prog__} -c --format=pretty RAXPOL-20220603
+            {__prog__} -c RAXPOL-*
             {__prog__} -d PX-20220226
             {__prog__} -d RAXPOL-20220225
             {__prog__} -d /mnt/data/PX1000/2022/20220226
@@ -896,6 +960,7 @@ def dbtool_main():
             {__prog__} -f 20220225
             {__prog__} -f RAXPOL-20220225
             {__prog__} -f --remove 20220127
+            {__prog__} --check-path /mnt/data/RaXPol/2022/202206*
         '''),
         epilog='Copyright (c) 2021-2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*',
@@ -907,16 +972,18 @@ def dbtool_main():
               - day (e.g., 20220223) for -c, -d
              '''))
     parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
-    parser.add_argument('-c', dest='check_day', action='store_true', help='checks entries from the Day table')
-    parser.add_argument('-C', dest='check_file', action='store_true', help='checks entries from the File table')
+    parser.add_argument('-c', '--check-day', action='store_true', help='checks entries from the Day table')
+    parser.add_argument('-C', '--check-file', action='store_true', help='checks entries from the File table')
     parser.add_argument('-d', dest='build_day', action='store_true', help='builds a Day entry')
     parser.add_argument('-f', dest='find_duplicates', action='store_true', help='finds duplicate File entries in the database')
+    parser.add_argument('--format', default='pretty', choices=['raw', 'short', 'pretty'], help='sets output format (default=pretty)')
     parser.add_argument('-i', dest='insert', action='store_true', help='inserts a folder')
     parser.add_argument('-I', dest='quick_insert', action='store_true', help='inserts (without check) a folder')
     parser.add_argument('--last', action='store_true', help='shows the absolute last entry in the database')
     parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
     parser.add_argument('--markdown', action='store_true', help='generates output in markdown')
     parser.add_argument('--no-bgor', dest='bgor', default=True, action='store_false', help='skips computing bgor')
+    parser.add_argument('-p', '--check-path', action='store_true', help='checks the storage path')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='shows a sweep summary')
@@ -933,6 +1000,7 @@ def dbtool_main():
         logger.showLogOnScreen()
         if args.verbose > 1:
             logger.setLevel(dailylog.logging.DEBUG)
+            logger.streamHandler.setLevel(dailylog.logging.DEBUG)
 
     if '*' in args.source:
         logger.info('Expanding asterisk ...')
@@ -951,7 +1019,9 @@ def dbtool_main():
             '''))
             return
         for day in args.source:
-            check_day(day)
+            if args.build_day:
+                build_day(day, bgor=args.bgor)
+            check_day(day, format=args.format)
     elif args.check_file:
         if len(args.source) == 0:
             print(textwrap.dedent(f'''
@@ -997,8 +1067,9 @@ def dbtool_main():
         logger.info('Inserting folder(s) with .txz / .tar.xz archives')
         for folder in args.source:
             folder = folder[:-1] if folder[-1] == '/' else folder
-            logger.info(f'{folder}')
-            xzfolder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
+            if len(args.source) > 1:
+                logger.info('...')
+            xz_folder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
     elif args.quick_insert:
         if len(args.source) == 0:
             print(textwrap.dedent(f'''
@@ -1009,8 +1080,10 @@ def dbtool_main():
             return
         logger.info('Quick inserting folder(s) with .txz / .tar.xz archives')
         for folder in args.source:
-            logger.info(f'{folder}')
-            xzfolder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
+            if len(args.source) > 1:
+                logger.info('...')
+            folder = folder[:-1] if folder[-1] == '/' else folder
+            xz_folder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
     elif args.last:
         logger.info('Retrieving the absolute last entry ...')
         o = File.objects.last()
@@ -1036,6 +1109,10 @@ def dbtool_main():
         if args.markdown:
             logger.hideLogOnScreen()
         show_visitor_log(markdown=args.markdown, show_city=args.show_city)
+    elif args.check_path:
+        for folder in args.source:
+            folder = folder[:-1] if folder[-1] == '/' else folder
+            check_path(folder)
     else:
         parser.print_help(sys.stderr)
 

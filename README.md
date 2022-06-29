@@ -66,6 +66,10 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.7.11 Improved network usage (6/15/2022)
   - [x] 0.7.12 Added auxiliary info to Caption (6/18/2022)
   - [x] 0.7.13 Updated BGOR scoring and improved performance slightly (6/23/2022)
+  - [x] 0.7.14 Made compatible with Python 3.8 (6/24/2022)
+  - [x] 0.7.15 Minor bug fixes (6/24/2022)
+  - [x] 0.7.16 Improved inspection of Visitor table (6/26/2022)
+  - [x] 0.7.17 Fixed a bug in caching too aggressively (6/26/2022)
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Page template, UI materials, mobile version
 - [ ] 1.0 Single end point, landing page, radar selection, etc.

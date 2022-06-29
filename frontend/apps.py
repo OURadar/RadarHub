@@ -102,7 +102,7 @@ def monitor(radar='px1000', prefix='PX-'):
 
     files = []
 
-    day = Day.objects.filter(name=prefix).last()
+    day = Day.objects.filter(name=prefix).latest('date')
     if day:
         hourly_count = day.hourly_count
         files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
@@ -113,7 +113,7 @@ def monitor(radar='px1000', prefix='PX-'):
     no_day_warning = 0
     while True:
         time.sleep(3.0)
-        day = Day.objects.filter(name=prefix).last()
+        day = Day.objects.filter(name=prefix).latest('date')
         if day is None:
             no_day_warning += 1
             if no_day_warning < 3 or no_day_warning % 100 == 0:

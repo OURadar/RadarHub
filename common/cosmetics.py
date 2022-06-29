@@ -14,8 +14,15 @@ colors = {
     'cyan': 14,
     'blue': 33,
     'pink': 170,
+<<<<<<< HEAD
     'purple': 141,
     'white': 15
+=======
+    'purple': 134,
+    'white': 15,
+    'gray': 239,
+    'black': 232
+>>>>>>> master
 }
 
 highlights = {

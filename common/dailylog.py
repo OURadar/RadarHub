@@ -38,7 +38,7 @@ class Logger(logging.Logger):
         self.init = False
         handler = logging.StreamHandler()
         handler.setFormatter(self.formatter)
-        handler.setLevel(logging.WARNING)
+        handler.setLevel(logging.DEBUG)
         self.streamHandler = handler
         self.addHandler(handler)
         self.setLevel(logging.INFO)

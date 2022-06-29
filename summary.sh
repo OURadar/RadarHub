@@ -32,12 +32,12 @@ function overview() {
 
 	if [ -f /lib/systemd/system/redis-server.service ]; then
 		echo
-		systemctl status redis --no-pager --lines 4
+		systemctl status redis --no-pager --lines 0
 	fi
 
 	if [ -f /lib/systemd/system/supervisor.service ]; then
 		echo
-		systemctl status supervisor --no-pager --lines 4
+		systemctl status supervisor --no-pager --lines 0
 	fi
 
 	echo
@@ -96,7 +96,7 @@ function overview() {
 function follow() {
 	args=""
 	folder=${var_log}
-	for item in "frontend" "access" "backhaul"; do
+	for item in "frontend" "access" "backhaul" "fifo2db"; do
 		file="${folder}/${item}.log"
 		if [ -f ${file} ]; then
 			args="${args} -f ${file}"

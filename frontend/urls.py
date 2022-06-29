@@ -14,7 +14,6 @@ urlpatterns = [
     path('dev/', views.dev, name='index'),
     path('control/<str:radar>/', views.control_radar, name='radar-control'),
     path('archive/<str:radar>/', views.archive_radar, name='radar-archive'),
-    path('data/date/<str:radar>/', archives.date, name='data-date-json'),
     path('data/catchup/<str:radar>/', archives.catchup, name='data-catchup-json'),
     path('data/month/<str:radar>/<str:day>/', archives.month, name='data-month-json'),
     path('data/count/<str:radar>/<str:day>/', archives.count, name='data-count-json'),

@@ -333,7 +333,7 @@ function list(radar, day, hour, symbol) {
             }
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
-          console.log(grid.fileListGrouped);
+          //console.log(grid.fileListGrouped);
           if (grid.scan in grid.fileListGrouped) {
             grid.index = grid.fileListGrouped[grid.scan].slice(-1)[0].index;
           } else {
@@ -343,6 +343,9 @@ function list(radar, day, hour, symbol) {
             type: "list",
             payload: grid,
           });
+          if (grid.hour < 0) {
+            self.postMessage({ type: "message", payload: "No Data" });
+          }
         });
       else
         response.text().then((response) => {
@@ -427,59 +430,50 @@ function dummy() {
 
 function geometry(sweep) {
   let scan = sweep["name"].split("-")[3];
+  const rs = sweep.rangeStart;
+  const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
+  let el_pad = 0.0;
+  let az_pad = 0.0;
+  const ii = clamp(sweep.nb / 2, 0, sweep.nb - 1);
+  if (scan[0] == "E") {
+    sweep.isRHI = false;
+    const da = sweep.azimuths[ii] - sweep.azimuths[ii - 1];
+    el_pad = sweep.elevations[sweep.nb - 1];
+    az_pad = sweep.azimuths[sweep.nb - 1] + da;
+  } else if (scan[0] == "A") {
+    sweep.isRHI = true;
+    const de = sweep.elevations[ii] - sweep.elevations[ii - 1];
+    el_pad = sweep.elevations[sweep.nb - 1] + de;
+    az_pad = sweep.azimuths[sweep.nb - 1];
+  } else {
+    const da = sweep.azimuths[ii] - sweep.azimuths[ii - 1];
+    const de = sweep.elevations[ii] - sweep.elevations[ii - 1];
+    el_pad = sweep.elevations[sweep.nb - 1] + de;
+    az_pad = sweep.azimuths[sweep.nb - 1] + da;
+  }
+  sweep.elevations.push(el_pad);
+  sweep.azimuths.push(az_pad);
   let points = [];
   let origins = [];
   let elements = [];
-  const rs = sweep.rangeStart;
-  const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
-  if (scan[0] == "E") {
-    sweep.isRHI = false;
-    const e = deg2rad(sweep.scanElevation);
+  for (let k = 0; k < sweep.nb + 1; k++) {
+    const e = deg2rad(sweep.elevations[k]);
+    const a = deg2rad(sweep.azimuths[k]);
     const ce = Math.cos(e);
     const se = Math.sin(e);
-    const ii = clamp(sweep.nb / 2, 0, sweep.nb - 1);
-    const da = sweep.azimuths[ii] - sweep.azimuths[ii - 1];
-    const az = sweep.azimuths[sweep.nb - 1] + da;
-    sweep.azimuths.push(az);
-    for (let k = 0; k < sweep.nb + 1; k++) {
-      const a = deg2rad(sweep.azimuths[k]);
-      const v = k / sweep.nb;
-      const x = ce * Math.sin(a);
-      const y = ce * Math.cos(a);
-      points.push(rs * x, rs * y, rs * se);
-      points.push(re * x, re * y, re * se);
-      origins.push(0, v);
-      origins.push(1, v);
-    }
-    for (let o = 2, l = 2 * sweep.nb; o <= l; o += 2) {
-      elements.push(o - 2, o - 1, o);
-      elements.push(o - 1, o, o + 1);
-    }
-  } else if (scan[0] == "A") {
-    sweep.isRHI = true;
-    const a = deg2rad(sweep.scanAzimuth);
     const ca = Math.cos(a);
     const sa = Math.sin(a);
-    const ii = sweep.nb - 1;
-    const de = sweep.elevations[ii] - sweep.elevations[ii - 1];
-    const el = sweep.elevations[sweep.nb - 1] + de;
-    sweep.elevations.push(el);
-    for (let k = 0; k < sweep.nb + 1; k++) {
-      const e = deg2rad(sweep.elevations[k]);
-      const ce = Math.cos(e);
-      const se = Math.sin(e);
-      const v = k / sweep.nb;
-      const x = ce * sa;
-      const y = ce * ca;
-      points.push(rs * x, rs * y, rs * se);
-      points.push(re * x, re * y, re * se);
-      origins.push(0, v);
-      origins.push(1, v);
-    }
-    for (let o = 2, l = 2 * sweep.nb; o <= l; o += 2) {
-      elements.push(o - 2, o - 1, o);
-      elements.push(o - 1, o, o + 1);
-    }
+    const v = k / sweep.nb;
+    const x = ce * sa;
+    const y = ce * ca;
+    points.push(rs * x, rs * y, rs * se);
+    points.push(re * x, re * y, re * se);
+    origins.push(0, v);
+    origins.push(1, v);
+  }
+  for (let o = 2, l = 2 * sweep.nb; o <= l; o += 2) {
+    elements.push(o - 2, o - 1, o);
+    elements.push(o - 1, o, o + 1);
   }
   sweep.points = points;
   sweep.origins = origins;
@@ -515,6 +509,7 @@ function catchup(radar) {
           grid.fileList = buffer.list;
           grid.hour = buffer.hour;
           grid.day = day;
+          grid.fileListGrouped = {};
           grid.fileList.forEach((file, index) => {
             let elements = file.split("-");
             let scanType = elements[3];
@@ -523,22 +518,24 @@ function catchup(radar) {
             }
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
-          if (state.debug > 1) {
-            console.debug(grid.fileListGrouped);
-            console.debug(`grid.scan = ${grid.scan}`);
+          if (state.verbose > 1) {
+            console.info(grid.fileList);
+            console.info(grid.fileListGrouped);
+            console.info(`grid.scan = ${grid.scan}`);
+            console.info(`grid.index = ${grid.index}`);
           }
           if (grid.scan[0] == "A") {
             grid.index = grid.fileList.length - 1;
+          } else if (grid.scan in grid.fileListGrouped) {
+            grid.index = grid.fileListGrouped[grid.scan].slice(-1)[0].index;
           } else {
-            if (grid.scan in grid.fileListGrouped) {
-              grid.index = grid.fileListGrouped[grid.scan].slice(-1)[0].index;
-            } else {
-              grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
-            }
+            grid.index = grid.fileList.length ? grid.fileList.length - 1 : -1;
           }
-          let file = grid.fileList[grid.index];
-          grid.scan = file.split("-")[3];
-          console.log(`Setting grid.scan to ${grid.scan}`);
+          if (grid.index >= 0) {
+            let file = grid.fileList[grid.index];
+            grid.scan = file.split("-")[3];
+            console.debug(`Setting grid.scan to ${grid.scan}`);
+          }
           self.postMessage({
             type: "list",
             payload: grid,

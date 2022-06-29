@@ -5,8 +5,6 @@
 //  Created by Boonleng Cheong on 9/23/2021.
 //
 
-import { clamp } from "./common";
-
 class Archive {
   constructor(radar) {
     this.radar = radar;
@@ -98,10 +96,14 @@ class Archive {
         this.state.loadCount = 0;
         this.grid.index = index;
         this.loadByIndex(this.grid.index);
-      } else if (this.grid.index >= 0 && index != this.grid.index) {
+      } else if (this.grid.index >= 0) {
         this.state.loadCount = 0;
         this.loadByIndex(this.grid.index);
       } else if (this.grid.index == -1) {
+        if (this.grid.latestFile == "") {
+          this.state.fileListUpdating = false;
+          return;
+        }
         let fileDayString = this.grid.latestFile.split("-")[1];
         let gridDayString = this.grid.dateTimeString.split("-")[0];
         console.log(
@@ -152,7 +154,14 @@ class Archive {
       } else if (payload.state == "disconnect") {
         this.state.liveUpdate = false;
       }
-      console.log(`state.liveUpdate -> ${this.state.liveUpdate}`);
+      if (this.state.verbose) {
+        console.log(
+          `%carchive.onmessage()%c state` +
+            `  liveUpdate = ${this.state.liveUpdate}`,
+          "color: lightseagreen",
+          "color: inherit"
+        );
+      }
       this.showMessage(payload.message, 2500);
     }
     this.onupdate(this.state.tic++);
@@ -307,9 +316,14 @@ class Archive {
   }
 
   toggleLiveUpdate() {
-    console.log(
-      `toggleLiveUpdate() this.state.liveUpdate = ${this.state.liveUpdate}`
-    );
+    if (this.state.verbose) {
+      console.log(
+        `%carchive.toggleLiveUpdate()%c` +
+          `   liveUpdate = ${this.state.liveUpdate}`,
+        "color: lightseagreen",
+        "color: inherit"
+      );
+    }
     if (this.state.liveUpdate) {
       this.disableLiveUpdate();
     } else {

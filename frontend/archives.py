@@ -7,7 +7,6 @@ import struct
 import logging
 import datetime
 import threading
-import numpy as np
 
 from functools import lru_cache
 
@@ -66,7 +65,7 @@ def screen(request):
     headers.pop('Cookie', None)
     ip = get_client_ip(request)
     if ip not in visitor_stats:
-        visitor = {'bandwidth': 0, 'headers': headers, 'count': 1, 'last_visited': datetime.datetime.today()}
+        visitor = {'payload': 0, 'bandwidth': 0, 'headers': headers, 'count': 1, 'last_visited': datetime.datetime.today()}
         visitor_stats[ip] = visitor
     else:
         visitor = visitor_stats[ip]
@@ -85,6 +84,19 @@ def screen(request):
     # if 'Referer' not in request.headers and 'Connection' not in request.headers:
     #     malicious = True
     return ip, malicious
+
+def http_response(ip, payload, cache=False):
+    global visitor_stats
+    visitor_stats[ip]['payload'] += len(payload)
+    net_payload = zlib.compress(payload)
+    net_size = len(net_payload)
+    visitor_stats[ip]['bandwidth'] += net_size
+    response = HttpResponse(net_payload, content_type='application/octet-stream')
+    if cache:
+        response['Cache-Control'] = 'max-age=604800'
+    response['Content-Encoding'] = 'deflate'
+    response['Content-Length'] = net_size
+    return response
 
 def visitors(_):
     # global visitor_stats
@@ -133,6 +145,8 @@ def month(request, radar, day):
     return response
 
 '''
+    Count of data - returns an array of 24 elements
+
     radar - a string of the radar name
           - e.g., px1000, raxpol, or px10k
 
@@ -169,6 +183,8 @@ def count(request, radar, day):
     return response
 
 '''
+    List of files - returns an array of strings
+
     radar - a string of the radar name
           - e.g., px1000, raxpol, or px10k
 
@@ -228,18 +244,20 @@ def list(request, radar, day_hour_symbol):
         if len(hours_with_data):
             message = f'Hour {hour} has no files. Auto-select hour {hours_with_data[0]}.'
             hour = hours_with_data[0]
+            day_hour_symbol = f'{day}-{hour:02d}00-{symbol}'
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
                 show += '   ' + colorize('override', 'red')
                 show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
                 logger.debug(show)
         else:
-            show = colorize('archive.list()', 'green')
-            show += '   ' + color_name_value('radar', radar)
-            show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
-            show += '   ' + color_name_value('hourly_count', '0\'s')
-            logger.warning(show)
-            message = 'All zeros in hourly_count'
+            if settings.VERBOSE > 1:
+                show = colorize('archive.list()', 'green')
+                show += '   ' + color_name_value('radar', radar)
+                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
+                show += '   ' + color_name_value('hourly_count', '0\'s')
+                logger.debug(show)
+            message = 'empty'
             hour = -1
     else:
         message = 'okay'
@@ -253,35 +271,18 @@ def list(request, radar, day_hour_symbol):
     }
     payload = json.dumps(data)
     payload = bytes(payload, 'utf-8')
-    payload = zlib.compress(payload)
-    response = HttpResponse(payload, content_type='application/json')
-    response['Content-Encoding'] = 'deflate'
-    response['Content-Length'] = len(payload)
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    return response
+    return http_response(ip, payload)
 
 '''
+    Load a sweep - returns a dictionary
+
     name - filename
 '''
 @lru_cache(maxsize=1000)
 def _load(name):
     if settings.SIMULATE:
-        elements = name.split('-')
         logger.info(f'Dummy sweep {name}')
-        sweep = {
-            'symbol': elements[4] if len(elements) > 4 else "Z",
-            'longitude': -97.422413,
-            'latitude': 35.25527,
-            'sweepTime': time.mktime(time.strptime(elements[1] + elements[2], r'%Y%m%d%H%M%S')),
-            'sweepElevation': float(elements[3][1:]) if "E" in elements[3] else 0.0,
-            'sweepAzimuth': float(elements[3][1:]) if "A" in elements[3] else 4.0,
-            'gatewidth': 150.0,
-            'waveform': 's01',
-            'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=np.float32),
-            'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=np.float32),
-            'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]], dtype=np.float32),
-            'u8': np.array([[64, 108, 62], [42, 52, 46], [82, 92, 82], [112, 122, 132]], dtype=np.uint8)
-        }
+        sweep = File.dummy_sweep(name)
     else:
         # Database is indexed by date so we extract the time first for a quicker search
         s = pattern_x_yyyymmdd_hhmmss.search(name)
@@ -330,17 +331,14 @@ def load(request, name):
     payload = _load(name + '.nc')
     if payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
-    payload = zlib.compress(payload)
-    response = HttpResponse(payload, content_type='application/octet-stream')
-    response['Content-Encoding'] = 'deflate'
-    response['Content-Length'] = len(payload)
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    return response
+    return http_response(ip, payload, cache=True)
 
 '''
+    Latest date - returns the latest YYYYMMDD and HH
+
     prefix - prefix of a radar, e.g., PX- for PX-1000, RAXPOL- for RaXPol
 '''
-def _date(prefix):
+def latest(prefix):
     if prefix is None:
         return None, None
     day = Day.objects.filter(name=prefix)
@@ -353,13 +351,13 @@ def _date(prefix):
         return None, None
     ymd = day.date.strftime(r'%Y%m%d')
     if settings.VERBOSE > 1:
-        show = colorize('archive._date()', 'green')
+        show = colorize('archive.latest()', 'green')
         show += '   ' + color_name_value('prefix', prefix)
         show += '   ' + color_name_value('day', ymd)
         logger.info(show)
     hour = day.last_hour()
     if hour is None:
-        show = colorize('archive._date()', 'green')
+        show = colorize('archive.latest()', 'green')
         show += '   ' + colorize(' WARNING ', 'warning')
         show += '   ' + colorize(f'Day {day.date} with', 'white')
         show += color_name_value(' .hourly_count', 'zeros')
@@ -367,37 +365,10 @@ def _date(prefix):
         return None, None
     return ymd, hour
 
-def date(request, radar):
-    global visitor_stats
-    if settings.VERBOSE > 1:
-        show = colorize('archive.date()', 'green')
-        show += '   ' + color_name_value('radar', radar)
-        logger.debug(show)
-    ip, malicious = screen(request)
-    if malicious:
-        return forbidden_request
-    if radar == 'undefined' or radar not in radar_prefix:
-        return invalid_query
-    prefix = radar_prefix[radar]
-    ymd, hour = _date(prefix)
-    if ymd is None:
-        data = {
-            'dateString': '19700101-0000',
-            'dayISOString': '1970/01/01',
-            'hour': 0,
-        }
-    else:
-        data = {
-            'dateString': f'{ymd}-{hour:02d}00',
-            'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
-            'hour': hour,
-        }
-    payload = json.dumps(data)
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    response = HttpResponse(payload, content_type='application/json')
-    return response
 
 '''
+    Location - returns a dictionary with latitude, longitude
+
     radar - Input radar name, e.g., px1000, raxpol, etc.
 '''
 def location(radar):
@@ -410,7 +381,7 @@ def location(radar):
         prefix = radar_prefix[radar]
     else:
         prefix = None
-    ymd, hour = _date(prefix)
+    ymd, hour = latest(prefix)
     if ymd is None:
         origins[radar] = {
           'longitude': -97.422413,
@@ -463,7 +434,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
     if radar == 'undefined' or radar not in radar_prefix:
         return invalid_query
     prefix = radar_prefix[radar]
-    ymd, hour = _date(prefix)
+    ymd, hour = latest(prefix)
     if ymd is None:
         data = {
             'dateString': '19700101-0000',
@@ -482,12 +453,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         data['list'] = _list(prefix, f'{dateString}-{symbol}')
     payload = json.dumps(data)
     payload = bytes(payload, 'utf-8')
-    payload = zlib.compress(payload)
-    response = HttpResponse(payload, content_type='application/json')
-    response['Content-Encoding'] = 'deflate'
-    response['Content-Length'] = len(payload)
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    return response
+    return http_response(ip, payload)
 
 def monitor():
     show = colorize('archives.monitor()', 'green')
@@ -506,6 +472,7 @@ def monitor():
                 visitor = match.first()
                 visitor.user_agent = user_agent
                 visitor.count += stats['count']
+                visitor.payload += stats['payload']
                 visitor.bandwidth += stats['bandwidth']
                 visitor.last_visited = stats['last_visited']
             else:
@@ -513,9 +480,11 @@ def monitor():
                     ip=ip,
                     user_agent=user_agent,
                     count=stats['count'],
+                    payload=stats['payload'],
                     bandwidth=stats['bandwidth'],
                     last_visited=stats['last_visited'])
             stats['bandwidth'] = 0
+            stats['payload'] = 0
             stats['count'] = 0
             visitor.save()
         visitor_stats_access.release()

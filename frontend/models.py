@@ -7,30 +7,35 @@
 #
 
 import os
-import re
-import time
+import json
 import logging
 import tarfile
 import datetime
+import urllib.request
+
 import numpy as np
-from netCDF4 import Dataset
-from django.db import models
-from django.core.validators import int_list_validator
-from django.conf import settings
+
 from common import colorize
+from django.conf import settings
+from django.core.validators import int_list_validator
+from django.db import models
+from netCDF4 import Dataset
 
 logger = logging.getLogger('frontend')
-pattern_firefox = re.compile(r'(?<=.)Firefox/[0-9.]{1,10}')
-pattern_chrome = re.compile(r'(?<=.)Chrome/[0-9.]{1,10}')
-pattern_safari = re.compile(r'(?<=.)Safari/[0-9.]{1,10}')
-pattern_opera = re.compile(r'(?<=.)Opera/[0-9.]{1,10}')
 
-# Some helper functions
+dot_colors = ['black', 'gray', 'blue', 'green', 'orange']
+
+user_agent_strings = {}
+if os.path.exists(settings.USER_AGENT_TABLE):
+    with open(settings.USER_AGENT_TABLE, 'r') as fid:
+        user_agent_strings = json.load(fid)
 
 np.set_printoptions(precision=2, threshold=5, linewidth=120)
-match_day = re.compile(r'([12][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])').match
+
 vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585', '\U00002586', '\U00002587']
+
 super_numbers = [' ', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁺', '⁻', '⁼', '⁽', '⁾']
+
 empty_sweep = {
     'symbol': 'U',
     'longitude': -97.422413,
@@ -46,8 +51,22 @@ empty_sweep = {
     'u8': np.empty((0, 0), dtype=np.uint8)
 }
 
-def valid_day(day):
-    return match_day(day) is not None
+dummy_sweep = {
+    'symbol': "Z",
+    'longitude': -97.422413,
+    'latitude': 35.25527,
+    'sweepTime': 1369071296.0,
+    'sweepElevation': 4.0,
+    'sweepAzimuth': 42.0,
+    'gatewidth': 150.0,
+    'waveform': 's01',
+    'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=np.float32),
+    'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=np.float32),
+    'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]], dtype=np.float32),
+    'u8': np.array([[64, 108, 62], [42, 52, 46], [82, 92, 82], [112, 122, 132]], dtype=np.uint8)
+}
+
+# Some helper functions
 
 '''
     value - Raw RhoHV values
@@ -75,7 +94,7 @@ File
  - show() - shows the self representation on screen
  - get_path() - returns full path of the archive that contains the file
  - get_age() - returns the current age of the file
- - read() - reads from a plain path or a .tgz / .txz / .tar.xz archive using _read()
+ - read() - reads from a plain path or a .tgz / .txz / .tar.xz archive using _read() and returns a sweep
  - _read() - reads from a file object, returns a dictionary with the data
 '''
 class File(models.Model):
@@ -191,6 +210,15 @@ class File(models.Model):
             logger.error(f'Error reading {self.name}')
             return empty_sweep
 
+    @staticmethod
+    def dummy_sweep(name='PX-20130520-123456-Z.nc'):
+        parts = name.split('-')
+        sweep = dummy_sweep.copy()
+        sweep['symbol'] = parts[4] if len(parts) > 4 else "Z"
+        sweep['sweepTime'] = datetime.datetime.strptime(parts[1] + parts[2], r'%Y%m%d%H%M%S').timestamp()
+        sweep['sweepElevation'] = float(parts[3][1:]) if "E" in parts[3] else 0.0
+        sweep['sweepAzimuth'] = float(parts[3][1:]) if "A" in parts[3] else 42.0
+        return sweep
 
 '''
 Day
@@ -230,19 +258,22 @@ class Day(models.Model):
         indexes = [models.Index(fields=['date', ]),
                    models.Index(fields=['name', ])]
 
-    def __repr__(self, long=False, short=False):
+    def __repr__(self, format='pretty'):
         self.fix_date()
         date = self.date.strftime(r'%Y%m%d') if self.date else '00000000'
-        if short:
-            return self.name + self.date.strftime(r'%Y%m%d')
-        elif long:
-            return f'{self.name}{date} {self.count} {self.hourly_count}  B:{self.blue} G:{self.green} O:{self.orange} R:{self.red}'
+        dot = colorize('●', dot_colors[self.weather_condition()])
+        if format == 'short':
+            return self.name + date
+        elif format == 'raw':
+            return f'{self.name}{date} {dot} {self.blue},{self.green},{self.orange},{self.red} {self.count} {self.hourly_count} ({len(self.hourly_count)})'
         else:
-            # hh = [int(x) for x in self.hourly_count.split(',')]
-            # dd = [super_numbers[(x // 100)] + f'{(x % 100):02d}' for x in hh]
-            # counts = ''.join(dd)
-            counts = ' '.join([f'{n:>3}' for n in self.hourly_count.split(',')])
-            show = f'{self.name}{date} {counts} {self.__vbar__()}'
+            def _int2str(num):
+                q = num // 1000
+                r = num % 1000
+                s = super_numbers[q] + str(r)
+                return f'{s:>4}'
+            counts = ''.join([_int2str(int(n)) for n in self.hourly_count.split(',')])
+            show = f'{date} {dot} {self.__vbar__()} {counts}'
         return show
 
     def __vbar__(self):
@@ -251,17 +282,20 @@ class Day(models.Model):
             i = min(7, int(s / 100))
             b += colorize(vbar[i], c, end='')
         b += '\033[m'
-        b += ' ' + str(self.weather_condition())
         return b
 
-    def show(self, long=False, short=False):
-        print(self.__repr__(long=long, short=short))
+    def show(self, format=''):
+        print(self.__repr__(format=format))
 
     def fix_date(self):
         if self.date is None:
             return
         if not isinstance(self.date, datetime.date):
-            self.date = datetime.date.fromisoformat(self.date) if valid_day(self.date) else None
+            try:
+                self.date = datetime.date.fromisoformat(self.date)
+            except:
+                logger.warning(f'fix_date() Unable to fix {self.date}')
+                self.date = None
 
     def first_hour(self):
         hours = [k for k, e in enumerate(self.hourly_count.split(',')) if e != '0']
@@ -295,17 +329,20 @@ class Day(models.Model):
 
     def weather_condition(self):
         cond = 0
-        if self.blue < 10:
+        if self.blue < 100:
             cond = 1
         elif self.green < 300 and self.orange < 200:
             cond = 2
-        elif self.green / self.blue > 1:
+        elif self.green / self.blue >= 0.1:
             if self.red / self.green >= 0.1:
                 cond = 4
             else:
                 cond = 3
+        elif self.blue >= 100:
+            cond = 2
         if cond == 0:
-            print(f'Day.weather_condition() {self.date} {self.blue} {self.green} {self.orange} {self.red}')
+            logger.info(f'Day.weather_condition() {self.name}{self.date} b:{self.blue} g:{self.green} o:{self.orange} r:{self.red} -> {cond} -> 1')
+            cond = 1
         return cond
 
 '''
@@ -313,7 +350,8 @@ Visitor
 
  - ip = IP address of the visitor
  - count = total number of screening
- - bandwidth = estimated data usage
+ - payload = raw payload size (B)
+ - bandwidth = network bandwidth usage (B)
  - user_agent = the last inspected OS / browser
  - last_visitor = last visited date time
 
@@ -325,6 +363,7 @@ Visitor
 class Visitor(models.Model):
     ip = models.GenericIPAddressField()
     count = models.PositiveIntegerField(default=0)
+    payload = models.PositiveIntegerField(default=0)
     bandwidth = models.PositiveIntegerField(default=0)
     user_agent = models.CharField(max_length=256, default='')
     last_visited = models.DateTimeField()
@@ -336,42 +375,44 @@ class Visitor(models.Model):
         time_string = self.last_visited_time_string()
         return f'{self.ip} : {self.count} : {self.bandwidth} : {time_string}'
 
+    def last_visited_date_string(self):
+        return self.last_visited.strftime(r'%Y/%m/%d')
+
     def last_visited_time_string(self):
         return self.last_visited.strftime(r'%Y/%m/%d %H:%M')
 
-    def machine(self):
-        # Could just use this: http://www.useragentstring.com/pages/api.php
-        if 'Macintosh' in self.user_agent:
-            return 'macOS'
-        if 'Windows' in self.user_agent:
-            return 'Windows'
-        if 'Linux' in self.user_agent:
-            return 'Linux'
-        if 'iPhone' in self.user_agent:
-            return 'iOS'
-        if 'iPad' in self.user_agent:
-            return 'iPadOS'
-        if 'Chrome OS' in self.user_agent:
-            return 'Chrome OS'
-        if 'Search Bot' in self.user_agent:
-            return 'Search Bot'
-        return 'Unknown'
-
-    def browser(self):
-        if pattern_firefox.findall(self.user_agent):
-            return 'Firefox'
-        if pattern_chrome.findall(self.user_agent):
-            return 'Chrome'
-        if pattern_safari.findall(self.user_agent):
-            return 'Safari'
-        if pattern_opera.findall(self.user_agent):
-            return 'Opera'
-        return 'Unknown'
+    def user_agent_string(self, reload=False):
+        def _replace_os_string(key):
+            oses = {'OS X': 'macOS', 'iPhone OS': 'iOS'}
+            return oses[key] if key in oses else key
+        # API reference: http://www.useragentstring.com/pages/api.php
+        global user_agent_strings
+        if self.user_agent in user_agent_strings and not reload:
+            agent = user_agent_strings[self.user_agent]
+            machine = _replace_os_string(agent['os_name'])
+            browser = agent['agent_name']
+            return f'{machine} / {browser}'
+        else:
+            s = self.user_agent.replace(' ', r'%20')
+            try:
+                url = f'http://www.useragentstring.com/?uas={s}&getJSON=agent_type-agent_name-agent_version-os_name'
+                logger.info(f'New browser {self.user_agent} ...')
+                response = urllib.request.urlopen(url)
+                if response.status == 200:
+                    agent = json.loads(response.readline())
+                    user_agent_strings[self.user_agent] = agent
+                    with open(settings.USER_AGENT_TABLE, 'w') as fid:
+                        json.dump(user_agent_strings, fid)
+                    return self.user_agent_string()
+            except:
+                pass
+        return 'Unknown / Unknown'
 
     def dict(self, num2str=True):
         return {
             'ip': self.ip,
             'count': f'{self.count:,d}' if num2str else self.count,
+            'payload': f'{self.payload:,d}' if num2str else self.payload,
             'bandwidth': f'{self.bandwidth:,d}' if num2str else self.bandwidth,
             'user_agent': self.user_agent,
             'last_visited': self.last_visited
