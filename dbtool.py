@@ -31,7 +31,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'radarhub.settings')
 django.setup()
 
 from django.conf import settings
+
 from frontend.models import File, Day, Visitor
+
 from common import colorize, color_name_value, dailylog
 
 __prog__ = os.path.basename(sys.argv[0])
@@ -748,7 +750,7 @@ def compute_bgor(day):
         return
     scans = [file.name.split('-')[3] for file in files]
     scans = list(np.unique(scans))
-    if 'E0.0' in scans:
+    if 'E0.0' in scans and len(scans) > 1:
         scans.remove('E0.0')
     scan = 'E4.0' if 'E4.0' in scans else scans[0]
     logger.debug(f'scans = {scans}  selected scan = {scan}')
@@ -848,9 +850,12 @@ def show_sweep_summary(source, markdown=False):
         print(f'Data shape = {shape}\nRaw size = {size:,d} B')
 
 '''
-| IP Address      |    Usage (B) |   Count |      OS / Browser | Last Visited     | Location                                   |
-| --------------- |------------- | ------- | ----------------- | ---------------- | ------------------------------------------ |
-| 107.77.220.225  |      189,884 |      11 |    macOS / Safari | 2022/06/17 17:11 | Dallas, Texas, United States               |
+
+    Shows visitor summary
+
+    | IP Address      |    Usage (B) |   Count |      OS / Browser | Last Visited     | Location                                   |
+    | --------------- |------------- | ------- | ----------------- | ---------------- | ------------------------------------------ |
+    | 107.77.220.225  |      189,884 |      11 |    macOS / Safari | 2022/06/17 17:11 | Dallas, Texas, United States               |
 '''
 
 def show_visitor_log(markdown=False, show_city=False):
@@ -892,6 +897,41 @@ def show_visitor_log(markdown=False, show_city=False):
     for visitor in Visitor.objects.filter(ip__startswith='10.').order_by('-last_visited'):
         show_visitor(visitor, markdown=markdown)
 
+def check_path(folder):
+    original = os.path.join(folder, '_original')
+    original_tgz = os.path.join(folder, '_original_tgz')
+    if os.path.exists(original) and os.path.exists(original_tgz):
+        archives = glob.glob(f'{original}/*.tar.xz')
+        if len(archives):
+            # print(f'{original_tgz} is safe to remove')
+            cmd = f'rm -rf {original_tgz}'
+            print(cmd)
+            # os.system(cmd)
+    elif os.path.exists(original):
+        archives = glob.glob(f'{original}/[A-Z]*.tar.xz')
+        if len(archives):
+            print(f'{original} ' + colorize('ok', 'green'))
+            return
+        archives = glob.glob(f'{original}/[A-Z]*.tgz')
+        if len(archives):
+            print(f'{original} ' + colorize('contains .tgz files', 'orange'))
+        else:
+            files = glob.glob(f'{original}/*.*')
+            if len(files):
+                print(f'{original} ' + colorize('ontains something else', 'orange'))
+            else:
+                print(f'{original} ' + colorize('empty', 'orange'))
+    else:
+        archives = glob.glob(f'{folder}/[A-Z]*.tgz')
+        if len(archives):
+            cmd = f'mkdir {original}'
+            print(cmd)
+            # os.system(cmd)
+            cmd = f'mv {folder}/[A-Z]*.tgz {original}'
+            print(cmd)
+            # os.system(cmd)
+        else:
+            print(f'{folder} structure unexpected')
 #
 
 def dbtool_main():
@@ -920,6 +960,7 @@ def dbtool_main():
             {__prog__} -f 20220225
             {__prog__} -f RAXPOL-20220225
             {__prog__} -f --remove 20220127
+            {__prog__} --check-path /mnt/data/RaXPol/2022/202206*
         '''),
         epilog='Copyright (c) 2021-2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*',
@@ -931,8 +972,8 @@ def dbtool_main():
               - day (e.g., 20220223) for -c, -d
              '''))
     parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
-    parser.add_argument('-c', dest='check_day', action='store_true', help='checks entries from the Day table')
-    parser.add_argument('-C', dest='check_file', action='store_true', help='checks entries from the File table')
+    parser.add_argument('-c', '--check-day', action='store_true', help='checks entries from the Day table')
+    parser.add_argument('-C', '--check-file', action='store_true', help='checks entries from the File table')
     parser.add_argument('-d', dest='build_day', action='store_true', help='builds a Day entry')
     parser.add_argument('-f', dest='find_duplicates', action='store_true', help='finds duplicate File entries in the database')
     parser.add_argument('--format', default='pretty', choices=['raw', 'short', 'pretty'], help='sets output format (default=pretty)')
@@ -942,6 +983,7 @@ def dbtool_main():
     parser.add_argument('-l', '--latest', action='store_true', help='shows the latest entries of each radar')
     parser.add_argument('--markdown', action='store_true', help='generates output in markdown')
     parser.add_argument('--no-bgor', dest='bgor', default=True, action='store_false', help='skips computing bgor')
+    parser.add_argument('-p', '--check-path', action='store_true', help='checks the storage path')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='shows a sweep summary')
@@ -1067,6 +1109,10 @@ def dbtool_main():
         if args.markdown:
             logger.hideLogOnScreen()
         show_visitor_log(markdown=args.markdown, show_city=args.show_city)
+    elif args.check_path:
+        for folder in args.source:
+            folder = folder[:-1] if folder[-1] == '/' else folder
+            check_path(folder)
     else:
         parser.print_help(sys.stderr)
 
