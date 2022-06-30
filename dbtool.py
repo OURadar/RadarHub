@@ -896,6 +896,8 @@ def show_visitor_log(markdown=False, show_city=False):
         show_visitor(visitor, markdown=markdown)
     for visitor in Visitor.objects.filter(ip__startswith='10.').order_by('-last_visited'):
         show_visitor(visitor, markdown=markdown)
+    if os.path.exists(settings.IP_DATABASE):
+        fid.close()
 
 def check_path(folder):
     original = os.path.join(folder, '_original')

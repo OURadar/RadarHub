@@ -17,7 +17,8 @@ def index(request):
     return render(request, 'frontend/intro.html')
 
 def dev(request):
-    return render(request, 'frontend/index-dev.html')
+    # return render(request, 'frontend/index-dev.html')
+    return render(request, 'frontend/maintenance.html')
 
 # Control
 

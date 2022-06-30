@@ -89,6 +89,12 @@ Copyright Boonleng Cheong
   src: url("../blob/helveticaneue/HelveticaNeueMed.ttf") format("truetype");
 }
 
+@font-face {
+  font-family: "Message";
+  font-style: normal;
+  src: url("../blob/helveticaneue/HelveticaNeueLt.ttf") format("truetype");
+}
+
 body,
 html {
   /* System Fonts as used by GitHub */
@@ -124,6 +130,14 @@ canvas {
 }
 .subtitle {
   font-size: 24px;
+}
+.message {
+  font-family: "Message";
+  font-size: 24pt;
+  font-weight: 100;
+  margin: 50px auto;
+  max-width: 1000px;
+  line-height: 36pt;
 }
 .fill {
   width: 100%;

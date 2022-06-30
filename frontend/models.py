@@ -329,7 +329,7 @@ class Day(models.Model):
 
     def weather_condition(self):
         cond = 0
-        if self.blue < 100:
+        if self.blue < 100 and self.green < 500:
             cond = 1
         elif self.green < 300 and self.orange < 200:
             cond = 2
@@ -401,8 +401,11 @@ class Visitor(models.Model):
                 if response.status == 200:
                     agent = json.loads(response.readline())
                     user_agent_strings[self.user_agent] = agent
-                    with open(settings.USER_AGENT_TABLE, 'w') as fid:
-                        json.dump(user_agent_strings, fid)
+                    try:
+                        with open(settings.USER_AGENT_TABLE, 'w') as fid:
+                            json.dump(user_agent_strings, fid)
+                    except:
+                        logger.warning(f'Unable to write to {settings.USER_AGENT_TABLE}')
                     return self.user_agent_string()
             except:
                 pass
