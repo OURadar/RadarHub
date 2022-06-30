@@ -19,6 +19,7 @@ urlpatterns = [
     path('data/count/<str:radar>/<str:day>/', archives.count, name='data-count-json'),
     path('data/list/<str:radar>/<str:day_hour_symbol>/', archives.list, name='data-list-json'),
     path('data/load/<str:name>/', archives.load, name='data-load-binary'),
+    path('visitors/<str:mode>/', archives.visitors, name='visitors'),
     path('visitors/', archives.visitors, name='visitors'),
     path('robots.txt', views.robots_txt),
 ]

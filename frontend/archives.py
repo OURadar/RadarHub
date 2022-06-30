@@ -58,7 +58,7 @@ def header(_, name):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
-def screen(request):
+def screen(request, count=False):
     global visitor_stats
     global visitor_stats_monitor_thread
     headers = dict(request.headers)
@@ -71,7 +71,8 @@ def screen(request):
         visitor = visitor_stats[ip]
         if visitor['headers']['User-Agent'] != headers['User-Agent']:
             visitor['headers']['User-Agent'] = headers['User-Agent']
-        visitor['count'] += 1
+        if count:
+            visitor['count'] += 1
         visitor['last_visited'] = datetime.datetime.today().replace(tzinfo=datetime.timezone.utc)
     if visitor_stats_monitor_thread is None:
         visitor_stats_monitor_thread = threading.Thread(target=monitor)
@@ -98,13 +99,14 @@ def http_response(ip, payload, cache=False):
     response['Content-Length'] = net_size
     return response
 
-def visitors(_):
-    # global visitor_stats
-    # payload = pp.pformat(visitor_stats)
-    stats = []
-    for visitor in Visitor.objects.all():
-        stats.append(visitor.dict())
-    payload = pp.pformat(stats)
+def visitors(_, mode=''):
+    if mode == 'live':
+        payload = pp.pformat(visitor_stats)
+    else:
+        stats = []
+        for visitor in Visitor.objects.all():
+            stats.append(visitor.dict())
+        payload = pp.pformat(stats)
     response = HttpResponse(payload, content_type='application/json')
     return response
 
@@ -140,9 +142,8 @@ def month(request, radar, day):
         array[key] = entry.weather_condition() if entry else 0
         date += step
     payload = json.dumps(array)
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    response = HttpResponse(payload, content_type='application/json')
-    return response
+    payload = bytes(payload, 'utf-8')
+    return http_response(ip, payload)
 
 '''
     Count of data - returns an array of 24 elements
@@ -214,7 +215,7 @@ def list(request, radar, day_hour_symbol):
     show = colorize('archive.list()', 'green')
     show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
     logger.debug(show)
-    ip, malicious = screen(request)
+    ip, malicious = screen(request, count=True)
     if malicious:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':
@@ -325,7 +326,7 @@ def load(request, name):
         show = colorize('archive.load()', 'green')
         show += '   ' + color_name_value('name', name)
         logger.debug(show)
-    ip, malicious = screen(request)
+    ip, malicious = screen(request, count=True)
     if malicious:
         return forbidden_request
     payload = _load(name + '.nc')
@@ -428,7 +429,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         show = colorize('archive.catchup()', 'green')
         show += '   ' + color_name_value('radar', radar)
         logger.debug(show)
-    ip, bad = screen(request)
+    ip, bad = screen(request, count=True)
     if bad:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix:
