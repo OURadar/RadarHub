@@ -35,8 +35,10 @@ for prefix, item in settings.RADARS.items():
     radar_prefix[radar] = prefix
 
 visitor_stats = {}
-visitor_stats_access = threading.Lock()
+visitor_stats_lock = threading.Lock()
 visitor_stats_monitor_thread = None
+
+# Learning modules
 
 def binary(request, name):
     ip, malicious = screen(request)
@@ -58,7 +60,9 @@ def header(_, name):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
-def screen(request):
+# Helper functions
+
+def screen(request, count=False):
     global visitor_stats
     global visitor_stats_monitor_thread
     headers = dict(request.headers)
@@ -71,16 +75,15 @@ def screen(request):
         visitor = visitor_stats[ip]
         if visitor['headers']['User-Agent'] != headers['User-Agent']:
             visitor['headers']['User-Agent'] = headers['User-Agent']
-        visitor['count'] += 1
+        if count:
+            visitor['count'] += 1
         visitor['last_visited'] = datetime.datetime.today().replace(tzinfo=datetime.timezone.utc)
     if visitor_stats_monitor_thread is None:
         visitor_stats_monitor_thread = threading.Thread(target=monitor)
         visitor_stats_monitor_thread.start()
     malicious = False
-    # if 'Accept-Encoding' not in headers or 'deflate' not in headers['Accept-Encoding']:
-    #     malicious = True
-    # if pattern_bad_agents.match(request.headers['User-Agent']):
-    #     malicious = True
+    if 'Accept-Encoding' not in headers or 'deflate' not in headers['Accept-Encoding']:
+        malicious = True
     # if 'Referer' not in request.headers and 'Connection' not in request.headers:
     #     malicious = True
     return ip, malicious
@@ -98,15 +101,25 @@ def http_response(ip, payload, cache=False):
     response['Content-Length'] = net_size
     return response
 
-def visitors(_):
-    # global visitor_stats
-    # payload = pp.pformat(visitor_stats)
-    stats = []
-    for visitor in Visitor.objects.all():
-        stats.append(visitor.dict())
-    payload = pp.pformat(stats)
-    response = HttpResponse(payload, content_type='application/json')
+# Stats
+
+def stats(_, mode=''):
+    if mode == 'recent-visitors':
+        payload = pp.pformat(visitor_stats)
+    elif mode == 'visitors':
+        stats = []
+        for visitor in Visitor.objects.all():
+            stats.append(visitor.dict())
+        payload = pp.pformat(stats)
+    elif mode == 'cache':
+        cache_info = _load.cache_info()
+        payload = str(cache_info)
+    else:
+        payload = 'Nothing'
+    response = HttpResponse(payload, content_type='text/plain')
     return response
+
+# Data
 
 '''
     radar - a string of the radar name
@@ -140,9 +153,8 @@ def month(request, radar, day):
         array[key] = entry.weather_condition() if entry else 0
         date += step
     payload = json.dumps(array)
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    response = HttpResponse(payload, content_type='application/json')
-    return response
+    payload = bytes(payload, 'utf-8')
+    return http_response(ip, payload)
 
 '''
     Count of data - returns an array of 24 elements
@@ -214,7 +226,7 @@ def list(request, radar, day_hour_symbol):
     show = colorize('archive.list()', 'green')
     show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
     logger.debug(show)
-    ip, malicious = screen(request)
+    ip, malicious = screen(request, count=True)
     if malicious:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':
@@ -299,7 +311,7 @@ def _load(name):
             sweep = match.read()
         else:
             return None
-
+    # Down-sample the sweep if the gate spacing is too fine
     gatewidth = 1.0e-3 * sweep['gatewidth']
     if gatewidth < 0.05:
         gatewidth *= 2.0;
@@ -325,7 +337,7 @@ def load(request, name):
         show = colorize('archive.load()', 'green')
         show += '   ' + color_name_value('name', name)
         logger.debug(show)
-    ip, malicious = screen(request)
+    ip, malicious = screen(request, count=True)
     if malicious:
         return forbidden_request
     payload = _load(name + '.nc')
@@ -428,7 +440,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         show = colorize('archive.catchup()', 'green')
         show += '   ' + color_name_value('radar', radar)
         logger.debug(show)
-    ip, bad = screen(request)
+    ip, bad = screen(request, count=True)
     if bad:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix:
@@ -455,12 +467,14 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
     payload = bytes(payload, 'utf-8')
     return http_response(ip, payload)
 
+# Threads
+
 def monitor():
     show = colorize('archives.monitor()', 'green')
     show += '   ' + color_name_value('Visitor.objects.count()', Visitor.objects.count())
     logger.info(show)
     while True:
-        visitor_stats_access.acquire()
+        visitor_stats_lock.acquire()
         for ip, stats in visitor_stats.items():
             if stats['count'] == 0 and stats['bandwidth'] == 0:
                 continue
@@ -487,5 +501,6 @@ def monitor():
             stats['payload'] = 0
             stats['count'] = 0
             visitor.save()
-        visitor_stats_access.release()
+        visitor_stats_lock.release()
         time.sleep(3)
+
