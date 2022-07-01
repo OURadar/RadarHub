@@ -10,7 +10,7 @@ import threading
 
 from functools import lru_cache
 
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.conf import settings
 
 from .models import File, Day, Visitor
@@ -115,9 +115,9 @@ def stats(_, mode=''):
         cache_info = _load.cache_info()
         payload = str(cache_info)
     else:
-        payload = 'Nothing'
-    response = HttpResponse(payload, content_type='text/plain')
-    return response
+        raise Http404
+
+    return HttpResponse(payload, content_type='text/plain')
 
 # Data
 
