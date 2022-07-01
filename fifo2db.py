@@ -98,7 +98,7 @@ def catchupV1(file, root='/mnt/data'):
         dayTree = date.strftime(r'%Y/%Y%m%d')
         dayFolder = f'{folder}/{dayTree}'
         logger.info(color_name_value('folder', dayFolder) + '   ' + color_name_value('hour', hour))
-        dbtool.xz_folder(dayFolder, hour, verbose=0)
+        dbtool.xz_folder(dayFolder, hour)
         date += stride
         hour = 0
 
@@ -143,7 +143,7 @@ def catchup(root='/mnt/data'):
             dayTree = date.strftime(r'%Y/%Y%m%d')
             dayFolder = f'{folder}/{dayTree}'
             logger.info(color_name_value('folder', dayFolder) + '   ' + color_name_value('hour', hour))
-            dbtool.xz_folder(dayFolder, hour, verbose=0)
+            dbtool.xz_folder(dayFolder, hour)
             date += stride
             hour = 0
         radars[prefix]['count'] += 1
