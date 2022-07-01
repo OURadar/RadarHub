@@ -200,6 +200,7 @@ postgres=#
 postgres=# CREATE USER radarhub;
 postgres-# ALTER ROLE radarhub WITH PASSWORD '_radarhub_password_';
 postgres-# GRANT ALL PRIVILEGES ON DATABASE radarhub TO radarhub;
+postgres-# ALTER ROLE radarhub SUPERUSER CREATEROLE CREATEDB;
 postgres-# ALTER DATABASE radarhub OWNER TO radarhub;
 postgres=#
 postgres=# CREATE USER guest;
