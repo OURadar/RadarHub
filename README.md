@@ -279,6 +279,20 @@ SELECT column_name, data_type, character_maximum_length FROM information_schema.
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
 ```
 
+## Migrating PostgreSQL to another machine:
+
+On the source machine, edit `/etc/postgresql/12/main/pg_hba.conf` by adding the following line:
+
+```conf
+host    replication     postgres        10.197.14.0/24          trust
+```
+
+```shell
+sudo systemctl stop postgresql
+rm -rf /var/lib/postgresql/12/main/*
+sudo -u postgres pg_basebackup -h dwv05 -U postgres -D /var/lib/postgresql/12/main/
+```
+
 ## Potential OS Limitations
 
 If webpack display a message like this:
