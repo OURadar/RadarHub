@@ -233,10 +233,17 @@ def process_archives(id, run, lock, queue, out):
             ramfile = task['ramfile']
             logger.debug(f'{id:02d}: {archive} {ramfile}')
             xx = []
-            with tarfile.open(archive) as tar:
-                for info in tar.getmembers():
-                    xx.append([info.name, info.offset, info.offset_data, info.size, archive])
-            out.put({'name': os.path.basename(archive), 'xx': xx})
+            try:
+                with tarfile.open(archive) as tar:
+                    for info in tar.getmembers():
+                        xx.append([info.name, info.offset, info.offset_data, info.size, archive])
+                    out.put({'name': os.path.basename(archive), 'xx': xx})
+            except tarfile.ReadError:
+                logger.warning(f'Failed to open {archive}')
+                os.system(f'rm -f {archive}')
+            except EOFError:
+                logger.warning(f'Truncated file {archive}')
+                os.system(f'rm -f {archive}')
             os.remove(ramfile)
         else:
             time.sleep(0.1)
@@ -270,11 +277,24 @@ def list_files(folder):
     use_bulk_update - use django's bulk update/create functions
             verbose - verbosity level
 '''
-def xz_folder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
+def xz_folder(folder, hour=0, check_db=True, bulk_update=True, args=None):
+    try:
+        progress = args.progress
+    except:
+        progress = None
+    try:
+        skip = args.skip
+    except:
+        skip = True
+    try:
+        verbose = args.verbose
+    except:
+        verbose = 0
     show = colorize('xz_folder()', 'green')
     show += '   ' + color_name_value('folder', folder)
     show += '   ' + color_name_value('check_db', check_db)
-    show += '   ' + color_name_value('use_bulk_update', use_bulk_update)
+    show += '   ' + color_name_value('bulk_update', bulk_update)
+    show += '   ' + color_name_value('skip', skip)
     logger.info(show)
 
     use_mp = 'linux' in sys.platform
@@ -291,17 +311,29 @@ def xz_folder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         logger.info(f'No files in {folder}. Unable to continue.')
         return
 
-    if not check_db:
-        d = check_day(folder)
-        if d:
-            d = d[0]
-            show = colorize(' WARNING ', 'warning')
-            logger.warning(f'{show} There are already {d.count:,d} entries.')
-            logger.warning(f'{show} Quick insert will result in duplicates. Try -i instead.')
+    d = check_day(folder)
+    if d:
+        d = d[0]
+
+    if not check_db and d:
+        show = colorize(' WARNING ', 'warning')
+        logger.warning(f'{show} There are {d.count:,d} existing entries.')
+        logger.warning(f'{show} Quick insert will result in duplicates. Try -i instead.')
+        ans = input('Do you still want to continue (y/[n])? ')
+        if not ans == 'y':
+            logger.info('Whew. Nothing happend.')
+            return
+
+    if d.count == len(raw_archives):
+        logger.warning(f'Number of files == Day({basename}).count = {d.count:,}')
+        if skip is None:
             ans = input('Do you still want to continue (y/[n])? ')
             if not ans == 'y':
-                logger.info('Whew. Nothing happend.')
+                logger.info(f'Folder {folder} skipped')
                 return
+        elif skip == True:
+            logger.info(f'Folder {folder} skipped')
+            return
 
     day_string = f'{s[0:4]}-{s[4:6]}-{s[6:8]}'
     date_range = [f'{day_string} {hour:02d}:00Z', f'{day_string} 23:59:59.99Z']
@@ -338,7 +370,7 @@ def xz_folder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             processes.append(p)
             p.start()
 
-        for archive in tqdm.tqdm(archives) if verbose else archives:
+        for archive in tqdm.tqdm(archives) if progress else archives:
             # Copy the file to ramdisk and queue the work after the file is copied
             basename = os.path.basename(archive)
             if os.path.exists('/mnt/ramdisk'):
@@ -367,7 +399,7 @@ def xz_folder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             keys.append(key)
             output[key] = out
     else:
-        for archive in tqdm.tqdm(archives) if verbose else archives:
+        for archive in tqdm.tqdm(archives) if progress else archives:
             xx = []
             with tarfile.open(archive) as tar:
                 for info in tar.getmembers():
@@ -426,10 +458,10 @@ def xz_folder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         count_update = 0;
         count_ignore = 0;
 
-        if use_bulk_update:
+        if bulk_update:
             logger.info('Pass 2 / 2 - Gathering entries ...')
             array_of_files = []
-            for key in tqdm.tqdm(keys) if verbose else keys:
+            for key in tqdm.tqdm(keys) if progress else keys:
                 xx = output[key]['xx']
                 files, cc, cu, ci = __handle_data__(xx)
                 array_of_files.append(files)
@@ -447,7 +479,7 @@ def xz_folder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
             logger.info(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
         else:
             logger.info('Pass 2 / 2 - Inserting entries into the database ...')
-            for key in tqdm.tqdm(keys) if verbose else keys:
+            for key in tqdm.tqdm(keys) if progress else keys:
                 xx = output[key]['xx']
                 _, cc, cu, ci = __handle_data__(xx, save=True)
                 count_create += cc;
@@ -471,7 +503,7 @@ def xz_folder(folder, hour=0, check_db=True, use_bulk_update=True, verbose=0):
         logger.info('Pass 2 / 2 - Creating entries ...')
         if verbose:
             array_of_files = []
-            for key in tqdm.tqdm(keys):
+            for key in tqdm.tqdm(keys) if progress else keys:
                 xx = output[key]['xx']
                 files = __sweep_files__(xx)
                 array_of_files.append(files)
@@ -530,7 +562,7 @@ def build_day(source, bgor=False, verbose=0):
     day = Day.objects.filter(date=date, name=prefix)
     if day:
         mode = 'U'
-        day = day[0]
+        day = day.first()
     else:
         day = Day(date=date, name=prefix)
 
@@ -559,11 +591,11 @@ def build_day(source, bgor=False, verbose=0):
 
     if bgor:
         compute_bgor(day)
+        logger.info(f'{mode} {day.__repr__()}')
 
     tic = time.time() - tic
 
     if verbose:
-        logger.debug(f'{mode} {day.__repr__()}')
         logger.debug(f'Elapsed time: {tic:.2f}s')
 
     return day, mode
@@ -612,7 +644,7 @@ def check_day(source, format=''):
 
     source - common source pattern (see params_from_source())
 '''
-def check_file(source, remove=False):
+def check_file(source, progress=True, remove=False):
     show = colorize('check_file()', 'green')
     show += '   ' + color_name_value('source', source)
     show += '   ' + color_name_value('remove', remove)
@@ -634,8 +666,7 @@ def check_file(source, remove=False):
         if count == 0:
             continue
         count = 0
-        showbar = logger.streamHandler.level <= dailylog.logging.INFO
-        for file in tqdm.tqdm(files) if showbar else files:
+        for file in tqdm.tqdm(files) if progress else files:
             if not os.path.exists(file.path):
                 file.show()
                 count += 1
@@ -951,6 +982,8 @@ def dbtool_main():
             {__prog__} -d /mnt/data/PX1000/2022/20220226
             {__prog__} -i /mnt/data/PX1000/2013/20130520
             {__prog__} -i /mnt/data/PX1000/2013/201305*
+            {__prog__} -i --skip /mnt/data/PX1000/2022/2022*
+            {__prog__} -i --skip --progress /mnt/data/PX1000/2022/2022*
             {__prog__} -l
             {__prog__} -l RAXPOL-
             {__prog__} -l RAXPOL- PX-
@@ -984,10 +1017,13 @@ def dbtool_main():
     parser.add_argument('--markdown', action='store_true', help='generates output in markdown')
     parser.add_argument('--no-bgor', dest='bgor', default=True, action='store_false', help='skips computing bgor')
     parser.add_argument('-p', '--check-path', action='store_true', help='checks the storage path')
+    parser.add_argument('--progress', action='store_true', help='shows progress bar')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='shows a sweep summary')
     parser.add_argument('--show-city', action='store_true', help='shows city of IP location')
+    parser.add_argument('--no-skip', dest='skip', default=True, action='store_false', help='do no skip folders with Day.count == count')
+    parser.add_argument('--skip', action='store_true', default=True, help='skips folders with Day.county == count')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + settings.VERSION)
     parser.add_argument('-V', '--visitor', action='store_true', help='shows visitor log')
@@ -1069,7 +1105,7 @@ def dbtool_main():
             folder = folder[:-1] if folder[-1] == '/' else folder
             if len(args.source) > 1:
                 logger.info('...')
-            xz_folder(folder, hour=args.hour, check_db=True, verbose=args.verbose)
+            xz_folder(folder, hour=args.hour, check_db=True, args=args)
     elif args.quick_insert:
         if len(args.source) == 0:
             print(textwrap.dedent(f'''
@@ -1083,7 +1119,7 @@ def dbtool_main():
             if len(args.source) > 1:
                 logger.info('...')
             folder = folder[:-1] if folder[-1] == '/' else folder
-            xz_folder(folder, hour=args.hour, check_db=False, verbose=args.verbose)
+            xz_folder(folder, hour=args.hour, check_db=False, args=args)
     elif args.last:
         logger.info('Retrieving the absolute last entry ...')
         o = File.objects.last()
