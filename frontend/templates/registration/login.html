@@ -50,13 +50,28 @@
       media="screen and (max-device-width: 550px)"
       href="{% static 'css/mobile.css' %}"
     />
-    <title>RadarHub</title>
+    <title>Sign In to RadarHub</title>
   </head>
   <body>
-    <h2>Log In</h2>
-    <form method="post">
-    {% csrf_token %} {{ form.as_p }}
-    <button type="submit">Log In</button>
+    {% if form.errors %}
+    <p>There are errors with the input</p>
+    {% endif %}
+
+    {% if next %}
+    <p>You are not authorized</p>
+    {% endif %}
+
+    <h1>Sign In to RadarHub</h1>
+
+    <form method="post" action="{% url 'login' %}">
+      {% csrf_token %}
+      {{ form.as_p }}
+      {% comment %} <p>{{ form.username }}</p>
+      <p>{{ form.password }}</p>
+
+      <p><input type="submit" value="login"></p>
+      <input type="hidden" name="next" value="{{ next }}"> {% endcomment %}
+    <button type="submit">Sign In</button>
     </form>
   </body>
 </html>

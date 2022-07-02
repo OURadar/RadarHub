@@ -52,28 +52,7 @@
       media="screen and (max-device-width: 550px)"
       href="{% static 'css/mobile.css' %}"
     />
-
-    {% comment %}
-
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{% static 'css/base.css' %}?r={% now 'U' %}"
-    />
-    <link
-      rel="stylesheet"
-      type="text/css"
-      media="screen and (max-device-width: 550px)"
-      href="{% static 'css/mobile.css' %}?r={% now 'U' %}"
-    />
-    <link
-      rel="stylesheet"
-      type="text/css"
-      media="screen and (min-device-width: 550px)"
-      href="{% static 'css/desktop.css' %}?r={% now 'U' %}"
-    />
-
-    {% endcomment %} {{ params|json_script:"params" }}
+    {{ params|json_script:"params" }}
     <title>RadarHub</title>
   </head>
   <body>

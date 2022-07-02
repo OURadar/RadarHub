@@ -7,7 +7,7 @@ Copyright Boonleng Cheong
 :root {
   --padding: 20px;
   --base-size: 14;
-  --topbar-background: rgb(5, 111, 146);
+  --topbar-background: #059284;
   box-sizing: border-box;
 }
 
@@ -44,7 +44,7 @@ Copyright Boonleng Cheong
     --overlay-background: #ffffffe8;
     --button-hover: rgba(0, 0, 16, 0.06);
     --map-background: #f9f5ed;
-    --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
+    --background-gradient: linear-gradient(180deg, #059284 60%, #162a28);
   }
 }
 @media (prefers-color-scheme: dark) {
@@ -79,7 +79,7 @@ Copyright Boonleng Cheong
     --overlay-background: #1e1e1ee8;
     --button-hover: rgba(248, 248, 255, 0.15);
     --map-background: #22252a;
-    --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
+    --background-gradient: linear-gradient(180deg, #059284 60%, #162a28);
   }
 }
 
@@ -331,24 +331,58 @@ h3 {
 }
 
 #topbar {
-  display: block;
-  width: 100%;
-  color: white;
-  padding-bottom: 5px;
-  overflow-y: auto;
   background-color: var(--topbar-background);
+  color: white;
+  display: block;
+  height: 60px;
+  overflow-y: auto;
+  padding-bottom: 5px;
+  width: 100%;
 }
-#statusPrefix,
+#topbarHead,
+#topbarTail {
+  display: block;
+  position: absolute;
+  top: 10px;
+}
+#topbarHead {
+  left: var(--padding);
+}
+#topbarTail {
+  right: var(--padding);
+}
+#topbarLogo {
+  content: url(/static/images/radarhub-outline.png);
+  display: inline-block;
+  position: relative;
+  top: 10px;
+  width: 40px;
+}
+#statusWrapper {
+  position: relative;
+}
+#statusLed {
+  display: inline-block;
+  border-radius: 50%;
+  box-sizing: border-box;
+  height: 10px;
+  width: 10px;
+}
+.online {
+  background-color: var(--green);
+}
+.offline {
+  background-color: var(--orange);
+}
+#versionTag,
 #statusBody {
   display: inline-block;
-  height: 26px;
-  font-size: 0.9em;
-  line-height: 26px;
-  padding-left: var(--padding);
-  vertical-align: middle;
+  padding-left: 10px;
+  white-space: nowrap;
 }
 #statusBody {
   background-color: rgba(255, 255, 255, 0.15);
+  line-height: 28px;
   margin-left: 10px;
   padding: 0 10px;
   text-align: middle;
@@ -474,28 +508,6 @@ h3 {
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 80%;
-}
-
-#statusLed {
-  display: inline-block;
-  border-radius: 50%;
-  box-sizing: border-box;
-  font-size: var(--font-size);
-  height: 10px;
-  line-height: var(--font-size);
-  margin-right: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: 10px;
-}
-
-.online {
-  background-color: var(--green);
-}
-
-.offline {
-  background-color: var(--orange);
 }
 
 a.radarButton {

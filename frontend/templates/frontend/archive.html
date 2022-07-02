@@ -73,7 +73,9 @@
       href="{% static 'css/desktop.css' %}?r={% now 'U' %}"
     />
 
-    {% endcomment %} {{ params|json_script:"params" }}
+    {% endcomment %}
+
+    {{ params|json_script:"params" }}
     <title>RadarHub</title>
   </head>
   <body>

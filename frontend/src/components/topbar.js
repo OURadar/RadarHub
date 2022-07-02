@@ -10,6 +10,7 @@ import {
   LightMode,
   DarkMode,
 } from "@mui/icons-material";
+// import logo from "/static/images/radarhub-outline.png";
 
 import { Notification } from "./notification";
 import { theme } from "./theme";
@@ -39,7 +40,6 @@ function StatusBodyQuick(props) {
 
 export function TopBar(props) {
   const name = props.ingest ? ` / ${props.ingest.radar}` : "";
-  const prefix = `v${version}${name}`;
   const [message, setMessage] = React.useState("");
   let online, status, notify;
   if (props.ingest) {
@@ -53,14 +53,16 @@ export function TopBar(props) {
   }
   return (
     <div>
-      <div id="topbar" roll="banner">
-        <h1>RadarHub</h1>
-        <div id="statusPrefix">
-          <div id="statusLed" className={online}></div>
-          {prefix}
+      <div id="topbar" role="banner">
+        <div id="topbarHead">
+          <img id="topbarLogo" alt="Logo" />
+          <div id="statusWrapper">
+            <div id="statusLed" className={online}></div>
+            <div id="versionTag">{`v${version}${name}`}</div>
+            {status}
+            {notify}
+          </div>
         </div>
-        {status}
-        {notify}
         <Console
           isMobile={props.isMobile || false}
           handleAccount={() => {
@@ -93,7 +95,7 @@ export function Console(props) {
   );
   return (
     <ThemeProvider theme={theme}>
-      <div id="console">
+      <div id="topbarTail">
         <IconButton
           aria-label="Refresh"
           onClick={() => {

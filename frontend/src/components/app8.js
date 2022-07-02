@@ -64,12 +64,6 @@ class App extends Component {
           isMobile={this.isMobile}
           handleModeChange={this.handleModeChange}
         />
-        <GLView
-          sweep={this.archive.data.sweep}
-          colors={this.state.colors}
-          debug={true}
-          showStats={true}
-        />
       </ThemeProvider>
     );
   }
