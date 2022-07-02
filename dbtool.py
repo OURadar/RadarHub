@@ -350,9 +350,11 @@ def xz_folder(folder, hour=0, check_db=True, bulk_update=True, args=None):
 
     keys = []
     output = {}
+    indent = ' ' * logger.indent()
 
     # Extracting parameters of the archives
-    logger.info('Pass 1 / 2 - Scanning archives ...')
+    desc = 'Pass 1 / 2 - Scanning archives'
+    logger.info(f'{desc} ...')
 
     e = time.time()
 
@@ -370,7 +372,7 @@ def xz_folder(folder, hour=0, check_db=True, bulk_update=True, args=None):
             processes.append(p)
             p.start()
 
-        for archive in tqdm.tqdm(archives) if progress else archives:
+        for archive in tqdm.tqdm(archives, desc=f'{indent}{desc}') if progress else archives:
             # Copy the file to ramdisk and queue the work after the file is copied
             basename = os.path.basename(archive)
             if os.path.exists('/mnt/ramdisk'):
@@ -459,9 +461,10 @@ def xz_folder(folder, hour=0, check_db=True, bulk_update=True, args=None):
         count_ignore = 0;
 
         if bulk_update:
-            logger.info('Pass 2 / 2 - Gathering entries ...')
+            desc = 'Pass 2 / 2 - Gathering entries'
+            logger.info(f'{desc} ...')
             array_of_files = []
-            for key in tqdm.tqdm(keys) if progress else keys:
+            for key in tqdm.tqdm(keys, desc=f'{indent}{desc}') if progress else keys:
                 xx = output[key]['xx']
                 files, cc, cu, ci = __handle_data__(xx)
                 array_of_files.append(files)
@@ -478,8 +481,7 @@ def xz_folder(folder, hour=0, check_db=True, bulk_update=True, args=None):
             a = len(files) / t
             logger.info(f'Bulk update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}')
         else:
-            logger.info('Pass 2 / 2 - Inserting entries into the database ...')
-            for key in tqdm.tqdm(keys) if progress else keys:
+            for key in tqdm.tqdm(keys,  desc=f'{indent}{desc}') if progress else keys:
                 xx = output[key]['xx']
                 _, cc, cu, ci = __handle_data__(xx, save=True)
                 count_create += cc;
@@ -500,10 +502,11 @@ def xz_folder(folder, hour=0, check_db=True, bulk_update=True, args=None):
             return files
 
         t = time.time()
-        logger.info('Pass 2 / 2 - Creating entries ...')
+        desc = 'Pass 2 / 2 - Creating entries'
+        logger.info(f'{desc} ...')
         if verbose:
             array_of_files = []
-            for key in tqdm.tqdm(keys) if progress else keys:
+            for key in tqdm.tqdm(keys, desc=desc) if progress else keys:
                 xx = output[key]['xx']
                 files = __sweep_files__(xx)
                 array_of_files.append(files)

@@ -85,6 +85,13 @@ class Logger(logging.Logger):
             else:
                 self.error(line)
 
+    def indent(self):
+        return self.formatter.get_header_length(logging.LogRecord(
+            name=self.name,
+            level=self.level,
+            pathname=self.home,
+            lineno=0,
+            msg='', args=(), exc_info=None))
 ##
 
 if __name__ == '__main__':
