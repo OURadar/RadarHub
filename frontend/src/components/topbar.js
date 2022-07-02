@@ -54,9 +54,9 @@ export function TopBar(props) {
   return (
     <div>
       <div id="topbar" role="banner">
-        <div id="topbarHead">
-          <img id="topbarLogo" alt="Logo" />
-          <div id="statusWrapper">
+        <div className="topbarComponent" id="topbarHead">
+          <img id="topbarLogo" />
+          <div className="statusWrapper">
             <div id="statusLed" className={online}></div>
             <div id="versionTag">{`v${version}${name}`}</div>
             {status}
@@ -95,7 +95,7 @@ export function Console(props) {
   );
   return (
     <ThemeProvider theme={theme}>
-      <div id="topbarTail">
+      <div className="topbarComponent" id="topbarTail">
         <IconButton
           aria-label="Refresh"
           onClick={() => {
