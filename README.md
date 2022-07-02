@@ -70,6 +70,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.7.15 Minor bug fixes (6/24/2022)
   - [x] 0.7.16 Improved inspection of Visitor table (6/26/2022)
   - [x] 0.7.17 Fixed a bug in caching too aggressively (6/26/2022)
+  - [x] 0.7.18 Show PPI / RHI using ray elevations / azimuths (6/28/2022)
+  - [x] 0.7.19 Added a stats endpoint (7/1/2022)
 - [ ] 0.8 Authentication + user priviledges
 - [ ] 0.9 Page template, UI materials, mobile version
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
@@ -198,6 +200,7 @@ postgres=#
 postgres=# CREATE USER radarhub;
 postgres-# ALTER ROLE radarhub WITH PASSWORD '_radarhub_password_';
 postgres-# GRANT ALL PRIVILEGES ON DATABASE radarhub TO radarhub;
+postgres-# ALTER ROLE radarhub SUPERUSER CREATEROLE CREATEDB;
 postgres-# ALTER DATABASE radarhub OWNER TO radarhub;
 postgres=#
 postgres=# CREATE USER guest;
@@ -274,6 +277,20 @@ Once in the `psql` terminal, some of these could be useful:
 \dt
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_file';
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
+```
+
+## Migrating PostgreSQL to another machine:
+
+On the source machine, edit `/etc/postgresql/12/main/pg_hba.conf` by adding the following line:
+
+```conf
+host    replication     postgres        10.197.14.0/24          trust
+```
+
+```shell
+sudo systemctl stop postgresql
+rm -rf /var/lib/postgresql/12/main/*
+sudo -u postgres pg_basebackup -h dwv05 -U postgres -D /var/lib/postgresql/12/main/
 ```
 
 ## Potential OS Limitations

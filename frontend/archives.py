@@ -10,7 +10,7 @@ import threading
 
 from functools import lru_cache
 
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.conf import settings
 
 from .models import File, Day, Visitor
@@ -35,8 +35,10 @@ for prefix, item in settings.RADARS.items():
     radar_prefix[radar] = prefix
 
 visitor_stats = {}
-visitor_stats_access = threading.Lock()
+visitor_stats_lock = threading.Lock()
 visitor_stats_monitor_thread = None
+
+# Learning modules
 
 def binary(request, name):
     ip, malicious = screen(request)
@@ -58,6 +60,8 @@ def header(_, name):
     response = HttpResponse(payload, content_type='application/json')
     return response
 
+# Helper functions
+
 def screen(request, count=False):
     global visitor_stats
     global visitor_stats_monitor_thread
@@ -78,10 +82,8 @@ def screen(request, count=False):
         visitor_stats_monitor_thread = threading.Thread(target=monitor)
         visitor_stats_monitor_thread.start()
     malicious = False
-    # if 'Accept-Encoding' not in headers or 'deflate' not in headers['Accept-Encoding']:
-    #     malicious = True
-    # if pattern_bad_agents.match(request.headers['User-Agent']):
-    #     malicious = True
+    if 'Accept-Encoding' not in headers or 'deflate' not in headers['Accept-Encoding']:
+        malicious = True
     # if 'Referer' not in request.headers and 'Connection' not in request.headers:
     #     malicious = True
     return ip, malicious
@@ -99,16 +101,25 @@ def http_response(ip, payload, cache=False):
     response['Content-Length'] = net_size
     return response
 
-def visitors(_, mode=''):
-    if mode == 'live':
+# Stats
+
+def stats(_, mode=''):
+    if mode == 'recent-visitors':
         payload = pp.pformat(visitor_stats)
-    else:
+    elif mode == 'visitors':
         stats = []
         for visitor in Visitor.objects.all():
             stats.append(visitor.dict())
         payload = pp.pformat(stats)
-    response = HttpResponse(payload, content_type='application/json')
-    return response
+    elif mode == 'cache':
+        cache_info = _load.cache_info()
+        payload = str(cache_info)
+    else:
+        raise Http404
+
+    return HttpResponse(payload, content_type='text/plain')
+
+# Data
 
 '''
     radar - a string of the radar name
@@ -456,12 +467,14 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
     payload = bytes(payload, 'utf-8')
     return http_response(ip, payload)
 
+# Threads
+
 def monitor():
     show = colorize('archives.monitor()', 'green')
     show += '   ' + color_name_value('Visitor.objects.count()', Visitor.objects.count())
     logger.info(show)
     while True:
-        visitor_stats_access.acquire()
+        visitor_stats_lock.acquire()
         for ip, stats in visitor_stats.items():
             if stats['count'] == 0 and stats['bandwidth'] == 0:
                 continue
@@ -488,5 +501,6 @@ def monitor():
             stats['payload'] = 0
             stats['count'] = 0
             visitor.save()
-        visitor_stats_access.release()
+        visitor_stats_lock.release()
         time.sleep(3)
+
