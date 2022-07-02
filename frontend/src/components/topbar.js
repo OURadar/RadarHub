@@ -57,7 +57,7 @@ export function TopBar(props) {
         <div className="topbarComponent" id="topbarHead">
           <img id="topbarLogo" />
           <div className="statusWrapper">
-            <div id="statusLed" className={online}></div>
+            <div className={online} id="statusLed"></div>
             <div id="versionTag">{`v${version}${name}`}</div>
             {status}
             {notify}

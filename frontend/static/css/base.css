@@ -115,6 +115,14 @@ canvas {
   font-family: "LabelFont";
 }
 
+.content {
+  background-color: var(--map-background);
+  box-sizing: border-box;
+  height: 100vh;
+  padding-top: 20vh;
+  text-align: center;
+  width: 100%;
+}
 .backgrad {
   background: #5c258d;
   background: var(--background-gradient);
@@ -334,16 +342,15 @@ h3 {
   background-color: var(--topbar-background);
   color: white;
   display: block;
-  height: 60px;
+  height: 56px;
   overflow-y: auto;
-  padding-bottom: 5px;
-  border-bottom: solid 2px rgba(255, 255, 255, 0.25);
+  padding-bottom: 4px;
   width: 100%;
 }
 .topbarComponent {
   display: inline-flex;
   position: absolute;
-  top: 10px;
+  top: 6px;
 }
 #topbarHead {
   left: var(--padding);
@@ -353,7 +360,7 @@ h3 {
 }
 #topbarLogo {
   content: url(/static/images/radarhub-outline.png);
-  padding: 2px;
+  padding: 3px;
   width: 44px;
 }
 .statusWrapper {
@@ -525,6 +532,6 @@ a.radarButton {
 }
 
 a.radarButton:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(0, 0, 0, 0.15);
   transition: background-color linear 0.3s;
 }
