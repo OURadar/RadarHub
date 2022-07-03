@@ -107,6 +107,7 @@ html {
 body {
   color: var(--system-foreground);
   margin: 0;
+  height: 100vh;
 }
 
 canvas {
@@ -115,26 +116,21 @@ canvas {
   font-family: "LabelFont";
 }
 
-.content {
-  background-color: var(--map-background);
-  box-sizing: border-box;
-  height: 100vh;
-  padding-top: 20vh;
-  text-align: center;
-  width: 100%;
-}
 .backgrad {
   background: #5c258d;
   background: var(--background-gradient);
-  box-sizing: border-box;
+  display: block;
+  height: calc(100vh - 56px);
+}
+.content {
   color: white;
-  height: 100vh;
   padding-top: 20vh;
   text-align: center;
   width: 100%;
 }
 .extraLarge {
   font-size: 100px;
+  margin-bottom: 25px;
 }
 .subtitle {
   font-size: 24px;
@@ -224,6 +220,18 @@ h3 {
 .spacer25 {
   display: block;
   height: 25px;
+}
+.left {
+  left: var(--padding);
+}
+.right {
+  right: var(--padding);
+}
+.top {
+  top: var(--padding);
+}
+.bottom {
+  bottom: var(--padding);
 }
 
 .sampleContainer {
@@ -344,7 +352,6 @@ h3 {
   display: block;
   height: 56px;
   overflow-y: auto;
-  padding-bottom: 4px;
   width: 100%;
 }
 .topbarComponent {
@@ -352,19 +359,13 @@ h3 {
   position: absolute;
   top: 6px;
 }
-#topbarHead {
-  left: var(--padding);
-}
-#topbarTail {
-  right: var(--padding);
-}
 #topbarLogo {
   content: url(/static/images/radarhub-outline.png);
+  cursor: pointer;
   padding: 3px;
   width: 44px;
 }
 .statusWrapper {
-  display: inline-block;
   position: relative;
   margin-left: 10px;
   line-height: 40px;
@@ -532,6 +533,21 @@ a.radarButton {
 }
 
 a.radarButton:hover {
+  background-color: rgba(0, 0, 0, 0.15);
+  transition: background-color linear 0.3s;
+}
+
+a.subtle {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 5px;
+  color: white;
+  display: inline-block;
+  padding: 5px 10px;
+  text-decoration: none;
+  transition: background-color linear 0.3s;
+}
+
+a.subtle:hover {
   background-color: rgba(0, 0, 0, 0.15);
   transition: background-color linear 0.3s;
 }

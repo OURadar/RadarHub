@@ -54,8 +54,13 @@ export function TopBar(props) {
   return (
     <div>
       <div id="topbar" role="banner">
-        <div className="topbarComponent" id="topbarHead">
-          <img id="topbarLogo" />
+        <div className="topbarComponent left">
+          <img
+            id="topbarLogo"
+            onClick={() => {
+              document.location = "/";
+            }}
+          />
           <div className="statusWrapper">
             <div className={online} id="statusLed"></div>
             <div id="versionTag">{`v${version}${name}`}</div>
@@ -94,51 +99,49 @@ export function Console(props) {
     window.innerHeight == screen.height
   );
   return (
-    <ThemeProvider theme={theme}>
-      <div className="topbarComponent" id="topbarTail">
+    <div className="topbarComponent right">
+      <IconButton
+        aria-label="Refresh"
+        onClick={() => {
+          window.location.reload();
+        }}
+        size="large"
+      >
+        <Refresh style={{ color: "white" }} />
+      </IconButton>
+      {!props.isMobile && (
         <IconButton
-          aria-label="Refresh"
+          aria-label="Fullscreen"
           onClick={() => {
-            window.location.reload();
+            if (fullscreen) document.webkitExitFullscreen();
+            else document.documentElement.webkitRequestFullScreen();
+            setFullscreen(!fullscreen);
           }}
           size="large"
         >
-          <Refresh style={{ color: "white" }} />
+          {(fullscreen && <WebAsset style={{ color: "white" }} />) || (
+            <Fullscreen style={{ color: "white" }} />
+          )}
         </IconButton>
-        {!props.isMobile && (
-          <IconButton
-            aria-label="Fullscreen"
-            onClick={() => {
-              if (fullscreen) document.webkitExitFullscreen();
-              else document.documentElement.webkitRequestFullScreen();
-              setFullscreen(!fullscreen);
-            }}
-            size="large"
-          >
-            {(fullscreen && <WebAsset style={{ color: "white" }} />) || (
-              <Fullscreen style={{ color: "white" }} />
-            )}
-          </IconButton>
-        )}
-        <IconButton
-          aria-label="Change Mode"
-          onClick={props.handleModeChange}
-          size="large"
-        >
-          {(props.mode == "light" && (
-            <LightMode style={{ color: "white" }} />
-          )) || <DarkMode style={{ color: "white" }} />}
-        </IconButton>
-        <IconButton
-          aria-label="Account"
-          onClick={() => {
-            props.handleAccount();
-          }}
-          size="large"
-        >
-          <AccountCircle style={{ color: "white" }} />
-        </IconButton>
-      </div>
-    </ThemeProvider>
+      )}
+      <IconButton
+        aria-label="Change Mode"
+        onClick={props.handleModeChange}
+        size="large"
+      >
+        {(props.mode == "light" && (
+          <LightMode style={{ color: "white" }} />
+        )) || <DarkMode style={{ color: "white" }} />}
+      </IconButton>
+      <IconButton
+        aria-label="Account"
+        onClick={() => {
+          props.handleAccount();
+        }}
+        size="large"
+      >
+        <AccountCircle style={{ color: "white" }} />
+      </IconButton>
+    </div>
   );
 }
