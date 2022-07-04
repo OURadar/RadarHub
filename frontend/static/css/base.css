@@ -122,7 +122,7 @@ canvas {
   background: #5c258d;
   background: var(--background-gradient);
   display: block;
-  height: calc(100vh - 56px);
+  height: 100vh;
 }
 .content {
   color: white;

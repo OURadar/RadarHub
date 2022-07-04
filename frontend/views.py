@@ -17,7 +17,7 @@ def index(request):
     return render(request, 'frontend/intro.html')
 
 def dev(request):
-    return render(request, 'frontend/intrdo-auth.html')
+    return render(request, 'frontend/intro-auth.html')
 
 # Control
 
