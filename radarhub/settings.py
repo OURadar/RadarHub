@@ -28,6 +28,7 @@ DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / 'config'
 FRONTEND_DIR = BASE_DIR / 'frontend'
+RECEPTION_DIR = BASE_DIR / 'reception'
 LOG_DIR = os.path.expanduser('~/logs') if DEBUG else '/var/log/radarhub'
 
 if VERBOSE > 1:
@@ -78,12 +79,12 @@ INSTALLED_APPS = [
     'django_eventstream',
     'frontend',
     'backhaul',
-    'auth',
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'reception'
 ]
 
 MIDDLEWARE = [
@@ -102,7 +103,7 @@ ROOT_URLCONF = 'radarhub.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [FRONTEND_DIR / 'templates/allauth'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -347,16 +348,20 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_QUERY_EMAIL = True
+
 # Provider specific settings
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        # For each OAuth based provider, either add a ``SocialApp``
-        # (``socialaccount`` app) containing the required client
-        # credentials, or list them here:
-        'APP': {
-            'client_id': '123',
-            'secret': '456',
-            'key': ''
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
         }
     }
 }
