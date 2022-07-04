@@ -534,20 +534,22 @@ a.radarButton {
 
 a.radarButton:hover {
   background-color: rgba(0, 0, 0, 0.15);
-  transition: background-color linear 0.3s;
+  transition: background-color linear 0.17s;
 }
 
-a.subtle {
-  background-color: rgba(255, 255, 255, 0.25);
+.subtle {
+  background-color: rgba(255, 255, 255, 0.15);
+  border: none;
   border-radius: 5px;
   color: white;
   display: inline-block;
+  font-size: inherit;
   padding: 5px 10px;
   text-decoration: none;
   transition: background-color linear 0.3s;
 }
 
-a.subtle:hover {
+.subtle:hover {
   background-color: rgba(0, 0, 0, 0.15);
-  transition: background-color linear 0.3s;
+  transition: background-color linear 0.17s;
 }

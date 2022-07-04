@@ -65,8 +65,8 @@
         <a class="radarButton" href="/archive/raxpol/">RaXPol</a>
         {% if user.is_authenticated %}
           <p>Logged in as {{ user.username }} / {{ user.email }}</p>
-          <p><a class="subtle" href="/accounts/logout/?next=/">Logout</a></p>
-          <form action="/accounts/logout/" method="post">
+          {% comment %} <a class="subtle" href="/accounts/logout/?next=/">Logout</a> {% endcomment %}
+          <form action="/accounts/logout/?next=/" method="post">
             {% csrf_token %}
             <button class="subtle" type="submit">Sign Out</button>
           </form>
