@@ -1,0 +1,16 @@
+{% load socialaccount %}
+
+{% load i18n %}
+
+{% get_providers as socialaccount_providers %}
+
+<h1>{% block head_title %}{% trans "Sign In" %}{% endblock %}</h1>
+
+{% for provider in socialaccount_providers %}
+
+<form action="/accounts/google/login/?process=login" method="post">
+    {% csrf_token %}
+    <button type="submit">{{provider.name}}</button>
+</form>
+
+{% endfor %}
