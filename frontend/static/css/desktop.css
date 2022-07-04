@@ -1,4 +1,4 @@
-/* 
+/*
 Desktop style sheet
 Copyright Boonleng Cheong
 */
@@ -95,7 +95,7 @@ Copyright Boonleng Cheong
 #right {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 84px - 1px);
+  height: var(--content-height);
   overflow-y: scroll;
 }
 
@@ -107,7 +107,7 @@ Copyright Boonleng Cheong
 .split,
 .gutter.gutter-horizontal {
   float: left;
-  height: calc(100vh - 84px - 1px);
+  height: var(--content-height);
   z-index: 3;
 }
 .gutter {
@@ -138,6 +138,6 @@ Copyright Boonleng Cheong
 }
 .filesContainer {
   background-color: var(--system-background);
-  height: calc(100vh - 84px - 86px - 44px - 192px - 44px - 1px);
+  height: calc(var(--content-height) - 44px - 86px - 192px - 44px);
   overflow-y: scroll;
 }

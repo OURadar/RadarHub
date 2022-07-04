@@ -48,19 +48,14 @@ export function TopBar(props) {
     notify = <Notification message={props.ingest.response || message} />;
   } else {
     online = "offline";
-    status = <StatusBody message={`Some text / props.mode = ${props.mode}`} />;
+    status = <StatusBody message={`${props.mode}`} />;
     notify = <Notification message={message} />;
   }
   return (
     <div>
       <div id="topbar" role="banner">
         <div className="topbarComponent left">
-          <img
-            id="topbarLogo"
-            onClick={() => {
-              document.location = "/";
-            }}
-          />
+          <h1>RadarHub</h1>
           <div className="statusWrapper">
             <div className={online} id="statusLed"></div>
             <div id="versionTag">{`v${version}${name}`}</div>
@@ -124,7 +119,7 @@ export function Console(props) {
           )}
         </IconButton>
       )}
-      <IconButton
+      {/* <IconButton
         aria-label="Change Mode"
         onClick={props.handleModeChange}
         size="large"
@@ -132,7 +127,7 @@ export function Console(props) {
         {(props.mode == "light" && (
           <LightMode style={{ color: "white" }} />
         )) || <DarkMode style={{ color: "white" }} />}
-      </IconButton>
+      </IconButton> */}
       <IconButton
         aria-label="Account"
         onClick={() => {

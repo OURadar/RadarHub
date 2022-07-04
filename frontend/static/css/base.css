@@ -7,7 +7,9 @@ Copyright Boonleng Cheong
 :root {
   --padding: 20px;
   --base-size: 14;
-  --topbar-background: #059284;
+  --topbar-background: #056f92;
+  --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
+  --content-height: calc(100vh - 84px); /* 54 later */
   box-sizing: border-box;
 }
 
@@ -44,7 +46,7 @@ Copyright Boonleng Cheong
     --overlay-background: #ffffffe8;
     --button-hover: rgba(0, 0, 16, 0.06);
     --map-background: #f9f5ed;
-    --background-gradient: linear-gradient(180deg, #059284 60%, #162a28);
+    --dev-background-gradient: linear-gradient(180deg, #059284 60%, #162a28);
   }
 }
 @media (prefers-color-scheme: dark) {
@@ -79,7 +81,7 @@ Copyright Boonleng Cheong
     --overlay-background: #1e1e1ee8;
     --button-hover: rgba(248, 248, 255, 0.15);
     --map-background: #22252a;
-    --background-gradient: linear-gradient(180deg, #059284 60%, #162a28);
+    --dev-background-gradient: linear-gradient(180deg, #059284 60%, #162a28);
   }
 }
 
@@ -226,6 +228,7 @@ h3 {
 }
 .right {
   right: var(--padding);
+  top: 19px;
 }
 .top {
   top: var(--padding);
@@ -350,27 +353,32 @@ h3 {
   background-color: var(--topbar-background);
   color: white;
   display: block;
-  height: 56px;
+  height: 86px;
   overflow-y: auto;
   width: 100%;
 }
 .topbarComponent {
-  display: inline-flex;
   position: absolute;
-  top: 6px;
 }
 #topbarLogo {
   content: url(/static/images/radarhub-outline.png);
   cursor: pointer;
   padding: 3px;
-  width: 44px;
+  width: 40px;
 }
-.statusWrapper {
+.statusWrapper8 {
   position: relative;
   margin-left: 10px;
   line-height: 40px;
   height: 40px;
   padding: 4px;
+}
+.statusWrapper {
+  display: inline-block;
+  font-size: 0.9em;
+  line-height: 26px;
+  height: 26px;
+  padding-left: var(--padding);
 }
 #statusLed {
   display: inline-block;
@@ -431,7 +439,7 @@ h3 {
 }
 
 .fullHeight {
-  height: calc(100vh - 84px - 44px - 1px);
+  height: calc(var(--content-height) - 44px - 1px);
   position: relative;
 }
 

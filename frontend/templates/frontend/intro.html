@@ -57,22 +57,11 @@
     <title>RadarHub</title>
   </head>
   <body>
-    <div id="app"></div>
     <div class="backgrad">
       <div class="content">
         <div class="extraLarge">RadarHub</div>
         <a class="radarButton" href="/archive/px1000/">PX-1000</a>
         <a class="radarButton" href="/archive/raxpol/">RaXPol</a>
-        {% if user.is_authenticated %}
-          <p>Logged in as {{ user.username }} / {{ user.email }}</p>
-          {% comment %} <a class="subtle" href="/accounts/logout/?next=/">Logout</a> {% endcomment %}
-          <form action="/accounts/logout/?next=/" method="post">
-            {% csrf_token %}
-            <button class="subtle" type="submit">Sign Out</button>
-          </form>
-        {% else %}
-          <p><a class="subtle" href="/reception/signin/">Login</a></p>
-        {% endif %}
       </div>
     </div>
   </body>
