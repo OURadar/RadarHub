@@ -1,8 +1,12 @@
+import logging
+
 from django.contrib.auth import get_user_model
 from allauth.account.signals import user_logged_in
 from allauth.socialaccount.signals import pre_social_login
 
 from common import colorize, color_name_value
+
+logger = logging.getLogger('frontend')
 
 # from django.db import models
 
@@ -15,14 +19,14 @@ User = get_user_model()
 def user_logged_in_receiver(request, user, **kwargs):
     show = colorize('user_logged_in_receiver()', 'green')
     show += '   ' + color_name_value('user.email', user.email)
-    print(show)
+    logger.info(show)
 
 user_logged_in.connect(user_logged_in_receiver, sender=User)
 
 def pre_social_login_receiver(request, sociallogin, **kwargs):
     show = colorize('pre_social_login_receiver()', 'green')
     show += '   ' + color_name_value('user.email', sociallogin.email)
-    print(show)
+    logger.info(show)
     print(request)
     print(sociallogin)
 
