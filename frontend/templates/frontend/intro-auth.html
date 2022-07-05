@@ -14,20 +14,18 @@
       <a class="radarButton" href="/archive/px1000/">PX-1000</a>
       <a class="radarButton" href="/archive/raxpol/">RaXPol</a>
       {% if user.is_authenticated %}
-        <p>Logged in as {{ user.username }} / {{ user.email }}</p>
-        {% comment %} <a class="subtle" href="/accounts/logout/?next=/">Logout</a> {% endcomment %}
+        <p>Signed in as {{ user.username }} / {{ user.email }}</p>
         <form action="/accounts/signout/?next=/dev/" method="post">
           {% csrf_token %}
           <button class="subtle" type="submit">Sign Out</button>
         </form>
       {% else %}
-        <p><a class="subtle" href="/accounts/signin/">Login</a></p>
+        <p><a class="subtle" href="/accounts/signin/">Sign In</a></p>
       {% endif %}
     </div>
   </div>
 {% endblock %}
 
 {% block extra_html %}
-<script type="text/javascript" src="{% static 'frontend/shared.js' %}"></script>
 <script type="text/javascript" src="{% static 'frontend/dev.js' %}"></script>
 {% endblock %}
