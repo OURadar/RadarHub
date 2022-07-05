@@ -2,16 +2,20 @@ const path = require("path");
 
 module.exports = {
   entry: {
-    control: {
-      import: "./src/control.js",
-      dependOn: "shared",
-    },
     archive: {
       import: "./src/archive.js",
       dependOn: "shared",
     },
+    control: {
+      import: "./src/control.js",
+      dependOn: "shared",
+    },
     dev: {
       import: "./src/dev.js",
+      dependOn: "shared",
+    },
+    intro: {
+      import: "./src/intro.js",
       dependOn: "shared",
     },
     shared: [

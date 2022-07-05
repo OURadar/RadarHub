@@ -13,7 +13,7 @@
       <a class="radarButton" href="/archive/raxpol/">RaXPol</a>
       {% if user.is_authenticated %}
         <p>Signed in as {{ user.email }}</p>
-        <form action="/accounts/signout/?next=/dev/" method="post">
+        <form action="/accounts/signout/?next=/" method="post">
           {% csrf_token %}
           <button class="subtle" type="submit">Sign Out</button>
         </form>
@@ -25,5 +25,5 @@
 {% endblock %}
 
 {% block extra_html %}
-<script type="text/javascript" src="{% static 'frontend/dev.js' %}"></script>
+<script type="text/javascript" src="{% static 'frontend/intro.js' %}"></script>
 {% endblock %}

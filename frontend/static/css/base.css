@@ -11,81 +11,76 @@ Copyright Boonleng Cheong
   --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
   --topbar-height: 54px;
   --content-height: calc(100vh - var(--topbar-height));
+  --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
   box-sizing: border-box;
 }
 
-/* https://developer.apple.com/design/human-interface-guidelines/ios/visual-design/color/ */
-@media (prefers-color-scheme: light) {
-  /* Light mode */
-  :root {
-    --ui-border: solid 1px rgba(0, 0, 0, 0.25);
-    --border-accent: rgba(0, 0, 0, 0.25);
-    --hover-overlay: rgba(0, 0, 0, 0.1);
-    --blue: rgb(0, 122, 255);
-    --brown: rgb(162, 132, 94);
-    --cyan: rgb(50, 173, 230);
-    --green: rgb(52, 199, 89);
-    --indigo: rgb(88 86, 214);
-    --mint: rgb(0, 199, 190);
-    --orange: rgb(255, 149, 0);
-    --pink: rgb(255, 45, 85);
-    --purple: rgb(175, 82, 222);
-    --red: rgb(255, 59, 48);
-    --teal: rgb(48, 176, 199);
-    --yellow: rgb(255, 204, 0);
-    --gray: rgb(128, 128, 128);
-    --gray1: rgb(142, 142, 147);
-    --gray2: rgb(174, 174, 178);
-    --gray3: rgb(199, 199, 204);
-    --gray4: rgb(209, 209, 214);
-    --gray5: rgb(229, 229, 234);
-    --gray6: rgb(242, 242, 247);
-    --gray7: rgb(252, 252, 255);
-    --system-foreground: #000000;
-    --system-background: #ffffff;
-    --secondary-system-background: #f2f2f7ff;
-    --tertiary-system-background: #ffffffff;
-    --overlay-background: #ffffffe8;
-    --button-hover: rgba(0, 0, 16, 0.06);
-    --map-background: #f9f5ed;
-    --dev-background-gradient: linear-gradient(180deg, #059284 60%, #162a28);
-  }
+[theme="light"] {
+  --ui-border: solid 1px rgba(0, 0, 0, 0.25);
+  --border-accent: rgba(0, 0, 0, 0.25);
+  --hover-overlay: rgba(0, 0, 0, 0.1);
+  --blue: rgb(0, 122, 255);
+  --brown: rgb(162, 132, 94);
+  --cyan: rgb(50, 173, 230);
+  --green: rgb(52, 199, 89);
+  --indigo: rgb(88 86, 214);
+  --mint: rgb(0, 199, 190);
+  --orange: rgb(255, 149, 0);
+  --pink: rgb(255, 45, 85);
+  --purple: rgb(175, 82, 222);
+  --red: rgb(255, 59, 48);
+  --teal: rgb(48, 176, 199);
+  --yellow: rgb(255, 204, 0);
+  --gray: rgb(128, 128, 128);
+  --gray1: rgb(142, 142, 147);
+  --gray2: rgb(174, 174, 178);
+  --gray3: rgb(199, 199, 204);
+  --gray4: rgb(209, 209, 214);
+  --gray5: rgb(229, 229, 234);
+  --gray6: rgb(242, 242, 247);
+  --gray7: rgb(252, 252, 255);
+  --system-foreground: #000000;
+  --system-background: #ffffff;
+  --secondary-system-background: #f2f2f7ff;
+  --tertiary-system-background: #ffffffff;
+  --overlay-background: #ffffffe8;
+  --button-hover: rgba(0, 0, 16, 0.06);
+  --map-background: #f9f5ed;
+  --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
 }
-@media (prefers-color-scheme: dark) {
-  /* Dark mode */
-  :root {
-    --ui-border: solid 1px rgba(255, 255, 255, 0.15);
-    --border-accent: rgba(255, 255, 255, 0.25);
-    --hover-overlay: rgba(255, 255, 255, 0.15);
-    --blue: rgb(10, 132, 255);
-    --brown: rgb(172, 142, 104);
-    --cyan: rgb(100, 210, 255);
-    --green: rgb(48, 209, 88);
-    --indigo: rgb(94, 92, 230);
-    --mint: rgb(102, 212, 207);
-    --orange: rgb(255, 159, 10);
-    --pink: rgb(255, 55, 95);
-    --purple: rgb(191, 90, 242);
-    --red: rgb(255, 69, 58);
-    --teal: rgb(64, 200, 224);
-    --yellow: rgb(255, 214, 10);
-    --gray: rgb(128, 128, 128);
-    --gray1: rgb(142, 142, 147);
-    --gray2: rgb(99, 99, 102);
-    --gray3: rgb(72, 72, 74);
-    --gray4: rgb(58, 58, 60);
-    --gray5: rgb(44, 44, 46);
-    --gray6: rgb(28, 28, 30);
-    --gray7: rgb(16, 16, 18);
-    --system-foreground: #ffffff;
-    --system-background: #222328;
-    --secondary-system-background: #1c1c1eff;
-    --tertiary-system-background: #2c2c2eff;
-    --overlay-background: #1e1e1ee8;
-    --button-hover: rgba(248, 248, 255, 0.15);
-    --map-background: #22252a;
-    --dev-background-gradient: linear-gradient(180deg, #059284 60%, #162a28);
-  }
+
+[theme="dark"] {
+  --ui-border: solid 1px rgba(255, 255, 255, 0.15);
+  --border-accent: rgba(255, 255, 255, 0.25);
+  --hover-overlay: rgba(255, 255, 255, 0.15);
+  --blue: rgb(10, 132, 255);
+  --brown: rgb(172, 142, 104);
+  --cyan: rgb(100, 210, 255);
+  --green: rgb(48, 209, 88);
+  --indigo: rgb(94, 92, 230);
+  --mint: rgb(102, 212, 207);
+  --orange: rgb(255, 159, 10);
+  --pink: rgb(255, 55, 95);
+  --purple: rgb(191, 90, 242);
+  --red: rgb(255, 69, 58);
+  --teal: rgb(64, 200, 224);
+  --yellow: rgb(255, 214, 10);
+  --gray: rgb(128, 128, 128);
+  --gray1: rgb(142, 142, 147);
+  --gray2: rgb(99, 99, 102);
+  --gray3: rgb(72, 72, 74);
+  --gray4: rgb(58, 58, 60);
+  --gray5: rgb(44, 44, 46);
+  --gray6: rgb(28, 28, 30);
+  --gray7: rgb(16, 16, 18);
+  --system-foreground: #ffffff;
+  --system-background: #222328;
+  --secondary-system-background: #1c1c1eff;
+  --tertiary-system-background: #2c2c2eff;
+  --overlay-background: #1e1e1ee8;
+  --button-hover: rgba(248, 248, 255, 0.15);
+  --map-background: #22252a;
+  --background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
 }
 
 @font-face {
@@ -111,6 +106,8 @@ html {
 
 body {
   color: var(--system-foreground);
+  display: flex;
+  flex-direction: column;
   margin: 0;
   height: 100vh;
 }
@@ -125,7 +122,7 @@ canvas {
   background: #5c258d;
   background: var(--background-gradient);
   display: flex;
-  height: 100vh;
+  height: 100%;
   justify-content: center;
 }
 .content {

@@ -37,7 +37,7 @@ class Ingest {
     this.execute = this.execute.bind(this);
     this.disconnect = this.disconnect.bind(this);
 
-    this.worker = new Worker("/static/frontend/ingest.js");
+    this.worker = new Worker("/static/frontend/ingest.worker.js");
     this.worker.onmessage = this.handleMessage;
   }
 
