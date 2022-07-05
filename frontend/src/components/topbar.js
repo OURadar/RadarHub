@@ -55,7 +55,12 @@ export function TopBar(props) {
     <div>
       <div id="topbar" role="banner">
         <div className="topbarComponent left">
-          <h1>RadarHub</h1>
+          <img
+            id="topbarLogo"
+            onClick={() => {
+              document.location = "/";
+            }}
+          />
           <div className="statusWrapper">
             <div className={online} id="statusLed"></div>
             <div id="versionTag">{`v${version}${name}`}</div>
@@ -119,7 +124,7 @@ export function Console(props) {
           )}
         </IconButton>
       )}
-      {/* <IconButton
+      <IconButton
         aria-label="Change Mode"
         onClick={props.handleModeChange}
         size="large"
@@ -127,7 +132,7 @@ export function Console(props) {
         {(props.mode == "light" && (
           <LightMode style={{ color: "white" }} />
         )) || <DarkMode style={{ color: "white" }} />}
-      </IconButton> */}
+      </IconButton>
       <IconButton
         aria-label="Account"
         onClick={() => {

@@ -375,7 +375,6 @@ if 'facebook' in SOCIALACCOUNT_PROVIDERS:
     for key in ['EXCHANGE_TOKEN', 'VERIFIED_EMAIL']:
         SOCIALACCOUNT_PROVIDERS['facebook'][key] = bool(SOCIALACCOUNT_PROVIDERS['facebook'][key])
     SOCIALACCOUNT_PROVIDERS['facebook']['INIT_PARAMS'] = {'cookie': True }
-    print(SOCIALACCOUNT_PROVIDERS['facebook'])
 
 if DEBUG is not True:
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'

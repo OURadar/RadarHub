@@ -9,7 +9,8 @@ Copyright Boonleng Cheong
   --base-size: 14;
   --topbar-background: #056f92;
   --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
-  --content-height: calc(100vh - 84px); /* 54 later */
+  --topbar-height: 54px;
+  --content-height: calc(100vh - var(--topbar-height));
   box-sizing: border-box;
 }
 
@@ -241,7 +242,6 @@ h3 {
 }
 .right {
   right: var(--padding);
-  top: 19px;
 }
 .top {
   top: var(--padding);
@@ -366,32 +366,28 @@ h3 {
   background-color: var(--topbar-background);
   color: white;
   display: block;
-  height: 86px;
+  height: var(--topbar-height);
   overflow-y: auto;
   width: 100%;
 }
 .topbarComponent {
+  align-items: center;
+  display: flex;
   position: absolute;
+  height: var(--topbar-height);
 }
 #topbarLogo {
   content: url(/static/images/radarhub-outline.png);
   cursor: pointer;
-  padding: 3px;
   width: 40px;
-}
-.statusWrapper8 {
-  position: relative;
-  margin-left: 10px;
-  line-height: 40px;
-  height: 40px;
-  padding: 4px;
 }
 .statusWrapper {
   display: inline-block;
-  font-size: 0.9em;
+  position: relative;
+  margin-left: 10px;
   line-height: 26px;
   height: 26px;
-  padding-left: var(--padding);
+  padding: 5px;
 }
 #statusLed {
   display: inline-block;
