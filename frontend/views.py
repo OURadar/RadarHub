@@ -29,7 +29,7 @@ def control_radar(request, radar):
     logger.info(show)
     origin = location(radar)
     params = {'radar': radar, 'origin': origin, 'a': 1, 'b': 2}
-    return render(request, 'frontend/index.html', {'params': params})
+    return render(request, 'frontend/control.html', {'params': params})
 
 def control(request):
     return control_radar(request, "demo")

@@ -8,7 +8,7 @@
 class Polygon {
   constructor() {
     this.busy = false;
-    this.worker = new Worker("/static/frontend/polygon.js");
+    this.worker = new Worker("/static/frontend/polygon.worker.js");
   }
 
   async load(name, geometry) {
