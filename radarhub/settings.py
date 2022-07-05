@@ -37,9 +37,9 @@ if VERBOSE > 1:
     show += color_name_value('FRONTEND_DIR', str(FRONTEND_DIR)) + '\n'
     show += color_name_value('LOG_DIR', LOG_DIR)
     print(show)
+
 if not os.path.isdir(LOG_DIR):
-    show += f'Creating directory {LOG_DIR} ...'
-    print(show)
+    print(f'Creating directory {LOG_DIR} ...')
     os.makedirs(LOG_DIR)
 
 # User settings

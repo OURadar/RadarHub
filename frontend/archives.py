@@ -10,6 +10,8 @@ import threading
 
 from functools import lru_cache
 
+from django.views.decorators.cache import never_cache
+
 from django.http import HttpResponse, Http404
 from django.conf import settings
 
@@ -435,6 +437,7 @@ def _file(prefix, scan='E4.0', symbol='Z'):
     scan - The 4-th component of filename describing the scan, e.g., E4.0, A120.0, etc.
     symbol - The symbol of a product, e.g., Z, V, W, etc.
 '''
+@never_cache
 def catchup(request, radar, scan='E4.0', symbol='Z'):
     if settings.VERBOSE > 1:
         show = colorize('archive.catchup()', 'green')

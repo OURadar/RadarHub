@@ -1,12 +1,12 @@
 from django.contrib import admin
 from django.urls import include, path
 
-# path("accounts/", include("django.contrib.auth.urls")),
-# import allauth.urls
+from django.conf import settings
 
 urlpatterns = [
-    path('manage/', admin.site.urls),
-    path('accounts/', include('allauth.urls')),
-    path('reception/', include('reception.urls')),
-    path('', include('frontend.urls'))
+    path('', include('frontend.urls')),
+    path('accounts/', include('reception.urls')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [path('manage/', admin.site.urls)]

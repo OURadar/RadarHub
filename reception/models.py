@@ -27,8 +27,6 @@ def pre_social_login_receiver(request, sociallogin, **kwargs):
     show = colorize('pre_social_login_receiver()', 'green')
     show += '   ' + color_name_value('user.email', sociallogin.email)
     logger.info(show)
-    print(request)
-    print(sociallogin)
 
 pre_social_login.connect(pre_social_login_receiver, sender=User)
 

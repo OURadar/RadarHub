@@ -1,11 +1,11 @@
 <h1>Sign In</h1>
 
-<form action="/accounts/google/login/?process=login" method="post">
+<form action="/accounts/google/login/?process=login&next=/dev/" method="post">
     {% csrf_token %}
     <button type="submit">Google</button>
 </form>
 
-<form action="/accounts/apple/login/?process=login" method="post">
+<form action="/accounts/apple/login/?process=login&next=/dev/" method="post">
     {% csrf_token %}
     <button type="submit">Apple</button>
 </form>
