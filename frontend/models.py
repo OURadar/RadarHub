@@ -333,8 +333,8 @@ class Day(models.Model):
             cond = 1
         elif self.green < 300 and self.orange < 200:
             cond = 2
-        elif self.green / self.blue >= 0.1:
-            if self.red / self.green >= 0.1:
+        elif self.blue > 0 and self.green / self.blue >= 0.1:
+            if self.green > 0 and self.red / self.green >= 0.1:
                 cond = 4
             else:
                 cond = 3
