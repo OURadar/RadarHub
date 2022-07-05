@@ -9,6 +9,7 @@ import {
   AccountCircle,
   LightMode,
   DarkMode,
+  HelpCenter,
 } from "@mui/icons-material";
 // import logo from "/static/images/radarhub-outline.png";
 
@@ -100,6 +101,13 @@ export function Console(props) {
   );
   return (
     <div className="topbarComponent right">
+      <IconButton
+        arial-label="Help"
+        onClick={() => console.log("Help Center")}
+        size="large"
+      >
+        <HelpCenter style={{ color: "white" }} />
+      </IconButton>
       <IconButton
         aria-label="Refresh"
         onClick={() => {
