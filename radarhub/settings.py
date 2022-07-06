@@ -334,15 +334,25 @@ LOGGING = {
     }
 }
 
+# Miscellaneous Small Databases
+# https://db-ip.com/db/download/ip-to-city-lite
+#
+# User Agent Strings
+# http://www.useragentstring.com
+
 IP_DATABASE = BASE_DIR / 'dbip-city-lite-2022-06.mmdb'
 
 USER_AGENT_TABLE = BASE_DIR / 'user-agent-strings.json'
+
+#
 
 CSRF_TRUSTED_ORIGINS = ['https://radarhub.arrc.ou.edu']
 
 LOGIN_REDIRECT_URL = '/'
 
 # Allauth
+# https://django-allauth.readthedocs.io/en/latest/index.html
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -350,9 +360,14 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_REQUIRED = True
+
+ACCOUNT_USERNAME_REQUIRED = False
+
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+
 SOCIALACCOUNT_QUERY_EMAIL = True
 
 # Provider specific settings
