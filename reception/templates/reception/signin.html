@@ -14,17 +14,17 @@
 
   <div class="spacer25"></div>
 
-  <form action="/accounts/google/login/?process=login&next=/dev/" method="post">
+  <form action="/accounts/google/login/?process=login&next=/" method="post">
     {% csrf_token %}
     <button class="signinButton signinButtonGoogle" type="submit">Google</button>
   </form>
 
-  <form action="/accounts/apple/login/?process=login&next=/dev/" method="post">
+  <form action="/accounts/apple/login/?process=login&next=/" method="post">
     {% csrf_token %}
     <button class="signinButton signinButtonApple" type="submit">Apple</button>
   </form>
 
-  <form action="/accounts/facebook/login/?process=login&next=/dev/" method="post">
+  <form action="/accounts/facebook/login/?process=login&next=/" method="post">
     {% csrf_token %}
     <button class="signinButton signinButtonFacebook" type="submit">Facebook</button>
   </form>

@@ -2,16 +2,20 @@ const path = require("path");
 
 module.exports = {
   entry: {
-    index: {
-      import: "./src/index.js",
+    archive: {
+      import: "./src/archive.js",
       dependOn: "shared",
     },
-    main: {
-      import: "./src/main.js",
+    control: {
+      import: "./src/control.js",
       dependOn: "shared",
     },
     dev: {
       import: "./src/dev.js",
+      dependOn: "shared",
+    },
+    intro: {
+      import: "./src/intro.js",
       dependOn: "shared",
     },
     shared: [
@@ -25,10 +29,10 @@ module.exports = {
       "split.js",
       "memoize-one",
     ],
-    polygon: "./src/components/polygon.worker.js",
-    opacity: "./src/components/overlay.worker.js",
-    archive: "./src/components/archive.worker.js",
-    ingest: "./src/components/ingest.worker.js",
+    "polygon.worker": "./src/components/polygon.worker.js",
+    "overlay.worker": "./src/components/overlay.worker.js",
+    "archive.worker": "./src/components/archive.worker.js",
+    "ingest.worker": "./src/components/ingest.worker.js",
   },
   output: {
     filename: "[name].js",

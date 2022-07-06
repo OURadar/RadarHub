@@ -37,8 +37,7 @@ class Overlay {
     this.handleMessage = this.handleMessage.bind(this);
 
     // const url = new URL("./overlay.worker.js", import.meta.url);
-    const url = "/static/frontend/opacity.js";
-    this.worker = new Worker(url);
+    this.worker = new Worker("/static/frontend/overlay.worker.js");
     this.worker.onmessage = this.handleMessage;
     this.workerReady = false;
 

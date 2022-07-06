@@ -33,6 +33,8 @@ class App extends Component {
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
     this.handleModeChange = this.handleModeChange.bind(this);
 
+    document.documentElement.setAttribute("theme", this.state.colors.name);
+
     window.addEventListener("keyup", (e) => {
       // console.log(`keyup: ${e.key}`);
       let symbol = e.key.toUpperCase();
@@ -71,6 +73,7 @@ class App extends Component {
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", (e) => {
         let mode = e.matches ? "dark" : "light";
+        document.documentElement.setAttribute("theme", mode);
         this.setState({
           colors: colorDict(mode),
           theme: makeTheme(mode),
@@ -165,7 +168,8 @@ class App extends Component {
 
   handleModeChange() {
     let mode = this.state.colors.name == "light" ? "dark" : "light";
-    console.log(`App8.handleModeChange() -> ${mode}`);
+    console.log(`App6.handleModeChange() -> ${mode}`);
+    document.documentElement.setAttribute("theme", mode);
     this.setState({
       colors: colorDict(mode),
       theme: makeTheme(mode),

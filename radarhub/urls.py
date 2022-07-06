@@ -3,6 +3,8 @@ from django.urls import include, path
 
 from django.conf import settings
 
+# path('allauth/', include('allauth.urls')),
+
 urlpatterns = [
     path('', include('frontend.urls')),
     path('accounts/', include('reception.urls')),

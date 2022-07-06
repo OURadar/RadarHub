@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import App from "./components/app8";
+import App from "./components/app-intro";
 
 let params = {};
 let o = document.getElementById("params");

@@ -1,6 +1,5 @@
 import React from "react";
 
-import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import IconButton from "@mui/material/IconButton";
 import {
   Refresh,
@@ -9,13 +8,25 @@ import {
   AccountCircle,
   LightMode,
   DarkMode,
+  HelpCenter,
 } from "@mui/icons-material";
 // import logo from "/static/images/radarhub-outline.png";
 
 import { Notification } from "./notification";
-import { theme } from "./theme";
 
 const version = require("/package.json").version;
+
+const emojis = {
+  spider: "🕷",
+  shrimp: "🦐",
+  lobster: "🦞",
+  crab: "🦀",
+  octopus: "🐙",
+  squid: "🦑",
+  shark: "🦈",
+  dolphin: "🐬",
+  whale: "🐳",
+};
 
 class StatusBody extends Notification {
   render() {
@@ -55,7 +66,12 @@ export function TopBar(props) {
     <div>
       <div id="topbar" role="banner">
         <div className="topbarComponent left">
-          <h1>RadarHub</h1>
+          <img
+            id="topbarLogo"
+            onClick={() => {
+              document.location = "/";
+            }}
+          />
           <div className="statusWrapper">
             <div className={online} id="statusLed"></div>
             <div id="versionTag">{`v${version}${name}`}</div>
@@ -66,12 +82,30 @@ export function TopBar(props) {
         <Console
           isMobile={props.isMobile || false}
           handleAccount={() => {
-            setMessage(
-              "<h3>Nothing 🍔</h3>Coming soon to v0.8<div class='emotion'>🤷🏻‍♀️</div>"
-            );
-            setTimeout(() => {
-              setMessage("");
-            }, 3500);
+            setMessage("Fetching User Information ...");
+            fetch("/profile/")
+              .then((response) => {
+                if (response.status == 200) {
+                  response.json().then(({ user, ip, emoji }) => {
+                    let title =
+                      user == "None" ? "Anonymous User" : `Hello ${user}`;
+                    setMessage(
+                      `<h3>${title}</h3>${ip}<div class='emotion'>${emojis[emoji]}</div>`
+                    );
+                    setTimeout(() => setMessage(""), 3500);
+                  });
+                } else {
+                  setMessage(
+                    `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+                  );
+                }
+              })
+              .catch((_error) => {
+                setMessage(
+                  `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+                );
+                setTimeout(() => setMessage(""), 3500);
+              });
           }}
           handleModeChange={props.handleModeChange}
           mode={props.mode}
@@ -96,6 +130,13 @@ export function Console(props) {
   return (
     <div className="topbarComponent right">
       <IconButton
+        arial-label="Help"
+        onClick={() => console.log("Help Center")}
+        size="large"
+      >
+        <HelpCenter style={{ color: "white" }} />
+      </IconButton>
+      <IconButton
         aria-label="Refresh"
         onClick={() => {
           window.location.reload();
@@ -119,7 +160,7 @@ export function Console(props) {
           )}
         </IconButton>
       )}
-      {/* <IconButton
+      <IconButton
         aria-label="Change Mode"
         onClick={props.handleModeChange}
         size="large"
@@ -127,7 +168,7 @@ export function Console(props) {
         {(props.mode == "light" && (
           <LightMode style={{ color: "white" }} />
         )) || <DarkMode style={{ color: "white" }} />}
-      </IconButton> */}
+      </IconButton>
       <IconButton
         aria-label="Account"
         onClick={() => {
