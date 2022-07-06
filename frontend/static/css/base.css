@@ -110,6 +110,7 @@ body {
   flex-direction: column;
   margin: 0;
   height: 100vh;
+  overflow-y: hidden;
 }
 
 canvas {

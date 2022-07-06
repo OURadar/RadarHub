@@ -55,9 +55,6 @@ def archive_radar_profile(request, radar, profileGL):
     show += '   ' + color_name_value('radar', radar)
     show += '   ' + color_name_value('ip', params['ip'])
     show += '   ' + color_name_value('user', params['user'])
-    if radar == 'favicon.ico':
-        logger.warning(show)
-        return render(request, 'static/images/favicon.ico')
     if settings.DEBUG and settings.VERBOSE:
         show += '   ' + color_name_value('profileGL', profileGL)
     logger.info(show)

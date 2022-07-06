@@ -11,4 +11,4 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += [path('manage/', admin.site.urls)]
+    urlpatterns += [path('admin/', admin.site.urls)]
