@@ -6,6 +6,7 @@ Copyright Boonleng Cheong
 /* Some common colors */
 :root {
   --padding: 20px;
+  --half-padding: 10px;
   --base-size: 14;
   --topbar-background: #056f92;
   --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
@@ -166,7 +167,7 @@ canvas {
   text-align: center;
 }
 .leftPadded {
-  padding-left: 20px;
+  padding-left: var(--padding);
 }
 .invisible {
   display: none !important;
@@ -185,7 +186,7 @@ canvas {
 .sectionHeader {
   background-color: var(--gray6);
   height: 24px;
-  padding: 10px 20px;
+  padding: var(--half-padding) var(--padding);
   user-select: none;
 }
 .sectionTitle {
@@ -381,15 +382,15 @@ h3 {
 #topbarLogo {
   content: url(/static/images/radarhub-outline.png);
   cursor: pointer;
-  width: 40px;
+  width: 34px;
 }
 .statusWrapper {
   display: inline-block;
   position: relative;
   margin-left: 10px;
-  line-height: 26px;
-  height: 26px;
-  padding: 5px;
+  line-height: 28px;
+  height: 28px;
+  padding: 0 5px;
 }
 #statusLed {
   display: inline-block;

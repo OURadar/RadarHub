@@ -50,7 +50,7 @@ class Archive {
     this.month = this.month.bind(this);
     this.updateAge = this.updateAge.bind(this);
 
-    this.worker = new Worker("/static/frontend/archive.worker.js?d=220618.2");
+    this.worker = new Worker("/static/frontend/archive.worker.js");
     this.worker.onmessage = this.handleMessage;
   }
 
