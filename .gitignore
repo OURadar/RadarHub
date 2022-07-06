@@ -3,15 +3,17 @@ __pycache__
 .ipynb_checkpoints
 node_modules
 build
+stash
 frontend/static/frontend
 frontend/static/maps
 frontend/dist
-frontend/migrations/*.py
 objects
 others
 *.xcodeproj
-*.a
+
+frontend/migrations/*.py
 screenlog.*
+*.a
 
 # Programs, etc.
 .DS_Store
