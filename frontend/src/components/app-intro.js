@@ -48,7 +48,6 @@ class App extends Component {
           mode={this.state.colors.name}
           isMobile={this.isMobile}
           handleModeChange={this.handleModeChange}
-          {...this.props}
         />
       </ThemeProvider>
     );

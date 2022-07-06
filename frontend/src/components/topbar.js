@@ -16,6 +16,18 @@ import { Notification } from "./notification";
 
 const version = require("/package.json").version;
 
+const emojis = {
+  spider: "🕷",
+  shrimp: "🦐",
+  lobster: "🦞",
+  crab: "🦀",
+  octopus: "🐙",
+  squid: "🦑",
+  shark: "🦈",
+  dolphin: "🐬",
+  whale: "🐳",
+};
+
 class StatusBody extends Notification {
   render() {
     return (
@@ -50,7 +62,6 @@ export function TopBar(props) {
     status = <StatusBody message={`${props.mode}`} />;
     notify = <Notification message={message} />;
   }
-  console.log(props);
   return (
     <div>
       <div id="topbar" role="banner">
@@ -71,18 +82,30 @@ export function TopBar(props) {
         <Console
           isMobile={props.isMobile || false}
           handleAccount={() => {
-            if (props?.user) {
-              setMessage(
-                `<h3>Hello ${props.user}</h3>You are from ${props.ip}<div class='emotion'>🐳</div>`
-              );
-            } else {
-              setMessage(
-                `<h3>Anonymous User</h3>You are from ${props.ip}<div class='emotion'>🤷🏻‍♀️</div>`
-              );
-            }
-            setTimeout(() => {
-              setMessage("");
-            }, 3500);
+            setMessage("Fetching User Information ...");
+            fetch("/profile/")
+              .then((response) => {
+                if (response.status == 200) {
+                  response.json().then(({ user, ip, emoji }) => {
+                    let title =
+                      user == "None" ? "Anonymous User" : `Hello ${user}`;
+                    setMessage(
+                      `<h3>${title}</h3>${ip}<div class='emotion'>${emojis[emoji]}</div>`
+                    );
+                    setTimeout(() => setMessage(""), 3500);
+                  });
+                } else {
+                  setMessage(
+                    `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+                  );
+                }
+              })
+              .catch((_error) => {
+                setMessage(
+                  `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+                );
+                setTimeout(() => setMessage(""), 3500);
+              });
           }}
           handleModeChange={props.handleModeChange}
           mode={props.mode}

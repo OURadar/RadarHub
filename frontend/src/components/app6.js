@@ -137,7 +137,6 @@ class App extends Component {
           ingest={this.archive}
           isMobile={this.isMobile}
           handleModeChange={this.handleModeChange}
-          {...this.props}
         />
         <div id="flex">
           <div id="left">
