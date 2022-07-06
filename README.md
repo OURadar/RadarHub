@@ -445,6 +445,24 @@ and enable it using shell command as:
 ln -s /etc/nginx/sites-available/radarhub /etc/nginx/sites-enabled/
 ```
 
+To use the maintenance page, add these lines to `/etc/nginx/sites-available/default`
+
+```conf
+	location / {
+		if (-f $document_root/maintenance.html) {
+			return 503;
+		}
+		# First attempt to serve request as file, then
+		# as directory, then fall back to displaying a 404.
+		try_files $uri $uri/ =404;
+	}
+
+	error_page 503 @maintenance;
+	location @maintenance {
+		rewrite ^(.*)$ /maintenance.html break;
+	}
+```
+
 ## Supervisor Using Systemd
 
 If you configured [Redis] through `systemd`, you can set up [supervisor] to start after [redis] is available.
