@@ -59,7 +59,7 @@ export function TopBar(props) {
     notify = <Notification message={props.ingest.response || message} />;
   } else {
     online = "offline";
-    status = <StatusBody message={`${props.mode}`} />;
+    status = <StatusBody />;
     notify = <Notification message={message} />;
   }
   return (

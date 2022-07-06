@@ -46,7 +46,7 @@ Copyright Boonleng Cheong
   --overlay-background: #ffffffe8;
   --button-hover: rgba(0, 0, 16, 0.06);
   --map-background: #f9f5ed;
-  --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
+  --background-gradient: linear-gradient(180deg, #056f92 60%, #4f7d9c);
 }
 
 [theme="dark"] {
@@ -80,7 +80,7 @@ Copyright Boonleng Cheong
   --overlay-background: #1e1e1ee8;
   --button-hover: rgba(248, 248, 255, 0.15);
   --map-background: #22252a;
-  --background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
+  --background-gradient: linear-gradient(180deg, #056f92 60%, #16222a);
 }
 
 @font-face {
