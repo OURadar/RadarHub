@@ -8,6 +8,7 @@ from allauth.account import views as allauth_views
 urlpatterns = [
     path('signin/', views.signin, name='signin'),
     path('signout/', allauth_views.logout, name='logout'),
+    path('social/signup/', views.signup, name='signup'),
     path('privacy/', views.privacy, name='privacy')
 ]
 

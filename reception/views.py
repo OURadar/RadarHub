@@ -6,6 +6,9 @@ from django.http import HttpResponse
 def signin(request):
     return render(request, 'reception/signin.html')
 
+def signup(request):
+    return render(request, 'reception/signup.html')
+
 def privacy(request):
     lines = [
         'Privacy Statement',
