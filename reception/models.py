@@ -20,33 +20,25 @@ def user_logged_in_receiver(request, user, **kwargs):
 
 def pre_social_login_receiver(request, sociallogin, **kwargs):
     show = colorize('pre_social_login_receiver()', 'green')
-    # show += '   ' + color_name_value('user.email', sociallogin.email)
     logger.info(show)
+    email = str(sociallogin.email_addresses[0]) if len(sociallogin.email_addresses) else None
+    if email is None:
+        logger.warning('No email provided')
     try:
         account = sociallogin.account
-        logger.info(f'sociallogin using {account}')
+        logger.info(f'sociallogin using {account} / {email}')
     except:
-        email = sociallogin.email_addresses[0] if len(sociallogin.email_addresses) else None
-        if email:
-            users = User.objects.filter(email=email)
-            if users:
-                user = users.first()
-                print(f'Connecting sociallogin to {user.username} / {user.email} ...')
-                sociallogin.connect(request, user)
-        else:
-            logger.warning('No email provided')
-    if sociallogin.user:
-        user = sociallogin.user
-        show = color_name_value('user.username', user.username)
-        show += '   ' + color_name_value('user.email', user.email)
-        print(show)
-    show = colorize('pre_social_login_receiver()', 'mint')
+        users = User.objects.filter(email=email)
+        if users:
+            user = users.first()
+            print(f'Connecting sociallogin to {user.username} / {user.email} ...')
+            sociallogin.connect(request, user)
 
+#
 
 user_logged_in.connect(user_logged_in_receiver, sender=User)
 pre_social_login.connect(pre_social_login_receiver, sender=SocialLogin)
 
-# allauth.socialaccount.signals.pre_social_login(request, sociallogin)
 
 # @receiver(user_signed_up)
 # def populate_profile(sociallogin, user, **kwargs):
