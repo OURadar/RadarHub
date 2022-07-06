@@ -129,6 +129,7 @@ export function Console(props) {
   );
   return (
     <div className="topbarComponent right">
+      {/*
       <IconButton
         arial-label="Help"
         onClick={() => console.log("Help Center")}
@@ -136,6 +137,7 @@ export function Console(props) {
       >
         <HelpCenter style={{ color: "white" }} />
       </IconButton>
+ */}
       <IconButton
         aria-label="Refresh"
         onClick={() => {
