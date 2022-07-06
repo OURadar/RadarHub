@@ -8,10 +8,6 @@ from common import colorize, color_name_value
 
 logger = logging.getLogger('frontend')
 
-# from django.db import models
-
-# Create your models here.
-
 #
 
 User = get_user_model()
@@ -21,14 +17,18 @@ def user_logged_in_receiver(request, user, **kwargs):
     show += '   ' + color_name_value('user.email', user.email)
     logger.info(show)
 
-user_logged_in.connect(user_logged_in_receiver, sender=User)
-
 def pre_social_login_receiver(request, sociallogin, **kwargs):
     show = colorize('pre_social_login_receiver()', 'green')
-    show += '   ' + color_name_value('user.email', sociallogin.email)
+    # show += '   ' + color_name_value('user.email', sociallogin.email)
+    print(sociallogin)
+    dir(sociallogin)
     logger.info(show)
 
+
+user_logged_in.connect(user_logged_in_receiver, sender=User)
 pre_social_login.connect(pre_social_login_receiver, sender=User)
+
+# allauth.socialaccount.signals.pre_social_login(request, sociallogin)
 
 # @receiver(user_signed_up)
 # def populate_profile(sociallogin, user, **kwargs):

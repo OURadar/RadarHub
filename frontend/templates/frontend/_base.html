@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html theme="light">
+  <head>
+    <title>RadarHub</title>
+    {% load static %}
+    {% load socialaccount %}
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="translucent" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="rgb(5, 111, 146)" />
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}" />
+    <link rel="apple-touch-icon" sizes="57x57" href="{% static 'images/iradar-icon-57x57.png' %}" />
+    <link rel="apple-touch-icon" sizes="72x72" href="{% static 'images/iradar-icon-72x72.png' %}" />
+    <link rel="apple-touch-icon" sizes="114x114" href="{% static 'images/iradar-icon-114x114.png' %}" />
+    <link rel="apple-touch-icon" sizes="144x144" href="{% static 'images/iradar-icon-144x144.png' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
+    <link rel="stylesheet" type="text/css" media="screen and (min-device-width: 550px)" href="{% static 'css/desktop.css' %}" />
+    <link rel="stylesheet" type="text/css" media="screen and (max-device-width: 550px)" href="{% static 'css/mobile.css' %}" />
+    {{ params|json_script:"params" }}
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <div id="app"></div>
+    {% block body %}{% endblock %}
+  </body>
+  <script type="text/javascript" src="{% static 'frontend/shared.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</html>
