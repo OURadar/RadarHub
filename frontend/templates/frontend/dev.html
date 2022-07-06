@@ -1,9 +1,6 @@
 {% extends "frontend/_base.html" %}
 
 {% load static %}
-{% load socialaccount %}
-
-{% block extra_head %}{{ params|json_script:"params" }}{% endblock %}
 
 {% block extra_html %}
 <script type="text/javascript" src="{% static 'frontend/dev.js' %}"></script>

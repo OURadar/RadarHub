@@ -13,7 +13,6 @@ import {
 // import logo from "/static/images/radarhub-outline.png";
 
 import { Notification } from "./notification";
-import { theme } from "./theme";
 
 const version = require("/package.json").version;
 
@@ -51,6 +50,7 @@ export function TopBar(props) {
     status = <StatusBody message={`${props.mode}`} />;
     notify = <Notification message={message} />;
   }
+  console.log(props);
   return (
     <div>
       <div id="topbar" role="banner">
@@ -71,9 +71,15 @@ export function TopBar(props) {
         <Console
           isMobile={props.isMobile || false}
           handleAccount={() => {
-            setMessage(
-              "<h3>Nothing 🍔</h3>Coming soon to v0.8<div class='emotion'>🤷🏻‍♀️</div>"
-            );
+            if (props?.user) {
+              setMessage(
+                `<h3>Hello ${props.user}</h3>You are from ${props.ip}<div class='emotion'>🐳</div>`
+              );
+            } else {
+              setMessage(
+                `<h3>Anonymous User</h3>You are from ${props.ip}<div class='emotion'>🤷🏻‍♀️</div>`
+              );
+            }
             setTimeout(() => {
               setMessage("");
             }, 3500);

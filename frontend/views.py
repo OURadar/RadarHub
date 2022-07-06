@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
 from django.views.decorators.http import require_GET
+from django.contrib.auth import get_user
 
 from common import colorize, color_name_value, get_client_ip
 from .archives import location
@@ -12,9 +13,20 @@ logger = logging.getLogger('frontend')
 
 default_radar = list(settings.RADARS.values())[0]['folder'].lower()
 
+#
+
+def get_params(request):
+    user = get_user(request)
+    try:
+        email = user.email
+    except:
+        email = None
+    return {'ip': get_client_ip(request), 'user': email}
+
 # Create your views here.
 def index(request):
-    return render(request, 'frontend/intro.html')
+    params = get_params(request)
+    return render(request, 'frontend/intro.html', {'params': params})
 
 def dev(request):
     return render(request, 'frontend/dev.html')
@@ -22,13 +34,14 @@ def dev(request):
 # Control
 
 def control_radar(request, radar):
-    ip = get_client_ip(request)
+    params = get_params(request)
     show = colorize('views.control()', 'green')
     show += '   ' + color_name_value('radar', radar)
-    show += '   ' + color_name_value('ip', ip)
+    show += '   ' + color_name_value('ip', params['ip'])
+    show += '   ' + color_name_value('user', params['user'])
     logger.info(show)
     origin = location(radar)
-    params = {'radar': radar, 'origin': origin, 'a': 1, 'b': 2}
+    params = {*params, *{'radar': radar, 'origin': origin}}
     return render(request, 'frontend/control.html', {'params': params})
 
 def control(request):
@@ -37,21 +50,22 @@ def control(request):
 # Archive
 
 def archive_radar_profile(request, radar, profileGL):
-    ip = get_client_ip(request)
-    if radar == 'favicon.ico':
-        show = colorize('views.archive()', 'red')
-        show += '   ' + color_name_value('radar', radar)
-        show += '   ' + color_name_value('ip', ip)
-        logger.warning(show)
-        return render(request, 'static/images/favicon.ico')
+    params = get_params(request)
     show = colorize('views.archive()', 'green')
     show += '   ' + color_name_value('radar', radar)
-    show += '   ' + color_name_value('ip', ip)
+    show += '   ' + color_name_value('ip', params['ip'])
+    show += '   ' + color_name_value('user', params['user'])
+    if radar == 'favicon.ico':
+        logger.warning(show)
+        return render(request, 'static/images/favicon.ico')
     if settings.DEBUG and settings.VERBOSE:
         show += '   ' + color_name_value('profileGL', profileGL)
     logger.info(show)
     origin = location(radar)
-    params = {'radar': radar, 'origin': origin, 'profileGL': profileGL}
+    # params = {*params, *{'radar': radar, 'origin': origin, 'profileGL': profileGL}}
+    params['radar'] = radar
+    params['origin'] = origin
+    params['profileGL'] = profileGL
     return render(request, 'frontend/archive.html', {'params': params})
 
 def archive_radar(request, radar):

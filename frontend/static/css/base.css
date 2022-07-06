@@ -234,6 +234,10 @@ h3 {
   display: block;
   height: 25px;
 }
+.spacer50 {
+  display: block;
+  height: 50px;
+}
 .left {
   left: var(--padding);
 }

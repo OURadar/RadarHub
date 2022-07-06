@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html theme="light">
   <head>
     <title>RadarHub</title>
     {% load static %}
+    {% load socialaccount %}
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
@@ -19,7 +20,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
     <link rel="stylesheet" type="text/css" media="screen and (min-device-width: 550px)" href="{% static 'css/desktop.css' %}" />
     <link rel="stylesheet" type="text/css" media="screen and (max-device-width: 550px)" href="{% static 'css/mobile.css' %}" />
-
+    {{ params|json_script:"params" }}
     {% block extra_head %}{% endblock %}
   </head>
   <body>

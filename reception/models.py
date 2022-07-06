@@ -8,10 +8,6 @@ from common import colorize, color_name_value
 
 logger = logging.getLogger('frontend')
 
-# from django.db import models
-
-# Create your models here.
-
 #
 
 User = get_user_model()

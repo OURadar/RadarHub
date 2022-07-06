@@ -1,9 +1,6 @@
 {% extends "frontend/_base.html" %}
 
 {% load static %}
-{% load socialaccount %}
-
-{% comment %} {% block extra_head %}{{ params|json_script:"params" }}{% endblock %} {% endcomment %}
 
 {% block body %}
   <div class="backgrad">
@@ -11,6 +8,7 @@
       <div class="extraLarge">RadarHub</div>
       <a class="radarButton" href="/archive/px1000/">PX-1000</a>
       <a class="radarButton" href="/archive/raxpol/">RaXPol</a>
+      <div class="spacer50"></div>
       {% if user.is_authenticated %}
         <p>Signed in as {{ user.email }}</p>
         <form action="/accounts/signout/?next=/" method="post">
