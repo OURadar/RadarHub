@@ -11,7 +11,7 @@ urlpatterns = [
 ]
 
 # path('login/', allauth_views.login, name='login'),
-
+# import allauth.socialaccount.urls
 urlpatterns += [path("social/", include("allauth.socialaccount.urls"))]
 
 urlpatterns += provider_urlpatterns
