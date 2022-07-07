@@ -14,5 +14,5 @@ tqdm
 numpy
 netCDF4
 maxminddb
-allauth
+django-allauth
 django-webpack-loader

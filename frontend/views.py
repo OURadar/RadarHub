@@ -26,7 +26,7 @@ def get_user_info(request):
 # Create your views here.
 def index(request):
     params = get_user_info(request)
-    return render(request, 'frontend/intro.html', {'params': params})
+    return render(request, 'frontend/index.html', {'params': params})
 
 def dev(request):
     return render(request, 'frontend/dev.html')
