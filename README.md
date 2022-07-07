@@ -72,7 +72,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.7.17 Fixed a bug in caching too aggressively (6/26/2022)
   - [x] 0.7.18 Show PPI / RHI using ray elevations / azimuths (6/28/2022)
   - [x] 0.7.19 Added a stats endpoint (7/1/2022)
-- [ ] 0.8 Authentication + user priviledges
+- [x] 0.8 Authentication through social accounts (7/7/2022)
 - [ ] 0.9 Page template, UI materials, mobile version
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
 
@@ -82,12 +82,13 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [ ] New abstraction layer for colorbar, title, and other static overlays.
   - [ ] Streaming buffers for radial-by-radial updates
   - [x] New camera transformation that is radar centric
+  - [ ] Local buffer for animations
 - - [ ] Auto adjustments for best view of PPI/RHI data
         [ ] Overlay Upgrades
   - [ ] An array of arrays of text assets to reduce texture updates
   - [ ] A new version of overlay.worker
-- [ ] Caching
-  - [ ] Frontend caching: archive.js
+- [x] Caching
+  - [x] Frontend caching: archive.js
   - [x] Backend caching: frontend.models.py
 - [ ] Infinite scrolling in data browser
 - [ ] Display frequency spectrum alongside scope view
@@ -445,7 +446,13 @@ and enable it using shell command as:
 ln -s /etc/nginx/sites-available/radarhub /etc/nginx/sites-enabled/
 ```
 
-To use the maintenance page, add these lines to `/etc/nginx/sites-available/default`
+To use the maintenance page, copy the file `frontend/templates/frontend/maintenance.html` to [nginx] root document folder, as:
+
+```shell
+cp frontend/templates/frontend/maintenance.html /var/www/html/
+```
+
+Then, modify the section `location /` of `/etc/nginx/sites-available/default ` as:
 
 ```conf
 	location / {
