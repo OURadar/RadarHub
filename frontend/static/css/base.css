@@ -121,11 +121,7 @@ canvas {
 }
 
 .backgrad {
-  background: #5c258d;
   background: var(--background-gradient);
-  display: flex;
-  height: 100%;
-  justify-content: center;
 }
 .content {
   color: white;

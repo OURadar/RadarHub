@@ -1,5 +1,5 @@
 //
-//  app8.js - Mobile / Desktop App
+//  app9.js - Mobile / Desktop App
 //  RadarHub
 //
 //  Created by Boonleng Cheong
@@ -69,7 +69,7 @@ class App extends Component {
   }
 
   handleOverlayLoaded() {
-    console.log(`App8.handleOverlayLoaded()`);
+    console.log(`App.handleOverlayLoaded()`);
     this.overlayLoaded = true;
   }
 
