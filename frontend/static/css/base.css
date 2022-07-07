@@ -137,7 +137,8 @@ canvas {
   background-color: var(--system-background);
   display: block;
   margin-top: 150px;
-  min-width: 500px;
+  min-width: 400px;
+  max-width: 800px;
   padding: 100px;
   position: absolute;
   text-align: center;
@@ -148,7 +149,8 @@ canvas {
   margin-bottom: 25px;
 }
 .subtitle {
-  font-size: 24px;
+  font-size: 1.5em;
+  line-height: 1.8em;
 }
 .message {
   font-family: "Message";
