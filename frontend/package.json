@@ -25,6 +25,7 @@
     "webpack-cli": "^4.9.2"
   },
   "dependencies": {
+    "@date-io/date-fns": "^2.14.0",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@mui/icons-material": "^5.0.1",
@@ -36,7 +37,6 @@
     "gl-matrix": "^3.4.3",
     "import": "^0.0.6",
     "memoize-one": "^5.2.1",
-    "react-native-paper": "^4.12.1",
     "react-window": "^1.8.6",
     "regl": "^2.1.0",
     "regl-stats-widget": "^0.0.1",
