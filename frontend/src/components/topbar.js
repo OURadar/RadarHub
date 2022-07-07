@@ -16,17 +16,7 @@ import { Notification } from "./notification";
 
 const version = require("/package.json").version;
 
-const emojis = {
-  spider: "🕷",
-  shrimp: "🦐",
-  lobster: "🦞",
-  crab: "🦀",
-  octopus: "🐙",
-  squid: "🦑",
-  shark: "🦈",
-  dolphin: "🐬",
-  whale: "🐳",
-};
+const emojis = require("emoji-name-map");
 
 class StatusBody extends Notification {
   render() {
@@ -89,8 +79,9 @@ export function TopBar(props) {
                   response.json().then(({ user, ip, emoji }) => {
                     let title =
                       user == "None" ? "Anonymous User" : `Hello ${user}`;
+                    let symbol = emojis.get(emoji) || "☁️";
                     setMessage(
-                      `<h3>${title}</h3>${ip}<div class='emotion'>${emojis[emoji]}</div>`
+                      `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
                     );
                     setTimeout(() => setMessage(""), 3500);
                   });

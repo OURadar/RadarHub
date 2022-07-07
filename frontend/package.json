@@ -34,6 +34,7 @@
     "@mui/x-date-pickers": "^5.0.0-alpha.6",
     "binary-parser": "^1.9.2",
     "date-fns": "^2.24.0",
+    "emoji-name-map": "^1.2.9",
     "gl-matrix": "^3.4.3",
     "import": "^0.0.6",
     "memoize-one": "^5.2.1",

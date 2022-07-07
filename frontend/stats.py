@@ -1,7 +1,7 @@
 import json
 
 from django.contrib.auth import get_user
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse
 
 from common import colorize, color_name_value, get_client_ip
 
@@ -18,7 +18,7 @@ def profile(request):
     data = {
         'ip': get_client_ip(request),
         'user': email or "None",
-        'emoji': 'shrimp' if email else 'spider',
+        'emoji': ':sunny:' if email else ':sun_behind_small_cloud:',
         'message': 'There is no message at this moment'
     }
     payload = json.dumps(data)
