@@ -100,7 +100,7 @@ class Archive {
         this.state.loadCount = 0;
         this.loadByIndex(this.grid.index);
       } else if (this.grid.index == -1) {
-        if (this.grid.latestFile == "") {
+        if (this.grid.latestFile == "" || this.grid.latestFile == null) {
           this.state.fileListUpdating = false;
           return;
         }

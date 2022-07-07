@@ -454,7 +454,10 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         data = {
             'dateString': '19700101-0000',
             'dayISOString': '1970/01/01',
-            'hour': 0,
+            'hour': -1,
+            'count': [0] * 24,
+            'file': '',
+            'list': []
         }
     else:
         dateString = f'{ymd}-{hour:02d}00'

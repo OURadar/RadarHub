@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 
 // import App from "./components/app-glview";
 // import App from "./components/app1";
@@ -13,4 +13,6 @@ if (o) {
   console.log(params);
 }
 
-ReactDOM.render(<App {...params} />, document.getElementById("app"));
+const container = document.getElementById("app");
+const root = createRoot(container);
+root.render(<App {...params} />);

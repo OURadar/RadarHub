@@ -1,5 +1,6 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
+
 import App from "./components/app5";
 
 let params = {};
@@ -8,4 +9,6 @@ if (o) {
   params = JSON.parse(o.textContent);
 }
 
-ReactDOM.render(<App {...params} />, document.getElementById("app"));
+const container = document.getElementById("app");
+const root = createRoot(container);
+root.render(<App {...params} />);
