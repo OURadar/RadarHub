@@ -15,7 +15,7 @@ default_radar = list(settings.RADARS.values())[0]['folder'].lower()
 
 #
 
-def get_params(request):
+def get_user_info(request):
     user = get_user(request)
     try:
         email = user.email
@@ -25,7 +25,7 @@ def get_params(request):
 
 # Create your views here.
 def index(request):
-    params = get_params(request)
+    params = get_user_info(request)
     return render(request, 'frontend/intro.html', {'params': params})
 
 def dev(request):
@@ -34,14 +34,14 @@ def dev(request):
 # Control
 
 def control_radar(request, radar):
-    params = get_params(request)
+    into = get_user_info(request)
     show = colorize('views.control()', 'green')
     show += '   ' + color_name_value('radar', radar)
-    show += '   ' + color_name_value('ip', params['ip'])
-    show += '   ' + color_name_value('user', params['user'])
+    show += '   ' + color_name_value('ip', into['ip'])
+    show += '   ' + color_name_value('user', into['user'])
     logger.info(show)
     origin = location(radar)
-    params = {*params, *{'radar': radar, 'origin': origin}}
+    params = {'radar': radar, 'origin': origin}
     return render(request, 'frontend/control.html', {'params': params})
 
 def control(request):
@@ -50,19 +50,16 @@ def control(request):
 # Archive
 
 def archive_radar_profile(request, radar, profileGL):
-    params = get_params(request)
+    info = get_user_info(request)
     show = colorize('views.archive()', 'green')
     show += '   ' + color_name_value('radar', radar)
-    show += '   ' + color_name_value('ip', params['ip'])
-    show += '   ' + color_name_value('user', params['user'])
+    show += '   ' + color_name_value('ip', info['ip'])
+    show += '   ' + color_name_value('user', info['user'])
     if settings.DEBUG and settings.VERBOSE:
         show += '   ' + color_name_value('profileGL', profileGL)
     logger.info(show)
     origin = location(radar)
-    # params = {*params, *{'radar': radar, 'origin': origin, 'profileGL': profileGL}}
-    params['radar'] = radar
-    params['origin'] = origin
-    params['profileGL'] = profileGL
+    params = {'radar': radar, 'origin': origin, 'profileGL': profileGL}
     return render(request, 'frontend/archive.html', {'params': params})
 
 def archive_radar(request, radar):

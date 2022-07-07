@@ -1,71 +1,104 @@
-const path = require("path");
+const Path = require("path");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const BundleTracker = require("webpack-bundle-tracker");
 
-module.exports = {
-  entry: {
-    archive: {
-      import: "./src/archive.js",
-      dependOn: "shared",
-    },
-    control: {
-      import: "./src/control.js",
-      dependOn: "shared",
-    },
-    dev: {
-      import: "./src/dev.js",
-      dependOn: "shared",
-    },
-    intro: {
-      import: "./src/intro.js",
-      dependOn: "shared",
-    },
-    shared: [
-      "react",
-      "react-dom",
-      "react-window",
-      "regl",
-      "gl-matrix",
-      "stats-js",
-      "binary-parser",
-      "split.js",
-      "memoize-one",
-    ],
-    "polygon.worker": "./src/components/polygon.worker.js",
-    "overlay.worker": "./src/components/overlay.worker.js",
-    "archive.worker": "./src/components/archive.worker.js",
-    "ingest.worker": "./src/components/ingest.worker.js",
-  },
-  output: {
-    filename: "[name].js",
-    path: path.resolve(__dirname, "static/frontend"),
-  },
-  module: {
-    rules: [
-      {
-        test: /\.worker\.js$/,
-        exclude: /node_modules/,
-        use: "babel-loader",
+const cleaner = new CleanWebpackPlugin({
+  cleanOnceBeforeBuildPatterns: ["**/*", "!**/*.worker.js"],
+  verbose: true,
+});
+
+module.exports = [
+  {
+    entry: {
+      archive: {
+        import: "./src/archive.js",
+        dependOn: "shared",
       },
-      {
-        test: /\.(js|jsx)$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: "babel-loader",
-            options: {
-              presets: ["@babel/preset-env"],
+      control: {
+        import: "./src/control.js",
+        dependOn: "shared",
+      },
+      dev: {
+        import: "./src/dev.js",
+        dependOn: "shared",
+      },
+      index: {
+        import: "./src/index.js",
+        dependOn: "shared",
+      },
+      shared: [
+        "react",
+        "react-dom",
+        "react-window",
+        "regl",
+        "gl-matrix",
+        "stats-js",
+        "binary-parser",
+        "split.js",
+        "memoize-one",
+      ],
+    },
+    output: {
+      filename: "[name].[hash:8].js",
+      path: Path.resolve(__dirname, "static/frontend"),
+    },
+    module: {
+      rules: [
+        {
+          test: /\.worker\.js$/,
+          exclude: /node_modules/,
+          use: "babel-loader",
+        },
+        {
+          test: /\.(js|jsx)$/,
+          exclude: /node_modules/,
+          use: [
+            {
+              loader: "babel-loader",
+              options: {
+                presets: ["@babel/preset-env"],
+              },
             },
-          },
-        ],
-      },
-    ],
+          ],
+        },
+      ],
+    },
+    optimization: {
+      minimize: true,
+    },
+    watchOptions: {
+      ignored: "**/node_modules",
+    },
+    plugins: [cleaner, new BundleTracker({ filename: "./webpack-stats.json" })],
   },
-  optimization: {
-    minimize: true,
+  {
+    entry: {
+      "polygon.worker": "./src/components/polygon.worker.js",
+      "overlay.worker": "./src/components/overlay.worker.js",
+      "archive.worker": "./src/components/archive.worker.js",
+      "ingest.worker": "./src/components/ingest.worker.js",
+    },
+    output: {
+      filename: "[name].js",
+      path: Path.resolve(__dirname, "static/frontend"),
+    },
+    module: {
+      rules: [
+        {
+          test: /\.js$/,
+          exclude: /node_modules/,
+          use: "babel-loader",
+        },
+      ],
+    },
+    watchOptions: {
+      ignored: "**/node_modules",
+    },
+    optimization: {
+      minimize: true,
+    },
   },
-  watchOptions: {
-    ignored: "**/node_modules",
-  },
-};
+];
 
 //
 // If webpack display messages like this

@@ -86,7 +86,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.apple',
     'allauth.socialaccount.providers.facebook',
-    'reception'
+    'reception',
+    'webpack_loader'
 ]
 
 MIDDLEWARE = [
@@ -372,19 +373,13 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'
 
 SOCIALACCOUNT_QUERY_EMAIL = True
 
-# Provider specific settings
 if 'socialaccounts' in settings:
     SOCIALACCOUNT_PROVIDERS = settings['socialaccounts']
 else:
     SOCIALACCOUNT_PROVIDERS = {
         'google': {
-            'SCOPE': [
-                'profile',
-                'email',
-            ],
-            'AUTH_PARAMS': {
-                'access_type': 'online',
-            }
+            'SCOPE': ['profile', 'email'],
+            'AUTH_PARAMS': { 'access_type': 'online' }
         }
     }
 
@@ -395,3 +390,13 @@ if 'facebook' in SOCIALACCOUNT_PROVIDERS:
 
 if DEBUG is not True:
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
+# Webpack Loader
+# https://django-webpack-loader.readthedocs.io/en/latest/
+
+WEBPACK_LOADER = {
+    'DEFAULT': {
+        'BUNDLE_DIR_NAME': '/frontend/',
+        'STATS_FILE': str(FRONTEND_DIR / 'webpack-stats.json'),
+    },
+}
