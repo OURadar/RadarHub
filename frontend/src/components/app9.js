@@ -20,6 +20,8 @@ class App extends Component {
       colors: colorDict(),
       theme: makeTheme(),
       time: new Date("2013-05-20T19:00"),
+      overlayLoaded: false,
+      key: "",
     };
     console.log(`colors.name = ${this.state.colors.name}`);
     this.isMobile = detectMob();
@@ -30,6 +32,15 @@ class App extends Component {
     this.overlayLoaded = false;
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
     this.handleModeChange = this.handleModeChange.bind(this);
+    document.documentElement.setAttribute("theme", this.state.colors.name);
+    window.addEventListener("keydown", (e) => (this.state.key = e.key));
+    window.addEventListener("keyup", (e) => {
+      if (e.key != this.state.key) {
+        console.log(`keydown ${this.state.key} != keyup ${e.key}`);
+        return;
+      }
+      console.log(`key = ${e.key}`);
+    });
   }
   static defaultProps = {
     radar: "radar",

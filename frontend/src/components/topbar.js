@@ -120,15 +120,13 @@ export function Console(props) {
   );
   return (
     <div className="topbarComponent right">
-      {/*
-      <IconButton
+      {/* <IconButton
         arial-label="Help"
         onClick={() => console.log("Help Center")}
         size="large"
       >
         <HelpCenter style={{ color: "white" }} />
-      </IconButton>
- */}
+      </IconButton> */}
       <IconButton
         aria-label="Refresh"
         onClick={() => {

@@ -933,7 +933,7 @@ def show_visitor_log(markdown=False, show_city=False):
     if os.path.exists(settings.IP_DATABASE):
         fid.close()
 
-def check_path(folder):
+def check_path(folder, args):
     original = os.path.join(folder, '_original')
     original_tgz = os.path.join(folder, '_original_tgz')
     if os.path.exists(original) and os.path.exists(original_tgz):
@@ -941,7 +941,8 @@ def check_path(folder):
         if len(archives):
             # print(f'{original_tgz} is safe to remove')
             cmd = f'rm -rf {original_tgz}'
-            print(cmd)
+            if args.verbose:
+                print(cmd)
             # os.system(cmd)
     elif os.path.exists(original):
         archives = glob.glob(f'{original}/[A-Z]*.tar.xz')
@@ -1153,7 +1154,7 @@ def dbtool_main():
     elif args.check_path:
         for folder in args.source:
             folder = folder[:-1] if folder[-1] == '/' else folder
-            check_path(folder)
+            check_path(folder, args=args)
     else:
         parser.print_help(sys.stderr)
 

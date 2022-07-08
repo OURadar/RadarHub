@@ -23,20 +23,23 @@ class App extends Component {
       colors: colorDict(),
       theme: makeTheme(),
       time: new Date("2013-05-20T19:00"),
+      overlayLoaded: false,
+      key: "",
     };
     this.isMobile = detectMob();
     this.archive = new Archive(props.radar);
     this.archive.onupdate = (_dontcare) => {
       this.forceUpdate();
     };
-    this.overlayLoaded = false;
-    this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
     this.handleModeChange = this.handleModeChange.bind(this);
-
+    this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
     document.documentElement.setAttribute("theme", this.state.colors.name);
-
+    window.addEventListener("keydown", (e) => (this.state.key = e.key));
     window.addEventListener("keyup", (e) => {
-      // console.log(`keyup: ${e.key}`);
+      if (e.key != this.state.key) {
+        console.log(`keydown ${this.state.key} != keyup ${e.key}`);
+        return;
+      }
       let symbol = e.key.toUpperCase();
       const styles = ["Z", "V", "W", "D", "P", "R"];
       if (styles.indexOf(symbol) != -1) {
@@ -163,7 +166,7 @@ class App extends Component {
 
   handleOverlayLoaded() {
     console.log(`App6.handleOverlayLoaded()`);
-    this.overlayLoaded = true;
+    this.state.overlayLoaded = true;
   }
 
   handleModeChange() {
