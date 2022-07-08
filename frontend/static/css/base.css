@@ -157,11 +157,14 @@ canvas {
   max-width: 1000px;
   line-height: 36pt;
 }
-.fill {
+.flex-center {
   display: flex;
-  height: 100%;
   justify-content: center;
+  text-align: center;
   overflow: hidden;
+}
+.fill {
+  height: 100%;
   position: relative;
   width: 100%;
 }
