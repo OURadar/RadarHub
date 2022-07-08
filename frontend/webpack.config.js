@@ -40,16 +40,11 @@ module.exports = [
       ],
     },
     output: {
-      filename: "[name].[hash:8].js",
+      filename: "[name].[chunkhash:8].js",
       path: Path.resolve(__dirname, "static/frontend"),
     },
     module: {
       rules: [
-        {
-          test: /\.worker\.js$/,
-          exclude: /node_modules/,
-          use: "babel-loader",
-        },
         {
           test: /\.(js|jsx)$/,
           exclude: /node_modules/,
