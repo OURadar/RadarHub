@@ -4,7 +4,7 @@ git reset --hard
 git pull
 
 cd frontend
-npm i
+npm update
 npm run build
 cd -
 
