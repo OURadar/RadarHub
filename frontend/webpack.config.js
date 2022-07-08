@@ -3,7 +3,7 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const BundleTracker = require("webpack-bundle-tracker");
 
 const cleaner = new CleanWebpackPlugin({
-  cleanOnceBeforeBuildPatterns: ["**/*", "!**/*.worker.js"],
+  cleanOnceBeforeBuildPatterns: ["**/*"],
   verbose: true,
 });
 
@@ -69,34 +69,7 @@ module.exports = [
     watchOptions: {
       ignored: "**/node_modules",
     },
-    plugins: [cleaner, new BundleTracker({ filename: "./webpack-stats.json" })],
-  },
-  {
-    entry: {
-      "polygon.worker": "./src/components/polygon.worker.js",
-      "overlay.worker": "./src/components/overlay.worker.js",
-      "archive.worker": "./src/components/archive.worker.js",
-      "ingest.worker": "./src/components/ingest.worker.js",
-    },
-    output: {
-      filename: "[name].js",
-      path: Path.resolve(__dirname, "static/frontend"),
-    },
-    module: {
-      rules: [
-        {
-          test: /\.js$/,
-          exclude: /node_modules/,
-          use: "babel-loader",
-        },
-      ],
-    },
-    watchOptions: {
-      ignored: "**/node_modules",
-    },
-    optimization: {
-      minimize: true,
-    },
+    plugins: [cleaner, new BundleTracker({ filename: "webpack-output.json" })],
   },
 ];
 

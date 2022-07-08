@@ -8,7 +8,6 @@ import App from "./components/app9";
 
 let text = document.getElementById("params")?.textContent || "{}";
 let params = JSON.parse(text);
-console.log(params);
 
 const container = document.getElementById("app");
 const root = createRoot(container);

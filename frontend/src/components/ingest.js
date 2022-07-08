@@ -37,7 +37,8 @@ class Ingest {
     this.execute = this.execute.bind(this);
     this.disconnect = this.disconnect.bind(this);
 
-    this.worker = new Worker("/static/frontend/ingest.worker.js");
+    this.worker = new Worker(new URL("./ingest.worker.js", import.meta.url));
+    this.worker.postMessage({ task: "init" });
     this.worker.onmessage = this.handleMessage;
   }
 

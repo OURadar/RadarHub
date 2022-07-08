@@ -84,6 +84,8 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
     navigateForwardScan();
   } else if (task == "backward-scan") {
     navigateBackwardScan();
+  } else if (task == "init") {
+    return;
   }
 };
 

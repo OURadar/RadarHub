@@ -59,6 +59,8 @@ self.onmessage = ({ data: { task, payload } }) => {
         radar: radar,
       })
     );
+  } else if (task == "init") {
+    return;
   }
 };
 

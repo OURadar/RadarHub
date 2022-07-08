@@ -36,7 +36,7 @@ class Overlay {
 
     this.handleMessage = this.handleMessage.bind(this);
 
-    this.worker = new Worker("/static/frontend/overlay.worker.js");
+    this.worker = new Worker(new URL("./overlay.worker.js", import.meta.url));
     this.worker.onmessage = this.handleMessage;
     this.workerReady = false;
 

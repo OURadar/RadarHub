@@ -397,6 +397,6 @@ if DEBUG is not True:
 WEBPACK_LOADER = {
     'DEFAULT': {
         'BUNDLE_DIR_NAME': '/frontend/',
-        'STATS_FILE': str(FRONTEND_DIR / 'webpack-stats.json'),
+        'STATS_FILE': str(FRONTEND_DIR / 'webpack-output.json'),
     },
 }
