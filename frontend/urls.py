@@ -9,8 +9,6 @@ urlpatterns = [
     # path('control/', views.control, name='control'),
     # path('data/header/<str:name>/', archives.header, name='data-header'),
     # path('data/binary/<str:name>/', archives.binary, name='data-binary'),
-    path('', views.index, name='index'),
-    path('dev/', views.dev, name='index'),
     path('control/<str:radar>/', views.control_radar, name='radar-control'),
     path('archive/<str:radar>/', views.archive_radar, name='radar-archive'),
     path('data/catchup/<str:radar>/', archives.catchup, name='data-catchup-json'),
@@ -21,4 +19,7 @@ urlpatterns = [
     path('stats/<str:mode>/', archives.stats, name='stats'),
     path('profile/', stats.profile, name='stats-profile'),
     path('robots.txt', views.robots_txt),
+    path('favicon.ico', views.favicon_ico),
+    path('dev/', views.dev, name='index'),
+    path('', views.index, name='index'),
 ]

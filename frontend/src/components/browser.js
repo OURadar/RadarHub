@@ -142,7 +142,7 @@ function Browser(props) {
 
   // View did mount
   React.useEffect(() => {
-    props.archive.catchup(radar);
+    props.archive.catchup();
   }, []);
 
   const setDayHour = (newDay, newHour) => {
@@ -188,11 +188,7 @@ function Browser(props) {
             }}
             onChange={(newValue) => {
               setValue(newValue);
-              if (
-                !isNaN(newValue) &&
-                newValue instanceof Date &&
-                newValue.getFullYear() > 2000
-              ) {
+              if (newValue instanceof Date && newValue.getFullYear() > 2000) {
                 setDayHour(newValue, hour);
               }
             }}
@@ -213,6 +209,14 @@ function Browser(props) {
                 >
                   <PickersDay {...pickersDayProps} />
                 </Badge>
+              );
+            }}
+            shouldDisableYear={(date) => {
+              let year = date.getYear();
+              return (
+                year < 0 ||
+                year >= 200 ||
+                props.archive.grid.yearlyAvailability[year] == 0
               );
             }}
             disableHighlightToday={true}

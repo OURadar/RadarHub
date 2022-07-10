@@ -17,6 +17,7 @@ let grid = {
   dateTimeString: "20130520-1900",
   dailyAvailability: {},
   hourlyAvailability: new Array(24).fill(0),
+  yearlyAvailability: new Array(200).fill(0),
   latestHour: -1,
   latestFile: "",
   fileListGrouped: {},
@@ -520,6 +521,11 @@ function catchup(radar) {
             }
             grid.fileListGrouped[scanType].push({ file: file, index: index });
           });
+          grid.yearlyAvailability.splice(
+            100,
+            buffer.years.length,
+            ...buffer.years
+          );
           if (state.verbose > 1) {
             console.info(grid.fileList);
             console.info(grid.fileListGrouped);

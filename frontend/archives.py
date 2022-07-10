@@ -450,12 +450,16 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         return invalid_query
     prefix = radar_prefix[radar]
     ymd, hour = latest(prefix)
+    years = [0] * 23
+    for k in range(13, 23):
+        years[k] = 1
     if ymd is None:
         data = {
             'dateString': '19700101-0000',
             'dayISOString': '1970/01/01',
             'hour': -1,
             'count': [0] * 24,
+            'years': [],
             'file': '',
             'list': []
         }
@@ -465,6 +469,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
             'dateString': dateString,
             'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
             'hour': hour,
+            'years': years
         }
         data['count'] = _count(prefix, ymd)
         data['file'] = _file(prefix, scan, symbol)

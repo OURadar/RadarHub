@@ -12,6 +12,7 @@ class Archive {
       dateTimeString: "20130520-1900",
       dailyAvailability: {},
       hourlyAvailability: new Array(24).fill(0),
+      yearlyAvailability: new Array(200).fill(0),
       latestHour: -1,
       latestFile: "",
       fileListGrouped: {},
