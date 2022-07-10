@@ -30,4 +30,9 @@
   </body>
   {% render_bundle 'shared' 'js' %}
   {% block extra_js %}{% endblock %}
+  <script>
+    window.addEventListener('load', () => {
+      document.body.classList.remove("hide");
+    })
+  </script>
 </html>
