@@ -276,10 +276,9 @@ def list(request, radar, day_hour_symbol):
     else:
         message = 'okay'
     data = {
-        'count': _count(prefix, day),
+        'hoursActive': _count(prefix, day),
         'hour': hour,
-        'last': hours_with_data[-1] if len(hours_with_data) else -1,
-        'list': _list(prefix, day_hour_symbol) if hour >= 0 else [],
+        'items': _list(prefix, day_hour_symbol) if hour >= 0 else [],
         'symbol': symbol,
         'message': message
     }
@@ -432,6 +431,15 @@ def _file(prefix, scan='E4.0', symbol='Z'):
     else:
         return ''
 
+def _years(prefix):
+    if prefix == 'PX-':
+        return [x > 12 for x in range(23)]
+    if prefix == 'RAXPOL-':
+        return [x > 16 for x in range(23)]
+    if prefix == 'PX10K-':
+        return [x == 18 for x in range(23)]
+    return []
+
 '''
     radar - Input radar name, e.g., px1000, raxpol, etc.
     scan - The 4-th component of filename describing the scan, e.g., E4.0, A120.0, etc.
@@ -450,30 +458,27 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         return invalid_query
     prefix = radar_prefix[radar]
     ymd, hour = latest(prefix)
-    years = [0] * 23
-    for k in range(13, 23):
-        years[k] = 1
     if ymd is None:
         data = {
-            'dateString': '19700101-0000',
+            'dateTimeString': '19700101-0000',
             'dayISOString': '1970/01/01',
+            'latestScan': '',
+            'yearsActive': [],
+            'hoursActive': [0] * 24,
             'hour': -1,
-            'count': [0] * 24,
-            'years': [],
-            'file': '',
-            'list': []
+            'items': [],
         }
     else:
-        dateString = f'{ymd}-{hour:02d}00'
+        dateTimeString = f'{ymd}-{hour:02d}00'
         data = {
-            'dateString': dateString,
+            'dateTimeString': dateTimeString,
             'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+            'latestScan': _file(prefix, scan, symbol),
+            'yearsActive': _years(prefix),
+            'hoursActive': _count(prefix, ymd),
             'hour': hour,
-            'years': years
+            'items': _list(prefix, f'{dateTimeString}-{symbol}'),
         }
-        data['count'] = _count(prefix, ymd)
-        data['file'] = _file(prefix, scan, symbol)
-        data['list'] = _list(prefix, f'{dateString}-{symbol}')
     payload = json.dumps(data)
     payload = bytes(payload, 'utf-8')
     return http_response(ip, payload)

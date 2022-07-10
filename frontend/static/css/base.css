@@ -111,6 +111,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  opacity: 0;
   overflow: hidden;
 }
 
@@ -370,6 +371,9 @@ h3 {
   position: absolute !important;
 }
 
+#app {
+  min-height: var(--topbar-height);
+}
 #topbar {
   background-color: var(--background-color);
   color: white;

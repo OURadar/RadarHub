@@ -58,6 +58,8 @@ class App extends Component {
         }
       }
     });
+    document.body.style.opacity = 0;
+    document.body.transition = "opacity 0.5s";
   }
   static defaultProps = {
     radar: "radar",
@@ -113,6 +115,10 @@ class App extends Component {
         },
       });
     }
+    setTimeout(() => {
+      document.body.style.opacity = 1.0;
+      document.body.style.transition = "";
+    }, 500);
   }
 
   render() {
