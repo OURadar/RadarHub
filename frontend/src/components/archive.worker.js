@@ -270,7 +270,7 @@ function count(radar, day) {
           grid.hoursActive = buffer.count;
           grid.latestHour =
             23 -
-            buffer.hoursActive
+            grid.hoursActive
               .slice()
               .reverse()
               .findIndex((x) => x > 0);

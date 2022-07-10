@@ -38,9 +38,9 @@ const createFileList = memoize((list, index, load) => ({
 }));
 
 const createFileButtons = (list, index, load) => {
+  if (list.length == 0) return [];
   const fileButtons = Array(list.length);
   for (let k = 0, l = list.length; k < l; k++) {
-    const selected = k == index;
     const file = list[k];
     fileButtons[k] = (
       <Button
@@ -48,7 +48,7 @@ const createFileButtons = (list, index, load) => {
         variant="file"
         onClick={() => load(k)}
         style={{ height: 36, overflow: "hidden", textOverflow: "ellipsis" }}
-        selected={selected}
+        selected={k == index}
       >
         {file}
       </Button>
@@ -58,11 +58,12 @@ const createFileButtons = (list, index, load) => {
 };
 
 function Browser(props) {
-  const day = props.archive.grid?.day || new Date("2013/05/20");
-  const hour = props.archive.grid?.hour || -1;
-  const count = props.archive.grid?.hoursActive || new Array(24).fill(0);
-  const items = props.archive.grid?.items || [];
-  const index = props.archive.grid?.index || -1;
+  const ok = props.archive.grid !== undefined;
+  const day = ok ? props.archive.grid.day : new Date("2013/05/20");
+  const hour = ok ? props.archive.grid.hour : -1;
+  const count = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
+  const items = ok ? props.archive.grid.items : [];
+  const index = ok ? props.archive.grid?.index : -1;
   const radar = props.radar;
 
   const [hourButtons, setHourButtons] = React.useState([]);

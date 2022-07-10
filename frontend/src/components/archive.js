@@ -48,28 +48,26 @@ class Archive {
   }
 
   handleMessage({ data: { type, payload } }) {
-    if (type == "message") {
-      this.showMessage(payload, 2500);
-    } else if (type == "count") {
-      this.grid.hoursActive = payload.hoursActive;
-      this.state.hoursActiveUpdating = false;
-      let hour = this.grid.selectedHour;
-      if (hour == -1 || this.grid.hoursActive[hour] == 0) {
-        let best = this.grid.hoursActive.findIndex((x) => x > 0);
-        if (best >= 0) {
-          hour = best;
-          if (this.state.verbose) {
-            console.log(
-              `%carchive.onmessage()%c count   No data.  hour = ${hour} -> ${best} ...`,
-              "color: lightseagreen",
-              "color: inherit"
-            );
-          }
-        } else {
-          console.log("Unexpeted results.");
-        }
+    if (type == "load") {
+      this.data.sweep = payload;
+      // console.log(this.data.sweep);
+      this.updateAge();
+      this.state.sweepLoading = false;
+      if (this.state.verbose) {
+        console.log(
+          `%carchive.onmessage()%c load` +
+            `   hour = ${this.grid.hour}` +
+            `   index = ${this.grid.index}` +
+            `   latestHour = ${this.grid.latestHour}` +
+            `   loadCount = ${this.state.loadCount}`,
+          "color: lightseagreen",
+          "color: inherit"
+        );
       }
-      this.list(this.radar, payload.day, hour, this.grid.symbol);
+      if (this.grid.latestHour != this.grid.hour || this.state.loadCount > 1) {
+        this.disableLiveUpdate();
+      }
+      this.showMessage(`${payload.name} loaded`);
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
@@ -77,17 +75,18 @@ class Archive {
             `   ${this.grid.dateTimeString}` +
             `   ${payload.latestScan}` +
             `   hour = ${this.grid.hour} -> ${payload.hour}` +
-            `   index = ${this.grid.index} -> ${payload.index}`,
+            `   index = ${this.grid.index} -> ${payload.index}` +
+            `   productSwitching = ${this.state.productSwitching}`,
           "color: lightseagreen",
           "color: inherit"
         );
       }
-      let index = this.grid.index;
+      //let index = this.grid.index;
       this.grid = payload;
       if (this.state.productSwitching) {
         this.state.productSwitching = false;
         this.state.loadCount = 0;
-        this.grid.index = index;
+        //this.grid.index = index;
         this.loadByIndex(this.grid.index);
       } else if (this.grid.index >= 0) {
         this.state.loadCount = 0;
@@ -114,25 +113,8 @@ class Archive {
         }
       }
       this.state.itemsUpdating = false;
-    } else if (type == "load") {
-      this.data.sweep = payload;
-      // console.log(this.data.sweep);
-      this.updateAge();
-      this.state.sweepLoading = false;
-      if (this.state.verbose) {
-        console.log(
-          `%carchive.onmessage()%c load` +
-            `   hour = ${this.grid.hour}` +
-            `   latestHour = ${this.grid.latestHour}` +
-            `   loadCount = ${this.state.loadCount}`,
-          "color: lightseagreen",
-          "color: inherit"
-        );
-      }
-      if (this.grid.latestHour != this.grid.hour || this.state.loadCount > 1) {
-        this.disableLiveUpdate();
-      }
-      this.showMessage(`${payload.name} loaded`);
+    } else if (type == "message") {
+      this.showMessage(payload, 2500);
     } else if (type == "month") {
       this.grid.daysActive = payload;
       this.state.daysActiveUpdating = false;
@@ -150,7 +132,7 @@ class Archive {
       if (this.state.verbose) {
         console.log(
           `%carchive.onmessage()%c state` +
-            `  liveUpdate = ${this.state.liveUpdate}`,
+            `   liveUpdate = ${this.state.liveUpdate}`,
           "color: lightseagreen",
           "color: inherit"
         );
@@ -166,6 +148,26 @@ class Archive {
       }
       this.grid = payload;
       this.ready = true;
+    } else if (type == "count") {
+      this.grid.hoursActive = payload.hoursActive;
+      this.state.hoursActiveUpdating = false;
+      let hour = this.grid.selectedHour;
+      if (hour == -1 || this.grid.hoursActive[hour] == 0) {
+        let best = this.grid.hoursActive.findIndex((x) => x > 0);
+        if (best >= 0) {
+          hour = best;
+          if (this.state.verbose) {
+            console.log(
+              `%carchive.onmessage()%c count   No data.  hour = ${hour} -> ${best} ...`,
+              "color: lightseagreen",
+              "color: inherit"
+            );
+          }
+        } else {
+          console.log("Unexpeted results.");
+        }
+      }
+      this.list(this.radar, payload.day, hour, this.grid.symbol);
     }
     this.onupdate(this.state.tic++);
   }
