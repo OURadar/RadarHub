@@ -18,12 +18,12 @@ module.exports = [
         import: "./src/control.js",
         dependOn: "shared",
       },
-      dev: {
-        import: "./src/dev.js",
-        dependOn: "shared",
-      },
       index: {
         import: "./src/index.js",
+        dependOn: "shared",
+      },
+      dev: {
+        import: "./src/dev.js",
         dependOn: "shared",
       },
       shared: [

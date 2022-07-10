@@ -22,8 +22,6 @@ class App extends Component {
     this.isMobile = detectMob();
     this.handleModeChange = this.handleModeChange.bind(this);
     document.documentElement.setAttribute("theme", this.state.colors.name);
-    document.body.style.opacity = 0;
-    document.body.transition = "opacity 0.5s";
   }
   static defaultProps = {
     debug: false,
@@ -41,10 +39,7 @@ class App extends Component {
         });
         document.documentElement.setAttribute("theme", mode);
       });
-    setTimeout(() => {
-      document.body.style.opacity = 1.0;
-      document.body.style.transition = "";
-    }, 500);
+    document.body.classList.remove("hide");
   }
 
   render() {
