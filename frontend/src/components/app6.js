@@ -113,12 +113,12 @@ class App extends Component {
         },
       });
     }
+    document.body.classList.remove("hide");
   }
 
   render() {
     if (this.isMobile)
       return (
-        // <StyledEngineProvider injectFirst>
         <ThemeProvider theme={this.state.theme}>
           <TopBar isMobile={this.isMobile} />
           <SectionHeader name="product" />
@@ -131,7 +131,6 @@ class App extends Component {
             onOverlayLoaded={this.handleOverlayLoaded}
           />
         </ThemeProvider>
-        // </StyledEngineProvider>
       );
     return (
       <ThemeProvider theme={this.state.theme}>

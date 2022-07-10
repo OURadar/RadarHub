@@ -112,6 +112,7 @@ body {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  transition: opacity 0.5s;
 }
 
 canvas {
@@ -162,6 +163,9 @@ canvas {
   justify-content: center;
   text-align: center;
   overflow: hidden;
+}
+.hide {
+  opacity: 0;
 }
 .fill {
   height: 100%;
@@ -370,6 +374,9 @@ h3 {
   position: absolute !important;
 }
 
+#app {
+  min-height: var(--topbar-height);
+}
 #topbar {
   background-color: var(--background-color);
   color: white;

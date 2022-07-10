@@ -73,6 +73,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.7.18 Show PPI / RHI using ray elevations / azimuths (6/28/2022)
   - [x] 0.7.19 Added a stats endpoint (7/1/2022)
 - [x] 0.8 Authentication through social accounts (7/7/2022)
+  - [x] 0.8.1 Improved loading speed for UX (7/10/2022))
 - [ ] 0.9 Page template, UI materials, mobile version
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
 

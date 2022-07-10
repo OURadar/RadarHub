@@ -1,7 +1,7 @@
 import logging
 
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.conf import settings
 from django.views.decorators.http import require_GET
 from django.contrib.auth import get_user
@@ -82,3 +82,8 @@ def robots_txt(request):
         'Disallow: /data/',
     ]
     return HttpResponse('\n'.join(lines), content_type='text/plain')
+
+def favicon_ico(request):
+    show = colorize('views.favicon_ico()', 'green')
+    logger.info(show)
+    raise Http404

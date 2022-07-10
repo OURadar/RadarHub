@@ -38,9 +38,9 @@ const createFileList = memoize((list, index, load) => ({
 }));
 
 const createFileButtons = (list, index, load) => {
+  if (list.length == 0) return [];
   const fileButtons = Array(list.length);
   for (let k = 0, l = list.length; k < l; k++) {
-    const selected = k == index;
     const file = list[k];
     fileButtons[k] = (
       <Button
@@ -48,7 +48,7 @@ const createFileButtons = (list, index, load) => {
         variant="file"
         onClick={() => load(k)}
         style={{ height: 36, overflow: "hidden", textOverflow: "ellipsis" }}
-        selected={selected}
+        selected={k == index}
       >
         {file}
       </Button>
@@ -58,11 +58,12 @@ const createFileButtons = (list, index, load) => {
 };
 
 function Browser(props) {
-  const count = props.archive.grid.hourlyAvailability;
-  const files = props.archive.grid.fileList;
-  const day = props.archive.grid.day;
-  const hour = props.archive.grid.hour;
-  const index = props.archive.grid.index;
+  const ok = props.archive.grid !== undefined;
+  const day = ok ? props.archive.grid.day : new Date("2013/05/20");
+  const hour = ok ? props.archive.grid.hour : -1;
+  const count = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
+  const items = ok ? props.archive.grid.items : [];
+  const index = ok ? props.archive.grid?.index : -1;
   const radar = props.radar;
 
   const [hourButtons, setHourButtons] = React.useState([]);
@@ -101,8 +102,8 @@ function Browser(props) {
         <FixedSizeList
           height={600}
           itemSize={32}
-          itemCount={files.length}
-          itemData={createFileList(files, index, props.archive.load)}
+          itemCount={items.length}
+          itemData={createFileList(items, index, props.archive.load)}
           overscanCount={5}
         >
           {Item}
@@ -110,11 +111,11 @@ function Browser(props) {
       </Box>
     ) : (
       <div className="filesContainer" ref={setElements}>
-        {createFileButtons(files, index, props.archive.load)}
+        {createFileButtons(items, index, props.archive.load)}
       </div>
     );
     setFileBrowser(newFileBrowser);
-  }, [files, index]);
+  }, [items, index]);
 
   React.useEffect(() => {
     const newButtons = Array(24);
@@ -142,7 +143,7 @@ function Browser(props) {
 
   // View did mount
   React.useEffect(() => {
-    props.archive.catchup(radar);
+    props.archive.catchup();
   }, []);
 
   const setDayHour = (newDay, newHour) => {
@@ -188,11 +189,7 @@ function Browser(props) {
             }}
             onChange={(newValue) => {
               setValue(newValue);
-              if (
-                !isNaN(newValue) &&
-                newValue instanceof Date &&
-                newValue.getFullYear() > 2000
-              ) {
+              if (newValue instanceof Date && newValue.getFullYear() > 2000) {
                 setDayHour(newValue, hour);
               }
             }}
@@ -200,8 +197,8 @@ function Browser(props) {
             renderDay={(day, _selectedDay, pickersDayProps) => {
               let key = day.toISOString().slice(0, 10);
               let num =
-                key in props.archive.grid.dailyAvailability
-                  ? props.archive.grid.dailyAvailability[key]
+                key in props.archive.grid.daysActive
+                  ? props.archive.grid.daysActive[key]
                   : 0;
               let variant = num ? "dot" : undefined;
               return (
@@ -213,6 +210,14 @@ function Browser(props) {
                 >
                   <PickersDay {...pickersDayProps} />
                 </Badge>
+              );
+            }}
+            shouldDisableYear={(date) => {
+              let year = date.getYear();
+              return (
+                year < 0 ||
+                year >= 200 ||
+                props.archive.grid.yearsActive[year] == 0
               );
             }}
             disableHighlightToday={true}

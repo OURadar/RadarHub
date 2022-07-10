@@ -91,6 +91,7 @@ class App extends Component {
     fetch("/static/blob/helveticaneue/HelveticaNeueMed.ttf").then(() => {
       this.ingest.connect();
     });
+    document.body.classList.remove("hide");
   }
 
   render() {

@@ -8,6 +8,7 @@
 class Ingest {
   constructor(radar) {
     this.radar = radar;
+    this.ready = true;
     this.data = {
       t: null,
       ch1: {
