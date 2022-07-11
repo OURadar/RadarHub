@@ -86,9 +86,7 @@ function Browser(props) {
           variant="hour"
           disabled={disabled}
           selected={selected}
-          onClick={() => {
-            setDayHour(day, k);
-          }}
+          onClick={() => setDayHour(day, k)}
         >
           {hourString}
         </Button>
@@ -117,9 +115,6 @@ function Browser(props) {
       "color: mediumpurple",
       "color: inherit"
     );
-    if (parseInt(n.slice(0, 4)) < 2000) {
-      return;
-    }
     props.archive.count(radar, newDay, newHour, symbol);
   };
 
@@ -139,14 +134,12 @@ function Browser(props) {
             value={value}
             onOpen={() => getMonthTable(day)}
             onYearChange={(newDay) => getMonthTable(newDay)}
-            onMonthChange={(newDay) => {
-              if (day != newDay) {
-                getMonthTable(newDay);
-              }
-            }}
+            onMonthChange={(newDay) => getMonthTable(newDay)}
             onChange={(newValue) => {
               setValue(newValue);
-              if (newValue instanceof Date && newValue.getFullYear() > 2000) {
+              let y = newValue?.getYear() || 0;
+              let hasData = props.archive.grid.yearsActive[y] > 0;
+              if (newValue instanceof Date && hasData) {
                 setDayHour(newValue, hour);
               }
             }}
@@ -170,11 +163,9 @@ function Browser(props) {
               );
             }}
             shouldDisableYear={(date) => {
-              let year = date.getYear();
+              let y = date.getYear();
               return (
-                year < 0 ||
-                year >= 200 ||
-                props.archive.grid.yearsActive[year] == 0
+                y < 0 || y >= 200 || props.archive.grid.yearsActive[y] == 0
               );
             }}
             disableHighlightToday={true}
