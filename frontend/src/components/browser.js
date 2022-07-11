@@ -1,41 +1,16 @@
-import React, { memo } from "react";
-import memoize from "memoize-one";
-import { FixedSizeList, areEqual } from "react-window";
+import React from "react";
 
-import Box from "@mui/material/Box";
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 
 import { SectionHeader } from "./section-header";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
-const Item = memo(({ data, index, style }) => {
-  const { list, selectedIndex, loadItem } = data;
-  const selected = index == selectedIndex;
-  const item = list[index];
-
-  return (
-    <Button
-      key={index}
-      onClick={() => loadItem(item, index)}
-      style={{ ...style, overflow: "hidden", textOverflow: "ellipsis" }}
-      selected={selected}
-    >
-      {item}
-    </Button>
-  );
-}, areEqual);
-
-const createFileList = memoize((list, index, load) => ({
-  list: list,
-  loadItem: load,
-  selectedIndex: index,
-}));
 
 const createFileButtons = (list, index, load) => {
   if (list.length == 0) return [];
@@ -91,25 +66,7 @@ function Browser(props) {
   };
 
   React.useEffect(() => {
-    const newFileBrowser = props.useMemo ? (
-      <Box
-        sx={{
-          width: "100%",
-          height: 600,
-          backgroundColor: "var(--system-background)",
-        }}
-      >
-        <FixedSizeList
-          height={600}
-          itemSize={32}
-          itemCount={items.length}
-          itemData={createFileList(items, index, props.archive.load)}
-          overscanCount={5}
-        >
-          {Item}
-        </FixedSizeList>
-      </Box>
-    ) : (
+    const newFileBrowser = (
       <div className="filesContainer" ref={setElements}>
         {createFileButtons(items, index, props.archive.load)}
       </div>
@@ -129,9 +86,7 @@ function Browser(props) {
           variant="hour"
           disabled={disabled}
           selected={selected}
-          onClick={() => {
-            setDayHour(day, k);
-          }}
+          onClick={() => setDayHour(day, k)}
         >
           {hourString}
         </Button>
@@ -160,9 +115,6 @@ function Browser(props) {
       "color: mediumpurple",
       "color: inherit"
     );
-    if (parseInt(n.slice(0, 4)) < 2000) {
-      return;
-    }
     props.archive.count(radar, newDay, newHour, symbol);
   };
 
@@ -182,14 +134,12 @@ function Browser(props) {
             value={value}
             onOpen={() => getMonthTable(day)}
             onYearChange={(newDay) => getMonthTable(newDay)}
-            onMonthChange={(newDay) => {
-              if (day != newDay) {
-                getMonthTable(newDay);
-              }
-            }}
+            onMonthChange={(newDay) => getMonthTable(newDay)}
             onChange={(newValue) => {
               setValue(newValue);
-              if (newValue instanceof Date && newValue.getFullYear() > 2000) {
+              let y = newValue?.getYear() || 0;
+              let hasData = props.archive.grid.yearsActive[y] > 0;
+              if (newValue instanceof Date && hasData) {
                 setDayHour(newValue, hour);
               }
             }}
@@ -213,11 +163,9 @@ function Browser(props) {
               );
             }}
             shouldDisableYear={(date) => {
-              let year = date.getYear();
+              let y = date.getYear();
               return (
-                year < 0 ||
-                year >= 200 ||
-                props.archive.grid.yearsActive[year] == 0
+                y < 0 || y >= 200 || props.archive.grid.yearsActive[y] == 0
               );
             }}
             disableHighlightToday={true}
