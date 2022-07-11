@@ -155,9 +155,7 @@ export function Console(props) {
       </IconButton>
       <IconButton
         aria-label="Account"
-        onClick={() => {
-          props.handleAccount();
-        }}
+        onClick={() => props.handleAccount()}
         size="large"
       >
         <AccountCircle style={{ color: "white" }} />
