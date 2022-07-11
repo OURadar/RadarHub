@@ -892,7 +892,7 @@ def show_sweep_summary(source, markdown=False):
     | 107.77.220.225  |      189,884 |      11 |    macOS / Safari | 2022/06/17 17:11 | Dallas, Texas, United States               |
 '''
 
-def show_visitor_log(markdown=False, show_city=False):
+def show_visitor_log(markdown=False, show_city=False, recent=0):
     if os.path.exists(settings.IP_DATABASE):
         import maxminddb
         fid = maxminddb.open_database(settings.IP_DATABASE)
@@ -926,10 +926,16 @@ def show_visitor_log(markdown=False, show_city=False):
             print(f'| `{visitor.ip}` | `{visitor.payload:,}` | `{visitor.bandwidth:,}` | `{visitor.count:,}` | {agent} | {date_string} | {origin} |')
         else:
             print(f'| {visitor.ip:15} | {visitor.payload:16,} | {visitor.bandwidth:16,} | {visitor.count:9,} | {agent:>20} | {date_string} | {origin:30} |')
-    for visitor in Visitor.objects.exclude(ip__startswith='10.').order_by('-last_visited'):
+
+    visitors = Visitor.objects.order_by('-last_visited')
+    if recent:
+        day = datetime.datetime.today().replace(tzinfo=datetime.timezone.utc) - datetime.timedelta(days=recent)
+        visitors = visitors.filter(last_visited__gte=day)
+    for visitor in visitors.exclude(ip__startswith='10.'):
         show_visitor(visitor, markdown=markdown)
-    for visitor in Visitor.objects.filter(ip__startswith='10.').order_by('-last_visited'):
+    for visitor in visitors.filter(ip__startswith='10.'):
         show_visitor(visitor, markdown=markdown)
+
     if os.path.exists(settings.IP_DATABASE):
         fid.close()
 
@@ -1025,6 +1031,7 @@ def dbtool_main():
     parser.add_argument('-p', '--check-path', action='store_true', help='checks the storage path')
     parser.add_argument('--progress', action='store_true', help='shows progress bar')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
+    parser.add_argument('--recent', default=0, type=int, help='shows recent days of entries')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='shows a sweep summary')
     parser.add_argument('--show-city', action='store_true', help='shows city of IP location')
@@ -1150,7 +1157,7 @@ def dbtool_main():
     elif args.visitor:
         if args.markdown:
             logger.hideLogOnScreen()
-        show_visitor_log(markdown=args.markdown, show_city=args.show_city)
+        show_visitor_log(markdown=args.markdown, show_city=args.show_city, recent=args.recent)
     elif args.check_path:
         for folder in args.source:
             folder = folder[:-1] if folder[-1] == '/' else folder
