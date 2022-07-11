@@ -36,9 +36,8 @@ class Texture {
       padding: 2,
     };
     this.busy = false;
-    this.fontLoaded = false;
     this.context.font = "14px LabelFont";
-    let meas = this.context.measureText("bitcoin");
+    let meas = this.context.measureText("tesla");
     this.initWidth = meas.width;
     this.hasDetails =
       undefined !== meas.actualBoundingBoxAscent &&
@@ -50,28 +49,6 @@ class Texture {
       if (o) o.appendChild(this.canvas);
     } else {
       console.log("Debugging element <div id='test'></div> not found.");
-    }
-
-    let font = new FontFace(
-      "LabelFont",
-      "url(/static/blob/helveticaneue/HelveticaNeueMed.ttf)"
-    );
-    font.load().then(() => {
-      this.fontLoaded = true;
-      // this.checkFontLoaded();
-    });
-  }
-
-  checkFontLoaded() {
-    let meas = this.context.measureText("tesla");
-    console.log(
-      `checkFontLoaded: %cmeas.wdith=${meas.width.toFixed(2)} ${
-        meas.width == this.initWidth ? "=" : "/="
-      } initWidth=${this.initWidth.toFixed(2)} tic = ${this.tic}`,
-      "color:blue"
-    );
-    if (meas.width != this.initWidth || this.tic++ > 50) {
-      this.fontLoaded = true;
     }
   }
 
