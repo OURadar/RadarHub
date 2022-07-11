@@ -8,9 +8,9 @@
 function handleShapefile(source, keys, asLabel = true) {
   let k = 0;
   let raw = [];
-  const nameKey = keys.name;
-  const weightKey = keys.weight ?? false;
-  const populationKey = keys.population ?? false;
+  const nameKey = keys?.name;
+  const weightKey = keys?.weight ?? false;
+  const populationKey = keys?.population ?? false;
 
   const handleLabel = (input) => {
     let props = {};
@@ -103,22 +103,29 @@ function convert({ src, keys, isLabel }) {
     });
 }
 
+// const configs = [
+//   {
+//     src: "../frontend/static/maps/World/cities.shp",
+//     keys: {
+//       name: "CITY_NAME",
+//       weight: "POP_RANK",
+//     },
+//     isLabel: true,
+//   },
+//   {
+//     src: "../frontend/static/maps/United States/citiesx020.shp",
+//     keys: {
+//       name: "NAME",
+//       population: "POP_2000",
+//     },
+//     isLabel: true,
+//   },
+// ];
+
 const configs = [
   {
-    src: "../frontend/static/maps/World/cities.shp",
-    keys: {
-      name: "CITY_NAME",
-      weight: "POP_RANK",
-    },
-    isLabel: true,
-  },
-  {
-    src: "../frontend/static/maps/United States/citiesx020.shp",
-    keys: {
-      name: "NAME",
-      population: "POP_2000",
-    },
-    isLabel: true,
+    src: "../frontend/static/maps/United States/gz_2010_us_050_00_500k.shp",
+    isLabel: false,
   },
 ];
 

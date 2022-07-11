@@ -23,10 +23,15 @@ self.onmessage = ({ data: { type, payload } }) => {
         .then((points) => makeBuffer(name, points))
         .then((buffer) => self.postMessage({ buffer }));
     } else if (type == "json") {
-      handleJSON(name)
-        .then((lines) => lines2points(lines))
-        .then((points) => makeBuffer(name, points))
-        .then((buffer) => self.postMessage({ buffer }));
+      const raw_type = name.split(".").pop();
+      if (raw_type == "shp") {
+        handleShapefileJSON(name);
+      } else {
+        handleJSON(name)
+          .then((lines) => lines2points(lines))
+          .then((points) => makeBuffer(name, points))
+          .then((buffer) => self.postMessage({ buffer }));
+      }
     } else if (name.includes("@")) {
       builtInGeometryDirect(name, model)
         .then((points) => makeBuffer(name, points))
@@ -147,6 +152,14 @@ async function handleJSON(name) {
         lines.push(line);
       });
       return lines;
+    });
+}
+
+async function handleShapefileJSON(name) {
+  return fetch(name, { cache: "force-cache" })
+    .then((text) => text.json())
+    .then((data) => {
+      console.log(data);
     });
 }
 

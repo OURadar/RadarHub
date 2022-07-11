@@ -92,7 +92,7 @@ class Overlay {
         fixed: false,
       },
       {
-        file: "/static/maps/United States/gz_2010_us_050_00_500k.shp",
+        file: "/static/maps/United States/gz_2010_us_050_00_500k.shp.json",
         color: this.colors.county,
         limits: [0.5, 2.0 * scale],
         weight: 0.4,
