@@ -84,7 +84,7 @@ class Overlay {
         fixed: true,
       },
       {
-        file: "/static/maps/United States/intrstat.shp",
+        file: "/static/maps/United States/intrstat.shp.json",
         color: this.colors.street,
         limits: [0.5, 2.5 * scale],
         weight: 0.4,

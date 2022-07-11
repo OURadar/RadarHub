@@ -88,6 +88,29 @@ function replacer(key, val) {
 
 //
 
+function shapefile2JSON(data) {
+  let lines = [];
+  data.forEach((shape) => {
+    if (shape.geometry.type.includes("MultiPolygon")) {
+      shape.geometry.coordinates.forEach((multipolygon) => {
+        multipolygon.forEach((polygon) => {
+          lines.push(polygon);
+        });
+      });
+    } else if (
+      shape.geometry.type.includes("Polygon") ||
+      shape.geometry.type.includes("MultiLineString")
+    ) {
+      shape.geometry.coordinates.forEach((polygon) => {
+        lines.push(polygon);
+      });
+    } else if (shape.geometry.type.includes("LineString")) {
+      lines.push(shape.geometry.coordinates);
+    }
+  });
+  return lines;
+}
+
 function convert({ src, keys, isLabel }) {
   const dst = src.concat(".json");
   console.log(`Generating ${dst} ...`);
@@ -97,6 +120,9 @@ function convert({ src, keys, isLabel }) {
     .then((source) => handleShapefile(source, keys, isLabel))
     // .then((list) => sortByWeight(list))
     .then((list) => {
+      if (!isLabel) {
+        list = shapefile2JSON(list);
+      }
       const fs = require("fs");
       fs.writeFileSync(dst, JSON.stringify(list, replacer));
       console.log(`Map ${dst} contains ${list.length.toLocaleString()} parts`);
@@ -125,6 +151,10 @@ function convert({ src, keys, isLabel }) {
 const configs = [
   {
     src: "../frontend/static/maps/United States/gz_2010_us_050_00_500k.shp",
+    isLabel: false,
+  },
+  {
+    src: "../frontend/static/maps/United States/intrstat.shp",
     isLabel: false,
   },
 ];
