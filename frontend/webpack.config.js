@@ -12,11 +12,11 @@ module.exports = [
     entry: {
       archive: {
         import: "./src/archive.js",
-        dependOn: ["shared", "graphics"],
+        dependOn: "shared",
       },
       control: {
         import: "./src/control.js",
-        dependOn: ["shared", "graphics"],
+        dependOn: "shared",
       },
       index: {
         import: "./src/index.js",
@@ -24,7 +24,7 @@ module.exports = [
       },
       dev: {
         import: "./src/dev.js",
-        dependOn: ["shared", "graphics"],
+        dependOn: "shared",
       },
       shared: [
         "emoji-name-map",
@@ -32,8 +32,10 @@ module.exports = [
         "react-dom",
         "react-window",
         "split.js",
+        "gl-matrix",
+        "regl",
+        "stats-js",
       ],
-      graphics: ["gl-matrix", "regl", "stats-js"],
     },
     output: {
       filename: "[name].[chunkhash:8].js",

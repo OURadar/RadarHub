@@ -37,7 +37,7 @@ class App extends Component {
     window.addEventListener("keydown", (e) => (this.state.key = e.key));
     window.addEventListener("keyup", (e) => {
       if (e.key != this.state.key) {
-        console.log(`keydown ${this.state.key} != keyup ${e.key}`);
+        // console.log(`keydown ${this.state.key} != keyup ${e.key}`);
         return;
       }
       let symbol = e.key.toUpperCase();
