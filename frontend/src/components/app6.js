@@ -113,14 +113,13 @@ class App extends Component {
         },
       });
     }
-    document.body.classList.remove("hide");
   }
 
   render() {
     if (this.isMobile)
       return (
         <ThemeProvider theme={this.state.theme}>
-          <TopBar isMobile={this.isMobile} />
+          <TopBar isMobile={true} />
           <SectionHeader name="product" />
           <Product
             sweep={this.archive.data.sweep}
