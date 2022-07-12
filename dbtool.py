@@ -1016,6 +1016,7 @@ def dbtool_main():
               - prefix + day (e.g., RAXPOL-20220225)
               - day (e.g., 20220223) for -c, -d
              '''))
+    parser.add_argument('--all', action='store_true', help='sets to use all for --visitor')
     parser.add_argument('-b', dest='hour', default=0, type=int, help='sets beginning hour of the day to catalog')
     parser.add_argument('-c', '--check-day', action='store_true', help='checks entries from the Day table')
     parser.add_argument('-C', '--check-file', action='store_true', help='checks entries from the File table')
@@ -1031,7 +1032,7 @@ def dbtool_main():
     parser.add_argument('-p', '--check-path', action='store_true', help='checks the storage path')
     parser.add_argument('--progress', action='store_true', help='shows progress bar')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
-    parser.add_argument('--recent', default=0, type=int, help='shows recent days of entries')
+    parser.add_argument('--recent', default=14, type=int, help='shows recent days of entries')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='shows a sweep summary')
     parser.add_argument('--show-city', action='store_true', help='shows city of IP location')
@@ -1157,7 +1158,7 @@ def dbtool_main():
     elif args.visitor:
         if args.markdown:
             logger.hideLogOnScreen()
-        show_visitor_log(markdown=args.markdown, show_city=args.show_city, recent=args.recent)
+        show_visitor_log(markdown=args.markdown, show_city=args.show_city, recent=0 if args.all else args.recent)
     elif args.check_path:
         for folder in args.source:
             folder = folder[:-1] if folder[-1] == '/' else folder
