@@ -469,15 +469,15 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
             'items': [],
         }
     else:
-        dateTimeString = f'{ymd}-{hour:02d}00'
+        date_time_string = f'{ymd}-{hour:02d}00'
         data = {
-            'dateTimeString': dateTimeString,
+            'dateTimeString': date_time_string,
             'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
             'latestScan': _file(prefix, scan, symbol),
             'yearsActive': _years(prefix),
             'hoursActive': _count(prefix, ymd),
             'hour': hour,
-            'items': _list(prefix, f'{dateTimeString}-{symbol}'),
+            'items': _list(prefix, f'{date_time_string}-{symbol}'),
         }
     payload = json.dumps(data)
     payload = bytes(payload, 'utf-8')
