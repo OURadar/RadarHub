@@ -88,7 +88,7 @@ function replacer(key, val) {
 
 //
 
-function shapefile2JSON(data) {
+function shapefile2ShpJSON(data) {
   let lines = [];
   data.forEach((shape) => {
     if (shape.geometry.type.includes("MultiPolygon")) {
@@ -111,6 +111,83 @@ function shapefile2JSON(data) {
   return lines;
 }
 
+function shapefile2JSON(data) {
+  let lines = [];
+  data.forEach((shape) => {
+    if (shape.geometry.type.includes("MultiPolygon")) {
+      shape.geometry.coordinates.forEach((multipolygon) => {
+        multipolygon.forEach((polygon) => {
+          lines.push(polygon);
+        });
+      });
+    } else if (
+      shape.geometry.type.includes("Polygon") ||
+      shape.geometry.type.includes("MultiLineString")
+    ) {
+      shape.geometry.coordinates.forEach((polygon) => {
+        lines.push(polygon);
+      });
+    } else if (shape.geometry.type.includes("LineString")) {
+      lines.push(shape.geometry.coordinates);
+    }
+  });
+
+  let min_lon = 180,
+    max_lon = -180,
+    min_lat = 90,
+    max_lat = -90;
+  lines.forEach((line) => {
+    line.forEach((point) => {
+      min_lon = Math.min(min_lon, point[0]);
+      max_lon = Math.max(max_lon, point[0]);
+      min_lat = Math.min(min_lat, point[1]);
+      max_lat = Math.max(max_lat, point[1]);
+    });
+  });
+
+  const mid_lon = 0.5 * (min_lon + max_lon);
+  const mid_lat = 0.5 * (min_lat + max_lat);
+
+  let translate = [mid_lon, mid_lat];
+  let scale = [65535 / (max_lon - min_lon), 65535 / (max_lat - min_lat)];
+
+  let dic = {
+    type: "Topology",
+    bbox: [-180, 0, 180, 80],
+    transform: {
+      scale: scale,
+      translate: translate,
+    },
+    objects: {},
+    arcs: [],
+  };
+  console.log(dic);
+
+  console.log(`lon = [${min_lon} ${max_lon}]`);
+  console.log(`lat = [${min_lat} ${max_lat}]`);
+
+  lines.forEach((line) => {
+    let k = 0;
+    let lon0 = 0,
+      lat0 = 0;
+    line.forEach((point) => {
+      if (k == 0) {
+        // arc.push([(point[0] - translate[0]) / scale[0], (point[1] - translate[1]) / scale[1]]);
+        lon0 = point[0];
+        lat0 = point[1];
+        let x0 = (point[0] - translate[0]) / scale[0];
+        let y0 = (point[1] - translate[1]) / scale[1];
+        console.log(`k = ${k}   ${x0}, ${y0}`);
+      } else {
+        let x = (point[0] - lon0) * scale[0];
+        let y = (point[1] - lat0) * scale[1];
+        console.log(`k = ${k}   ${x}, ${y}`);
+      }
+      k++;
+    });
+  });
+}
+
 function convert({ src, keys, isLabel }) {
   const dst = src.concat(".json");
   console.log(`Generating ${dst} ...`);
@@ -123,9 +200,9 @@ function convert({ src, keys, isLabel }) {
       if (!isLabel) {
         list = shapefile2JSON(list);
       }
-      const fs = require("fs");
-      fs.writeFileSync(dst, JSON.stringify(list, replacer));
-      console.log(`Map ${dst} contains ${list.length.toLocaleString()} parts`);
+      // const fs = require("fs");
+      // fs.writeFileSync(dst, JSON.stringify(list, replacer));
+      // console.log(`Map ${dst} contains ${list.length.toLocaleString()} parts`);
     });
 }
 
@@ -148,11 +225,18 @@ function convert({ src, keys, isLabel }) {
 //   },
 // ];
 
+// const configs = [
+//   {
+//     src: "../frontend/static/maps/United States/gz_2010_us_050_00_500k.shp",
+//     isLabel: false,
+//   },
+//   {
+//     src: "../frontend/static/maps/United States/intrstat.shp",
+//     isLabel: false,
+//   },
+// ];
+
 const configs = [
-  {
-    src: "../frontend/static/maps/United States/gz_2010_us_050_00_500k.shp",
-    isLabel: false,
-  },
   {
     src: "../frontend/static/maps/United States/intrstat.shp",
     isLabel: false,
