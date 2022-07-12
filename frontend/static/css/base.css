@@ -569,21 +569,28 @@ a.radarButton:hover {
   transition: background-color linear 0.17s;
 }
 
-.subtle {
-  background-color: rgba(255, 255, 255, 0.15);
+.link {
   border: none;
   border-radius: 5px;
-  color: white;
   display: inline-block;
   font-size: inherit;
   padding: 5px 10px;
   text-decoration: none;
   transition: background-color linear 0.3s;
 }
-
-.subtle:hover {
+.link:hover {
   background-color: var(--hover-overlay);
   transition: background-color linear 0.17s;
+}
+
+.subtle {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.darken {
+  background-color: rgba(0, 0, 0, 0.15);
+  color: var(--system-foreground);
 }
 
 .signinButton {

@@ -12,10 +12,10 @@
       <p>Signed in as {{ user.email }}</p>
       <form action="/accounts/signout/?next=/" method="post">
         {% csrf_token %}
-        <button class="subtle" type="submit">Sign Out</button>
+        <button class="link subtle" type="submit">Sign Out</button>
       </form>
     {% else %}
-      <p><a class="subtle" href="/accounts/signin/">Sign In</a></p>
+      <p><a class="link subtle" href="/accounts/signin/">Sign In</a></p>
     {% endif %}
   </div>
 {% endblock %}
