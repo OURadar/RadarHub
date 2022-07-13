@@ -84,7 +84,7 @@ class Overlay {
         fixed: true,
       },
       {
-        file: "/static/maps/United States/intrstat.shp.json",
+        file: "/static/maps/United States/intrstat.st.json",
         color: this.colors.street,
         limits: [0.5, 2.5 * scale],
         weight: 0.4,
@@ -92,7 +92,7 @@ class Overlay {
         fixed: false,
       },
       {
-        file: "/static/maps/United States/gz_2010_us_050_00_500k.shp.json",
+        file: "/static/maps/United States/gz_2010_us_050_00_500k.shp",
         color: this.colors.county,
         limits: [0.5, 2.0 * scale],
         weight: 0.4,

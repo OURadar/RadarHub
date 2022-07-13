@@ -5,7 +5,7 @@
 //  Created by Boonleng Cheong on 9/9/2021.
 //
 
-function handleShapefile(source, keys, asLabel = true) {
+function handleShapefile(source, keys, asLabel = true, show = false) {
   let k = 0;
   let raw = [];
   const nameKey = keys?.name;
@@ -26,7 +26,7 @@ function handleShapefile(source, keys, asLabel = true) {
       },
       P: props,
     };
-    if (k++ < 3) {
+    if (k++ < 3 && show) {
       console.log(input);
       console.log("...");
       console.log(label);
@@ -44,7 +44,7 @@ function handleShapefile(source, keys, asLabel = true) {
         coordinates: input.geometry.coordinates,
       },
     };
-    if (k++ < 3) {
+    if (k++ < 3 && show) {
       console.log(input);
       console.log("...");
       console.log(input.geometry.coordinates);
@@ -111,26 +111,10 @@ function shapefile2ShpJSON(data) {
   return lines;
 }
 
-function shapefile2JSON(data) {
-  let lines = [];
-  data.forEach((shape) => {
-    if (shape.geometry.type.includes("MultiPolygon")) {
-      shape.geometry.coordinates.forEach((multipolygon) => {
-        multipolygon.forEach((polygon) => {
-          lines.push(polygon);
-        });
-      });
-    } else if (
-      shape.geometry.type.includes("Polygon") ||
-      shape.geometry.type.includes("MultiLineString")
-    ) {
-      shape.geometry.coordinates.forEach((polygon) => {
-        lines.push(polygon);
-      });
-    } else if (shape.geometry.type.includes("LineString")) {
-      lines.push(shape.geometry.coordinates);
-    }
-  });
+function shapefile2TransformJSON(data) {
+  let lines = shapefile2ShpJSON(data);
+
+  console.log(`SHP contains ${lines.length} segments`);
 
   let min_lon = 180,
     max_lon = -180,
@@ -145,51 +129,52 @@ function shapefile2JSON(data) {
     });
   });
 
-  const mid_lon = 0.5 * (min_lon + max_lon);
-  const mid_lat = 0.5 * (min_lat + max_lat);
+  // let translate = [min_lon, min_lat];
+  // let scale = [
+  //   (max_lon - min_lon) / 100000000,
+  //   (max_lat - min_lat) / 100000000,
+  // ];
+  let translate = [-158.5, 10.5];
+  let scale = [0.000005, 0.000005];
 
-  let translate = [mid_lon, mid_lat];
-  let scale = [65535 / (max_lon - min_lon), 65535 / (max_lat - min_lat)];
+  let arcs = [];
+  let count = 0;
+  lines.forEach((line) => {
+    let lon = translate[0];
+    let lat = translate[1];
+    let arc = [];
+    line.forEach((point) => {
+      x = point[0] - lon;
+      y = point[1] - lat;
+      arc.push([
+        parseInt(Math.round(x / scale[0])),
+        parseInt(Math.round(y / scale[1])),
+      ]);
+      lon = point[0];
+      lat = point[1];
+    });
+    // console.log(arc);
+    arcs.push(arc);
+    count += arc.length;
+  });
 
-  let dic = {
+  return {
     type: "Topology",
-    bbox: [-180, 0, 180, 80],
+    bbox: [min_lon, min_lat, min_lat, max_lat],
     transform: {
       scale: scale,
       translate: translate,
     },
-    objects: {},
-    arcs: [],
+    count: count,
+    arcs: arcs,
   };
-  console.log(dic);
-
-  console.log(`lon = [${min_lon} ${max_lon}]`);
-  console.log(`lat = [${min_lat} ${max_lat}]`);
-
-  lines.forEach((line) => {
-    let k = 0;
-    let lon0 = 0,
-      lat0 = 0;
-    line.forEach((point) => {
-      if (k == 0) {
-        // arc.push([(point[0] - translate[0]) / scale[0], (point[1] - translate[1]) / scale[1]]);
-        lon0 = point[0];
-        lat0 = point[1];
-        let x0 = (point[0] - translate[0]) / scale[0];
-        let y0 = (point[1] - translate[1]) / scale[1];
-        console.log(`k = ${k}   ${x0}, ${y0}`);
-      } else {
-        let x = (point[0] - lon0) * scale[0];
-        let y = (point[1] - lat0) * scale[1];
-        console.log(`k = ${k}   ${x}, ${y}`);
-      }
-      k++;
-    });
-  });
 }
 
-function convert({ src, keys, isLabel }) {
-  const dst = src.concat(".json");
+function convert({ src, keys, isLabel }, method = 1) {
+  const dst =
+    method == 0
+      ? src.concat(".json")
+      : src.split(".").slice(0, -1).join(".").concat(".st.json");
   console.log(`Generating ${dst} ...`);
 
   require("../frontend/node_modules/shapefile")
@@ -198,11 +183,21 @@ function convert({ src, keys, isLabel }) {
     // .then((list) => sortByWeight(list))
     .then((list) => {
       if (!isLabel) {
-        list = shapefile2JSON(list);
+        let dict = {};
+        if (method == 0) {
+          dict = shapefile2ShpJSON(list);
+          let count = dict.length.toLocaleString();
+          console.log(`Map ${dst} contains ${count} parts`);
+        } else {
+          dict = shapefile2TransformJSON(list);
+          console.log(`count = ${dict.count}`);
+          let count = dict.arcs.length.toLocaleString();
+          console.log(`Transformed map ${dst} contains ${count} lines`);
+        }
+        require("fs").writeFileSync(dst, JSON.stringify(dict));
+      } else {
+        fs.writeFileSync(dst, JSON.stringify(list, replacer));
       }
-      // const fs = require("fs");
-      // fs.writeFileSync(dst, JSON.stringify(list, replacer));
-      // console.log(`Map ${dst} contains ${list.length.toLocaleString()} parts`);
     });
 }
 
@@ -225,23 +220,23 @@ function convert({ src, keys, isLabel }) {
 //   },
 // ];
 
-// const configs = [
-//   {
-//     src: "../frontend/static/maps/United States/gz_2010_us_050_00_500k.shp",
-//     isLabel: false,
-//   },
-//   {
-//     src: "../frontend/static/maps/United States/intrstat.shp",
-//     isLabel: false,
-//   },
-// ];
-
 const configs = [
+  {
+    src: "../frontend/static/maps/United States/gz_2010_us_050_00_500k.shp",
+    isLabel: false,
+  },
   {
     src: "../frontend/static/maps/United States/intrstat.shp",
     isLabel: false,
   },
 ];
+
+// const configs = [
+//   {
+//     src: "../frontend/static/maps/United States/intrstat.shp",
+//     isLabel: false,
+//   },
+// ];
 
 configs.forEach((config) => {
   convert(config);

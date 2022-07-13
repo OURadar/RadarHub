@@ -23,8 +23,8 @@ self.onmessage = ({ data: { type, payload } }) => {
         .then((points) => makeBuffer(name, points))
         .then((buffer) => self.postMessage({ buffer }));
     } else if (type == "json") {
-      if (name.split(".").includes("shp")) {
-        handleShapefileJSON(name)
+      if (name.split(".").includes("st")) {
+        handleJSON(name)
           .then((lines) => filterLines(lines, origin))
           .then((lines) => lines2points(lines))
           .then((points) => makeBuffer(name, points))
@@ -156,12 +156,6 @@ async function handleJSON(name) {
       });
       return lines;
     });
-}
-
-async function handleShapefileJSON(name) {
-  return fetch(name, { cache: "force-cache" }).then((text) => {
-    return text.json();
-  });
 }
 
 async function handleShapefile(name) {
