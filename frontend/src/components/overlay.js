@@ -92,7 +92,7 @@ class Overlay {
         fixed: false,
       },
       {
-        file: "/static/maps/United States/gz_2010_us_050_00_500k.shp",
+        file: "/static/maps/United States/gz_2010_us_050_00_500k.st.json",
         color: this.colors.county,
         limits: [0.5, 2.0 * scale],
         weight: 0.4,
@@ -128,7 +128,11 @@ class Overlay {
     for (let k = 0; k < overlays.length; k++) {
       const overlay = overlays[k];
       if (this.layers[k] === undefined || overlay.origin) {
-        const buffer = await this.polyEngine.load(overlay.file, this.geometry);
+        const buffer = await this.polyEngine.load(
+          overlay.file,
+          overlay.origin,
+          this.geometry
+        );
         if (buffer === null) {
           console.log("Poly.load() returns null.");
           continue;

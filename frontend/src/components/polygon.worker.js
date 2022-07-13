@@ -13,6 +13,7 @@ import { deg, rad } from "./common";
 self.onmessage = ({ data: { type, payload } }) => {
   if (type == "poly") {
     const name = payload.name;
+    const thin = payload.thin;
     const model = payload.model;
     const origin = payload.origin;
     const type = name.split(".").pop();
@@ -23,18 +24,11 @@ self.onmessage = ({ data: { type, payload } }) => {
         .then((points) => makeBuffer(name, points))
         .then((buffer) => self.postMessage({ buffer }));
     } else if (type == "json") {
-      if (name.split(".").includes("st")) {
-        handleJSON(name)
-          .then((lines) => filterLines(lines, origin))
-          .then((lines) => lines2points(lines))
-          .then((points) => makeBuffer(name, points))
-          .then((buffer) => self.postMessage({ buffer }));
-      } else {
-        handleJSON(name)
-          .then((lines) => lines2points(lines))
-          .then((points) => makeBuffer(name, points))
-          .then((buffer) => self.postMessage({ buffer }));
-      }
+      handleJSON(name)
+        .then((lines) => (thin ? filterLines(lines, origin) : lines))
+        .then((lines) => lines2points(lines))
+        .then((points) => makeBuffer(name, points))
+        .then((buffer) => self.postMessage({ buffer }));
     } else if (name.includes("@")) {
       builtInGeometryDirect(name, model)
         .then((points) => makeBuffer(name, points))
