@@ -131,8 +131,8 @@ def monitor(radar='px1000', prefix='PX-'):
         if len(delta) == 0:
             continue
         payload = {
-            'files':  [file.name.rstrip('.nc') for file in delta],
-            'count': [int(c) for c in hourly_count.split(',')],
+            'items':  [file.name.rstrip('.nc') for file in delta],
+            'hoursActive': [int(c) for c in hourly_count.split(',')],
             'time': datetime.datetime.utcnow().isoformat()
         }
         send_event('sse', radar, payload)
@@ -163,8 +163,8 @@ def simulate(radar='px1000', prefix='PX-'):
                 files.append(filename)
                 hourly_count[sweep_time.hour] += 1
             payload = {
-                'files': files,
-                'count': hourly_count,
+                'items': files,
+                'hoursActive': hourly_count,
                 'time': sweep_time.isoformat()
             }
             logger.info(f'{time_string}-{scan}  {hourly_count}')

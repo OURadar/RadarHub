@@ -31,7 +31,6 @@ class Text {
     this.busy = false;
     this.context.font = "14px LabelFont";
     let meas = this.context.measureText("bitcoin");
-    this.initWidth = meas.width;
     this.hasDetails =
       undefined !== meas.actualBoundingBoxAscent &&
       undefined !== meas.actualBoundingBoxDescent;

@@ -13,6 +13,7 @@ import { deg, rad } from "./common";
 self.onmessage = ({ data: { type, payload } }) => {
   if (type == "poly") {
     const name = payload.name;
+    const thin = payload.thin;
     const model = payload.model;
     const origin = payload.origin;
     const type = name.split(".").pop();
@@ -24,6 +25,7 @@ self.onmessage = ({ data: { type, payload } }) => {
         .then((buffer) => self.postMessage({ buffer }));
     } else if (type == "json") {
       handleJSON(name)
+        .then((lines) => (thin ? filterLines(lines, origin) : lines))
         .then((lines) => lines2points(lines))
         .then((points) => makeBuffer(name, points))
         .then((buffer) => self.postMessage({ buffer }));

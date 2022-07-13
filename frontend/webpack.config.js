@@ -2,42 +2,21 @@ const Path = require("path");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const BundleTracker = require("webpack-bundle-tracker");
 
-const cleaner = new CleanWebpackPlugin({
-  cleanOnceBeforeBuildPatterns: ["**/*"],
-  verbose: true,
-});
-
 module.exports = [
   {
     entry: {
       archive: {
         import: "./src/archive.js",
-        dependOn: "shared",
       },
       control: {
         import: "./src/control.js",
-        dependOn: "shared",
       },
       index: {
         import: "./src/index.js",
-        dependOn: "shared",
       },
       dev: {
         import: "./src/dev.js",
-        dependOn: "shared",
       },
-      shared: [
-        "binary-parser",
-        "emoji-name-map",
-        "gl-matrix",
-        "memoize-one",
-        "react",
-        "react-dom",
-        "react-window",
-        "regl",
-        "split.js",
-        "stats-js",
-      ],
     },
     output: {
       filename: "[name].[chunkhash:8].js",
@@ -61,11 +40,15 @@ module.exports = [
     },
     optimization: {
       minimize: true,
+      splitChunks: { chunks: "all" },
     },
     watchOptions: {
       ignored: "**/node_modules",
     },
-    plugins: [cleaner, new BundleTracker({ filename: "webpack-output.json" })],
+    plugins: [
+      new CleanWebpackPlugin({ verbose: true }),
+      new BundleTracker({ filename: "webpack-output.json" }),
+    ],
   },
 ];
 

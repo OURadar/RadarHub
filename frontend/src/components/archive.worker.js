@@ -109,13 +109,13 @@ function connect(newRadar) {
   source = new EventSource("/events/");
   source.addEventListener(radar, (event) => {
     const payload = JSON.parse(event.data);
-    payload.files.forEach((file) => {
-      updateListWithFile(file);
+    payload.items.forEach((item) => {
+      updateListWithItem(item);
     });
-    grid.hoursActive = payload.count;
+    grid.hoursActive = payload.hoursActive;
     grid.latestHour =
       23 -
-      payload.hoursActive
+      grid.hoursActive
         .slice()
         .reverse()
         .findIndex((x) => x > 0);
@@ -148,7 +148,7 @@ function disconnect() {
   });
 }
 
-function updateListWithFile(item) {
+function updateListWithItem(item) {
   const elements = item.split("-");
   const symbol = elements[4].split(".")[0];
   if (symbol != grid.symbol) {
@@ -266,8 +266,9 @@ function count(radar, day) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
+          console.log(buffer);
           grid.day = day;
-          grid.hoursActive = buffer.count;
+          grid.hoursActive = buffer.hoursActive;
           grid.latestHour =
             23 -
             grid.hoursActive

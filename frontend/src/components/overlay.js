@@ -5,10 +5,10 @@
 //  Created by Boonleng Cheong
 //
 
-import { Polygon } from "./polygon";
-import { Text } from "./text";
 import { clamp, deg } from "./common";
 import { mat4, vec4 } from "gl-matrix";
+import { Polygon } from "./polygon";
+import { Text } from "./text";
 
 //
 // Manages overlays
@@ -84,7 +84,8 @@ class Overlay {
         fixed: true,
       },
       {
-        file: "/static/maps/United States/intrstat.shp",
+        // file: "/static/maps/United States/tl_2020_us_primaryroads.stq.json",
+        file: "/static/maps/United States/intrstat.stq.json",
         color: this.colors.street,
         limits: [0.5, 2.5 * scale],
         weight: 0.4,
@@ -92,7 +93,9 @@ class Overlay {
         fixed: false,
       },
       {
-        file: "/static/maps/United States/gz_2010_us_050_00_500k.shp",
+        // file: "/static/maps/United States/cb_2021_us_county_500k.stq.json",
+        // file: "/static/maps/United States/gz_2010_us_050_00_500k.shp",
+        file: "/static/maps/United States/gz_2010_us_050_00_500k.stq.json",
         color: this.colors.county,
         limits: [0.5, 2.0 * scale],
         weight: 0.4,
@@ -100,7 +103,7 @@ class Overlay {
         fixed: false,
       },
       {
-        file: "/static/maps/United States/counties-10m.json",
+        file: "/static/maps/United States/counties-10m.stq.json",
         color: this.colors.county,
         limits: [0.5, 2.0 * scale],
         weight: 0.4,
@@ -128,7 +131,11 @@ class Overlay {
     for (let k = 0; k < overlays.length; k++) {
       const overlay = overlays[k];
       if (this.layers[k] === undefined || overlay.origin) {
-        const buffer = await this.polyEngine.load(overlay.file, this.geometry);
+        const buffer = await this.polyEngine.load(
+          overlay.file,
+          overlay.origin,
+          this.geometry
+        );
         if (buffer === null) {
           console.log("Poly.load() returns null.");
           continue;

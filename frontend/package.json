@@ -1,13 +1,11 @@
 {
   "name": "frontend",
-  "version": "0.8.1",
+  "version": "0.8.4",
   "description": "",
   "main": "index.js",
   "scripts": {
     "dev": "webpack --mode development --watch",
-    "build": "webpack --mode production",
-    "dev-verbose": "webpack --mode development --watch --entry ./src/index.js --output-path ./static/frontend",
-    "build-verbose": "webpack --mode production --entry ./src/index.js --output-path ./static/frontend"
+    "build": "webpack --mode production"
   },
   "keywords": [],
   "author": "Boonleng Cheong",

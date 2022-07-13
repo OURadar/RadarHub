@@ -42,14 +42,14 @@ class Colorbar {
       console.log("Input undefined.");
       return;
     }
-    if (this.tic++ == 0) {
-      //console.log(`this.tic = ${this.tic}`);
-      return fetch("/static/blob/helveticaneue/HelveticaNeueMed.ttf", {
-        cache: "force-cache",
-      }).then(() => {
-        return this.makeBuffer(configs, colors);
-      });
-    }
+    // if (this.tic++ == 0) {
+    //   //console.log(`this.tic = ${this.tic}`);
+    //   return fetch("/static/blob/helveticaneue/HelveticaNeueMed.ttf", {
+    //     cache: "force-cache",
+    //   }).then(() => {
+    //     return this.makeBuffer(configs, colors);
+    //   });
+    // }
     return this.makeBuffer(configs, colors);
   }
 

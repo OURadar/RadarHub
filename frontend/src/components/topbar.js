@@ -79,9 +79,13 @@ export function TopBar(props) {
                   response.json().then(({ user, ip, emoji }) => {
                     let title =
                       user == "None" ? "Anonymous User" : `Hello ${user}`;
-                    let symbol = emojis.get(emoji) || "☁️";
+                    let symbol = emojis.get(emoji) || "";
                     setMessage(
-                      `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
+                      user == "None"
+                        ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
+                            window.location.pathname +
+                            "'>Sign In Here</a><div class='emotion'>⛅️</div>"
+                        : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
                     );
                     setTimeout(() => setMessage(""), 3500);
                   });
@@ -155,9 +159,7 @@ export function Console(props) {
       </IconButton>
       <IconButton
         aria-label="Account"
-        onClick={() => {
-          props.handleAccount();
-        }}
+        onClick={() => props.handleAccount()}
         size="large"
       >
         <AccountCircle style={{ color: "white" }} />

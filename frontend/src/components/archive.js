@@ -149,7 +149,7 @@ class Archive {
     } else if (type == "count") {
       this.grid.hoursActive = payload.hoursActive;
       this.state.hoursActiveUpdating = false;
-      let hour = this.grid.selectedHour;
+      let hour = this.grid.hour;
       if (hour == -1 || this.grid.hoursActive[hour] == 0) {
         let best = this.grid.hoursActive.findIndex((x) => x > 0);
         if (best >= 0) {
@@ -205,7 +205,7 @@ class Archive {
     }
     if (
       day == this.grid.day &&
-      hour == this.grid.selectedHour &&
+      hour == this.grid.hour &&
       symbol == this.grid.symbol
     ) {
       console.log(
@@ -302,7 +302,7 @@ class Archive {
       return;
     }
     this.state.productSwitching = true;
-    this.list(this.radar, this.grid.day, this.grid.selectedHour, symbol);
+    this.list(this.radar, this.grid.day, this.grid.hour, symbol);
   }
 
   disableLiveUpdate() {

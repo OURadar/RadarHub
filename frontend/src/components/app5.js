@@ -29,6 +29,8 @@ class App extends Component {
     this.ingest.onupdate = () => {
       this.forceUpdate();
     };
+    this.handleModeChange = this.handleModeChange.bind(this);
+    document.documentElement.setAttribute("theme", this.state.colors.name);
     this.isMobile = detectMob();
     console.log(props);
   }
@@ -44,17 +46,12 @@ class App extends Component {
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", (e) => {
-        if (e.matches) {
-          this.setState({
-            colors: colorDict("dark"),
-            theme: makeTheme("dark"),
-          });
-        } else {
-          this.setState({
-            colors: colorDict("light"),
-            theme: makeTheme("light"),
-          });
-        }
+        let mode = e.matches ? "dark" : "light";
+        document.documentElement.setAttribute("theme", mode);
+        this.setState({
+          colors: colorDict(mode),
+          theme: makeTheme(mode),
+        });
       });
     if (!this.isMobile) {
       // const w = 40;
@@ -88,10 +85,10 @@ class App extends Component {
       });
     }
     // Preload something before we start to connect and draw
-    fetch("/static/blob/helveticaneue/HelveticaNeueMed.ttf").then(() => {
-      this.ingest.connect();
-    });
-    document.body.classList.remove("hide");
+    // fetch("/static/blob/helveticaneue/HelveticaNeueMed.ttf").then(() => {
+    //   this.ingest.connect();
+    // });
+    this.ingest.connect();
   }
 
   render() {
@@ -109,7 +106,11 @@ class App extends Component {
       );
     return (
       <ThemeProvider theme={this.state.theme}>
-        <TopBar ingest={this.ingest} />
+        <TopBar
+          mode={this.state.colors.name}
+          ingest={this.ingest}
+          handleModeChange={this.handleModeChange}
+        />
         <div id="flex">
           <div id="left">
             <div>
@@ -129,6 +130,16 @@ class App extends Component {
         </div>
       </ThemeProvider>
     );
+  }
+
+  handleModeChange() {
+    let mode = this.state.colors.name == "light" ? "dark" : "light";
+    console.log(`App5.handleModeChange() -> ${mode}`);
+    document.documentElement.setAttribute("theme", mode);
+    this.setState({
+      colors: colorDict(mode),
+      theme: makeTheme(mode),
+    });
   }
 }
 

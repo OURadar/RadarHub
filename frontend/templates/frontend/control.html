@@ -1,8 +1,7 @@
 {% extends "frontend/__base__.html" %}
 
-={% load render_bundle from webpack_loader %}
+{% load render_bundle from webpack_loader %}
 
-{% block extra_js %}
+{% block main_js %}
 {% render_bundle 'control' 'js' %}
-
 {% endblock %}
