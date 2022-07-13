@@ -134,49 +134,69 @@ function shapefile2TransformJSON(data) {
   //   (max_lon - min_lon) / 100000000,
   //   (max_lat - min_lat) / 100000000,
   // ];
-  let b = [-158.5, 10.5];
-  let w = [0.000005, 0.000005];
+  // let b = [-158.5, 10.5];
+  // let w = [0.000005, 0.000005];
+  const b = [-95.7129, 37.0902];
+  const w = [0.0001, 0.0001];
 
   let arcs = [];
   let count = 0;
   let k = 0;
-  lines.slice(2677, 2678).forEach((line) => {
+  let sdx = 0;
+  let sdy = 0;
+  let mdx = 0;
+  let mdy = 0;
+  lines.forEach((line) => {
     let lon = b[0];
     let lat = b[1];
     let arc = [];
     let point = [0, 0];
-    // k++;
     // if (
     //   Math.abs(line[0][0] + 97.43722) > 0.5 ||
     //   Math.abs(line[0][1] - 35.18138) > 0.5
     // ) {
-    //   console.log(`k = ${k}`);
+    //   // console.log(`k = ${k}`);
     //   return;
     // }
     line.forEach((coord) => {
-      let x = coord[0] - lon;
-      let y = coord[1] - lat;
+      let qlon = Math.round((coord[0] - b[0]) / w[0]) * w[0] + b[0];
+      let qlat = Math.round((coord[1] - b[1]) / w[1]) * w[1] + b[1];
+      let x = qlon - lon;
+      let y = qlat - lat;
       const p = [
         parseInt(Math.round(x / w[0])),
         parseInt(Math.round(y / w[1])),
       ];
       arc.push(p);
+      // Reconstruct coordinate
       point[0] += p[0];
       point[1] += p[1];
       let rlon = w[0] * point[0] + b[0];
       let rlat = w[1] * point[1] + b[1];
       let dx = coord[0] - rlon;
       let dy = coord[1] - rlat;
-      console.log(
-        `${coord[0]}, ${coord[1]} -> ${rlon}, ${rlat}    delta = ${dx} ${dy}`
-      );
-      lon = coord[0];
-      lat = coord[1];
+      // console.log(`${coord[0]}, ${coord[1]} -> ${rlon}, ${rlat}`);
+      // lon = coord[0]
+      // lat = coord[1]
+      lon = qlon;
+      lat = qlat;
+      // Some statistics
+      mdx += dx;
+      mdy += dy;
+      sdx += dx * dx;
+      sdy += dy * dy;
+      k++;
     });
     // console.log(arc);
     arcs.push(arc);
     count += arc.length;
   });
+  mdx /= k;
+  mdy /= k;
+  sdx = Math.sqrt(sdx / k - mdx * mdx);
+  sdy = Math.sqrt(sdy / k - mdy * mdy);
+  console.log(`Mean ${mdx}, ${mdy}`);
+  console.log(`STD ${sdx}, ${sdy}`);
 
   return {
     type: "Topology",
@@ -194,7 +214,7 @@ function convert({ src, keys, isLabel }, method = 1) {
   const dst =
     method == 0
       ? src.concat(".json")
-      : src.split(".").slice(0, -1).join(".").concat(".st.json");
+      : src.split(".").slice(0, -1).join(".").concat(".stq.json");
   console.log(`Generating ${dst} ...`);
 
   require("../frontend/node_modules/shapefile")
