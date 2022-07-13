@@ -134,24 +134,44 @@ function shapefile2TransformJSON(data) {
   //   (max_lon - min_lon) / 100000000,
   //   (max_lat - min_lat) / 100000000,
   // ];
-  let translate = [-158.5, 10.5];
-  let scale = [0.000005, 0.000005];
+  let b = [-158.5, 10.5];
+  let w = [0.000005, 0.000005];
 
   let arcs = [];
   let count = 0;
-  lines.forEach((line) => {
-    let lon = translate[0];
-    let lat = translate[1];
+  let k = 0;
+  lines.slice(2677, 2678).forEach((line) => {
+    let lon = b[0];
+    let lat = b[1];
     let arc = [];
-    line.forEach((point) => {
-      x = point[0] - lon;
-      y = point[1] - lat;
-      arc.push([
-        parseInt(Math.round(x / scale[0])),
-        parseInt(Math.round(y / scale[1])),
-      ]);
-      lon = point[0];
-      lat = point[1];
+    let point = [0, 0];
+    // k++;
+    // if (
+    //   Math.abs(line[0][0] + 97.43722) > 0.5 ||
+    //   Math.abs(line[0][1] - 35.18138) > 0.5
+    // ) {
+    //   console.log(`k = ${k}`);
+    //   return;
+    // }
+    line.forEach((coord) => {
+      let x = coord[0] - lon;
+      let y = coord[1] - lat;
+      const p = [
+        parseInt(Math.round(x / w[0])),
+        parseInt(Math.round(y / w[1])),
+      ];
+      arc.push(p);
+      point[0] += p[0];
+      point[1] += p[1];
+      let rlon = w[0] * point[0] + b[0];
+      let rlat = w[1] * point[1] + b[1];
+      let dx = coord[0] - rlon;
+      let dy = coord[1] - rlat;
+      console.log(
+        `${coord[0]}, ${coord[1]} -> ${rlon}, ${rlat}    delta = ${dx} ${dy}`
+      );
+      lon = coord[0];
+      lat = coord[1];
     });
     // console.log(arc);
     arcs.push(arc);
@@ -162,8 +182,8 @@ function shapefile2TransformJSON(data) {
     type: "Topology",
     bbox: [min_lon, min_lat, min_lat, max_lat],
     transform: {
-      scale: scale,
-      translate: translate,
+      scale: w,
+      translate: b,
     },
     count: count,
     arcs: arcs,
