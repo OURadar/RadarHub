@@ -433,11 +433,11 @@ def _file(prefix, scan='E4.0', symbol='Z'):
 
 def _years(prefix):
     if prefix == 'PX-':
-        return [x > 12 for x in range(23)]
+        return [int(x > 12) for x in range(23)]
     if prefix == 'RAXPOL-':
-        return [x > 16 for x in range(23)]
+        return [int(x > 16) for x in range(23)]
     if prefix == 'PX10K-':
-        return [x == 18 for x in range(23)]
+        return [int(x == 18) for x in range(23)]
     return []
 
 '''
