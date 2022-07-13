@@ -5,4 +5,4 @@ if [[ ${HOSTNAME} == "dwv05" ]]; then
     exit
 fi
 
-rsync -av --size-only --exclude=.DS_Store ../static/maps radarhub@dwv05:/home/radarhub/app/frontend/static/
+rsync -av --size-only --exclude=.DS_Store ../frontend/static/maps radarhub@dwv05:/home/radarhub/app/frontend/static/
