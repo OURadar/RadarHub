@@ -154,7 +154,7 @@ def month(request, radar, day):
         entry = entries.filter(date=date).last()
         array[key] = entry.weather_condition() if entry else 0
         date += step
-    payload = json.dumps(array)
+    payload = json.dumps(array, separators=(',', ':'))
     payload = bytes(payload, 'utf-8')
     return http_response(ip, payload)
 
@@ -191,7 +191,7 @@ def count(request, radar, day):
     data = {
         'count': _count(prefix, day)
     }
-    payload = json.dumps(data)
+    payload = json.dumps(data, separators=(',', ':'))
     visitor_stats[ip]['bandwidth'] += len(payload)
     response = HttpResponse(payload, content_type='application/json')
     return response
@@ -282,7 +282,7 @@ def list(request, radar, day_hour_symbol):
         'symbol': symbol,
         'message': message
     }
-    payload = json.dumps(data)
+    payload = json.dumps(data, separators=(',', ':'))
     payload = bytes(payload, 'utf-8')
     return http_response(ip, payload)
 
@@ -320,7 +320,7 @@ def _load(name):
     info = json.dumps({
         'gatewidth': sweep['gatewidth'],
         'waveform': sweep['waveform']
-    })
+    }, separators=(',', ':'))
 
     head = struct.pack('hhhhddddffff', *sweep['u8'].shape, len(info), 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
@@ -479,7 +479,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
             'hour': hour,
             'items': _list(prefix, f'{date_time_string}-{symbol}'),
         }
-    payload = json.dumps(data)
+    payload = json.dumps(data, separators=(',', ':'))
     payload = bytes(payload, 'utf-8')
     return http_response(ip, payload)
 
