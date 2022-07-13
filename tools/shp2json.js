@@ -5,7 +5,7 @@
 //  Created by Boonleng Cheong on 9/9/2021.
 //
 
-function handleShapefile(source, keys, asLabel = true) {
+function handleShapefile(source, keys, asLabel = true, show = false) {
   let k = 0;
   let raw = [];
   const nameKey = keys?.name;
@@ -26,7 +26,7 @@ function handleShapefile(source, keys, asLabel = true) {
       },
       P: props,
     };
-    if (k++ < 3) {
+    if (k++ < 3 && show) {
       console.log(input);
       console.log("...");
       console.log(label);
@@ -44,7 +44,7 @@ function handleShapefile(source, keys, asLabel = true) {
         coordinates: input.geometry.coordinates,
       },
     };
-    if (k++ < 3) {
+    if (k++ < 3 && show) {
       console.log(input);
       console.log("...");
       console.log(input.geometry.coordinates);
@@ -88,7 +88,7 @@ function replacer(key, val) {
 
 //
 
-function shapefile2JSON(data) {
+function shapefile2ShpJSON(data) {
   let lines = [];
   data.forEach((shape) => {
     if (shape.geometry.type.includes("MultiPolygon")) {
@@ -111,8 +111,70 @@ function shapefile2JSON(data) {
   return lines;
 }
 
-function convert({ src, keys, isLabel }) {
-  const dst = src.concat(".json");
+function shapefile2TransformJSON(data) {
+  let lines = shapefile2ShpJSON(data);
+
+  console.log(`SHP contains ${lines.length} segments`);
+
+  let min_lon = 180,
+    max_lon = -180,
+    min_lat = 90,
+    max_lat = -90;
+  lines.forEach((line) => {
+    line.forEach((point) => {
+      min_lon = Math.min(min_lon, point[0]);
+      max_lon = Math.max(max_lon, point[0]);
+      min_lat = Math.min(min_lat, point[1]);
+      max_lat = Math.max(max_lat, point[1]);
+    });
+  });
+
+  // let translate = [min_lon, min_lat];
+  // let scale = [
+  //   (max_lon - min_lon) / 100000000,
+  //   (max_lat - min_lat) / 100000000,
+  // ];
+  let translate = [-158.5, 10.5];
+  let scale = [0.000005, 0.000005];
+
+  let arcs = [];
+  let count = 0;
+  lines.forEach((line) => {
+    let lon = translate[0];
+    let lat = translate[1];
+    let arc = [];
+    line.forEach((point) => {
+      x = point[0] - lon;
+      y = point[1] - lat;
+      arc.push([
+        parseInt(Math.round(x / scale[0])),
+        parseInt(Math.round(y / scale[1])),
+      ]);
+      lon = point[0];
+      lat = point[1];
+    });
+    // console.log(arc);
+    arcs.push(arc);
+    count += arc.length;
+  });
+
+  return {
+    type: "Topology",
+    bbox: [min_lon, min_lat, min_lat, max_lat],
+    transform: {
+      scale: scale,
+      translate: translate,
+    },
+    count: count,
+    arcs: arcs,
+  };
+}
+
+function convert({ src, keys, isLabel }, method = 1) {
+  const dst =
+    method == 0
+      ? src.concat(".json")
+      : src.split(".").slice(0, -1).join(".").concat(".st.json");
   console.log(`Generating ${dst} ...`);
 
   require("../frontend/node_modules/shapefile")
@@ -121,11 +183,21 @@ function convert({ src, keys, isLabel }) {
     // .then((list) => sortByWeight(list))
     .then((list) => {
       if (!isLabel) {
-        list = shapefile2JSON(list);
+        let dict = {};
+        if (method == 0) {
+          dict = shapefile2ShpJSON(list);
+          let count = dict.length.toLocaleString();
+          console.log(`Map ${dst} contains ${count} parts`);
+        } else {
+          dict = shapefile2TransformJSON(list);
+          console.log(`count = ${dict.count}`);
+          let count = dict.arcs.length.toLocaleString();
+          console.log(`Transformed map ${dst} contains ${count} lines`);
+        }
+        require("fs").writeFileSync(dst, JSON.stringify(dict));
+      } else {
+        fs.writeFileSync(dst, JSON.stringify(list, replacer));
       }
-      const fs = require("fs");
-      fs.writeFileSync(dst, JSON.stringify(list, replacer));
-      console.log(`Map ${dst} contains ${list.length.toLocaleString()} parts`);
     });
 }
 
@@ -158,6 +230,13 @@ const configs = [
     isLabel: false,
   },
 ];
+
+// const configs = [
+//   {
+//     src: "../frontend/static/maps/United States/intrstat.shp",
+//     isLabel: false,
+//   },
+// ];
 
 configs.forEach((config) => {
   convert(config);

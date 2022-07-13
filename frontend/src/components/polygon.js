@@ -10,7 +10,7 @@ class Polygon {
     this.worker = new Worker(new URL("./polygon.worker.js", import.meta.url));
   }
 
-  async load(name, geometry) {
+  async load(name, thin, geometry) {
     if (this.busy) {
       console.log("Calling Polygon.load() too frequently.");
       return new Promise((resolve) => {
@@ -33,6 +33,7 @@ class Polygon {
         type: "poly",
         payload: {
           name: name,
+          thin: thin,
           model: geometry.model,
           origin: geometry.origin,
         },
