@@ -58,7 +58,7 @@ def header(_, name):
 
 # Helper functions
 
-def screen(request, count=False):
+def screen(request):
     headers = dict(request.headers)
     headers.pop('Cookie', None)
     ip = get_client_ip(request)
@@ -89,7 +89,7 @@ def stats(_, mode=''):
     day - a string in the forms of
           - YYYYMM
 '''
-def month(request, radar, day):
+def month(_, radar, day):
     if settings.VERBOSE > 1:
         show = colorize('archive.month()', 'green')
         show += '   ' + color_name_value('radar', radar)
@@ -175,7 +175,7 @@ def list(request, radar, day_hour_symbol):
     show = colorize('archive.list()', 'green')
     show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
     logger.debug(show)
-    _, malicious = screen(request, count=True)
+    _, malicious = screen(request)
     if malicious:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':
@@ -283,7 +283,7 @@ def load(request, name):
         show = colorize('archive.load()', 'green')
         show += '   ' + color_name_value('name', name)
         logger.debug(show)
-    _, malicious = screen(request, count=True)
+    _, malicious = screen(request)
     if malicious:
         return forbidden_request
     payload = _load(name + '.nc')
@@ -399,8 +399,8 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         show = colorize('archive.catchup()', 'green')
         show += '   ' + color_name_value('radar', radar)
         logger.debug(show)
-    _, bad = screen(request, count=True)
-    if bad:
+    _, malicious = screen(request)
+    if malicious:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix:
         return invalid_query
