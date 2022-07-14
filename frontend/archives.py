@@ -1,12 +1,10 @@
 import re
 import json
 import time
-import zlib
 import pprint
 import struct
 import logging
 import datetime
-import threading
 
 from functools import lru_cache
 
@@ -15,7 +13,7 @@ from django.views.decorators.cache import never_cache
 from django.http import HttpResponse, Http404
 from django.conf import settings
 
-from .models import File, Day, Visitor
+from .models import File, Day
 from common import colorize, color_name_value, is_valid_time, get_client_ip
 
 logger = logging.getLogger('frontend')
@@ -35,10 +33,6 @@ radar_prefix = {}
 for prefix, item in settings.RADARS.items():
     radar = item['folder'].lower()
     radar_prefix[radar] = prefix
-
-visitor_stats = {}
-visitor_stats_lock = threading.Lock()
-visitor_stats_monitor_thread = None
 
 # Learning modules
 
@@ -65,24 +59,9 @@ def header(_, name):
 # Helper functions
 
 def screen(request, count=False):
-    global visitor_stats
-    global visitor_stats_monitor_thread
     headers = dict(request.headers)
     headers.pop('Cookie', None)
     ip = get_client_ip(request)
-    if ip not in visitor_stats:
-        visitor = {'payload': 0, 'bandwidth': 0, 'headers': headers, 'count': 1, 'last_visited': datetime.datetime.today()}
-        visitor_stats[ip] = visitor
-    else:
-        visitor = visitor_stats[ip]
-        if visitor['headers']['User-Agent'] != headers['User-Agent']:
-            visitor['headers']['User-Agent'] = headers['User-Agent']
-        if count:
-            visitor['count'] += 1
-        visitor['last_visited'] = datetime.datetime.today().replace(tzinfo=datetime.timezone.utc)
-    if visitor_stats_monitor_thread is None:
-        visitor_stats_monitor_thread = threading.Thread(target=monitor)
-        visitor_stats_monitor_thread.start()
     malicious = False
     if 'Accept-Encoding' not in headers or 'deflate' not in headers['Accept-Encoding']:
         malicious = True
@@ -90,28 +69,10 @@ def screen(request, count=False):
     #     malicious = True
     return ip, malicious
 
-def http_response(ip, payload):
-    global visitor_stats
-    visitor_stats[ip]['payload'] += len(payload)
-    net_payload = zlib.compress(payload)
-    net_size = len(net_payload)
-    visitor_stats[ip]['bandwidth'] += net_size
-    response = HttpResponse(net_payload, content_type='application/octet-stream')
-    response['Content-Encoding'] = 'deflate'
-    response['Content-Length'] = net_size
-    return response
-
 # Stats
 
 def stats(_, mode=''):
-    if mode == 'recent-visitors':
-        payload = pp.pformat(visitor_stats)
-    elif mode == 'visitors':
-        stats = []
-        for visitor in Visitor.objects.all():
-            stats.append(visitor.dict())
-        payload = pp.pformat(stats)
-    elif mode == 'cache':
+    if mode == 'cache':
         cache_info = _load.cache_info()
         payload = str(cache_info)
     else:
@@ -129,15 +90,11 @@ def stats(_, mode=''):
           - YYYYMM
 '''
 def month(request, radar, day):
-    global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.month()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         logger.debug(show)
-    ip, malicious = screen(request)
-    if malicious:
-        return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
         return invalid_query
     y = int(day[0:4])
@@ -153,8 +110,7 @@ def month(request, radar, day):
         array[key] = entry.weather_condition() if entry else 0
         date += step
     payload = json.dumps(array, separators=(',', ':'))
-    payload = bytes(payload, 'utf-8')
-    return http_response(ip, payload)
+    return HttpResponse(payload, content_type='application/json')
 
 '''
     Count of data - returns an array of 24 elements
@@ -174,15 +130,11 @@ def _count(prefix, day):
     return [0] * 24
 
 def count(request, radar, day):
-    global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.count()', 'green')
         show += '   ' + color_name_value('radar', radar)
         show += '   ' + color_name_value('day', day)
         logger.debug(show)
-    ip, malicious = screen(request)
-    if malicious:
-        return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or not is_valid_time(day):
         return invalid_query
     prefix = radar_prefix[radar]
@@ -190,9 +142,7 @@ def count(request, radar, day):
         'count': _count(prefix, day)
     }
     payload = json.dumps(data, separators=(',', ':'))
-    visitor_stats[ip]['bandwidth'] += len(payload)
-    response = HttpResponse(payload, content_type='application/json')
-    return response
+    return HttpResponse(payload, content_type='application/json')
 
 '''
     List of files - returns an array of strings
@@ -222,11 +172,10 @@ def _list(prefix, day_hour_symbol):
     return [o.name.rstrip('.nc') for o in matches]
 
 def list(request, radar, day_hour_symbol):
-    global visitor_stats
     show = colorize('archive.list()', 'green')
     show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
     logger.debug(show)
-    ip, malicious = screen(request, count=True)
+    _, malicious = screen(request, count=True)
     if malicious:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':
@@ -281,8 +230,7 @@ def list(request, radar, day_hour_symbol):
         'message': message
     }
     payload = json.dumps(data, separators=(',', ':'))
-    payload = bytes(payload, 'utf-8')
-    return http_response(ip, payload)
+    return HttpResponse(payload, content_type='application/json')
 
 '''
     Load a sweep - returns a dictionary
@@ -299,17 +247,17 @@ def _load(name):
         s = pattern_x_yyyymmdd_hhmmss.search(name)
         if s is None:
             logger.warning(f'Bad filename {name}')
-            return None, 0, 0
+            return None
         s = s.group(0)
         if not is_valid_time(s):
-            return None, 0, 0
+            return None
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
         match = File.objects.filter(date=date).filter(name=name)
         if match.exists():
             match = match.first()
             sweep = match.read()
         else:
-            return None, 0, 0
+            return None
     # Down-sample the sweep if the gate spacing is too fine
     gatewidth = 1.0e-3 * sweep['gatewidth']
     if gatewidth < 0.05:
@@ -323,34 +271,26 @@ def _load(name):
     head = struct.pack('hhhhddddffff', *sweep['u8'].shape, len(info), 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
         sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)
-    raw_payload = bytes(head) \
-                + bytes(info, 'utf-8') \
-                + bytes(sweep['elevations']) \
-                + bytes(sweep['azimuths']) \
-                + bytes(sweep['u8'])
-    net_payload = zlib.compress(raw_payload)
-    raw_size = len(raw_payload)
-    net_size = len(net_payload)
-    return net_payload, raw_size, net_size
+    payload = bytes(head) \
+            + bytes(info, 'utf-8') \
+            + bytes(sweep['elevations']) \
+            + bytes(sweep['azimuths']) \
+            + bytes(sweep['u8'])
+    return payload
 
 def load(request, name):
-    global visitor_stats
     if settings.VERBOSE > 1:
         show = colorize('archive.load()', 'green')
         show += '   ' + color_name_value('name', name)
         logger.debug(show)
-    ip, malicious = screen(request, count=True)
+    _, malicious = screen(request, count=True)
     if malicious:
         return forbidden_request
-    net_payload, raw_size, net_size = _load(name + '.nc')
-    if net_payload is None:
+    payload = _load(name + '.nc')
+    if payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
-    visitor_stats[ip]['payload'] += raw_size
-    visitor_stats[ip]['bandwidth'] += net_size
-    response = HttpResponse(net_payload, content_type='application/octet-stream')
+    response = HttpResponse(payload, content_type='application/octet-stream')
     response['Cache-Control'] = 'max-age=604800'
-    response['Content-Encoding'] = 'deflate'
-    response['Content-Length'] = net_size
     return response
 
 
@@ -459,7 +399,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         show = colorize('archive.catchup()', 'green')
         show += '   ' + color_name_value('radar', radar)
         logger.debug(show)
-    ip, bad = screen(request, count=True)
+    _, bad = screen(request, count=True)
     if bad:
         return forbidden_request
     if radar == 'undefined' or radar not in radar_prefix:
@@ -488,43 +428,4 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
             'items': _list(prefix, f'{date_time_string}-{symbol}'),
         }
     payload = json.dumps(data, separators=(',', ':'))
-    payload = bytes(payload, 'utf-8')
-    return http_response(ip, payload)
-
-# Threads
-
-def monitor():
-    show = colorize('archives.monitor()', 'green')
-    show += '   ' + color_name_value('Visitor.objects.count()', Visitor.objects.count())
-    logger.info(show)
-    while True:
-        visitor_stats_lock.acquire()
-        for ip, stats in visitor_stats.items():
-            if stats['count'] == 0 and stats['bandwidth'] == 0:
-                continue
-            user_agent = stats['headers']['User-Agent'] if 'User-Agent' in stats['headers'] else 'Unknown'
-            match = Visitor.objects.filter(ip=ip)
-            if match.exists():
-                if match.count() > 1:
-                    logger.error(f'More than one entries for {ip}, choosing the first ...')
-                visitor = match.first()
-                visitor.user_agent = user_agent
-                visitor.count += stats['count']
-                visitor.payload += stats['payload']
-                visitor.bandwidth += stats['bandwidth']
-                visitor.last_visited = stats['last_visited']
-            else:
-                visitor = Visitor.objects.create(
-                    ip=ip,
-                    user_agent=user_agent,
-                    count=stats['count'],
-                    payload=stats['payload'],
-                    bandwidth=stats['bandwidth'],
-                    last_visited=stats['last_visited'])
-            stats['bandwidth'] = 0
-            stats['payload'] = 0
-            stats['count'] = 0
-            visitor.save()
-        visitor_stats_lock.release()
-        time.sleep(3)
-
+    return HttpResponse(payload, content_type='application/json')
