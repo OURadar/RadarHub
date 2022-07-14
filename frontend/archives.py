@@ -90,15 +90,13 @@ def screen(request, count=False):
     #     malicious = True
     return ip, malicious
 
-def http_response(ip, payload, cache=False):
+def http_response(ip, payload):
     global visitor_stats
     visitor_stats[ip]['payload'] += len(payload)
     net_payload = zlib.compress(payload)
     net_size = len(net_payload)
     visitor_stats[ip]['bandwidth'] += net_size
     response = HttpResponse(net_payload, content_type='application/octet-stream')
-    if cache:
-        response['Cache-Control'] = 'max-age=604800'
     response['Content-Encoding'] = 'deflate'
     response['Content-Length'] = net_size
     return response
@@ -301,17 +299,17 @@ def _load(name):
         s = pattern_x_yyyymmdd_hhmmss.search(name)
         if s is None:
             logger.warning(f'Bad filename {name}')
-            return None
+            return None, 0, 0
         s = s.group(0)
         if not is_valid_time(s):
-            return None
+            return None, 0, 0
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
         match = File.objects.filter(date=date).filter(name=name)
         if match.exists():
             match = match.first()
             sweep = match.read()
         else:
-            return None
+            return None, 0, 0
     # Down-sample the sweep if the gate spacing is too fine
     gatewidth = 1.0e-3 * sweep['gatewidth']
     if gatewidth < 0.05:
@@ -325,12 +323,15 @@ def _load(name):
     head = struct.pack('hhhhddddffff', *sweep['u8'].shape, len(info), 0,
         sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
         sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)
-    payload = bytes(head) \
-            + bytes(info, 'utf-8') \
-            + bytes(sweep['elevations']) \
-            + bytes(sweep['azimuths']) \
-            + bytes(sweep['u8'])
-    return payload
+    raw_payload = bytes(head) \
+                + bytes(info, 'utf-8') \
+                + bytes(sweep['elevations']) \
+                + bytes(sweep['azimuths']) \
+                + bytes(sweep['u8'])
+    net_payload = zlib.compress(raw_payload)
+    raw_size = len(raw_payload)
+    net_size = len(net_payload)
+    return net_payload, raw_size, net_size
 
 def load(request, name):
     global visitor_stats
@@ -341,10 +342,17 @@ def load(request, name):
     ip, malicious = screen(request, count=True)
     if malicious:
         return forbidden_request
-    payload = _load(name + '.nc')
-    if payload is None:
+    net_payload, raw_size, net_size = _load(name + '.nc')
+    if net_payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
-    return http_response(ip, payload, cache=True)
+    visitor_stats[ip]['payload'] += raw_size
+    visitor_stats[ip]['bandwidth'] += net_size
+    response = HttpResponse(net_payload, content_type='application/octet-stream')
+    response['Cache-Control'] = 'max-age=604800'
+    response['Content-Encoding'] = 'deflate'
+    response['Content-Length'] = net_size
+    return response
+
 
 '''
     Latest date - returns the latest YYYYMMDD and HH
