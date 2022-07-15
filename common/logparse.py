@@ -80,7 +80,7 @@ def show(x, verbose=1):
     if len(url) > 70:
         url = url[:52] + '...' + url[-15:]
     #pro = f'{x["protocol"]} ' if "protocol" in x else ""
-    b = '\033[38;5;171m' if x['compression'] > 25.0 else ''
+    b = '\033[38;5;171m' if x['compression'] > 20.0 else ''
     com = f'{x["compression"]:5.2f}'[:5] if x['compression'] else '  -  '
     print(f'{t} | {x["ip"]:>15} | {x["bytes"]:10,d} | {b}{com}\033[m | {c}{status:3d} {url}\033[m')
 
