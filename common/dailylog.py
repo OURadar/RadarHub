@@ -1,7 +1,6 @@
 import os
 import time
 import logging
-import textwrap
 import traceback
 
 logging.Formatter.converter = time.localtime
