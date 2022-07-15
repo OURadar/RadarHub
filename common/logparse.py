@@ -84,6 +84,12 @@ def show(x, verbose=1):
     com = f'{x["compression"]:5.2f}'[:5] if b else '  -  '
     print(f'{t} | {x["ip"]:>15} | {x["bytes"]:10,d} | {b}{com}\033[m | {c}{status:3d} {url}\033[m')
 
+def showline(line):
+    x = decode(line)
+    if x is None:
+        return
+    show(x)
+
 def readlines(source):
     with gzip.open(source, 'rt') if '.gz' in source else open(source, 'rt') as fid:
         lines = fid.readlines()
@@ -110,13 +116,10 @@ if __name__ == '__main__':
     if len(args.source):
         for source in args.source:
             for line in  readlines(source):
-                x = decode(line)
-                if x is None:
-                    continue
-                show(x)
+                showline(line)
     elif select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin
         for line in sys.stdin:
-            show(line)
+            showline(line)
     else:
         parser.print_help()
