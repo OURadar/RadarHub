@@ -1,6 +1,10 @@
 {
   "background_color": "black",
   "description": "A hub where radars and users connect",
+  "developer": {
+    "name": "Boonleng Cheong",
+    "url": "https:/arrc.ou.edu/people.html"
+  },
   "display": "standalone",
   "icons": [
     {

@@ -27,6 +27,7 @@ pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
 invalid_query = HttpResponse(f'Invalid Query', status=204)
+unsupported_request = HttpResponse(f'Unsupported. Feel free to request the data from us.\n', status=405)
 forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell Us.', status=403)
 
 radar_prefix = {}
@@ -37,11 +38,12 @@ for prefix, item in settings.RADARS.items():
 # Learning modules
 
 def binary(request, name):
-    ip, malicious = screen(request)
+    ip = get_client_ip(request)
+    dirty = screen(request)
     show = colorize('binary()', 'green')
     show += '   ' + color_name_value('name', name)
     show += '   ' + color_name_value('ip', ip)
-    show += '   ' + color_name_value('malicious', malicious)
+    show += '   ' + color_name_value('dirty', dirty)
     logger.info(show)
     payload = b'\x01\x02\x03\x04\x05\x06\x07\x08'
     response = HttpResponse(payload, content_type='application/octet-stream')
@@ -61,13 +63,12 @@ def header(_, name):
 def screen(request):
     headers = dict(request.headers)
     headers.pop('Cookie', None)
-    ip = get_client_ip(request)
-    malicious = False
+    dirty = False
     if 'Accept-Encoding' not in headers or 'deflate' not in headers['Accept-Encoding']:
-        malicious = True
+        dirty = True
     # if 'Referer' not in request.headers and 'Connection' not in request.headers:
-    #     malicious = True
-    return ip, malicious
+    #     dirty = True
+    return dirty
 
 # Stats
 
@@ -175,9 +176,9 @@ def list(request, radar, day_hour_symbol):
     show = colorize('archive.list()', 'green')
     show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
     logger.debug(show)
-    _, malicious = screen(request)
-    if malicious:
-        return forbidden_request
+    dirty = screen(request)
+    if dirty:
+        return unsupported_request
     if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':
         return invalid_query
     if len(day_hour_symbol) not in [8, 13, 15]:
@@ -283,9 +284,9 @@ def load(request, name):
         show = colorize('archive.load()', 'green')
         show += '   ' + color_name_value('name', name)
         logger.debug(show)
-    _, malicious = screen(request)
-    if malicious:
-        return forbidden_request
+    dirty = screen(request)
+    if dirty:
+        return unsupported_request
     payload = _load(name + '.nc')
     if payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
@@ -399,9 +400,9 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         show = colorize('archive.catchup()', 'green')
         show += '   ' + color_name_value('radar', radar)
         logger.debug(show)
-    _, malicious = screen(request)
-    if malicious:
-        return forbidden_request
+    dirty = screen(request)
+    if dirty:
+        return unsupported_request
     if radar == 'undefined' or radar not in radar_prefix:
         return invalid_query
     prefix = radar_prefix[radar]
