@@ -37,7 +37,7 @@ ng = re.compile(
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}).+\]'
     + r' "(GET|POST) (?P<url>.+) (?P<protocol>HTTP/[0-9.]+)"'
     + r' (?P<status>\d{3}) (?P<bytes>\d+)'
-    + r' "(?P<useragent>.+)" "(?P<compression>[0-9.-]+)"'
+    + r' "(?P<browser>.+)" "(?P<compression>[0-9.-]+)"'
 )
 
 rh = re.compile(
@@ -50,21 +50,20 @@ rh = re.compile(
 def decode(line):
     x = ng.search(line)
     if x:
-        return x.groupdict()
+        x = x.groupdict()
+        for key in ["bytes", "status"]:
+            x[key] = int(x[key])
+        x['datetime'] = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S')
+        x['compression'] = float(x['compression']) if '-' not in x['compression'] else 0
+        return x
     return None
 
-def show(line, verbose=1):
-    x = decode(line)
-    if x is None:
-        return
+def show(x, verbose=1):
     if verbose > 1:
         pp.pprint(x)
-    for key in ["bytes", "status"]:
-        x[key] = int(x[key])
-    t = x["time"]
-    t = datetime.datetime.strptime(t, r'%d/%b/%Y:%H:%M:%S').strftime(r'%m/%d %H:%M:%S')
+    t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
 
-    status = x["status"]
+    status = x['status']
     if status == 200:
         c = '\033[38;5;142m'
     elif status == 302:
@@ -81,8 +80,9 @@ def show(line, verbose=1):
     if len(url) > 70:
         url = url[:52] + '...' + url[-15:]
     #pro = f'{x["protocol"]} ' if "protocol" in x else ""
-    com = f'{x["compression"]:>5}'[:5] + ' | ' if "compression" in x else ""
-    print(f'{t} | {x["ip"]:>15} | {x["bytes"]:10,d} | {com}{c}{status:3d} {url}\033[m')
+    b = '\033[38;5;171m' if float(x['compression']) > 25.0 else ''
+    com = f'{x["compression"]:5.2f}'[:5] if b else '  -  '
+    print(f'{t} | {x["ip"]:>15} | {x["bytes"]:10,d} | {b}{com}\033[m | {c}{status:3d} {url}\033[m')
 
 def readlines(source):
     with gzip.open(source, 'rt') if '.gz' in source else open(source, 'rt') as fid:
@@ -110,9 +110,12 @@ if __name__ == '__main__':
     if len(args.source):
         for source in args.source:
             for line in  readlines(source):
-                show(line)
+                x = decode(line)
+                if x is None:
+                    continue
+                show(x)
     elif select.select([sys.stdin, ], [], [], 0.0)[0]:
-        # If there is something piped through stdin
+        # There is something piped through the stdin
         for line in sys.stdin:
             show(line)
     else:

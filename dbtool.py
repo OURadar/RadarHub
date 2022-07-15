@@ -34,11 +34,11 @@ from django.conf import settings
 
 from frontend.models import File, Day, Visitor
 
-from common import colorize, color_name_value, dailylog
+from common import colorize, color_name_value, dailylog, logparse
 
 __prog__ = os.path.basename(sys.argv[0])
 
-pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
+pp = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
 logger = dailylog.Logger(__prog__.split('.')[0] if '.' in __prog__ else __prog__, home=settings.LOG_DIR, dailyfile=settings.DEBUG)
 pattern_yyyy = re.compile(r'20[0-9][0-9]')
 pattern_yyyymmdd = re.compile(r'20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])')
@@ -884,14 +884,12 @@ def show_sweep_summary(source, markdown=False):
         print(f'Data shape = {shape}\nRaw size = {size:,d} B')
 
 '''
-
     Shows visitor summary
 
     | IP Address      |    Usage (B) |   Count |      OS / Browser | Last Visited     | Location                                   |
     | --------------- |------------- | ------- | ----------------- | ---------------- | ------------------------------------------ |
     | 107.77.220.225  |      189,884 |      11 |    macOS / Safari | 2022/06/17 17:11 | Dallas, Texas, United States               |
 '''
-
 def show_visitor_log(markdown=False, show_city=False, recent=0):
     if os.path.exists(settings.IP_DATABASE):
         import maxminddb
@@ -938,6 +936,51 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
 
     if os.path.exists(settings.IP_DATABASE):
         fid.close()
+
+'''
+    Update Visitor table
+'''
+def update_visitors(file):
+    show = colorize('update_visitors()', 'green')
+    logger.info(show)
+    visitors = {}
+    lines = logparse.readlines(file)
+    uu = re.compile(r'(/data/load|/data/list)')
+    for line in lines:
+        obj = logparse.decode(line)
+        obj['datetime'] = obj['datetime'].replace(tzinfo=datetime.timezone.utc)
+
+        if obj['status'] > 300:
+            # print(f'skip {line[:80]} ...')
+            continue
+        if uu.search(obj['url']) is None:
+            continue
+        if obj['compression'] == 0:
+            continue
+
+        if obj['ip'] not in visitors:
+            db_visitors = Visitor.objects.filter(ip=obj['ip'])
+            if db_visitors:
+                visitor = db_visitors.first()
+                if visitor.last_visited >= obj['datetime']:
+                    continue
+            else:
+                visitor = Visitor.objects.create(ip=obj['ip'],
+                    last_visited=obj['datetime'])
+            visitors[obj['ip']] = visitor
+        else:
+            visitor = visitors[obj['ip']]
+
+        visitor.count += 1
+        visitor.payload += int(obj['bytes'] * obj['compression'])
+        visitor.bandwidth += obj['bytes']
+        visitor.user_agent = obj['browser']
+        visitor.last_visited = obj['datetime']
+        logparse.show(obj)
+
+    for _, visitor in visitors.items():
+        pp.pprint(visitor.dict())
+        visitor.save()
 
 def check_path(folder, args):
     original = os.path.join(folder, '_original')
@@ -1038,6 +1081,7 @@ def dbtool_main():
     parser.add_argument('--show-city', action='store_true', help='shows city of IP location')
     parser.add_argument('--no-skip', dest='skip', default=True, action='store_false', help='do no skip folders with Day.count == count')
     parser.add_argument('--skip', action='store_true', default=True, help='skips folders with Day.county == count')
+    parser.add_argument('--update', action='store_true', help='updates visitor table from access log')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + settings.VERSION)
     parser.add_argument('-V', '--visitor', action='store_true', help='shows visitor log')
@@ -1155,6 +1199,9 @@ def dbtool_main():
         print('A placeholder for test routines')
         params = params_from_source('RAXPOL-202202*')
         pp.pprint(params)
+    elif args.update:
+        for file in args.source:
+            update_visitors(file)
     elif args.visitor:
         if args.markdown:
             logger.hideLogOnScreen()
