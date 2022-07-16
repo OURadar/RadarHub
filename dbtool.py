@@ -952,8 +952,8 @@ def update_visitors(file, verbose=1):
         latest_visitor = Visitor.objects.latest('last_visited')
         obj = logparse.decode(lines[0], format='nginx')
         if obj['datetime'] > latest_visitor.last_visited:
-            logger.warning('Potentially no overlap.')
-            ans = input('Do you really want to exit ([y]/n)? ')
+            logger.warning('Potential data gap.')
+            ans = input('Do you really want to continue (y/[n])? ')
             if not ans == 'y':
                 logger.info('Whew. Nothing happend.')
                 return

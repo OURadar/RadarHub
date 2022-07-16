@@ -95,10 +95,11 @@ def showline(line, verbose=0):
         return
     if verbose > 1:
         pp.pprint(x)
-    if 'Mozilla' not in x['browser'] and len(x['browser']) > 100:
-        message = x['browser']
-        print(f'== Special Message:\n{message}\n===')
     show(x)
+    if 'Mozilla' not in x['browser'] and len(x['browser']) > 100:
+        ip = x['ip']
+        msg = x['browser']
+        print(f'=== Special Message from {ip}:\n{msg}\n===')
 
 def readlines(source):
     with gzip.open(source, 'rt') if '.gz' in source else open(source, 'rt') as fid:
