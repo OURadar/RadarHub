@@ -53,7 +53,7 @@ def decode(line):
         x = x.groupdict()
         for key in ["bytes", "status"]:
             x[key] = int(x[key])
-        x['datetime'] = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S')
+        x['datetime'] = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
         x['compression'] = float(x['compression']) if '-' not in x['compression'] else 0
         return x
     return None

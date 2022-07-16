@@ -940,15 +940,32 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
 '''
     Update Visitor table
 '''
-def update_visitors(file):
+def update_visitors(file, verbose=1):
     show = colorize('update_visitors()', 'green')
     logger.info(show)
     visitors = {}
-    lines = logparse.readlines(file)
+    overlap = Visitor.objects.count() == 0
     uu = re.compile(r'(/data/load|/data/list)')
+    lines = logparse.readlines(file)
+
+    if not overlap:
+        latest_visitor = Visitor.objects.latest('last_visited')
+        obj = logparse.decode(lines[0])
+        if obj['datetime'] > latest_visitor.last_visited:
+            logger.warning('Potentially no overlap.')
+            ans = input('Do you really want to exit ([y]/n)? ')
+            if not ans == 'y':
+                logger.info('Whew. Nothing happend.')
+                return
+        obj = logparse.decode(lines[-1])
+        if obj['datetime'] < latest_visitor.last_visited:
+            o = obj['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
+            t = latest_visitor.last_visited.strftime(r'%Y/%m/%d %H:%M:%S')
+            logger.warning(f'Last entry {o} < last_visited {t}.')
+            return
+
     for line in lines:
         obj = logparse.decode(line)
-        obj['datetime'] = obj['datetime'].replace(tzinfo=datetime.timezone.utc)
 
         if obj['status'] > 300:
             # print(f'skip {line[:80]} ...')
@@ -963,6 +980,7 @@ def update_visitors(file):
             if db_visitors:
                 visitor = db_visitors.first()
                 if visitor.last_visited >= obj['datetime']:
+                    overlap = True
                     continue
             else:
                 visitor = Visitor.objects.create(ip=obj['ip'],
@@ -976,11 +994,18 @@ def update_visitors(file):
         visitor.bandwidth += obj['bytes']
         visitor.user_agent = obj['browser']
         visitor.last_visited = obj['datetime']
-        logparse.show(obj)
+        if verbose:
+            logparse.show(obj)
+
+    if not overlap:
+        ans = input('No overlap entries, continue updating (y/[n])? ')
+        if not ans == 'y':
+            logger.info('Whew. Nothing happend.')
+            return
 
     for _, visitor in visitors.items():
         pp.pprint(visitor.dict())
-        visitor.save()
+        # visitor.save()
 
 def check_path(folder, args):
     original = os.path.join(folder, '_original')
@@ -1081,7 +1106,7 @@ def dbtool_main():
     parser.add_argument('--show-city', action='store_true', help='shows city of IP location')
     parser.add_argument('--no-skip', dest='skip', default=True, action='store_false', help='do no skip folders with Day.count == count')
     parser.add_argument('--skip', action='store_true', default=True, help='skips folders with Day.county == count')
-    parser.add_argument('--update', action='store_true', help='updates visitor table from access log')
+    parser.add_argument('-u', '--update', action='store_true', help='updates visitor table from access log')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + settings.VERSION)
     parser.add_argument('-V', '--visitor', action='store_true', help='shows visitor log')

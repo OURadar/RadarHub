@@ -64,7 +64,7 @@ def screen(request):
     headers = dict(request.headers)
     headers.pop('Cookie', None)
     dirty = False
-    if 'Accept-Encoding' not in headers or 'deflate' not in headers['Accept-Encoding']:
+    if 'Accept-Encoding' not in headers or 'gzip' not in headers['Accept-Encoding']:
         dirty = True
     # if 'Referer' not in request.headers and 'Connection' not in request.headers:
     #     dirty = True
