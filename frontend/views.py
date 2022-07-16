@@ -1,7 +1,7 @@
 import logging
 
 from django.shortcuts import render
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect
 from django.conf import settings
 from django.views.decorators.http import require_GET
 from django.contrib.auth import get_user
@@ -83,7 +83,12 @@ def robots_txt(request):
     ]
     return HttpResponse('\n'.join(lines), content_type='text/plain')
 
-def favicon_ico(request):
-    show = colorize('views.favicon_ico()', 'green')
+def not_found(request):
+    show = colorize('views.not_found()', 'green')
     logger.info(show)
     raise Http404
+
+def template(request, template):
+    show = colorize('views.template()', 'green')
+    logger.info(show)
+    return render(request, f'frontend/{template}')

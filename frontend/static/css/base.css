@@ -151,12 +151,13 @@ canvas {
   line-height: 1.8em;
 }
 .message {
-  font-family: "Message";
+  font-family: "Message", Helvetica, Arial;
   font-size: 24pt;
   font-weight: 100;
   margin: 50px auto;
-  max-width: 1000px;
+  max-width: 900px;
   line-height: 36pt;
+  padding: 0 100px;
 }
 .flex-center {
   display: flex;

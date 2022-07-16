@@ -120,6 +120,7 @@ if __name__ == '__main__':
         Examples:
             {__prog__} /var/log/nginx/access.log
             cat /var/log/nginx/access.log | {__prog__}
+            tail -f /var/log/nginx/access.log | {__prog__}
         '''),
         epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')

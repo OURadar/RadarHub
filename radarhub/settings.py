@@ -341,7 +341,7 @@ LOGGING = {
 # User Agent Strings
 # http://www.useragentstring.com
 
-IP_DATABASE = BASE_DIR / 'dbip-city-lite-2022-06.mmdb'
+IP_DATABASE = BASE_DIR / 'dbip-city-lite-2022-07.mmdb'
 
 USER_AGENT_TABLE = BASE_DIR / 'user-agent-strings.json'
 

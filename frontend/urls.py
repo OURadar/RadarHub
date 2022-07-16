@@ -19,7 +19,8 @@ urlpatterns = [
     path('stats/<str:mode>/', archives.stats, name='stats'),
     path('profile/', stats.profile, name='stats-profile'),
     path('robots.txt', views.robots_txt),
-    path('favicon.ico', views.favicon_ico),
+    path('favicon.ico', views.not_found),
+    path('template/<str:template>/', views.template),
     path('dev/', views.dev, name='index'),
     path('', views.index, name='index'),
 ]

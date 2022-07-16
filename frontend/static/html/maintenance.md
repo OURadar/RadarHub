@@ -10,7 +10,7 @@ Copy the font files to the `nginx` root content folder, typically at `/var/www/h
 │   ├── HelveticaNeueLt.ttf
 │   └── HelveticaNeueMed.ttf
 ├── index.nginx-debian.html
-└── maintenance.html -> /home/radarhub/app/frontend/templates/frontend/maintenance.html
+└── maintenance.html -> /home/radarhub/app/frontend/static/html/maintenance.html
 ```
 
 Add these `/etc/nginx/sites-available/default` as:
