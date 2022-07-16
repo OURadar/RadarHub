@@ -34,7 +34,9 @@ from django.conf import settings
 
 from frontend.models import File, Day, Visitor
 
-from common import colorize, color_name_value, dailylog, logparse
+from common import colorize, color_name_value, dailylog
+
+import logparse
 
 __prog__ = os.path.basename(sys.argv[0])
 
@@ -961,7 +963,7 @@ def update_visitors(file, verbose=1):
         if obj['datetime'] < latest_visitor.last_visited:
             o = obj['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
             t = latest_visitor.last_visited.strftime(r'%Y/%m/%d %H:%M:%S')
-            logger.warning(f'Last entry {o} < last_visited {t}.')
+            logger.info(f'Seen before. Last entry {o} < last_visited {t}.')
             return
 
     for line in lines:

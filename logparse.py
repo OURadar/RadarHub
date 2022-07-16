@@ -27,6 +27,8 @@ import datetime
 import argparse
 import textwrap
 
+from common import colorize
+
 __prog__ = os.path.basename(sys.argv[0])
 __version__ = '1.0'
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
@@ -97,9 +99,10 @@ def showline(line, verbose=0):
         pp.pprint(x)
     show(x)
     if 'Mozilla' not in x['browser'] and len(x['browser']) > 100:
-        ip = x['ip']
-        msg = x['browser']
-        print(f'=== Special Message from {ip}:\n{msg}\n===')
+        ip = colorize(x['ip'], 'yellow')
+        tm = x['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
+        msg = colorize(x['browser'], 'mint')
+        print(f'=== Special Message on {tm} from {ip}: {msg} ===')
 
 def readlines(source):
     with gzip.open(source, 'rt') if '.gz' in source else open(source, 'rt') as fid:
