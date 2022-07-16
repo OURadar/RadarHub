@@ -26,9 +26,9 @@ pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2]
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
-invalid_query = HttpResponse(f'Invalid Query', status=204)
-unsupported_request = HttpResponse(f'Unsupported. Feel free to request the data from us.\n', status=405)
-forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell Us.', status=403)
+invalid_query = HttpResponse(f'Invalid Query\n', status=204)
+unsupported_request = HttpResponse(f'Unsupported query. Feel free to email a data request to: data@arrc.ou.edu\n', status=405)
+forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell my father.\n', status=403)
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
@@ -72,13 +72,15 @@ def screen(request):
 
 # Stats
 
-def stats(_, mode=''):
+def stats(request, mode=''):
+    dirty = screen(request)
+    if dirty:
+        return forbidden_request
     if mode == 'cache':
         cache_info = _load.cache_info()
         payload = str(cache_info)
     else:
         raise Http404
-
     return HttpResponse(payload, content_type='text/plain')
 
 # Data

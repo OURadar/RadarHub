@@ -29,9 +29,7 @@ import textwrap
 
 __prog__ = os.path.basename(sys.argv[0])
 __version__ = '1.0'
-
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
-
 ng = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}).+\]'
@@ -39,7 +37,6 @@ ng = re.compile(
     + r' (?P<status>\d{3}) (?P<bytes>\d+)'
     + r' "(?P<browser>.+)" "(?P<compression>[0-9.-]+)"'
 )
-
 rh = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):0 - -'
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2})\]'
@@ -47,20 +44,26 @@ rh = re.compile(
     + r' (?P<status>\d{3}) (?P<bytes>\d+)'
 )
 
-def decode(line):
-    x = ng.search(line)
+#
+
+def decode(line, format=None):
+    line = line.rstrip()
+    if format == 'nginx':
+        x = ng.search(line)
+    elif format == 'radarhub':
+        x = rh.search(line)
+    else:
+        x = ng.search(line) if line[-1] == '"' else rh.search(line)
     if x:
         x = x.groupdict()
         for key in ["bytes", "status"]:
             x[key] = int(x[key])
         x['datetime'] = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
-        x['compression'] = float(x['compression']) if '-' not in x['compression'] else 0
+        x['compression'] = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
         return x
     return None
 
-def show(x, verbose=1):
-    if verbose > 1:
-        pp.pprint(x)
+def show(x):
     t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
 
     status = x['status']
@@ -84,10 +87,17 @@ def show(x, verbose=1):
     com = f'{x["compression"]:5.2f}'[:5] if x['compression'] else '  -  '
     print(f'{t} | {x["ip"]:>15} | {x["bytes"]:10,d} | {b}{com}\033[m | {c}{status:3d} {url}\033[m')
 
-def showline(line):
+def showline(line, verbose=0):
+    if verbose > 1:
+        print(line)
     x = decode(line)
     if x is None:
         return
+    if verbose > 1:
+        pp.pprint(x)
+    if 'Mozilla' not in x['browser'] and len(x['browser']) > 100:
+        message = x['browser']
+        print(f'== Special Message:\n{message}\n===')
     show(x)
 
 def readlines(source):
@@ -109,14 +119,18 @@ if __name__ == '__main__':
         '''),
         epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
+    parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     args = parser.parse_args()
 
+    if args.quiet:
+        args.verbose = 0
+
     if len(args.source):
         for source in args.source:
             for line in readlines(source):
-                showline(line)
+                showline(line, verbose=args.verbose)
     elif select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin
         for line in sys.stdin:

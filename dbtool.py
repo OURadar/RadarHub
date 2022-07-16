@@ -950,14 +950,14 @@ def update_visitors(file, verbose=1):
 
     if not overlap:
         latest_visitor = Visitor.objects.latest('last_visited')
-        obj = logparse.decode(lines[0])
+        obj = logparse.decode(lines[0], format='nginx')
         if obj['datetime'] > latest_visitor.last_visited:
             logger.warning('Potentially no overlap.')
             ans = input('Do you really want to exit ([y]/n)? ')
             if not ans == 'y':
                 logger.info('Whew. Nothing happend.')
                 return
-        obj = logparse.decode(lines[-1])
+        obj = logparse.decode(lines[-1], format='nginx')
         if obj['datetime'] < latest_visitor.last_visited:
             o = obj['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
             t = latest_visitor.last_visited.strftime(r'%Y/%m/%d %H:%M:%S')
@@ -965,7 +965,7 @@ def update_visitors(file, verbose=1):
             return
 
     for line in lines:
-        obj = logparse.decode(line)
+        obj = logparse.decode(line, format='nginx')
 
         if obj['status'] > 300:
             # print(f'skip {line[:80]} ...')
@@ -1005,7 +1005,7 @@ def update_visitors(file, verbose=1):
 
     for _, visitor in visitors.items():
         pp.pprint(visitor.dict())
-        # visitor.save()
+        visitor.save()
 
 def check_path(folder, args):
     original = os.path.join(folder, '_original')
