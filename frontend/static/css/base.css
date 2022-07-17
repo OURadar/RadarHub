@@ -86,13 +86,13 @@ Copyright Boonleng Cheong
 @font-face {
   font-family: "LabelFont";
   font-style: normal;
-  src: url("../fonts/HelveticaNeueMed.ttf") format("truetype");
+  src: url(/static/fonts/HelveticaNeueMed.ttf) format("truetype");
 }
 
 @font-face {
-  font-family: "Message";
+  font-family: "MessageFont";
   font-style: normal;
-  src: url("../fonts/HelveticaNeueLt.ttf") format("truetype");
+  src: url(/static/fonts/HelveticaNeueLt.ttf) format("truetype");
 }
 
 body,
@@ -117,8 +117,8 @@ body {
 
 canvas {
   display: block;
+  font-family: "LabelFont", Helvetica, Arial;
   position: relative;
-  font-family: "LabelFont";
 }
 
 .backgrad {
@@ -151,7 +151,7 @@ canvas {
   line-height: 1.8em;
 }
 .message {
-  font-family: "Message", Helvetica, Arial;
+  font-family: "MessageFont", Helvetica, Arial;
   font-size: 24pt;
   font-weight: 100;
   margin: 50px auto;
@@ -629,15 +629,15 @@ a.radarButton:hover {
 }
 
 .signinButtonGoogle::before {
-  background-image: url("/static/images/icon-google.png");
+  background-image: url(/static/images/icon-google.png);
 }
 
 .signinButtonApple::before {
-  background-image: url("/static/images/icon-apple.png");
+  background-image: url(/static/images/icon-apple.png);
 }
 
 .signinButtonFacebook::before {
-  background-image: url("/static/images/icon-facebook.png");
+  background-image: url(/static/images/icon-facebook.png);
 }
 
 .logo {
@@ -662,7 +662,7 @@ a.radarButton:hover {
 }
 
 .spin {
-  animation: spin 6s linear infinite;
+  animation: spin 12s linear infinite;
 }
 
 @keyframes spin {

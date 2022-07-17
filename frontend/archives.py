@@ -10,6 +10,7 @@ from functools import lru_cache
 
 from django.views.decorators.cache import never_cache
 
+from django.shortcuts import render
 from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.conf import settings
 
@@ -79,6 +80,8 @@ def stats(request, mode=''):
     if mode == 'cache':
         cache_info = _load.cache_info()
         payload = str(cache_info)
+    elif mode == '403':
+        return forbidden_request
     else:
         raise Http404
     return HttpResponse(payload, content_type='text/plain')

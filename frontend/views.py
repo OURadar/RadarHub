@@ -86,12 +86,8 @@ def robots_txt(request):
     ]
     return HttpResponse('\n'.join(lines), content_type='text/plain')
 
-def not_found(request):
-    show = colorize('views.not_found()', 'green')
-    logger.info(show)
-    raise Http404
+def forbidden(request):
+    return render(request, '403.html', status=403)
 
-def template(request, template):
-    show = colorize('views.template()', 'green')
-    logger.info(show)
-    return render(request, f'frontend/{template}')
+def not_found(request):
+    return render(request, '404.html', status=404)
