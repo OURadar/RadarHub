@@ -21,15 +21,22 @@ from common import color_name_value
 VERBOSE = 1
 SIMULATE = False
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
+# SECURITY WARNING
+# SECURITY WARNING    Don't run with debug turned on in production!
+# SECURITY WARNING
+# SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
+
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
+# DEBUG = False
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / 'config'
 FRONTEND_DIR = BASE_DIR / 'frontend'
 RECEPTION_DIR = BASE_DIR / 'reception'
-LOG_DIR = os.path.expanduser('~/logs') if DEBUG else '/var/log/radarhub'
+# LOG_DIR = os.path.expanduser('~/logs') if DEBUG else '/var/log/radarhub'
+LOG_DIR = os.path.expanduser('~/logs')
 
 if VERBOSE > 1:
     show = color_name_value('BASE_DIR', str(BASE_DIR)) + '\n'
