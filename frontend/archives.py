@@ -10,7 +10,7 @@ from functools import lru_cache
 
 from django.views.decorators.cache import never_cache
 
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.conf import settings
 
 from .models import File, Day
@@ -28,7 +28,7 @@ pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
 invalid_query = HttpResponse(f'Invalid Query\n', status=204)
 unsupported_request = HttpResponse(f'Unsupported query. Feel free to email a data request to: data@arrc.ou.edu\n', status=405)
-forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell my father.\n', status=403)
+forbidden_request = HttpResponseForbidden('Forbidden. Mistaken? Tell my father.\n')
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
