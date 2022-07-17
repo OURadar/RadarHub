@@ -1,7 +1,7 @@
 import logging
 
 from django.shortcuts import render
-from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect
+from django.http import Http404, HttpResponse
 from django.conf import settings
 from django.views.decorators.http import require_GET
 from django.contrib.auth import get_user
@@ -11,7 +11,8 @@ from .archives import location
 
 logger = logging.getLogger('frontend')
 
-default_radar = list(settings.RADARS.values())[0]['folder'].lower()
+radars = [x['folder'].lower() for x in settings.RADARS.values()]
+default_radar = radars[0]
 
 #
 
@@ -58,6 +59,8 @@ def archive_radar_profile(request, radar, profileGL):
     if settings.DEBUG and settings.VERBOSE:
         show += '   ' + color_name_value('profileGL', profileGL)
     logger.info(show)
+    if radar not in radars:
+        raise Http404
     origin = location(radar)
     params = {'radar': radar, 'origin': origin, 'profileGL': profileGL}
     return render(request, 'frontend/archive.html', {'params': params})
