@@ -4,7 +4,7 @@ __pycache__
 node_modules
 build
 stash
-frontend/static/js
+frontend/static/frontend
 frontend/static/maps
 frontend/dist
 objects
