@@ -86,8 +86,5 @@ def robots_txt(request):
     ]
     return HttpResponse('\n'.join(lines), content_type='text/plain')
 
-def forbidden(request):
-    return render(request, '403.html', status=403)
-
-def not_found(request):
-    return render(request, '404.html', status=404)
+def template(request, page):
+    return render(request, f'{page}.html', status=200)

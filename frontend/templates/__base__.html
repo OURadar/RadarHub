@@ -1,17 +1,17 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html>
+<html theme="light">
   <head>
-    <meta charset="UTF-8" />
+    <title>RadarHub</title>
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="rgb(5, 111, 146)" />
     <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
-    <title>RadarHub</title>
   </head>
-  <body>
-    <div class="backgrad content">
+  <body class="backgrad">
+    <div class="content">
       <use>
         {% block svg %}{% endblock %}
       </use>

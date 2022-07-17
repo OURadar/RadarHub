@@ -98,7 +98,7 @@ def showline(line, verbose=0):
     if verbose > 1:
         pp.pprint(x)
     show(x)
-    if 'Mozilla' not in x['browser'] and len(x['browser']) > 100:
+    if 'browser' in x and 'Mozilla' not in x['browser'] and len(x['browser']) > 100:
         ip = colorize(x['ip'], 'yellow')
         tm = x['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
         msg = colorize(x['browser'], 'mint')

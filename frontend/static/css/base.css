@@ -145,6 +145,7 @@ canvas {
 .extraLarge {
   font-size: 100px;
   margin-bottom: 25px;
+  margin-top: 25px;
 }
 .subtitle {
   font-size: 1.5em;

@@ -912,7 +912,7 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
                     return origin
             return '-'
     else:
-        def get_location(_):
+        def get_location(_, **kwargs):
             return '- (no IP database) -'
     print('| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |')
     print('| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |')
