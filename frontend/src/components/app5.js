@@ -84,10 +84,6 @@ class App extends Component {
         },
       });
     }
-    // Preload something before we start to connect and draw
-    // fetch("/static/blob/helveticaneue/HelveticaNeueMed.ttf").then(() => {
-    //   this.ingest.connect();
-    // });
     this.ingest.connect();
   }
 
