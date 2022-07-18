@@ -27,7 +27,7 @@ import datetime
 import argparse
 import textwrap
 
-from common import colorize
+from common import colorize, get_user_agent_string
 
 __prog__ = os.path.basename(sys.argv[0])
 __version__ = '1.0'
@@ -37,7 +37,7 @@ ng = re.compile(
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}).+\]'
     + r' "(GET|POST) (?P<url>.+) (?P<protocol>HTTP/[0-9.]+)"'
     + r' (?P<status>\d{3}) (?P<bytes>\d+)'
-    + r' "(?P<browser>.+)" "(?P<compression>[0-9.-]+)"'
+    + r' "(?P<user_agent>.+)" "(?P<compression>[0-9.-]+)"'
 )
 rh = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):0 - -'
@@ -62,34 +62,46 @@ def decode(line, format=None):
             x[key] = int(x[key])
         x['datetime'] = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
         x['compression'] = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
+        x['os_browser'] = get_user_agent_string(x['user_agent'])
         return x
     return None
 
-def show(x):
-    t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
-
-    status = x['status']
+def color_code(status):
     if status == 200:
-        c = '\033[38;5;142m'
+        return '\033[38;5;142m'
     elif status == 302:
-        c = '\033[38;5;82m'
+        return '\033[38;5;82m'
     elif status > 400:
-        c = '\033[38;5;204m'
+        return '\033[38;5;204m'
     elif status > 300:
-        c = '\033[38;5;6m'
+        return '\033[38;5;6m'
     elif status > 200:
-        c = '\033[38;5;94m'
+        return '\033[38;5;94m'
     else:
-        c = '\033[38;5;82m'
-    url = x["url"]
-    if len(url) > 70:
-        url = url[:52] + '...' + url[-15:]
-    #pro = f'{x["protocol"]} ' if "protocol" in x else ""
-    b = '\033[38;5;171m' if x['compression'] > 20.0 else ''
-    com = f'{x["compression"]:5.2f}'[:5] if x['compression'] else '  -  '
-    print(f'{t} | {x["ip"]:>15} | {x["bytes"]:10,d} | {b}{com}\033[m | {c}{status:3d} {url}\033[m')
+        return '\033[38;5;82m'
 
-def showline(line, verbose=0):
+def compression(x):
+    c = '\033[38;5;141m' if x['compression'] > 20.0 else ''
+    n = f'{x["compression"]:5.2f}'[:5] if x['compression'] else '  -  '
+    return f'{c}{n}\033[m'
+
+def status_url(x):
+    c = color_code(x['status'])
+    url = x["url"][:55] + ' ... ' + x["url"][-15:] if len(x["url"]) > 75 else x["url"]
+    return f'{c}{x["status"]:3d} {url}\033[m'
+
+def show_url(x):
+    t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
+    c = compression(x)
+    u = status_url(x)
+    print(f'{t} | {x["ip"]:>15} | {x["bytes"]:10,d} | {c} | {u}')
+
+def show_agent(x):
+    t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
+    u = status_url(x)
+    print(f'{t} | {x["ip"]:>15} | {x["os_browser"]:>20} | {u}')
+
+def showline(line, show_func=show_url, verbose=0, **kwargs):
     if verbose > 1:
         print(line)
     x = decode(line)
@@ -97,11 +109,11 @@ def showline(line, verbose=0):
         return
     if verbose > 1:
         pp.pprint(x)
-    show(x)
-    if 'browser' in x and 'Mozilla' not in x['browser'] and len(x['browser']) > 100:
+    show_func(x)
+    if 'user_agent' in x and 'Mozilla' not in x['user_agent'] and len(x['user_agent']) > 100:
         ip = colorize(x['ip'], 'yellow')
         tm = x['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
-        msg = colorize(x['browser'], 'mint')
+        msg = colorize(x['user_agent'], 'mint')
         print(f'=== Special Message on {tm} from {ip}: {msg} ===')
 
 def readlines(source):
@@ -124,6 +136,7 @@ if __name__ == '__main__':
         '''),
         epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
+    parser.add_argument('-f', dest='format', choices=['url', 'agent'], default='url', help='sets output format')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
@@ -132,13 +145,19 @@ if __name__ == '__main__':
     if args.quiet:
         args.verbose = 0
 
+    show_options = {
+        'url': show_url,
+        'agent': show_agent
+    }
+    show_func = show_options[args.format]
+
     if len(args.source):
         for source in args.source:
             for line in readlines(source):
-                showline(line, verbose=args.verbose)
+                showline(line, show_func=show_func, verbose=args.verbose)
     elif select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin
         for line in sys.stdin:
-            showline(line)
+            showline(line, show_func=show_func)
     else:
         parser.print_help()

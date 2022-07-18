@@ -997,7 +997,7 @@ def update_visitors(file, verbose=1):
         visitor.user_agent = obj['browser']
         visitor.last_visited = obj['datetime']
         if verbose:
-            logparse.show(obj)
+            logparse.show_url(obj)
 
     if not overlap:
         ans = input('No overlap entries, continue updating (y/[n])? ')
