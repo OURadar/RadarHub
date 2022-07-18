@@ -34,6 +34,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / 'config'
 FRONTEND_DIR = BASE_DIR / 'frontend'
 RECEPTION_DIR = BASE_DIR / 'reception'
+DATABASE_DIR = BASE_DIR / 'database'
 LOG_DIR = os.path.expanduser('~/logs') if DEBUG else '/var/log/radarhub'
 
 if VERBOSE > 1:
@@ -138,7 +139,7 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': DATABASE_DIR / 'db.sqlite3',
     }
 }
 

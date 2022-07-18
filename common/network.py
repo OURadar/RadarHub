@@ -1,12 +1,16 @@
+import os
 import re
 import json
 import maxminddb
 import urllib.request
 
-user_agent_strings_db = 'user-agent-strings.json'
+BASE_DIR = os.path.dirname(__file__)
+DATABASE_DIR = os.path.join(BASE_DIR, 'database')
+
+user_agent_strings_db = os.path.join(DATABASE_DIR, 'user-agent-strings.json')
 user_agent_strings = {}
 
-ip_location_db = 'dbip-city-lite-2022-07.mmdb'
+ip_location_db = os.path.join(DATABASE_DIR, 'dbip-city-lite-2022-07.mmdb')
 ip_location_db_fid = None
 
 re_space = re.compile(' \(.*\)')

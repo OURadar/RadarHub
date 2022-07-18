@@ -2,6 +2,7 @@
 __pycache__
 .ipynb_checkpoints
 node_modules
+database
 build
 stash
 frontend/static/frontend
@@ -19,7 +20,6 @@ screenlog.*
 # Programs, etc.
 .DS_Store
 package-lock.json
-db.sqlite3
 dbip*
 config/*
 frontend/migrations/[0-9]*.py
@@ -28,4 +28,3 @@ reporter/secret
 reporter/data
 reporter/dgen
 webpack-*.json
-user-agent-strings.json
