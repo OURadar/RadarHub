@@ -53,17 +53,17 @@ def get_user_agent_string(user_agent, reload=False):
                 agent = json.loads(response.readline())
                 user_agent_strings[user_agent] = agent
                 try:
-                    with open(user_agent_strings_db, 'w') as fid:
+                    with open(user_agent_strings_db, 'wt') as fid:
                         json.dump(user_agent_strings, fid)
                 except:
                     print(f'ERROR. Unable to write to {user_agent_strings_db}')
-                return get_user_agent_string()
+                return get_user_agent_string(user_agent)
             else:
                 print('Not found from useragentstring.com')
                 print(response)
         except:
             pass
-    return f'- / {user_agent[:16]}'
+    return f'- {user_agent[:18]}'
 
 @lru_cache
 def get_ip_location(ip, show_city=False):
