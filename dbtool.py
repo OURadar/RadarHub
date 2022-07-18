@@ -893,27 +893,6 @@ def show_sweep_summary(source, markdown=False):
     | 107.77.220.225  |      189,884 |      11 |    macOS / Safari | 2022/06/17 17:11 | Dallas, Texas, United States               |
 '''
 def show_visitor_log(markdown=False, show_city=False, recent=0):
-    if os.path.exists(settings.IP_DATABASE):
-        import maxminddb
-        fid = maxminddb.open_database(settings.IP_DATABASE)
-        def get_location(ip, show_city=False):
-            pattern = re.compile(' \(.*\)')
-            if ip[:3] == '10.':
-                return 'OU Internal / VPN'
-            else:
-                info = fid.get(ip)
-                if info:
-                    country = info['country']['names']['en']
-                    state = info['subdivisions'][0]['names']['en']
-                    origin = f'{state}, {country}'
-                    if show_city:
-                        city = pattern.sub('', info['city']['names']['en'])
-                        origin = f'{city}, ' + origin
-                    return origin
-            return '-'
-    else:
-        def get_location(_, **kwargs):
-            return '- (no IP database) -'
     print('| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |')
     print('| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |')
     def show_visitor(visitor, markdown):
@@ -921,7 +900,7 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
         if agent == 'Unknown / Unknown':
             agent = visitor.user_agent.split()[0]
         date_string = visitor.last_visited_date_string()
-        origin = get_location(visitor.ip, show_city=show_city)
+        origin = logparse.get_ip_location(visitor.ip, show_city=show_city)
         if markdown:
             print(f'| `{visitor.ip}` | `{visitor.payload:,}` | `{visitor.bandwidth:,}` | `{visitor.count:,}` | {agent} | {date_string} | {origin} |')
         else:
