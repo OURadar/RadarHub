@@ -968,7 +968,8 @@ def update_visitors(file, verbose=1):
 
     for line in lines:
         obj = logparse.decode(line, format='nginx')
-
+        if obj is None:
+            continue
         if obj['status'] > 300:
             # print(f'skip {line[:80]} ...')
             continue
@@ -994,7 +995,7 @@ def update_visitors(file, verbose=1):
         visitor.count += 1
         visitor.payload += int(obj['bytes'] * obj['compression'])
         visitor.bandwidth += obj['bytes']
-        visitor.user_agent = obj['browser']
+        visitor.user_agent = obj['user_agent']
         visitor.last_visited = obj['datetime']
         if verbose:
             logparse.show_url(obj)
