@@ -915,9 +915,6 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
     for visitor in visitors.filter(ip__startswith='10.'):
         show_visitor(visitor, markdown=markdown)
 
-    if os.path.exists(settings.IP_DATABASE):
-        fid.close()
-
 '''
     Update Visitor table
 '''
