@@ -27,10 +27,10 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
-@lru_cache
+# @lru_cache
 def get_user_agent_string(user_agent, reload=False):
     def _replace_os_string(key):
-        oses = {'OS X': 'macOS', 'iPhone OS': 'iOS'}
+        oses = {'OS X': 'macOS', 'iPhone OS': 'iOS', 'unknown': '-'}
         return oses[key] if key in oses else key
     # API reference: http://www.useragentstring.com/pages/api.php
     global user_agent_strings
@@ -61,7 +61,7 @@ def get_user_agent_string(user_agent, reload=False):
                 print(response)
         except:
             pass
-    return 'Unknown / Unknown'
+    return f'- / {user_agent[:16]}'
 
 def get_ip_location(ip, show_city=False):
     if ip[:3] == '10.' or ip[:4] == '192.':
