@@ -27,7 +27,7 @@ import datetime
 import argparse
 import textwrap
 
-from common import colorize, get_user_agent_string
+from common import colorize, get_user_agent_string, get_ip_location
 
 __prog__ = os.path.basename(sys.argv[0])
 __version__ = '1.0'
@@ -63,6 +63,7 @@ def decode(line, format=None):
         x['datetime'] = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
         x['compression'] = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
         x['os_browser'] = get_user_agent_string(x['user_agent'])
+        x['location'] = get_ip_location(x['ip'])
         return x
     return None
 
@@ -85,9 +86,9 @@ def compression(x):
     n = f'{x["compression"]:5.2f}'[:5] if x['compression'] else '  -  '
     return f'{c}{n}\033[m'
 
-def status_url(x):
+def status_url(x, width=75):
     c = color_code(x['status'])
-    url = x["url"][:55] + ' ... ' + x["url"][-15:] if len(x["url"]) > 75 else x["url"]
+    url = x["url"][:width-20] + ' ... ' + x["url"][-15:] if len(x["url"]) > width else x["url"]
     return f'{c}{x["status"]:3d} {url}\033[m'
 
 def show_url(x):
@@ -95,6 +96,11 @@ def show_url(x):
     c = compression(x)
     u = status_url(x)
     print(f'{t} | {x["ip"]:>15} | {x["bytes"]:10,d} | {c} | {u}')
+
+def show_loc(x):
+    t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
+    u = status_url(x, 45)
+    print(f'{t} | {x["ip"]:>15} | {x["os_browser"]:>20} | {x["location"]:>25} | {u}')
 
 def show_agent(x):
     t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
@@ -136,7 +142,7 @@ if __name__ == '__main__':
         '''),
         epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
-    parser.add_argument('-f', dest='format', choices=['url', 'agent'], default='url', help='sets output format')
+    parser.add_argument('-f', dest='format', choices=['url', 'loc', 'agent'], default='url', help='sets output format')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
@@ -147,6 +153,7 @@ if __name__ == '__main__':
 
     show_options = {
         'url': show_url,
+        'loc': show_loc,
         'agent': show_agent
     }
     show_func = show_options[args.format]

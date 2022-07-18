@@ -1,8 +1,15 @@
+import re
 import json
-import urllib
+import maxminddb
+import urllib.request
 
 user_agent_strings_db = 'user-agent-strings.json'
 user_agent_strings = {}
+
+ip_location_db = 'dbip-city-lite-2022-07.mmdb'
+ip_location_db_fid = None
+
+re_space = re.compile(' \(.*\)')
 
 # From https://stackoverflow.com/questions/4581789/how-do-i-get-user-ip-address-in-django
 def get_client_ip(request):
@@ -47,3 +54,20 @@ def get_user_agent_string(user_agent, reload=False):
         except:
             pass
     return 'Unknown / Unknown'
+
+def get_ip_location(ip, show_city=False):
+    if ip[:3] == '10.':
+        return 'Internal / VPN'
+    global ip_location_db_fid
+    if ip_location_db_fid is None:
+        ip_location_db_fid = maxminddb.open_database(ip_location_db)
+    info = ip_location_db_fid.get(ip)
+    if info is None:
+        return '-'
+    country = info['country']['names']['en']
+    state = info['subdivisions'][0]['names']['en']
+    origin = f'{state}, {country}'
+    if show_city:
+        city = re_space.sub('', info['city']['names']['en'])
+        origin = f'{city}, ' + origin
+    return origin
