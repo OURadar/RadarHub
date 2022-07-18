@@ -30,7 +30,7 @@ def get_client_ip(request):
     return ip
 
 @lru_cache
-def get_user_agent_string(user_agent, reload=False):
+def get_user_agent_string(user_agent, width=25, reload=False):
     def _replace_os_string(key):
         oses = {'OS X': 'macOS', 'iPhone OS': 'iOS', 'unknown': '-'}
         return oses[key] if key in oses else key
@@ -43,7 +43,10 @@ def get_user_agent_string(user_agent, reload=False):
         agent = user_agent_strings[user_agent]
         machine = _replace_os_string(agent['os_name'])
         browser = agent['agent_name']
-        return f'/ {browser}' if machine == '-' else f'{machine} / {browser}'
+        machine_browser = f'/ {browser}' if machine == '-' else f'{machine} / {browser}'
+        if len(machine_browser) > width:
+            machine_browser = machine_browser[:width-3] + '...'
+        return machine_browser
     else:
         s = user_agent.replace(' ', r'%20')
         try:

@@ -62,7 +62,7 @@ def decode(line, format=None):
             x[key] = int(x[key])
         x['datetime'] = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
         x['compression'] = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
-        x['os_browser'] = get_user_agent_string(x['user_agent'])
+        x['os_browser'] = get_user_agent_string(x['user_agent'], width=20)
         x['location'] = get_ip_location(x['ip'])
         return x
     return None
@@ -99,8 +99,8 @@ def show_url(x):
 
 def show_loc(x):
     t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
-    u = status_url(x, 45)
-    print(f'{t} | {x["ip"]:>15} | {x["os_browser"]:>20} | {x["location"]:>25} | {u}')
+    u = status_url(x, 40)
+    print(f'{t} | {x["ip"]:>15} | {x["os_browser"]:>20} | {x["location"]:>30} | {u}')
 
 def show_agent(x):
     t = x['datetime'].strftime(r'%m/%d %H:%M:%S')

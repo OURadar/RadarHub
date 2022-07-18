@@ -896,7 +896,7 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
     print('| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |')
     print('| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |')
     def show_visitor(visitor, markdown):
-        agent = visitor.user_agent_string()
+        agent = logparse.get_user_agent_string(visitor.user_agent, width=20)
         date_string = visitor.last_visited_date_string()
         origin = logparse.get_ip_location(visitor.ip, show_city=show_city)
         if markdown:
@@ -927,7 +927,8 @@ def update_visitors(file, verbose=1):
     if not overlap:
         latest_visitor = Visitor.objects.latest('last_visited')
         obj = logparse.decode(lines[0], format='nginx')
-        if obj['datetime'] > latest_visitor.last_visited:
+        delta = obj['datetime'] - latest_visitor.last_visited
+        if delta > datetime.timedelta(hours=1):
             logger.warning('Potential data gap.')
             ans = input('Do you really want to continue (y/[n])? ')
             if not ans == 'y':
