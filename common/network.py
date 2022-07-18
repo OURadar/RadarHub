@@ -4,7 +4,10 @@ import json
 import maxminddb
 import urllib.request
 
-BASE_DIR = os.path.dirname(__file__)
+from functools import lru_cache
+
+FILE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(FILE_DIR)
 DATABASE_DIR = os.path.join(BASE_DIR, 'database')
 
 user_agent_strings_db = os.path.join(DATABASE_DIR, 'user-agent-strings.json')
@@ -24,6 +27,7 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
+@lru_cache
 def get_user_agent_string(user_agent, reload=False):
     def _replace_os_string(key):
         oses = {'OS X': 'macOS', 'iPhone OS': 'iOS'}
@@ -60,7 +64,7 @@ def get_user_agent_string(user_agent, reload=False):
     return 'Unknown / Unknown'
 
 def get_ip_location(ip, show_city=False):
-    if ip[:3] == '10.':
+    if ip[:3] == '10.' or ip[:4] == '192.':
         return 'Internal / VPN'
     global ip_location_db_fid
     if ip_location_db_fid is None:
