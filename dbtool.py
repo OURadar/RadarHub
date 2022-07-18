@@ -897,8 +897,6 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
     print('| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |')
     def show_visitor(visitor, markdown):
         agent = visitor.user_agent_string()
-        if agent == 'Unknown / Unknown':
-            agent = visitor.user_agent.split()[0]
         date_string = visitor.last_visited_date_string()
         origin = logparse.get_ip_location(visitor.ip, show_city=show_city)
         if markdown:

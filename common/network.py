@@ -43,7 +43,7 @@ def get_user_agent_string(user_agent, reload=False):
         agent = user_agent_strings[user_agent]
         machine = _replace_os_string(agent['os_name'])
         browser = agent['agent_name']
-        return f'{machine} / {browser}'
+        return f'/ {browser}' if machine == '-' else f'{machine} / {browser}'
     else:
         s = user_agent.replace(' ', r'%20')
         try:
@@ -51,6 +51,10 @@ def get_user_agent_string(user_agent, reload=False):
             response = urllib.request.urlopen(url)
             if response.status == 200:
                 agent = json.loads(response.readline())
+                if agent['os_name'] == 'unknown':
+                    agent['os_name'] = '-'
+                if agent['agent_name'] == 'unknown':
+                    agent['agent_name'] = user_agent.split('/')[0]
                 user_agent_strings[user_agent] = agent
                 try:
                     with open(user_agent_strings_db, 'wt') as fid:
