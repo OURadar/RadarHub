@@ -140,9 +140,9 @@ canvas {
   overflow-y: scroll;
   position: absolute;
   text-align: center;
-  width: 800px;
+  width: 900px;
 }
-.sheetText {
+.sheetContent {
   padding-left: 80px;
   padding-right: 80px;
 }

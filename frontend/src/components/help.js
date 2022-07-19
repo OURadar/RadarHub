@@ -9,7 +9,7 @@ export function HelpPage(props) {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    width: "800px",
+    width: "900px",
     height: "76%",
     overflowY: "scroll",
     bgcolor: "background.paper",
@@ -24,13 +24,22 @@ export function HelpPage(props) {
       aria-describedby="modal-modal-description"
     >
       <Box sx={style}>
-        <div className="sheetText">
+        <div className="sheetContent">
           <div className="title">Overview</div>
         </div>
 
-        <img src="/static/images/demo.gif" width="800px" height="800px" />
+        <div
+          dangerouslySetInnerHTML={{
+            __html: `
+          <video width="900" height="720" loop muted autoplay playsinline>
+          <source src="/static/media/demo-0503.mp4" type="video/mp4" />
+          Video Help
+          </video>
+          `,
+          }}
+        />
 
-        <div className="sheetText">
+        <div className="sheetContent">
           <div className="title">Navigation Shortcuts</div>
 
           <table className="keyTask">
@@ -113,7 +122,7 @@ export function HelpPage(props) {
           </table>
         </div>
 
-        <div className="sheetText">
+        <div className="sheetContent">
           <div className="title">Data Request</div>
           <p>
             If you are interested in obtaining the original archive files,
