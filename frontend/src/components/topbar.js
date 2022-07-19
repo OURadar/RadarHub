@@ -10,12 +10,25 @@ import {
   DarkMode,
   HelpCenter,
 } from "@mui/icons-material";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 import { Notification } from "./notification";
 
 const version = require("/package.json").version;
 
 const emojis = require("emoji-name-map");
+
+const topbarTheme = createTheme({
+  components: {
+    MuiSvgIcon: {
+      styleOverrides: {
+        root: {
+          color: "white",
+        },
+      },
+    },
+  },
+});
 
 class StatusBody extends Notification {
   render() {
@@ -53,56 +66,58 @@ export function TopBar(props) {
   }
   return (
     <div>
-      <div id="topbar" role="banner">
-        <div className="topbarComponent left">
-          <img
-            id="topbarLogo"
-            onClick={() => {
-              document.location = "/";
-            }}
-          />
-          <div className="statusWrapper">
-            <div className={online} id="statusLed"></div>
-            <div id="versionTag">{`v${version}${name}`}</div>
-            {status}
-            {notify}
+      <ThemeProvider theme={topbarTheme}>
+        <div id="topbar" role="banner">
+          <div className="topbarComponent left">
+            <img
+              id="topbarLogo"
+              onClick={() => {
+                document.location = "/";
+              }}
+            />
+            <div className="statusWrapper">
+              <div className={online} id="statusLed"></div>
+              <div id="versionTag">{`v${version}${name}`}</div>
+              {status}
+              {notify}
+            </div>
           </div>
-        </div>
-        <Console
-          {...props}
-          handleAccount={() => {
-            setMessage("Fetching User Information ...");
-            fetch("/profile/")
-              .then((response) => {
-                if (response.status == 200) {
-                  response.json().then(({ user, ip, emoji }) => {
-                    let title =
-                      user == "None" ? "Anonymous User" : `Hello ${user}`;
-                    let symbol = emojis.get(emoji) || "";
+          <Console
+            {...props}
+            handleAccount={() => {
+              setMessage("Fetching User Information ...");
+              fetch("/profile/")
+                .then((response) => {
+                  if (response.status == 200) {
+                    response.json().then(({ user, ip, emoji }) => {
+                      let title =
+                        user == "None" ? "Anonymous User" : `Hello ${user}`;
+                      let symbol = emojis.get(emoji) || "";
+                      setMessage(
+                        user == "None"
+                          ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
+                              window.location.pathname +
+                              "'>Sign In Here</a><div class='emotion'>⛅️</div>"
+                          : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
+                      );
+                      setTimeout(() => setMessage(""), 3500);
+                    });
+                  } else {
                     setMessage(
-                      user == "None"
-                        ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
-                            window.location.pathname +
-                            "'>Sign In Here</a><div class='emotion'>⛅️</div>"
-                        : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
+                      `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
                     );
-                    setTimeout(() => setMessage(""), 3500);
-                  });
-                } else {
+                  }
+                })
+                .catch((_error) => {
                   setMessage(
                     `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
                   );
-                }
-              })
-              .catch((_error) => {
-                setMessage(
-                  `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
-                );
-                setTimeout(() => setMessage(""), 3500);
-              });
-          }}
-        />
-      </div>
+                  setTimeout(() => setMessage(""), 3500);
+                });
+            }}
+          />
+        </div>
+      </ThemeProvider>
     </div>
   );
 }

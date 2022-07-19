@@ -229,13 +229,6 @@ export function makeTheme(inputMode) {
           },
         ],
       },
-      MuiSvgIcon: {
-        styleOverrides: {
-          root: {
-            color: "white",
-          },
-        },
-      },
     },
   });
   return theme;
