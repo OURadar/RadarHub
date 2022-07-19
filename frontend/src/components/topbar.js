@@ -10,7 +10,6 @@ import {
   DarkMode,
   HelpCenter,
 } from "@mui/icons-material";
-// import logo from "/static/images/radarhub-outline.png";
 
 import { Notification } from "./notification";
 
@@ -70,7 +69,7 @@ export function TopBar(props) {
           </div>
         </div>
         <Console
-          isMobile={props.isMobile || false}
+          {...props}
           handleAccount={() => {
             setMessage("Fetching User Information ...");
             fetch("/profile/")
@@ -102,8 +101,6 @@ export function TopBar(props) {
                 setTimeout(() => setMessage(""), 3500);
               });
           }}
-          handleModeChange={props.handleModeChange}
-          mode={props.mode}
         />
       </div>
     </div>
@@ -125,13 +122,20 @@ export function Console(props) {
   return (
     <div className="topbarComponent right">
       <IconButton
+        aria-label="Help"
+        onClick={props.handleHelpRequest}
+        size="large"
+      >
+        <HelpCenter />
+      </IconButton>
+      <IconButton
         aria-label="Refresh"
         onClick={() => {
           window.location.reload();
         }}
         size="large"
       >
-        <Refresh style={{ color: "white" }} />
+        <Refresh />
       </IconButton>
       {!props.isMobile && (
         <IconButton
@@ -143,9 +147,7 @@ export function Console(props) {
           }}
           size="large"
         >
-          {(fullscreen && <WebAsset style={{ color: "white" }} />) || (
-            <Fullscreen style={{ color: "white" }} />
-          )}
+          {(fullscreen && <WebAsset />) || <Fullscreen />}
         </IconButton>
       )}
       <IconButton
@@ -153,16 +155,14 @@ export function Console(props) {
         onClick={props.handleModeChange}
         size="large"
       >
-        {(props.mode == "light" && (
-          <LightMode style={{ color: "white" }} />
-        )) || <DarkMode style={{ color: "white" }} />}
+        {(props.mode == "light" && <LightMode />) || <DarkMode />}
       </IconButton>
       <IconButton
         aria-label="Account"
         onClick={() => props.handleAccount()}
         size="large"
       >
-        <AccountCircle style={{ color: "white" }} />
+        <AccountCircle />
       </IconButton>
     </div>
   );

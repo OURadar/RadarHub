@@ -10,6 +10,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { colorDict, makeTheme } from "./theme";
 import { detectMob } from "./common";
 import { TopBar } from "./topbar";
+import { HelpPage } from "./help";
 
 class App extends Component {
   constructor(props) {
@@ -18,8 +19,11 @@ class App extends Component {
       colors: colorDict(),
       theme: makeTheme(),
       time: new Date("2013-05-20T19:00"),
+      open: false,
     };
     this.isMobile = detectMob();
+    this.handleHelpOpen = this.handleHelpOpen.bind(this);
+    this.handleHelpClose = this.handleHelpClose.bind(this);
     this.handleModeChange = this.handleModeChange.bind(this);
     document.documentElement.setAttribute("theme", this.state.colors.name);
   }
@@ -49,7 +53,9 @@ class App extends Component {
           mode={this.state.colors.name}
           isMobile={this.isMobile}
           handleModeChange={this.handleModeChange}
+          handleHelpRequest={this.handleHelpOpen}
         />
+        <HelpPage open={this.state.open} handleClose={this.handleHelpClose} />
       </ThemeProvider>
     );
   }
@@ -62,6 +68,16 @@ class App extends Component {
       colors: colorDict(mode),
       theme: makeTheme(mode),
     });
+  }
+
+  handleHelpOpen() {
+    console.log("handleHelpOpen()");
+    this.setState({ open: true });
+  }
+
+  handleHelpClose() {
+    console.log("handleHelpClose");
+    this.setState({ open: false });
   }
 }
 
