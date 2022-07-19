@@ -84,13 +84,13 @@ Copyright Boonleng Cheong
 }
 
 @font-face {
-  font-family: "LabelFont";
+  font-family: LabelFont;
   font-style: normal;
   src: url(/static/fonts/HelveticaNeueMed.ttf) format("truetype");
 }
 
 @font-face {
-  font-family: "MessageFont";
+  font-family: MessageFont;
   font-style: normal;
   src: url(/static/fonts/HelveticaNeueLt.ttf) format("truetype");
 }
@@ -117,7 +117,7 @@ body {
 
 canvas {
   display: block;
-  font-family: "LabelFont", Helvetica, Arial;
+  font-family: LabelFont, Helvetica, Arial;
   position: relative;
 }
 
@@ -152,9 +152,8 @@ canvas {
   line-height: 1.8em;
 }
 .message {
-  font-family: "MessageFont", Helvetica, Arial;
+  font-family: MessageFont, Helvetica, Arial;
   font-size: 24pt;
-  font-weight: 100;
   margin: 50px auto;
   line-height: 36pt;
   padding: 0 100px;
