@@ -156,7 +156,6 @@ canvas {
   font-size: 24pt;
   font-weight: 100;
   margin: 50px auto;
-  max-width: 900px;
   line-height: 36pt;
   padding: 0 100px;
 }
@@ -643,7 +642,7 @@ a.radarButton:hover {
 
 .logo {
   height: 15vh;
-  fill: #d9f959;
+  fill: #ddff00;
 }
 
 .wiggle {
