@@ -88,7 +88,7 @@ def compression(x):
 
 def status_url(x, width=75):
     c = color_code(x['status'])
-    url = x["url"][:width-20] + ' ... ' + x["url"][-15:] if len(x["url"]) > width else x["url"]
+    url = x["url"][:width-25] + ' ... ' + x["url"][-20:] if len(x["url"]) > width else x["url"]
     return f'{c}{x["status"]:3d} {url}\033[m'
 
 def show_url(x):
@@ -99,7 +99,7 @@ def show_url(x):
 
 def show_loc(x):
     t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
-    u = status_url(x, 40)
+    u = status_url(x, 45)
     print(f'{t} | {x["ip"]:>15} | {x["os_browser"]:>20} | {x["location"]:>30} | {u}')
 
 def show_agent(x):
@@ -127,6 +127,9 @@ def readlines(source):
         lines = fid.readlines()
     return lines
 
+def showfile(file, show_func, verbose=0):
+    for line in readlines(file):
+        showline(line, show_func=show_func, verbose=verbose)
 #
 
 if __name__ == '__main__':
@@ -142,6 +145,7 @@ if __name__ == '__main__':
         '''),
         epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
+    parser.add_argument('-a', dest='access', action='store_true', help='checks nginx access log')
     parser.add_argument('-f', dest='format', choices=['url', 'loc', 'agent'], default='url', help='sets output format')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
@@ -158,10 +162,15 @@ if __name__ == '__main__':
     }
     show_func = show_options[args.format]
 
-    if len(args.source):
+    if args.access:
+        source = '/var/log/nginx/access.log'
+        if not os.path.exists(source):
+            print(f'ERROR. File {source} does not exist')
+            sys.exit()
+        showfile(source, show_func=show_func, verbose=args.verbose)
+    elif len(args.source):
         for source in args.source:
-            for line in readlines(source):
-                showline(line, show_func=show_func, verbose=args.verbose)
+            showfile(source, show_func=show_func, verbose=args.verbose)
     elif select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin
         for line in sys.stdin:
