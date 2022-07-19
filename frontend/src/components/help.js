@@ -28,7 +28,7 @@ export function HelpPage(props) {
           <div className="title">Overview</div>
         </div>
 
-        <img src="/static/images/demo.gif" />
+        <img src="/static/images/demo.gif" width="800px" height="800px" />
 
         <div className="sheetText">
           <div className="title">Navigation Shortcuts</div>

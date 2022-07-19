@@ -15,6 +15,7 @@ import { Browser } from "./browser";
 import { Product } from "./product";
 import { TopBar } from "./topbar";
 import { Archive } from "./archive";
+import { HelpPage } from "./help";
 
 class App extends Component {
   constructor(props) {
@@ -141,6 +142,7 @@ class App extends Component {
           ingest={this.archive}
           isMobile={this.isMobile}
           handleModeChange={this.handleModeChange}
+          handleHelpRequest={this.handleHelpOpen}
         />
         <div id="flex">
           <div id="left">
