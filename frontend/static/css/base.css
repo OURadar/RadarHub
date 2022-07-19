@@ -90,7 +90,7 @@ Copyright Boonleng Cheong
 }
 
 @font-face {
-  font-family: MessageFont;
+  font-family: TextFont;
   font-style: normal;
   src: url(/static/fonts/HelveticaNeueLt.ttf) format("truetype");
 }
@@ -152,12 +152,41 @@ canvas {
   line-height: 1.8em;
 }
 .message {
-  font-family: MessageFont, Helvetica, Arial;
-  font-size: 24pt;
-  margin: 50px auto;
-  line-height: 36pt;
+  font-family: "Helvetica Neue", Helvetica, Arial;
+  font-size: 28pt;
+  font-weight: 200;
+  margin: 20px auto;
+  line-height: 40pt;
   padding: 0 100px;
 }
+.w100 {
+  font-weight: 100;
+}
+.w200 {
+  font-weight: 200;
+}
+.w300 {
+  font-weight: 300;
+}
+.w400 {
+  font-weight: 400;
+}
+.w500 {
+  font-weight: 500;
+}
+.w600 {
+  font-weight: 600;
+}
+.w700 {
+  font-weight: 700;
+}
+.w800 {
+  font-weight: 800;
+}
+.w900 {
+  font-weight: 900;
+}
+
 .flex-center {
   display: flex;
   justify-content: center;

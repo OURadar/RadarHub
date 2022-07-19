@@ -45,6 +45,7 @@ rh = re.compile(
     + r' "(GET|POST) (?P<url>.+)"'
     + r' (?P<status>\d{3}) (?P<bytes>\d+)'
 )
+re_agent = re.compile(r'(mozilla|webkit|safari|firefox|android)', flags=re.IGNORECASE)
 
 #
 
@@ -116,7 +117,8 @@ def showline(line, show_func=show_url, verbose=0, **kwargs):
     if verbose > 1:
         pp.pprint(x)
     show_func(x)
-    if 'user_agent' in x and 'Mozilla' not in x['user_agent'] and len(x['user_agent']) > 100:
+    user_agent = x['user_agent'] if 'user_agent' in x else ''
+    if re_agent.search(user_agent) is None and len(user_agent) > 160:
         ip = colorize(x['ip'], 'yellow')
         tm = x['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
         msg = colorize(x['user_agent'], 'mint')
