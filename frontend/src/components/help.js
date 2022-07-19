@@ -108,11 +108,11 @@ export function HelpPage(props) {
               </tr>
               <tr>
                 <td>Up / Down</td>
-                <td>Navigate in time</td>
+                <td>Navigate in scan sequence</td>
               </tr>
               <tr>
                 <td>Left / Right</td>
-                <td>Navigate in same scan</td>
+                <td>Navigate along the same scan</td>
               </tr>
               <tr>
                 <td>Double Click</td>
