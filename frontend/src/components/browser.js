@@ -137,9 +137,7 @@ function Browser(props) {
             onMonthChange={(newDay) => getMonthTable(newDay)}
             onChange={(newValue) => {
               setValue(newValue);
-              let y = newValue?.getYear() || 0;
-              let hasData = props.archive.grid.yearsActive[y] > 0;
-              if (newValue instanceof Date && hasData) {
+              if (newValue instanceof Date) {
                 setDayHour(newValue, hour);
               }
             }}
@@ -150,16 +148,17 @@ function Browser(props) {
                 key in props.archive.grid.daysActive
                   ? props.archive.grid.daysActive[key]
                   : 0;
-              let variant = num ? "dot" : undefined;
-              return (
+              return num ? (
                 <Badge
                   key={key}
                   color={badgeColors[num]}
                   overlap="circular"
-                  variant={variant}
+                  variant="dot"
                 >
                   <PickersDay {...pickersDayProps} />
                 </Badge>
+              ) : (
+                <PickersDay {...pickersDayProps} disabled={true} />
               );
             }}
             shouldDisableYear={(date) => {

@@ -21,7 +21,12 @@ from common import color_name_value
 VERBOSE = 1
 SIMULATE = False
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
+# SECURITY WARNING
+# SECURITY WARNING    Don't run with debug turned on in production!
+# SECURITY WARNING
+# SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
+
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -29,6 +34,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_DIR = BASE_DIR / 'config'
 FRONTEND_DIR = BASE_DIR / 'frontend'
 RECEPTION_DIR = BASE_DIR / 'reception'
+DATABASE_DIR = BASE_DIR / 'database'
 LOG_DIR = os.path.expanduser('~/logs') if DEBUG else '/var/log/radarhub'
 
 if VERBOSE > 1:
@@ -133,7 +139,7 @@ WSGI_APPLICATION = 'radarhub.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': DATABASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -341,7 +347,7 @@ LOGGING = {
 # User Agent Strings
 # http://www.useragentstring.com
 
-IP_DATABASE = BASE_DIR / 'dbip-city-lite-2022-06.mmdb'
+IP_DATABASE = BASE_DIR / 'dbip-city-lite-2022-07.mmdb'
 
 USER_AGENT_TABLE = BASE_DIR / 'user-agent-strings.json'
 

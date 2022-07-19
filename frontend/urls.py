@@ -17,9 +17,9 @@ urlpatterns = [
     path('data/list/<str:radar>/<str:day_hour_symbol>/', archives.list, name='data-list-json'),
     path('data/load/<str:name>/', archives.load, name='data-load-binary'),
     path('stats/<str:mode>/', archives.stats, name='stats'),
+    path('view/<str:page>/', views.template, name='page-name'),
     path('profile/', stats.profile, name='stats-profile'),
     path('robots.txt', views.robots_txt),
-    path('favicon.ico', views.favicon_ico),
     path('dev/', views.dev, name='index'),
     path('', views.index, name='index'),
 ]

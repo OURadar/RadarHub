@@ -34,7 +34,9 @@ from django.conf import settings
 
 from frontend.models import File, Day, Visitor
 
-from common import colorize, color_name_value, dailylog, logparse
+from common import colorize, color_name_value, dailylog
+
+import logparse
 
 __prog__ = os.path.basename(sys.argv[0])
 
@@ -891,35 +893,12 @@ def show_sweep_summary(source, markdown=False):
     | 107.77.220.225  |      189,884 |      11 |    macOS / Safari | 2022/06/17 17:11 | Dallas, Texas, United States               |
 '''
 def show_visitor_log(markdown=False, show_city=False, recent=0):
-    if os.path.exists(settings.IP_DATABASE):
-        import maxminddb
-        fid = maxminddb.open_database(settings.IP_DATABASE)
-        def get_location(ip, show_city=False):
-            pattern = re.compile(' \(.*\)')
-            if ip[:3] == '10.':
-                return 'OU Internal / VPN'
-            else:
-                info = fid.get(ip)
-                if info:
-                    country = info['country']['names']['en']
-                    state = info['subdivisions'][0]['names']['en']
-                    origin = f'{state}, {country}'
-                    if show_city:
-                        city = pattern.sub('', info['city']['names']['en'])
-                        origin = f'{city}, ' + origin
-                    return origin
-            return '-'
-    else:
-        def get_location(_):
-            return '- (no IP database) -'
     print('| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |')
     print('| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |')
     def show_visitor(visitor, markdown):
-        agent = visitor.user_agent_string()
-        if agent == 'Unknown / Unknown':
-            agent = visitor.user_agent.split()[0]
+        agent = logparse.get_user_agent_string(visitor.user_agent, width=20)
         date_string = visitor.last_visited_date_string()
-        origin = get_location(visitor.ip, show_city=show_city)
+        origin = logparse.get_ip_location(visitor.ip, show_city=show_city)
         if markdown:
             print(f'| `{visitor.ip}` | `{visitor.payload:,}` | `{visitor.bandwidth:,}` | `{visitor.count:,}` | {agent} | {date_string} | {origin} |')
         else:
@@ -934,22 +913,38 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
     for visitor in visitors.filter(ip__startswith='10.'):
         show_visitor(visitor, markdown=markdown)
 
-    if os.path.exists(settings.IP_DATABASE):
-        fid.close()
-
 '''
     Update Visitor table
 '''
-def update_visitors(file):
+def update_visitors(file, verbose=1):
     show = colorize('update_visitors()', 'green')
     logger.info(show)
     visitors = {}
-    lines = logparse.readlines(file)
+    overlap = Visitor.objects.count() == 0
     uu = re.compile(r'(/data/load|/data/list)')
-    for line in lines:
-        obj = logparse.decode(line)
-        obj['datetime'] = obj['datetime'].replace(tzinfo=datetime.timezone.utc)
+    lines = logparse.readlines(file)
 
+    if not overlap:
+        latest_visitor = Visitor.objects.latest('last_visited')
+        obj = logparse.decode(lines[0], format='nginx')
+        delta = obj['datetime'] - latest_visitor.last_visited
+        if delta > datetime.timedelta(hours=1):
+            logger.warning('Potential data gap.')
+            ans = input('Do you really want to continue (y/[n])? ')
+            if not ans == 'y':
+                logger.info('Whew. Nothing happend.')
+                return
+        obj = logparse.decode(lines[-1], format='nginx')
+        if obj['datetime'] < latest_visitor.last_visited:
+            o = obj['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
+            t = latest_visitor.last_visited.strftime(r'%Y/%m/%d %H:%M:%S')
+            logger.info(f'Seen before. Last entry {o} < last_visited {t}.')
+            return
+
+    for line in lines:
+        obj = logparse.decode(line, format='nginx')
+        if obj is None:
+            continue
         if obj['status'] > 300:
             # print(f'skip {line[:80]} ...')
             continue
@@ -963,6 +958,7 @@ def update_visitors(file):
             if db_visitors:
                 visitor = db_visitors.first()
                 if visitor.last_visited >= obj['datetime']:
+                    overlap = True
                     continue
             else:
                 visitor = Visitor.objects.create(ip=obj['ip'],
@@ -974,9 +970,16 @@ def update_visitors(file):
         visitor.count += 1
         visitor.payload += int(obj['bytes'] * obj['compression'])
         visitor.bandwidth += obj['bytes']
-        visitor.user_agent = obj['browser']
+        visitor.user_agent = obj['user_agent']
         visitor.last_visited = obj['datetime']
-        logparse.show(obj)
+        if verbose:
+            logparse.show_url(obj)
+
+    if not overlap:
+        ans = input('No overlap entries, continue updating (y/[n])? ')
+        if not ans == 'y':
+            logger.info('Whew. Nothing happend.')
+            return
 
     for _, visitor in visitors.items():
         pp.pprint(visitor.dict())
@@ -1081,7 +1084,7 @@ def dbtool_main():
     parser.add_argument('--show-city', action='store_true', help='shows city of IP location')
     parser.add_argument('--no-skip', dest='skip', default=True, action='store_false', help='do no skip folders with Day.count == count')
     parser.add_argument('--skip', action='store_true', default=True, help='skips folders with Day.county == count')
-    parser.add_argument('--update', action='store_true', help='updates visitor table from access log')
+    parser.add_argument('-u', '--update', action='store_true', help='updates visitor table from access log')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + settings.VERSION)
     parser.add_argument('-V', '--visitor', action='store_true', help='shows visitor log')

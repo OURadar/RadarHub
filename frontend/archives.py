@@ -10,7 +10,8 @@ from functools import lru_cache
 
 from django.views.decorators.cache import never_cache
 
-from django.http import HttpResponse, Http404
+from django.shortcuts import render
+from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.conf import settings
 
 from .models import File, Day
@@ -26,9 +27,9 @@ pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2]
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
-invalid_query = HttpResponse(f'Invalid Query', status=204)
-unsupported_request = HttpResponse(f'Unsupported. Feel free to request the data from us.\n', status=405)
-forbidden_request = HttpResponse(f'Forbidden. Mistaken? Tell Us.', status=403)
+invalid_query = HttpResponse(f'Invalid Query\n', status=204)
+unsupported_request = HttpResponse(f'Unsupported query. Feel free to email a data request to: data@arrc.ou.edu\n', status=405)
+forbidden_request = HttpResponseForbidden('Forbidden. Mistaken? Tell my father.\n')
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
@@ -64,7 +65,7 @@ def screen(request):
     headers = dict(request.headers)
     headers.pop('Cookie', None)
     dirty = False
-    if 'Accept-Encoding' not in headers or 'deflate' not in headers['Accept-Encoding']:
+    if 'Accept-Encoding' not in headers or 'gzip' not in headers['Accept-Encoding']:
         dirty = True
     # if 'Referer' not in request.headers and 'Connection' not in request.headers:
     #     dirty = True
@@ -72,13 +73,17 @@ def screen(request):
 
 # Stats
 
-def stats(_, mode=''):
+def stats(request, mode=''):
+    dirty = screen(request)
+    if dirty:
+        return forbidden_request
     if mode == 'cache':
         cache_info = _load.cache_info()
         payload = str(cache_info)
+    elif mode == '403':
+        return forbidden_request
     else:
         raise Http404
-
     return HttpResponse(payload, content_type='text/plain')
 
 # Data
@@ -386,7 +391,7 @@ def _years(prefix):
     if prefix == 'RAXPOL-':
         return [int(x > 16) for x in range(23)]
     if prefix == 'PX10K-':
-        return [int(x == 18) for x in range(23)]
+        return [int(x == 19) for x in range(23)]
     return []
 
 '''

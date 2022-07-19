@@ -1,0 +1,19 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html theme="light">
+  <head>
+    <title>RadarHub</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="rgb(5, 111, 146)" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
+  </head>
+  <body class="backgrad">
+    <div class="content">
+      {% block svg %}{% endblock %}
+      {% block message %}{% endblock %}
+    </div>
+  </body>
+</html>

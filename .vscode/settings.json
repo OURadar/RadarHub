@@ -38,9 +38,6 @@
     "**/node_modules/*/**": true,
     "**/screenlog.*": true
   },
-  "files.exclude": {
-    "**/db.sqlite3*": true
-  },
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "C_Cpp_Runner.cCompilerPath": "/usr/bin/clang",

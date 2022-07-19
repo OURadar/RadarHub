@@ -2,25 +2,23 @@
 __pycache__
 .ipynb_checkpoints
 node_modules
+database
 build
 stash
-frontend/static/frontend
-frontend/static/maps
-frontend/dist
 objects
 others
 *.xcodeproj
 
+frontend/dist
 frontend/migrations/*.py
+frontend/static/frontend
+frontend/static/maps
 screenlog.*
 *.a
-*.mmdb
 
 # Programs, etc.
 .DS_Store
 package-lock.json
-db.sqlite3
-dbip*
 config/*
 frontend/migrations/[0-9]*.py
 reporter/simple
@@ -28,4 +26,3 @@ reporter/secret
 reporter/data
 reporter/dgen
 webpack-*.json
-user-agent-strings.json

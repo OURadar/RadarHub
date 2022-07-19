@@ -11,11 +11,10 @@ import json
 import logging
 import tarfile
 import datetime
-import urllib.request
 
 import numpy as np
 
-from common import colorize
+from common import colorize, get_user_agent_string
 from django.conf import settings
 from django.core.validators import int_list_validator
 from django.db import models
@@ -383,35 +382,8 @@ class Visitor(models.Model):
     def last_visited_time_string(self):
         return self.last_visited.strftime(r'%Y/%m/%d %H:%M')
 
-    def user_agent_string(self, reload=False):
-        def _replace_os_string(key):
-            oses = {'OS X': 'macOS', 'iPhone OS': 'iOS'}
-            return oses[key] if key in oses else key
-        # API reference: http://www.useragentstring.com/pages/api.php
-        global user_agent_strings
-        if self.user_agent in user_agent_strings and not reload:
-            agent = user_agent_strings[self.user_agent]
-            machine = _replace_os_string(agent['os_name'])
-            browser = agent['agent_name']
-            return f'{machine} / {browser}'
-        else:
-            s = self.user_agent.replace(' ', r'%20')
-            try:
-                url = f'http://www.useragentstring.com/?uas={s}&getJSON=agent_type-agent_name-agent_version-os_name'
-                logger.info(f'New browser {self.user_agent} ...')
-                response = urllib.request.urlopen(url)
-                if response.status == 200:
-                    agent = json.loads(response.readline())
-                    user_agent_strings[self.user_agent] = agent
-                    try:
-                        with open(settings.USER_AGENT_TABLE, 'w') as fid:
-                            json.dump(user_agent_strings, fid)
-                    except:
-                        logger.warning(f'Unable to write to {settings.USER_AGENT_TABLE}')
-                    return self.user_agent_string()
-            except:
-                pass
-        return 'Unknown / Unknown'
+    def user_agent_string(self):
+        return get_user_agent_string(self.user_agent)
 
     def dict(self, num2str=True):
         return {

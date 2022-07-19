@@ -84,15 +84,15 @@ Copyright Boonleng Cheong
 }
 
 @font-face {
-  font-family: "LabelFont";
+  font-family: LabelFont;
   font-style: normal;
-  src: url("../blob/helveticaneue/HelveticaNeueMed.ttf") format("truetype");
+  src: url(/static/fonts/HelveticaNeueMed.ttf) format("truetype");
 }
 
 @font-face {
-  font-family: "Message";
+  font-family: TextFont;
   font-style: normal;
-  src: url("../blob/helveticaneue/HelveticaNeueLt.ttf") format("truetype");
+  src: url(/static/fonts/HelveticaNeueLt.ttf) format("truetype");
 }
 
 body,
@@ -117,8 +117,8 @@ body {
 
 canvas {
   display: block;
+  font-family: LabelFont, Helvetica, Arial;
   position: relative;
-  font-family: "LabelFont";
 }
 
 .backgrad {
@@ -145,19 +145,48 @@ canvas {
 .extraLarge {
   font-size: 100px;
   margin-bottom: 25px;
+  margin-top: 25px;
 }
 .subtitle {
   font-size: 1.5em;
   line-height: 1.8em;
 }
 .message {
-  font-family: "Message";
-  font-size: 24pt;
-  font-weight: 100;
-  margin: 50px auto;
-  max-width: 1000px;
-  line-height: 36pt;
+  font-family: "Helvetica Neue", Helvetica, Arial;
+  font-size: 28pt;
+  font-weight: 200;
+  margin: 20px auto;
+  line-height: 40pt;
+  padding: 0 100px;
 }
+.w100 {
+  font-weight: 100;
+}
+.w200 {
+  font-weight: 200;
+}
+.w300 {
+  font-weight: 300;
+}
+.w400 {
+  font-weight: 400;
+}
+.w500 {
+  font-weight: 500;
+}
+.w600 {
+  font-weight: 600;
+}
+.w700 {
+  font-weight: 700;
+}
+.w800 {
+  font-weight: 800;
+}
+.w900 {
+  font-weight: 900;
+}
+
 .flex-center {
   display: flex;
   justify-content: center;
@@ -628,13 +657,47 @@ a.radarButton:hover {
 }
 
 .signinButtonGoogle::before {
-  background-image: url("/static/images/icon-google.png");
+  background-image: url(/static/images/icon-google.png);
 }
 
 .signinButtonApple::before {
-  background-image: url("/static/images/icon-apple.png");
+  background-image: url(/static/images/icon-apple.png);
 }
 
 .signinButtonFacebook::before {
-  background-image: url("/static/images/icon-facebook.png");
+  background-image: url(/static/images/icon-facebook.png);
+}
+
+.logo {
+  height: 15vh;
+  fill: #ddff00;
+}
+
+.wiggle {
+  animation: wiggle 0.2s infinite;
+}
+
+@keyframes wiggle {
+  0% {
+    transform: rotate(3deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(3deg);
+  }
+}
+
+.spin {
+  animation: spin 12s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
