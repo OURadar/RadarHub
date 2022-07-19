@@ -71,12 +71,10 @@ class App extends Component {
   }
 
   handleHelpOpen() {
-    console.log("handleHelpOpen()");
     this.setState({ open: true });
   }
 
   handleHelpClose() {
-    console.log("handleHelpClose");
     this.setState({ open: false });
   }
 }

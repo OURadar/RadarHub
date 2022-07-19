@@ -9,12 +9,11 @@ export function HelpPage(props) {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    width: "61.8%",
-    maxWidth: "618px",
-    maxHeight: "80%",
+    width: "800px",
+    height: "76%",
     overflowY: "scroll",
     bgcolor: "background.paper",
-    padding: "50px",
+    textAlign: "center",
   };
 
   return (
@@ -25,60 +24,101 @@ export function HelpPage(props) {
       aria-describedby="modal-modal-description"
     >
       <Box sx={style}>
-        <div class="extraLarge">Help</div>
-        <div>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent
-            maximus laoreet dolor sed aliquet. Nulla sed odio ac dolor auctor
-            accumsan. Fusce venenatis iaculis odio ut vestibulum. Nulla id lacus
-            risus. Morbi sed facilisis lorem, iaculis commodo urna. Orci varius
-            natoque penatibus et magnis dis parturient montes, nascetur
-            ridiculus mus. Maecenas maximus cursus quam. Nam ac dolor et purus
-            ullamcorper semper eu at ante. In non condimentum sapien.
-            Suspendisse rhoncus neque ac nunc tincidunt, et interdum nunc
-            tristique. Sed id posuere enim. Nam at egestas ipsum, eu commodo
-            dui. Vivamus mattis, orci quis volutpat venenatis, nisi ante aliquet
-            mi, eu lacinia odio purus sed ipsum.
-          </p>
-          <table class="keyTask">
-            <tr>
-              <th>Keyboard Shortcuts</th>
-              <th>Tasks</th>
-            </tr>
-            <tr>
-              <td>Z, V, D, D, P, R</td>
-              <td>
-                Switch products in between (Z) reflectivity, (V) velocity, (W)
-                spectrum width, (D) differential reflectivity, (P) PhiDP, and
-                (R) RhoHV
-              </td>
-            </tr>
+        <div className="sheetText">
+          <div className="title">Overview</div>
+        </div>
+
+        <img src="/static/images/demo.gif" />
+
+        <div className="sheetText">
+          <div className="title">Navigation Shortcuts</div>
+
+          <table className="keyTask">
+            <tbody>
+              <tr>
+                <th>Keys / Gestures</th>
+                <th>Tasks</th>
+              </tr>
+              <tr>
+                <td>
+                  <div className="key">z</div>
+                </td>
+                <td>Switch to Z - reflectivity</td>
+              </tr>
+              <tr>
+                <td>
+                  <div className="key">v</div>
+                </td>
+                <td>Switch to V - velocity</td>
+              </tr>
+              <tr>
+                <td>
+                  <div className="key">w</div>
+                </td>
+                <td>Switch to W - spectrum width</td>
+              </tr>
+              <tr>
+                <td>
+                  <div className="key">d</div>
+                </td>
+                <td>Switch to D - differential reflectivity</td>
+              </tr>
+              <tr>
+                <td>
+                  <div className="key">p</div>
+                </td>
+                <td>Switch to P - differential phase</td>
+              </tr>
+              <tr>
+                <td>
+                  <div className="key">r</div>
+                </td>
+                <td>Switch to R - cross-correlation coefficient</td>
+              </tr>
+              <tr>
+                <td>
+                  <div className="key">l</div>
+                </td>
+                <td>Toggle in between live / offline modes</td>
+              </tr>
+              <tr>
+                <td>
+                  <div className="key">shift</div> + motion
+                </td>
+                <td>Pan</td>
+              </tr>
+              <tr>
+                <td>
+                  <div className="key">option</div> + motion
+                </td>
+                <td>Tilt</td>
+              </tr>
+              <tr>
+                <td>Scroll / Pinch</td>
+                <td>Zoom</td>
+              </tr>
+              <tr>
+                <td>Up / Down</td>
+                <td>Navigate in time</td>
+              </tr>
+              <tr>
+                <td>Left / Right</td>
+                <td>Navigate in same scan</td>
+              </tr>
+              <tr>
+                <td>Double Click</td>
+                <td>Reset the view</td>
+              </tr>
+            </tbody>
           </table>
-          <img src="/static/images/icon64.png" />
-          <h1>Some Title</h1>
+        </div>
+
+        <div className="sheetText">
+          <div className="title">Data Request</div>
           <p>
-            In dictum pretium dapibus. Phasellus vel leo dolor. Donec ultricies
-            lobortis sollicitudin. Pellentesque dictum dapibus augue, a gravida
-            lectus consectetur quis. Fusce maximus ullamcorper augue vel mollis.
-            Duis pharetra ultricies quam, id molestie diam porttitor eget. Donec
-            malesuada sit amet ipsum eget dignissim. Etiam molestie sapien in ex
-            viverra, consequat tristique dolor mollis. Nullam mattis lacus
-            lorem, ut accumsan ex sagittis sed.
+            If you are interested in obtaining the original archive files,
+            please send us an email to: radar@arrc.ou.edu
           </p>
-          <img src="/static/images/icon512.png" width="512px" />
-          <p>
-            Cras sed velit facilisis, porta velit id, pharetra leo. Nam eleifend
-            consequat viverra. Aenean tempor nisl non neque porta convallis.
-            Curabitur sollicitudin nisl et odio tincidunt placerat. Vivamus
-            euismod dui eu nisi auctor ornare. Phasellus auctor ut lorem ac
-            vulputate. Nulla velit lorem, consectetur nec urna vitae, facilisis
-            lobortis sem. Nullam augue felis, consectetur eu bibendum eu, congue
-            et turpis. Mauris odio enim, vehicula id lorem vitae, euismod
-            iaculis neque. Praesent mi urna, interdum et orci mattis,
-            ullamcorper congue felis.
-          </p>
-          <img src="/static/images/icon512.png" />
-          <p>More text</p>
         </div>
       </Box>
     </Modal>

@@ -24,6 +24,7 @@ class App extends Component {
       theme: makeTheme(),
       time: new Date("2013-05-20T19:00"),
       overlayLoaded: false,
+      open: false,
       key: "",
     };
     this.isMobile = detectMob();
@@ -31,6 +32,8 @@ class App extends Component {
     this.archive.onupdate = (_dontcare) => {
       this.forceUpdate();
     };
+    this.handleHelpOpen = this.handleHelpOpen.bind(this);
+    this.handleHelpClose = this.handleHelpClose.bind(this);
     this.handleModeChange = this.handleModeChange.bind(this);
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
     document.documentElement.setAttribute("theme", this.state.colors.name);
@@ -158,6 +161,7 @@ class App extends Component {
             <Browser archive={this.archive} radar={this.props.radar} />
           </div>
         </div>
+        <HelpPage open={this.state.open} handleClose={this.handleHelpClose} />
       </ThemeProvider>
     );
   }
@@ -175,6 +179,14 @@ class App extends Component {
       colors: colorDict(mode),
       theme: makeTheme(mode),
     });
+  }
+
+  handleHelpOpen() {
+    this.setState({ open: true });
+  }
+
+  handleHelpClose() {
+    this.setState({ open: false });
   }
 }
 
