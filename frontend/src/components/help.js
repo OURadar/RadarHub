@@ -9,8 +9,8 @@ export function HelpPage(props) {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    width: "50%",
-    maxWidth: "600px",
+    width: "61.8%",
+    maxWidth: "618px",
     maxHeight: "80%",
     overflowY: "scroll",
     bgcolor: "background.paper",
@@ -25,7 +25,7 @@ export function HelpPage(props) {
       aria-describedby="modal-modal-description"
     >
       <Box sx={style}>
-        <h1>Some Title</h1>
+        <div class="extraLarge">Help</div>
         <div>
           <p>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent
@@ -40,6 +40,20 @@ export function HelpPage(props) {
             dui. Vivamus mattis, orci quis volutpat venenatis, nisi ante aliquet
             mi, eu lacinia odio purus sed ipsum.
           </p>
+          <table class="keyTask">
+            <tr>
+              <th>Keyboard Shortcuts</th>
+              <th>Tasks</th>
+            </tr>
+            <tr>
+              <td>Z, V, D, D, P, R</td>
+              <td>
+                Switch products in between (Z) reflectivity, (V) velocity, (W)
+                spectrum width, (D) differential reflectivity, (P) PhiDP, and
+                (R) RhoHV
+              </td>
+            </tr>
+          </table>
           <img src="/static/images/icon64.png" />
           <h1>Some Title</h1>
           <p>

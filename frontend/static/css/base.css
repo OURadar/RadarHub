@@ -701,3 +701,8 @@ a.radarButton:hover {
     transform: rotate(360deg);
   }
 }
+
+table.keyTask {
+  display: block;
+  width: 80%;
+}
