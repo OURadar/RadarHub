@@ -916,14 +916,16 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
 '''
     Update Visitor table
 '''
-def update_visitors(file, verbose=1):
+def update_visitors(verbose=1):
     show = colorize('update_visitors()', 'green')
     logger.info(show)
     visitors = {}
     uu = re.compile(r'(/data/load|/data/list)')
+    file = '/var/log/nginx/access.log'
     lines = logparse.readlines(file)
+    logger.info(f'Processing {file} ... total lines = {len(lines):,d}')
 
-    if Visitor.objects.count() > 0:
+    if Visitor.objects.count():
         last = Visitor.objects.latest('last_visited')
 
         obj = logparse.decode(lines[-1], format='nginx')
@@ -934,30 +936,31 @@ def update_visitors(file, verbose=1):
             return
 
         obj = logparse.decode(lines[0], format='nginx')
-        if last.last_visited < obj['datetime']:
-            # o = obj['datetime'].strftime(r'%m/%d %H:%M:%S')
-            # t = last.last_visited.strftime(r'%m/%d %H:%M:%S')
-            # print(f'o = {o}   t = {t}')
-            # delta = obj['datetime'] - last.last_visited
-            # logger.info(f'delta = {delta}')
-            logger.warning('Potential data gap.')
-            previous = logparse.find_previous_log(file)
-            if previous:
-                print(f'Rolling back to {previous} ...')
-                lines_previous = logparse.readlines(previous)
-                lines = [*lines_previous, *lines]
-            else:
+        if last.last_visited <= obj['datetime']:
+            delta = obj['datetime'] - last.last_visited
+            logger.warning(f'Potential data gap: {delta}')
+            file = logparse.find_previous_log(file)
+            if file is None:
                 ans = input('Do you really want to continue (y/[n])? ')
                 if not ans == 'y':
                     logger.info('Whew. Nothing happend.')
                     return
+            while file:
+                front = logparse.readlines(file)
+                lines = [*front, *lines]
+                logger.info(f'Rolling back to {file} ... total lines -> {len(lines):,d}')
+                obj = logparse.decode(lines[0], format='nginx')
+                if last.last_visited > obj['datetime']:
+                    break
+                file = logparse.find_previous_log(file)
+
+    overlap = False
 
     for line in lines:
         obj = logparse.decode(line, format='nginx')
         if obj is None:
             continue
         if obj['status'] > 300:
-            # print(f'skip {line[:80]} ...')
             continue
         if uu.search(obj['url']) is None:
             continue
@@ -1214,8 +1217,7 @@ def dbtool_main():
         params = params_from_source('RAXPOL-202202*')
         pp.pprint(params)
     elif args.update:
-        for file in args.source:
-            update_visitors(file)
+        update_visitors(verbose=args.verbose)
     elif args.visitor:
         if args.markdown:
             logger.hideLogOnScreen()
