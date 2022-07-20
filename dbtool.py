@@ -918,6 +918,7 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
 '''
 def update_visitors(verbose=1):
     show = colorize('update_visitors()', 'green')
+    show += '   ' + color_name_value('verbose', verbose)
     logger.info(show)
     visitors = {}
     uu = re.compile(r'(/data/load|/data/list)')
@@ -941,6 +942,7 @@ def update_visitors(verbose=1):
             logger.warning(f'Potential data gap: {delta}')
             file = logparse.find_previous_log(file)
             if file is None:
+                logger.warning('No previous logs that provide continuity.')
                 ans = input('Do you really want to continue (y/[n])? ')
                 if not ans == 'y':
                     logger.info('Whew. Nothing happend.')
@@ -953,8 +955,6 @@ def update_visitors(verbose=1):
                 if last.last_visited > obj['datetime']:
                     break
                 file = logparse.find_previous_log(file)
-
-    overlap = False
 
     for line in lines:
         obj = logparse.decode(line, format='nginx')
@@ -972,7 +972,6 @@ def update_visitors(verbose=1):
             if db_visitors:
                 visitor = db_visitors.first()
                 if visitor.last_visited >= obj['datetime']:
-                    overlap = True
                     continue
             else:
                 visitor = Visitor.objects.create(ip=obj['ip'],
@@ -989,15 +988,17 @@ def update_visitors(verbose=1):
         if verbose:
             logparse.show_url(obj)
 
-    if not overlap:
-        ans = input('No overlap entries, continue updating (y/[n])? ')
-        if not ans == 'y':
-            logger.info('Whew. Nothing happend.')
-            return
-
     for _, visitor in visitors.items():
-        pp.pprint(visitor.dict())
+        if verbose:
+            pp.pprint(visitor.dict())
         visitor.save()
+
+    count = len(visitors)
+    s = 's' if count > 1 else ''
+    logger.info(f'Updated {count} visitor{s}')
+
+    if verbose:
+        show_visitor_log(recent=7)
 
 def check_path(folder, args):
     original = os.path.join(folder, '_original')
@@ -1107,6 +1108,7 @@ def dbtool_main():
 
     if args.quiet:
         args.verbose = 0
+        logger.hideLogOnScreen()
     elif args.verbose:
         logger.showLogOnScreen()
         if args.verbose > 1:

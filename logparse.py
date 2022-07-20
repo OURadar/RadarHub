@@ -93,6 +93,12 @@ def status_url(x, width=75):
     url = x["url"][:width-25] + ' ... ' + x["url"][-20:] if len(x["url"]) > width else x["url"]
     return f'{c}{x["status"]:3d} {url}\033[m'
 
+def show_all(x):
+    t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
+    c = compression(x)
+    u = status_url(x)
+    print(f'{t} | {x["ip"]:>15} | {x["location"]:>30} | {x["bytes"]:10,d} | {c} | {x["os_browser"]:>20} | {u}')
+
 def show_url(x):
     t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
     c = compression(x)
@@ -102,7 +108,7 @@ def show_url(x):
 def show_loc(x):
     t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
     u = status_url(x, 45)
-    print(f'{t} | {x["ip"]:>15} | {x["os_browser"]:>20} | {x["location"]:>30} | {u}')
+    print(f'{t} | {x["ip"]:>15} | {x["location"]:>30} | {x["os_browser"]:>20} | {u}')
 
 def show_agent(x):
     t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
@@ -150,6 +156,12 @@ def find_previous_log(file):
 #
 
 if __name__ == '__main__':
+    show_options = {
+        'all': show_all,
+        'url': show_url,
+        'loc': show_loc,
+        'agent': show_agent
+    }
     parser = argparse.ArgumentParser(prog=__prog__,
         formatter_class=argparse.RawTextHelpFormatter,
         description=textwrap.dedent(f'''\
@@ -159,11 +171,13 @@ if __name__ == '__main__':
             {__prog__} /var/log/nginx/access.log
             cat /var/log/nginx/access.log | {__prog__}
             tail -f /var/log/nginx/access.log | {__prog__}
+            {__prog__} -a -f loc
+            {__prog__} -af all
         '''),
         epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
     parser.add_argument('-a', dest='access', action='store_true', help='checks nginx access log')
-    parser.add_argument('-f', dest='format', choices=['url', 'loc', 'agent'], default='url', help='sets output format')
+    parser.add_argument('-f', dest='format', choices=show_options.keys(), default='url', help='sets output format')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
@@ -172,11 +186,6 @@ if __name__ == '__main__':
     if args.quiet:
         args.verbose = 0
 
-    show_options = {
-        'url': show_url,
-        'loc': show_loc,
-        'agent': show_agent
-    }
     show_func = show_options[args.format]
 
     if args.access:

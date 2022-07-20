@@ -62,7 +62,7 @@ class Logger(logging.Logger):
         self.streamHandler.setLevel(self.level)
 
     def hideLogOnScreen(self):
-        self.streamHandler.setLevel(logging.ERROR)
+        self.streamHandler.setLevel(logging.WARNING)
 
     def check(self):
         self.time = time.localtime(time.time())
