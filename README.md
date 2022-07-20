@@ -77,7 +77,10 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.8.2 SplitChunks, map conversion for UX (7/11/2022)
   - [x] 0.8.3 Introduced scale-transform maps for efficiency (7/13/2022)
   - [x] 0.8.4 Introduced scale-transform-transform maps for efficiency (7/13/2022)
-  - [x] 0.8.5 Added custom pages 403, 404, and 503 (7/17/2022)
+  - [x] 0.8.5 Deferred data compression to nginx (7/15/2022)
+  - [x] 0.8.6 Added custom pages 403, 404, and 503 (7/17/2022)
+  - [x] 0.8.7 Added a pop-up help page (7/19/2022)
+  - [x] 0.8.8 Automated visitor access log update (7/20/2022)
 - [ ] 0.9 Page template, UI materials, mobile version
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
 

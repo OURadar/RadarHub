@@ -50,6 +50,7 @@ class Archive {
       this.data.sweep = payload;
       // console.log(this.data.sweep);
       this.updateAge();
+      this.state.loadCount++;
       this.state.sweepLoading = false;
       if (this.state.verbose) {
         console.log(
@@ -66,6 +67,17 @@ class Archive {
         this.disableLiveUpdate();
       }
       this.showMessage(`${payload.name} loaded`);
+    } else if (type == "index") {
+      if (this.state.verbose) {
+        console.log(
+          `%carchive.onmessage()%c index` +
+            `   index = ${this.grid.index} -> ${payload}`,
+          "color: lightseagreen",
+          "color: inherit"
+        );
+      }
+      this.grid.index = payload;
+      this.loadIfNecessary();
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
@@ -81,35 +93,8 @@ class Archive {
       }
       //let index = this.grid.index;
       this.grid = payload;
-      if (this.state.productSwitching) {
-        this.state.productSwitching = false;
-        this.state.loadCount = 0;
-        //this.grid.index = index;
-        this.loadByIndex(this.grid.index);
-      } else if (this.grid.index >= 0) {
-        this.state.loadCount = 0;
-        this.loadByIndex(this.grid.index);
-      } else if (this.grid.index == -1) {
-        if (this.grid.latestScan == "" || this.grid.latestScan == null) {
-          this.state.itemsUpdating = false;
-          return;
-        }
-        let fileDayString = this.grid.latestScan.split("-")[1];
-        let gridDayString = this.grid.dateTimeString.split("-")[0];
-        console.log(
-          `%carchive.onmessage()%c list` +
-            `   fileDayString: ${fileDayString}` +
-            `   gridDayString: ${gridDayString}` +
-            `   loadCount = ${this.state.loadCount}`,
-          "color: lightseagreen",
-          "color: inherit"
-        );
-        if (this.state.liveUpdate) {
-          this.state.loadCount = 0;
-          console.log(`Live update with ${this.grid.latestScan}`);
-          this.loadByName(this.grid.latestScan);
-        }
-      }
+      this.loadIfNecessary();
+      this.state.loadCount = 0;
       this.state.itemsUpdating = false;
     } else if (type == "message") {
       this.showMessage(payload, 2500);
@@ -249,9 +234,38 @@ class Archive {
 
   loadByName(name = "PX-20130520-195944-E2.6-Z.nc") {
     this.message = `Loading ${name} ...`;
-    this.state.loadCount++;
     this.worker.postMessage({ task: "load", name: name });
     this.onupdate(this.state.tic++);
+  }
+
+  loadIfNecessary() {
+    if (this.state.productSwitching) {
+      this.state.productSwitching = false;
+      this.state.loadCount = 0;
+      //this.grid.index = index;
+      this.loadByIndex(this.grid.index);
+    } else if (this.grid.index >= 0) {
+      this.loadByIndex(this.grid.index);
+    } else if (this.grid.index == -1) {
+      if (this.grid.latestScan == "" || this.grid.latestScan == null) {
+        this.state.itemsUpdating = false;
+        return;
+      }
+      let fileDayString = this.grid.latestScan.split("-")[1];
+      let gridDayString = this.grid.dateTimeString.split("-")[0];
+      console.log(
+        `%carchive.loadIfNecessary()%c` +
+          `   fileDayString: ${fileDayString}` +
+          `   gridDayString: ${gridDayString}` +
+          `   loadCount = ${this.state.loadCount}`,
+        "color: lightseagreen",
+        "color: inherit"
+      );
+      if (this.state.liveUpdate) {
+        console.log(`Live update with ${this.grid.latestScan}`);
+        this.loadByName(this.grid.latestScan);
+      }
+    }
   }
 
   // Expect something like radar = px1000, day = 201305

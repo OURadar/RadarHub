@@ -55,9 +55,14 @@ function Browser(props) {
     ) {
       return;
     }
-    // Expect loadCount <= 1 during live update
+    // Expect loadCount == 0 during live update
     // console.log(`loadCount = ${props.archive.state.loadCount}`);
-    if (props.archive.state.loadCount == 1) {
+    // let visible = elements.children[index];
+    // let child = elements.children[index];
+    // let style = window.getComputedStyle(elements.children[index]);
+    // console.log(child.offsetHeight, child.getClientRects().length);
+    // console.log(`index = ${index}`);
+    if (props.archive.state.loadCount == 0) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
     } else if (props.archive.grid.latestHour) {
@@ -102,6 +107,13 @@ function Browser(props) {
   }, []);
 
   const setDayHour = (newDay, newHour) => {
+    if (
+      isNaN(newDay) ||
+      newDay.getFullYear() < 2000 ||
+      newDay.getFullYear() > 2023
+    ) {
+      return;
+    }
     let symbol = props.archive.grid.symbol;
     let t = day instanceof Date ? "Date" : "Not Date";
     let n = newDay.toISOString().slice(0, 10);

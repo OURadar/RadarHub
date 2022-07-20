@@ -32,31 +32,32 @@ from common import colorize, get_user_agent_string, get_ip_location
 __prog__ = os.path.basename(sys.argv[0])
 __version__ = '1.0'
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
-ng = re.compile(
+re_ngnix = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}).+\]'
     + r' "(GET|POST) (?P<url>.+) (?P<protocol>HTTP/[0-9.]+)"'
     + r' (?P<status>\d{3}) (?P<bytes>\d+)'
     + r' "(?P<user_agent>.+)" "(?P<compression>[0-9.-]+)"'
 )
-rh = re.compile(
+re_radarhub = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):0 - -'
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2})\]'
     + r' "(GET|POST) (?P<url>.+)"'
     + r' (?P<status>\d{3}) (?P<bytes>\d+)'
 )
 re_agent = re.compile(r'(mozilla|webkit|safari|firefox|android)', flags=re.IGNORECASE)
+re_logfile = re.compile(r'(\w+\.log)(?:\.(\d{1,2}))?(?:\.(gz))?', flags=re.IGNORECASE)
 
 #
 
 def decode(line, format=None):
     line = line.rstrip()
     if format == 'nginx':
-        x = ng.search(line)
+        x = re_ngnix.search(line)
     elif format == 'radarhub':
-        x = rh.search(line)
+        x = re_radarhub.search(line)
     else:
-        x = ng.search(line) if line[-1] == '"' else rh.search(line)
+        x = re_ngnix.search(line) if line[-1] == '"' else re_radarhub.search(line)
     if x:
         x = x.groupdict()
         for key in ["bytes", "status"]:
@@ -132,6 +133,20 @@ def readlines(source):
 def showfile(file, show_func, verbose=0):
     for line in readlines(file):
         showline(line, show_func=show_func, verbose=verbose)
+
+def find_previous_log(file):
+    folder, basename = os.path.split(file)
+    parts = re_logfile.search(basename).groups()
+    count = int(parts[1]) if parts[1] else 0
+    parts = [parts[0], str(count + 1)]
+    previous = os.path.join(folder, '.'.join(parts))
+    if os.path.exists(previous):
+        return previous
+    previous += '.gz'
+    if os.path.exists(previous):
+        return previous
+    return None
+
 #
 
 if __name__ == '__main__':

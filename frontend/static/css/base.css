@@ -132,15 +132,19 @@ canvas {
 }
 .sheet {
   background-color: var(--system-background);
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.15);
   color: var(--system-foreground);
   display: block;
   margin-top: 150px;
-  min-width: 400px;
-  max-width: 800px;
-  padding: 100px;
+  max-height: 75%;
+  overflow-y: scroll;
   position: absolute;
   text-align: center;
-  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.15);
+  width: 900px;
+}
+.sheetContent {
+  padding-left: 80px;
+  padding-right: 80px;
 }
 .extraLarge {
   font-size: 100px;
@@ -277,6 +281,10 @@ h3 {
 .spacer50 {
   display: block;
   height: 50px;
+}
+.spacer100 {
+  display: block;
+  height: 100px;
 }
 .left {
   left: var(--padding);
@@ -700,4 +708,41 @@ a.radarButton:hover {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.title {
+  color: var(--gray1);
+  font-size: 32px;
+  line-height: 40px;
+  margin: 20px auto;
+  text-align: center;
+  user-select: none;
+}
+
+table.keyTask {
+  border: solid 1px var(--gray4);
+  line-height: 1.8em;
+  margin: 0 auto;
+  width: 90%;
+}
+table.keyTask tr {
+  width: 100%;
+}
+table.keyTask th:first-child {
+  padding: 0.4em 2em;
+}
+table.keyTask td:last-child {
+  text-align: left;
+  padding: 0.4em 2em;
+}
+table.keyTask tr:nth-child(2n + 1) {
+  background-color: var(--gray6);
+}
+div.key {
+  display: inline-block;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 500;
+  border: solid 1px var(--gray2);
+  padding: 0 10px;
+  border-radius: 4px;
 }
