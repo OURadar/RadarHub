@@ -2,17 +2,15 @@
 __pycache__
 .ipynb_checkpoints
 node_modules
-database
-build
-stash
-objects
-others
 *.xcodeproj
+objects
+stash
 
-frontend/dist
-frontend/migrations/*.py
+database
+frontend/migrations/[0-9]*.py
 frontend/static/frontend
 frontend/static/maps
+frontend/static/media
 screenlog.*
 *.a
 
@@ -20,7 +18,6 @@ screenlog.*
 .DS_Store
 package-lock.json
 config/*
-frontend/migrations/[0-9]*.py
 reporter/simple
 reporter/secret
 reporter/data
