@@ -56,13 +56,13 @@ function Browser(props) {
       return;
     }
     // Expect loadCount == 0 during live update
-    // console.log(`loadCount = ${props.archive.state.loadCount}`);
+    console.log(`loadCount = ${props.archive.state.loadCount}`);
     // let visible = elements.children[index];
     // let child = elements.children[index];
     // let style = window.getComputedStyle(elements.children[index]);
     // console.log(child.offsetHeight, child.getClientRects().length);
     // console.log(`index = ${index}`);
-    if (props.archive.state.loadCount == 0) {
+    if (props.archive.state.loadCount <= 1) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
     } else if (props.archive.grid.latestHour) {
