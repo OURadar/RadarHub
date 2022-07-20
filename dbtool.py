@@ -924,10 +924,12 @@ def update_visitors(file, verbose=1):
     uu = re.compile(r'(/data/load|/data/list)')
     lines = logparse.readlines(file)
 
+    obj = logparse.decode(lines[0], format='nginx')
+    last = Visitor.objects.latest('last_visited')
+    delta = obj['datetime'] - last.last_visited
+
     if not overlap:
-        latest_visitor = Visitor.objects.latest('last_visited')
-        obj = logparse.decode(lines[0], format='nginx')
-        delta = obj['datetime'] - latest_visitor.last_visited
+        logger.info(f'delta = {delta}')
         if delta > datetime.timedelta(hours=1):
             logger.warning('Potential data gap.')
             ans = input('Do you really want to continue (y/[n])? ')
@@ -935,9 +937,9 @@ def update_visitors(file, verbose=1):
                 logger.info('Whew. Nothing happend.')
                 return
         obj = logparse.decode(lines[-1], format='nginx')
-        if obj['datetime'] < latest_visitor.last_visited:
+        if obj['datetime'] < last.last_visited:
             o = obj['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
-            t = latest_visitor.last_visited.strftime(r'%Y/%m/%d %H:%M:%S')
+            t = last.last_visited.strftime(r'%Y/%m/%d %H:%M:%S')
             logger.info(f'Seen before. Last entry {o} < last_visited {t}.')
             return
 

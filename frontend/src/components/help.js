@@ -129,6 +129,8 @@ export function HelpPage(props) {
             please send us an email to: radar@arrc.ou.edu
           </p>
         </div>
+
+        <div className="spacer25"></div>
       </Box>
     </Modal>
   );
