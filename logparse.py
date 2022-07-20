@@ -140,11 +140,9 @@ def find_previous_log(file):
     count = int(parts[1]) if parts[1] else 0
     parts = [parts[0], str(count + 1)]
     previous = os.path.join(folder, '.'.join(parts))
-    print(parts, previous)
     if os.path.exists(previous):
         return previous
     previous += '.gz'
-    print(previous)
     if os.path.exists(previous):
         return previous
     return None

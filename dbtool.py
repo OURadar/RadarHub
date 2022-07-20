@@ -920,28 +920,37 @@ def update_visitors(file, verbose=1):
     show = colorize('update_visitors()', 'green')
     logger.info(show)
     visitors = {}
-    overlap = Visitor.objects.count() == 0
     uu = re.compile(r'(/data/load|/data/list)')
     lines = logparse.readlines(file)
 
-    obj = logparse.decode(lines[0], format='nginx')
-    last = Visitor.objects.latest('last_visited')
-    delta = obj['datetime'] - last.last_visited
+    if Visitor.objects.count() > 0:
+        last = Visitor.objects.latest('last_visited')
 
-    if not overlap:
-        logger.info(f'delta = {delta}')
-        if delta > datetime.timedelta(hours=1):
-            logger.warning('Potential data gap.')
-            ans = input('Do you really want to continue (y/[n])? ')
-            if not ans == 'y':
-                logger.info('Whew. Nothing happend.')
-                return
         obj = logparse.decode(lines[-1], format='nginx')
-        if obj['datetime'] < last.last_visited:
-            o = obj['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
-            t = last.last_visited.strftime(r'%Y/%m/%d %H:%M:%S')
-            logger.info(f'Seen before. Last entry {o} < last_visited {t}.')
+        if last.last_visited >= obj['datetime']:
+            o = obj['datetime'].strftime(r'%m/%d %H:%M:%S')
+            t = last.last_visited.strftime(r'%m/%d %H:%M:%S')
+            logger.info(f'Seen it all: last_visited {t} >= last log entry {o}.')
             return
+
+        obj = logparse.decode(lines[0], format='nginx')
+        if last.last_visited < obj['datetime']:
+            # o = obj['datetime'].strftime(r'%m/%d %H:%M:%S')
+            # t = last.last_visited.strftime(r'%m/%d %H:%M:%S')
+            # print(f'o = {o}   t = {t}')
+            # delta = obj['datetime'] - last.last_visited
+            # logger.info(f'delta = {delta}')
+            logger.warning('Potential data gap.')
+            previous = logparse.find_previous_log(file)
+            if previous:
+                print(f'Rolling back to {previous} ...')
+                lines_previous = logparse.readlines(previous)
+                lines = [*lines_previous, *lines]
+            else:
+                ans = input('Do you really want to continue (y/[n])? ')
+                if not ans == 'y':
+                    logger.info('Whew. Nothing happend.')
+                    return
 
     for line in lines:
         obj = logparse.decode(line, format='nginx')
