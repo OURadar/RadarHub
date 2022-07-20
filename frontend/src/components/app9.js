@@ -13,6 +13,12 @@ import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 import { Archive } from "./archive";
 
+import BottomNavigation from "@mui/material/BottomNavigation";
+import BottomNavigationAction from "@mui/material/BottomNavigationAction";
+import FolderIcon from "@mui/icons-material/Folder";
+import RestoreIcon from "@mui/icons-material/Restore";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 class App extends Component {
   constructor(props) {
     super(props);
@@ -22,6 +28,7 @@ class App extends Component {
       time: new Date("2013-05-20T19:00"),
       overlayLoaded: false,
       key: "",
+      value: "recent",
     };
     console.log(`colors.name = ${this.state.colors.name}`);
     this.isMobile = detectMob();
@@ -32,11 +39,12 @@ class App extends Component {
     this.overlayLoaded = false;
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
     this.handleModeChange = this.handleModeChange.bind(this);
+    this.handleChange = this.handleChange.bind(this);
     document.documentElement.setAttribute("theme", this.state.colors.name);
     window.addEventListener("keydown", (e) => (this.state.key = e.key));
     window.addEventListener("keyup", (e) => {
       if (e.key != this.state.key) {
-        console.log(`keydown ${this.state.key} != keyup ${e.key}`);
+        // console.log(`keydown ${this.state.key} != keyup ${e.key}`);
         return;
       }
       console.log(`key = ${e.key}`);
@@ -75,6 +83,28 @@ class App extends Component {
           isMobile={this.isMobile}
           handleModeChange={this.handleModeChange}
         />
+        <BottomNavigation value={this.state.value} onChange={this.handleChange}>
+          <BottomNavigationAction
+            label="Recents"
+            value="recents"
+            icon={<RestoreIcon />}
+          />
+          <BottomNavigationAction
+            label="Favorites"
+            value="favorites"
+            icon={<FavoriteIcon />}
+          />
+          <BottomNavigationAction
+            label="Nearby"
+            value="nearby"
+            icon={<LocationOnIcon />}
+          />
+          <BottomNavigationAction
+            label="Folder"
+            value="folder"
+            icon={<FolderIcon />}
+          />
+        </BottomNavigation>
       </ThemeProvider>
     );
   }
@@ -91,6 +121,11 @@ class App extends Component {
       colors: colorDict(mode),
       theme: makeTheme(mode),
     });
+  }
+
+  handleChange(event, newValue) {
+    console.log("handleChange()");
+    this.setState({ value: newValue });
   }
 }
 
