@@ -55,8 +55,8 @@ function Browser(props) {
     ) {
       return;
     }
-    // Expect loadCount == 0 during live update
-    console.log(`loadCount = ${props.archive.state.loadCount}`);
+    // Expect loadCount == 1 during live update
+    // console.log(`loadCount = ${props.archive.state.loadCount}`);
     // let visible = elements.children[index];
     // let child = elements.children[index];
     // let style = window.getComputedStyle(elements.children[index]);
