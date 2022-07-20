@@ -589,7 +589,7 @@ function updateGridIndex(index) {
     return;
   }
   grid.index = index;
-  self.postMessage({ type: "list", payload: grid });
+  self.postMessage({ type: "index", payload: index });
 }
 
 function navigateForward() {
