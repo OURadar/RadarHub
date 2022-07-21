@@ -50,7 +50,6 @@ class Archive {
       this.data.sweep = payload;
       // console.log(this.data.sweep);
       this.updateAge();
-      this.state.loadCount++;
       this.state.sweepLoading = false;
       if (this.state.verbose) {
         console.log(
@@ -93,8 +92,8 @@ class Archive {
       }
       //let index = this.grid.index;
       this.grid = payload;
-      this.loadIfNecessary();
       this.state.loadCount = 0;
+      this.loadIfNecessary();
       this.state.itemsUpdating = false;
     } else if (type == "message") {
       this.showMessage(payload, 2500);
@@ -235,6 +234,7 @@ class Archive {
   loadByName(name = "PX-20130520-195944-E2.6-Z.nc") {
     this.message = `Loading ${name} ...`;
     this.worker.postMessage({ task: "load", name: name });
+    this.state.loadCount++;
     this.onupdate(this.state.tic++);
   }
 
