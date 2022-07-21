@@ -12,9 +12,11 @@ export function HelpPage(props) {
     width: "900px",
     height: "76%",
     overflowY: "scroll",
-    bgcolor: "background.paper",
+    bgcolor: "var(--system-background)",
     textAlign: "center",
   };
+
+  const theme = document.documentElement.getAttribute("theme") || "light";
 
   return (
     <Modal
@@ -32,7 +34,7 @@ export function HelpPage(props) {
           dangerouslySetInnerHTML={{
             __html: `
           <video width="900" height="720" loop muted autoplay playsinline>
-          <source src="/static/media/demo-0503.mp4" type="video/mp4" />
+          <source src="/static/media/demo-0503-${theme}.mp4" type="video/mp4" />
           Video Help
           </video>
           `,
