@@ -64,9 +64,9 @@ class LogParser:
         self.bytes = 0
         self.url = '/'
         if line:
-            self.decode(line, **kwargs)
+            self.decode(line)
 
-    def decode(self, line, **kwargs):
+    def decode(self, line):
         line = line.rstrip()
         x = self.parser.search(line)
         if x:
@@ -168,8 +168,8 @@ if __name__ == '__main__':
         epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
     parser.add_argument('-a', dest='access', action='store_true', help='checks nginx access log')
-    parser.add_argument('-f', dest='format', choices={'all', 'url', 'loc', 'agent'}, default='url', help='sets output format')
-    parser.add_argument('-i', dest='parser', choices={'radarhub', 'nginx'}, help='sets the log parser (default = nginx)')
+    parser.add_argument('-f', dest='format', choices={'all', 'url', 'loc', 'agent'}, default='loc', help='sets output format (default = loc)')
+    parser.add_argument('-p', dest='parser', choices={'radarhub', 'nginx'}, help='sets the log parser (default = nginx)')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     width = 50 if args.format == 'loc' else 75
     hope = LogParser(parser='nginx', format=args.format, width=width)
 
-    if args.access:
+    if len(args.source) == 0 or args.access:
         source = '/var/log/nginx/access.log'
         if not os.path.exists(source):
             print(f'ERROR. File {source} does not exist')
