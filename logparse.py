@@ -62,7 +62,7 @@ class LogParser:
     def __init__(self, line=None, **kwargs):
         self.format = kwargs['format'] if 'format' in kwargs else 'loc'
         self.parser = re_radarhub if 'parser' in kwargs and kwargs['parser'] == 'radarhub' else re_nginx
-        self.width = kwargs['width'] if 'width' in kwargs else max(35, get_terminal_width() - 95)
+        self.width = kwargs['width'] if 'width' in kwargs else max(25, get_terminal_width() - 95)
         self.ws = kwargs['all'] if 'all' in kwargs else False
         self.ip = '127.0.0.1'
         self.datetime = None
@@ -74,7 +74,6 @@ class LogParser:
         self.url = '/'
         if line:
             self.decode(line)
-        print(self.width)
 
     def decode(self, line):
         line = line.rstrip()
@@ -204,6 +203,9 @@ if __name__ == '__main__':
             hope.show(line)
     elif len(args.source):
         for source in args.source:
+            if not os.path.exists(source):
+                print(f'ERROR. File {source} does not exist')
+                sys.exit()
             for line in readlines(source):
                 hope.show(line)
     else:
