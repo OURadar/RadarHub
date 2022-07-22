@@ -62,18 +62,22 @@ class LogParser:
     def __init__(self, line=None, **kwargs):
         self.format = kwargs['format'] if 'format' in kwargs else 'loc'
         self.parser = re_radarhub if 'parser' in kwargs and kwargs['parser'] == 'radarhub' else re_nginx
-        self.width = kwargs['width'] if 'width' in kwargs else max(25, get_terminal_width() - 95)
+        self.width = kwargs['width'] if 'width' in kwargs else max(25, get_terminal_width() - 93)
         self.ws = kwargs['all'] if 'all' in kwargs else False
-        self.ip = '127.0.0.1'
-        self.datetime = None
-        self.compression = 1.0
-        self.os_browser = '-'
-        self.location = 'uknown'
-        self.status = 200
-        self.bytes = 0
-        self.url = '/'
+        self.__blank__()
         if line:
             self.decode(line)
+
+    def __blank__(self):
+        self.ip = '127.0.0.1'
+        self.datetime = None
+        self.compression = 0
+        self.user_agent = '-'
+        self.os_browser = '-'
+        self.location = '-'
+        self.status = 0
+        self.bytes = 0
+        self.url = None
 
     def decode(self, line):
         line = line.rstrip()
@@ -83,11 +87,14 @@ class LogParser:
             self.ip = x['ip']
             self.datetime = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
             self.compression = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
-            self.os_browser = get_user_agent_string(x['user_agent'], width=20) if 'user_agent' in x else '-'
+            self.user_agent = x['user_agent'] if 'user_agent' in x else ''
+            self.os_browser = get_user_agent_string(self.user_agent if len(self.user_agent) else '-', width=20)
             self.location = get_ip_location(x['ip'])
             self.status = int(x['status']) if x['status'] != '-' else 0
             self.bytes = int(x['bytes']) if x['bytes'] != '-' else 0
             self.url = x['url']
+        else:
+            self.__blank__()
 
     def _status_color_code(self):
         if self.status == 200:
@@ -110,9 +117,9 @@ class LogParser:
         if self.compression > 10.0:
             return '\033[38;5;172m'
         if self.compression > 5.0:
-            return '\033[38;5;222m'
+            return '\033[38;5;178m'
         if self.compression > 3.0:
-            return '\033[38;5;114m'
+            return '\033[38;5;2m'
         return '\033[m'
 
     def _str_compression(self):
@@ -120,8 +127,8 @@ class LogParser:
         return self._compression_color_code() + s + '\033[m'
 
     def _str_status_url(self):
-        w = (self.width - 5) // 2
-        u = self.url[:w] + ' ... ' + self.url[-w:] if len(self.url) > self.width else self.url
+        w = (self.width - 3) // 2
+        u = self.url[:w] + '...' + self.url[-w:] if len(self.url) > self.width else self.url
         s = str(self.status) if self.status > 0 else ' - '
         return self._status_color_code() + s + ' ' + u + '\033[m'
 
@@ -129,9 +136,7 @@ class LogParser:
         t = self.datetime.strftime(r'%m/%d %H:%M:%S') if self.datetime else '--/-- --:--:--'
         c = self._str_compression()
         u = self._str_status_url()
-        b = f'{self.bytes:10,d}' if self.bytes else '    -     '
-        if self.format == 'all':
-            return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {c} | {self.os_browser:>20} | {u}'
+        b = f'{self.bytes:10,d}' if self.bytes else '         -'
         if self.format == 'loc':
             if self.parser == re_nginx:
                 return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {c} | {u}'
@@ -141,6 +146,7 @@ class LogParser:
             return f'{t} | {self.ip:>15} | {self.bytes:>10,d} | {c} | {u}'
         if self.format == 'agent':
             return f'{t} | {self.ip:>15} | {self.os_browser:>20} | {u}'
+        return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {c} | {self.os_browser:>20} | {u}'
 
     def show(self, line=None):
         if line:

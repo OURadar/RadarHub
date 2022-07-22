@@ -926,19 +926,21 @@ def update_visitors(verbose=1):
     lines = logparse.readlines(file)
     logger.info(f'Processing {file} ... total lines = {len(lines):,d}')
 
+    parser = logparse.LogParser(parser='nginx')
+
     if Visitor.objects.count():
         last = Visitor.objects.latest('last_visited')
 
-        obj = logparse.decode(lines[-1], format='nginx')
-        if last.last_visited >= obj['datetime']:
-            o = obj['datetime'].strftime(r'%m/%d %H:%M:%S')
+        parser.decode(lines[-1])
+        if last.last_visited >= parser.datetime:
+            o = parser.datetime.strftime(r'%m/%d %H:%M:%S')
             t = last.last_visited.strftime(r'%m/%d %H:%M:%S')
             logger.info(f'Seen it all: last_visited {t} >= last log entry {o}.')
             return
 
-        obj = logparse.decode(lines[0], format='nginx')
-        if last.last_visited <= obj['datetime']:
-            delta = obj['datetime'] - last.last_visited
+        parser.decode(lines[0])
+        if last.last_visited <= parser.datetime:
+            delta = parser.datetime - last.last_visited
             logger.warning(f'Potential data gap: {delta}')
             file = logparse.find_previous_log(file)
             if file is None:
@@ -951,42 +953,38 @@ def update_visitors(verbose=1):
                 front = logparse.readlines(file)
                 lines = [*front, *lines]
                 logger.info(f'Rolling back to {file} ... total lines -> {len(lines):,d}')
-                obj = logparse.decode(lines[0], format='nginx')
-                if last.last_visited > obj['datetime']:
+                parser.decode(lines[0])
+                if last.last_visited > parser.datetime:
                     break
                 file = logparse.find_previous_log(file)
 
     for line in lines:
-        obj = logparse.decode(line, format='nginx')
-        if obj is None:
+        parser.decode(line)
+        if parser.status == 0 or parser.status > 300:
             continue
-        if obj['status'] > 300:
-            continue
-        if uu.search(obj['url']) is None:
-            continue
-        if obj['compression'] == 0:
+        if uu.search(parser.url) is None:
             continue
 
-        if obj['ip'] not in visitors:
-            db_visitors = Visitor.objects.filter(ip=obj['ip'])
+        if parser.ip not in visitors:
+            db_visitors = Visitor.objects.filter(ip=parser.ip)
             if db_visitors:
                 visitor = db_visitors.first()
-                if visitor.last_visited >= obj['datetime']:
+                if visitor.last_visited >= parser.datetime:
                     continue
             else:
-                visitor = Visitor.objects.create(ip=obj['ip'],
-                    last_visited=obj['datetime'])
-            visitors[obj['ip']] = visitor
+                visitor = Visitor.objects.create(ip=parser.ip,
+                    last_visited=parser.datetime)
+            visitors[parser.ip] = visitor
         else:
-            visitor = visitors[obj['ip']]
+            visitor = visitors[parser.ip]
 
         visitor.count += 1
-        visitor.payload += int(obj['bytes'] * obj['compression'])
-        visitor.bandwidth += obj['bytes']
-        visitor.user_agent = obj['user_agent']
-        visitor.last_visited = obj['datetime']
+        visitor.payload += int(parser.bytes * parser.compression)
+        visitor.bandwidth += parser.bytes
+        visitor.user_agent = parser.user_agent
+        visitor.last_visited = parser.datetime
         if verbose:
-            logparse.show_url(obj)
+            parser.show()
 
     for _, visitor in visitors.items():
         if verbose:
