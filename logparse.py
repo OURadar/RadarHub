@@ -121,7 +121,7 @@ class LogParser:
         if self.format == 'all':
             return f'{t} | {self.ip:>15} | {self.location:>30} | {self.bytes:10,d} | {c} | {self.os_browser:>20} | {u}'
         if self.format == 'loc':
-            return f'{t} | {self.location:>30} | {self.bytes:10,d} | {c} | {u}'
+            return f'{t} | {self.ip:>15} | {self.location:>30} | {self.bytes:10,d} | {c} | {u}'
         if self.format == 'url':
             return f'{t} | {self.ip:>15} | {self.bytes:>10,d} | {c} | {u}'
         if self.format == 'agent':
@@ -178,7 +178,8 @@ if __name__ == '__main__':
     if args.quiet:
         args.verbose = 0
 
-    hope = LogParser(parser='nginx', format=args.format, width=75)
+    width = 50 if args.format == 'loc' else 75
+    hope = LogParser(parser='nginx', format=args.format, width=width)
 
     if args.access:
         source = '/var/log/nginx/access.log'
