@@ -27,12 +27,12 @@ import datetime
 import argparse
 import textwrap
 
-from common import colorize, get_user_agent_string, get_ip_location
+from common import get_user_agent_string, get_ip_location
 
 __prog__ = os.path.basename(sys.argv[0])
 __version__ = '1.0'
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
-re_ngnix = re.compile(
+re_nginx = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}).+\]'
     + r' "(GET|POST) (?P<url>.+) (?P<protocol>HTTP/[0-9.]+)"'
@@ -40,105 +40,124 @@ re_ngnix = re.compile(
     + r' "(?P<user_agent>.+)" "(?P<compression>[0-9.-]+)"'
 )
 re_radarhub = re.compile(
-    r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):0 - -'
+    r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d{1,5} - -'
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2})\]'
-    + r' "(GET|POST) (?P<url>.+)"'
-    + r' (?P<status>\d{3}) (?P<bytes>\d+)'
+    + r' "(GET|POST|WSCONNECTING|WSDISCONNECT) (?P<url>.+)"'
+    + r' (?P<status>[\d-]+) (?P<bytes>[\d-]+)'
 )
 re_agent = re.compile(r'(mozilla|webkit|safari|firefox|android)', flags=re.IGNORECASE)
 re_logfile = re.compile(r'(\w+\.log)(?:\.(\d{1,2}))?(?:\.(gz))?', flags=re.IGNORECASE)
 
 #
 
-def decode(line, format=None):
-    line = line.rstrip()
-    if format == 'nginx':
-        x = re_ngnix.search(line)
-    elif format == 'radarhub':
-        x = re_radarhub.search(line)
-    else:
-        x = re_ngnix.search(line) if line[-1] == '"' else re_radarhub.search(line)
-    if x:
-        x = x.groupdict()
-        for key in ["bytes", "status"]:
-            x[key] = int(x[key])
-        x['datetime'] = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
-        x['compression'] = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
-        x['os_browser'] = get_user_agent_string(x['user_agent'], width=20)
-        x['location'] = get_ip_location(x['ip'])
-        return x
-    return None
+def get_terminal_width():
+    try:
+        w = os.get_terminal_size()
+        return w.columns
+    except:
+        w = 140
+    return w
 
-def color_code(status):
-    if status == 200:
-        return '\033[38;5;142m'
-    elif status == 302:
+class LogParser:
+    def __init__(self, line=None, **kwargs):
+        self.format = kwargs['format'] if 'format' in kwargs else 'loc'
+        self.parser = re_radarhub if 'parser' in kwargs and kwargs['parser'] == 'radarhub' else re_nginx
+        self.width = kwargs['width'] if 'width' in kwargs else max(25, get_terminal_width() - 93)
+        self.ws = kwargs['all'] if 'all' in kwargs else False
+        self.__blank__()
+        if line:
+            self.decode(line)
+
+    def __blank__(self):
+        self.ip = '127.0.0.1'
+        self.datetime = None
+        self.compression = 0
+        self.user_agent = '-'
+        self.os_browser = '-'
+        self.location = '-'
+        self.status = 0
+        self.bytes = 0
+        self.url = None
+
+    def decode(self, line):
+        line = line.rstrip()
+        x = self.parser.search(line)
+        if x:
+            x = x.groupdict()
+            self.ip = x['ip']
+            self.datetime = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
+            self.compression = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
+            self.user_agent = x['user_agent'] if 'user_agent' in x else ''
+            self.os_browser = get_user_agent_string(self.user_agent if len(self.user_agent) else '-', width=20)
+            self.location = get_ip_location(x['ip'])
+            self.status = int(x['status']) if x['status'] != '-' else 0
+            self.bytes = int(x['bytes']) if x['bytes'] != '-' else 0
+            self.url = x['url']
+        else:
+            self.__blank__()
+
+    def _status_color_code(self):
+        if self.status == 200:
+            return '\033[38;5;142m'
+        if self.status == 302:
+            return '\033[38;5;82m'
+        if self.status > 400:
+            return '\033[38;5;204m'
+        if self.status > 300:
+            return '\033[38;5;6m'
+        if self.status > 200:
+            return '\033[38;5;94m'
         return '\033[38;5;82m'
-    elif status > 400:
-        return '\033[38;5;204m'
-    elif status > 300:
-        return '\033[38;5;6m'
-    elif status > 200:
-        return '\033[38;5;94m'
-    else:
-        return '\033[38;5;82m'
 
-def compression(x):
-    c = '\033[38;5;141m' if x['compression'] > 20.0 else ''
-    n = f'{x["compression"]:5.2f}'[:5] if x['compression'] else '  -  '
-    return f'{c}{n}\033[m'
+    def _compression_color_code(self):
+        if self.compression > 20.0:
+            return '\033[38;5;141m'
+        if self.compression > 15.0:
+            return '\033[38;5;175m'
+        if self.compression > 10.0:
+            return '\033[38;5;172m'
+        if self.compression > 5.0:
+            return '\033[38;5;178m'
+        if self.compression > 3.0:
+            return '\033[38;5;2m'
+        return '\033[m'
 
-def status_url(x, width=75):
-    c = color_code(x['status'])
-    url = x["url"][:width-25] + ' ... ' + x["url"][-20:] if len(x["url"]) > width else x["url"]
-    return f'{c}{x["status"]:3d} {url}\033[m'
+    def _str_compression(self):
+        s = f'{self.compression:5.2f}'[:5] if self.compression > 1.0 else '  -  '
+        return self._compression_color_code() + s + '\033[m'
 
-def show_all(x):
-    t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
-    c = compression(x)
-    u = status_url(x)
-    print(f'{t} | {x["ip"]:>15} | {x["location"]:>30} | {x["bytes"]:10,d} | {c} | {x["os_browser"]:>20} | {u}')
+    def _str_status_url(self):
+        w = (self.width - 3) // 2
+        u = self.url[:w] + '...' + self.url[-w:] if len(self.url) > self.width else self.url
+        s = str(self.status) if self.status > 0 else ' - '
+        return self._status_color_code() + s + ' ' + u + '\033[m'
 
-def show_url(x):
-    t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
-    c = compression(x)
-    u = status_url(x)
-    print(f'{t} | {x["ip"]:>15} | {x["bytes"]:10,d} | {c} | {u}')
+    def __str__(self):
+        t = self.datetime.strftime(r'%m/%d %H:%M:%S') if self.datetime else '--/-- --:--:--'
+        c = self._str_compression()
+        u = self._str_status_url()
+        b = f'{self.bytes:10,d}' if self.bytes else '         -'
+        if self.format == 'loc':
+            if self.parser == re_nginx:
+                return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {c} | {u}'
+            else:
+                return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {u}'
+        if self.format == 'url':
+            return f'{t} | {self.ip:>15} | {self.bytes:>10,d} | {c} | {u}'
+        if self.format == 'agent':
+            return f'{t} | {self.ip:>15} | {self.os_browser:>20} | {u}'
+        return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {c} | {self.os_browser:>20} | {u}'
 
-def show_loc(x):
-    t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
-    u = status_url(x, 45)
-    print(f'{t} | {x["ip"]:>15} | {x["location"]:>30} | {x["os_browser"]:>20} | {u}')
-
-def show_agent(x):
-    t = x['datetime'].strftime(r'%m/%d %H:%M:%S')
-    u = status_url(x)
-    print(f'{t} | {x["ip"]:>15} | {x["os_browser"]:>20} | {u}')
-
-def showline(line, show_func=show_url, verbose=0, **kwargs):
-    if verbose > 1:
-        print(line)
-    x = decode(line)
-    if x is None:
-        return
-    if verbose > 1:
-        pp.pprint(x)
-    show_func(x)
-    user_agent = x['user_agent'] if 'user_agent' in x else ''
-    if re_agent.search(user_agent) is None and len(user_agent) > 160:
-        ip = colorize(x['ip'], 'yellow')
-        tm = x['datetime'].strftime(r'%Y/%m/%d %H:%M:%S')
-        msg = colorize(x['user_agent'], 'mint')
-        print(f'=== Special Message on {tm} from {ip}: {msg} ===')
+    def show(self, line=None):
+        if line:
+            self.decode(line)
+        if self.status or self.ws:
+            print(self)
 
 def readlines(source):
-    with gzip.open(source, 'rt') if '.gz' in source else open(source, 'rt') as fid:
+    with gzip.open(source, 'rt') if '.gz' == source[:-3] else open(source, 'rt') as fid:
         lines = fid.readlines()
     return lines
-
-def showfile(file, show_func, verbose=0):
-    for line in readlines(file):
-        showline(line, show_func=show_func, verbose=verbose)
 
 def find_previous_log(file):
     folder, basename = os.path.split(file)
@@ -156,12 +175,6 @@ def find_previous_log(file):
 #
 
 if __name__ == '__main__':
-    show_options = {
-        'all': show_all,
-        'url': show_url,
-        'loc': show_loc,
-        'agent': show_agent
-    }
     parser = argparse.ArgumentParser(prog=__prog__,
         formatter_class=argparse.RawTextHelpFormatter,
         description=textwrap.dedent(f'''\
@@ -177,29 +190,34 @@ if __name__ == '__main__':
         epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
     parser.add_argument('-a', dest='access', action='store_true', help='checks nginx access log')
-    parser.add_argument('-f', dest='format', choices=show_options.keys(), default='url', help='sets output format')
+    parser.add_argument('-f', dest='format', choices={'all', 'url', 'loc', 'agent'}, default='loc', help='sets output format (default = loc)')
+    parser.add_argument('-p', dest='parser', choices={'radarhub', 'nginx'}, help='sets the log parser (default = nginx)')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
+    parser.add_argument('--all', action='store_true', help='shows all entries, including WSCONNECTING and WSDISCONNECT (default = False)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     args = parser.parse_args()
 
     if args.quiet:
         args.verbose = 0
 
-    show_func = show_options[args.format]
+    hope = LogParser(parser=args.parser, format=args.format, all=args.all)
 
-    if args.access:
+    if select.select([sys.stdin, ], [], [], 0.0)[0]:
+        # There is something piped through the stdin
+        for line in sys.stdin:
+            hope.show(line)
+    elif len(args.source):
+        for source in args.source:
+            if not os.path.exists(source):
+                print(f'ERROR. File {source} does not exist')
+                sys.exit()
+            for line in readlines(source):
+                hope.show(line)
+    else:
         source = '/var/log/nginx/access.log'
         if not os.path.exists(source):
             print(f'ERROR. File {source} does not exist')
             sys.exit()
-        showfile(source, show_func=show_func, verbose=args.verbose)
-    elif len(args.source):
-        for source in args.source:
-            showfile(source, show_func=show_func, verbose=args.verbose)
-    elif select.select([sys.stdin, ], [], [], 0.0)[0]:
-        # There is something piped through the stdin
-        for line in sys.stdin:
-            showline(line, show_func=show_func)
-    else:
-        parser.print_help()
+        for line in readlines(source):
+            hope.show(line)
