@@ -40,10 +40,10 @@ re_nginx = re.compile(
     + r' "(?P<user_agent>.+)" "(?P<compression>[0-9.-]+)"'
 )
 re_radarhub = re.compile(
-    r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):0 - -'
+    r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d{1,5} - -'
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2})\]'
-    + r' "(GET|POST) (?P<url>.+)"'
-    + r' (?P<status>\d{3}) (?P<bytes>\d+)'
+    + r' "(GET|POST|WSCONNECTING|WSDISCONNECT) (?P<url>.+)"'
+    + r' (?P<status>[\d-]+) (?P<bytes>[\d-]+)'
 )
 re_agent = re.compile(r'(mozilla|webkit|safari|firefox|android)', flags=re.IGNORECASE)
 re_logfile = re.compile(r'(\w+\.log)(?:\.(\d{1,2}))?(?:\.(gz))?', flags=re.IGNORECASE)
@@ -55,6 +55,7 @@ class LogParser:
         self.format = kwargs['format'] if 'format' in kwargs else 'loc'
         self.parser = re_radarhub if 'parser' in kwargs and kwargs['parser'] == 'radarhub' else re_nginx
         self.width = kwargs['width'] if 'width' in kwargs else max(75, os.get_terminal_size().columns - 65)
+        self.ws = kwargs['all'] if 'all' in kwargs else False
         self.ip = '127.0.0.1'
         self.datetime = None
         self.compression = 1.0
@@ -65,6 +66,7 @@ class LogParser:
         self.url = '/'
         if line:
             self.decode(line)
+        print(self.parser)
 
     def decode(self, line):
         line = line.rstrip()
@@ -74,10 +76,10 @@ class LogParser:
             self.ip = x['ip']
             self.datetime = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
             self.compression = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
-            self.os_browser = get_user_agent_string(x['user_agent'], width=20)
+            self.os_browser = get_user_agent_string(x['user_agent'], width=20) if 'user_agent' in x else '-'
             self.location = get_ip_location(x['ip'])
-            self.status = int(x['status'])
-            self.bytes = int(x['bytes'])
+            self.status = int(x['status']) if x['status'] != '-' else 0
+            self.bytes = int(x['bytes']) if x['bytes'] != '-' else 0
             self.url = x['url']
 
     def _status_color_code(self):
@@ -112,16 +114,21 @@ class LogParser:
 
     def _str_status_url(self):
         u = self.url[:self.width-25] + ' ... ' + self.url[-20:] if len(self.url) > self.width else self.url
-        return self._status_color_code() + u + '\033[m'
+        s = str(self.status) if self.status > 0 else ' - '
+        return self._status_color_code() + s + ' ' + u + '\033[m'
 
     def __str__(self):
-        t = self.datetime.strftime(r'%m/%d %H:%M:%S')
+        t = self.datetime.strftime(r'%m/%d %H:%M:%S') if self.datetime else '--/-- --:--:--'
         c = self._str_compression()
         u = self._str_status_url()
+        b = f'{self.bytes:10,d}' if self.bytes else '    -     '
         if self.format == 'all':
-            return f'{t} | {self.ip:>15} | {self.location:>30} | {self.bytes:10,d} | {c} | {self.os_browser:>20} | {u}'
+            return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {c} | {self.os_browser:>20} | {u}'
         if self.format == 'loc':
-            return f'{t} | {self.ip:>15} | {self.location:>30} | {self.bytes:10,d} | {c} | {u}'
+            if self.parser == re_nginx:
+                return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {c} | {u}'
+            else:
+                return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {u}'
         if self.format == 'url':
             return f'{t} | {self.ip:>15} | {self.bytes:>10,d} | {c} | {u}'
         if self.format == 'agent':
@@ -130,7 +137,8 @@ class LogParser:
     def show(self, line=None):
         if line:
             self.decode(line)
-        print(self)
+        if self.status or self.ws:
+            print(self)
 
 def readlines(source):
     with gzip.open(source, 'rt') if '.gz' == source[:-3] else open(source, 'rt') as fid:
@@ -172,6 +180,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', dest='parser', choices={'radarhub', 'nginx'}, help='sets the log parser (default = nginx)')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
+    parser.add_argument('--all', action='store_true', help='shows all entries, including WSCONNECTING and WSDISCONNECT (default = False)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     args = parser.parse_args()
 
@@ -179,7 +188,7 @@ if __name__ == '__main__':
         args.verbose = 0
 
     width = 50 if args.format == 'loc' else 75
-    hope = LogParser(parser='nginx', format=args.format, width=width)
+    hope = LogParser(parser=args.parser, format=args.format, width=width, all=args.all)
 
     if len(args.source) == 0 or args.access:
         source = '/var/log/nginx/access.log'
