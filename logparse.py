@@ -50,11 +50,19 @@ re_logfile = re.compile(r'(\w+\.log)(?:\.(\d{1,2}))?(?:\.(gz))?', flags=re.IGNOR
 
 #
 
+def get_terminal_width():
+    try:
+        w = os.get_terminal_size()
+        return w.columns
+    except:
+        w = 140
+    return w
+
 class LogParser:
     def __init__(self, line=None, **kwargs):
         self.format = kwargs['format'] if 'format' in kwargs else 'loc'
         self.parser = re_radarhub if 'parser' in kwargs and kwargs['parser'] == 'radarhub' else re_nginx
-        self.width = kwargs['width'] if 'width' in kwargs else max(75, os.get_terminal_size().columns - 65)
+        self.width = kwargs['width'] if 'width' in kwargs else max(35, get_terminal_width() - 95)
         self.ws = kwargs['all'] if 'all' in kwargs else False
         self.ip = '127.0.0.1'
         self.datetime = None
@@ -66,7 +74,7 @@ class LogParser:
         self.url = '/'
         if line:
             self.decode(line)
-        print(self.parser)
+        print(self.width)
 
     def decode(self, line):
         line = line.rstrip()
@@ -113,7 +121,8 @@ class LogParser:
         return self._compression_color_code() + s + '\033[m'
 
     def _str_status_url(self):
-        u = self.url[:self.width-25] + ' ... ' + self.url[-20:] if len(self.url) > self.width else self.url
+        w = (self.width - 5) // 2
+        u = self.url[:w] + ' ... ' + self.url[-w:] if len(self.url) > self.width else self.url
         s = str(self.status) if self.status > 0 else ' - '
         return self._status_color_code() + s + ' ' + u + '\033[m'
 
@@ -187,8 +196,7 @@ if __name__ == '__main__':
     if args.quiet:
         args.verbose = 0
 
-    width = 50 if args.format == 'loc' else 75
-    hope = LogParser(parser=args.parser, format=args.format, width=width, all=args.all)
+    hope = LogParser(parser=args.parser, format=args.format, all=args.all)
 
     if len(args.source) == 0 or args.access:
         source = '/var/log/nginx/access.log'
