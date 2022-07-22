@@ -62,7 +62,14 @@ class LogParser:
     def __init__(self, line=None, **kwargs):
         self.format = kwargs['format'] if 'format' in kwargs else 'loc'
         self.parser = re_radarhub if 'parser' in kwargs and kwargs['parser'] == 'radarhub' else re_nginx
-        self.width = kwargs['width'] if 'width' in kwargs else max(25, get_terminal_width() - 93)
+        if 'width' in kwargs:
+            self.width = kwargs['width']
+        elif self.format == 'loc':
+            self.width = max(25, get_terminal_width() - 88)
+        elif self.format == 'all':
+            self.width = 200
+        else:
+            self.width = 75
         self.ws = kwargs['all'] if 'all' in kwargs else False
         self.__blank__()
         if line:
@@ -89,7 +96,7 @@ class LogParser:
             self.compression = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
             self.user_agent = x['user_agent'] if 'user_agent' in x else ''
             self.os_browser = get_user_agent_string(self.user_agent if len(self.user_agent) else '-', width=20)
-            self.location = get_ip_location(x['ip'])
+            self.location = get_ip_location(x['ip']).replace('United States', 'USA')
             self.status = int(x['status']) if x['status'] != '-' else 0
             self.bytes = int(x['bytes']) if x['bytes'] != '-' else 0
             self.url = x['url']
@@ -139,14 +146,14 @@ class LogParser:
         b = f'{self.bytes:10,d}' if self.bytes else '         -'
         if self.format == 'loc':
             if self.parser == re_nginx:
-                return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {c} | {u}'
+                return f'{t} | {self.ip:>15} | {self.location:>25} | {b} | {c} | {u}'
             else:
-                return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {u}'
+                return f'{t} | {self.ip:>15} | {self.location:>25} | {b} | {u}'
         if self.format == 'url':
             return f'{t} | {self.ip:>15} | {self.bytes:>10,d} | {c} | {u}'
         if self.format == 'agent':
             return f'{t} | {self.ip:>15} | {self.os_browser:>20} | {u}'
-        return f'{t} | {self.ip:>15} | {self.location:>30} | {b} | {c} | {self.os_browser:>20} | {u}'
+        return f'{t} | {self.ip:>15} | {self.location:>25} | {b} | {c} | {self.os_browser:>20} | {u}'
 
     def show(self, line=None):
         if line:
