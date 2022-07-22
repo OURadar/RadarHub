@@ -198,20 +198,18 @@ if __name__ == '__main__':
 
     hope = LogParser(parser=args.parser, format=args.format, all=args.all)
 
-    if len(args.source) == 0 or args.access:
+    if select.select([sys.stdin, ], [], [], 0.0)[0]:
+        # There is something piped through the stdin
+        for line in sys.stdin:
+            hope.show(line)
+    elif len(args.source):
+        for source in args.source:
+            for line in readlines(source):
+                hope.show(line)
+    else:
         source = '/var/log/nginx/access.log'
         if not os.path.exists(source):
             print(f'ERROR. File {source} does not exist')
             sys.exit()
         for line in readlines(source):
             hope.show(line)
-    elif len(args.source):
-        for source in args.source:
-            for line in readlines(source):
-                hope.show(line)
-    elif select.select([sys.stdin, ], [], [], 0.0)[0]:
-        # There is something piped through the stdin
-        for line in sys.stdin:
-            hope.show(line)
-    else:
-        parser.print_help()
