@@ -27,6 +27,10 @@ import datetime
 import argparse
 import textwrap
 
+import fcntl, termios, struct
+
+from signal import signal, SIGPIPE, SIG_DFL
+
 from common import colorize, get_user_agent_string, get_ip_location
 
 __prog__ = os.path.basename(sys.argv[0])
@@ -52,11 +56,16 @@ re_logfile = re.compile(r'(\w+\.log)(?:\.(\d{1,2}))?(?:\.(gz))?', flags=re.IGNOR
 
 def get_terminal_width():
     try:
-        w = os.get_terminal_size()
-        return w.columns
+        _, w = struct.unpack('HH', fcntl.ioctl(0, termios.TIOCGWINSZ, b'\0' * 4))
+        if w:
+            return w
     except:
         pass
-    return 80
+    try:
+        t = os.get_terminal_size()
+        return t.columns
+    except:
+        return 80
 
 class LogParser:
     def __init__(self, line=None, **kwargs):
@@ -74,6 +83,7 @@ class LogParser:
         self.__blank__()
         if line:
             self.decode(line)
+        print(f'w = {self.width}')
 
     def __blank__(self):
         self.ip = '127.0.0.1'
@@ -190,6 +200,10 @@ def find_previous_log(file):
         return previous
     return None
 
+def xfunc():
+    w = get_terminal_width()
+    print(f'w = {w}')
+
 #
 
 if __name__ == '__main__':
@@ -213,6 +227,7 @@ if __name__ == '__main__':
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('-w', dest='width', type=int, help='uses specific width')
+    parser.add_argument('-x', action='store_true', help='experimental')
     parser.add_argument('--all', action='store_true', help='shows all entries, including WSCONNECTING and WSDISCONNECT (default = False)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     args = parser.parse_args()
@@ -225,6 +240,11 @@ if __name__ == '__main__':
     else:
         parser = args.parser
     hope = LogParser(parser=parser, format=args.format, all=args.all, width=args.width)
+
+    signal(SIGPIPE, SIG_DFL)
+
+    if args.x:
+        xfunc()
 
     if select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin
