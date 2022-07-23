@@ -103,7 +103,7 @@ class LogParser:
         else:
             self.__blank__()
 
-    def _status_color_code(self):
+    def _color_code_status(self):
         if self.status == 200:
             return '\033[38;5;142m'
         if self.status == 302:
@@ -116,7 +116,7 @@ class LogParser:
             return '\033[38;5;94m'
         return '\033[38;5;82m'
 
-    def _compression_color_code(self):
+    def _color_code_compression(self):
         if self.compression > 20.0:
             return '\033[38;5;141m'
         if self.compression > 15.0:
@@ -131,13 +131,13 @@ class LogParser:
 
     def _str_compression(self):
         s = f'{self.compression:5.2f}'[:5] if self.compression > 1.0 else '  -  '
-        return self._compression_color_code() + s + '\033[m'
+        return self._color_code_compression() + s + '\033[m'
 
     def _str_status_url(self):
         w = (self.width - 3) // 2
         u = self.url[:w] + '...' + self.url[-w:] if len(self.url) > self.width else self.url
         s = str(self.status) if self.status > 0 else ' - '
-        return self._status_color_code() + s + ' ' + u + '\033[m'
+        return self._color_code_status() + s + ' ' + u + '\033[m'
 
     def __str__(self):
         t = self.datetime.strftime(r'%m/%d %H:%M:%S') if self.datetime else '--/-- --:--:--'
@@ -162,6 +162,9 @@ class LogParser:
             print(self)
 
 def readlines(source):
+    if not os.path.exists(source):
+        print(f'ERROR. File {source} does not exist')
+        return None
     with gzip.open(source, 'rt') if '.gz' == source[:-3] else open(source, 'rt') as fid:
         lines = fid.readlines()
     return lines
@@ -208,7 +211,11 @@ if __name__ == '__main__':
     if args.quiet:
         args.verbose = 0
 
-    hope = LogParser(parser=args.parser, format=args.format, all=args.all)
+    if len(args.source) and args.parser is None:
+        parser = 'radarhub' if 'radarhub' in args.source[0] else 'nginx'
+    else:
+        parser = args.parser
+    hope = LogParser(parser=parser, format=args.format, all=args.all)
 
     if select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin
