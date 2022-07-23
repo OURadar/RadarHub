@@ -928,8 +928,15 @@ def update_visitors(verbose=1):
 
     file = '/var/log/nginx/access.log'
     lines = logparse.readlines(file)
-    if lines is None or len(lines) == 0:
-        return
+    if lines is None:
+        print('ERROR. Unable to continue.')
+    while file and len(lines) == 0:
+        logger.info(f'File {file} is empty')
+        file = logparse.find_previous_log(file)
+        if file is None:
+            logger.error('ERROR. Unable to continue.')
+            return
+        lines = logparse.readlines(file)
 
     logger.info(f'Processing {file} ... total lines = {len(lines):,d}')
 
