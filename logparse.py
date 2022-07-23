@@ -83,7 +83,6 @@ class LogParser:
         self.__blank__()
         if line:
             self.decode(line)
-        print(f'w = {self.width}')
 
     def __blank__(self):
         self.ip = '127.0.0.1'
@@ -183,7 +182,7 @@ def readlines(source):
     if not os.path.exists(source):
         print(f'ERROR. File {source} does not exist')
         return None
-    with gzip.open(source, 'rt') if '.gz' == source[:-3] else open(source, 'rt') as fid:
+    with gzip.open(source, 'rt') if '.gz' == source[-3:] else open(source, 'rt') as fid:
         lines = fid.readlines()
     return lines
 
