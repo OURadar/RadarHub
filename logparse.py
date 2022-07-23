@@ -55,14 +55,14 @@ def get_terminal_width():
         w = os.get_terminal_size()
         return w.columns
     except:
-        w = 80
-    return w
+        pass
+    return 80
 
 class LogParser:
     def __init__(self, line=None, **kwargs):
         self.format = kwargs['format'] if 'format' in kwargs else 'loc'
         self.parser = re_radarhub if 'parser' in kwargs and kwargs['parser'] == 'radarhub' else re_nginx
-        if 'width' in kwargs:
+        if 'width' in kwargs and kwargs['width'] is not None and kwargs['width'] > 40:
             self.width = kwargs['width']
         elif self.format == 'loc':
             self.width = max(25, get_terminal_width() - 88)
@@ -70,7 +70,6 @@ class LogParser:
             self.width = 200
         else:
             self.width = max(25, get_terminal_width() - 35)
-        print(self.width)
         self.ws = kwargs['all'] if 'all' in kwargs else False
         self.__blank__()
         if line:
@@ -147,11 +146,12 @@ class LogParser:
         b = f'{self.bytes:10,d}' if self.bytes else '         -'
         if re_agent.search(self.user_agent) is None and len(self.user_agent) > 100:
             h = f'{t} | {self.ip:>15} | '
-            m = '\n'.join(textwrap.wrap(self.user_agent, width=self.width))
+            w = get_terminal_width() - len(h)
+            m = '\n'.join(textwrap.wrap(self.user_agent, width=w))
             i = len(h)
-            m = textwrap.indent(m, prefix=' ' * i)
-            m = colorize(m[i:], 'mint')
-            return f'{h}{m}'
+            n = textwrap.indent(m, prefix=' ' * i)
+            o = colorize(n[i:], 'mint')
+            return f'{h}{o} ({len(m)} / {w})'
         if self.format == 'loc':
             if self.parser == re_nginx:
                 return f'{t} | {self.ip:>15} | {self.location:>25} | {b} | {c} | {u}'
@@ -212,6 +212,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', dest='parser', choices={'radarhub', 'nginx'}, help='sets the log parser (default = nginx)')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
+    parser.add_argument('-w', dest='width', type=int, help='uses specific width')
     parser.add_argument('--all', action='store_true', help='shows all entries, including WSCONNECTING and WSDISCONNECT (default = False)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     args = parser.parse_args()
@@ -223,7 +224,7 @@ if __name__ == '__main__':
         parser = 'radarhub' if 'radarhub' in args.source[0] else 'nginx'
     else:
         parser = args.parser
-    hope = LogParser(parser=parser, format=args.format, all=args.all)
+    hope = LogParser(parser=parser, format=args.format, all=args.all, width=args.width)
 
     if select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin
