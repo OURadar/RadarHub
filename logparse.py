@@ -27,7 +27,7 @@ import datetime
 import argparse
 import textwrap
 
-from common import get_user_agent_string, get_ip_location
+from common import colorize, get_user_agent_string, get_ip_location
 
 __prog__ = os.path.basename(sys.argv[0])
 __version__ = '1.0'
@@ -55,7 +55,7 @@ def get_terminal_width():
         w = os.get_terminal_size()
         return w.columns
     except:
-        w = 140
+        w = 80
     return w
 
 class LogParser:
@@ -69,7 +69,8 @@ class LogParser:
         elif self.format == 'all':
             self.width = 200
         else:
-            self.width = 75
+            self.width = max(25, get_terminal_width() - 35)
+        print(self.width)
         self.ws = kwargs['all'] if 'all' in kwargs else False
         self.__blank__()
         if line:
@@ -144,6 +145,13 @@ class LogParser:
         c = self._str_compression()
         u = self._str_status_url()
         b = f'{self.bytes:10,d}' if self.bytes else '         -'
+        if re_agent.search(self.user_agent) is None and len(self.user_agent) > 100:
+            h = f'{t} | {self.ip:>15} | '
+            m = '\n'.join(textwrap.wrap(self.user_agent, width=self.width))
+            i = len(h)
+            m = textwrap.indent(m, prefix=' ' * i)
+            m = colorize(m[i:], 'mint')
+            return f'{h}{m}'
         if self.format == 'loc':
             if self.parser == re_nginx:
                 return f'{t} | {self.ip:>15} | {self.location:>25} | {b} | {c} | {u}'
