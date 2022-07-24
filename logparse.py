@@ -105,7 +105,7 @@ class LogParser:
             self.compression = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
             self.user_agent = x['user_agent'] if 'user_agent' in x else ''
             self.os_browser = get_user_agent_string(self.user_agent if len(self.user_agent) else '-', width=20)
-            self.location = get_ip_location(x['ip']).replace('United States', 'USA')
+            self.location = get_ip_location(x['ip'])
             self.status = int(x['status']) if x['status'] != '-' else 0
             self.bytes = int(x['bytes']) if x['bytes'] != '-' else 0
             self.url = x['url']

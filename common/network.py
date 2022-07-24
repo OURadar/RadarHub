@@ -20,6 +20,11 @@ ip_location_db_fid = None
 
 re_space = re.compile(' \(.*\)')
 
+country_short = {
+    'United States': 'USA',
+    'United Kingdom': 'UK'
+}
+
 # From https://stackoverflow.com/questions/4581789/how-do-i-get-user-ip-address-in-django
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -85,8 +90,10 @@ def get_ip_location(ip, show_city=False):
     info = ip_location_db_fid.get(ip)
     if info is None:
         return '-'
-    country = info['country']['names']['en']
     state = info['subdivisions'][0]['names']['en']
+    country = info['country']['names']['en']
+    if country in country_short:
+        country = country_short[country]
     origin = f'{state}, {country}'
     if show_city:
         city = re_space.sub('', info['city']['names']['en'])
