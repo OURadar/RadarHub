@@ -1006,8 +1006,11 @@ def update_visitors(verbose=1):
         visitor.save()
 
     count = len(visitors)
-    s = 's' if count > 1 else ''
-    logger.info(f'Updated {count} visitor{s}')
+    if count:
+        s = 's' if count > 1 else ''
+        logger.info(f'Updated {count} visitor{s}')
+    else:
+        logger.info('No updates')
 
     if verbose:
         show_visitor_log(recent=7)
@@ -1069,6 +1072,7 @@ def dbtool_main():
             {__prog__} -i /mnt/data/PX1000/2013/201305*
             {__prog__} -i --skip /mnt/data/PX1000/2022/2022*
             {__prog__} -i --skip --progress /mnt/data/PX1000/2022/2022*
+            {__prog__} -i --no-skip --progress /mnt/data/PX1000/2022/202206*
             {__prog__} -l
             {__prog__} -l RAXPOL-
             {__prog__} -l RAXPOL- PX-
@@ -1079,6 +1083,7 @@ def dbtool_main():
             {__prog__} -f RAXPOL-20220225
             {__prog__} -f --remove 20220127
             {__prog__} --check-path /mnt/data/RaXPol/2022/202206*
+            {__prog__} -u
         '''),
         epilog='Copyright (c) 2021-2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*',
