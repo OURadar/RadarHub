@@ -16,6 +16,7 @@ import { Product } from "./product";
 import { TopBar } from "./topbar";
 import { Archive } from "./archive";
 import { HelpPage } from "./help";
+import { Preference } from "./preference";
 
 class App extends Component {
   constructor(props) {
@@ -163,6 +164,7 @@ class App extends Component {
             <Browser archive={this.archive} radar={this.props.radar} />
           </div>
         </div>
+        <Preference />
         <HelpPage open={this.state.open} handleClose={this.handleHelpClose} />
       </ThemeProvider>
     );

@@ -12,6 +12,7 @@ import { detectMob } from "./common";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 import { Archive } from "./archive";
+import { Preference } from "./preference";
 
 class App extends Component {
   constructor(props) {

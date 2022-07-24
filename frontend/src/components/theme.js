@@ -118,6 +118,7 @@ export function makeTheme(inputMode) {
         styleOverrides: {
           root: {
             borderRadius: 4,
+            textTransform: "inherit",
           },
         },
         variants: [
@@ -202,6 +203,13 @@ export function makeTheme(inputMode) {
             },
           },
         ],
+      },
+      MuiToggleButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "none",
+          },
+        },
       },
       MuiListItemText: {
         styleOverrides: {
