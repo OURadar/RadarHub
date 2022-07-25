@@ -13,7 +13,7 @@ class Archive {
       sweep: null,
     };
     this.state = {
-      liveUpdate: false,
+      liveUpdate: null,
       daysActiveUpdating: false,
       hoursActiveUpdating: false,
       itemsUpdating: true,
@@ -59,7 +59,7 @@ class Archive {
             `   latestHour = ${this.grid.latestHour}` +
             `   loadCount = ${this.state.loadCount}`,
           "color: lightseagreen",
-          "color: inherit"
+          ""
         );
       }
       if (this.grid.latestHour != this.grid.hour || this.state.loadCount > 1) {
@@ -72,7 +72,7 @@ class Archive {
           `%carchive.onmessage()%c index` +
             `   index = ${this.grid.index} -> ${payload}`,
           "color: lightseagreen",
-          "color: inherit"
+          ""
         );
       }
       this.grid.index = payload;
@@ -87,7 +87,7 @@ class Archive {
             `   index = ${this.grid.index} -> ${payload.index}` +
             `   productSwitching = ${this.state.productSwitching}`,
           "color: lightseagreen",
-          "color: inherit"
+          ""
         );
       }
       //let index = this.grid.index;
@@ -106,17 +106,16 @@ class Archive {
       this.grid.index = -1;
       this.state.sweepLoading = false;
     } else if (type == "state") {
-      if (payload.state == "connect") {
-        this.state.liveUpdate = true;
-      } else if (payload.state == "disconnect") {
-        this.state.liveUpdate = false;
-      }
+      this.state.liveUpdate = payload.update == "null" ? null : payload.update;
+      this.state.loadCount = 0;
       if (this.state.verbose) {
         console.log(
           `%carchive.onmessage()%c state` +
-            `   liveUpdate = ${this.state.liveUpdate}`,
+            `   state.liveUpdate = ${this.state.liveUpdate} (${
+              this.state.liveUpdate === null
+            })`,
           "color: lightseagreen",
-          "color: inherit"
+          ""
         );
       }
       this.showMessage(payload.message, 2500);
@@ -125,7 +124,7 @@ class Archive {
         console.log(
           `%carchive.onmessage()%c init` + `   index = ${payload.index}`,
           "color: lightseagreen",
-          "color: inherit"
+          ""
         );
       }
       this.grid = payload;
@@ -142,7 +141,7 @@ class Archive {
             console.log(
               `%carchive.onmessage()%c count   No data.  hour = ${hour} -> ${best} ...`,
               "color: lightseagreen",
-              "color: inherit"
+              ""
             );
           }
         } else {
@@ -170,13 +169,17 @@ class Archive {
 
   init() {
     if (this.state.verbose) {
-      console.log(`%carchive.init()`, "color: lightseagreen");
+      console.log(
+        `%carchive.init()%c   radar = ${this.radar}`,
+        "color: lightseagreen",
+        ""
+      );
     }
-    this.worker.postMessage({ task: "init" });
+    this.worker.postMessage({ task: "init", name: this.radar });
   }
 
-  // Expect something like radar = px1000, day = Date('2013-05-20'), hour = 19
-  list(radar, day, hour, symbol) {
+  // Expect something like day = Date('2013-05-20'), hour = 19
+  list(day, hour, symbol) {
     if (this.state.verbose) {
       console.log(
         `%carchive.list()%c` +
@@ -184,7 +187,7 @@ class Archive {
           `   hour = ${hour}` +
           `   symbol = ${symbol} / ${this.grid.symbol}`,
         "color: lightseagreen",
-        "color: inherit"
+        ""
       );
     }
     if (
@@ -195,15 +198,13 @@ class Archive {
       console.log(
         `%carchive.list()%c same day, hour & symbol, do nothing`,
         "color: lightseagreen",
-        "color: inherit"
+        ""
       );
       return;
     }
-    this.radar = radar;
     this.state.itemsUpdating = true;
     this.worker.postMessage({
       task: "list",
-      name: radar,
       day: day,
       hour: hour,
       symbol: symbol,
@@ -259,30 +260,30 @@ class Archive {
           `   gridDayString: ${gridDayString}` +
           `   loadCount = ${this.state.loadCount}`,
         "color: lightseagreen",
-        "color: inherit"
+        ""
       );
-      if (this.state.liveUpdate) {
+      if (this.state.liveUpdate != null) {
         console.log(`Live update with ${this.grid.latestScan}`);
         this.loadByName(this.grid.latestScan);
       }
     }
   }
 
-  // Expect something like radar = px1000, day = 201305
-  month(radar, day) {
+  // Expect something like day = 201305
+  month(day) {
     this.state.daysActiveUpdating = true;
-    this.worker.postMessage({ task: "month", name: radar, day: day });
+    this.worker.postMessage({ task: "month", day: day });
   }
 
-  // Expect something like radar = raxpol, day = Date('2013-05-20')
-  count(radar, day, hour, symbol) {
+  // Expect something like day = Date('2013-05-20')
+  count(day, hour, symbol) {
     if (this.state.verbose) {
       console.log(
         `%carchive.count()%c` +
           `   day = ${day.toISOString().slice(0, 10)}` +
           `   hour = ${hour}   symbol = ${symbol}`,
         "color: lightseagreen",
-        "color: inherit"
+        ""
       );
     }
     if (this.grid.day == day) {
@@ -290,16 +291,15 @@ class Archive {
         console.log(
           `%carchive.count()%c same day, list directly`,
           "color: lightseagreen",
-          "color: inherit"
+          ""
         );
       }
-      this.list(radar, day, hour, symbol);
+      this.list(day, hour, symbol);
       return;
     }
     this.state.hoursActiveUpdating = true;
     this.worker.postMessage({
       task: "list",
-      name: radar,
       day: day,
       hour: hour,
       symbol: symbol,
@@ -316,35 +316,34 @@ class Archive {
       return;
     }
     this.state.productSwitching = true;
-    this.list(this.radar, this.grid.day, this.grid.hour, symbol);
+    this.list(this.grid.day, this.grid.hour, symbol);
   }
 
   disableLiveUpdate() {
-    this.worker.postMessage({ task: "disconnect", name: this.radar });
+    // this.worker.postMessage({ task: "disconnect" });
+    this.worker.postMessage({ task: "toggle", name: "null" });
   }
 
   enableLiveUpdate() {
-    this.worker.postMessage({ task: "connect", name: this.radar });
+    // this.worker.postMessage({ task: "connect" });
+    this.worker.postMessage({ task: "toggle", name: "scan" });
   }
 
   catchup() {
-    this.worker.postMessage({ task: "catchup", name: this.radar });
+    this.worker.postMessage({ task: "catchup" });
   }
 
-  toggleLiveUpdate() {
+  toggleLiveUpdate(mode = "auto") {
     if (this.state.verbose) {
       console.log(
         `%carchive.toggleLiveUpdate()%c` +
-          `   liveUpdate = ${this.state.liveUpdate}`,
+          `   liveUpdate = ${this.state.liveUpdate}` +
+          `   mode = ${mode}`,
         "color: lightseagreen",
-        "color: inherit"
+        ""
       );
     }
-    if (this.state.liveUpdate) {
-      this.disableLiveUpdate();
-    } else {
-      this.catchup();
-    }
+    this.worker.postMessage({ task: "toggle", name: mode });
   }
 
   updateAge() {
@@ -377,24 +376,22 @@ class Archive {
   }
 
   navigateForward() {
-    this.worker.postMessage({ task: "forward", name: this.radar });
+    this.worker.postMessage({ task: "forward" });
   }
 
   navigateBackward() {
-    this.worker.postMessage({ task: "backward", name: this.radar });
+    this.worker.postMessage({ task: "backward" });
   }
 
   navigateForwardScan() {
     this.worker.postMessage({
       task: "forward-scan",
-      name: this.radar,
     });
   }
 
   navigateBackwardScan() {
     this.worker.postMessage({
       task: "backward-scan",
-      name: this.radar,
     });
   }
 }

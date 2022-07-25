@@ -237,10 +237,18 @@ export function makeTheme(inputMode) {
           },
         ],
       },
+      MuiToggleButtonGroup: {
+        styleOverrides: {
+          root: {
+            backgroundColor: "var(--preference-background)",
+            WebkitBackdropFilter: "blur(4px);",
+          },
+        },
+      },
       MuiBackdrop: {
         styleOverrides: {
           root: {
-            "-webkit-backdrop-filter": "blur(4px);",
+            WebkitBackdropFilter: "blur(4px);",
           },
         },
       },
