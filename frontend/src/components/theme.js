@@ -229,6 +229,13 @@ export function makeTheme(inputMode) {
           },
         ],
       },
+      MuiBackdrop: {
+        styleOverrides: {
+          root: {
+            "-webkit-backdrop-filter": "blur(4px);",
+          },
+        },
+      },
     },
   });
   return theme;
