@@ -118,7 +118,9 @@ class Archive {
           ""
         );
       }
-      this.showMessage(payload.message, 2500);
+      if (payload.message) {
+        this.showMessage(payload.message, 2500);
+      }
     } else if (type == "init") {
       if (this.state.verbose) {
         console.log(
@@ -320,12 +322,10 @@ class Archive {
   }
 
   disableLiveUpdate() {
-    // this.worker.postMessage({ task: "disconnect" });
-    this.worker.postMessage({ task: "toggle", name: "null" });
+    this.worker.postMessage({ task: "toggle", name: null });
   }
 
   enableLiveUpdate() {
-    // this.worker.postMessage({ task: "connect" });
     this.worker.postMessage({ task: "toggle", name: "scan" });
   }
 

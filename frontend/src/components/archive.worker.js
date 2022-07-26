@@ -72,10 +72,6 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
     count(day);
   } else if (task == "month") {
     month(day);
-  } else if (task == "connect") {
-    connect();
-  } else if (task == "disconnect") {
-    disconnect();
   } else if (task == "toggle") {
     toggle(name);
   } else if (task == "catchup") {
@@ -110,7 +106,7 @@ function init(newRadar) {
 function connect(force = false) {
   if (source?.readyState == 1) {
     if (force) {
-      console.info("Closing existing connection ...");
+      console.debug("Closing existing connection ...");
       source.close();
     } else {
       self.postMessage({
@@ -663,7 +659,7 @@ function toggle(name) {
   }
   const update = state.update;
   if (name == "auto") {
-    if (state.update == "null") {
+    if (state.update === null) {
       state.update = "scan";
     } else if (state.update == "scan") {
       state.update = "always";
@@ -684,18 +680,12 @@ function toggle(name) {
   }
   if (state.update != update) {
     if (state.update == null) {
-      console.log("disconnecting ...");
       disconnect();
     } else {
       connect();
+      catchup();
     }
   } else {
-    self.postMessage({
-      type: "state",
-      payload: {
-        update: state.update,
-        message: "State change",
-      },
-    });
+    self.postMessage({ type: "state", payload: { update: state.update } });
   }
 }

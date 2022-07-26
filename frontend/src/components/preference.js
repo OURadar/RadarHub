@@ -12,14 +12,6 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import { DensityLarge, DensitySmall } from "@mui/icons-material";
 
 export function Preference(props) {
-  // const [update, setUpdate] = React.useState("null");
-
-  // if (props.ingest) {
-  //   console.log(`Preference ${update}`);
-  //   // setUpdate(props.ingest.state.liveUpdate);
-  // } else {
-  //   // setUpdate("null");
-  // }
   return (
     <div className="preferenceMenu">
       <ToggleButtonGroup
@@ -45,6 +37,5 @@ Preference.defaultProps = {
   ingest: null,
   handleChange: (_e, value) => {
     console.log(`Preference.handleChange()  value = ${value}`);
-    // setUpdate(value);
   },
 };
