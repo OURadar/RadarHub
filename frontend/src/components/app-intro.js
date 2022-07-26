@@ -43,7 +43,6 @@ class App extends Component {
         });
         document.documentElement.setAttribute("theme", mode);
       });
-    document.body.classList.remove("hide");
   }
 
   render() {
