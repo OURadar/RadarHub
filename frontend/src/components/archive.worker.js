@@ -30,7 +30,7 @@ let grid = {
 };
 let state = {
   update: "scan",
-  verbose: 1,
+  verbose: 0,
 };
 const namecolor = "#bf9140";
 
@@ -566,7 +566,6 @@ function catchup() {
           if (grid.index >= 0) {
             let file = grid.items[grid.index];
             grid.scan = file.split("-")[3];
-            console.debug(`Setting grid.scan to ${grid.scan}`);
           }
           if (state.verbose > 1) {
             console.info(grid.items);
