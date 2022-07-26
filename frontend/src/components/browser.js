@@ -39,7 +39,7 @@ function Browser(props) {
   const count = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
   const items = ok ? props.archive.grid.items : [];
   const index = ok ? props.archive.grid?.index : -1;
-  const radar = props.radar;
+  // const radar = props.radar;
 
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
@@ -121,19 +121,19 @@ function Browser(props) {
     console.log(
       `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
       "color: deeppink",
-      "color: inherit",
+      "",
       "color: mediumpurple",
-      "color: inherit",
+      "",
       "color: mediumpurple",
-      "color: inherit"
+      ""
     );
-    props.archive.count(radar, newDay, newHour, symbol);
+    props.archive.count(newDay, newHour, symbol);
   };
 
   const getMonthTable = (newMonth) => {
     let tmp = newMonth.toISOString();
     let yyyymm = tmp.slice(0, 4) + tmp.slice(5, 7);
-    props.archive.month(radar, yyyymm);
+    props.archive.month(yyyymm);
   };
 
   return (

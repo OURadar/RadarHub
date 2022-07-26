@@ -118,6 +118,7 @@ export function makeTheme(inputMode) {
         styleOverrides: {
           root: {
             borderRadius: 4,
+            textTransform: "inherit",
           },
         },
         variants: [
@@ -203,6 +204,13 @@ export function makeTheme(inputMode) {
           },
         ],
       },
+      MuiToggleButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "none",
+          },
+        },
+      },
       MuiListItemText: {
         styleOverrides: {
           root: {
@@ -228,6 +236,21 @@ export function makeTheme(inputMode) {
             },
           },
         ],
+      },
+      MuiToggleButtonGroup: {
+        styleOverrides: {
+          root: {
+            backgroundColor: "var(--preference-background)",
+            backdropFilter: "blur(4px)",
+          },
+        },
+      },
+      MuiBackdrop: {
+        styleOverrides: {
+          root: {
+            backdropFilter: "blur(4px)",
+          },
+        },
       },
     },
   });

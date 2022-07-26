@@ -52,14 +52,15 @@ function StatusBodyQuick(props) {
 // - xxx - archived data ingest
 
 export function TopBar(props) {
-  const name = props.ingest ? ` / ${props.ingest.radar}` : "";
   const [message, setMessage] = React.useState("");
-  let online, status, notify;
+  let name, online, status, notify;
   if (props.ingest) {
-    online = props.ingest.state?.liveUpdate ? "online" : "offline";
+    name = " / " + props.ingest.radar;
+    online = props.ingest.state.liveUpdate === null ? "offline" : "online";
     status = <StatusBody message={props.ingest.message} />;
     notify = <Notification message={props.ingest.response || message} />;
   } else {
+    name = "";
     online = "offline";
     status = <StatusBody />;
     notify = <Notification message={message} />;
@@ -125,8 +126,8 @@ export function TopBar(props) {
 TopBar.defaultProps = {
   ingest: null,
   mode: "light",
-  handleModeChange: () => {
-    console.log(`handleModeChange()`);
+  handleThemeChange: () => {
+    console.log(`Topbar.handleThemeChange()`);
   },
 };
 
@@ -167,7 +168,7 @@ export function Console(props) {
       )}
       <IconButton
         aria-label="Change Mode"
-        onClick={props.handleModeChange}
+        onClick={props.handleThemeChange}
         size="large"
       >
         {(props.mode == "light" && <LightMode />) || <DarkMode />}

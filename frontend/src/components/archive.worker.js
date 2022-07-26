@@ -24,14 +24,15 @@ let grid = {
   itemsGrouped: {},
   day: new Date("2013/05/20"),
   hour: -1,
-  symbol: "Z",
   index: -1,
-  scan: "",
+  symbol: "Z",
+  scan: "E4.0",
 };
 let data = {
   sweep: null,
 };
 let state = {
+  update: "scan",
   verbose: 0,
 };
 const namecolor = "#bf9140";
@@ -62,21 +63,19 @@ const sweepParser = new Parser()
 
 self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
   if (task == "init") {
-    init();
+    init(name);
   } else if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(name, day, hour, symbol);
+    list(day, hour, symbol);
   } else if (task == "count") {
-    count(name, day);
+    count(day);
   } else if (task == "month") {
-    month(name, day);
-  } else if (task == "connect") {
-    connect(name);
-  } else if (task == "disconnect") {
-    disconnect();
+    month(day);
+  } else if (task == "toggle") {
+    toggle(name);
   } else if (task == "catchup") {
-    catchup(name);
+    catchup();
   } else if (task == "forward") {
     navigateForward();
   } else if (task == "backward") {
@@ -92,20 +91,43 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
   }
 };
 
-function init() {
+function init(newRadar) {
+  radar = newRadar;
   if (state.verbose) {
-    console.info(`%carchive.worker.init()`, `color: ${namecolor}`, "");
+    console.info(
+      `%carchive.worker.init()%c ${radar}`,
+      `color: ${namecolor}`,
+      "color: dodgerblue"
+    );
   }
   self.postMessage({ type: "init", payload: grid });
 }
 
-function connect(newRadar) {
-  radar = newRadar;
+function connect(force = false) {
   if (source?.readyState == 1) {
-    console.info("Closing existing connection ...");
-    source.close();
+    if (force) {
+      console.debug("Closing existing connection ...");
+      source.close();
+    } else {
+      self.postMessage({
+        type: "state",
+        payload: {
+          update: state.update,
+          message: `Update mode to ${state.update}`,
+        },
+      });
+      if (state.update == "always") {
+        navigateToEnd();
+      }
+      return;
+    }
   }
-  if (state.verbose) console.info(`Connecting live update to ${radar} ...`);
+  if (state.verbose)
+    console.info(
+      `Connecting live update to %c${radar}%c ...`,
+      "color: dodgerblue",
+      ""
+    );
   source = new EventSource("/events/");
   source.addEventListener(radar, (event) => {
     const payload = JSON.parse(event.data);
@@ -127,8 +149,8 @@ function connect(newRadar) {
   self.postMessage({
     type: "state",
     payload: {
-      state: "connect",
-      message: `Listening for ${radar} ...`,
+      update: state.update,
+      message: `Connecting to ${radar} stream ...`,
     },
   });
 }
@@ -142,8 +164,7 @@ function disconnect() {
   self.postMessage({
     type: "state",
     payload: {
-      state: "disconnect",
-      message: "Live update disabled",
+      update: state.update,
     },
   });
 }
@@ -190,9 +211,7 @@ function updateListWithItem(item) {
   const index = grid.items.length;
   grid.items.push(item);
   grid.itemsGrouped[scan].push({ item: item, index: index });
-  // let targetScan = "E4.0";
-  if (grid.scan[0] == "A") {
-    console.log("RHI mode, always choose the latest.");
+  if (state.update == "always") {
     grid.index = index;
   } else {
     if (grid.scan in grid.itemsGrouped) {
@@ -224,12 +243,8 @@ function createSweep(name = "dummy") {
   };
 }
 
-function month(radar, day) {
-  console.info(
-    `%carchive.worker.month()%c ${radar} ${day}`,
-    `color: ${namecolor}`,
-    ""
-  );
+function month(day) {
+  console.info(`%carchive.worker.month()%c ${day}`, `color: ${namecolor}`, "");
   const url = `/data/month/${radar}/${day}/`;
   fetch(url)
     .then((response) => {
@@ -293,7 +308,7 @@ function count(radar, day) {
     });
 }
 
-function list(radar, day, hour, symbol) {
+function list(day, hour, symbol) {
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
   let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
@@ -498,7 +513,7 @@ function geometry(sweep) {
   return sweep;
 }
 
-function catchup(radar) {
+function catchup() {
   console.info(
     `%carchive.worker.catchup()%c ${radar}`,
     `color: ${namecolor}`,
@@ -513,9 +528,13 @@ function catchup(radar) {
           if (state.verbose) {
             console.info(
               `%carchive.worker.catchup()%c` +
-                `   dateTimeString = ${buffer.dateTimeString}` +
-                `   hour = ${buffer.hour}  `,
+                `   dateTimeString = %c${buffer.dateTimeString}%c` +
+                `   hour = %c${buffer.hour}%c`,
               `color: ${namecolor}`,
+              "",
+              "color: dodgerblue",
+              "",
+              "color: dodgerblue",
               ""
             );
           }
@@ -540,13 +559,7 @@ function catchup(radar) {
             buffer.yearsActive.length,
             ...buffer.yearsActive
           );
-          if (state.verbose > 1) {
-            console.info(grid.items);
-            console.info(grid.itemsGrouped);
-            console.info(`grid.scan = ${grid.scan}`);
-            console.info(`grid.index = ${grid.index}`);
-          }
-          if (grid.scan[0] == "A") {
+          if (state.update == "always") {
             grid.index = grid.items.length - 1;
           } else if (grid.scan in grid.itemsGrouped) {
             grid.index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
@@ -558,13 +571,19 @@ function catchup(radar) {
             grid.scan = file.split("-")[3];
             console.debug(`Setting grid.scan to ${grid.scan}`);
           }
+          if (state.verbose > 1) {
+            console.info(grid.items);
+            console.info(grid.itemsGrouped);
+            console.info(`grid.scan = ${grid.scan}`);
+            console.info(`grid.index = ${grid.index}`);
+          }
           self.postMessage({
             type: "list",
             payload: grid,
           });
-          return radar;
+          return;
         })
-        .then((radar) => connect(radar))
+        .then(() => connect(true))
         .catch((error) => console.error(`Unexpected error ${error}`));
     } else {
       console.error("Unable to catch up.");
@@ -602,6 +621,11 @@ function navigateBackward() {
   updateGridIndex(index);
 }
 
+function navigateToEnd() {
+  let index = grid.items.length - 1;
+  updateGridIndex(index);
+}
+
 function updateGridIndexByScan(delta) {
   if (grid.itemsGrouped.length == 0) return;
   let k = -1;
@@ -622,4 +646,45 @@ function navigateForwardScan() {
 
 function navigateBackwardScan() {
   updateGridIndexByScan(-1);
+}
+
+function toggle(name) {
+  if (state.verbose > 1) {
+    console.info(
+      `%carchive.worker.toggle()%c ${name}`,
+      `color: ${namecolor}`,
+      "color: dodgerblue"
+    );
+  }
+  const update = state.update;
+  if (name == "auto") {
+    if (state.update === null) {
+      state.update = "scan";
+    } else if (state.update == "scan") {
+      state.update = "always";
+    } else {
+      state.update = null;
+    }
+  } else {
+    state.update = name;
+  }
+  if (state.verbose) {
+    console.log(
+      `%carchive.worker.toggle()%c update = %c${state.update}%c ← ${update}`,
+      `color: ${namecolor}`,
+      "",
+      "color: mediumpurple",
+      ""
+    );
+  }
+  if (state.update != update) {
+    if (state.update == null) {
+      disconnect();
+    } else {
+      connect();
+      catchup();
+    }
+  } else {
+    self.postMessage({ type: "state", payload: { update: state.update } });
+  }
 }

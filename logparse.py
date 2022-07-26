@@ -27,7 +27,11 @@ import datetime
 import argparse
 import textwrap
 
-from common import get_user_agent_string, get_ip_location
+import fcntl, termios, struct
+
+from signal import signal, SIGPIPE, SIG_DFL
+
+from common import colorize, get_user_agent_string, get_ip_location
 
 __prog__ = os.path.basename(sys.argv[0])
 __version__ = '1.0'
@@ -52,24 +56,29 @@ re_logfile = re.compile(r'(\w+\.log)(?:\.(\d{1,2}))?(?:\.(gz))?', flags=re.IGNOR
 
 def get_terminal_width():
     try:
-        w = os.get_terminal_size()
-        return w.columns
+        _, w = struct.unpack('HH', fcntl.ioctl(0, termios.TIOCGWINSZ, b'\0' * 4))
+        if w:
+            return w
     except:
-        w = 140
-    return w
+        pass
+    try:
+        t = os.get_terminal_size()
+        return t.columns
+    except:
+        return 80
 
 class LogParser:
     def __init__(self, line=None, **kwargs):
         self.format = kwargs['format'] if 'format' in kwargs else 'loc'
         self.parser = re_radarhub if 'parser' in kwargs and kwargs['parser'] == 'radarhub' else re_nginx
-        if 'width' in kwargs:
+        if 'width' in kwargs and kwargs['width'] is not None and kwargs['width'] > 40:
             self.width = kwargs['width']
         elif self.format == 'loc':
             self.width = max(25, get_terminal_width() - 88)
         elif self.format == 'all':
             self.width = 200
         else:
-            self.width = 75
+            self.width = max(25, get_terminal_width() - 35)
         self.ws = kwargs['all'] if 'all' in kwargs else False
         self.__blank__()
         if line:
@@ -103,7 +112,7 @@ class LogParser:
         else:
             self.__blank__()
 
-    def _status_color_code(self):
+    def _color_code_status(self):
         if self.status == 200:
             return '\033[38;5;142m'
         if self.status == 302:
@@ -116,7 +125,7 @@ class LogParser:
             return '\033[38;5;94m'
         return '\033[38;5;82m'
 
-    def _compression_color_code(self):
+    def _color_code_compression(self):
         if self.compression > 20.0:
             return '\033[38;5;141m'
         if self.compression > 15.0:
@@ -131,19 +140,27 @@ class LogParser:
 
     def _str_compression(self):
         s = f'{self.compression:5.2f}'[:5] if self.compression > 1.0 else '  -  '
-        return self._compression_color_code() + s + '\033[m'
+        return self._color_code_compression() + s + '\033[m'
 
     def _str_status_url(self):
         w = (self.width - 3) // 2
         u = self.url[:w] + '...' + self.url[-w:] if len(self.url) > self.width else self.url
         s = str(self.status) if self.status > 0 else ' - '
-        return self._status_color_code() + s + ' ' + u + '\033[m'
+        return self._color_code_status() + s + ' ' + u + '\033[m'
 
     def __str__(self):
         t = self.datetime.strftime(r'%m/%d %H:%M:%S') if self.datetime else '--/-- --:--:--'
         c = self._str_compression()
         u = self._str_status_url()
         b = f'{self.bytes:10,d}' if self.bytes else '         -'
+        if re_agent.search(self.user_agent) is None and len(self.user_agent) > 100:
+            h = f'{t} | {self.ip:>15} | '
+            w = get_terminal_width() - len(h)
+            m = '\n'.join(textwrap.wrap(self.user_agent, width=w))
+            i = len(h)
+            n = textwrap.indent(m, prefix=' ' * i)
+            o = colorize(n[i:], 'mint')
+            return f'{h}{o} ({len(m)} / {w})'
         if self.format == 'loc':
             if self.parser == re_nginx:
                 return f'{t} | {self.ip:>15} | {self.location:>25} | {b} | {c} | {u}'
@@ -162,7 +179,10 @@ class LogParser:
             print(self)
 
 def readlines(source):
-    with gzip.open(source, 'rt') if '.gz' == source[:-3] else open(source, 'rt') as fid:
+    if not os.path.exists(source):
+        print(f'ERROR. File {source} does not exist')
+        return None
+    with gzip.open(source, 'rt') if '.gz' == source[-3:] else open(source, 'rt') as fid:
         lines = fid.readlines()
     return lines
 
@@ -178,6 +198,10 @@ def find_previous_log(file):
     if os.path.exists(previous):
         return previous
     return None
+
+def xfunc():
+    w = get_terminal_width()
+    print(f'w = {w}')
 
 #
 
@@ -201,6 +225,8 @@ if __name__ == '__main__':
     parser.add_argument('-p', dest='parser', choices={'radarhub', 'nginx'}, help='sets the log parser (default = nginx)')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
+    parser.add_argument('-w', dest='width', type=int, help='uses specific width')
+    parser.add_argument('-x', action='store_true', help='experimental')
     parser.add_argument('--all', action='store_true', help='shows all entries, including WSCONNECTING and WSDISCONNECT (default = False)')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     args = parser.parse_args()
@@ -208,7 +234,16 @@ if __name__ == '__main__':
     if args.quiet:
         args.verbose = 0
 
-    hope = LogParser(parser=args.parser, format=args.format, all=args.all)
+    if len(args.source) and args.parser is None:
+        parser = 'radarhub' if 'radarhub' in args.source[0] else 'nginx'
+    else:
+        parser = args.parser
+    hope = LogParser(parser=parser, format=args.format, all=args.all, width=args.width)
+
+    signal(SIGPIPE, SIG_DFL)
+
+    if args.x:
+        xfunc()
 
     if select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin

@@ -886,15 +886,17 @@ def show_sweep_summary(source, markdown=False):
         print(f'Data shape = {shape}\nRaw size = {size:,d} B')
 
 '''
-    Shows visitor summary
+    Shows visitor summary, something like:
 
-    | IP Address      |    Usage (B) |   Count |      OS / Browser | Last Visited     | Location                                   |
-    | --------------- |------------- | ------- | ----------------- | ---------------- | ------------------------------------------ |
-    | 107.77.220.225  |      189,884 |      11 |    macOS / Safari | 2022/06/17 17:11 | Dallas, Texas, United States               |
+| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |
+| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |
+| 75.111.159.35   |       13,836,684 |        1,361,384 |        42 |       macOS / Chrome | 2022/07/22 | Texas, United States           |
+| 186.221.73.23   |    1,380,023,303 |      151,369,900 |     3,797 |       Linux / Chrome | 2022/07/22 | Goiás, Brazil                  |
+| 174.109.29.230  |    1,413,313,725 |      281,190,422 |    14,658 |  Windows 10 / Chrome | 2022/07/22 | North Carolina, United States  |
 '''
 def show_visitor_log(markdown=False, show_city=False, recent=0):
     print('| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |')
-    print('| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |')
+    print('| --------------- | ---------------- | ---------------- | --------- | -------------------- | ---------- | ------------------------------ |')
     def show_visitor(visitor, markdown):
         agent = logparse.get_user_agent_string(visitor.user_agent, width=20)
         date_string = visitor.last_visited_date_string()
@@ -920,10 +922,22 @@ def update_visitors(verbose=1):
     show = colorize('update_visitors()', 'green')
     show += '   ' + color_name_value('verbose', verbose)
     logger.info(show)
+
     visitors = {}
     uu = re.compile(r'(/data/load|/data/list)')
+
     file = '/var/log/nginx/access.log'
     lines = logparse.readlines(file)
+    if lines is None:
+        print('ERROR. Unable to continue.')
+    while file and len(lines) == 0:
+        logger.info(f'File {file} is empty')
+        file = logparse.find_previous_log(file)
+        if file is None:
+            logger.error('ERROR. Unable to continue.')
+            return
+        lines = logparse.readlines(file)
+
     logger.info(f'Processing {file} ... total lines = {len(lines):,d}')
 
     parser = logparse.LogParser(parser='nginx')
@@ -992,8 +1006,11 @@ def update_visitors(verbose=1):
         visitor.save()
 
     count = len(visitors)
-    s = 's' if count > 1 else ''
-    logger.info(f'Updated {count} visitor{s}')
+    if count:
+        s = 's' if count > 1 else ''
+        logger.info(f'Updated {count} visitor{s}')
+    else:
+        logger.info('No updates')
 
     if verbose:
         show_visitor_log(recent=7)
@@ -1055,6 +1072,7 @@ def dbtool_main():
             {__prog__} -i /mnt/data/PX1000/2013/201305*
             {__prog__} -i --skip /mnt/data/PX1000/2022/2022*
             {__prog__} -i --skip --progress /mnt/data/PX1000/2022/2022*
+            {__prog__} -i --no-skip --progress /mnt/data/PX1000/2022/202206*
             {__prog__} -l
             {__prog__} -l RAXPOL-
             {__prog__} -l RAXPOL- PX-
@@ -1065,6 +1083,7 @@ def dbtool_main():
             {__prog__} -f RAXPOL-20220225
             {__prog__} -f --remove 20220127
             {__prog__} --check-path /mnt/data/RaXPol/2022/202206*
+            {__prog__} -u
         '''),
         epilog='Copyright (c) 2021-2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*',
