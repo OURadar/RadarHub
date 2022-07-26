@@ -127,8 +127,8 @@ export function HelpPage(props) {
         <div className="sheetContent">
           <div className="title">Data Request</div>
           <p>
-            If you are interested in obtaining the original archive files,
-            please send us an email to: radar@arrc.ou.edu
+            If you are interested in obtaining the original archive, please send
+            us an email to: radar@arrc.ou.edu
           </p>
         </div>
 

@@ -165,7 +165,6 @@ function disconnect() {
     type: "state",
     payload: {
       update: state.update,
-      message: "Live update disabled",
     },
   });
 }
