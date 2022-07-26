@@ -241,14 +241,14 @@ export function makeTheme(inputMode) {
         styleOverrides: {
           root: {
             backgroundColor: "var(--preference-background)",
-            WebkitBackdropFilter: "blur(4px);",
+            backdropFilter: "blur(4px)",
           },
         },
       },
       MuiBackdrop: {
         styleOverrides: {
           root: {
-            WebkitBackdropFilter: "blur(4px);",
+            backdropFilter: "blur(4px)",
           },
         },
       },
