@@ -12,6 +12,14 @@ import {
 } from "@mui/icons-material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
+import {
+  RadarHubIcon,
+  RadarHub1Icon,
+  RadarHub2Icon,
+  RadarHub3Icon,
+  RadarHub4Icon,
+  RadarHub5Icon,
+} from "./radarhub-icon";
 import { Notification } from "./notification";
 
 const version = require("/package.json").version;
@@ -70,12 +78,26 @@ export function TopBar(props) {
       <ThemeProvider theme={topbarTheme}>
         <div id="topbar" role="banner">
           <div className="topbarComponent left">
-            <img
-              id="topbarLogo"
+            <RadarHubIcon
               onClick={() => {
                 document.location = "/";
               }}
             />
+            <IconButton>
+              <RadarHub1Icon />
+            </IconButton>
+            <IconButton>
+              <RadarHub2Icon />
+            </IconButton>
+            <IconButton>
+              <RadarHub3Icon />
+            </IconButton>
+            <IconButton>
+              <RadarHub4Icon />
+            </IconButton>
+            <IconButton>
+              <RadarHub5Icon />
+            </IconButton>
             <div className="statusWrapper">
               <div className={online} id="statusLed"></div>
               <div id="versionTag">{`v${version}${name}`}</div>

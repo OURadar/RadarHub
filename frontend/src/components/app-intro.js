@@ -41,7 +41,6 @@ class App extends Component {
           colors: colorDict(mode),
           theme: makeTheme(mode),
         });
-        document.documentElement.setAttribute("theme", mode);
       });
     document.body.classList.remove("hide");
   }

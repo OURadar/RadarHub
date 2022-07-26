@@ -431,8 +431,8 @@ h3 {
   height: var(--topbar-height);
 }
 #topbarLogo {
-  content: url(/static/images/radarhub-outline.png);
   cursor: pointer;
+  height: 34px;
   width: 34px;
 }
 .statusWrapper {
