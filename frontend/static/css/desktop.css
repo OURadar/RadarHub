@@ -148,7 +148,7 @@ Copyright Boonleng Cheong
   font-size: 0.8em;
   left: var(--padding);
   line-height: 1.2em;
-  padding: var(--padding);
+  padding: var(--half-padding);
   position: fixed;
   text-align: center;
   top: calc(

@@ -24,8 +24,8 @@ let grid = {
   itemsGrouped: {},
   day: new Date("2013/05/20"),
   hour: -1,
-  symbol: "Z",
   index: -1,
+  symbol: "Z",
   scan: "E4.0",
 };
 let data = {

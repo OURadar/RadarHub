@@ -106,20 +106,20 @@ class Archive {
       this.grid.index = -1;
       this.state.sweepLoading = false;
     } else if (type == "state") {
-      this.state.liveUpdate = payload.update == "null" ? null : payload.update;
-      this.state.loadCount = 0;
       if (this.state.verbose) {
         console.log(
           `%carchive.onmessage()%c state` +
-            `   state.liveUpdate = ${this.state.liveUpdate} (${
-              this.state.liveUpdate === null
-            })`,
+            `   state.liveUpdate = ${this.state.liveUpdate} -> ${payload.update}` +
+            ` (${payload.update === null})`,
           "color: lightseagreen",
           ""
         );
       }
-      if (payload.message) {
-        this.showMessage(payload.message, 2500);
+      if (this.state.liveUpdate != payload.update) {
+        this.state.liveUpdate = payload.update;
+        if (payload.message) {
+          this.showMessage(payload.message, 2500);
+        }
       }
     } else if (type == "init") {
       if (this.state.verbose) {

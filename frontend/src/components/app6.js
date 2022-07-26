@@ -26,7 +26,7 @@ class App extends Component {
       theme: makeTheme(),
       time: new Date("2013-05-20T19:00"),
       overlayLoaded: false,
-      open: false,
+      showHelp: false,
       key: "",
     };
     this.isMobile = detectMob();
@@ -36,7 +36,7 @@ class App extends Component {
     };
     this.handleHelpOpen = this.handleHelpOpen.bind(this);
     this.handleHelpClose = this.handleHelpClose.bind(this);
-    this.handleModeChange = this.handleModeChange.bind(this);
+    this.handleThemeChange = this.handleThemeChange.bind(this);
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
     this.handleLiveModeChange = this.handleLiveModeChange.bind(this);
     document.documentElement.setAttribute("theme", this.state.colors.name);
@@ -143,7 +143,7 @@ class App extends Component {
           mode={this.state.colors.name}
           ingest={this.archive}
           isMobile={this.isMobile}
-          handleModeChange={this.handleModeChange}
+          handleThemeChange={this.handleThemeChange}
           handleHelpRequest={this.handleHelpOpen}
         />
         <div id="flex">
@@ -169,7 +169,10 @@ class App extends Component {
           value={this.archive.state.liveUpdate}
           handleChange={this.handleLiveModeChange}
         />
-        <HelpPage open={this.state.open} handleClose={this.handleHelpClose} />
+        <HelpPage
+          open={this.state.showHelp}
+          handleClose={this.handleHelpClose}
+        />
       </ThemeProvider>
     );
   }
@@ -179,9 +182,8 @@ class App extends Component {
     this.state.overlayLoaded = true;
   }
 
-  handleModeChange() {
+  handleThemeChange() {
     let mode = this.state.colors.name == "light" ? "dark" : "light";
-    console.log(`App6.handleModeChange() -> ${mode}`);
     document.documentElement.setAttribute("theme", mode);
     this.setState({
       colors: colorDict(mode),
@@ -190,15 +192,14 @@ class App extends Component {
   }
 
   handleHelpOpen() {
-    this.setState({ open: true });
+    this.setState({ showHelp: true });
   }
 
   handleHelpClose() {
-    this.setState({ open: false });
+    this.setState({ showHelp: false });
   }
 
   handleLiveModeChange(_e, value) {
-    console.log(`handleLiveModeChange()  value = ${value}`);
     this.archive.toggleLiveUpdate(value);
   }
 }
