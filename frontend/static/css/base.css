@@ -123,13 +123,17 @@ canvas {
   position: relative;
 }
 
+.paper {
+  background-color: var(--system-background);
+}
 .backgrad {
   background: var(--background-gradient);
 }
 .content {
   color: white;
-  padding-top: 20vh;
+  position: absolute;
   text-align: center;
+  top: 25vh;
   width: 100%;
 }
 .sheet {
@@ -288,6 +292,10 @@ h3 {
   display: block;
   height: 100px;
 }
+.spacerTop {
+  display: block;
+  height: var(--topbar-height);
+}
 .left {
   left: var(--padding);
 }
@@ -417,17 +425,17 @@ h3 {
   height: 100vh;
 }
 #topbar {
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(0, 0, 0, 0.72);
   color: white;
   display: block;
   height: var(--topbar-height);
-  overflow-y: auto;
   width: 100%;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  position: absolute;
+  position: fixed;
   top: 0;
-  z-index: 10;
+  z-index: 1000;
+  box-shadow: inset 0px -1px 1px var(--gray);
 }
 .topbarComponent {
   align-items: center;
@@ -750,7 +758,5 @@ div.key {
 }
 
 .scrollable {
-  background-color: var(--system-background);
-  height: 100%;
   overflow-y: scroll;
 }

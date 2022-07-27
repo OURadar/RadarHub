@@ -96,6 +96,7 @@ Copyright Boonleng Cheong
   display: flex;
   flex-direction: column;
   height: var(--content-height);
+  margin-top: var(--topbar-height);
   overflow-y: scroll;
 }
 

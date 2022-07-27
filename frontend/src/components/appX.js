@@ -2,17 +2,19 @@ import * as React from "react";
 import Box from "@mui/material/Box";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
+
 import RadarIcon from "@mui/icons-material/Radar";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import GamepadIcon from "@mui/icons-material/Gamepad";
-import Paper from "@mui/material/Paper";
+
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemText from "@mui/material/ListItemText";
 import Avatar from "@mui/material/Avatar";
 
+import { colorDict, makeTheme } from "./theme";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 
@@ -24,14 +26,17 @@ function refreshMessages() {
   );
 }
 
-export default function App() {
+export default function App(props) {
+  const [color, setColor] = React.useState(() => colorDict());
+  const [theme, setTheme] = React.useState(() => makeTheme());
   const [value, setValue] = React.useState(1);
   const [messages, setMessages] = React.useState(() => refreshMessages());
+
   const [view, setView] = React.useState(<div className="fullHeight"></div>);
 
   const glView = <GLView />;
   const listView = (
-    <div className="scrollable">
+    <div className="fullHeight paper scrollable">
       <Box sx={{ pt: 7, pb: 7 }}>
         <List>
           {messages.map(({ primary, secondary, person }, index) => (

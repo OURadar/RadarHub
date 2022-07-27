@@ -149,7 +149,6 @@ class App extends Component {
         <div id="flex">
           <div id="left">
             <div>
-              <SectionHeader name="product" isMobile={false} />
               <Product
                 origin={this.props.origin}
                 sweep={this.archive.data.sweep}
@@ -162,6 +161,7 @@ class App extends Component {
             </div>
           </div>
           <div id="right">
+            <div className="spacerTop"></div>
             <Browser archive={this.archive} radar={this.props.radar} />
           </div>
         </div>
