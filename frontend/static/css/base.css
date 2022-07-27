@@ -414,15 +414,20 @@ h3 {
 }
 
 #app {
-  min-height: var(--topbar-height);
+  height: 100vh;
 }
 #topbar {
-  background-color: var(--background-color);
+  background-color: rgba(0, 0, 0, 0.75);
   color: white;
   display: block;
   height: var(--topbar-height);
   overflow-y: auto;
   width: 100%;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  position: absolute;
+  top: 0;
+  z-index: 10;
 }
 .topbarComponent {
   align-items: center;
@@ -499,11 +504,6 @@ h3 {
   position: absolute;
   top: 10px;
   right: 5px;
-}
-
-.fullHeight {
-  height: calc(var(--content-height) - 44px - 1px);
-  position: relative;
 }
 
 #test {
@@ -751,6 +751,6 @@ div.key {
 
 .scrollable {
   background-color: var(--system-background);
-  max-height: 100%;
+  height: 100%;
   overflow-y: scroll;
 }

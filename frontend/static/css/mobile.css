@@ -1,4 +1,4 @@
-/* 
+/*
 Mobile style sheet
 Copyright Boonleng Cheong
 */
@@ -71,4 +71,9 @@ Copyright Boonleng Cheong
   display: inline-block;
   width: 88vw;
   padding: 8px;
+}
+
+.fullHeight {
+  height: 100vh;
+  position: relative;
 }

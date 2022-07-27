@@ -280,7 +280,8 @@ class GLView extends Component {
     const ww = Math.round(h / 3);
     geo.fix.viewport.width = ww;
     geo.fix.viewport.height = ww;
-    geo.fix.viewport.x = w - ww;
+    geo.fix.viewport.x = w - ww - 5;
+    geo.fix.viewport.y = 56 + 5;
 
     geo.viewport.width = w;
     geo.viewport.height = h;

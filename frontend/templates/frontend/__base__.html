@@ -18,9 +18,9 @@
     <link rel="icon" type="image/png" sizes="64x64" href="{% static 'images/icon64.png' %}" />
     <link rel="apple-touch-icon" sizes="114x114" href="{% static 'images/icon114.png' %}" />
     <link rel="apple-touch-icon" sizes="144x144" href="{% static 'images/icon144.png' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}?v={% now "U" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}?v={%now "U" %}" />
     <link rel="stylesheet" type="text/css" media="screen and (min-device-width: 550px)" href="{% static 'css/desktop.css' %}?v={% now "U" %}" />
-    <link rel="stylesheet" type="text/css" media="screen and (max-device-width: 550px)" href="{% static 'css/mobile.css' %}" />
+    <link rel="stylesheet" type="text/css" media="screen and (max-device-width: 550px)" href="{% static 'css/mobile.css' %}?v={%now "U" %}" />
     {{ params|json_script:"params" }}
     {% block extra_head %}{% endblock %}
   </head>
