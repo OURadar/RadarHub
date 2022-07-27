@@ -9,7 +9,7 @@ Copyright Boonleng Cheong
   --half-padding: 10px;
   --base-size: 14;
   --background-color: #056f92;
-  --topbar-height: 54px;
+  --topbar-height: 56px;
   --content-height: calc(100vh - var(--topbar-height));
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
   box-sizing: border-box;

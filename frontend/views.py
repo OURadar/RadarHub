@@ -1,3 +1,4 @@
+import glob
 import logging
 
 from django.shortcuts import render
@@ -14,6 +15,12 @@ logger = logging.getLogger('frontend')
 radars = [x['folder'].lower() for x in settings.RADARS.values()]
 default_radar = radars[0]
 
+lines = []
+for file in glob.glob('frontend/static/css/*.css'):
+    with open(file) as fid:
+        lines = [*lines, *fid.readlines()]
+css_hash = hex(hash('\n'.join(lines)))[-8:]
+
 #
 
 def get_user_info(request):
@@ -27,10 +34,10 @@ def get_user_info(request):
 # Create your views here.
 def index(request):
     params = get_user_info(request)
-    return render(request, 'frontend/index.html', {'params': params})
+    return render(request, 'frontend/index.html', {'vars': params, 'css': css_hash})
 
 def dev(request):
-    return render(request, 'frontend/dev.html')
+    return render(request, 'frontend/dev.html', {'css': css_hash})
 
 # Control
 
@@ -43,7 +50,7 @@ def control_radar(request, radar):
     logger.info(show)
     origin = location(radar)
     params = {'radar': radar, 'origin': origin}
-    return render(request, 'frontend/control.html', {'params': params})
+    return render(request, 'frontend/control.html', {'vars': params, 'css': css_hash})
 
 def control(request):
     return control_radar(request, "demo")
@@ -63,7 +70,7 @@ def archive_radar_profile(request, radar, profileGL):
         raise Http404
     origin = location(radar)
     params = {'radar': radar, 'origin': origin, 'profileGL': profileGL}
-    return render(request, 'frontend/archive.html', {'params': params})
+    return render(request, 'frontend/archive.html', {'vars': params, 'css': css_hash})
 
 def archive_radar(request, radar):
     return archive_radar_profile(request, radar, False)
