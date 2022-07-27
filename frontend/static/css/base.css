@@ -748,3 +748,9 @@ div.key {
   padding: 0 10px;
   border-radius: 4px;
 }
+
+.scrollable {
+  background-color: var(--system-background);
+  max-height: 100%;
+  overflow-y: scroll;
+}
