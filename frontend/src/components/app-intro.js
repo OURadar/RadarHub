@@ -42,7 +42,6 @@ class App extends Component {
           theme: makeTheme(mode),
         });
       });
-    document.body.classList.remove("hide");
   }
 
   render() {

@@ -200,6 +200,7 @@ class App extends Component {
   }
 
   handleLiveModeChange(_e, value) {
+    console.log(`handleLiveModeChange() ${value}`);
     this.archive.toggleLiveUpdate(value);
   }
 }

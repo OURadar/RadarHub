@@ -9,6 +9,7 @@ import {
   LightMode,
   DarkMode,
   HelpCenter,
+  Adjust,
 } from "@mui/icons-material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
@@ -19,6 +20,8 @@ import {
   RadarHub3Icon,
   RadarHub4Icon,
   RadarHub5Icon,
+  RadarHub6Icon,
+  RadarHub7Icon,
 } from "./radarhub-icon";
 import { Notification } from "./notification";
 
@@ -78,11 +81,16 @@ export function TopBar(props) {
       <ThemeProvider theme={topbarTheme}>
         <div id="topbar" role="banner">
           <div className="topbarComponent left">
-            <RadarHubIcon
+            <IconButton
               onClick={() => {
                 document.location = "/";
               }}
-            />
+            >
+              <RadarHubIcon />
+            </IconButton>
+            <IconButton>
+              <Adjust />
+            </IconButton>
             <IconButton>
               <RadarHub1Icon />
             </IconButton>
@@ -97,6 +105,12 @@ export function TopBar(props) {
             </IconButton>
             <IconButton>
               <RadarHub5Icon />
+            </IconButton>
+            <IconButton>
+              <RadarHub6Icon />
+            </IconButton>
+            <IconButton>
+              <RadarHub7Icon />
             </IconButton>
             <div className="statusWrapper">
               <div className={online} id="statusLed"></div>

@@ -28,9 +28,6 @@ let grid = {
   symbol: "Z",
   scan: "E4.0",
 };
-let data = {
-  sweep: null,
-};
 let state = {
   update: "scan",
   verbose: 0,
@@ -106,7 +103,7 @@ function init(newRadar) {
 function connect(force = false) {
   if (source?.readyState == 1) {
     if (force) {
-      console.debug("Closing existing connection ...");
+      console.debug(`Closing existing connection ... force = ${force}`);
       source.close();
     } else {
       self.postMessage({
@@ -569,7 +566,6 @@ function catchup() {
           if (grid.index >= 0) {
             let file = grid.items[grid.index];
             grid.scan = file.split("-")[3];
-            console.debug(`Setting grid.scan to ${grid.scan}`);
           }
           if (state.verbose > 1) {
             console.info(grid.items);
@@ -583,7 +579,7 @@ function catchup() {
           });
           return;
         })
-        .then(() => connect(true))
+        .then(() => connect())
         .catch((error) => console.error(`Unexpected error ${error}`));
     } else {
       console.error("Unable to catch up.");
@@ -681,7 +677,6 @@ function toggle(name) {
     if (state.update == null) {
       disconnect();
     } else {
-      connect();
       catchup();
     }
   } else {
