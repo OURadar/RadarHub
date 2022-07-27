@@ -15,10 +15,12 @@ import { Archive } from "./archive";
 
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
-import FolderIcon from "@mui/icons-material/Folder";
-import RestoreIcon from "@mui/icons-material/Restore";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
+
+import RadarIcon from "@mui/icons-material/Radar";
+import EventNoteIcon from "@mui/icons-material/EventNote";
+import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
+import GamepadIcon from "@mui/icons-material/Gamepad";
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -85,24 +87,24 @@ class App extends Component {
         />
         <BottomNavigation value={this.state.value} onChange={this.handleChange}>
           <BottomNavigationAction
-            label="Recents"
-            value="recents"
-            icon={<RestoreIcon />}
+            label="View"
+            value="view"
+            icon={<RadarIcon />}
           />
           <BottomNavigationAction
-            label="Favorites"
-            value="favorites"
-            icon={<FavoriteIcon />}
+            label="Archive"
+            value="archive"
+            icon={<EventNoteIcon />}
           />
           <BottomNavigationAction
-            label="Nearby"
-            value="nearby"
-            icon={<LocationOnIcon />}
+            label="Health"
+            value="health"
+            icon={<MonitorHeartIcon />}
           />
           <BottomNavigationAction
-            label="Folder"
-            value="folder"
-            icon={<FolderIcon />}
+            label="Control"
+            value="control"
+            icon={<GamepadIcon />}
           />
         </BottomNavigation>
       </ThemeProvider>

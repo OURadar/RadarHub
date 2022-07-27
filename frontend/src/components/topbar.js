@@ -9,20 +9,10 @@ import {
   LightMode,
   DarkMode,
   HelpCenter,
-  Adjust,
 } from "@mui/icons-material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
-import {
-  RadarHubIcon,
-  RadarHub1Icon,
-  RadarHub2Icon,
-  RadarHub3Icon,
-  RadarHub4Icon,
-  RadarHub5Icon,
-  RadarHub6Icon,
-  RadarHub7Icon,
-} from "./radarhub-icon";
+import { RadarHubIcon } from "./radarhub-icon";
 import { Notification } from "./notification";
 
 const version = require("/package.json").version;
@@ -87,30 +77,6 @@ export function TopBar(props) {
               }}
             >
               <RadarHubIcon />
-            </IconButton>
-            <IconButton>
-              <Adjust />
-            </IconButton>
-            <IconButton>
-              <RadarHub1Icon />
-            </IconButton>
-            <IconButton>
-              <RadarHub2Icon />
-            </IconButton>
-            <IconButton>
-              <RadarHub3Icon />
-            </IconButton>
-            <IconButton>
-              <RadarHub4Icon />
-            </IconButton>
-            <IconButton>
-              <RadarHub5Icon />
-            </IconButton>
-            <IconButton>
-              <RadarHub6Icon />
-            </IconButton>
-            <IconButton>
-              <RadarHub7Icon />
             </IconButton>
             <div className="statusWrapper">
               <div className={online} id="statusLed"></div>
