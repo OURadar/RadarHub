@@ -1,25 +1,19 @@
 {
   "background_color": "black",
   "description": "A hub where radars and users connect",
+  "developer": {
+    "name": "Boonleng Cheong",
+    "url": "https:/arrc.ou.edu/people.html"
+  },
   "display": "standalone",
   "icons": [
     {
-      "src": "/static/images/iradar-icon-57x57.png",
-      "sizes": "57x57",
-      "type": "image/png"
-    },
-    {
-      "src": "/static/images/iradar-icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png"
-    },
-    {
-      "src": "/static/images/iradar-icon-114x114.png",
+      "src": "/static/images/icon114.png",
       "sizes": "114x114",
       "type": "image/png"
     },
     {
-      "src": "/static/images/iradar-icon-144x144.png",
+      "src": "/static/images/icon144.png",
       "sizes": "144x144",
       "type": "image/png"
     }
