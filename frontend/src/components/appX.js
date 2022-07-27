@@ -74,7 +74,7 @@ export default function App(props) {
         }}
         sx={{
           position: "absolute",
-          bottom: 0,
+          bottom: "20px",
           backgroundColor: "rgba(255, 255, 255, 0.75)",
           backdropFilter: "blur(4px)",
           width: "100%",
