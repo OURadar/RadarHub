@@ -8,10 +8,10 @@ Copyright Boonleng Cheong
   --padding: 20px;
   --half-padding: 10px;
   --base-size: 14;
-  --background-color: #056f92;
+  --background-color: rgb(0, 111, 146);
+  --background-color-translucent: rgba(0, 92, 121, 0.72);
   --topbar-height: 56px;
   --tabbar-height: 48px;
-  --content-height: calc(100vh - var(--topbar-height) - var(--tabbar-height));
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
   box-sizing: border-box;
 }
@@ -446,12 +446,19 @@ h3 {
   height: 100vh;
 }
 #topbar {
+  backdrop-filter: blur(4px);
+  background: linear-gradient(
+    180deg,
+    var(--background-color) 25%,
+    var(--background-color-translucent)
+  );
   color: white;
   display: block;
   height: var(--topbar-height);
   width: 100%;
   position: fixed;
   top: 0;
+  -webkit-backdrop-filter: blur(4px);
   z-index: 1000;
 }
 .topbarComponent {
@@ -460,11 +467,15 @@ h3 {
   position: absolute;
   height: var(--topbar-height);
 }
+#tabbar {
+  backdrop-filter: blur(4px);
+  background-color: rgba(240, 240, 240, 0.8);
+  -webkit-backdrop-filter: blur(4px);
+}
 
 .statusWrapper {
   display: inline-block;
   position: relative;
-  margin-left: 10px;
   line-height: 28px;
   height: 28px;
   padding: 0 5px;
@@ -482,7 +493,12 @@ h3 {
 .offline {
   background-color: var(--orange);
 }
-#versionTag,
+#versionTag {
+  bottom: 5vh;
+  position: fixed;
+  text-align: center;
+  width: 100%;
+}
 #statusBody {
   display: inline-block;
   padding-left: 10px;

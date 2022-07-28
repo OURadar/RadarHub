@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import { ThemeProvider } from "@mui/material/styles";
+
 import Box from "@mui/material/Box";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
@@ -14,10 +16,12 @@ import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 
 export default function App(props) {
-  const [value, setValue] = React.useState(0);
   const [view, setView] = React.useState(<div className="fullHeight"></div>);
+  const [value, setValue] = React.useState(0);
+  const [theme, setTheme] = React.useState(() => makeTheme());
+  const [colors, setColors] = React.useState(() => colorDict());
 
-  const glView = <GLView />;
+  const glView = <GLView colors={colors} />;
 
   const listView = (
     <div className="fullHeight paper">
@@ -41,13 +45,14 @@ export default function App(props) {
   }, [value]);
 
   return (
-    <div className="fullHeight">
+    <ThemeProvider theme={theme}>
       <TopBar />
       <Tabs
+        id="tabbar"
         value={value}
         onChange={handleChange}
         aria-label="icon tabs"
-        className="fullWidth lightBackground"
+        className="fullWidth"
         variant="fullWidth"
         sx={{ position: "fixed", top: 56, zIndex: 1 }}
       >
@@ -57,6 +62,6 @@ export default function App(props) {
         <Tab icon={<GamepadIcon />} aria-label="control" disabled />
       </Tabs>
       {view}
-    </div>
+    </ThemeProvider>
   );
 }

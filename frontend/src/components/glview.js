@@ -281,7 +281,7 @@ class GLView extends Component {
     geo.fix.viewport.width = ww;
     geo.fix.viewport.height = ww;
     geo.fix.viewport.x = w - ww - 5 * this.ratio;
-    geo.fix.viewport.y = (56 + 5) * this.ratio;
+    geo.fix.viewport.y = 5 * this.ratio;
 
     geo.viewport.width = w;
     geo.viewport.height = h;

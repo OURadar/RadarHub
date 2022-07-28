@@ -15,8 +15,6 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { RadarHubIcon } from "./radarhub-icon";
 import { Notification } from "./notification";
 
-const version = require("/package.json").version;
-
 const emojis = require("emoji-name-map");
 
 const topbarTheme = createTheme({
@@ -56,7 +54,7 @@ export function TopBar(props) {
   const [message, setMessage] = React.useState("");
   let name, online, status, notify;
   if (props.ingest) {
-    name = " / " + props.ingest.radar;
+    name = props.ingest.radar;
     online = props.ingest.state.liveUpdate === null ? "offline" : "online";
     status = <StatusBody message={props.ingest.message} />;
     notify = <Notification message={props.ingest.response || message} />;
@@ -69,7 +67,7 @@ export function TopBar(props) {
   return (
     <div>
       <ThemeProvider theme={topbarTheme}>
-        <div id="topbar" role="banner" className="darkBackground">
+        <div id="topbar" role="banner">
           <div className="topbarComponent left">
             <IconButton
               onClick={() => {
@@ -80,7 +78,7 @@ export function TopBar(props) {
             </IconButton>
             <div className="statusWrapper">
               <div className={online} id="statusLed"></div>
-              <div id="versionTag">{`v${version}${name}`}</div>
+              <div id="versionTag">{`${name}`}</div>
               {status}
               {notify}
             </div>

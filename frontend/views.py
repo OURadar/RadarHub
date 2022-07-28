@@ -39,7 +39,7 @@ def get_user_info(request):
 # Create your views here.
 def index(request):
     params = get_user_info(request)
-    return render(request, 'frontend/index.html', {'vars': params, 'css': css_hash})
+    return render(request, 'frontend/index.html', {'vars': params, 'css': css_hash, 'version': settings.VERSION})
 
 def dev(request):
     return render(request, 'frontend/dev.html', {'css': css_hash})
