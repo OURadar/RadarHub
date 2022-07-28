@@ -12,6 +12,7 @@ Copyright Boonleng Cheong
   --button-border-left: solid 1px var(--border-accent);
   --button-border-radius: 5px;
   --button-margin-bottom: 5px;
+  --content-height: calc(100vh - var(--topbar-height));
 }
 .controlContainer,
 .healthContainer {

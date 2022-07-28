@@ -11,7 +11,7 @@ Copyright Boonleng Cheong
   --background-color: #056f92;
   --topbar-height: 56px;
   --tabbar-height: 48px;
-  --content-height: calc(100vh - var(--topbar-height));
+  --content-height: calc(100vh - var(--topbar-height) - var(--tabbar-height));
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
   box-sizing: border-box;
 }
@@ -428,18 +428,17 @@ h3 {
 }
 
 .darkBackground {
-  background-color: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(4px);
+  background: linear-gradient(180deg, black 50%, rgba(0, 0, 0, 0.85));
   -webkit-backdrop-filter: blur(4px);
 }
 .lightBackground {
-  /* background-color: rgba(255, 255, 255, 0.72); */
+  backdrop-filter: blur(4px);
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.72) 60%,
-    transparent
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0.6)
   );
-  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
 
@@ -454,7 +453,6 @@ h3 {
   position: fixed;
   top: 0;
   z-index: 1000;
-  box-shadow: inset 0px -1px 1px var(--gray);
 }
 .topbarComponent {
   align-items: center;
