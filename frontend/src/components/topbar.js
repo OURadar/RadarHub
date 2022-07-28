@@ -69,7 +69,7 @@ export function TopBar(props) {
   return (
     <div>
       <ThemeProvider theme={topbarTheme}>
-        <div id="topbar" role="banner">
+        <div id="topbar" role="banner" className="darkBackground">
           <div className="topbarComponent left">
             <IconButton
               onClick={() => {
