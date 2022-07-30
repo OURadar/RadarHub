@@ -15,9 +15,8 @@ import { colorDict, makeTheme, makeDarkPalette } from "./theme";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 
-const darkPalette = makeDarkPalette();
 const topbarTheme = createTheme({
-  ...darkPalette,
+  ...makeDarkPalette("dark"),
   components: {
     MuiSvgIcon: {
       styleOverrides: {

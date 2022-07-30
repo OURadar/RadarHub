@@ -10,7 +10,7 @@ Copyright Boonleng Cheong
   --base-size: 14;
   --background-color: rgb(0, 111, 146);
   --background-color-translucent: rgba(0, 92, 121, 0.72);
-  --background-secondary: rgba(0, 46, 60, 0.72);
+  --background-secondary: rgba(0, 20, 27, 0.85);
   --topbar-height: 56px;
   --tabbar-height: 48px;
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
@@ -448,11 +448,7 @@ h3 {
 }
 #topbar {
   backdrop-filter: blur(4px);
-  background: linear-gradient(
-    180deg,
-    var(--background-color) 25%,
-    var(--background-color-translucent)
-  );
+  background: var(--background-color);
   color: white;
   display: block;
   height: var(--topbar-height);
