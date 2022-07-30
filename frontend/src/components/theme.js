@@ -32,6 +32,62 @@ function reviseMode(mode) {
   return { body, mode };
 }
 
+const paletteLight = {
+  primary: {
+    main: "rgb(0, 199, 190)",
+    light: "rgba(0, 199, 190, 0.2)",
+    dark: "rgba(0, 199, 190, 0.3)",
+  },
+  secondary: {
+    main: "rgb(162, 132, 94)",
+    light: "rgba(162, 132, 94, 0.15)",
+    dark: "rgba(162, 132, 94, 0.25)",
+  },
+  gray: {
+    main: "rgb(180, 180, 180)",
+  },
+  clear: {
+    main: "rgb(123, 195, 237)",
+  },
+  rain: {
+    main: "rgb(30, 230, 56)",
+  },
+  heavy: {
+    main: "rgb(255, 175, 25)",
+  },
+  divider: "rgba(0, 0, 0, 0.04)",
+};
+
+const paletteDark = {
+  primary: {
+    main: "rgb(102, 212, 207)",
+    light: "rgba(102, 212, 207, 0.2)",
+    dark: "rgba(102, 212, 207, 0.3)",
+  },
+  secondary: {
+    main: "rgb(172, 142, 104)",
+    light: "rgba(172, 142, 104, 0.2)",
+    dark: "rgba(172, 142, 104, 0.3)",
+  },
+  gray: {
+    main: "rgb(180, 180, 180)",
+  },
+  clear: {
+    main: "rgb(123, 195, 237)",
+  },
+  rain: {
+    main: "rgb(30, 230, 56)",
+  },
+  heavy: {
+    main: "rgb(255, 175, 25)",
+  },
+  divider: "rgba(255, 255, 255, 0.04)",
+};
+
+export function makeDarkPalette() {
+  return createTheme({ palette: paletteDark });
+}
+
 export function makeTheme(inputMode) {
   const border =
     window.devicePixelRatio > 1
@@ -41,57 +97,7 @@ export function makeTheme(inputMode) {
   let theme = createTheme({
     palette: {
       mode,
-      ...(mode === "light"
-        ? {
-            primary: {
-              main: "rgb(0, 199, 190)",
-              light: "rgba(0, 199, 190, 0.2)",
-              dark: "rgba(0, 199, 190, 0.3)",
-            },
-            secondary: {
-              main: "rgb(162, 132, 94)",
-              light: "rgba(162, 132, 94, 0.15)",
-              dark: "rgba(162, 132, 94, 0.25)",
-            },
-            gray: {
-              main: "rgb(180, 180, 180)",
-            },
-            clear: {
-              main: "rgb(123, 195, 237)",
-            },
-            rain: {
-              main: "rgb(30, 230, 56)",
-            },
-            heavy: {
-              main: "rgb(255, 175, 25)",
-            },
-            divider: "rgba(0, 0, 0, 0.04)",
-          }
-        : {
-            primary: {
-              main: "rgb(102, 212, 207)",
-              light: "rgba(102, 212, 207, 0.2)",
-              dark: "rgba(102, 212, 207, 0.3)",
-            },
-            secondary: {
-              main: "rgb(172, 142, 104)",
-              light: "rgba(172, 142, 104, 0.2)",
-              dark: "rgba(172, 142, 104, 0.3)",
-            },
-            gray: {
-              main: "rgb(180, 180, 180)",
-            },
-            clear: {
-              main: "rgb(123, 195, 237)",
-            },
-            rain: {
-              main: "rgb(30, 230, 56)",
-            },
-            heavy: {
-              main: "rgb(255, 175, 25)",
-            },
-            divider: "rgba(255, 255, 255, 0.04)",
-          }),
+      ...(mode === "light" ? paletteLight : paletteDark),
     },
     typography: {
       fontFamily: [
