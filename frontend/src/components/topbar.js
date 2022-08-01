@@ -55,7 +55,7 @@ export function TopBar(props) {
   let name, online, status, notify;
   if (props.ingest) {
     name = props.ingest.radar;
-    online = props.ingest.state.liveUpdate === null ? "offline" : "online";
+    online = props.ingest.state.liveUpdate || "unknown";
     status = <StatusBody message={props.ingest.message} />;
     notify = <Notification message={props.ingest.response || message} />;
   } else {
@@ -78,7 +78,7 @@ export function TopBar(props) {
             </IconButton>
             <div className="statusWrapper">
               <div className={online} id="statusLed"></div>
-              <div id="versionTag">{`${name}`}</div>
+              <div id="radarName">{`${name}`}</div>
               {status}
               {notify}
             </div>
