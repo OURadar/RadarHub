@@ -464,10 +464,22 @@ h3 {
   position: absolute;
   height: var(--topbar-height);
 }
-#tabbar {
+
+#tabbar,
+#navbar {
   backdrop-filter: blur(4px);
   background-color: var(--background-secondary);
+  position: fixed;
+  width: 100%;
+  z-index: 1;
   -webkit-backdrop-filter: blur(4px);
+}
+#tabbar {
+  top: 56px;
+}
+#navbar {
+  bottom: 0;
+  padding-bottom: 20px;
 }
 
 .statusWrapper {

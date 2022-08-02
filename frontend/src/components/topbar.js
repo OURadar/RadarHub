@@ -8,7 +8,7 @@ import {
   AccountCircle,
   LightMode,
   DarkMode,
-  HelpCenter,
+  Info,
 } from "@mui/icons-material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
@@ -60,7 +60,7 @@ export function TopBar(props) {
     notify = <Notification message={props.ingest.response || message} />;
   } else {
     name = "";
-    online = "offline";
+    online = "unknown";
     status = <StatusBody />;
     notify = <Notification message={message} />;
   }
@@ -142,7 +142,7 @@ export function Console(props) {
         onClick={props.handleHelpRequest}
         size="large"
       >
-        <HelpCenter />
+        <Info />
       </IconButton>
       <IconButton
         aria-label="Refresh"

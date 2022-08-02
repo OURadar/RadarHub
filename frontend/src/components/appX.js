@@ -1,5 +1,7 @@
 import * as React from "react";
-import Box from "@mui/material/Box";
+
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 
@@ -8,49 +10,37 @@ import EventNoteIcon from "@mui/icons-material/EventNote";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import GamepadIcon from "@mui/icons-material/Gamepad";
 
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
-import ListItemText from "@mui/material/ListItemText";
-import Avatar from "@mui/material/Avatar";
-
-import { colorDict, makeTheme } from "./theme";
+import { colorDict, makeTheme, makeDarkPalette } from "./theme";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
+import { RandomList } from "./random-list";
 
-function refreshMessages() {
-  const getRandomInt = (max) => Math.floor(Math.random() * Math.floor(max));
+const topbarTheme = createTheme({
+  ...makeDarkPalette("dark"),
+  components: {
+    MuiSvgIcon: {
+      styleOverrides: {
+        root: {
+          color: "white",
+        },
+      },
+    },
+  },
+});
 
-  return Array.from(new Array(50)).map(
-    () => messageExamples[getRandomInt(messageExamples.length)]
-  );
-}
+const glView = <GLView />;
+const listView = <RandomList />;
 
 export default function App(props) {
-  const [color, setColor] = React.useState(() => colorDict());
-  const [theme, setTheme] = React.useState(() => makeTheme());
   const [value, setValue] = React.useState(1);
-  const [messages, setMessages] = React.useState(() => refreshMessages());
+  const [theme, setTheme] = React.useState(() => makeTheme());
+  const [colors, setColors] = React.useState(() => colorDict());
 
   const [view, setView] = React.useState(<div className="fullHeight"></div>);
 
-  const glView = <GLView />;
-  const listView = (
-    <div className="fullHeight paper scrollable">
-      <Box sx={{ pt: 7, pb: 7 }}>
-        <List>
-          {messages.map(({ primary, secondary, person }, index) => (
-            <ListItem button key={index + person}>
-              <ListItemAvatar>
-                <Avatar alt="Profile Picture" src={person} />
-              </ListItemAvatar>
-              <ListItemText primary={primary} secondary={secondary} />
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-    </div>
-  );
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
 
   React.useEffect(() => {
     console.log(`value = ${value}`);
@@ -58,78 +48,26 @@ export default function App(props) {
       setView(glView);
     } else {
       setView(listView);
-      setMessages(refreshMessages());
     }
-  }, [value, setMessages]);
+  }, [value]);
 
   return (
     <div className="fullHeight">
       <TopBar />
-      {view}
-      <BottomNavigation
-        showLabels
-        value={value}
-        onChange={(event, newValue) => {
-          setValue(newValue);
-        }}
-        sx={{
-          position: "absolute",
-          bottom: "20px",
-          backgroundColor: "rgba(255, 255, 255, 0.75)",
-          backdropFilter: "blur(4px)",
-          width: "100%",
-        }}
-      >
-        <BottomNavigationAction label="View" icon={<RadarIcon />} />
-        <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
-        <BottomNavigationAction label="Health" icon={<MonitorHeartIcon />} />
-        <BottomNavigationAction label="Control" icon={<GamepadIcon />} />
-      </BottomNavigation>
+      <ThemeProvider theme={theme}>{view}</ThemeProvider>
+      <ThemeProvider theme={theme}>
+        <BottomNavigation
+          id="navbar"
+          showLabels
+          value={value}
+          onChange={handleChange}
+        >
+          <BottomNavigationAction label="View" icon={<RadarIcon />} />
+          <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
+          <BottomNavigationAction label="Health" icon={<MonitorHeartIcon />} />
+          <BottomNavigationAction label="Control" icon={<GamepadIcon />} />
+        </BottomNavigation>
+      </ThemeProvider>
     </div>
   );
 }
-
-const messageExamples = [
-  {
-    primary: "Brunch this week?",
-    secondary:
-      "I'll be in the neighbourhood this week. Let's grab a bite to eat",
-    person: "/static/images/icon64.png",
-  },
-  {
-    primary: "Birthday Gift",
-    secondary: `Do you have a suggestion for a good present for John on his work
-      anniversary. I am really confused & would love your thoughts on it.`,
-    person: "/static/images/icon64.png",
-  },
-  {
-    primary: "Recipe to try",
-    secondary:
-      "I am try out this new BBQ recipe, I think this might be amazing",
-    person: "/static/images/icon64.png",
-  },
-  {
-    primary: "Yes!",
-    secondary: "I have the tickets to the ReactConf for this year.",
-    person: "/static/images/icon64.png",
-  },
-  {
-    primary: "Doctor's Appointment",
-    secondary:
-      "My appointment for the doctor was rescheduled for next Saturday.",
-    person: "/static/images/icon64.png",
-  },
-  {
-    primary: "Discussion",
-    secondary: `Menus that are generated by the bottom app bar (such as a bottom
-      navigation drawer or overflow menu) open as bottom sheets at a higher elevation
-      than the bar.`,
-    person: "/static/images/icon64.png",
-  },
-  {
-    primary: "Summer BBQ",
-    secondary: `Who wants to have a cookout this weekend? I just got some furniture
-      for my backyard and would love to fire up the grill.`,
-    person: "/static/images/icon64.png",
-  },
-];

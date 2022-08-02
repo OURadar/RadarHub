@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
-import Box from "@mui/material/Box";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 
@@ -14,6 +13,7 @@ import GamepadIcon from "@mui/icons-material/Gamepad";
 import { colorDict, makeTheme, makeDarkPalette } from "./theme";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
+import { RandomList } from "./random-list";
 
 const topbarTheme = createTheme({
   ...makeDarkPalette("dark"),
@@ -28,21 +28,15 @@ const topbarTheme = createTheme({
   },
 });
 
+const glView = <GLView colors={colors} />;
+const listView = <RandomList />;
+
 export default function App(props) {
-  const [view, setView] = React.useState(<div className="fullHeight"></div>);
   const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(() => makeTheme());
   const [colors, setColors] = React.useState(() => colorDict());
 
-  const glView = <GLView colors={colors} />;
-
-  const listView = (
-    <div className="fullHeight paper">
-      <Box sx={{ pt: 15, bgColor: "var(--system-background)" }}>
-        <div className="spacerTop">Something here</div>
-      </Box>
-    </div>
-  );
+  const [view, setView] = React.useState(<div className="fullHeight"></div>);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -68,7 +62,6 @@ export default function App(props) {
           aria-label="icon tabs"
           className="fullWidth"
           variant="fullWidth"
-          sx={{ position: "fixed", top: 56, zIndex: 1 }}
         >
           <Tab icon={<RadarIcon />} aria-label="view" />
           <Tab icon={<EventNoteIcon />} aria-label="archive" />
