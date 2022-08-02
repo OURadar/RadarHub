@@ -15,7 +15,7 @@ import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 import { RandomList } from "./random-list";
 
-const topbarTheme = createTheme({
+const darkTheme = createTheme({
   ...makeDarkPalette("dark"),
   components: {
     MuiSvgIcon: {
@@ -54,7 +54,7 @@ export default function App(props) {
   return (
     <div>
       <TopBar />
-      <ThemeProvider theme={topbarTheme}>
+      <ThemeProvider theme={darkTheme}>
         <Tabs
           id="tabbar"
           value={value}

@@ -15,19 +15,6 @@ import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 import { RandomList } from "./random-list";
 
-const topbarTheme = createTheme({
-  ...makeDarkPalette("dark"),
-  components: {
-    MuiSvgIcon: {
-      styleOverrides: {
-        root: {
-          color: "white",
-        },
-      },
-    },
-  },
-});
-
 const glView = <GLView />;
 const listView = <RandomList />;
 
@@ -52,10 +39,10 @@ export default function App(props) {
   }, [value]);
 
   return (
-    <div className="fullHeight">
+    <div>
       <TopBar />
-      <ThemeProvider theme={theme}>{view}</ThemeProvider>
       <ThemeProvider theme={theme}>
+        {view}
         <BottomNavigation
           id="navbar"
           showLabels

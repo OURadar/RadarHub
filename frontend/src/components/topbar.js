@@ -65,61 +65,59 @@ export function TopBar(props) {
     notify = <Notification message={message} />;
   }
   return (
-    <div>
-      <ThemeProvider theme={topbarTheme}>
-        <div id="topbar" role="banner">
-          <div className="topbarComponent left">
-            <IconButton
-              onClick={() => {
-                document.location = "/";
-              }}
-            >
-              <RadarHubIcon />
-            </IconButton>
-            <div className="statusWrapper">
-              <div className={online} id="statusLed"></div>
-              <div id="radarName">{`${name}`}</div>
-              {status}
-              {notify}
-            </div>
+    <ThemeProvider theme={topbarTheme}>
+      <div id="topbar" role="banner">
+        <div className="topbarComponent left">
+          <IconButton
+            onClick={() => {
+              document.location = "/";
+            }}
+          >
+            <RadarHubIcon />
+          </IconButton>
+          <div className="statusWrapper">
+            <div className={online} id="statusLed"></div>
+            <div id="radarName">{`${name}`}</div>
+            {status}
+            {notify}
           </div>
-          <Console
-            {...props}
-            handleAccount={() => {
-              setMessage("Fetching User Information ...");
-              fetch("/profile/")
-                .then((response) => {
-                  if (response.status == 200) {
-                    response.json().then(({ user, ip, emoji }) => {
-                      let title =
-                        user == "None" ? "Anonymous User" : `Hello ${user}`;
-                      let symbol = emojis.get(emoji) || "";
-                      setMessage(
-                        user == "None"
-                          ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
-                              window.location.pathname +
-                              "'>Sign In Here</a><div class='emotion'>⛅️</div>"
-                          : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
-                      );
-                      setTimeout(() => setMessage(""), 3500);
-                    });
-                  } else {
+        </div>
+        <Console
+          {...props}
+          handleAccount={() => {
+            setMessage("Fetching User Information ...");
+            fetch("/profile/")
+              .then((response) => {
+                if (response.status == 200) {
+                  response.json().then(({ user, ip, emoji }) => {
+                    let title =
+                      user == "None" ? "Anonymous User" : `Hello ${user}`;
+                    let symbol = emojis.get(emoji) || "";
                     setMessage(
-                      `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+                      user == "None"
+                        ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
+                            window.location.pathname +
+                            "'>Sign In Here</a><div class='emotion'>⛅️</div>"
+                        : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
                     );
-                  }
-                })
-                .catch((_error) => {
+                    setTimeout(() => setMessage(""), 3500);
+                  });
+                } else {
                   setMessage(
                     `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
                   );
-                  setTimeout(() => setMessage(""), 3500);
-                });
-            }}
-          />
-        </div>
-      </ThemeProvider>
-    </div>
+                }
+              })
+              .catch((_error) => {
+                setMessage(
+                  `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+                );
+                setTimeout(() => setMessage(""), 3500);
+              });
+          }}
+        />
+      </div>
+    </ThemeProvider>
   );
 }
 

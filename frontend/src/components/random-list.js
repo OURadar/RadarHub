@@ -21,7 +21,7 @@ export function RandomList(props) {
 
   return (
     <div className="fullHeight paper scrollable">
-      <Box sx={{ pt: 7, pb: 7 }}>
+      <Box sx={{ pt: 7, pb: 10 }}>
         <List>
           {messages.map(({ primary, secondary, person }, index) => (
             <ListItem button key={index + person}>

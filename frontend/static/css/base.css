@@ -154,11 +154,6 @@ canvas {
   padding-left: 80px;
   padding-right: 80px;
 }
-.extraLarge {
-  font-size: 100px;
-  margin-bottom: 25px;
-  margin-top: 25px;
-}
 .subtitle {
   font-size: 1.5em;
   line-height: 1.8em;
@@ -445,6 +440,7 @@ h3 {
 
 #app {
   height: 100vh;
+  overflow: hidden;
 }
 #topbar {
   backdrop-filter: blur(4px);
@@ -468,7 +464,6 @@ h3 {
 #tabbar,
 #navbar {
   backdrop-filter: blur(4px);
-  background-color: var(--background-secondary);
   position: fixed;
   width: 100%;
   z-index: 1;
@@ -476,6 +471,7 @@ h3 {
 }
 #tabbar {
   top: 56px;
+  background-color: var(--background-secondary);
 }
 #navbar {
   bottom: 0;
