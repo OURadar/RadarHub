@@ -81,6 +81,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.8.6 Added custom pages 403, 404, and 503 (7/17/2022)
   - [x] 0.8.7 Added a pop-up help page (7/19/2022)
   - [x] 0.8.8 Automated visitor access log update (7/20/2022)
+  - [x] 0.8.9 Updated log parsing tool for viewing recent logs (7/31/2022)
+  - [x] 0.8.10 Updated page templates (8/3/2022)
 - [ ] 0.9 Page template, UI materials, mobile version
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
 
