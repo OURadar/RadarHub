@@ -22,8 +22,9 @@ for file in glob.glob('frontend/static/css/*.css'):
 css_hash = hash('\n'.join(lines))
 css_hash = f'{css_hash:08x}'[-8:]
 
-show = color_name_value('css_hash', css_hash)
-print(show)
+if settings.DEBUG:
+    show = color_name_value('css_hash', css_hash)
+    print(show)
 
 #
 
