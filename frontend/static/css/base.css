@@ -147,10 +147,9 @@ canvas {
   box-shadow: 0 4px 40px rgba(0, 0, 0, 0.15);
   color: var(--system-foreground);
   display: block;
-  margin-top: 150px;
+  margin: 20vh auto 0 auto;
   max-height: 75%;
   overflow-y: scroll;
-  position: absolute;
   text-align: center;
   width: 900px;
 }
