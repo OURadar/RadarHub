@@ -10,7 +10,7 @@ Copyright Boonleng Cheong
   --button-border-bottom: solid 0.5px var(--border-accent);
   --button-border-left: none;
   --button-margin-bottom: 0;
-  --button-border-radius: 0;
+  --button-border-radius: 4px;
   --padding: 20px;
   --content-height: calc(100vh - var(--topbar-height) - var(--tabbar-height));
   padding: 0;

@@ -27,7 +27,7 @@ export function RandomList(props) {
           {messages.map(({ primary, secondary, person }, index) => (
             <ListItem key={index}>
               <ListItemAvatar>
-                <Avatar alt="Picture" src={person} />
+                <Avatar alt="Picture" src={person} variant="rounded" />
               </ListItemAvatar>
               <ListItemText
                 primary={primary}
@@ -48,30 +48,30 @@ const messageExamples = [
     primary: "Brunch this week?",
     secondary:
       "I'll be in the neighbourhood this week. Let's grab a bite to eat",
-    person: "/static/images/icon-apple.png",
+    person: "/static/images/logo-apple.svg",
   },
   {
     primary: "Birthday Gift",
     secondary: `Do you have a suggestion for a good present for John on his work
         anniversary. I am really confused & would love your thoughts on it.`,
-    person: "/static/images/icon-facebook.png",
+    person: "/static/images/logo-facebook.svg",
   },
   {
     primary: "Recipe to try",
     secondary:
       "I am try out this new BBQ recipe, I think this might be amazing",
-    person: "/static/images/icon-facebook.png",
+    person: "/static/images/logo-facebook.svg",
   },
   {
     primary: "Yes!",
     secondary: "I have the tickets to the ReactConf for this year.",
-    person: "/static/images/icon-google.png",
+    person: "/static/images/logo-google.svg",
   },
   {
     primary: "Doctor's Appointment",
     secondary:
       "My appointment for the doctor was rescheduled for next Saturday.",
-    person: "/static/images/icon-google.png",
+    person: "/static/images/logo-google.svg",
   },
   {
     primary: "Discussion",

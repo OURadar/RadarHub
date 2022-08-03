@@ -122,6 +122,11 @@ export function makeTheme(inputMode) {
   });
   theme = createTheme(theme, {
     components: {
+      MuiAvatar: {
+        styleOverrides: {
+          img: { width: "auto" },
+        },
+      },
       MuiButton: {
         styleOverrides: {
           root: {
