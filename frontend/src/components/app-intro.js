@@ -22,9 +22,9 @@ class App extends Component {
       open: false,
     };
     this.isMobile = detectMob();
-    this.handleHelpOpen = this.handleHelpOpen.bind(this);
-    this.handleHelpClose = this.handleHelpClose.bind(this);
-    this.handleModeChange = this.handleModeChange.bind(this);
+    this.handleInfoOpen = this.handleInfoOpen.bind(this);
+    this.handleInfoClose = this.handleInfoClose.bind(this);
+    this.handleThemeChange = this.handleThemeChange.bind(this);
   }
   static defaultProps = {
     debug: false,
@@ -49,17 +49,16 @@ class App extends Component {
         <TopBar
           mode={this.state.colors.name}
           isMobile={this.isMobile}
-          handleModeChange={this.handleModeChange}
-          handleHelpRequest={this.handleHelpOpen}
+          handleThemeChange={this.handleThemeChange}
+          handleInfoRequest={this.handleInfoOpen}
         />
-        <HelpPage open={this.state.open} handleClose={this.handleHelpClose} />
+        <HelpPage open={this.state.open} handleClose={this.handleInfoClose} />
       </ThemeProvider>
     );
   }
 
-  handleModeChange() {
+  handleThemeChange() {
     let mode = this.state.colors.name == "light" ? "dark" : "light";
-    console.log(`App.handleModeChange() -> ${mode}`);
     document.documentElement.setAttribute("theme", mode);
     this.setState({
       colors: colorDict(mode),
@@ -67,11 +66,11 @@ class App extends Component {
     });
   }
 
-  handleHelpOpen() {
+  handleInfoOpen() {
     this.setState({ open: true });
   }
 
-  handleHelpClose() {
+  handleInfoClose() {
     this.setState({ open: false });
   }
 }

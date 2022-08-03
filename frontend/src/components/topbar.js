@@ -125,7 +125,10 @@ TopBar.defaultProps = {
   ingest: null,
   mode: "light",
   handleThemeChange: () => {
-    console.log(`Topbar.handleThemeChange()`);
+    console.log("Topbar.handleThemeChange()");
+  },
+  handleInfoRequest: () => {
+    console.log("Topbar.handleInfoRequest()");
   },
 };
 
@@ -135,11 +138,7 @@ export function Console(props) {
   );
   return (
     <div className="topbarComponent right">
-      <IconButton
-        aria-label="Help"
-        onClick={props.handleHelpRequest}
-        size="large"
-      >
+      <IconButton aria-label="Info" onClick={props.handleInfoRequest}>
         <Info />
       </IconButton>
       <IconButton
@@ -147,7 +146,6 @@ export function Console(props) {
         onClick={() => {
           window.location.reload();
         }}
-        size="large"
       >
         <Refresh />
       </IconButton>
@@ -159,23 +157,14 @@ export function Console(props) {
             else document.documentElement.webkitRequestFullScreen();
             setFullscreen(!fullscreen);
           }}
-          size="large"
         >
           {(fullscreen && <WebAsset />) || <Fullscreen />}
         </IconButton>
       )}
-      <IconButton
-        aria-label="Change Mode"
-        onClick={props.handleThemeChange}
-        size="large"
-      >
+      <IconButton aria-label="Change Mode" onClick={props.handleThemeChange}>
         {(props.mode == "light" && <LightMode />) || <DarkMode />}
       </IconButton>
-      <IconButton
-        aria-label="Account"
-        onClick={() => props.handleAccount()}
-        size="large"
-      >
+      <IconButton aria-label="Account" onClick={props.handleAccount}>
         <AccountCircle />
       </IconButton>
     </div>
