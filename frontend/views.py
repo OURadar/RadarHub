@@ -99,4 +99,4 @@ def robots_txt(request):
     return HttpResponse('\n'.join(lines), content_type='text/plain')
 
 def template(request, page):
-    return render(request, f'{page}.html', status=200)
+    return render(request, f'{page}.html', {'css': css_hash}, status=200)

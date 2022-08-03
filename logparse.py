@@ -250,6 +250,18 @@ if __name__ == '__main__':
         for line in sys.stdin:
             hope.show(line)
     elif len(args.source):
+        if args.source[0][0] == '-':
+            source = '/var/log/nginx/access.log'
+            n = int(args.source[0][1:])
+            for _ in range(n):
+                source = find_previous_log(source)
+            print(f'\033[4;38;5;45m{source}\033[m')
+            if source is None:
+                print(f'ERROR. Unable to find the previous source #{n}')
+                sys.exit()
+            for line in readlines(source):
+                hope.show(line)
+            sys.exit()
         for source in args.source:
             if not os.path.exists(source):
                 print(f'ERROR. File {source} does not exist')

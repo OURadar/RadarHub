@@ -24,14 +24,19 @@
     {{ vars|json_script:"params" }}
     {% block extra_head %}{% endblock %}
   </head>
-  <body class="backgrad hide">
-    <div id="app"><div id="topbar"></div></div>
+  <body class="backgrad">
+    <div id="app" class="hide"></div>
     {% block body %}{% endblock %}
   </body>
   {% block main_js %}{% endblock %}
   <script>
     window.addEventListener('load', () => {
-      setTimeout(() => {document.body.classList.remove("hide")}, 300);
+      let o = document.getElementById('loading')
+      if (o) o.style.opacity = 0
+      setTimeout(() => {
+        if (o) o.remove()
+        document.getElementById("app").classList.remove("hide")
+      }, 300);
     })
   </script>
 </html>

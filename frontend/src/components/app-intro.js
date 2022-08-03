@@ -25,7 +25,6 @@ class App extends Component {
     this.handleHelpOpen = this.handleHelpOpen.bind(this);
     this.handleHelpClose = this.handleHelpClose.bind(this);
     this.handleModeChange = this.handleModeChange.bind(this);
-    document.documentElement.setAttribute("theme", this.state.colors.name);
   }
   static defaultProps = {
     debug: false,
