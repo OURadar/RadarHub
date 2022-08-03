@@ -34,8 +34,8 @@ class App extends Component {
     this.archive.onupdate = (_dontcare) => {
       this.forceUpdate();
     };
-    this.handleHelpOpen = this.handleHelpOpen.bind(this);
-    this.handleHelpClose = this.handleHelpClose.bind(this);
+    this.handleInfoOpen = this.handleInfoOpen.bind(this);
+    this.handleInfoClose = this.handleInfoClose.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
     this.handleLiveModeChange = this.handleLiveModeChange.bind(this);
@@ -143,7 +143,7 @@ class App extends Component {
           mode={this.state.colors.name}
           ingest={this.archive}
           handleThemeChange={this.handleThemeChange}
-          handleHelpRequest={this.handleHelpOpen}
+          handleInfoRequest={this.handleInfoOpen}
         />
         <div className="flexRow">
           <div id="left" className="container">
@@ -168,7 +168,7 @@ class App extends Component {
         />
         <HelpPage
           open={this.state.showHelp}
-          handleClose={this.handleHelpClose}
+          handleClose={this.handleInfoClose}
         />
       </ThemeProvider>
     );
@@ -180,6 +180,7 @@ class App extends Component {
   }
 
   handleThemeChange() {
+    console.log("app6.handleThemeChange()");
     let mode = this.state.colors.name == "light" ? "dark" : "light";
     document.documentElement.setAttribute("theme", mode);
     this.setState({
@@ -188,11 +189,11 @@ class App extends Component {
     });
   }
 
-  handleHelpOpen() {
+  handleInfoOpen() {
     this.setState({ showHelp: true });
   }
 
-  handleHelpClose() {
+  handleInfoClose() {
     this.setState({ showHelp: false });
   }
 
