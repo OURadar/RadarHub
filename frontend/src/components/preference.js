@@ -15,12 +15,13 @@ export function Preference(props) {
   return (
     <div className="preferenceMenu">
       <ToggleButtonGroup
+        exclusive
         color="primary"
         size="small"
         value={props.value}
         onChange={props.handleChange}
         orientation="vertical"
-        exclusive
+        variant="control"
       >
         <ToggleButton value="scan">
           <DensityLarge />

@@ -15,15 +15,16 @@ import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 import { RandomList } from "./random-list";
 
-const glView = <GLView />;
-const listView = <RandomList />;
-
 export default function App(props) {
   const [value, setValue] = React.useState(1);
   const [theme, setTheme] = React.useState(() => makeTheme());
   const [colors, setColors] = React.useState(() => colorDict());
 
-  const [view, setView] = React.useState(<div className="fullHeight"></div>);
+  const [view, setView] = React.useState(<div></div>);
+
+  const glView = <GLView colors={colors} />;
+  const listView = <RandomList />;
+  const list2 = <RandomList />;
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -33,14 +34,16 @@ export default function App(props) {
     console.log(`value = ${value}`);
     if (value == 0) {
       setView(glView);
-    } else {
+    } else if (value == 1) {
       setView(listView);
+    } else {
+      setView(list2);
     }
   }, [value]);
 
   return (
-    <div>
-      <TopBar />
+    <div className="fullHeight">
+      <TopBar isMobile={true} />
       <ThemeProvider theme={theme}>
         {view}
         <BottomNavigation

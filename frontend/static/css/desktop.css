@@ -19,6 +19,13 @@ Copyright Boonleng Cheong
   margin-bottom: 25px;
   margin-top: 25px;
 }
+.flexRow {
+  display: flex;
+  flex-direction: row;
+  background-color: var(--gray6);
+  overflow-y: hidden;
+}
+
 .controlContainer,
 .healthContainer {
   background-color: var(--system-background);
@@ -92,12 +99,6 @@ Copyright Boonleng Cheong
   padding: 8px 80px;
 }
 
-#flex {
-  display: flex;
-  flex-direction: row;
-  background-color: var(--gray6);
-  overflow-y: hidden;
-}
 #right {
   display: flex;
   flex-direction: column;

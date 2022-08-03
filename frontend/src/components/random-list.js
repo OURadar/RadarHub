@@ -24,11 +24,16 @@ export function RandomList(props) {
       <Box sx={{ pt: 7, pb: 10 }}>
         <List>
           {messages.map(({ primary, secondary, person }, index) => (
-            <ListItem button key={index + person}>
+            <ListItem key={index}>
               <ListItemAvatar>
-                <Avatar alt="Profile Picture" src={person} />
+                <Avatar alt="Picture" src={person} />
               </ListItemAvatar>
-              <ListItemText primary={primary} secondary={secondary} />
+              <ListItemText
+                primary={primary}
+                primaryTypographyProps={{ color: "var(--system-foreground)" }}
+                secondary={secondary}
+                secondaryTypographyProps={{ color: "var(--gray)" }}
+              />
             </ListItem>
           ))}
         </List>

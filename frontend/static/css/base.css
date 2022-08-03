@@ -125,6 +125,11 @@ canvas {
   position: relative;
 }
 
+.fill {
+  height: 100%;
+  position: relative;
+  width: 100%;
+}
 .paper {
   background-color: var(--system-background);
 }
@@ -193,8 +198,16 @@ canvas {
 .w900 {
   font-weight: 900;
 }
-
-.flex-center {
+.container {
+  position: relative;
+}
+.flexRow {
+  display: flex;
+  flex-direction: row;
+  background-color: var(--gray6);
+  overflow-y: hidden;
+}
+.flexCenter {
   display: flex;
   justify-content: center;
   text-align: center;
@@ -202,11 +215,6 @@ canvas {
 }
 .hide {
   opacity: 0;
-}
-.fill {
-  height: 100%;
-  position: relative;
-  width: 100%;
 }
 .center {
   text-align: center;
@@ -441,6 +449,8 @@ h3 {
 #app {
   height: 100vh;
   overflow: hidden;
+  position: fixed;
+  width: 100vw;
 }
 #topbar {
   backdrop-filter: blur(4px);
@@ -476,6 +486,8 @@ h3 {
 #navbar {
   bottom: 0;
   padding-bottom: 20px;
+  border-top: var(--ui-border);
+  background-color: var(--overlay-background);
 }
 
 .statusWrapper {

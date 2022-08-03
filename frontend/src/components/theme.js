@@ -219,16 +219,30 @@ export function makeTheme(inputMode) {
           },
         },
       },
+      // MuiListItemText: {
+      //   styleOverrides: {
+      //     root: {
+      //       display: "inline-block",
+      //       color: theme.palette.text.secondary,
+      //       overflow: "hidden",
+      //       textOverflow: "ellipsis",
+      //       whiteSpace: "nowrap",
+      //     },
+      //   },
+      // },
       MuiListItemText: {
-        styleOverrides: {
-          root: {
-            display: "inline-block",
-            color: theme.palette.text.secondary,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+        variants: [
+          {
+            props: { variant: "status" },
+            style: {
+              display: "inline-block",
+              color: theme.palette.text.secondary,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            },
           },
-        },
+        ],
       },
       MuiButtonGroup: {
         variants: [
@@ -246,12 +260,15 @@ export function makeTheme(inputMode) {
         ],
       },
       MuiToggleButtonGroup: {
-        styleOverrides: {
-          root: {
-            backgroundColor: "var(--preference-background)",
-            backdropFilter: "blur(4px)",
+        variants: [
+          {
+            props: { variant: "control" },
+            style: {
+              backgroundColor: "var(--preference-background)",
+              backdropFilter: "blur(4px)",
+            },
           },
-        },
+        ],
       },
       MuiBackdrop: {
         styleOverrides: {
