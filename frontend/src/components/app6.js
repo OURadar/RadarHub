@@ -142,26 +142,23 @@ class App extends Component {
         <TopBar
           mode={this.state.colors.name}
           ingest={this.archive}
-          isMobile={this.isMobile}
           handleThemeChange={this.handleThemeChange}
           handleHelpRequest={this.handleHelpOpen}
         />
-        <div id="flex">
-          <div id="left">
-            <div>
-              <SectionHeader name="product" isMobile={false} />
-              <Product
-                origin={this.props.origin}
-                sweep={this.archive.data.sweep}
-                colors={this.state.colors}
-                debug={this.props.debug}
-                showStats={false}
-                profileGL={this.props.profileGL}
-                onOverlayLoaded={this.handleOverlayLoaded}
-              />
-            </div>
+        <div className="flexRow">
+          <div id="left" className="container">
+            <Product
+              origin={this.props.origin}
+              sweep={this.archive.data.sweep}
+              colors={this.state.colors}
+              debug={this.props.debug}
+              showStats={false}
+              profileGL={this.props.profileGL}
+              onOverlayLoaded={this.handleOverlayLoaded}
+            />
           </div>
           <div id="right">
+            <div className="spacerTop"></div>
             <Browser archive={this.archive} radar={this.props.radar} />
           </div>
         </div>
@@ -200,7 +197,6 @@ class App extends Component {
   }
 
   handleLiveModeChange(_e, value) {
-    console.log(`handleLiveModeChange() ${value}`);
     this.archive.toggleLiveUpdate(value);
   }
 }

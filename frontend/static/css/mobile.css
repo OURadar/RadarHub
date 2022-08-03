@@ -1,4 +1,4 @@
-/* 
+/*
 Mobile style sheet
 Copyright Boonleng Cheong
 */
@@ -12,7 +12,14 @@ Copyright Boonleng Cheong
   --button-margin-bottom: 0;
   --button-border-radius: 0;
   --padding: 20px;
+  --content-height: calc(100vh - var(--topbar-height) - var(--tabbar-height));
   padding: 0;
+}
+
+.extraLarge {
+  font-size: 60px;
+  margin-bottom: 25px;
+  margin-top: 25px;
 }
 .controlContainer,
 .healthContainer {
@@ -71,4 +78,9 @@ Copyright Boonleng Cheong
   display: inline-block;
   width: 88vw;
   padding: 8px;
+}
+
+.fullHeight {
+  height: 100vh;
+  position: relative;
 }

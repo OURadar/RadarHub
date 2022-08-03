@@ -8,14 +8,12 @@ import {
   AccountCircle,
   LightMode,
   DarkMode,
-  HelpCenter,
+  Info,
 } from "@mui/icons-material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
-import { Notification } from "./notification";
 import { RadarHubIcon } from "./radarhub-icon";
-
-const version = require("/package.json").version;
+import { Notification } from "./notification";
 
 const emojis = require("emoji-name-map");
 
@@ -56,74 +54,70 @@ export function TopBar(props) {
   const [message, setMessage] = React.useState("");
   let name, online, status, notify;
   if (props.ingest) {
-    name = " / " + props.ingest.radar;
-    online = props.ingest.state.liveUpdate === null ? "offline" : "online";
+    name = props.ingest.radar;
+    online = props.ingest.state.liveUpdate || "unknown";
     status = <StatusBody message={props.ingest.message} />;
     notify = <Notification message={props.ingest.response || message} />;
   } else {
     name = "";
-    online = "offline";
+    online = "unknown";
     status = <StatusBody />;
     notify = <Notification message={message} />;
   }
   return (
-    <div>
-      <ThemeProvider theme={topbarTheme}>
-        <div id="topbar" role="banner">
-          <div className="topbarComponent left">
-            <IconButton
-              aria-label="RadarHub"
-              onClick={() => {
-                document.location = "/";
-              }}
-              size="large"
-            >
-              <RadarHubIcon />
-            </IconButton>
-            <div className="statusWrapper">
-              <div className={online} id="statusLed"></div>
-              <div id="versionTag">{`v${version}${name}`}</div>
-              {status}
-              {notify}
-            </div>
+    <ThemeProvider theme={topbarTheme}>
+      <div id="topbar" role="banner">
+        <div className="topbarComponent left">
+          <IconButton
+            onClick={() => {
+              document.location = "/";
+            }}
+          >
+            <RadarHubIcon />
+          </IconButton>
+          <div className="statusWrapper">
+            <div className={online} id="statusLed"></div>
+            <div id="radarName">{`${name}`}</div>
+            {status}
+            {notify}
           </div>
-          <Console
-            {...props}
-            handleAccount={() => {
-              setMessage("Fetching User Information ...");
-              fetch("/profile/")
-                .then((response) => {
-                  if (response.status == 200) {
-                    response.json().then(({ user, ip, emoji }) => {
-                      let title =
-                        user == "None" ? "Anonymous User" : `Hello ${user}`;
-                      let symbol = emojis.get(emoji) || "";
-                      setMessage(
-                        user == "None"
-                          ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
-                              window.location.pathname +
-                              "'>Sign In Here</a><div class='emotion'>⛅️</div>"
-                          : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
-                      );
-                      setTimeout(() => setMessage(""), 3500);
-                    });
-                  } else {
+        </div>
+        <Console
+          {...props}
+          handleAccount={() => {
+            setMessage("Fetching User Information ...");
+            fetch("/profile/")
+              .then((response) => {
+                if (response.status == 200) {
+                  response.json().then(({ user, ip, emoji }) => {
+                    let title =
+                      user == "None" ? "Anonymous User" : `Hello ${user}`;
+                    let symbol = emojis.get(emoji) || "";
                     setMessage(
-                      `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+                      user == "None"
+                        ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
+                            window.location.pathname +
+                            "'>Sign In Here</a><div class='emotion'>⛅️</div>"
+                        : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
                     );
-                  }
-                })
-                .catch((_error) => {
+                    setTimeout(() => setMessage(""), 3500);
+                  });
+                } else {
                   setMessage(
                     `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
                   );
-                  setTimeout(() => setMessage(""), 3500);
-                });
-            }}
-          />
-        </div>
-      </ThemeProvider>
-    </div>
+                }
+              })
+              .catch((_error) => {
+                setMessage(
+                  `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+                );
+                setTimeout(() => setMessage(""), 3500);
+              });
+          }}
+        />
+      </div>
+    </ThemeProvider>
   );
 }
 
@@ -146,7 +140,7 @@ export function Console(props) {
         onClick={props.handleHelpRequest}
         size="large"
       >
-        <HelpCenter />
+        <Info />
       </IconButton>
       <IconButton
         aria-label="Refresh"
