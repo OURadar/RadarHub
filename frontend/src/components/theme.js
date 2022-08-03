@@ -84,7 +84,7 @@ const paletteDark = {
   divider: "rgba(255, 255, 255, 0.04)",
 };
 
-export function makeDarkPalette(theme = "light") {
+export function makePalette(theme = "light") {
   return theme == "light"
     ? createTheme({ palette: paletteLight })
     : createTheme({ palette: paletteDark });

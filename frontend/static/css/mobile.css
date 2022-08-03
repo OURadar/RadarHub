@@ -15,6 +15,7 @@ Copyright Boonleng Cheong
   --content-height: calc(100vh - var(--topbar-height) - var(--tabbar-height));
   padding: 0;
 }
+
 .extraLarge {
   font-size: 60px;
   margin-bottom: 25px;

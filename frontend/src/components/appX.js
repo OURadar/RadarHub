@@ -10,7 +10,7 @@ import EventNoteIcon from "@mui/icons-material/EventNote";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import GamepadIcon from "@mui/icons-material/Gamepad";
 
-import { colorDict, makeTheme, makeDarkPalette } from "./theme";
+import { colorDict, makeTheme, makePalette } from "./theme";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 import { RandomList } from "./random-list";
@@ -23,8 +23,8 @@ export default function App(props) {
   const [view, setView] = React.useState(<div></div>);
 
   const glView = <GLView colors={colors} />;
-  const listView = <RandomList />;
-  const list2 = <RandomList />;
+  const list1 = <RandomList />;
+  const list2 = <RandomList label="2" seed={42} />;
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -35,7 +35,7 @@ export default function App(props) {
     if (value == 0) {
       setView(glView);
     } else if (value == 1) {
-      setView(listView);
+      setView(list1);
     } else {
       setView(list2);
     }

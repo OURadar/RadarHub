@@ -8,20 +8,23 @@ import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemText from "@mui/material/ListItemText";
 import Avatar from "@mui/material/Avatar";
 
-function refreshMessages() {
-  const getRandomInt = (max) => Math.floor(Math.random() * Math.floor(max));
+function refreshMessages(seed = 1) {
+  const getRandomInt = (max, seed) =>
+    Math.floor((Math.random() % seed) * Math.floor(max));
 
-  return Array.from(new Array(50)).map(
-    () => messageExamples[getRandomInt(messageExamples.length)]
+  return Array.from(new Array(20)).map(
+    () => messageExamples[getRandomInt(messageExamples.length, seed)]
   );
 }
 
 export function RandomList(props) {
-  const [messages, setMessages] = React.useState(() => refreshMessages());
+  const [messages, setMessages] = React.useState(() =>
+    refreshMessages(props.seed || 1)
+  );
 
   return (
-    <div className="fullHeight paper scrollable">
-      <Box sx={{ pt: 7, pb: 10 }}>
+    <div className="fullHeight paper scrollable container">
+      <Box sx={{ pt: 6, pb: 10 }}>
         <List>
           {messages.map(({ primary, secondary, person }, index) => (
             <ListItem key={index}>
