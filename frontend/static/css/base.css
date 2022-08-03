@@ -147,10 +147,10 @@ canvas {
   box-shadow: 0 4px 40px rgba(0, 0, 0, 0.15);
   color: var(--system-foreground);
   display: block;
-  margin-top: 150px;
+  margin: 20vh auto 0 auto;
   max-height: 75%;
+  max-width: 100%;
   overflow-y: scroll;
-  position: absolute;
   text-align: center;
   width: 900px;
 }
@@ -746,15 +746,15 @@ a.radarButton:hover {
 }
 
 .signinButtonGoogle::before {
-  background-image: url(/static/images/icon-google.png);
+  background-image: url(/static/images/logo-google.svg);
 }
 
 .signinButtonApple::before {
-  background-image: url(/static/images/icon-apple.png);
+  background-image: url(/static/images/logo-apple.svg);
 }
 
 .signinButtonFacebook::before {
-  background-image: url(/static/images/icon-facebook.png);
+  background-image: url(/static/images/logo-facebook.svg);
 }
 
 .logo50 {
