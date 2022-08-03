@@ -153,8 +153,6 @@ Copyright Boonleng Cheong
   padding: var(--half-padding);
   position: fixed;
   text-align: center;
-  top: calc(
-    var(--topbar-height) + 2 * var(--half-padding) + 24px + var(--padding)
-  );
+  top: calc(var(--topbar-height) + 2 * var(--padding));
   z-index: 2;
 }
