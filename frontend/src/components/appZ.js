@@ -28,9 +28,6 @@ const darkTheme = createTheme({
   },
 });
 
-const glView = <GLView colors={colors} />;
-const listView = <RandomList />;
-
 export default function App(props) {
   const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(() => makeTheme());
@@ -38,12 +35,14 @@ export default function App(props) {
 
   const [view, setView] = React.useState(<div className="fullHeight"></div>);
 
+  const glView = <GLView colors={colors} />;
+  const listView = <RandomList />;
+
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
 
   React.useEffect(() => {
-    console.log(`value = ${value}`);
     if (value == 0) {
       setView(glView);
     } else {
@@ -53,7 +52,7 @@ export default function App(props) {
 
   return (
     <div>
-      <TopBar />
+      <TopBar isMobile={true} />
       <ThemeProvider theme={darkTheme}>
         <Tabs
           id="tabbar"

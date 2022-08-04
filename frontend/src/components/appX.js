@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
@@ -10,7 +10,7 @@ import EventNoteIcon from "@mui/icons-material/EventNote";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import GamepadIcon from "@mui/icons-material/Gamepad";
 
-import { colorDict, makeTheme, makePalette } from "./theme";
+import { colorDict, makeTheme } from "./theme";
 import { TopBar } from "./topbar";
 import { GLView } from "./glview";
 import { RandomList } from "./random-list";
@@ -22,28 +22,44 @@ export default function App(props) {
 
   const [view, setView] = React.useState(<div></div>);
 
-  const glView = <GLView colors={colors} />;
-  const list1 = <RandomList />;
-  const list2 = <RandomList label="2" seed={42} />;
+  const setMode = (mode) => {
+    document.documentElement.setAttribute("theme", mode);
+    setColors(() => colorDict(mode));
+    setTheme(() => makeTheme(mode));
+  };
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
 
+  const handleThemeChange = () => {
+    console.log("appX.handleThemeChange()");
+    let mode = colors.name == "light" ? "dark" : "light";
+    setMode(mode);
+  };
+
   React.useEffect(() => {
-    console.log(`value = ${value}`);
     if (value == 0) {
-      setView(glView);
+      setView(<GLView colors={colors} />);
     } else if (value == 1) {
-      setView(list1);
+      setView(<RandomList />);
     } else {
-      setView(list2);
+      setView(<RandomList label="2" seed={42} />);
     }
-  }, [value]);
+  }, [value, colors]);
+
+  React.useEffect(() => {
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        let mode = e.matches ? "dark" : "light";
+        setMode(mode);
+      });
+  }, []);
 
   return (
     <div className="fullHeight">
-      <TopBar isMobile={true} />
+      <TopBar isMobile={true} handleThemeChange={handleThemeChange} />
       <ThemeProvider theme={theme}>
         {view}
         <BottomNavigation
@@ -61,3 +77,14 @@ export default function App(props) {
     </div>
   );
 }
+
+App.defaultProps = {
+  radar: "px1000",
+  origin: {
+    longitude: -97.422413,
+    latitude: 35.25527,
+  },
+  debug: false,
+  profileGL: false,
+  autoLoad: true,
+};
