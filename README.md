@@ -177,7 +177,7 @@ curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-## Getting the Project
+## Get the Project
 
 Now you should be ready to clone the repository:
 
@@ -290,7 +290,7 @@ SELECT column_name, data_type, character_maximum_length FROM information_schema.
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
 ```
 
-## Migrating PostgreSQL to another machine:
+## Migrate PostgreSQL to another machine:
 
 On the source machine, edit `/etc/postgresql/12/main/pg_hba.conf` by adding the following line:
 
@@ -368,7 +368,7 @@ For running [redis] using [Docker]:
 docker run -p 6379:6379 -d redis:6
 ```
 
-# Developing
+# Develop RadarHub
 
 Be sure to have [redis] going for the [Channels] module every time you reboot the machine.
 
@@ -395,7 +395,7 @@ python manage.py runworker backhaul
 
 Off you go, you should be able to view the RadarHub interface through a web browser at http://localhost:8000 and tinker with the source codes and see the changes when you reload the page. Happy coding.
 
-# Deploying
+# Deploy RadarHub
 
 On a production server, the Ubuntu [Nginx]-[Supervisor] setup was recommended in the [Channels] documentation. A special account `radarhub` has been created to house the production codes. The instructions here is based on the assumption that everything is stored under `/home/radarhub/app`. To make an optimized `main.js`, compile the components as:
 
@@ -506,7 +506,7 @@ RestartSec=50s
 WantedBy=multi-user.target
 ```
 
-## Supervisor
+## Configure Supervisor
 
 Configure through the file `/etc/supervisor/conf.d/radarhub.conf` as:
 
@@ -580,7 +580,7 @@ chown radarhub.radarhub /var/run/supervisor.sock
 chmod g+rwx /var/run/supervisor.sock
 ```
 
-## Django_eventstream
+## Django EventStream
 
 The migrations of [django_eventstream] is stored in where the package is installed. If you are using [pyenv] to manage your [Python] versions, the migration history can be removed using the following commands
 
