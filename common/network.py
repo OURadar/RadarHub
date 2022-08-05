@@ -90,11 +90,11 @@ def get_ip_location(ip, show_city=False):
     info = ip_location_db_fid.get(ip)
     if info is None:
         return '-'
-    state = info['subdivisions'][0]['names']['en']
+	state = info['subdivisions'][0]['names']['en'] if 'subdivisions' in info else None
     country = info['country']['names']['en']
     if country in country_short:
         country = country_short[country]
-    origin = f'{state}, {country}'
+    origin = f'{state}, {country}' if state else country
     if show_city:
         city = re_space.sub('', info['city']['names']['en'])
         origin = f'{city}, ' + origin
