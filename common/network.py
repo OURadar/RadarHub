@@ -18,7 +18,7 @@ user_agent_strings = {}
 ip_location_db = os.path.join(DATABASE_DIR, 'dbip-city-lite-2022-07.mmdb')
 ip_location_db_fid = None
 
-re_space = re.compile(' \(.*\)')
+re_space = re.compile(r' \(.*\)')
 
 country_short = {
     'United States': 'USA',
@@ -39,6 +39,8 @@ def get_user_agent_string(user_agent, width=25, reload=False):
     def _replace_os_string(key):
         oses = {'OS X': 'macOS', 'iPhone OS': 'iOS', 'unknown': '-'}
         return oses[key] if key in oses else key
+    if not user_agent[0].isalpha():
+        return f'- {user_agent[:18]}'
     # API reference: http://www.useragentstring.com/pages/api.php
     global user_agent_strings
     if len(user_agent_strings) == 0:
@@ -90,7 +92,7 @@ def get_ip_location(ip, show_city=False):
     info = ip_location_db_fid.get(ip)
     if info is None:
         return '-'
-	state = info['subdivisions'][0]['names']['en'] if 'subdivisions' in info else None
+    state = info['subdivisions'][0]['names']['en'] if 'subdivisions' in info else None
     country = info['country']['names']['en']
     if country in country_short:
         country = country_short[country]

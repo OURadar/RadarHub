@@ -39,14 +39,14 @@ pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 re_nginx = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}).+\]'
-    + r' "(GET|POST) (?P<url>.+) (?P<protocol>HTTP/[0-9.]+)"'
+    + r' "([A-Z]+) (?P<url>.+) (?P<protocol>HTTP/[0-9.]+)"'
     + r' (?P<status>\d{3}) (?P<bytes>\d+)'
     + r' "(?P<user_agent>.+)" "(?P<compression>[0-9.-]+)"'
 )
 re_radarhub = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d{1,5} - -'
     + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2})\]'
-    + r' "(GET|POST|WSCONNECTING|WSDISCONNECT) (?P<url>.+)"'
+    + r' "(GET|PUT|POST|WSCONNECTING|WSDISCONNECT) (?P<url>.+)"'
     + r' (?P<status>[\d-]+) (?P<bytes>[\d-]+)'
 )
 re_agent = re.compile(r'(mozilla|webkit|safari|firefox|android)', flags=re.IGNORECASE)
@@ -199,9 +199,23 @@ def find_previous_log(file):
         return previous
     return None
 
-def xfunc():
-    w = get_terminal_width()
-    print(f'w = {w}')
+def xfunc(parser, verbose=0):
+    ips = {}
+    source = '/var/log/nginx/access.log'
+    while source:
+        if verbose:
+            if verbose > 1:
+                print(f'\033[4;38;5;45m{source}\033[m')
+            else:
+                print(source)
+        for line in readlines(source):
+            parser.decode(line)
+            if verbose > 1:
+                print(parser)
+            if parser.ip not in ips:
+                ips[parser.ip] = parser.location
+        source = find_previous_log(source)
+    pp.pprint(ips)
 
 #
 
@@ -243,7 +257,8 @@ if __name__ == '__main__':
     signal(SIGPIPE, SIG_DFL)
 
     if args.x:
-        xfunc()
+        xfunc(parser=hope, verbose=args.verbose)
+        sys.exit()
 
     if select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin
