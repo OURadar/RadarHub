@@ -410,43 +410,46 @@ Configure through the file `/etc/nginx/sites-available/radarhub` as:
 
 ```nginx
 upstream channels-backend {
-    server localhost:8000;
+	server localhost:8000;
 }
 
 server {
-    listen 443;
-    server_name radarhub.arrc.ou.edu;
-    rewrite ^(.*)? http://$host$1 permanent;
+	listen 443;
+	server_name radarhub.arrc.ou.edu;
+	rewrite ^(.*)? http://$host$1 permanent;
 }
 
 server {
-    listen 80;
-    listen [::]:80;
-    server_name radarhub.arrc.ou.edu;
+	listen 80;
+	listen [::]:80;
+	server_name radarhub.arrc.ou.edu;
 
-    location /static/ {
-        root /home/radarhub/app/frontend;
-    }
+	location ~ /(favicon.ico|apple-touch-icon.png|apple-touch-icon-precomposed.png) {
+		root /home/radarhub/app/frontend/static/images;
+	}
 
-    location /favicon.ico {
-        root /home/radarhub/app/frontend/static/images/favicon.ico;
-    }
+	location /static/ {
+		root /home/radarhub/app/frontend;
+	}
 
-    location / {
-        try_files $uri @proxy_to_app;
-    }
+	location / {
+		try_files $uri @proxy_to_app;
+	}
 
-    location @proxy_to_app {
-        proxy_pass http://channels-backend;
+	location @proxy_to_app {
+		proxy_pass http://channels_backend;
 
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Host $server_name;
-    }
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection 'upgrade';
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Host $server_name;
+		proxy_set_header X-Accel-Buffering no;
+		proxy_buffering off;
+		proxy_cache off;
+	}
 }
 ```
 
@@ -462,9 +465,13 @@ To use the maintenance page, copy the file `frontend/templates/frontend/maintena
 cp frontend/templates/frontend/maintenance.html /var/www/html/
 ```
 
-Then, modify the section `location /` of `/etc/nginx/sites-available/default ` as:
+Then, modify the section `location /` of `/etc/nginx/sites-available/default` as:
 
 ```conf
+	location /favicon.ico {
+		root /home/radarhub/app/frontend/static/images;
+	}
+
 	location / {
 		if (-f $document_root/maintenance.html) {
 			return 503;
