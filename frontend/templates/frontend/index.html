@@ -1,9 +1,9 @@
-{% extends "frontend/__app__.html" %}
+{% extends "__base__.html" %}
 
 {% load render_bundle from webpack_loader %}
 
 {% block body %}
-  <div id="app" class="hide"></div>
+  <div id="app"></div>
   <div class="content">
     <div class="extraLarge">RadarHub</div>
     <a class="radarButton" href="/archive/px1000/">PX-1000</a>
@@ -22,6 +22,6 @@
   </div>
 {% endblock %}
 
-{% block main_js %}
+{% block extra_html %}
 {% render_bundle 'index' 'js' %}
 {% endblock %}
