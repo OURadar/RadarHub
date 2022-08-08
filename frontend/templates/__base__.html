@@ -6,14 +6,23 @@
     <title>RadarHub</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="translucent" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="rgb(5, 111, 146)" />
-    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}" />
+    <link rel="preload" href="{% static 'fonts/HelveticaNeueMed.ttf' %}" as="font" type="font/ttf" crossorigin />
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}" />
+    <link rel="icon" type="image/png" sizes="64x64" href="{% static 'images/icon64.png' %}" />
+    <link rel="apple-touch-icon" sizes="114x114" href="{% static 'images/icon114.png' %}" />
+    <link rel="apple-touch-icon" sizes="144x144" href="{% static 'images/icon144.png' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}?h={{css}}" />
+    <link rel="stylesheet" type="text/css" media="screen and (min-device-width: 550px)" href="{% static 'css/desktop.css' %}?h={{css}}" />
+    <link rel="stylesheet" type="text/css" media="screen and (max-device-width: 550px)" href="{% static 'css/mobile.css' %}?h={{css}}" />
+    {% block extra_head %}{% endblock %}
   </head>
   <body class="backgrad">
-    <div class="content">
-      {% block svg %}{% endblock %}
-      {% block message %}{% endblock %}
-    </div>
+    {% block body %}{% endblock %}
   </body>
+  {% block extra_html %}{% endblock %}
 </html>

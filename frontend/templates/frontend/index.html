@@ -1,8 +1,9 @@
-{% extends "frontend/__base__.html" %}
+{% extends "frontend/__app__.html" %}
 
 {% load render_bundle from webpack_loader %}
 
 {% block body %}
+  <div id="app" class="hide"></div>
   <div class="content">
     <div class="extraLarge">RadarHub</div>
     <a class="radarButton" href="/archive/px1000/">PX-1000</a>
