@@ -1,3 +1,4 @@
+import os
 import glob
 import logging
 from turtle import color
@@ -99,5 +100,5 @@ def robots_txt(request):
     ]
     return HttpResponse('\n'.join(lines), content_type='text/plain')
 
-def template(request, page):
+def view(request, page):
     return render(request, f'{page}.html', {'css': css_hash}, status=200)
