@@ -58,6 +58,26 @@ export function RadarHub7Icon(props) {
   );
 }
 
+export function RadarHub8Icon(props) {
+  return (
+    <SvgIcon {...props}>
+      <g stroke="currentcolor" fill="none">
+        <g strokeWidth="1.5">
+          <circle cx="12" cy="12" r="6.25" />
+          <circle cx="12" cy="21" r="2.25" />
+          <circle cx="12" cy="21" r="2.25" transform="rotate(120,12,12)" />
+          <circle cx="12" cy="21" r="2.25" transform="rotate(240,12,12)" />
+        </g>
+        <g strokeWidth={2.5} strokeLinecap="round">
+          <path d="M12,1.25l0,3.9" />
+          <path d="M12,1.25l0,3.9" transform="rotate(120,12,12)" />
+          <path d="M12,1.25l0,3.9" transform="rotate(240,12,12)" />
+        </g>
+      </g>
+    </SvgIcon>
+  );
+}
+
 export function RadarHubIcon(props) {
-  return RadarHub7Icon(props);
+  return RadarHub8Icon(props);
 }

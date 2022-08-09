@@ -766,6 +766,11 @@ a.radarButton:hover {
 .logo {
   height: 15vh;
   fill: #ddff00;
+  stroke: #ddff00;
+}
+.square15 {
+  height: 15vh;
+  width: 15vh;
 }
 
 .wiggle {
@@ -794,6 +799,19 @@ a.radarButton:hover {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+.backspin {
+  animation: backspin 24s linear infinite;
+}
+
+@keyframes backspin {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(-360deg);
   }
 }
 
