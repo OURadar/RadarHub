@@ -776,7 +776,6 @@ a.radarButton:hover {
 .wiggle {
   animation: wiggle 0.2s infinite;
 }
-
 @keyframes wiggle {
   0% {
     transform: rotate(3deg);
@@ -792,7 +791,6 @@ a.radarButton:hover {
 .spin {
   animation: spin 12s linear infinite;
 }
-
 @keyframes spin {
   0% {
     transform: rotate(0);
@@ -805,13 +803,32 @@ a.radarButton:hover {
 .backspin {
   animation: backspin 24s linear infinite;
 }
-
 @keyframes backspin {
   0% {
     transform: rotate(0);
   }
   100% {
     transform: rotate(-360deg);
+  }
+}
+
+.breathe {
+  animation: breathe 4s linear infinite;
+}
+@keyframes breathe {
+  15% {
+    opacity: 1;
+    scale: 1;
+  }
+  25% {
+    opacity: 0;
+  }
+  75% {
+    opacity: 0;
+  }
+  85% {
+    opacity: 1;
+    scale: 1;
   }
 }
 
