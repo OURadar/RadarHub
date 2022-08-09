@@ -12,11 +12,11 @@ import GamepadIcon from "@mui/icons-material/Gamepad";
 
 import { colorDict, makeTheme } from "./theme";
 import { TopBar } from "./topbar";
-import { GLView } from "./glview";
+import { Product } from "./product";
 import { RandomList } from "./random-list";
 
 export default function App(props) {
-  const [value, setValue] = React.useState(1);
+  const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(() => makeTheme());
   const [colors, setColors] = React.useState(() => colorDict());
 
@@ -40,7 +40,7 @@ export default function App(props) {
 
   React.useEffect(() => {
     if (value == 0) {
-      setView(<GLView colors={colors} />);
+      setView(<Product colors={colors} />);
     } else if (value == 1) {
       setView(<RandomList />);
     } else {

@@ -112,6 +112,7 @@ html {
 
 body {
   color: var(--system-foreground);
+  background: var(--map-background);
   display: flex;
   flex-direction: column;
   height: 100vh;
