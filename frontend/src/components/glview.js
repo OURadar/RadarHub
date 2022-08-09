@@ -19,6 +19,7 @@ class GLView extends Component {
   constructor(props) {
     super(props);
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
+    this.style = props.style;
     this.canvas = document.createElement("canvas");
     this.canvas.classList.add("roundCorder");
     this.canvas.style.width = "100%";
@@ -200,6 +201,7 @@ class GLView extends Component {
       longitude: 20.0,
       latitude: 10.0,
     },
+    style: "right",
   };
 
   componentDidMount() {
@@ -275,7 +277,16 @@ class GLView extends Component {
     mat4.multiply(geo.modelview, geo.view, geo.model);
     mat4.multiply(geo.viewprojection, geo.projection, geo.view);
 
-    geo.dashport.x = w - geo.dashport.width;
+    if (this.props.style == "right") {
+      geo.dashport.x = w - geo.dashport.width;
+      geo.dashport.y = 100;
+    } else if (this.props.style == "top") {
+      geo.dashport.x = 0;
+      geo.dashport.y = h - geo.dashport.height - 88;
+      console.log(
+        `geometry.dashport.y = ${this.geometry.dashport.y} / ${this.canvas.height}`
+      );
+    }
 
     const ww = Math.round(h / 3);
     geo.fix.viewport.width = ww;

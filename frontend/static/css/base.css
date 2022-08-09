@@ -459,6 +459,11 @@ h3 {
   transition: opacity 0.5s;
   width: 100vw;
 }
+#backdrop {
+  background: var(--background-gradient);
+  background-color: var(--background-color);
+  height: 100vh;
+}
 #app {
   height: 100vh;
   overflow: hidden;
@@ -478,6 +483,7 @@ h3 {
   top: 0;
   -webkit-backdrop-filter: blur(4px);
   z-index: 69;
+  opacity: 0.5;
 }
 .topbarComponent {
   align-items: center;
@@ -492,6 +498,7 @@ h3 {
   position: fixed;
   width: 100%;
   z-index: 42;
+  opacity: 0.5;
   -webkit-backdrop-filter: blur(3px);
 }
 #tabbar {

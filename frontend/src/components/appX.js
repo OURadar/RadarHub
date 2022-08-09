@@ -38,9 +38,11 @@ export default function App(props) {
     setMode(mode);
   };
 
+  const glView = <Product colors={colors} style="top" />;
+
   React.useEffect(() => {
     if (value == 0) {
-      setView(<Product colors={colors} />);
+      setView(glView);
     } else if (value == 1) {
       setView(<RandomList />);
     } else {

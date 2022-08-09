@@ -6,16 +6,16 @@
 //
 
 class Colorbar {
-  constructor(style = 1, debug = true) {
+  constructor(style = "right", debug = true) {
     this.style = style;
     this.scale = window.devicePixelRatio > 1 ? 2 : 1;
     let w, h;
-    if (style == 0) {
+    if (style == "right") {
       w = 200;
       h = 600;
     } else {
-      w = 600;
-      h = 200;
+      w = 390;
+      h = 150;
     }
     w *= this.scale;
     h *= this.scale;
@@ -112,7 +112,7 @@ class Colorbar {
     let y;
     let meas;
 
-    if (this.style == 0) {
+    if (this.style == "right") {
       // Colorbar dimension: 20 x 255
       const yscale = Math.round(2.0 * scale);
       const height = Math.round(255 * yscale);
@@ -202,13 +202,13 @@ class Colorbar {
         width + scale,
         height + scale
       );
-    } else if (this.style == 1) {
+    } else if (this.style == "top") {
       // Colorbar dimension: 255 x 20
       const tscale = Math.round(2.0 * scale);
-      const height = Math.round(20 * tscale);
-      const width = Math.round(255 * scale);
-      const originX = Math.round(this.canvas.width - 60 * scale);
-      const originY = Math.round(this.canvas.height - 110 * scale);
+      const height = Math.round(20);
+      const width = Math.round(255);
+      const originX = Math.round(10 * scale);
+      const originY = Math.round(30 * scale);
       const tickOffset = tscale - 1;
       context.translate(originX, originY);
       context.font = `${16 * scale}px LabelFont`;

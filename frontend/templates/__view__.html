@@ -1,8 +1,10 @@
 {% extends "__base__.html" %}
 
 {% block body %}
+<div id="backdrop">
   <div class="content">
     {% block svg %}{% endblock %}
     {% block message %}{% endblock %}
   </div>
+</div>
 {% endblock %}

@@ -24,7 +24,7 @@ class Product extends GLView {
   constructor(props) {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
-    this.colorbar = new Colorbar();
+    this.colorbar = new Colorbar(props.style);
     this.geometry.dashport.y = 100;
     this.geometry.dashport.width = this.colorbar.canvas.width;
     this.geometry.dashport.height = this.colorbar.canvas.height;
@@ -75,6 +75,7 @@ class Product extends GLView {
   static defaultProps = {
     ...super.defaultProps,
     sweep: null,
+    style: "right",
     origin: {
       longitude: -97.422413,
       latitude: 35.25527,
