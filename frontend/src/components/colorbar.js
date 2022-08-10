@@ -25,7 +25,11 @@ function draw(context, theme) {
   context.strokeStyle = theme.stroke;
   context.strokeText(text, 40, 55);
   context.fillText(text, 40, 55);
+
+  context.imageSmoothingEnabled = false;
+  context.drawImage(theme.palette, 1, theme.index, 255, 1, 120, 36, 600, 32);
 }
+
 export function Colorbar(props) {
   const index = props.index;
   const palette = props.palette;
@@ -38,7 +42,7 @@ export function Colorbar(props) {
     const topbarHeight = parseFloat(
       computedStyle.getPropertyValue("--topbar-height")
     );
-    if (props.style == "top") {
+    if (props.gravity == "top") {
       canvas.width = window.innerWidth * scale;
       canvas.height = topbarHeight * scale;
       canvas.style.width = `${window.innerWidth}px`;
@@ -76,6 +80,8 @@ export function Colorbar(props) {
       blank: false,
       face: props.colors.label.face,
       stroke: props.colors.label.stroke,
+      palette: props.palette,
+      index: props.style.index,
       width: 3.5,
     };
     draw(context, theme);

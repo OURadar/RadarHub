@@ -38,7 +38,7 @@ export default function App(props) {
     setMode(mode);
   };
 
-  const glView = <Product colors={colors} style="top" />;
+  const glView = <Product colors={colors} gravity="top" />;
 
   React.useEffect(() => {
     if (value == 0) {

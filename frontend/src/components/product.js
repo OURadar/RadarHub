@@ -37,7 +37,7 @@ class Product extends GLView {
       ageString: "",
       titleString: "",
       palette: null,
-      index: 0.5 / 6,
+      style: null,
     };
     this.labelFaceColor = this.props.colors.label.face;
     this.assets = {
@@ -45,7 +45,7 @@ class Product extends GLView {
       time: 0,
       symbol: "Z",
       colormap: null,
-      style: null,
+      index: 0,
       data: null,
       points: null,
       origins: null,
@@ -67,9 +67,9 @@ class Product extends GLView {
       });
       this.setState({
         palette: image,
-        index: 0.5 / this.assets.colormap.height,
+        style: this.makeStyle("Z"),
       });
-      // this.assets.index = 0.5 / this.assets.colormap.height;
+      this.assets.index = 0.5 / this.assets.colormap.height;
       if (this.assets.data != null) this.assets.complete = true;
       this.loadDashboard();
     });
@@ -79,11 +79,11 @@ class Product extends GLView {
   static defaultProps = {
     ...super.defaultProps,
     sweep: null,
-    style: "right",
     origin: {
       longitude: -97.422413,
       latitude: 35.25527,
     },
+    gravity: "right",
     onOverlayLoaded: () => {},
   };
 
@@ -183,15 +183,9 @@ class Product extends GLView {
     if (sweep && this.assets.symbol != sweep.symbol) {
       this.updateData();
     }
-    this.assets.style = this.makeStyle(this.assets.symbol);
     if (this.assets.colormap) {
-      // this.assets.index =
-      //   (this.assets.style.index + 0.5) / this.assets.colormap.height;
-      console.log(
-        `state.index -> ${this.assets.style.index} / ${this.assets.symbol}`
-      );
       this.setState({
-        index: (this.assets.style.index + 0.5) / this.assets.colormap.height,
+        style: this.makeStyle(this.assets.symbol),
       });
     }
     // this.colorbar
@@ -278,8 +272,8 @@ class Product extends GLView {
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
         <Colorbar
           {...this.props}
+          style={this.state.style}
           palette={this.state.palette}
-          index={this.state.index}
         />
         <Caption id="ageString" string={this.props.sweep?.age || ""} />
         <Caption id="infoString" string={this.props.sweep?.infoString || ""} />
