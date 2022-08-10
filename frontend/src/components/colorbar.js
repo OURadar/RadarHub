@@ -29,20 +29,24 @@ function draw(context, theme) {
 export function Colorbar(props) {
   const canvasRef = useRef(null);
 
-  // const width = 390 * scale;
-  // const height = 150 * scale;
-  // canvas.width = width;
-  // canvas.height = height;
-
   React.useEffect(() => {
     const scale = window.devicePixelRatio > 1 ? 2 : 1;
     const canvas = canvasRef.current;
+    const computedStyle = getComputedStyle(document.body);
+    const topbarHeight = parseFloat(
+      computedStyle.getPropertyValue("--topbar-height")
+    );
     if (props.style == "top") {
-      canvas.width = 390 * scale;
-      canvas.height = 56 * scale;
-      canvas.style.width = "390px";
+      canvas.width = window.innerWidth * scale;
+      canvas.height = topbarHeight * scale;
+      canvas.style.width = `${window.innerWidth}px`;
       canvas.style.height = "56px";
-      canvas.style.top = "56px";
+      canvas.style.top = `${topbarHeight}px`;
+      if (props.debug)
+        console.debug(
+          `window size = ${window.innerWidth} x ${window.innerHeight}` +
+            `  topbarHeight = ${topbarHeight}`
+        );
     } else {
       canvas.width = 200 * scale;
       canvas.height = 600 * scale;
@@ -55,10 +59,11 @@ export function Colorbar(props) {
     // canvas.height = scale * (props.height || 200);
     const context = canvas.getContext("2d");
 
-    console.log(
-      `drawing ... ${canvas.style.width} x ${canvas.style.height} ` +
-        ` @ ${canvas.width} x ${canvas.height}`
-    );
+    if (props.debug)
+      console.debug(
+        `drawing ... ${canvas.style.width} x ${canvas.style.height}` +
+          ` @ ${window.devicePixelRatio} -> ${canvas.width} x ${canvas.height}`
+      );
 
     console.log(props);
     const theme = {
