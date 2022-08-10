@@ -126,7 +126,6 @@ class App extends Component {
       return (
         <ThemeProvider theme={this.state.theme}>
           <TopBar isMobile={true} />
-          <SectionHeader name="product" />
           <Product
             sweep={this.archive.data.sweep}
             colors={this.state.colors}

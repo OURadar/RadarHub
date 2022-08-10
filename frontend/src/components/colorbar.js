@@ -35,24 +35,36 @@ export function Colorbar(props) {
   // canvas.height = height;
 
   React.useEffect(() => {
+    const scale = window.devicePixelRatio > 1 ? 2 : 1;
     const canvas = canvasRef.current;
-    canvas.width = 390 * 2;
-    canvas.height = 56 * 2;
-    canvas.style.width = "390px";
-    canvas.style.height = "56px";
-    canvas.style.top = "56px";
-
+    if (props.style == "top") {
+      canvas.width = 390 * scale;
+      canvas.height = 56 * scale;
+      canvas.style.width = "390px";
+      canvas.style.height = "56px";
+      canvas.style.top = "56px";
+    } else {
+      canvas.width = 200 * scale;
+      canvas.height = 600 * scale;
+      canvas.style.width = "200px";
+      canvas.style.height = "600px";
+      canvas.style.right = 0;
+      canvas.style.bottom = 0;
+    }
     // canvas.width = scale * (props.width || 300);
     // canvas.height = scale * (props.height || 200);
     const context = canvas.getContext("2d");
 
-    console.log(`drawing ... ${canvas.width} x ${canvas.height}`);
+    console.log(
+      `drawing ... ${canvas.style.width} x ${canvas.style.height} ` +
+        ` @ ${canvas.width} x ${canvas.height}`
+    );
 
     console.log(props);
     const theme = {
       blank: false,
-      face: props.theme.label.face,
-      stroke: props.theme.label.stroke,
+      face: props.colors.label.face,
+      stroke: props.colors.label.stroke,
       width: 3.5,
     };
 
