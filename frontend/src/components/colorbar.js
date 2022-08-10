@@ -16,14 +16,14 @@ function draw(context, params) {
     const yscale = Math.round(2.0 * scale);
     const height = Math.round(255 * yscale);
     const width = Math.round(20 * scale);
-    const originX = Math.round(context.canvas.width - 110 * scale);
-    const originY = Math.round(context.canvas.height - 60 * scale);
+    const originX = Math.round(context.canvas.width - 80 * scale);
+    const originY = Math.round(context.canvas.height - 20 * scale);
     const tickOffset = yscale - 1;
     context.translate(originX, originY);
     context.font = `${16 * scale}px LabelFont`;
     params.style.ticks.forEach((tick) => {
       let y = 0.5 * scale - tick.pos * yscale + tickOffset;
-      // context.strokeStyle = theme.face;
+      context.strokeStyle = params.face;
       // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
       if (params.blank) {
         context.lineWidth = lineWidth;
@@ -133,6 +133,7 @@ function draw(context, params) {
 
 export function Colorbar(props) {
   const index = props.index;
+  const colors = props.colors;
   const palette = props.palette;
   const canvasRef = useRef(null);
   const scale = window.devicePixelRatio > 1 ? 2 : 1;
@@ -155,12 +156,12 @@ export function Colorbar(props) {
             `  topbarHeight = ${topbarHeight}`
         );
     } else {
-      canvas.width = 200 * scale;
-      canvas.height = 600 * scale;
-      canvas.style.width = "200px";
-      canvas.style.height = "600px";
-      canvas.style.right = 0;
-      canvas.style.bottom = 0;
+      canvas.width = 130 * scale;
+      canvas.height = 550 * scale;
+      canvas.style.width = "130px";
+      canvas.style.height = "550px";
+      canvas.style.right = "30px";
+      canvas.style.bottom = "100px";
     }
   }, []);
 
@@ -178,15 +179,15 @@ export function Colorbar(props) {
 
     console.log(props);
 
-    context.shadowColor = props.debug ? "#ff992288" : props.colors.label.stroke;
-    context.shadowBlur = 10;
+    context.shadowColor = props.debug ? "#ff9922dd" : props.colors.label.stroke;
+    context.shadowBlur = 10 * scale;
     draw(context, {
       blank: true,
       gravity: props.gravity,
       palette: props.palette,
       index: props.style.index,
-      face: props.debug ? "#ff992288" : props.colors.label.face,
-      stroke: props.debug ? "#ff992288" : props.colors.label.stroke,
+      face: props.debug ? "#ff9922dd" : props.colors.label.stroke,
+      stroke: props.debug ? "#ff9922dd" : props.colors.label.stroke,
       style: props.style,
     });
 
@@ -201,7 +202,7 @@ export function Colorbar(props) {
       stroke: props.colors.label.stroke,
       style: props.style,
     });
-  }, [index, palette]);
+  }, [index, colors, palette]);
 
   return <canvas className="colorbar" ref={canvasRef} />;
 }

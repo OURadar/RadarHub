@@ -48,11 +48,11 @@ Copyright Boonleng Cheong
   --button-hover: rgba(0, 0, 16, 0.06);
   --map-background: #f9f5ed;
   --preference-background: rgba(249, 245, 237, 0.8);
-  --background-color-translucent: rgba(0, 111, 146, 0.85);
+  --background-color-translucent: rgba(0, 111, 146, 0.9);
   --background-gradient: linear-gradient(
     0,
-    var(--background-color-translucent) 30%,
-    var(--background-color) 80%
+    var(--background-color-translucent) 15%,
+    var(--background-color) 75%
   );
 }
 
@@ -88,11 +88,11 @@ Copyright Boonleng Cheong
   --button-hover: rgba(248, 248, 255, 0.15);
   --map-background: #22252a;
   --preference-background: rgba(34, 37, 42, 0.8);
-  --background-color-translucent: rgba(0, 94, 123, 0.8);
+  --background-color-translucent: rgba(0, 94, 123, 0.9);
   --background-gradient: linear-gradient(
     0,
-    var(--background-color-translucent) 30%,
-    var(--background-color) 80%
+    var(--background-color-translucent) 15%,
+    var(--background-color) 75%
   );
 }
 
@@ -503,11 +503,11 @@ h3 {
 
 #tabbar,
 #navbar {
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(5px);
   position: fixed;
   width: 100%;
   z-index: 42;
-  -webkit-backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(5px);
 }
 #tabbar {
   top: var(--topbar-height);

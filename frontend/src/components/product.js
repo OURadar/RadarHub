@@ -11,7 +11,6 @@ import { mat4, vec3, quat } from "gl-matrix";
 
 import { GLView } from "./glview";
 import { Overlay } from "./overlay";
-// import { Colorbar } from "./colorbar-v1";
 import { Colorbar } from "./colorbar";
 import { Caption } from "./caption";
 import { Title } from "./title";
@@ -274,6 +273,7 @@ class Product extends GLView {
           {...this.props}
           style={this.state.style}
           palette={this.state.palette}
+          debug={false}
         />
         <Caption id="ageString" string={this.props.sweep?.age || ""} />
         <Caption id="infoString" string={this.props.sweep?.infoString || ""} />
