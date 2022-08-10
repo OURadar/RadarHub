@@ -149,7 +149,7 @@ class GLView extends Component {
       viewprojection: mat4.create(),
       orthoprojection: mat4.ortho([], 0, 1, 0, 1, 0, 1),
       viewport: { x: 0, y: 0, width: 1, height: 1 },
-      dashport: { x: 0, y: 100, width: 1000, height: 1000 },
+      // dashport: { x: 0, y: 100, width: 1000, height: 1000 },
       pixelDensity: 1,
       pointDensity: 1,
       needsUpdate: true,
@@ -280,16 +280,16 @@ class GLView extends Component {
     mat4.multiply(geo.modelview, geo.view, geo.model);
     mat4.multiply(geo.viewprojection, geo.projection, geo.view);
 
-    if (this.props.style == "right") {
-      geo.dashport.x = w - geo.dashport.width;
-      geo.dashport.y = 100;
-    } else if (this.props.style == "top") {
-      geo.dashport.x = 0;
-      geo.dashport.y = h - geo.dashport.height - this.props.sx.pt * this.ratio;
-      console.log(
-        `geometry.dashport.y = ${this.geometry.dashport.y} / ${this.canvas.height}`
-      );
-    }
+    // if (this.props.style == "right") {
+    //   geo.dashport.x = w - geo.dashport.width;
+    //   geo.dashport.y = 100;
+    // } else if (this.props.style == "top") {
+    //   geo.dashport.x = 0;
+    //   geo.dashport.y = h - geo.dashport.height - this.props.sx.pt * this.ratio;
+    //   console.log(
+    //     `geometry.dashport.y = ${this.geometry.dashport.y} / ${this.canvas.height}`
+    //   );
+    // }
 
     const ww = Math.round(h / 3);
     geo.fix.viewport.width = ww;

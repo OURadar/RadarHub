@@ -267,7 +267,7 @@ class Product extends GLView {
     return (
       <div className="fullHeight">
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
-        <Colorbar />
+        <Colorbar width={390} />
         <Caption id="ageString" string={this.props.sweep?.age || ""} />
         <Caption id="infoString" string={this.props.sweep?.infoString || ""} />
         <Title string={this.props.sweep?.timeString || ""} />
