@@ -9,7 +9,7 @@ Copyright Boonleng Cheong
   --half-padding: 10px;
   --base-size: 14;
   --background-color: rgb(0, 111, 146);
-  --background-color-translucent: rgba(0, 92, 121, 0.72);
+  --background-color-translucent: rgba(0, 92, 121, 0.8);
   --background-secondary: rgba(0, 20, 27, 0.85);
   --topbar-height: 56px;
   --tabbar-height: 48px;
@@ -45,7 +45,7 @@ Copyright Boonleng Cheong
   --system-background: #ffffff;
   --secondary-system-background: #f2f2f7ff;
   --tertiary-system-background: #ffffffff;
-  --overlay-background: #ffffffe8;
+  --overlay-background: #ffffffd8;
   --button-hover: rgba(0, 0, 16, 0.06);
   --map-background: #f9f5ed;
   --preference-background: rgba(249, 245, 237, 0.8);
@@ -465,6 +465,7 @@ h3 {
   height: 100vh;
 }
 #app {
+  background-color: var(--background-color);
   height: 100vh;
   overflow: hidden;
   position: fixed;
@@ -474,7 +475,7 @@ h3 {
 }
 #topbar {
   backdrop-filter: blur(4px);
-  background: var(--background-color);
+  background: var(--background-color-translucent);
   color: white;
   display: block;
   height: var(--topbar-height);
@@ -483,7 +484,6 @@ h3 {
   top: 0;
   -webkit-backdrop-filter: blur(4px);
   z-index: 69;
-  opacity: 0.6;
 }
 .topbarComponent {
   align-items: center;
@@ -498,7 +498,6 @@ h3 {
   position: fixed;
   width: 100%;
   z-index: 42;
-  opacity: 0.6;
   -webkit-backdrop-filter: blur(3px);
 }
 #tabbar {
@@ -593,15 +592,6 @@ h3 {
   right: 5px;
 }
 
-#test {
-  background-color: #aba24248;
-  position: fixed;
-  bottom: 30px;
-  left: 0;
-  width: 100%;
-  height: 256px;
-}
-
 .hoursContainer {
   background-color: var(--system-background);
   display: block;
@@ -616,6 +606,19 @@ h3 {
     0 0 10px var(--map-background), 0 0 10px var(--map-background),
     0 0 10px var(--map-background);
   user-select: none;
+}
+
+.scrollable {
+  overflow-y: scroll;
+}
+
+#test {
+  background-color: #aba24248;
+  position: fixed;
+  bottom: 30px;
+  left: 0;
+  width: 100%;
+  height: 256px;
 }
 
 #caption {
@@ -877,6 +880,26 @@ div.key {
   border-radius: 4px;
 }
 
-.scrollable {
-  overflow-y: scroll;
+.preferenceMenu {
+  color: var(--gray);
+  display: block;
+  font-size: 0.8em;
+  left: var(--padding);
+  line-height: 1.2em;
+  padding: var(--half-padding);
+  position: fixed;
+  text-align: center;
+  top: calc(var(--topbar-height) + 2 * var(--padding));
+  z-index: 2;
+}
+
+.colorbar {
+  display: block;
+  position: fixed;
+  z-index: 2;
+  width: 100%;
+  height: 56px;
+  top: 56px;
+  box-sizing: border-box;
+  border: solid 2px var(--orange);
 }

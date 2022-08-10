@@ -143,16 +143,3 @@ Copyright Boonleng Cheong
   height: calc(var(--content-height) - 44px - 86px - 192px - 44px);
   overflow-y: scroll;
 }
-
-.preferenceMenu {
-  color: var(--gray);
-  display: block;
-  font-size: 0.8em;
-  left: var(--padding);
-  line-height: 1.2em;
-  padding: var(--half-padding);
-  position: fixed;
-  text-align: center;
-  top: calc(var(--topbar-height) + 2 * var(--padding));
-  z-index: 2;
-}

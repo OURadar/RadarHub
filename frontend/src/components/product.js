@@ -11,6 +11,7 @@ import { mat4, vec3, quat } from "gl-matrix";
 
 import { GLView } from "./glview";
 import { Overlay } from "./overlay";
+// import { Colorbar } from "./colorbar-v1";
 import { Colorbar } from "./colorbar";
 import { Caption } from "./caption";
 import { Title } from "./title";
@@ -24,10 +25,10 @@ class Product extends GLView {
   constructor(props) {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
-    this.colorbar = new Colorbar(props.style);
-    this.geometry.dashport.y = 100;
-    this.geometry.dashport.width = this.colorbar.canvas.width;
-    this.geometry.dashport.height = this.colorbar.canvas.height;
+    // this.colorbar = new Colorbar(props.style);
+    // this.geometry.dashport.y = 100;
+    // this.geometry.dashport.width = this.colorbar.canvas.width;
+    // this.geometry.dashport.height = this.colorbar.canvas.height;
     this.offset = (Date.now() % 86400000) / 5000;
     this.state = {
       ...this.state,
@@ -184,30 +185,30 @@ class Product extends GLView {
       this.assets.index =
         (this.assets.style.index + 0.5) / this.assets.colormap.height;
     }
-    this.colorbar
-      .load(
-        {
-          palette: this.assets.palette,
-          style: this.assets.style,
-          time: sweep ? sweep.timeString : "-",
-        },
-        this.props.colors
-      )
-      .then((buffer) => {
-        this.dashboardTexture?.texture.destroy();
-        this.dashboardTexture = {
-          bound: [buffer.image.width, buffer.image.height],
-          texture: this.regl.texture({
-            height: buffer.image.height,
-            width: buffer.image.width,
-            data: buffer.image.data,
-            min: "linear",
-            mag: "linear",
-            flipY: true,
-            premultiplyAlpha: true,
-          }),
-        };
-      });
+    // this.colorbar
+    //   .load(
+    //     {
+    //       palette: this.assets.palette,
+    //       style: this.assets.style,
+    //       time: sweep ? sweep.timeString : "-",
+    //     },
+    //     this.props.colors
+    //   )
+    //   .then((buffer) => {
+    //     this.dashboardTexture?.texture.destroy();
+    //     this.dashboardTexture = {
+    //       bound: [buffer.image.width, buffer.image.height],
+    //       texture: this.regl.texture({
+    //         height: buffer.image.height,
+    //         width: buffer.image.width,
+    //         data: buffer.image.data,
+    //         min: "linear",
+    //         mag: "linear",
+    //         flipY: true,
+    //         premultiplyAlpha: true,
+    //       }),
+    //     };
+    //   });
   }
 
   toggleSpin() {
@@ -266,6 +267,7 @@ class Product extends GLView {
     return (
       <div className="fullHeight">
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
+        <Colorbar />
         <Caption id="ageString" string={this.props.sweep?.age || ""} />
         <Caption id="infoString" string={this.props.sweep?.infoString || ""} />
         <Title string={this.props.sweep?.timeString || ""} />
@@ -396,13 +398,13 @@ class Product extends GLView {
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);
-    if (this.dashboardTexture) {
-      this.michelangelo({
-        projection: this.geometry.orthoprojection,
-        viewport: this.geometry.dashport,
-        texture: this.dashboardTexture.texture,
-      });
-    }
+    // if (this.dashboardTexture) {
+    //   this.michelangelo({
+    //     projection: this.geometry.orthoprojection,
+    //     viewport: this.geometry.dashport,
+    //     texture: this.dashboardTexture.texture,
+    //   });
+    // }
     if (this.state.spin && !this.gesture.panInProgress) {
       this.updateViewPoint();
     }
