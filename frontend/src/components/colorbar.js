@@ -9,6 +9,7 @@ import React, { useRef } from "react";
 
 function draw(context, params) {
   const scale = window.devicePixelRatio > 1 ? 2 : 1;
+  const lineWidth = 3.5;
 
   if (params.gravity == "right") {
     // Colorbar dimension: 20 x 255
@@ -25,7 +26,7 @@ function draw(context, params) {
       // context.strokeStyle = theme.face;
       // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
       if (params.blank) {
-        context.lineWidth = params.width;
+        context.lineWidth = lineWidth;
         context.beginPath();
         context.moveTo(22.5 * scale, y);
         context.lineTo(28.5 * scale, y);
@@ -39,7 +40,7 @@ function draw(context, params) {
         context.closePath();
         context.stroke();
       }
-      context.lineWidth = params.width;
+      context.lineWidth = lineWidth;
       let meas = context.measureText(tick.text);
       let xx = 34 * scale;
       let yy = y + 0.5 * meas.actualBoundingBoxAscent;
@@ -49,7 +50,7 @@ function draw(context, params) {
       context.fillText(tick.text, xx, yy);
     });
     // Colorbar shades. The first shade is transparent.
-    context.lineWidth = params.width;
+    context.lineWidth = lineWidth;
     context.rotate(-0.5 * Math.PI);
     context.imageSmoothingEnabled = false;
     if (params.blank) {
@@ -80,7 +81,7 @@ function draw(context, params) {
     );
 
     context.font = `${20 * scale}px LabelFont`;
-    context.lineWidth = params.width;
+    context.lineWidth = lineWidth;
     context.fillStyle = params.face;
     context.strokeStyle = params.stroke;
     let meas = context.measureText(params.style.name);
@@ -187,7 +188,6 @@ export function Colorbar(props) {
       face: props.debug ? "#ff992288" : props.colors.label.face,
       stroke: props.debug ? "#ff992288" : props.colors.label.stroke,
       style: props.style,
-      width: 3.5,
     });
 
     context.shadowColor = "rgba(128, 128, 128, 0)";
@@ -200,7 +200,6 @@ export function Colorbar(props) {
       face: props.colors.label.face,
       stroke: props.colors.label.stroke,
       style: props.style,
-      width: 3.5,
     });
   }, [index, palette]);
 

@@ -268,7 +268,7 @@ class Product extends GLView {
 
   render() {
     return (
-      <div className="fullHeight">
+      <div className="container fullHeight">
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
         <Colorbar
           {...this.props}

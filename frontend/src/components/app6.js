@@ -10,7 +10,6 @@ import Split from "split.js";
 import { ThemeProvider } from "@mui/material/styles";
 import { colorDict, makeTheme } from "./theme";
 import { detectMob, clamp } from "./common";
-import { SectionHeader } from "./section-header";
 import { Browser } from "./browser";
 import { Product } from "./product";
 import { TopBar } from "./topbar";

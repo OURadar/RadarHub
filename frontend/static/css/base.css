@@ -48,11 +48,11 @@ Copyright Boonleng Cheong
   --button-hover: rgba(0, 0, 16, 0.06);
   --map-background: #f9f5ed;
   --preference-background: rgba(249, 245, 237, 0.8);
-  --background-color-translucent: rgba(0, 92, 121, 0.8);
+  --background-color-translucent: rgba(0, 111, 146, 0.85);
   --background-gradient: linear-gradient(
     0,
-    var(--background-color-translucent) 35%,
-    var(--background-color) 85%
+    var(--background-color-translucent) 30%,
+    var(--background-color) 80%
   );
 }
 
@@ -91,8 +91,8 @@ Copyright Boonleng Cheong
   --background-color-translucent: rgba(0, 94, 123, 0.8);
   --background-gradient: linear-gradient(
     0,
-    var(--background-color-translucent) 35%,
-    var(--background-color) 85%
+    var(--background-color-translucent) 30%,
+    var(--background-color) 80%
   );
 }
 
@@ -907,7 +907,7 @@ div.key {
   box-sizing: border-box;
   display: block;
   overflow: hidden;
-  position: fixed;
+  position: absolute;
   z-index: 2;
   pointer-events: none;
   /* backdrop-filter: blur(3px);
