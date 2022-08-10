@@ -8,8 +8,8 @@
 import React, { useRef } from "react";
 
 function draw(context, params) {
-  const scale = window.devicePixelRatio > 1 ? 2 : 1;
-  const lineWidth = 3.5;
+  const scale = window.devicePixelRatio;
+  const lineWidth = 3.5 * scale;
 
   if (params.gravity == "right") {
     // Colorbar dimension: 20 x 255
@@ -23,8 +23,8 @@ function draw(context, params) {
     context.font = `${16 * scale}px LabelFont`;
     params.style.ticks.forEach((tick) => {
       let y = 0.5 * scale - tick.pos * yscale + tickOffset;
-      context.strokeStyle = params.face;
       // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
+      context.strokeStyle = params.face;
       if (params.blank) {
         context.lineWidth = lineWidth;
         context.beginPath();
@@ -63,7 +63,7 @@ function draw(context, params) {
         params.palette,
         1,
         params.style.index,
-        255,
+        params.palette.width - 1,
         1,
         0,
         0,
@@ -101,7 +101,7 @@ function draw(context, params) {
     );
   } else {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    context.lineWidth = 1.0;
+    context.lineWidth = scale;
     context.beginPath();
     context.moveTo(10, 10);
     context.lineTo(50, 10);
@@ -131,35 +131,29 @@ function draw(context, params) {
   }
 }
 
+function setCanvasSize(canvas, width, height) {
+  const scale = window.devicePixelRatio;
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+}
+
 export function Colorbar(props) {
   const index = props.index;
   const colors = props.colors;
   const palette = props.palette;
   const canvasRef = useRef(null);
-  const scale = window.devicePixelRatio > 1 ? 2 : 1;
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
     const computedStyle = getComputedStyle(document.body);
-    const topbarHeight = parseFloat(
-      computedStyle.getPropertyValue("--topbar-height")
-    );
+    const topbarHeight = computedStyle.getPropertyValue("--topbar-height");
     if (props.gravity == "top") {
-      canvas.width = window.innerWidth * scale;
-      canvas.height = topbarHeight * scale;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = "56px";
-      canvas.style.top = `${topbarHeight}px`;
-      if (props.debug)
-        console.debug(
-          `window size = ${window.innerWidth} x ${window.innerHeight}` +
-            `  topbarHeight = ${topbarHeight}`
-        );
+      setCanvasSize(canvas, window.innerWidth, 64);
+      canvas.style.top = topbarHeight;
     } else {
-      canvas.width = 130 * scale;
-      canvas.height = 550 * scale;
-      canvas.style.width = "130px";
-      canvas.style.height = "550px";
+      setCanvasSize(canvas, 130, 550);
       canvas.style.right = "30px";
       canvas.style.bottom = "100px";
     }
@@ -180,7 +174,7 @@ export function Colorbar(props) {
     console.log(props);
 
     context.shadowColor = props.debug ? "#ff9922dd" : props.colors.label.stroke;
-    context.shadowBlur = 10 * scale;
+    context.shadowBlur = 10 * window.devicePixelRatio;
     draw(context, {
       blank: true,
       gravity: props.gravity,
@@ -207,6 +201,6 @@ export function Colorbar(props) {
   return <canvas className="colorbar" ref={canvasRef} />;
 }
 
-// Colorbar.defaultProps = {
-//   style: "top",
-// };
+Colorbar.defaultProps = {
+  gravity: "top",
+};
