@@ -7,27 +7,127 @@
 
 import React, { useRef } from "react";
 
-function draw(context, theme) {
+function draw(context, params) {
   const scale = window.devicePixelRatio > 1 ? 2 : 1;
 
-  context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-  context.lineWidth = 1.0;
-  context.beginPath();
-  context.moveTo(10, 10);
-  context.lineTo(50, 10);
-  context.closePath();
-  context.stroke();
+  if (params.gravity == "right") {
+    // Colorbar dimension: 20 x 255
+    const yscale = Math.round(2.0 * scale);
+    const height = Math.round(255 * yscale);
+    const width = Math.round(20 * scale);
+    const originX = Math.round(context.canvas.width - 110 * scale);
+    const originY = Math.round(context.canvas.height - 60 * scale);
+    const tickOffset = yscale - 1;
+    context.translate(originX, originY);
+    context.font = `${16 * scale}px LabelFont`;
+    params.style.ticks.forEach((tick) => {
+      let y = 0.5 * scale - tick.pos * yscale + tickOffset;
+      // context.strokeStyle = theme.face;
+      // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
+      if (params.blank) {
+        context.lineWidth = params.width;
+        context.beginPath();
+        context.moveTo(22.5 * scale, y);
+        context.lineTo(28.5 * scale, y);
+        context.closePath();
+        context.stroke();
+      } else {
+        context.lineWidth = scale;
+        context.beginPath();
+        context.moveTo(22.5 * scale, y);
+        context.lineTo(27.5 * scale, y);
+        context.closePath();
+        context.stroke();
+      }
+      context.lineWidth = params.width;
+      let meas = context.measureText(tick.text);
+      let xx = 34 * scale;
+      let yy = y + 0.5 * meas.actualBoundingBoxAscent;
+      context.fillStyle = params.face;
+      context.strokeStyle = params.stroke;
+      context.strokeText(tick.text, xx, yy);
+      context.fillText(tick.text, xx, yy);
+    });
+    // Colorbar shades. The first shade is transparent.
+    context.lineWidth = params.width;
+    context.rotate(-0.5 * Math.PI);
+    context.imageSmoothingEnabled = false;
+    if (params.blank) {
+      context.fillStyle = params.face;
+      context.strokeRect(-1.5, -1.5, height + 3, width + 3);
+      context.fillRect(0, 0, height, width);
+    } else {
+      context.clearRect(0, 0, height, width);
+      context.drawImage(
+        params.palette,
+        1,
+        params.style.index,
+        255,
+        1,
+        0,
+        0,
+        height,
+        width
+      );
+    }
+    context.lineWidth = scale;
+    context.strokeStyle = params.face;
+    context.strokeRect(
+      -1.5 * context.lineWidth,
+      -1.5 * context.lineWidth,
+      height + 3 * scale,
+      width + 3 * scale
+    );
 
-  const text = "bitcoin";
-  context.font = `${20 * scale}px LabelFont`;
-  context.lineWidth = theme.width * scale;
-  context.fillStyle = theme.face;
-  context.strokeStyle = theme.stroke;
-  context.strokeText(text, 40, 55);
-  context.fillText(text, 40, 55);
+    context.font = `${20 * scale}px LabelFont`;
+    context.lineWidth = params.width;
+    context.fillStyle = params.face;
+    context.strokeStyle = params.stroke;
+    let meas = context.measureText(params.style.name);
+    let x = 0.5 * (height - meas.width);
+    context.strokeText(params.style.name, x, -18 * scale);
+    context.fillText(params.style.name, x, -18 * scale);
 
-  context.imageSmoothingEnabled = false;
-  context.drawImage(theme.palette, 1, theme.index, 255, 1, 120, 36, 600, 32);
+    context.setTransform(1, 0, 0, 1, 0, 0);
+
+    context.lineWidth = scale;
+    context.strokeStyle = params.stroke;
+    context.strokeRect(
+      originX - 0.5 * context.lineWidth,
+      originY - 0.5 * context.lineWidth - height,
+      width + scale,
+      height + scale
+    );
+  } else {
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    context.lineWidth = 1.0;
+    context.beginPath();
+    context.moveTo(10, 10);
+    context.lineTo(50, 10);
+    context.closePath();
+    context.stroke();
+
+    const text = "bitcoin";
+    context.font = `${20 * scale}px LabelFont`;
+    context.lineWidth = params.width * scale;
+    context.fillStyle = params.face;
+    context.strokeStyle = params.stroke;
+    context.strokeText(text, 40, 55);
+    context.fillText(text, 40, 55);
+
+    context.imageSmoothingEnabled = false;
+    context.drawImage(
+      params.palette,
+      1,
+      params.index,
+      255,
+      1,
+      120,
+      36,
+      600,
+      32
+    );
+  }
 }
 
 export function Colorbar(props) {
@@ -76,15 +176,32 @@ export function Colorbar(props) {
       );
 
     console.log(props);
-    const theme = {
-      blank: false,
-      face: props.colors.label.face,
-      stroke: props.colors.label.stroke,
+
+    context.shadowColor = props.debug ? "#ff992288" : props.colors.label.stroke;
+    context.shadowBlur = 10;
+    draw(context, {
+      blank: true,
+      gravity: props.gravity,
       palette: props.palette,
       index: props.style.index,
+      face: props.debug ? "#ff992288" : props.colors.label.face,
+      stroke: props.debug ? "#ff992288" : props.colors.label.stroke,
+      style: props.style,
       width: 3.5,
-    };
-    draw(context, theme);
+    });
+
+    context.shadowColor = "rgba(128, 128, 128, 0)";
+    context.shadowBlur = 0;
+    draw(context, {
+      blank: false,
+      gravity: props.gravity,
+      palette: props.palette,
+      index: props.style.index,
+      face: props.colors.label.face,
+      stroke: props.colors.label.stroke,
+      style: props.style,
+      width: 3.5,
+    });
   }, [index, palette]);
 
   return <canvas className="colorbar" ref={canvasRef} />;

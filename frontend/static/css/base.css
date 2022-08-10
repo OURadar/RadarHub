@@ -909,6 +909,7 @@ div.key {
   overflow: hidden;
   position: fixed;
   z-index: 2;
+  pointer-events: none;
   /* backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   background-color: var(--background-color-translucent); */
