@@ -21,7 +21,6 @@ class GLView extends Component {
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
     this.style = props.style;
     this.canvas = document.createElement("canvas");
-    this.canvas.classList.add("roundCorder");
     this.canvas.style.width = "100%";
     this.canvas.style.height = "100%";
     if (props.profileGL) {
@@ -202,6 +201,10 @@ class GLView extends Component {
       latitude: 10.0,
     },
     style: "right",
+    sx: {
+      pt: 7,
+      pb: 7,
+    },
   };
 
   componentDidMount() {
@@ -282,7 +285,7 @@ class GLView extends Component {
       geo.dashport.y = 100;
     } else if (this.props.style == "top") {
       geo.dashport.x = 0;
-      geo.dashport.y = h - geo.dashport.height - 88;
+      geo.dashport.y = h - geo.dashport.height - this.props.sx.pt * this.ratio;
       console.log(
         `geometry.dashport.y = ${this.geometry.dashport.y} / ${this.canvas.height}`
       );

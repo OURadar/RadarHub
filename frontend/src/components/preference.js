@@ -1,12 +1,11 @@
 //
-//  product.js
+//  preference.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong
 //
 
 import React from "react";
-// import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import { DensityLarge, DensitySmall } from "@mui/icons-material";
