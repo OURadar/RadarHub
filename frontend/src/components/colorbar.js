@@ -27,10 +27,12 @@ function draw(context, theme) {
   context.fillText(text, 40, 55);
 }
 export function Colorbar(props) {
+  const index = props.index;
+  const palette = props.palette;
   const canvasRef = useRef(null);
+  const scale = window.devicePixelRatio > 1 ? 2 : 1;
 
   React.useEffect(() => {
-    const scale = window.devicePixelRatio > 1 ? 2 : 1;
     const canvas = canvasRef.current;
     const computedStyle = getComputedStyle(document.body);
     const topbarHeight = parseFloat(
@@ -55,9 +57,13 @@ export function Colorbar(props) {
       canvas.style.right = 0;
       canvas.style.bottom = 0;
     }
-    // canvas.width = scale * (props.width || 300);
-    // canvas.height = scale * (props.height || 200);
+  }, []);
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
+
+    if (palette === null) return;
 
     if (props.debug)
       console.debug(
@@ -72,9 +78,8 @@ export function Colorbar(props) {
       stroke: props.colors.label.stroke,
       width: 3.5,
     };
-
     draw(context, theme);
-  }, []);
+  }, [index, palette]);
 
   return <canvas className="colorbar" ref={canvasRef} />;
 }
