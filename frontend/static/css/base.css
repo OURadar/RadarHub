@@ -903,14 +903,9 @@ div.key {
 }
 
 .colorbar {
-  border: solid 2px var(--orange);
-  box-sizing: border-box;
   display: block;
   overflow: hidden;
   position: absolute;
   z-index: 2;
   pointer-events: none;
-  /* backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  background-color: var(--background-color-translucent); */
 }

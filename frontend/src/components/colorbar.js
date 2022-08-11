@@ -11,6 +11,9 @@ function draw(context, params) {
   const scale = window.devicePixelRatio;
   const lineWidth = 3.5 * scale;
 
+  context.lineWidth = 1.0;
+  context.strokeStyle = params.face;
+
   if (params.gravity == "right") {
     // Colorbar dimension: 20 x 255
     const yscale = Math.round(2.0 * scale);
@@ -23,23 +26,15 @@ function draw(context, params) {
     context.font = `${16 * scale}px LabelFont`;
     params.style.ticks.forEach((tick) => {
       let y = 0.5 * scale - tick.pos * yscale + tickOffset;
-      // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
       context.strokeStyle = params.face;
-      if (params.blank) {
-        context.lineWidth = lineWidth;
-        context.beginPath();
-        context.moveTo(22.5 * scale, y);
-        context.lineTo(28.5 * scale, y);
-        context.closePath();
-        context.stroke();
-      } else {
-        context.lineWidth = scale;
-        context.beginPath();
-        context.moveTo(22.5 * scale, y);
-        context.lineTo(27.5 * scale, y);
-        context.closePath();
-        context.stroke();
-      }
+      context.lineWidth = params.blank ? lineWidth + scale : scale;
+      // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
+      context.beginPath();
+      context.moveTo(22 * scale - 0.5 * context.lineWidth, y);
+      context.lineTo(27 * scale + 0.5 * context.lineWidth, y);
+      context.closePath();
+      context.stroke();
+
       context.lineWidth = lineWidth;
       let meas = context.measureText(tick.text);
       let xx = 34 * scale;
@@ -55,8 +50,7 @@ function draw(context, params) {
     context.imageSmoothingEnabled = false;
     if (params.blank) {
       context.fillStyle = params.face;
-      context.strokeRect(-1.5, -1.5, height + 3, width + 3);
-      context.fillRect(0, 0, height, width);
+      context.fillRect(-scale, -scale, height + 2 * scale, width + 2 * scale);
     } else {
       context.clearRect(0, 0, height, width);
       context.drawImage(
@@ -71,14 +65,6 @@ function draw(context, params) {
         width
       );
     }
-    context.lineWidth = scale;
-    context.strokeStyle = params.face;
-    context.strokeRect(
-      -1.5 * context.lineWidth,
-      -1.5 * context.lineWidth,
-      height + 3 * scale,
-      width + 3 * scale
-    );
 
     context.font = `${20 * scale}px LabelFont`;
     context.lineWidth = lineWidth;
@@ -91,22 +77,42 @@ function draw(context, params) {
 
     context.setTransform(1, 0, 0, 1, 0, 0);
 
-    context.lineWidth = scale;
-    context.strokeStyle = params.stroke;
-    context.strokeRect(
-      originX - 0.5 * context.lineWidth,
-      originY - 0.5 * context.lineWidth - height,
-      width + scale,
-      height + scale
-    );
+    context.strokeStyle = params.face;
+    if (params.blank) {
+      context.lineWidth = lineWidth;
+      context.strokeRect(
+        originX - 2 * scale,
+        originY - 2 * scale - height,
+        width + 4 * scale,
+        height + 4 * scale
+      );
+    } else {
+      context.lineWidth = scale;
+      context.strokeRect(
+        originX - 1.5 * scale,
+        originY - 1.5 * scale - height,
+        width + 3 * scale,
+        height + 3 * scale
+      );
+    }
   } else {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    context.lineWidth = scale;
-    context.beginPath();
-    context.moveTo(10, 10);
-    context.lineTo(50, 10);
-    context.closePath();
-    context.stroke();
+
+    context.lineWidth = 3;
+    context.strokeStyle = "red";
+    // context.strokeRect(9.5, 9.5, 12, 12);
+    context.strokeRect(10.5, 10.5, 10, 10);
+
+    context.lineWidth = 1;
+    context.strokeStyle = "black";
+    context.strokeRect(10.5, 10.5, 10, 10);
+
+    // context.lineWidth = scale;
+    // context.beginPath();
+    // context.moveTo(10, 10);
+    // context.lineTo(50, 10);
+    // context.closePath();
+    // context.stroke();
 
     const text = "bitcoin";
     context.font = `${20 * scale}px LabelFont`;
@@ -121,12 +127,20 @@ function draw(context, params) {
       params.palette,
       1,
       params.index,
-      255,
+      params.palette.width - 1,
       1,
       120,
       36,
       600,
       32
+    );
+    context.strokeStyle = "rgba(255, 160, 0, 0.8)";
+    context.lineWidth = 2.0 * scale;
+    context.strokeRect(
+      0.5 * context.lineWidth,
+      0.5 * context.lineWidth,
+      context.canvas.width - context.lineWidth,
+      context.canvas.height - context.lineWidth
     );
   }
 }
