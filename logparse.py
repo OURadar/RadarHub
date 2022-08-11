@@ -148,10 +148,15 @@ class LogParser:
         s = str(self.status) if self.status > 0 else ' - '
         return self._color_code_status() + s + ' ' + u + '\033[m'
 
+    def _str_location(self):
+        s = '...' + self.location[-22:] if len(self.location) > 25 else self.location
+        return s
+
     def __str__(self):
         t = self.datetime.strftime(r'%m/%d %H:%M:%S') if self.datetime else '--/-- --:--:--'
         c = self._str_compression()
         u = self._str_status_url()
+        l = self._str_location()
         b = f'{self.bytes:10,d}' if self.bytes else '         -'
         if re_agent.search(self.user_agent) is None and len(self.user_agent) > 100:
             h = f'{t} | {self.ip:>15} | '
@@ -163,14 +168,14 @@ class LogParser:
             return f'{h}{o} ({len(m)} / {w})'
         if self.format == 'loc':
             if self.parser == re_nginx:
-                return f'{t} | {self.ip:>15} | {self.location:>25} | {b} | {c} | {u}'
+                return f'{t} | {self.ip:>15} | {l:>25} | {b} | {c} | {u}'
             else:
-                return f'{t} | {self.ip:>15} | {self.location:>25} | {b} | {u}'
+                return f'{t} | {self.ip:>15} | {l:>25} | {b} | {u}'
         if self.format == 'url':
             return f'{t} | {self.ip:>15} | {self.bytes:>10,d} | {c} | {u}'
         if self.format == 'agent':
             return f'{t} | {self.ip:>15} | {self.os_browser:>20} | {u}'
-        return f'{t} | {self.ip:>15} | {self.location:>25} | {b} | {c} | {self.os_browser:>20} | {u}'
+        return f'{t} | {self.ip:>15} | {l:>25} | {b} | {c} | {self.os_browser:>20} | {u}'
 
     def show(self, line=None):
         if line:
