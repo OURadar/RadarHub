@@ -20,31 +20,33 @@ function draw(context, params) {
     const originY = Math.round(context.canvas.height - 20 * scale);
     const tickOffset = yscale - 1;
 
-    // Move the origin reference for drawing ticks
+    // Move the origin reference
     context.translate(originX, originY);
     context.font = `${16 * scale}px LabelFont`;
+
+    // Ticks
     params.style.ticks.forEach((tick) => {
-      let y = 0.5 * scale - tick.pos * yscale + tickOffset;
+      let t = 0.5 * scale - tick.pos * yscale + tickOffset;
       context.strokeStyle = params.face;
       context.lineWidth = params.blank ? lineWidth + scale : scale;
       // console.log(`tick.pos = ${tick.pos}   y = ${y}`);
       context.beginPath();
-      context.moveTo(22 * scale - 0.5 * context.lineWidth, y);
-      context.lineTo(27 * scale + 0.5 * context.lineWidth, y);
+      context.moveTo(22 * scale - 0.5 * context.lineWidth, t);
+      context.lineTo(27 * scale + 0.5 * context.lineWidth, t);
       context.closePath();
       context.stroke();
 
       context.lineWidth = lineWidth;
       let meas = context.measureText(tick.text);
       let xx = 34 * scale;
-      let yy = y + 0.5 * meas.actualBoundingBoxAscent;
+      let yy = t + 0.5 * meas.actualBoundingBoxAscent;
       context.fillStyle = params.face;
       context.strokeStyle = params.stroke;
       context.strokeText(tick.text, xx, yy);
       context.fillText(tick.text, xx, yy);
     });
 
-    // Colorbar shades. The first shade is transparent so we only paint shades 1 - 255
+    // Colorbar shades. The first shade is transparent so only paint shades 1 - 255
     context.rotate(-0.5 * Math.PI);
     if (params.blank) {
       context.fillStyle = params.face;
@@ -111,13 +113,13 @@ function draw(context, params) {
     // Colorbar dimension: (0.8 * w) x (0.08 * w)
     const width = Math.round(0.8 * context.canvas.width);
     const height = Math.round(0.2 * context.canvas.height);
-    const xscale = Math.round(width / 255.0);
+    const xscale = width / 255.0;
     const originX = Math.round(0.1 * context.canvas.width);
     const originY = Math.round(0.4 * context.canvas.height);
-    const tickOffset = xscale - 1;
-    console.log(`width = ${width}   height = ${height}   xscale = ${xscale}`);
+    const tickOffset = Math.round(xscale - 1);
+    console.log(`${width} x ${height}   xscale = ${xscale} / ${tickOffset}`);
 
-    // Move the origin reference for drawing ticks
+    // Move the origin reference
     context.translate(originX, originY);
 
     // Colorbar shades. The first shade is transparent so we only paint shades 1 - 255
@@ -165,6 +167,30 @@ function draw(context, params) {
         height + 3 * scale
       );
     }
+
+    // Ticks
+    context.font = `${16 * scale}px LabelFont`;
+    params.style.ticks.forEach((tick) => {
+      let t = Math.floor(tick.pos * xscale) - tickOffset + 0.5 * scale;
+
+      context.lineWidth = lineWidth;
+      let meas = context.measureText(tick.text);
+      // console.log("meas", meas);
+      let xx = t - 0.5 * meas.width;
+      let yy = height + 24 * scale;
+      context.fillStyle = params.face;
+      context.strokeStyle = params.stroke;
+      context.strokeText(tick.text, xx, yy);
+      context.fillText(tick.text, xx, yy);
+
+      context.strokeStyle = params.face;
+      context.lineWidth = params.blank ? lineWidth + scale : scale;
+      context.beginPath();
+      context.moveTo(t, height + 2 * scale - 0.5 * context.lineWidth);
+      context.lineTo(t, height + 3 * scale + 0.5 * context.lineWidth);
+      context.closePath();
+      context.stroke();
+    });
   }
 
   // Reset the transformation
@@ -201,7 +227,7 @@ export function Colorbar(props) {
     const computedStyle = getComputedStyle(document.body);
     const topbarHeight = computedStyle.getPropertyValue("--topbar-height");
     if (props.gravity == "top") {
-      setCanvasSize(canvas, window.innerWidth, 64);
+      setCanvasSize(canvas, window.innerWidth, 80);
       canvas.style.top = topbarHeight;
     } else {
       setCanvasSize(canvas, 130, 550);
@@ -227,7 +253,7 @@ export function Colorbar(props) {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
     context.shadowColor = props.debug ? "#ff9922dd" : props.colors.label.stroke;
-    context.shadowBlur = 10 * window.devicePixelRatio;
+    context.shadowBlur = 3 * window.devicePixelRatio;
     draw(context, {
       blank: true,
       gravity: props.gravity,
@@ -247,7 +273,7 @@ export function Colorbar(props) {
       palette: props.palette,
       index: props.style.index,
       face: props.colors.label.face,
-      stroke: props.colors.label.stroke,
+      stroke: props.debug ? "#ff9922dd" : props.colors.label.stroke,
       style: props.style,
       debug: props.debug,
     });
