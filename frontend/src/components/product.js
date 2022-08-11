@@ -271,13 +271,21 @@ class Product extends GLView {
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
         <Colorbar
           {...this.props}
+          id="colorbar"
           style={this.state.style}
           palette={this.state.palette}
-          debug={true}
+          debug={false}
         />
-        <Caption id="ageString" string={this.props.sweep?.age || ""} />
-        <Caption id="infoString" string={this.props.sweep?.infoString || ""} />
-        <Title string={this.props.sweep?.timeString || ""} />
+        <Caption id="ageString" string={this.props.sweep?.age || "> 1 week"} />
+        <Caption
+          id="infoString"
+          string={
+            this.props.sweep?.infoString || "Gatewidth: 60m\nWaveform: o95"
+          }
+        />
+        <Title
+          string={this.props.sweep?.timeString || "2013/05/20 12:34:56 UTC"}
+        />
       </div>
     );
   }

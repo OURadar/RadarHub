@@ -177,7 +177,7 @@ function draw(context, params) {
       let meas = context.measureText(tick.text);
       // console.log("meas", meas);
       let xx = t - 0.5 * meas.width;
-      let yy = height + 24 * scale;
+      let yy = height + 22 * scale;
       context.fillStyle = params.face;
       context.strokeStyle = params.stroke;
       context.strokeText(tick.text, xx, yy);
@@ -279,7 +279,7 @@ export function Colorbar(props) {
     });
   }, [index, colors, palette]);
 
-  return <canvas className="colorbar" ref={canvasRef} />;
+  return <canvas id={props.id} ref={canvasRef} />;
 }
 
 Colorbar.defaultProps = {

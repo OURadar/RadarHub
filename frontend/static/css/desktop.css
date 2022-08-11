@@ -143,3 +143,21 @@ Copyright Boonleng Cheong
   height: calc(var(--content-height) - 44px - 86px - 192px - 44px);
   overflow-y: scroll;
 }
+
+#ageString {
+  bottom: 50px;
+  font-size: 20px;
+  font-weight: 500;
+  left: 30px;
+}
+#infoString {
+  bottom: 90px;
+  left: 30px;
+}
+#title {
+  font-size: 32px;
+  font-weight: 500;
+  text-align: right;
+  bottom: 50px;
+  right: 50px;
+}
