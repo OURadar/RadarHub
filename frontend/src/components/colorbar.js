@@ -11,8 +11,6 @@ function draw(context, params) {
   const scale = window.devicePixelRatio;
   const lineWidth = 3.5 * scale;
 
-  context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-
   if (params.gravity == "right") {
     // Colorbar dimension: 20 x 510 (not 512, we paint one shade less, more later)
     const width = Math.round(20 * scale);
@@ -48,12 +46,14 @@ function draw(context, params) {
 
     // Colorbar shades. The first shade is transparent so we only paint shades 1 - 255
     context.rotate(-0.5 * Math.PI);
-    context.imageSmoothingEnabled = false;
     if (params.blank) {
       context.fillStyle = params.face;
-      context.fillRect(-scale, -scale, height + 2 * scale, width + 2 * scale);
+      context.fillRect(-scale, -scale, width + 2 * scale, height + 2 * scale);
+      // context.lineWidth = params.width;
+      // context.strokeRect(-1.5, -1.5, width + 3, height + 3);
     } else {
       context.clearRect(0, 0, height, width);
+      context.imageSmoothingEnabled = false;
       context.drawImage(
         params.palette,
         1,
@@ -121,12 +121,12 @@ function draw(context, params) {
     context.translate(originX, originY);
 
     // Colorbar shades. The first shade is transparent so we only paint shades 1 - 255
-    context.imageSmoothingEnabled = false;
     if (params.blank) {
       context.fillStyle = params.face;
-      context.fillRect(-scale, -scale, height + 2 * scale, width + 2 * scale);
+      context.fillRect(-scale, -scale, width + 2 * scale, height + 2 * scale);
     } else {
       context.imageSmoothingEnabled = false;
+      context.clearRect(0, 0, width, height);
       context.drawImage(
         params.palette,
         1,
@@ -144,11 +144,17 @@ function draw(context, params) {
     context.strokeStyle = params.face;
     if (params.blank) {
       context.lineWidth = lineWidth;
+      // context.strokeRect(
+      //   -2 * scale,
+      //   -2 * scale,
+      //   width + 4 * scale,
+      //   height + 4 * scale
+      // );
       context.strokeRect(
-        -2 * scale,
-        -2 * scale,
-        width + 4 * scale,
-        height + 4 * scale
+        -scale - 0.5 * lineWidth,
+        -scale - 0.5 * lineWidth,
+        width + 2 * scale + lineWidth,
+        height + 2 * scale + lineWidth
       );
     } else {
       context.lineWidth = scale;
@@ -217,6 +223,8 @@ export function Colorbar(props) {
       );
 
     console.log(props);
+
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
     context.shadowColor = props.debug ? "#ff9922dd" : props.colors.label.stroke;
     context.shadowBlur = 10 * window.devicePixelRatio;
