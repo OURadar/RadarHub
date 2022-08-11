@@ -459,12 +459,13 @@ h3 {
 }
 
 #loading {
+  background-color: var(--background-color);
   color: white;
   fill: white;
   height: 100vh;
   position: absolute;
   text-align: center;
-  top: 25vh;
+  padding-top: 25vh;
   transition: opacity 0.5s;
   width: 100vw;
 }
