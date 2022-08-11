@@ -273,7 +273,7 @@ class Product extends GLView {
           {...this.props}
           style={this.state.style}
           palette={this.state.palette}
-          debug={false}
+          debug={true}
         />
         <Caption id="ageString" string={this.props.sweep?.age || ""} />
         <Caption id="infoString" string={this.props.sweep?.infoString || ""} />
