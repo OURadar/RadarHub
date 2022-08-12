@@ -64,5 +64,6 @@
     "**/.*/**",
     "**/.vscode",
     "**/.vscode/**"
-  ]
+  ],
+  "C_Cpp.default.compilerPath": "/usr/local/bin/gcc-11"
 }
