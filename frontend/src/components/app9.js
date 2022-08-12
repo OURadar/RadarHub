@@ -7,11 +7,6 @@
 
 import React, { Component } from "react";
 import { ThemeProvider } from "@mui/material/styles";
-import { colorDict, makeTheme } from "./theme";
-import { detectMob } from "./common";
-import { TopBar } from "./topbar";
-import { GLView } from "./glview";
-import { Archive } from "./archive";
 
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
@@ -20,6 +15,12 @@ import RadarIcon from "@mui/icons-material/Radar";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import GamepadIcon from "@mui/icons-material/Gamepad";
+
+import { colorDict, makeTheme } from "./theme";
+import { detectMob } from "./common";
+import { TopBar } from "./topbar";
+import { Product } from "./product";
+import { Archive } from "./archive";
 
 class App extends Component {
   constructor(props) {
@@ -78,36 +79,26 @@ class App extends Component {
 
   render() {
     return (
-      <ThemeProvider theme={this.state.theme}>
-        <TopBar
-          mode={this.state.colors.name}
-          ingest={this.ingest}
-          isMobile={this.isMobile}
-          handleModeChange={this.handleModeChange}
-        />
-        <BottomNavigation value={this.state.value} onChange={this.handleChange}>
-          <BottomNavigationAction
-            label="View"
-            value="view"
-            icon={<RadarIcon />}
-          />
-          <BottomNavigationAction
-            label="Archive"
-            value="archive"
-            icon={<EventNoteIcon />}
-          />
-          <BottomNavigationAction
-            label="Health"
-            value="health"
-            icon={<MonitorHeartIcon />}
-          />
-          <BottomNavigationAction
-            label="Control"
-            value="control"
-            icon={<GamepadIcon />}
-          />
-        </BottomNavigation>
-      </ThemeProvider>
+      <div className="fullHeight">
+        <TopBar isMobile={true} handleThemeChange={this.handleThemeChange} />
+        <ThemeProvider theme={this.state.theme}>
+          <Product colors={this.state.colors} gravity="top" />
+          <BottomNavigation
+            id="navbar"
+            showLabels
+            value={this.state.value}
+            onChange={this.handleChange}
+          >
+            <BottomNavigationAction label="View" icon={<RadarIcon />} />
+            <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
+            <BottomNavigationAction
+              label="Health"
+              icon={<MonitorHeartIcon />}
+            />
+            <BottomNavigationAction label="Control" icon={<GamepadIcon />} />
+          </BottomNavigation>
+        </ThemeProvider>
+      </div>
     );
   }
 
