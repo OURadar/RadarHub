@@ -102,7 +102,7 @@ class LogParser:
             x = x.groupdict()
             self.ip = x['ip']
             self.datetime = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
-            self.compression = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 0
+            self.compression = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 1
             self.user_agent = x['user_agent'] if 'user_agent' in x else ''
             self.os_browser = get_user_agent_string(self.user_agent if len(self.user_agent) else '-', width=20)
             self.location = get_ip_location(x['ip'])
