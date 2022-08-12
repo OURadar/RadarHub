@@ -44,7 +44,10 @@ def index(request):
     return render(request, 'frontend/index.html', {'vars': params, 'css': css_hash, 'version': settings.VERSION})
 
 def dev(request):
-    return render(request, 'frontend/dev.html', {'css': css_hash})
+    radar = 'px1000'
+    origin = location(radar)
+    params = {'radar': radar, 'origin': origin}
+    return render(request, 'frontend/dev.html', {'vars':params, 'css': css_hash})
 
 # Control
 

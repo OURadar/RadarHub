@@ -17,10 +17,10 @@ import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import GamepadIcon from "@mui/icons-material/Gamepad";
 
 import { colorDict, makeTheme } from "./theme";
-import { detectMob } from "./common";
 import { TopBar } from "./topbar";
-import { Product } from "./product";
 import { Archive } from "./archive";
+import { Browser } from "./browser";
+import { Product } from "./product";
 
 class App extends Component {
   constructor(props) {
@@ -30,31 +30,19 @@ class App extends Component {
       theme: makeTheme(),
       time: new Date("2013-05-20T19:00"),
       overlayLoaded: false,
-      key: "",
-      value: "recent",
+      tabIndex: 0,
     };
-    console.log(`colors.name = ${this.state.colors.name}`);
-    this.isMobile = detectMob();
     this.archive = new Archive(props.radar);
     this.archive.onupdate = (_dontcare) => {
       this.forceUpdate();
     };
-    this.overlayLoaded = false;
+    this.handleThemeChange = this.handleThemeChange.bind(this);
     this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
-    this.handleModeChange = this.handleModeChange.bind(this);
-    this.handleChange = this.handleChange.bind(this);
+    this.handleNavigationChange = this.handleNavigationChange.bind(this);
     document.documentElement.setAttribute("theme", this.state.colors.name);
-    window.addEventListener("keydown", (e) => (this.state.key = e.key));
-    window.addEventListener("keyup", (e) => {
-      if (e.key != this.state.key) {
-        // console.log(`keydown ${this.state.key} != keyup ${e.key}`);
-        return;
-      }
-      console.log(`key = ${e.key}`);
-    });
   }
   static defaultProps = {
-    radar: "radar",
+    radar: "px1000",
     origin: {
       longitude: -97.422413,
       latitude: 35.25527,
@@ -80,14 +68,24 @@ class App extends Component {
   render() {
     return (
       <div className="fullHeight">
-        <TopBar isMobile={true} handleThemeChange={this.handleThemeChange} />
+        <TopBar
+          isMobile={true}
+          ingest={this.archive}
+          handleThemeChange={this.handleThemeChange}
+        />
         <ThemeProvider theme={this.state.theme}>
-          <Product colors={this.state.colors} gravity="top" />
+          <Product
+            gravity="top"
+            colors={this.state.colors}
+            origin={this.props.origin}
+            sweep={this.archive.data.sweep}
+            onOverlayLoaded={this.handleOverlayLoaded}
+          />
           <BottomNavigation
             id="navbar"
             showLabels
-            value={this.state.value}
-            onChange={this.handleChange}
+            value={this.state.tabIndex}
+            onChange={this.handleNavigationChange}
           >
             <BottomNavigationAction label="View" icon={<RadarIcon />} />
             <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
@@ -104,21 +102,27 @@ class App extends Component {
 
   handleOverlayLoaded() {
     console.log(`App.handleOverlayLoaded()`);
-    this.overlayLoaded = true;
+    this.setState({ overlayLoaded: true });
+    this.archive.catchup();
   }
 
-  handleModeChange() {
+  handleThemeChange() {
+    console.log("app6.handleThemeChange()");
     let mode = this.state.colors.name == "light" ? "dark" : "light";
-    console.log(`App8.handleModeChange() -> ${mode}`);
+    document.documentElement.setAttribute("theme", mode);
     this.setState({
       colors: colorDict(mode),
       theme: makeTheme(mode),
     });
   }
 
-  handleChange(event, newValue) {
+  handleLiveModeChange(_e, value) {
+    this.archive.toggleLiveUpdate(value);
+  }
+
+  handleNavigationChange(_e, value) {
     console.log("handleChange()");
-    this.setState({ value: newValue });
+    this.setState({ navIndex: value });
   }
 }
 
