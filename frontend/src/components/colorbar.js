@@ -100,24 +100,14 @@ function draw(context, params) {
       );
     }
   } else {
-    // console.log(`scale = ${scale}`);
-
-    // context.lineWidth = 3 * scale;
-    // context.strokeStyle = "red";
-    // context.strokeRect(10.5, 10.5, 30, 30);
-
-    // context.lineWidth = 1;
-    // context.strokeStyle = "black";
-    // context.strokeRect(10.5, 10.5, 10, 10);
-
-    // Colorbar dimension: (0.8 * w) x (0.08 * w)
-    const width = Math.round(0.8 * context.canvas.width);
+    // Colorbar dimension: (0.85 * w) x (0.2 * h)
+    const width = Math.round(0.85 * context.canvas.width);
     const height = Math.round(0.2 * context.canvas.height);
     const xscale = width / 255.0;
-    const originX = Math.round(0.1 * context.canvas.width);
+    const originX = Math.round(0.5 * (context.canvas.width - width));
     const originY = Math.round(0.4 * context.canvas.height);
     const tickOffset = Math.round(xscale - 1);
-    console.log(`${width} x ${height}   xscale = ${xscale} / ${tickOffset}`);
+    // console.log(`${width} x ${height}   xscale = ${xscale} / ${tickOffset}`);
 
     // Move the origin reference
     context.translate(originX, originY);
@@ -191,6 +181,14 @@ function draw(context, params) {
       context.closePath();
       context.stroke();
     });
+
+    // context.lineWidth = 3 * scale;
+    // context.strokeStyle = "red";
+    // context.strokeRect(10.5, 10.5, 30, 30);
+
+    // context.lineWidth = 1;
+    // context.strokeStyle = "black";
+    // context.strokeRect(10.5, 10.5, 10, 10);
   }
 
   // Reset the transformation

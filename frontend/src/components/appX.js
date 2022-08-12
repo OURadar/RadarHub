@@ -15,12 +15,23 @@ import { TopBar } from "./topbar";
 import { Product } from "./product";
 import { RandomList } from "./random-list";
 
+import { Archive } from "./archive";
+import { Preference } from "./preference";
+
 export default function App(props) {
   const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(() => makeTheme());
   const [colors, setColors] = React.useState(() => colorDict());
+  // const [view, setView] = React.useState(<div></div>);
 
-  const [view, setView] = React.useState(<div></div>);
+  // const [ignored, forceUpdate] = React.useReducer((x) => {
+  //   console.log(`foceUpdate()`);
+  //   return x + 1;
+  // }, 0);
+
+  // console.log(`radar = ${props.radar}`);
+  // const archive = new Archive(props.radar);
+  // archive.onupdate = forceUpdate;
 
   const setMode = (mode) => {
     document.documentElement.setAttribute("theme", mode);
@@ -38,17 +49,19 @@ export default function App(props) {
     setMode(mode);
   };
 
-  const glView = <Product colors={colors} gravity="top" />;
+  // const glView = (
+  //   <Product colors={colors} gravity="top" sweep={archive.data.sweep} />
+  // );
 
-  React.useEffect(() => {
-    if (value == 0) {
-      setView(glView);
-    } else if (value == 1) {
-      setView(<RandomList />);
-    } else {
-      setView(<RandomList label="2" seed={42} />);
-    }
-  }, [value, colors]);
+  // React.useEffect(() => {
+  //   if (value == 0) {
+  //     setView(glView);
+  //   } else if (value == 1) {
+  //     setView(<RandomList />);
+  //   } else {
+  //     setView(<RandomList label="2" seed={42} />);
+  //   }
+  // }, [value, colors]);
 
   React.useEffect(() => {
     window
@@ -63,7 +76,7 @@ export default function App(props) {
     <div className="fullHeight">
       <TopBar isMobile={true} handleThemeChange={handleThemeChange} />
       <ThemeProvider theme={theme}>
-        {view}
+        <Product colors={colors} gravity="top" />
         <BottomNavigation
           id="navbar"
           showLabels

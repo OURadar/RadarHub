@@ -16,6 +16,14 @@ Copyright Boonleng Cheong
   padding: 0;
 }
 
+[theme="light"] {
+  --colorbar-background: rgba(249, 245, 237, 0.75);
+}
+
+[theme="dark"] {
+  --colorbar-background: rgba(34, 37, 42, 0.75);
+}
+
 .extraLarge {
   font-size: 60px;
   margin-bottom: 25px;
@@ -86,14 +94,14 @@ Copyright Boonleng Cheong
 }
 
 #ageString {
-  bottom: calc(var(--button-height) + var(--navbar-padding-bottom) + 25px);
-  left: 30px;
+  bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 30px);
+  left: var(--padding);
 }
 #infoString {
   bottom: calc(
-    var(--button-height) + var(--navbar-padding-bottom) + var(--padding) + 40px
+    var(--navbar-padding-bottom) + var(--button-height) + var(--padding) + 40px
   );
-  left: 30px;
+  left: var(--padding);
 }
 #title {
   display: block;
@@ -104,7 +112,7 @@ Copyright Boonleng Cheong
   z-index: 2;
 }
 #colorbar {
-  background-color: var(--preference-background);
+  background-color: var(--colorbar-background);
   backdrop-filter: blur(3px);
   border-bottom: var(--ui-border);
   -webkit-backdrop-filter: blur(3px);
