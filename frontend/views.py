@@ -101,3 +101,9 @@ def robots_txt(request):
 
 def view(request, page):
     return render(request, f'{page}.html', {'css': css_hash}, status=200)
+
+def page403(request, exception):
+    return render(request, f'403.html', {'css': css_hash}, status=403)
+
+def page404(request, exception):
+    return render(request, f'404.html', {'css': css_hash}, status=404)

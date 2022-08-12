@@ -487,6 +487,29 @@ Then, modify the section `location /` of `/etc/nginx/sites-available/default` as
 	}
 ```
 
+To enable data compression, which could save bandwidth and improve performance, add these lines to `/etc/nginx/nginx.conf` under the `http` section as:
+
+```conf
+http {
+    ...
+
+	##
+	# Gzip Settings
+	##
+
+	gzip on;
+	gzip_vary on;
+	gzip_proxied any;
+	gzip_comp_level 6;
+	gzip_buffers 16 8k;
+	gzip_http_version 1.1;
+	gzip_min_length 256;
+	gzip_types text/plain text/css text/javascript application/json application/javascript application/octet-stream;
+
+    ...
+}
+```
+
 ## Supervisor Using Systemd
 
 If you configured [Redis] through `systemd`, you can set up [supervisor] to start after [redis] is available.
