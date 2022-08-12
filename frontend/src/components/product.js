@@ -279,12 +279,10 @@ class Product extends GLView {
         <Caption id="ageString" string={this.props.sweep?.age || "> 1 week"} />
         <Caption
           id="infoString"
-          string={
-            this.props.sweep?.infoString || "Gatewidth: 60m\nWaveform: o95"
-          }
+          string={this.props.sweep?.infoString || "Gatewidth: -\nWaveform: -"}
         />
         <Title
-          string={this.props.sweep?.timeString || "2013/05/20 12:34:56 UTC"}
+          string={this.props.sweep?.timeString || "----/--/-- --:--:-- UTC"}
         />
       </div>
     );

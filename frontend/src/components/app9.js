@@ -93,7 +93,11 @@ class App extends Component {
               label="Health"
               icon={<MonitorHeartIcon />}
             />
-            <BottomNavigationAction label="Control" icon={<GamepadIcon />} />
+            <BottomNavigationAction
+              label="Control"
+              icon={<GamepadIcon />}
+              disabled
+            />
           </BottomNavigation>
         </ThemeProvider>
       </div>
