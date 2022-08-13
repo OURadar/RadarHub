@@ -40,7 +40,12 @@ def get_user_info(request):
 # Create your views here.
 def index(request):
     params = get_user_info(request)
-    return render(request, 'frontend/index.html', {'vars': params, 'css': css_hash, 'version': settings.VERSION})
+    context = {
+        'vars': params,
+        'css': css_hash,
+        'version': settings.VERSION
+    }
+    return render(request, 'frontend/index.html', context)
 
 def dev(request):
     return render(request, 'frontend/dev.html', {'css': css_hash})
@@ -55,8 +60,14 @@ def control_radar(request, radar):
     show += '   ' + color_name_value('user', into['user'])
     logger.info(show)
     origin = location(radar)
-    params = {'radar': radar, 'origin': origin}
-    return render(request, 'frontend/control.html', {'vars': params, 'css': css_hash})
+    context = {
+        'vars': {
+            'radar': radar,
+            'origin': origin
+        },
+        'css': css_hash
+    }
+    return render(request, 'frontend/control.html', context)
 
 def control(request):
     return control_radar(request, "demo")
@@ -75,8 +86,15 @@ def archive_radar_profile(request, radar, profileGL):
     if radar not in radars:
         raise Http404
     origin = location(radar)
-    params = {'radar': radar, 'origin': origin, 'profileGL': profileGL}
-    return render(request, 'frontend/archive.html', {'vars': params, 'css': css_hash})
+    context = {
+        'vars': {
+            'radar': radar,
+            'origin': origin,
+            'profileGL': profileGL
+        },
+        'css': css_hash
+    }
+    return render(request, 'frontend/archive.html', context)
 
 def archive_radar(request, radar):
     return archive_radar_profile(request, radar, False)
@@ -100,13 +118,17 @@ def robots_txt(request):
     return HttpResponse('\n'.join(lines), content_type='text/plain')
 
 def view(request, page):
-    return render(request, f'{page}.html', {'css': css_hash}, status=200)
+    context = {'css': css_hash}
+    return render(request, f'{page}.html', context, status=200)
 
 def page400(request, exception):
-    return render(request, f'400.html', {'css': css_hash}, status=400)
+    context = {'css': css_hash}
+    return render(request, f'400.html', context, status=400)
 
 def page403(request, exception):
-    return render(request, f'403.html', {'css': css_hash}, status=403)
+    context = {'css': css_hash}
+    return render(request, f'403.html', context, status=403)
 
 def page404(request, exception):
-    return render(request, f'404.html', {'css': css_hash}, status=404)
+    context = {'css': css_hash}
+    return render(request, f'404.html', context, status=404)

@@ -13,7 +13,7 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += [path('admin/', admin.site.urls)]
 
-handler400 = 'frontend.views.page403'
+handler400 = 'frontend.views.page400'
 handler403 = 'frontend.views.page403'
 handler404 = 'frontend.views.page404'
 # handler500
