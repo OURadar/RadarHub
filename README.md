@@ -467,7 +467,7 @@ cp frontend/templates/frontend/maintenance.html /var/www/html/
 
 Then, modify the section `location /` of `/etc/nginx/sites-available/default` as:
 
-```conf
+```nginx
 	location /favicon.ico {
 		root /home/radarhub/app/frontend/static/images;
 	}
@@ -489,9 +489,9 @@ Then, modify the section `location /` of `/etc/nginx/sites-available/default` as
 
 To enable data compression, which could save bandwidth and improve performance, add these lines to `/etc/nginx/nginx.conf` under the `http` section as:
 
-```conf
+```nginx
 http {
-    ...
+	...
 
 	##
 	# Gzip Settings
@@ -506,7 +506,7 @@ http {
 	gzip_min_length 256;
 	gzip_types text/plain text/css text/javascript application/json application/javascript application/octet-stream;
 
-    ...
+	...
 }
 ```
 
