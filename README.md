@@ -491,7 +491,7 @@ To enable data compression, which could save bandwidth and improve performance, 
 
 ```nginx
 http {
-	...
+	###
 
 	##
 	# Gzip Settings
@@ -506,7 +506,7 @@ http {
 	gzip_min_length 256;
 	gzip_types text/plain text/css text/javascript application/json application/javascript application/octet-stream;
 
-	...
+	###
 }
 ```
 
