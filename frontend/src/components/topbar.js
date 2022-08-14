@@ -79,7 +79,6 @@ export function TopBar(props) {
             <div className={online} id="statusLed"></div>
             <div id="radarName">{`${name}`}</div>
             {status}
-            {notify}
           </div>
         </div>
         <Console
@@ -117,6 +116,7 @@ export function TopBar(props) {
           }}
         />
       </div>
+      {notify}
     </ThemeProvider>
   );
 }

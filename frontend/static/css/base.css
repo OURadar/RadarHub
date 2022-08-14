@@ -446,18 +446,17 @@ h3 {
 }
 
 .darkBackground {
-  backdrop-filter: blur(4px);
-  background: linear-gradient(180deg, black 50%, rgba(0, 0, 0, 0.85));
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(5px);
+  background: linear-gradient(rgba(0, 0, 0, 0.85), black 50%);
+  -webkit-backdrop-filter: blur(5px);
 }
 .lightBackground {
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(5px);
   background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.8) 50%,
-    rgba(255, 255, 255, 0.6)
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0.8) 50%
   );
-  -webkit-backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 #loading {
@@ -486,7 +485,7 @@ h3 {
   z-index: 0;
 }
 #topbar {
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(5px);
   background: var(--background-gradient);
   color: white;
   display: block;
@@ -494,8 +493,8 @@ h3 {
   width: 100%;
   position: fixed;
   top: 0;
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 69;
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 42;
 }
 .topbarComponent {
   align-items: center;
@@ -594,7 +593,7 @@ h3 {
   top: 10px;
   transform: translate(-50%, 0);
   vertical-align: middle;
-  z-index: 10;
+  z-index: 69;
 }
 .emotion {
   font-size: 64px;
@@ -649,7 +648,7 @@ h3 {
   white-space: pre-line;
 }
 #title {
-  color: var(--system-foreground);
+  display: block;
 }
 #colorbar {
   display: block;

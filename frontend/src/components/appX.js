@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useReducer } from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
@@ -31,8 +31,10 @@ export default function App(props) {
   // const [view, setView] = React.useState(<div></div>);
   const [archive, setArchive] = React.useState();
 
-  const [, updateState] = React.useState();
-  const forceUpdate = React.useCallback(() => updateState({}), []);
+  // const [, updateState] = React.useState();
+  // const forceUpdate = React.useCallback(() => updateState({}), []);
+
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   useConstructor(() => {
     const engine = new Archive(props.radar);

@@ -89,7 +89,6 @@ Copyright Boonleng Cheong
 }
 
 #notification {
-  display: inline-block;
   width: 88vw;
   padding: 8px;
 }
@@ -110,7 +109,6 @@ Copyright Boonleng Cheong
   left: var(--padding);
 }
 #title {
-  display: block;
   font: 18px LabelFont;
   text-align: center;
   text-shadow: none;
