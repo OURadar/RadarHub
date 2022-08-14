@@ -163,8 +163,10 @@ function draw(context, params) {
       let xx = t - 0.5 * meas.width;
       let yy = height + 22 * scale;
       context.fillStyle = params.face;
-      context.strokeStyle = params.stroke;
-      context.strokeText(tick.text, xx, yy);
+      if (params.blank) {
+        context.strokeStyle = params.stroke;
+        context.strokeText(tick.text, xx, yy);
+      }
       context.fillText(tick.text, xx, yy);
 
       context.strokeStyle = params.face;
@@ -244,18 +246,18 @@ export function Colorbar(props) {
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-    context.shadowColor = props.debug ? "#ff9922dd" : props.colors.label.stroke;
-    context.shadowBlur = 3 * window.devicePixelRatio;
-    draw(context, {
-      blank: true,
-      gravity: props.gravity,
-      palette: props.palette,
-      index: props.style.index,
-      face: props.debug ? "#ff9922dd" : props.colors.label.stroke,
-      stroke: props.debug ? "#ff9922dd" : props.colors.label.stroke,
-      style: props.style,
-      debug: props.debug,
-    });
+    // context.shadowColor = props.debug ? "#ff9922dd" : props.colors.label.stroke;
+    // context.shadowBlur = 3 * window.devicePixelRatio;
+    // draw(context, {
+    //   blank: true,
+    //   gravity: props.gravity,
+    //   palette: props.palette,
+    //   index: props.style.index,
+    //   face: props.debug ? "#ff9922dd" : props.colors.label.stroke,
+    //   stroke: props.debug ? "#ff9922dd" : props.colors.label.stroke,
+    //   style: props.style,
+    //   debug: props.debug,
+    // });
 
     context.shadowColor = "rgba(128, 128, 128, 0)";
     context.shadowBlur = 0;

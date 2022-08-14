@@ -84,7 +84,7 @@ export function TopBar(props) {
         </div>
         <Console
           {...props}
-          handleAccount={() => {
+          onAccount={() => {
             setMessage("Fetching User Information ...");
             fetch("/profile/")
               .then((response) => {
@@ -161,10 +161,10 @@ export function Console(props) {
           {(fullscreen && <WebAsset />) || <Fullscreen />}
         </IconButton>
       )}
-      <IconButton aria-label="Change Mode" onClick={props.handleThemeChange}>
+      <IconButton aria-label="Change Mode" onClick={props.onThemeChange}>
         {(props.mode == "light" && <LightMode />) || <DarkMode />}
       </IconButton>
-      <IconButton aria-label="Account" onClick={props.handleAccount}>
+      <IconButton aria-label="Account" onClick={props.onAccount}>
         <AccountCircle />
       </IconButton>
     </div>
