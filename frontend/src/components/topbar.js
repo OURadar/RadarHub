@@ -124,11 +124,11 @@ export function TopBar(props) {
 TopBar.defaultProps = {
   ingest: null,
   mode: "light",
-  handleThemeChange: () => {
-    console.log("Topbar.handleThemeChange()");
+  onThemeChange: () => {
+    console.log("Topbar.onThemeChange()");
   },
-  handleInfoRequest: () => {
-    console.log("Topbar.handleInfoRequest()");
+  onInfoRequest: () => {
+    console.log("Topbar.onInfoRequest()");
   },
 };
 

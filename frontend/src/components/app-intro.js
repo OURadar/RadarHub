@@ -49,8 +49,8 @@ class App extends Component {
         <TopBar
           mode={this.state.colors.name}
           isMobile={this.isMobile}
-          handleThemeChange={this.handleThemeChange}
-          handleInfoRequest={this.handleInfoOpen}
+          onThemeChange={this.handleThemeChange}
+          onInfoRequest={this.handleInfoOpen}
         />
         <HelpPage open={this.state.open} handleClose={this.handleInfoClose} />
       </ThemeProvider>

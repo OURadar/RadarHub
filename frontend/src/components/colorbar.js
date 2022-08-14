@@ -136,12 +136,6 @@ function draw(context, params) {
     context.strokeStyle = params.face;
     if (params.blank) {
       context.lineWidth = lineWidth;
-      // context.strokeRect(
-      //   -2 * scale,
-      //   -2 * scale,
-      //   width + 4 * scale,
-      //   height + 4 * scale
-      // );
       context.strokeRect(
         -scale - 0.5 * lineWidth,
         -scale - 0.5 * lineWidth,

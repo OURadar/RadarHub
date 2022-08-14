@@ -105,7 +105,7 @@ class App extends Component {
         <TopBar
           mode={this.state.colors.name}
           ingest={this.ingest}
-          handleModeChange={this.handleModeChange}
+          onModeChange={this.handleModeChange}
         />
         <div id="flex">
           <div id="left">

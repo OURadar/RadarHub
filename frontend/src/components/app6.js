@@ -140,8 +140,8 @@ class App extends Component {
         <TopBar
           mode={this.state.colors.name}
           ingest={this.archive}
-          handleThemeChange={this.handleThemeChange}
-          handleInfoRequest={this.handleInfoOpen}
+          onThemeChange={this.handleThemeChange}
+          onInfoRequest={this.handleInfoOpen}
         />
         <div className="flexRow">
           <div id="left" className="container">

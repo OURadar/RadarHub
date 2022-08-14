@@ -71,7 +71,7 @@ class App extends Component {
         <TopBar
           isMobile={true}
           ingest={this.archive}
-          handleThemeChange={this.handleThemeChange}
+          onThemeChange={this.handleThemeChange}
         />
         <ThemeProvider theme={this.state.theme}>
           <Product

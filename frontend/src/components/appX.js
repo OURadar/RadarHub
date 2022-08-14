@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useRef } from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
@@ -18,20 +18,27 @@ import { RandomList } from "./random-list";
 import { Archive } from "./archive";
 import { Preference } from "./preference";
 
+const useConstructor = (callback = () => {}) => {
+  const hasBeenCalled = useRef(false);
+  if (hasBeenCalled.current) return;
+  callback();
+  hasBeenCalled.current = true;
+};
 export default function App(props) {
   const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(() => makeTheme());
   const [colors, setColors] = React.useState(() => colorDict());
   // const [view, setView] = React.useState(<div></div>);
+  const [archive, setArchive] = React.useState();
 
-  // const [ignored, forceUpdate] = React.useReducer((x) => {
-  //   console.log(`foceUpdate()`);
-  //   return x + 1;
-  // }, 0);
+  const [, updateState] = React.useState();
+  const forceUpdate = React.useCallback(() => updateState({}), []);
 
-  // console.log(`radar = ${props.radar}`);
-  // const archive = new Archive(props.radar);
-  // archive.onupdate = forceUpdate;
+  useConstructor(() => {
+    const engine = new Archive(props.radar);
+    engine.onupdate = forceUpdate;
+    setArchive(engine);
+  });
 
   const setMode = (mode) => {
     document.documentElement.setAttribute("theme", mode);
@@ -39,14 +46,20 @@ export default function App(props) {
     setTheme(() => makeTheme(mode));
   };
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
+  const handleOverlayLoaded = () => {
+    console.log(`App.handleOverlayLoaded()`);
+    archive.catchup();
   };
 
   const handleThemeChange = () => {
     console.log("appX.handleThemeChange()");
     let mode = colors.name == "light" ? "dark" : "light";
     setMode(mode);
+  };
+
+  const handleNavigationChange = (event, newValue) => {
+    console.log(`handleNavigationChange() -> ${newValue}`);
+    setValue(newValue);
   };
 
   // const glView = (
@@ -74,14 +87,20 @@ export default function App(props) {
 
   return (
     <div className="fullHeight">
-      <TopBar isMobile={true} handleThemeChange={handleThemeChange} />
+      <TopBar isMobile={true} onThemeChange={handleThemeChange} />
       <ThemeProvider theme={theme}>
-        <Product colors={colors} gravity="top" />
+        <Product
+          gravity="top"
+          colors={colors}
+          origin={props.origin}
+          sweep={archive?.data.sweep}
+          onOverlayLoaded={handleOverlayLoaded}
+        />
         <BottomNavigation
           id="navbar"
           showLabels
           value={value}
-          onChange={handleChange}
+          onChange={handleNavigationChange}
         >
           <BottomNavigationAction label="View" icon={<RadarIcon />} />
           <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
