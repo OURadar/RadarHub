@@ -48,7 +48,6 @@ class Archive {
   handleMessage({ data: { type, payload } }) {
     if (type == "load") {
       this.data.sweep = payload;
-      // console.log(this.data.sweep);
       this.updateAge();
       this.state.sweepLoading = false;
       if (this.state.verbose) {
@@ -347,13 +346,15 @@ class Archive {
   }
 
   updateAge() {
-    if (this.data.sweep == null) {
+    if (this.data.sweep === null) {
       return;
     }
     let age = Date.now() / 1000 - this.data.sweep.time;
     let ageString;
-    if (age > 3 * 86400) {
+    if (age > 14 * 86400) {
       ageString = "";
+    } else if (age > 7 * 86400) {
+      ageString = "> 1 week";
     } else if (age > 86400) {
       let d = Math.floor(age / 86400);
       let s = d > 1 ? "s" : "";

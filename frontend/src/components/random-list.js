@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState, useEffect } from "react";
 
 import Box from "@mui/material/Box";
 
@@ -18,7 +18,11 @@ function refreshMessages(seed = 1) {
 }
 
 export function RandomList(props) {
-  const messages = refreshMessages(props.seed || 1);
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    setMessages(refreshMessages(props.seed || 1));
+  }, []);
 
   return (
     <div className="fullHeight paper scrollable container">

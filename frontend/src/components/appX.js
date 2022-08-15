@@ -46,18 +46,17 @@ export default function App(props) {
   };
 
   const handleOverlayLoaded = () => {
-    console.log(`App.handleOverlayLoaded()`);
+    console.log(`AppX.handleOverlayLoaded()`);
     archive.catchup();
   };
 
   const handleThemeChange = () => {
-    console.log("appX.handleThemeChange()");
+    console.log("AppX.handleThemeChange()");
     let mode = colors.name == "light" ? "dark" : "light";
     setMode(mode);
   };
 
   const handleNavigationChange = (event, newValue) => {
-    console.log(`handleNavigationChange() -> ${newValue}`);
     setValue(newValue);
   };
 
