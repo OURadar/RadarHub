@@ -202,64 +202,66 @@ function draw(context, params) {
   }
 }
 
-function setCanvasSize(canvas, width, height) {
-  const scale = window.devicePixelRatio;
-  canvas.width = width * scale;
-  canvas.height = height * scale;
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${height}px`;
+function setCanvasStyle(canvas, gravity) {
+  const computedStyle = getComputedStyle(document.body);
+  const topbarHeight = computedStyle.getPropertyValue("--topbar-height");
+
+  const setCanvasSize = (width, height) => {
+    const scale = window.devicePixelRatio;
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+  };
+
+  if (gravity == "top") {
+    setCanvasSize(window.innerWidth, 80);
+    canvas.style.top = topbarHeight;
+  } else {
+    setCanvasSize(130, 550);
+    canvas.style.right = "30px";
+    canvas.style.bottom = "100px";
+  }
 }
 
 export function Colorbar(props) {
-  const index = props.index;
-  const colors = props.colors;
-  const palette = props.palette;
   const canvasRef = useRef(null);
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
-    const computedStyle = getComputedStyle(document.body);
-    const topbarHeight = computedStyle.getPropertyValue("--topbar-height");
-    if (props.gravity == "top") {
-      setCanvasSize(canvas, window.innerWidth, 80);
-      canvas.style.top = topbarHeight;
-    } else {
-      setCanvasSize(canvas, 130, 550);
-      canvas.style.right = "30px";
-      canvas.style.bottom = "100px";
-    }
-  }, []);
+    setCanvasStyle(canvas, props.gravity);
 
-  React.useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
+    if (props.palette === null) return;
 
-    if (palette === null) return;
-
-    if (props.debug)
+    if (props.debug) {
+      console.log(props);
       console.debug(
         `drawing ... ${canvas.style.width} x ${canvas.style.height}` +
           ` @ ${window.devicePixelRatio} -> ${canvas.width} x ${canvas.height}`
       );
+    }
 
-    console.log(props);
+    const context = canvas.getContext("2d");
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
-    // context.shadowColor = props.debug ? "#ff9922dd" : props.colors.label.stroke;
-    // context.shadowBlur = 3 * window.devicePixelRatio;
-    // draw(context, {
-    //   blank: true,
-    //   gravity: props.gravity,
-    //   palette: props.palette,
-    //   index: props.style.index,
-    //   face: props.debug ? "#ff9922dd" : props.colors.label.stroke,
-    //   stroke: props.debug ? "#ff9922dd" : props.colors.label.stroke,
-    //   style: props.style,
-    //   debug: props.debug,
-    // });
+    let tint = props.debug ? "#ff9922dd" : props.colors.label.stroke;
+    if (props.style == "right") {
+      context.shadowColor = tint;
+      context.shadowBlur = 3 * window.devicePixelRatio;
+      draw(context, {
+        blank: true,
+        gravity: props.gravity,
+        palette: props.palette,
+        index: props.style.index,
+        face: tint,
+        stroke: tint,
+        style: props.style,
+        debug: props.debug,
+      });
+    }
 
-    context.shadowColor = "rgba(128, 128, 128, 0)";
+    context.shadowColor = "rgb(128, 128, 128)";
     context.shadowBlur = 0;
     draw(context, {
       blank: false,
@@ -267,11 +269,11 @@ export function Colorbar(props) {
       palette: props.palette,
       index: props.style.index,
       face: props.colors.label.face,
-      stroke: props.debug ? "#ff9922dd" : props.colors.label.stroke,
+      stroke: tint,
       style: props.style,
       debug: props.debug,
     });
-  }, [index, colors, palette]);
+  }, [props.count]);
 
   return <canvas id={props.id} ref={canvasRef} />;
 }

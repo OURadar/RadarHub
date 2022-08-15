@@ -37,6 +37,7 @@ class Product extends GLView {
       titleString: "",
       palette: null,
       style: null,
+      count: 0,
     };
     this.labelFaceColor = this.props.colors.label.face;
     this.assets = {
@@ -182,9 +183,11 @@ class Product extends GLView {
     if (sweep && this.assets.symbol != sweep.symbol) {
       this.updateData();
     }
+    console.log(`loadDashboard() ${this.state.count}`);
     if (this.assets.colormap) {
       this.setState({
         style: this.makeStyle(this.assets.symbol),
+        count: this.state.count + 1,
       });
     }
     // this.colorbar
@@ -272,6 +275,7 @@ class Product extends GLView {
         <Colorbar
           {...this.props}
           id="colorbar"
+          count={this.state.count}
           style={this.state.style}
           palette={this.state.palette}
           debug={false}
@@ -368,14 +372,16 @@ class Product extends GLView {
 
   draw() {
     if (this.mount === null) return;
+    if (this.geometry.needsUpdate) {
+      this.updateProjection();
+    }
     if (
-      this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth * this.ratio ||
       this.canvas.height != this.mount.offsetHeight * this.ratio
     ) {
       this.updateProjection();
-    }
-    if (this.labelFaceColor != this.props.colors.label.face) {
+      this.loadDashboard();
+    } else if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
       this.loadDashboard();
