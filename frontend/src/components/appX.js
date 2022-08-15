@@ -19,10 +19,10 @@ import { Archive } from "./archive";
 import { Preference } from "./preference";
 
 const useConstructor = (callback = () => {}) => {
-  const hasBeenCalled = useRef(false);
-  if (hasBeenCalled.current) return;
+  const used = useRef(false);
+  if (used.current) return;
   callback();
-  hasBeenCalled.current = true;
+  used.current = true;
 };
 
 export default function App(props) {

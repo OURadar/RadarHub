@@ -179,14 +179,15 @@ class Product extends GLView {
     }
   }
 
-  loadDashboard(sweep = null) {
-    if (sweep && this.assets.symbol != sweep.symbol) {
+  loadDashboard() {
+    if (this.props.sweep && this.assets.symbol != this.props.sweep.symbol) {
       this.updateData();
     }
-    console.log(`loadDashboard() ${this.state.count}`);
     if (this.assets.colormap) {
+      let style = this.makeStyle(this.assets.symbol);
+      this.assets.index = (style.index + 0.5) / this.assets.colormap.height;
       this.setState({
-        style: this.makeStyle(this.assets.symbol),
+        style: style,
         count: this.state.count + 1,
       });
     }
