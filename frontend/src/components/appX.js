@@ -24,15 +24,12 @@ const useConstructor = (callback = () => {}) => {
   callback();
   hasBeenCalled.current = true;
 };
+
 export default function App(props) {
   const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(() => makeTheme());
   const [colors, setColors] = React.useState(() => colorDict());
-  // const [view, setView] = React.useState(<div></div>);
   const [archive, setArchive] = React.useState();
-
-  // const [, updateState] = React.useState();
-  // const forceUpdate = React.useCallback(() => updateState({}), []);
 
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -64,20 +61,6 @@ export default function App(props) {
     setValue(newValue);
   };
 
-  // const glView = (
-  //   <Product colors={colors} gravity="top" sweep={archive.data.sweep} />
-  // );
-
-  // React.useEffect(() => {
-  //   if (value == 0) {
-  //     setView(glView);
-  //   } else if (value == 1) {
-  //     setView(<RandomList />);
-  //   } else {
-  //     setView(<RandomList label="2" seed={42} />);
-  //   }
-  // }, [value, colors]);
-
   React.useEffect(() => {
     window
       .matchMedia("(prefers-color-scheme: dark)")
@@ -91,13 +74,18 @@ export default function App(props) {
     <div className="fullHeight">
       <TopBar isMobile={true} onThemeChange={handleThemeChange} />
       <ThemeProvider theme={theme}>
-        <Product
-          gravity="top"
-          colors={colors}
-          origin={props.origin}
-          sweep={archive?.data.sweep}
-          onOverlayLoaded={handleOverlayLoaded}
-        />
+        <div className={value === 0 ? "active" : "inactive"}>
+          <Product
+            gravity="top"
+            colors={colors}
+            origin={props.origin}
+            sweep={archive?.data.sweep}
+            onOverlayLoaded={handleOverlayLoaded}
+          />
+        </div>
+        <div className={value === 1 ? "active" : "inactive"}>
+          <RandomList />
+        </div>
         <BottomNavigation
           id="navbar"
           showLabels
@@ -106,8 +94,6 @@ export default function App(props) {
         >
           <BottomNavigationAction label="View" icon={<RadarIcon />} />
           <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
-          <BottomNavigationAction label="Health" icon={<MonitorHeartIcon />} />
-          <BottomNavigationAction label="Control" icon={<GamepadIcon />} />
         </BottomNavigation>
       </ThemeProvider>
     </div>

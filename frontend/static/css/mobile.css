@@ -122,3 +122,12 @@ Copyright Boonleng Cheong
   border-bottom: var(--ui-border);
   -webkit-backdrop-filter: blur(5px);
 }
+
+.active {
+  position: absolute;
+  z-index: 2;
+}
+.inactive {
+  position: absolute;
+  z-index: 0;
+}
