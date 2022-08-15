@@ -50,9 +50,7 @@ function draw(context, params) {
     context.rotate(-0.5 * Math.PI);
     if (params.blank) {
       context.fillStyle = params.face;
-      context.fillRect(-scale, -scale, width + 2 * scale, height + 2 * scale);
-      // context.lineWidth = params.width;
-      // context.strokeRect(-1.5, -1.5, width + 3, height + 3);
+      context.fillRect(-scale, -scale, height + 2 * scale, width + 2 * scale);
     } else {
       context.clearRect(0, 0, height, width);
       context.imageSmoothingEnabled = false;
@@ -246,7 +244,7 @@ export function Colorbar(props) {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
     let tint = props.debug ? "#ff9922dd" : props.colors.label.stroke;
-    if (props.style == "right") {
+    if (props.gravity == "right") {
       context.shadowColor = tint;
       context.shadowBlur = 3 * window.devicePixelRatio;
       draw(context, {
