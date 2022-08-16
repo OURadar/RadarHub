@@ -61,6 +61,11 @@ export default function App(props) {
     setValue(newValue);
   };
 
+  const handleLoad = (k) => {
+    console.log(`AppX.handleLoad()  k = ${k}`);
+    setValue(0);
+  };
+
   React.useEffect(() => {
     window
       .matchMedia("(prefers-color-scheme: dark)")
@@ -85,7 +90,7 @@ export default function App(props) {
           />
         </div>
         <div className={value === 1 ? "active" : "inactive"}>
-          <Browser archive={archive} radar={props.radar} />
+          <Browser archive={archive} radar={props.radar} onLoad={handleLoad} />
         </div>
         <div className={value === 2 ? "active" : "inactive"}>
           <RandomList />

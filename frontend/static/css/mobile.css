@@ -107,9 +107,14 @@ Copyright Boonleng Cheong
   padding-right: var(--half-padding);
 }
 .filesContainer {
-  background-color: var(--system-background);
-  height: calc(var(--content-height) - 44px - 86px - 192px - 44px);
+  background-color: var(--map-background);
+  padding-top: 2 * var(--topbar-height) + var(--padding) + var(--half-padding) +
+    4 * var(--button-height);
   overflow-y: scroll;
+  padding-bottom: var(--button-height) + var(--navbar-padding-bottom);
+  position: absolute;
+  height: 100vh;
+  top: 0;
 }
 
 #ageString {

@@ -24,36 +24,9 @@ function Calender(props) {
 
   const [value, setValue] = React.useState();
 
-  const getMonthTable = (newMonth) => {
-    let tmp = newMonth.toISOString();
-    let yyyymm = tmp.slice(0, 4) + tmp.slice(5, 7);
-    props.archive.month(yyyymm);
-  };
-
-  const setDayHour = (newDay, newHour) => {
-    // if (
-    //   isNaN(newDay) ||
-    //   newDay.getFullYear() < 2000 ||
-    //   newDay.getFullYear() > 2023
-    // ) {
-    //   return;
-    // }
-    // let symbol = props.archive.grid.symbol;
-    // let t = day instanceof Date ? "Date" : "Not Date";
-    // let n = newDay.toISOString().slice(0, 10);
-    // let o = day.toISOString().slice(0, 10);
-    // console.log(
-    //   `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
-    //   "color: deeppink",
-    //   "",
-    //   "color: mediumpurple",
-    //   "",
-    //   "color: mediumpurple",
-    //   ""
-    // );
-    // props.archive.count(newDay, newHour, symbol);
-    props.archive.setDayHour(newDay, newHour);
-  };
+  React.useEffect(() => {
+    console.log(`value -> ${value}`);
+  }, [value]);
 
   return (
     <div className="calendarContainer">
@@ -61,13 +34,13 @@ function Calender(props) {
         <DatePicker
           label="Date"
           value={value}
-          onOpen={() => getMonthTable(day)}
-          onYearChange={(newDay) => getMonthTable(newDay)}
-          onMonthChange={(newDay) => getMonthTable(newDay)}
+          onOpen={() => props.archive.month(day)}
+          onYearChange={(newDay) => props.archive.month(newDay)}
+          onMonthChange={(newDay) => props.archive.month(newDay)}
           onChange={(newValue) => {
             setValue(newValue);
             if (newValue instanceof Date) {
-              setDayHour(newValue, hour);
+              props.archive.setDayHour(newValue, hour);
             }
           }}
           renderInput={(params) => <TextField {...params} />}
@@ -103,14 +76,21 @@ function Calender(props) {
 
 function HourList(props) {
   const ok = props.archive.grid !== undefined;
-  const count = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
+  const day = ok ? props.archive.grid.day : new Date("2013/05/20");
+  const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
   // React.useEffect(() => {
   //   console.log(count);
   // });
   return (
     <div className="hoursContainer">
-      {count.map((x, k) => (
-        <Button key={`h${k}`} variant="hour" disabled={count[k] == 0}>
+      {hours.map((_, k) => (
+        <Button
+          key={`hour-${k}`}
+          variant="hour"
+          disabled={hours[k] == 0}
+          selected={hours[k] > 0 && k == props.archive.grid.hour}
+          onClick={() => props.archive.setDayHour(day, k)}
+        >
           {k.toString().padStart(2, "0")}
         </Button>
       ))}
@@ -122,7 +102,23 @@ function FileList(props) {
   const ok = props.archive.grid !== undefined;
   const items = ok ? props.archive.grid.items : [];
   const index = ok ? props.archive.grid?.index : -1;
-  return <div></div>;
+  return (
+    <div className="filesContainer">
+      {items.map((item, k) => (
+        <Button
+          key={`file-${k}`}
+          variant="file"
+          onClick={() => {
+            props.archive.load(k);
+            props.onLoad(k);
+          }}
+          selected={k == index}
+        >
+          {item}
+        </Button>
+      ))}
+    </div>
+  );
 }
 
 export function Browser(props) {
@@ -130,30 +126,24 @@ export function Browser(props) {
   const items = ok ? props.archive.grid.items : [];
   const index = ok ? props.archive.grid?.index : -1;
 
-  const [files, setFiles] = React.useState([]);
-  const [hours, setHours] = React.useState([]);
-
   React.useEffect(() => {
     const newFiles = ok ? props.archive.grid.items : [];
     console.log(`updating files ... len = ${newFiles.length}`);
-    setFiles(newFiles);
   }, [items, index]);
 
   return (
-    <div className="fullHeight fullWidth paper container">
-      <Calender {...props} />
-      <HourList {...props} />
+    <div>
+      <div className="fullWidth paper container">
+        <Calender {...props} />
+        <HourList {...props} />
+      </div>
+      <FileList {...props} />
     </div>
-    // <div className="fullHeight fullWidth paper scrollable container">
-    //   <Box sx={{ pt: 6, pb: 10 }}>
-    //     <List>
-    //       {files.map((value, index) => (
-    //         <ListItem key={index}>
-    //           <ListItemText primary={value} secondary={index} />
-    //         </ListItem>
-    //       ))}
-    //     </List>
-    //   </Box>
-    // </div>
   );
 }
+
+Browser.defaultProps = {
+  onLoad: () => {
+    console.log("Browser.onLoad()");
+  },
+};

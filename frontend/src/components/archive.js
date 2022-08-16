@@ -400,8 +400,27 @@ class Archive {
   }
 
   setDayHour(day, hour) {
-    console.log("Archive.setDayHour()");
+    if (this.state.verbose == 0) {
+      let t = day instanceof Date ? "Date" : "Not Date";
+      let n = day.toISOString().slice(0, 10);
+      let o = day.toISOString().slice(0, 10);
+      console.log(
+        `%cArchive.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${hour}%c ← ${this.grid.hour}    ${this.grid.symbol}`,
+        "color: deeppink",
+        "",
+        "color: mediumpurple",
+        "",
+        "color: mediumpurple",
+        ""
+      );
+    }
     this.count(day, hour);
+  }
+
+  getMonthTable(day) {
+    let s = day.toISOString();
+    let yyyymm = s.slice(0, 4) + s.slice(5, 7);
+    this.month(yyyymm);
   }
 }
 
