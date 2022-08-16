@@ -31,27 +31,28 @@ function Calender(props) {
   };
 
   const setDayHour = (newDay, newHour) => {
-    if (
-      isNaN(newDay) ||
-      newDay.getFullYear() < 2000 ||
-      newDay.getFullYear() > 2023
-    ) {
-      return;
-    }
-    let symbol = props.archive.grid.symbol;
-    let t = day instanceof Date ? "Date" : "Not Date";
-    let n = newDay.toISOString().slice(0, 10);
-    let o = day.toISOString().slice(0, 10);
-    console.log(
-      `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
-      "color: deeppink",
-      "",
-      "color: mediumpurple",
-      "",
-      "color: mediumpurple",
-      ""
-    );
-    props.archive.count(newDay, newHour, symbol);
+    // if (
+    //   isNaN(newDay) ||
+    //   newDay.getFullYear() < 2000 ||
+    //   newDay.getFullYear() > 2023
+    // ) {
+    //   return;
+    // }
+    // let symbol = props.archive.grid.symbol;
+    // let t = day instanceof Date ? "Date" : "Not Date";
+    // let n = newDay.toISOString().slice(0, 10);
+    // let o = day.toISOString().slice(0, 10);
+    // console.log(
+    //   `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
+    //   "color: deeppink",
+    //   "",
+    //   "color: mediumpurple",
+    //   "",
+    //   "color: mediumpurple",
+    //   ""
+    // );
+    // props.archive.count(newDay, newHour, symbol);
+    props.archive.setDayHour(newDay, newHour);
   };
 
   return (

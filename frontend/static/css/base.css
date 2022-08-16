@@ -610,12 +610,11 @@ h3 {
 }
 
 .floatText {
-  display: block;
   position: absolute;
   font-family: LabelFont;
   paint-order: stroke fill;
   stroke: var(--map-background);
-  stroke-width: 6px;
+  stroke-width: 3.5px;
   user-select: none;
 }
 

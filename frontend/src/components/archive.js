@@ -277,7 +277,7 @@ class Archive {
   }
 
   // Expect something like day = Date('2013-05-20')
-  count(day, hour, symbol) {
+  count(day, hour, symbol = this.grid.symbol) {
     if (this.state.verbose) {
       console.log(
         `%carchive.count()%c` +
@@ -287,6 +287,9 @@ class Archive {
         ""
       );
     }
+    if (isNaN(day)) return;
+    let year = day.getFullYear();
+    if (year < 2000 || year > 2023) return;
     if (this.grid.day == day) {
       if (this.state.verbose) {
         console.log(
@@ -394,6 +397,11 @@ class Archive {
     this.worker.postMessage({
       task: "backward-scan",
     });
+  }
+
+  setDayHour(day, hour) {
+    console.log("Archive.setDayHour()");
+    this.count(day, hour);
   }
 }
 
