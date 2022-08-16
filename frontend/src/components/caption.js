@@ -9,8 +9,11 @@ import React from "react";
 
 function measure(string) {}
 function Caption(props) {
-  const svgRef = React.useRef(null);
   const h = props.h || 20;
+  const l = props.l || 5;
+  const lines = props.string.split(/\r?\n/);
+
+  const svgRef = React.useRef(null);
 
   // React.useEffect(() => {
   //   const style = getComputedStyle(svgRef.current);
@@ -24,12 +27,12 @@ function Caption(props) {
       id={props.id}
       ref={svgRef}
       width="150"
-      height="100"
+      height={lines.length * h + 10}
       className="floatText"
     >
-      {props.string.split(/\r?\n/).map((x, i) => (
-        <text key={"c" + i} x="0" y={i * h + h}>
-          {x}
+      {lines.map((line, i) => (
+        <text key={"c" + i} x={l} y={i * h + h}>
+          {line}
         </text>
       ))}
     </svg>

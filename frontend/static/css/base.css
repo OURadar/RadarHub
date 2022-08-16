@@ -611,11 +611,11 @@ h3 {
 
 .floatText {
   display: block;
+  position: absolute;
   font-family: LabelFont;
   paint-order: stroke fill;
-  position: absolute;
   stroke: var(--map-background);
-  stroke-width: 3.5px;
+  stroke-width: 6px;
   user-select: none;
 }
 
@@ -636,7 +636,7 @@ h3 {
   fill: var(--mint);
 }
 #ageString {
-  color: var(--green);
+  fill: var(--green);
   font-size: 16px;
   font-weight: 500;
 }
@@ -648,6 +648,12 @@ h3 {
 }
 #title {
   display: block;
+  position: absolute;
+  font-family: LabelFont;
+  paint-order: stroke fill;
+}
+#title text {
+  fill: var(--system-foreground);
 }
 #colorbar {
   display: block;

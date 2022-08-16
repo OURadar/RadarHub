@@ -160,4 +160,11 @@ Copyright Boonleng Cheong
   text-align: right;
   bottom: 50px;
   right: 50px;
+  stroke: var(--map-background);
+  stroke-width: 6px;
+  width: 80%;
+  max-width: calc(100% - 200px);
+}
+#title text {
+  text-anchor: end;
 }

@@ -108,12 +108,13 @@ Copyright Boonleng Cheong
   padding-left: var(--padding);
 }
 #title {
-  font: 18px LabelFont;
+  font-size: 18px;
   text-align: center;
-  text-shadow: none;
-  top: calc(var(--topbar-height) + 5px);
-  width: 100%;
+  top: calc(var(--topbar-height) + 3px);
   z-index: 2;
+}
+#title text {
+  text-anchor: middle;
 }
 #colorbar {
   background: var(--colorbar-background);
