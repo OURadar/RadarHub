@@ -63,6 +63,10 @@ class App extends Component {
           theme: makeTheme(mode),
         });
       });
+    document.documentElement.setAttribute(
+      "theme",
+      this.state.theme.palette.mode
+    );
   }
 
   render() {
@@ -105,18 +109,20 @@ class App extends Component {
   }
 
   handleOverlayLoaded() {
-    console.log(`App.handleOverlayLoaded()`);
+    console.log(`App9.handleOverlayLoaded()`);
     this.setState({ overlayLoaded: true });
     this.archive.catchup();
   }
 
   handleThemeChange() {
     console.log("app6.handleThemeChange()");
-    let mode = this.state.colors.name == "light" ? "dark" : "light";
-    document.documentElement.setAttribute("theme", mode);
-    this.setState({
-      colors: colorDict(mode),
-      theme: makeTheme(mode),
+    this.setState((state) => {
+      let mode = state.colors.name == "light" ? "dark" : "light";
+      document.documentElement.setAttribute("theme", mode);
+      return {
+        colors: colorDict(mode),
+        theme: makeTheme(mode),
+      };
     });
   }
 

@@ -174,16 +174,18 @@ class App extends Component {
 
   handleOverlayLoaded() {
     console.log(`App6.handleOverlayLoaded()`);
-    this.state.overlayLoaded = true;
+    this.setState({ overlayLoaded: true });
   }
 
   handleThemeChange() {
     console.log("app6.handleThemeChange()");
-    let mode = this.state.colors.name == "light" ? "dark" : "light";
-    document.documentElement.setAttribute("theme", mode);
-    this.setState({
-      colors: colorDict(mode),
-      theme: makeTheme(mode),
+    this.setState((state) => {
+      let mode = state.colors.name == "light" ? "dark" : "light";
+      document.documentElement.setAttribute("theme", mode);
+      return {
+        colors: colorDict(mode),
+        theme: makeTheme(mode),
+      };
     });
   }
 

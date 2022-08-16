@@ -186,10 +186,10 @@ class Product extends GLView {
     if (this.assets.colormap) {
       let style = this.makeStyle(this.assets.symbol);
       this.assets.index = (style.index + 0.5) / this.assets.colormap.height;
-      this.setState({
+      this.setState((state) => ({
         style: style,
-        count: this.state.count + 1,
-      });
+        count: state.count + 1,
+      }));
     }
     // this.colorbar
     //   .load(

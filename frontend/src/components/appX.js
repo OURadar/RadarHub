@@ -68,6 +68,7 @@ export default function App(props) {
         let mode = e.matches ? "dark" : "light";
         setMode(mode);
       });
+    document.documentElement.setAttribute("theme", theme.palette.mode);
   }, []);
 
   return (
