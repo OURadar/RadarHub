@@ -97,6 +97,21 @@ Copyright Boonleng Cheong
   position: relative;
 }
 
+.calendarContainer {
+  padding-top: calc(var(--topbar-height) + var(--padding));
+  padding-bottom: var(--half-padding);
+}
+.hoursContainer {
+  column-count: 8;
+  padding-left: var(--half-padding);
+  padding-right: var(--half-padding);
+}
+.filesContainer {
+  background-color: var(--system-background);
+  height: calc(var(--content-height) - 44px - 86px - 192px - 44px);
+  overflow-y: scroll;
+}
+
 #ageString {
   bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 30px);
   left: var(--padding);
@@ -111,6 +126,7 @@ Copyright Boonleng Cheong
   font-size: 18px;
   text-align: center;
   top: calc(var(--topbar-height) + 3px);
+  width: 100%;
   z-index: 2;
 }
 #title text {

@@ -903,3 +903,7 @@ div.key {
   top: calc(var(--topbar-height) + 2 * var(--padding));
   z-index: 2;
 }
+
+.calendarContainer {
+  text-align: center;
+}

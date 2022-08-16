@@ -130,10 +130,8 @@ Copyright Boonleng Cheong
 }
 
 .calendarContainer {
-  background-color: var(--system-background);
   padding-top: var(--padding);
   padding-bottom: calc(0.5 * var(--padding));
-  text-align: center;
 }
 .hoursContainer {
   column-count: 4;

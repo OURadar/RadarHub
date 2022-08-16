@@ -186,7 +186,8 @@ export function makeTheme(inputMode) {
             style: {
               color: theme.palette.text.secondary,
               height: 32,
-              width: "25%",
+              width: "12.5%",
+              minWidth: 20,
             },
           },
           {
