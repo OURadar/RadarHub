@@ -12,6 +12,7 @@ import GamepadIcon from "@mui/icons-material/Gamepad";
 
 import { colorDict, makeTheme } from "./theme";
 import { TopBar } from "./topbar";
+import { Browser } from "./browser-v2";
 import { Product } from "./product";
 import { RandomList } from "./random-list";
 
@@ -26,7 +27,7 @@ const useConstructor = (callback = () => {}) => {
 };
 
 export default function App(props) {
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = React.useState(1);
   const [theme, setTheme] = React.useState(() => makeTheme());
   const [colors, setColors] = React.useState(() => colorDict());
   const [archive, setArchive] = React.useState();
@@ -83,6 +84,9 @@ export default function App(props) {
           />
         </div>
         <div className={value === 1 ? "active" : "inactive"}>
+          <Browser archive={archive} radar={props.radar} />
+        </div>
+        <div className={value === 2 ? "active" : "inactive"}>
           <RandomList />
         </div>
         <BottomNavigation
@@ -93,6 +97,7 @@ export default function App(props) {
         >
           <BottomNavigationAction label="View" icon={<RadarIcon />} />
           <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
+          <BottomNavigationAction label="List" icon={<MonitorHeartIcon />} />
         </BottomNavigation>
       </ThemeProvider>
     </div>
