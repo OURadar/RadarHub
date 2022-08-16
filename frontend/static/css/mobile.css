@@ -105,7 +105,7 @@ Copyright Boonleng Cheong
   bottom: calc(
     var(--navbar-padding-bottom) + var(--button-height) + var(--padding) + 40px
   );
-  left: var(--padding);
+  padding-left: var(--padding);
 }
 #title {
   font: 18px LabelFont;

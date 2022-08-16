@@ -27,7 +27,7 @@ const useConstructor = (callback = () => {}) => {
 };
 
 export default function App(props) {
-  const [value, setValue] = React.useState(1);
+  const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(() => makeTheme());
   const [colors, setColors] = React.useState(() => colorDict());
   const [archive, setArchive] = React.useState();

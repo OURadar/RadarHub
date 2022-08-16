@@ -611,11 +611,11 @@ h3 {
 
 .floatText {
   display: block;
+  font-family: LabelFont;
+  paint-order: stroke fill;
   position: absolute;
-  text-shadow: 0 0 3px var(--map-background), 0 0 3px var(--map-background),
-    0 0 3px var(--map-background), -1.5px 1.5px 0 var(--map-background),
-    1.5px 1.5px 0 var(--map-background), -1.5px -1.5px 0 var(--map-background),
-    1.5px -1.5px 0 var(--map-background);
+  stroke: var(--map-background);
+  stroke-width: 3.5px;
   user-select: none;
 }
 
@@ -633,7 +633,7 @@ h3 {
 }
 
 #caption {
-  color: var(--mint);
+  fill: var(--mint);
 }
 #ageString {
   color: var(--green);
@@ -641,11 +641,10 @@ h3 {
   font-weight: 500;
 }
 #infoString {
-  color: var(--brown);
+  fill: var(--brown);
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
-  white-space: pre-line;
 }
 #title {
   display: block;
