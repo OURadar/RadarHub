@@ -144,9 +144,10 @@ export function makeTheme(inputMode) {
             props: { variant: "hour" },
             style: {
               color: theme.palette.text.secondary,
-              height: 32,
+              height: "var(--small-button-height)",
               fontSize: "16px",
-              padding: "6px 2px",
+              padding: "0 2px",
+              textAlign: "center",
               width: "100%",
               minWidth: 32,
             },

@@ -12,7 +12,7 @@ import GamepadIcon from "@mui/icons-material/Gamepad";
 
 import { colorDict, makeTheme } from "./theme";
 import { TopBar } from "./topbar";
-import { Browser } from "./browser-v2";
+import { Browser } from "./browser-mobile";
 import { Product } from "./product";
 import { RandomList } from "./random-list";
 

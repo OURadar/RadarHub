@@ -72,7 +72,7 @@ function Browser(props) {
 
   React.useEffect(() => {
     const newFileBrowser = (
-      <div className="filesContainer" ref={setElements}>
+      <div id="filesContainer" ref={setElements}>
         {createFileButtons(items, index, props.archive.load)}
       </div>
     );
@@ -139,7 +139,7 @@ function Browser(props) {
   return (
     <div className="fill paper">
       <SectionHeader name="archive" />
-      <div className="calendarContainer">
+      <div id="calendarContainer">
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
             label="Date"
@@ -183,7 +183,7 @@ function Browser(props) {
           />
         </LocalizationProvider>
       </div>
-      <div className="hoursContainer">{hourButtons}</div>
+      <div id="hoursContainer">{hourButtons}</div>
       <SectionHeader name="files" />
       {fileBrowser}
     </div>

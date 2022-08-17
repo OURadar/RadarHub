@@ -129,14 +129,14 @@ Copyright Boonleng Cheong
   width: 8px !important;
 }
 
-.calendarContainer {
+#calendarContainer {
   padding-top: var(--padding);
   padding-bottom: calc(0.5 * var(--padding));
 }
-.hoursContainer {
+#hoursContainer {
   column-count: 4;
 }
-.filesContainer {
+#filesContainer {
   background-color: var(--system-background);
   height: calc(var(--content-height) - 44px - 86px - 192px - 44px);
   overflow-y: scroll;

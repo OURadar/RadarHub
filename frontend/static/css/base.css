@@ -13,8 +13,10 @@ Copyright Boonleng Cheong
   --background-color-secondary: rgba(0, 20, 27, 0.85);
   --topbar-height: 56px;
   --tabbar-height: 48px;
+  --calendar-height: 56px;
   --navbar-button-height: 56px;
   --navbar-padding-bottom: 28px;
+  --small-button-height: 32px;
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
   box-sizing: border-box;
 }
@@ -626,11 +628,6 @@ h3 {
   right: 5px;
 }
 
-.hoursContainer {
-  display: block;
-  overflow-y: scroll;
-}
-
 .floatText {
   position: absolute;
   font-family: LabelFont;
@@ -641,6 +638,11 @@ h3 {
 }
 
 .scrollable {
+  overflow-y: scroll;
+}
+
+#hoursContainer {
+  display: block;
   overflow-y: scroll;
 }
 
@@ -925,6 +927,6 @@ div.key {
   z-index: 2;
 }
 
-.calendarContainer {
+#calendarContainer {
   text-align: center;
 }
