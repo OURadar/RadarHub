@@ -105,11 +105,7 @@ export default function App(props) {
         >
           <BottomNavigationAction label="View" icon={<RadarIcon />} />
           <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
-          <BottomNavigationAction
-            label="List"
-            icon={<MonitorHeartIcon />}
-            disabled
-          />
+          <BottomNavigationAction label="Health" icon={<MonitorHeartIcon />} />
         </BottomNavigation>
       </ThemeProvider>
     </div>

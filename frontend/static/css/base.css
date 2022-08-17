@@ -42,6 +42,13 @@ Copyright Boonleng Cheong
   --gray5: rgb(229, 229, 234);
   --gray6: rgb(242, 242, 247);
   --gray7: rgb(252, 252, 255);
+  --gray1-translucent: rgba(142, 142, 147, 0.85);
+  --gray2-translucent: rgba(174, 174, 178, 0.85);
+  --gray3-translucent: rgba(199, 199, 204, 0.85);
+  --gray4-translucent: rgba(209, 209, 214, 0.85);
+  --gray5-translucent: rgba(229, 229, 234, 0.85);
+  --gray6-translucent: rgba(242, 242, 247, 0.85);
+  --gray7-translucent: rgba(252, 252, 255, 0.85);
   --system-foreground: #000000;
   --system-background: #ffffff;
   --secondary-system-background: #f2f2f7ff;
@@ -82,6 +89,13 @@ Copyright Boonleng Cheong
   --gray5: rgb(44, 44, 46);
   --gray6: rgb(28, 28, 30);
   --gray7: rgb(16, 16, 18);
+  --gray1-translucent: rgba(142, 142, 147, 0.85);
+  --gray2-translucent: rgba(99, 99, 102, 0.85);
+  --gray3-translucent: rgba(72, 72, 74, 0.85);
+  --gray4-translucent: rgba(58, 58, 60, 0.85);
+  --gray5-translucent: rgba(44, 44, 46, 0.85);
+  --gray6-translucent: rgba(28, 28, 30, 0.85);
+  --gray7-translucent: rgba(16, 16, 18, 0.85);
   --system-foreground: #ffffff;
   --system-background: #222328;
   --secondary-system-background: #1c1c1eff;
@@ -523,7 +537,7 @@ h3 {
 }
 .fog {
   backdrop-filter: blur(5px);
-  background-color: var(--overlay-background);
+  background-color: var(--gray6-translucent);
   -webkit-backdrop-filter: blur(5px);
 }
 

@@ -126,7 +126,7 @@ function FileList(props) {
 function OtherList(props) {
   return (
     <Box sx={{ pt: 1, pb: 1 }}>
-      <div className="fullWidth center">Other things</div>
+      <div className="fullWidth center">Tabs, lots of tabs</div>
     </Box>
   );
 }
