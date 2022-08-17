@@ -266,6 +266,7 @@ export function makeTheme(inputMode) {
           {
             props: { variant: "control" },
             style: {
+              color: "primary",
               boxSizing: "border-box",
               fontSize: "var(--font-size)",
               overflow: "hidden",

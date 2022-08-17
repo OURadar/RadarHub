@@ -641,6 +641,10 @@ h3 {
   overflow-y: scroll;
 }
 
+#calendarContainer {
+  text-align: center;
+}
+
 #hoursContainer {
   display: block;
   overflow-y: scroll;
@@ -914,7 +918,7 @@ div.key {
   border-radius: 4px;
 }
 
-.preferenceMenu {
+.floatMenu {
   color: var(--gray);
   display: block;
   font-size: 0.8em;
@@ -925,8 +929,4 @@ div.key {
   text-align: center;
   top: calc(var(--topbar-height) + 2 * var(--padding));
   z-index: 2;
-}
-
-#calendarContainer {
-  text-align: center;
 }

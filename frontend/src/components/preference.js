@@ -12,15 +12,14 @@ import { DensityLarge, DensitySmall } from "@mui/icons-material";
 
 export function Preference(props) {
   return (
-    <div className="preferenceMenu">
+    <div className="floatMenu">
       <ToggleButtonGroup
+        variant="control"
         exclusive
-        color="primary"
         size="small"
         value={props.value}
         onChange={props.handleChange}
         orientation="vertical"
-        variant="control"
       >
         <ToggleButton value="scan">
           <DensityLarge />
