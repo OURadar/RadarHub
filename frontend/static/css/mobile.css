@@ -152,3 +152,7 @@ Copyright Boonleng Cheong
   position: absolute;
   z-index: 0;
 }
+
+#cake {
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+}

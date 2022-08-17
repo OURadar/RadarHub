@@ -521,6 +521,11 @@ h3 {
   border-top: var(--ui-border);
   background-color: var(--overlay-background);
 }
+.fog {
+  backdrop-filter: blur(5px);
+  background-color: var(--overlay-background);
+  -webkit-backdrop-filter: blur(5px);
+}
 
 .statusWrapper {
   display: inline-block;
@@ -604,7 +609,6 @@ h3 {
 }
 
 .hoursContainer {
-  background-color: var(--system-background);
   display: block;
   overflow-y: scroll;
 }

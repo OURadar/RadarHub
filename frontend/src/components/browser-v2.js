@@ -104,20 +104,30 @@ function FileList(props) {
   const index = ok ? props.archive.grid?.index : -1;
   return (
     <div className="filesContainer">
-      {items.map((item, k) => (
-        <Button
-          key={`file-${k}`}
-          variant="file"
-          onClick={() => {
-            props.archive.load(k);
-            props.onLoad(k);
-          }}
-          selected={k == index}
-        >
-          {item}
-        </Button>
-      ))}
+      <Box sx={{ pt: 35, pb: 11 }}>
+        {items.map((item, k) => (
+          <Button
+            key={`file-${k}`}
+            variant="file"
+            onClick={() => {
+              props.archive.load(k);
+              props.onLoad(k);
+            }}
+            selected={k == index}
+          >
+            {item}
+          </Button>
+        ))}
+      </Box>
     </div>
+  );
+}
+
+function OtherList(props) {
+  return (
+    <Box sx={{ pt: 1, pb: 1 }}>
+      <div className="fullWidth center">Other things</div>
+    </Box>
   );
 }
 
@@ -133,9 +143,10 @@ export function Browser(props) {
 
   return (
     <div>
-      <div className="fullWidth paper container">
+      <div id="cake" className="fullWidth container fog">
         <Calender {...props} />
         <HourList {...props} />
+        <OtherList {...props} />
       </div>
       <FileList {...props} />
     </div>

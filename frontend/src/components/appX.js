@@ -63,7 +63,9 @@ export default function App(props) {
 
   const handleLoad = (k) => {
     console.log(`AppX.handleLoad()  k = ${k}`);
-    setValue(0);
+    setTimeout(() => {
+      setValue(0);
+    }, 300);
   };
 
   React.useEffect(() => {
@@ -103,7 +105,11 @@ export default function App(props) {
         >
           <BottomNavigationAction label="View" icon={<RadarIcon />} />
           <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
-          <BottomNavigationAction label="List" icon={<MonitorHeartIcon />} />
+          <BottomNavigationAction
+            label="List"
+            icon={<MonitorHeartIcon />}
+            disabled
+          />
         </BottomNavigation>
       </ThemeProvider>
     </div>
