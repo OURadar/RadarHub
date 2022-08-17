@@ -114,6 +114,18 @@ Copyright Boonleng Cheong
   width: 100%;
   top: 0;
 }
+.filesContainer ::-webkit-scrollbar {
+  height: 100px;
+}
+.filesContainer ::-webkit-scrollbar-track {
+  margin-top: calc(
+    2 * var(--topbar-height) + var(--padding) + var(--half-padding) + 3 *
+      var(--button-height)
+  );
+  margin-bottom: calc(
+    var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px
+  );
+}
 .fileList {
   padding-top: calc(
     2 * var(--topbar-height) + var(--padding) + var(--half-padding) + 3 *

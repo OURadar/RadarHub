@@ -133,7 +133,7 @@ function FileList(props) {
 function OtherList(props) {
   return (
     <Box sx={{ pt: 1, pb: 1 }}>
-      <div className="fullWidth center disabled">Tabs, lots of tabs</div>
+      <div className="fullWidth center disabled">Hours</div>
     </Box>
   );
 }

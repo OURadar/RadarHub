@@ -1,36 +1,8 @@
-// import { createTheme } from "@mui/material/styles";
-// import { Hidden } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 
-function reviseMode(mode) {
-  // Retrieve the body color so we can match the canvas with it
-  let bg = window.getComputedStyle(document.body).backgroundColor;
-  let body = new Array(bg.match(/\d+/g).map((x) => x / 255));
-  if (body.length == 3) {
-    body.push(1.0);
-  }
-  // Check for browser preference if 'theme' was not specified
-  if (mode === undefined) {
-    const matchMedia = window.matchMedia("(prefers-color-scheme: dark)");
-    if (matchMedia.media != "not all") {
-      if (matchMedia.matches === true) {
-        mode = "dark";
-      } else {
-        mode = "light";
-      }
-    }
-  }
-  // If the previous step failed, choose based on the brightness of the body
-  if (mode === undefined || mode == "auto") {
-    let brightness = 0.2125 * body[0] + 0.7152 * body[1] + 0.0722 * body[2];
-    if (brightness > 0.5) {
-      mode = "light";
-    } else {
-      mode = "dark";
-    }
-  }
-  return { body, mode };
-}
+import { detectMob } from "./common";
+
+//
 
 const paletteLight = {
   primary: {
@@ -84,6 +56,38 @@ const paletteDark = {
   divider: "rgba(255, 255, 255, 0.04)",
 };
 
+//
+
+function reviseMode(mode) {
+  // Retrieve the body color so we can match the canvas with it
+  let bg = window.getComputedStyle(document.body).backgroundColor;
+  let body = new Array(bg.match(/\d+/g).map((x) => x / 255));
+  if (body.length == 3) {
+    body.push(1.0);
+  }
+  // Check for browser preference if 'theme' was not specified
+  if (mode === undefined) {
+    const matchMedia = window.matchMedia("(prefers-color-scheme: dark)");
+    if (matchMedia.media != "not all") {
+      if (matchMedia.matches === true) {
+        mode = "dark";
+      } else {
+        mode = "light";
+      }
+    }
+  }
+  // If the previous step failed, choose based on the brightness of the body
+  if (mode === undefined || mode == "auto") {
+    let brightness = 0.2125 * body[0] + 0.7152 * body[1] + 0.0722 * body[2];
+    if (brightness > 0.5) {
+      mode = "light";
+    } else {
+      mode = "dark";
+    }
+  }
+  return { body, mode };
+}
+
 export function makePalette(theme = "light") {
   return theme == "light"
     ? createTheme({ palette: paletteLight })
@@ -95,6 +99,7 @@ export function makeTheme(inputMode) {
     window.devicePixelRatio > 1
       ? "solid 0.5px var(--gray3)"
       : "solid 1.0px var(--gray5)";
+  const isMobile = detectMob();
   let { mode } = reviseMode(inputMode);
   let theme = createTheme({
     palette: {
@@ -135,6 +140,31 @@ export function makeTheme(inputMode) {
           },
         },
         variants: [
+          {
+            props: { variant: "hour" },
+            style: {
+              color: theme.palette.text.secondary,
+              height: 32,
+              fontSize: "16px",
+              padding: "6px 2px",
+              width: "100%",
+              minWidth: 32,
+            },
+          },
+          {
+            props: { variant: "hour", selected: true },
+            style: {
+              color: theme.palette.primary.main,
+              "&:hover": {
+                color: "white",
+              },
+              backgroundColor: theme.palette.primary.light,
+              "&:hover": {
+                backgroundColor: theme.palette.primary.dark,
+              },
+              fontWeight: 600,
+            },
+          },
           {
             props: { variant: "control" },
             style: {
@@ -181,29 +211,6 @@ export function makeTheme(inputMode) {
                 backgroundColor: theme.palette.secondary.dark,
               },
               height: 32,
-              fontWeight: 600,
-            },
-          },
-          {
-            props: { variant: "hour" },
-            style: {
-              color: theme.palette.text.secondary,
-              height: 32,
-              width: "12.5%",
-              minWidth: 20,
-            },
-          },
-          {
-            props: { variant: "hour", selected: true },
-            style: {
-              color: theme.palette.primary.main,
-              "&:hover": {
-                color: "white",
-              },
-              backgroundColor: theme.palette.primary.light,
-              "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
-              },
               fontWeight: 600,
             },
           },

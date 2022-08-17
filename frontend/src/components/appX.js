@@ -36,7 +36,6 @@ function Navigation(props) {
     >
       <BottomNavigationAction label="View" icon={<RadarIcon />} />
       <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
-      <BottomNavigationAction label="Messages" icon={<MonitorHeartIcon />} />
     </BottomNavigation>
   );
 }
@@ -46,7 +45,7 @@ Navigation.defaultProps = {
   onChange: () => {},
 };
 export default function App(props) {
-  const [value, setValue] = React.useState(1);
+  const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
   const [archive, setArchive] = React.useState();
