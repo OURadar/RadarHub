@@ -26,6 +26,25 @@ const useConstructor = (callback = () => {}) => {
   used.current = true;
 };
 
+function Navigation(props) {
+  return (
+    <BottomNavigation
+      id="navbar"
+      showLabels
+      value={props.value}
+      onChange={props.onChange}
+    >
+      <BottomNavigationAction label="View" icon={<RadarIcon />} />
+      <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
+      <BottomNavigationAction label="Messages" icon={<MonitorHeartIcon />} />
+    </BottomNavigation>
+  );
+}
+
+Navigation.defaultProps = {
+  value: 0,
+  onChange: () => {},
+};
 export default function App(props) {
   const [value, setValue] = React.useState(1);
   const [theme, setTheme] = React.useState(makeTheme());
@@ -97,16 +116,7 @@ export default function App(props) {
         <div className={value === 2 ? "active" : "inactive"}>
           <RandomList />
         </div>
-        <BottomNavigation
-          id="navbar"
-          showLabels
-          value={value}
-          onChange={handleNavigationChange}
-        >
-          <BottomNavigationAction label="View" icon={<RadarIcon />} />
-          <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
-          <BottomNavigationAction label="Health" icon={<MonitorHeartIcon />} />
-        </BottomNavigation>
+        <Navigation value={value} onChange={handleNavigationChange} />
       </ThemeProvider>
     </div>
   );

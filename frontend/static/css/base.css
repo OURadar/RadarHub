@@ -13,6 +13,7 @@ Copyright Boonleng Cheong
   --background-color-secondary: rgba(0, 20, 27, 0.85);
   --topbar-height: 56px;
   --tabbar-height: 48px;
+  --navbar-button-height: 56px;
   --navbar-padding-bottom: 28px;
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
   box-sizing: border-box;
@@ -42,13 +43,13 @@ Copyright Boonleng Cheong
   --gray5: rgb(229, 229, 234);
   --gray6: rgb(242, 242, 247);
   --gray7: rgb(252, 252, 255);
-  --gray1-translucent: rgba(142, 142, 147, 0.85);
-  --gray2-translucent: rgba(174, 174, 178, 0.85);
-  --gray3-translucent: rgba(199, 199, 204, 0.85);
-  --gray4-translucent: rgba(209, 209, 214, 0.85);
-  --gray5-translucent: rgba(229, 229, 234, 0.85);
-  --gray6-translucent: rgba(242, 242, 247, 0.85);
-  --gray7-translucent: rgba(252, 252, 255, 0.85);
+  --gray1-translucent: rgba(142, 142, 147, 0.9);
+  --gray2-translucent: rgba(174, 174, 178, 0.9);
+  --gray3-translucent: rgba(199, 199, 204, 0.9);
+  --gray4-translucent: rgba(209, 209, 214, 0.9);
+  --gray5-translucent: rgba(229, 229, 234, 0.9);
+  --gray6-translucent: rgba(242, 242, 247, 0.9);
+  --gray7-translucent: rgba(252, 252, 255, 0.9);
   --system-foreground: #000000;
   --system-background: #ffffff;
   --secondary-system-background: #f2f2f7ff;
@@ -222,6 +223,9 @@ canvas {
 }
 .w900 {
   font-weight: 900;
+}
+.disabled {
+  color: var(--gray);
 }
 .container {
   position: relative;

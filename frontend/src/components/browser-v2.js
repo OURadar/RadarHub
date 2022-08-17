@@ -22,11 +22,9 @@ function Calender(props) {
   const day = ok ? props.archive.grid.day : new Date("2013/05/20");
   const hour = ok ? props.archive.grid.hour : -1;
 
-  const [value, setValue] = React.useState();
+  const [value, setValue] = React.useState(day);
 
-  React.useEffect(() => {
-    console.log(`value -> ${value}`);
-  }, [value]);
+  React.useEffect(() => setValue(day), [day]);
 
   return (
     <div className="calendarContainer">
@@ -34,17 +32,17 @@ function Calender(props) {
         <DatePicker
           label="Date"
           value={value}
-          onOpen={() => props.archive.month(day)}
-          onYearChange={(newDay) => props.archive.month(newDay)}
-          onMonthChange={(newDay) => props.archive.month(newDay)}
-          onChange={(newValue) => {
-            setValue(newValue);
-            if (newValue instanceof Date) {
-              props.archive.setDayHour(newValue, hour);
+          onOpen={() => props.archive.getMonthTable(day)}
+          onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
+          onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
+          onChange={(newDay) => {
+            setValue(newDay);
+            if (newDay instanceof Date) {
+              props.archive.setDayHour(newDay, hour);
             }
           }}
           renderInput={(params) => <TextField {...params} />}
-          renderDay={(day, _selectedDay, pickersDayProps) => {
+          renderDay={(day, _selected, pickersDayProps) => {
             let key = day.toISOString().slice(0, 10);
             let num =
               key in props.archive.grid.daysActive
@@ -102,9 +100,18 @@ function FileList(props) {
   const ok = props.archive.grid !== undefined;
   const items = ok ? props.archive.grid.items : [];
   const index = ok ? props.archive.grid?.index : -1;
+
+  React.useEffect(() => {
+    if (props.archive.state.loadCount <= 1) {
+      console.log(`Scroll row ${index} into view`);
+    }
+  }, [items, index]);
+
+  const selectedButton = React.useRef(null);
+
   return (
     <div className="filesContainer">
-      <Box sx={{ pt: 35, pb: 11 }}>
+      <div className="fileList">
         {items.map((item, k) => (
           <Button
             key={`file-${k}`}
@@ -118,7 +125,7 @@ function FileList(props) {
             {item}
           </Button>
         ))}
-      </Box>
+      </div>
     </div>
   );
 }
@@ -126,7 +133,7 @@ function FileList(props) {
 function OtherList(props) {
   return (
     <Box sx={{ pt: 1, pb: 1 }}>
-      <div className="fullWidth center">Tabs, lots of tabs</div>
+      <div className="fullWidth center disabled">Tabs, lots of tabs</div>
     </Box>
   );
 }
