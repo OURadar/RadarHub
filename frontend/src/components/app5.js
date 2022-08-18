@@ -62,7 +62,7 @@ class App extends Component {
         w = 300;
       }
       let v = (w / window.innerWidth) * 100;
-      Split(["#left", "#right"], {
+      Split(["#split-panel-left", "#split-panel-right"], {
         sizes: [100 - v, v],
         minSize: [400, 500],
         expandToMin: true,

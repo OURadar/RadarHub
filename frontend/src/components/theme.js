@@ -156,9 +156,6 @@ export function makeTheme(inputMode) {
             props: { variant: "hour", selected: true },
             style: {
               color: theme.palette.primary.main,
-              "&:hover": {
-                color: "white",
-              },
               backgroundColor: theme.palette.primary.light,
               "&:hover": {
                 backgroundColor: theme.palette.primary.dark,
@@ -204,15 +201,12 @@ export function makeTheme(inputMode) {
             props: { variant: "file", selected: true },
             style: {
               color: theme.palette.secondary.main,
-              "&:hover": {
-                color: "white",
-              },
               backgroundColor: theme.palette.secondary.light,
               "&:hover": {
                 backgroundColor: theme.palette.secondary.dark,
               },
-              height: 32,
               fontWeight: 600,
+              height: 32,
             },
           },
           {
@@ -229,13 +223,20 @@ export function makeTheme(inputMode) {
           },
         ],
       },
-      MuiToggleButton: {
-        styleOverrides: {
-          root: {
-            textTransform: "none",
-          },
-        },
-      },
+      // MuiToggleButton: {
+      //   styleOverrides: {
+      //     root: {
+      //       textTransform: "none",
+      //       "&.Mui-selected": {
+      //         color: theme.palette.primary.main,
+      //         backgroundColor: theme.palette.primary.light,
+      //       },
+      //       "&.Mui-selected:hover": {
+      //         backgroundColor: theme.palette.primary.dark,
+      //       },
+      //     },
+      //   },
+      // },
       // MuiListItemText: {
       //   styleOverrides: {
       //     root: {

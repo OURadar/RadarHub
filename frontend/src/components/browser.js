@@ -138,6 +138,7 @@ function Browser(props) {
 
   return (
     <div className="fill paper">
+      <div className="spacerTop" />
       <SectionHeader name="archive" />
       <div id="calendarContainer">
         <LocalizationProvider dateAdapter={AdapterDateFns}>

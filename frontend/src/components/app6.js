@@ -6,10 +6,11 @@
 //
 
 import React, { Component } from "react";
-import Split from "split.js";
+
 import { ThemeProvider } from "@mui/material/styles";
 import { colorDict, makeTheme } from "./theme";
-import { detectMob, clamp } from "./common";
+import { detectMob } from "./common";
+import { Layout } from "./layout";
 import { Browser } from "./browser";
 import { Product } from "./product";
 import { TopBar } from "./topbar";
@@ -87,37 +88,6 @@ class App extends Component {
           theme: makeTheme(mode),
         });
       });
-    if (!this.isMobile) {
-      const wm = 280;
-      var w = localStorage.getItem("split-archive-w");
-      if (w) {
-        w = clamp(parseFloat(JSON.parse(w)), wm, window.innerWidth - 400);
-      } else {
-        w = wm;
-      }
-      let v = (w / window.innerWidth) * 100;
-      Split(["#left", "#right"], {
-        sizes: [100 - v, v],
-        minSize: [400, wm],
-        expandToMin: true,
-        elementStyle: (_dimension, elementSize, _gutterSize, index) => {
-          if (index == 0)
-            return {
-              width: `calc(100% - ${w}px)`,
-            };
-          else {
-            w = (window.innerWidth * elementSize) / 100;
-            return {
-              width: `${w}px`,
-            };
-          }
-        },
-        onDragEnd: (_sizes) => {
-          w = parseFloat(w).toFixed(1);
-          localStorage.setItem("split-archive-w", JSON.stringify(w));
-        },
-      });
-    }
   }
 
   render() {
@@ -143,8 +113,9 @@ class App extends Component {
           onThemeChange={this.handleThemeChange}
           onInfoRequest={this.handleInfoOpen}
         />
-        <div className="flexRow">
-          <div id="left" className="container">
+        <Layout
+          name="split-archive-width"
+          left={
             <Product
               origin={this.props.origin}
               sweep={this.archive.data.sweep}
@@ -154,12 +125,15 @@ class App extends Component {
               profileGL={this.props.profileGL}
               onOverlayLoaded={this.handleOverlayLoaded}
             />
-          </div>
-          <div id="right">
-            <div className="spacerTop"></div>
-            <Browser archive={this.archive} radar={this.props.radar} />
-          </div>
-        </div>
+          }
+          right={
+            <Browser
+              archive={this.archive}
+              radar={this.props.radar}
+              debug={this.props.debug}
+            />
+          }
+        />
         <Preference
           value={this.archive.state.liveUpdate}
           handleChange={this.handleLiveModeChange}

@@ -93,14 +93,7 @@ Copyright Boonleng Cheong
   padding: 8px 80px;
 }
 
-#right {
-  display: flex;
-  flex-direction: column;
-  height: var(--content-height);
-  margin-top: var(--topbar-height);
-  overflow-y: scroll;
-}
-
+/* Split */
 .split {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -123,12 +116,22 @@ Copyright Boonleng Cheong
 .gutter.gutter-vertical {
   cursor: row-resize;
 }
-
 .gutter.gutter-horizontal {
   cursor: col-resize;
   width: 8px !important;
 }
+#split-panel {
+  display: flex;
+  flex-direction: row;
+  background-color: var(--gray6);
+}
+#split-panel-left,
+#split-panel-right {
+  display: block;
+  height: 100vh;
+}
 
+/* Browser */
 #calendarContainer {
   padding-top: var(--padding);
   padding-bottom: calc(0.5 * var(--padding));
@@ -142,6 +145,7 @@ Copyright Boonleng Cheong
   overflow-y: scroll;
 }
 
+/* Product */
 #ageString {
   bottom: 50px;
   font-size: 20px;
