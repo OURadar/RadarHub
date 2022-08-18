@@ -11,10 +11,6 @@ import TextField from "@mui/material/TextField";
 
 import Box from "@mui/material/Box";
 
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 
 function Calender(props) {
@@ -98,17 +94,25 @@ function FileList(props) {
   const items = ok ? props.archive.grid.items : [];
   const index = ok ? props.archive.grid?.index : -1;
 
+  const fileListRef = React.useRef(null);
+
   React.useEffect(() => {
+    if (
+      fileListRef.current == null ||
+      fileListRef.current.children.length == 0
+    ) {
+      return;
+    }
     if (props.archive.state.loadCount <= 1 && index != -1) {
-      console.log(`Scroll row ${index} into view`);
+      fileListRef.current.children[index].scrollIntoViewIfNeeded();
+    } else if (props.archive.grid.latestHour > -1) {
+      props.archive.disableLiveUpdate();
     }
   }, [items, index]);
 
-  const selectedButton = React.useRef(null);
-
   return (
     <div id="filesContainer">
-      <div id="fileList">
+      <div id="fileList" ref={fileListRef}>
         {items.map((item, k) => (
           <Button
             key={`file-${k}`}

@@ -14,12 +14,13 @@ export function Preference(props) {
   return (
     <div className="floatMenu">
       <ToggleButtonGroup
+        color="primary"
         variant="control"
-        exclusive
         size="small"
         value={props.value}
         onChange={props.handleChange}
         orientation="vertical"
+        exclusive
       >
         <ToggleButton value="scan">
           <DensityLarge />
