@@ -99,10 +99,6 @@ Copyright Boonleng Cheong
   padding: 8px;
 }
 
-.fullHeight {
-  position: relative;
-}
-
 #calendarContainer {
   height: var(--calendar-height);
   padding-top: calc(var(--topbar-height) + var(--padding));
@@ -153,9 +149,7 @@ Copyright Boonleng Cheong
 }
 #colorbar {
   background: var(--colorbar-background);
-  backdrop-filter: blur(5px);
   border-bottom: var(--ui-border);
-  -webkit-backdrop-filter: blur(5px);
 }
 
 .active {

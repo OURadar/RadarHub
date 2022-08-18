@@ -5,7 +5,11 @@
 //  Created by Boonleng Cheong
 //
 
-import React, { useRef } from "react";
+import React from "react";
+
+import { detectMob } from "./common";
+
+const isMobile = detectMob();
 
 function draw(context, params) {
   const scale = window.devicePixelRatio;
@@ -103,7 +107,7 @@ function draw(context, params) {
     const height = Math.round(0.2 * context.canvas.height);
     const xscale = width / 255.0;
     const originX = Math.round(0.5 * (context.canvas.width - width));
-    const originY = Math.round(0.4 * context.canvas.height);
+    const originY = Math.round(0.42 * context.canvas.height);
     const tickOffset = Math.round(xscale - 1);
     // console.log(`${width} x ${height}   xscale = ${xscale} / ${tickOffset}`);
 
@@ -223,7 +227,7 @@ function setCanvasStyle(canvas, gravity) {
 }
 
 export function Colorbar(props) {
-  const canvasRef = useRef(null);
+  const canvasRef = React.useRef(null);
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
@@ -273,7 +277,13 @@ export function Colorbar(props) {
     });
   }, [props.count]);
 
-  return <canvas id={props.id} ref={canvasRef} />;
+  return (
+    <canvas
+      id={props.id}
+      ref={canvasRef}
+      className={(isMobile && "blur") || ""}
+    />
+  );
 }
 
 Colorbar.defaultProps = {

@@ -99,7 +99,7 @@ function FileList(props) {
   const index = ok ? props.archive.grid?.index : -1;
 
   React.useEffect(() => {
-    if (props.archive.state.loadCount <= 1) {
+    if (props.archive.state.loadCount <= 1 && index != -1) {
       console.log(`Scroll row ${index} into view`);
     }
   }, [items, index]);
@@ -136,18 +136,9 @@ function OtherList(props) {
 }
 
 export function Browser(props) {
-  const ok = props.archive.grid !== undefined;
-  const items = ok ? props.archive.grid.items : [];
-  const index = ok ? props.archive.grid?.index : -1;
-
-  React.useEffect(() => {
-    const newFiles = ok ? props.archive.grid.items : [];
-    console.log(`updating files ... len = ${newFiles.length}`);
-  }, [items, index]);
-
   return (
     <div>
-      <div id="cake" className="fullWidth container fog">
+      <div id="cake" className="fullWidth container fog blur">
         <Calender {...props} />
         <HourList {...props} />
         <OtherList {...props} />

@@ -66,7 +66,7 @@ export function TopBar(props) {
   }
   return (
     <ThemeProvider theme={topbarTheme}>
-      <div id="topbar" role="banner">
+      <div id="topbar" role="banner" className="blur">
         <div className="topbarComponent left">
           <IconButton
             onClick={() => {

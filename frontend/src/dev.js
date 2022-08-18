@@ -7,7 +7,7 @@ import App from "./components/appX.js";
 
 let text = document.getElementById("params")?.textContent || "{}";
 let params = JSON.parse(text);
-console.log(params);
+console.log("params", params);
 
 const container = document.getElementById("app");
 const root = createRoot(container);

@@ -30,9 +30,10 @@ function Navigation(props) {
   return (
     <BottomNavigation
       id="navbar"
-      showLabels
+      className="blur"
       value={props.value}
       onChange={props.onChange}
+      showLabels
     >
       <BottomNavigationAction label="View" icon={<RadarIcon />} />
       <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
