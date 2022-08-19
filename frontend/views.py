@@ -46,7 +46,7 @@ def index(request):
 def dev(request):
     radar = 'px1000'
     origin = location(radar)
-    params = {'radar': radar, 'origin': origin}
+    params = {'radar': radar, 'origin': origin, 'hash': css_hash}
     return render(request, 'frontend/dev.html', {'vars':params, 'css': css_hash})
 
 # Control
@@ -79,7 +79,8 @@ def archive_radar_profile(request, radar, profileGL):
     if radar not in radars:
         raise Http404
     origin = location(radar)
-    params = {'radar': radar, 'origin': origin, 'profileGL': profileGL}
+    params = {'radar': radar, 'origin': origin, 'profileGL': profileGL, 'hash': css_hash}
+    print(params)
     return render(request, 'frontend/archive.html', {'vars': params, 'css': css_hash})
 
 def archive_radar(request, radar):

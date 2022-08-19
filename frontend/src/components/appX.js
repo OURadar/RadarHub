@@ -57,6 +57,10 @@ export function App(props) {
     const engine = new Archive(props.radar);
     engine.onupdate = forceUpdate;
     setArchive(engine);
+
+    document
+      .getElementById("device-style")
+      .setAttribute("href", `/static/css/mobile.css?h=${props.hash}`);
   });
 
   const setMode = (mode) => {
