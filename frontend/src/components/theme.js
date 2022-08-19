@@ -137,6 +137,7 @@ export function makeTheme(inputMode) {
           root: {
             borderRadius: 4,
             textTransform: "inherit",
+            padding: "var(--half-padding)",
           },
         },
         variants: [

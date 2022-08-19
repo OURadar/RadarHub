@@ -12,6 +12,7 @@ export function MenuArrow(props) {
   return (
     <div id="arrow" className="floatMenu blur">
       <ButtonGroup
+        size="large"
         color="secondary"
         variant="outlined"
         orientation="vertical"
