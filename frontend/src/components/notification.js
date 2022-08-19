@@ -64,7 +64,7 @@ class Notification extends React.Component {
         dangerouslySetInnerHTML={{
           __html: "<p>" + this.state.message + "</p>",
         }}
-      ></div>
+      />
     );
   }
 }

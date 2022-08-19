@@ -170,3 +170,7 @@ Copyright Boonleng Cheong
 #title text {
   text-anchor: end;
 }
+#update {
+  top: calc(var(--topbar-height) + 2 * var(--padding));
+  left: 30px;
+}

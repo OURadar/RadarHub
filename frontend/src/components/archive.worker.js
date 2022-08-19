@@ -228,6 +228,7 @@ function createSweep(name = "dummy") {
     nx: 0,
     time: 42,
     timeString: "1970/01/01 00:00:42 UTC",
+    titleString: "----/--/-- --:--:-- --- -- -.-°",
     symbol: "U",
     isRHI: false,
     scanElevation: 4.0,
@@ -412,6 +413,13 @@ function load(name) {
             `${components[2].slice(0, 2)}:` +
             `${components[2].slice(2, 4)}:` +
             `${components[2].slice(4, 6)} UTC`;
+          sweep.titleString =
+            sweep.timeString +
+            "   " +
+            (sweep.isRHI
+              ? `Az ${sweep.scanAzimuth.toFixed(1)}`
+              : `El ${sweep.scanElevation.toFixed(1)}`) +
+            "°";
           sweep.symbol = components[4].split(".")[0];
           sweep.info = JSON.parse(sweep.info);
           sweep.infoString =

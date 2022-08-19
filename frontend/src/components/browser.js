@@ -39,7 +39,6 @@ function Browser(props) {
   const count = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
   const items = ok ? props.archive.grid.items : [];
   const index = ok ? props.archive.grid?.index : -1;
-  // const radar = props.radar;
 
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);

@@ -46,101 +46,17 @@ function StatusBodyQuick(props) {
   return <div className="invisible"></div>;
 }
 
-// Supply props with
-// - ingest - real-time data ingest
-// - xxx - archived data ingest
-
-export function TopBar(props) {
-  const [message, setMessage] = React.useState("");
-  let name, online, status, notify;
-  if (props.ingest) {
-    name = props.ingest.radar;
-    online = props.ingest.state.liveUpdate || "unknown";
-    status = <StatusBody message={props.ingest.message} />;
-    notify = <Notification message={props.ingest.response || message} />;
-  } else {
-    name = "";
-    online = "unknown";
-    status = <StatusBody />;
-    notify = <Notification message={message} />;
-  }
-  return (
-    <ThemeProvider theme={topbarTheme}>
-      <div id="topbar" role="banner" className="blur">
-        <div className="topbarComponent left">
-          <IconButton
-            onClick={() => {
-              document.location = "/";
-            }}
-          >
-            <RadarHubIcon />
-          </IconButton>
-          <div className="statusWrapper">
-            <div className={online} id="statusLed"></div>
-            <div id="radarName">{`${name}`}</div>
-            {status}
-          </div>
-        </div>
-        <Console
-          {...props}
-          onAccount={() => {
-            setMessage("Fetching User Information ...");
-            fetch("/profile/")
-              .then((response) => {
-                if (response.status == 200) {
-                  response.json().then(({ user, ip, emoji }) => {
-                    let title =
-                      user == "None" ? "Anonymous User" : `Hello ${user}`;
-                    let symbol = emojis.get(emoji) || "";
-                    setMessage(
-                      user == "None"
-                        ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
-                            window.location.pathname +
-                            "'>Sign In Here</a><div class='emotion'>⛅️</div>"
-                        : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
-                    );
-                    setTimeout(() => setMessage(""), 3500);
-                  });
-                } else {
-                  setMessage(
-                    `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
-                  );
-                }
-              })
-              .catch((_error) => {
-                setMessage(
-                  `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
-                );
-                setTimeout(() => setMessage(""), 3500);
-              });
-          }}
-        />
-      </div>
-      {notify}
-    </ThemeProvider>
-  );
-}
-
-TopBar.defaultProps = {
-  ingest: null,
-  mode: "light",
-  onThemeChange: () => {
-    console.log("Topbar.onThemeChange()");
-  },
-  onInfoRequest: () => {
-    console.log("Topbar.onInfoRequest()");
-  },
-};
-
-export function Console(props) {
+function Console(props) {
   const [fullscreen, setFullscreen] = React.useState(
     window.innerHeight == screen.height
   );
   return (
     <div className="topbarComponent right">
-      <IconButton aria-label="Info" onClick={props.handleInfoRequest}>
-        <Info />
-      </IconButton>
+      {!props.isMobile && (
+        <IconButton aria-label="Info" onClick={props.handleInfoRequest}>
+          <Info />
+        </IconButton>
+      )}
       <IconButton
         aria-label="Refresh"
         onClick={() => {
@@ -170,3 +86,88 @@ export function Console(props) {
     </div>
   );
 }
+
+// Supply props with
+// - ingest - real-time data ingest
+// - xxx - archived data ingest
+
+export function TopBar(props) {
+  const [message, setMessage] = React.useState("");
+  let name, online, status, notify;
+  if (props.ingest) {
+    name = props.ingest.radar;
+    online = props.ingest.state.liveUpdate || "unknown";
+    status = <StatusBody message={props.ingest.message} />;
+    notify = <Notification message={props.ingest.response || message} />;
+  } else {
+    name = "";
+    online = "unknown";
+    status = <StatusBody />;
+    notify = <Notification message={message} />;
+  }
+
+  const handleAccount = () => {
+    setMessage("Fetching User Information ...");
+    fetch("/profile/")
+      .then((response) => {
+        if (response.status == 200) {
+          response.json().then(({ user, ip, emoji }) => {
+            let title = user == "None" ? "Anonymous User" : `Hello ${user}`;
+            let symbol = emojis.get(emoji) || "";
+            setMessage(
+              user == "None"
+                ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
+                    window.location.pathname +
+                    "'>Sign In Here</a><div class='emotion'>⛅️</div>"
+                : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
+            );
+            setTimeout(() => setMessage(""), 3500);
+          });
+        } else {
+          setMessage(
+            `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+          );
+        }
+      })
+      .catch((_error) => {
+        setMessage(
+          `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+        );
+        setTimeout(() => setMessage(""), 3500);
+      });
+  };
+
+  return (
+    <ThemeProvider theme={topbarTheme}>
+      <div id="topbar" role="banner" className="blur">
+        <div className="topbarComponent left">
+          <IconButton
+            onClick={() => {
+              document.location = "/";
+            }}
+          >
+            <RadarHubIcon />
+          </IconButton>
+          <div className="statusWrapper">
+            <div className={online} id="statusLed"></div>
+            <div id="radarName">{`${name}`}</div>
+            {status}
+          </div>
+        </div>
+        <Console {...props} onAccount={handleAccount} />
+      </div>
+      {notify}
+    </ThemeProvider>
+  );
+}
+
+TopBar.defaultProps = {
+  ingest: null,
+  mode: "light",
+  onThemeChange: () => {
+    console.log("Topbar.onThemeChange()");
+  },
+  onInfoRequest: () => {
+    console.log("Topbar.onInfoRequest()");
+  },
+};

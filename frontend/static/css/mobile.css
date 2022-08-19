@@ -128,14 +128,14 @@ Copyright Boonleng Cheong
 }
 
 #ageString {
-  bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 30px);
+  bottom: calc(
+    var(--navbar-padding-bottom) + var(--button-height) + var(--padding) + 70px
+  );
   left: var(--padding);
 }
 #infoString {
-  bottom: calc(
-    var(--navbar-padding-bottom) + var(--button-height) + var(--padding) + 40px
-  );
-  padding-left: var(--padding);
+  bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 30px);
+  left: var(--padding);
 }
 #title {
   font-size: 18px;
@@ -164,4 +164,9 @@ Copyright Boonleng Cheong
 #cake {
   border-bottom: var(--ui-border);
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+}
+
+#arrow {
+  bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 40px);
+  right: 30px;
 }

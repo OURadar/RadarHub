@@ -16,7 +16,7 @@ import { Product } from "./product";
 import { TopBar } from "./topbar";
 import { Archive } from "./archive";
 import { HelpPage } from "./help";
-import { Preference } from "./preference";
+import { MenuUpdate } from "./menu-update";
 
 export class App extends React.Component {
   constructor(props) {
@@ -134,7 +134,7 @@ export class App extends React.Component {
             />
           }
         />
-        <Preference
+        <MenuUpdate
           value={this.archive.state.liveUpdate}
           handleChange={this.handleLiveModeChange}
         />

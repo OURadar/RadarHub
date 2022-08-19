@@ -287,7 +287,7 @@ class Product extends GLView {
           string={this.props.sweep?.infoString || "Gatewidth: -\nWaveform: -"}
         />
         <Title
-          string={this.props.sweep?.timeString || "----/--/-- --:--:-- UTC"}
+          string={this.props.sweep?.titleString || "----/--/-- --:--:-- UTC"}
         />
       </div>
     );

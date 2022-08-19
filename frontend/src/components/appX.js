@@ -1,4 +1,4 @@
-import React, { useRef, useReducer } from "react";
+import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
@@ -16,10 +16,11 @@ import { Browser } from "./browser-mobile";
 import { Product } from "./product";
 
 import { Archive } from "./archive";
-import { Preference } from "./preference";
+import { MenuUpdate } from "./menu-update";
+import { MenuArrow } from "./menu-arrow";
 
 const useConstructor = (callback = () => {}) => {
-  const used = useRef(false);
+  const used = React.useRef(false);
   if (used.current) return;
   callback();
   used.current = true;
@@ -49,18 +50,18 @@ export function App(props) {
   const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
-  const [archive, setArchive] = React.useState();
 
-  const [, forceUpdate] = useReducer((x) => x + 1, 0);
+  const archive = React.useRef(null);
+
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   useConstructor(() => {
-    const engine = new Archive(props.radar);
-    engine.onupdate = forceUpdate;
-    setArchive(engine);
-
     document
       .getElementById("device-style")
-      .setAttribute("href", `/static/css/mobile.css?h=${props.hash}`);
+      .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
+
+    archive.current = new Archive(props.radar);
+    archive.current.onupdate = forceUpdate;
   });
 
   const setMode = (mode) => {
@@ -71,7 +72,7 @@ export function App(props) {
 
   const handleOverlayLoaded = () => {
     console.log(`AppX.handleOverlayLoaded()`);
-    archive.catchup();
+    archive.current.catchup();
   };
 
   const handleThemeChange = () => {
@@ -89,6 +90,23 @@ export function App(props) {
     setTimeout(() => {
       setValue(0);
     }, 300);
+  };
+
+  const handleDoubleLeft = () => {
+    console.log("AppX.handleDoubleLeft()");
+    archive.current.navigateBackwardScan();
+  };
+
+  const handleLeft = () => {
+    archive.current.navigateBackward();
+  };
+
+  const handleRight = () => {
+    archive.current.navigateForward();
+  };
+
+  const handleDoubleRight = () => {
+    archive.current.navigateForwardScan();
   };
 
   React.useEffect(() => {
@@ -110,12 +128,18 @@ export function App(props) {
             gravity="top"
             colors={colors}
             origin={props.origin}
-            sweep={archive?.data.sweep}
+            sweep={archive.current?.data.sweep}
             onOverlayLoaded={handleOverlayLoaded}
+          />
+          <MenuArrow
+            onDoubleLeft={handleDoubleLeft}
+            onLeft={handleLeft}
+            onRight={handleRight}
+            onDoubleRight={handleDoubleRight}
           />
         </div>
         <div className={value === 1 ? "active" : "inactive"}>
-          <Browser archive={archive} radar={props.radar} onLoad={handleLoad} />
+          <Browser archive={archive.current} onLoad={handleLoad} />
         </div>
         <Navigation value={value} onChange={handleNavigationChange} />
       </ThemeProvider>

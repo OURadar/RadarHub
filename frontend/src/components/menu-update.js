@@ -10,9 +10,9 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import { DensityLarge, DensitySmall } from "@mui/icons-material";
 
-export function Preference(props) {
+export function MenuUpdate(props) {
   return (
-    <div className="floatMenu">
+    <div id="update" className="floatMenu">
       <ToggleButtonGroup
         color="primary"
         variant="control"
@@ -33,7 +33,7 @@ export function Preference(props) {
   );
 }
 
-Preference.defaultProps = {
+MenuUpdate.defaultProps = {
   ingest: null,
   handleChange: (_e, value) => {
     console.log(`Preference.handleChange()  value = ${value}`);
