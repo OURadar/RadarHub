@@ -14,7 +14,6 @@ import { colorDict, makeTheme } from "./theme";
 import { TopBar } from "./topbar";
 import { Browser } from "./browser-mobile";
 import { Product } from "./product";
-import { RandomList } from "./random-list";
 
 import { Archive } from "./archive";
 import { Preference } from "./preference";
@@ -46,7 +45,7 @@ Navigation.defaultProps = {
   onChange: () => {},
 };
 
-export default function App(props) {
+export function App(props) {
   const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
@@ -113,9 +112,6 @@ export default function App(props) {
         </div>
         <div className={value === 1 ? "active" : "inactive"}>
           <Browser archive={archive} radar={props.radar} onLoad={handleLoad} />
-        </div>
-        <div className={value === 2 ? "active" : "inactive"}>
-          <RandomList />
         </div>
         <Navigation value={value} onChange={handleNavigationChange} />
       </ThemeProvider>

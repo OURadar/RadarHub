@@ -22,7 +22,7 @@ import { Archive } from "./archive";
 import { Browser } from "./browser";
 import { Product } from "./product";
 
-class App extends Component {
+export class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -135,5 +135,3 @@ class App extends Component {
     this.setState({ navIndex: value });
   }
 }
-
-export default App;

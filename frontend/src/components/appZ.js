@@ -28,7 +28,7 @@ const darkTheme = createTheme({
   },
 });
 
-export default function App(props) {
+export function App(props) {
   const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(() => makeTheme());
   const [colors, setColors] = React.useState(() => colorDict());

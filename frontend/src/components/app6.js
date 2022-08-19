@@ -5,7 +5,7 @@
 //  Created by Boonleng Cheong
 //
 
-import React, { Component } from "react";
+import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 import { colorDict, makeTheme } from "./theme";
@@ -18,7 +18,7 @@ import { Archive } from "./archive";
 import { HelpPage } from "./help";
 import { Preference } from "./preference";
 
-class App extends Component {
+export class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -175,5 +175,3 @@ class App extends Component {
     this.archive.toggleLiveUpdate(value);
   }
 }
-
-export default App;
