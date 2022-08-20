@@ -32,7 +32,7 @@ const topbarTheme = createTheme({
 class StatusBody extends Notification {
   render() {
     return (
-      <div id="statusBody" className={this.state.class}>
+      <div id="statusBody" className={`${this.state.class} blur`}>
         {this.state.message}
       </div>
     );
@@ -105,6 +105,7 @@ export function TopBar(props) {
     status = <StatusBody />;
     notify = <Notification message={message} />;
   }
+  // status = <StatusBody message="PX-20200202-123456-E1.0-Z loaded" />;
 
   const handleAccount = () => {
     setMessage("Fetching User Information ...");

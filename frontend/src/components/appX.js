@@ -115,7 +115,11 @@ export function App(props) {
 
   return (
     <div className="fullHeight">
-      <TopBar isMobile={true} onThemeChange={handleThemeChange} />
+      <TopBar
+        isMobile={true}
+        ingest={archive.current}
+        onThemeChange={handleThemeChange}
+      />
       <ThemeProvider theme={theme}>
         <div className={value === 0 ? "active" : "inactive"}>
           <Product

@@ -511,6 +511,12 @@ h3 {
   background-color: var(--background-color);
   height: 100vh;
 }
+#versionTag {
+  bottom: 5vh;
+  position: fixed;
+  text-align: center;
+  width: 100%;
+}
 #app {
   background-color: var(--background-color);
   overflow: hidden;
@@ -559,11 +565,12 @@ h3 {
 }
 
 .statusWrapper {
-  display: inline-block;
+  width: calc(100vw - 100px);
   height: 28px;
   line-height: 28px;
   padding: 0 5px;
   position: relative;
+  user-select: none;
 }
 #statusLed {
   display: inline-block;
@@ -583,28 +590,21 @@ h3 {
 .ready {
   background-color: var(--orange);
 }
-#radarName {
-  display: inline-block;
-  padding-left: 10px;
-}
-#versionTag {
-  bottom: 5vh;
-  position: fixed;
-  text-align: center;
-  width: 100%;
-}
+#radarName,
 #statusBody {
-  display: inline-block;
-  padding-left: 10px;
-  white-space: nowrap;
-}
-#statusBody {
-  background-color: rgba(255, 255, 255, 0.15);
-  line-height: 28px;
-  margin-left: 10px;
+  display: inline;
   padding: 0 10px;
-  text-align: middle;
+}
+#statusBody {
+  background-color: hsla(193, 43%, 44%, 0.817);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  position: absolute;
+  left: 5px;
   border-radius: var(--button-border-radius);
+  width: calc(100vw - 120px);
+  z-index: 2;
 }
 #console {
   display: block;
