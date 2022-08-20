@@ -7,8 +7,6 @@
 
 import React from "react";
 
-import { detectMob } from "./common";
-
 function draw(context, params) {
   const scale = window.devicePixelRatio;
   const lineWidth = 3.5 * scale;
@@ -153,7 +151,7 @@ function draw(context, params) {
     }
 
     // Ticks
-    context.font = `${16 * scale}px LabelFont`;
+    context.font = `${15 * scale}px LabelFont`;
     params.style.ticks.forEach((tick) => {
       let t = Math.floor(tick.pos * xscale) - tickOffset + 0.5 * scale;
 

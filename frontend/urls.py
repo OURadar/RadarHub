@@ -20,6 +20,6 @@ urlpatterns = [
     path('view/<str:page>/', views.view, name='page-name'),
     path('profile/', stats.profile, name='stats-profile'),
     path('robots.txt', views.robots_txt),
-    path('dev/', views.dev, name='index'),
+    path('dev/<str:radar>/', views.dev, name='index'),
     path('', views.index, name='index'),
 ]

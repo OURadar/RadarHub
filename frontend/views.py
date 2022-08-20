@@ -53,8 +53,8 @@ def index(request):
     vars = make_vars(request)
     return render(request, 'frontend/index.html', {'vars': vars, 'css': css_hash, 'version': settings.VERSION})
 
-def dev(request):
-    vars = make_vars(request)
+def dev(request, radar):
+    vars = make_vars(request, radar)
     return render(request, 'frontend/dev.html', {'vars': vars, 'css': css_hash})
 
 # Control

@@ -343,12 +343,13 @@ function list(day, hour, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          // console.log(buffer);
-          grid.dateTimeString = dateTimeString;
+          console.log(buffer);
+          let hourString = clamp(grid.hour, 0, 23).toString().padStart(2, "0");
           grid.day = day;
           grid.hour = buffer.hour;
           grid.symbol = symbol;
           grid.hoursActive = buffer.hoursActive;
+          grid.dateTimeString = `${dayString}-${hourString}00`;
           grid.latestHour =
             23 -
             grid.hoursActive
@@ -696,7 +697,7 @@ function toggle(name) {
 }
 
 function reviseGridPaths() {
-  if (grid.items.length == 0 || !(grid.scan in grid.itemsGrouped)) {
+  if (grid.items.length == 0) {
     grid.pathsActive.fill(false);
     return;
   }
@@ -715,7 +716,18 @@ function reviseGridPaths() {
   grid.pathsActive[1] = index != 0;
   grid.pathsActive[2] = index != grid.items.length - 1;
   grid.pathsActive[3] = index != last.index;
-  if (state.verbose == 0) {
-    console.log("reviseGridPaths()", scan, first, last, grid.pathsActive);
+  if (state.verbose) {
+    console.log(
+      `%carchive.worker.reviseGridPaths() %c${scan}%c`,
+      `color: ${namecolor}`,
+      "color: dodgerblue",
+      "",
+      "first",
+      first,
+      "last",
+      last,
+      "pathsActive",
+      grid.pathsActive
+    );
   }
 }

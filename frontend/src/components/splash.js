@@ -4,5 +4,5 @@ export function removeSplash() {
   setTimeout(() => {
     document.getElementById("loading")?.remove();
     document.getElementById("app").classList.remove("hide");
-  }, 300);
+  }, 500);
 }

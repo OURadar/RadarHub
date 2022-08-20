@@ -67,7 +67,7 @@ Copyright Boonleng Cheong
     var(--background-color-translucent) 15%,
     var(--background-color) 75%
   );
-  --background-image: linear-gradient(transparent 60%, hsl(194, 100%, 35%));
+  --background-image: linear-gradient(transparent 69%, hsl(194, 100%, 35%));
 }
 
 [theme="dark"] {
@@ -115,7 +115,7 @@ Copyright Boonleng Cheong
     var(--background-color-translucent) 15%,
     var(--background-color) 75%
   );
-  --background-image: linear-gradient(transparent 60%, hsl(194, 100%, 20%));
+  --background-image: linear-gradient(transparent 69%, hsl(194, 100%, 20%));
 }
 
 @font-face {
@@ -143,7 +143,6 @@ html {
 
 body {
   color: var(--system-foreground);
-  background: var(--map-background);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -185,9 +184,8 @@ canvas {
   background-color: var(--system-background);
   box-shadow: 0 4px 40px rgba(0, 0, 0, 0.15);
   color: var(--system-foreground);
-  display: block;
   margin: 20vh auto 0 auto;
-  max-height: 75%;
+  max-height: 60vh;
   max-width: 100%;
   overflow-y: scroll;
   text-align: center;
@@ -739,7 +737,7 @@ a.radarButton {
   color: white;
   display: inline-block;
   font-size: 24pt;
-  margin: 10px;
+  margin: var(--half-padding);
   padding: 10px 20px;
   text-decoration: none;
   transition: background-color linear 0.3s;

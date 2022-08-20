@@ -208,6 +208,7 @@ class Archive {
         "color: lightseagreen",
         ""
       );
+      console.log(this.grid);
       return;
     }
     this.state.itemsUpdating = true;
