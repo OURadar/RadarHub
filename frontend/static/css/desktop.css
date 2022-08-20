@@ -10,7 +10,6 @@ Copyright Boonleng Cheong
   --button-border-right: solid 1px var(--border-accent);
   --button-border-bottom: solid 1px var(--border-accent);
   --button-border-left: solid 1px var(--border-accent);
-  --button-border-radius: 5px;
   --button-margin-bottom: 5px;
   --content-height: calc(100vh - var(--topbar-height));
 }
@@ -18,7 +17,7 @@ Copyright Boonleng Cheong
 .controlContainer,
 .healthContainer {
   background-color: var(--system-background);
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
   padding: var(--padding);
   padding-bottom: calc(var(--padding) - var(--button-margin-bottom));
 }
@@ -70,7 +69,7 @@ Copyright Boonleng Cheong
   right: 0;
   width: 50%;
   height: var(--indicator-height);
-  border-radius: 4px;
+  border-radius: var(--button-border-radius);
   border: 1px solid var(--border-accent);
   box-sizing: border-box;
   padding-top: calc(var(--indicator-height) * 0.2 - 1px);

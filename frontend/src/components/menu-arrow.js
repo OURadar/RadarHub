@@ -10,7 +10,7 @@ import {
 
 export function MenuArrow(props) {
   return (
-    <div id="arrow" className="floatMenu blur">
+    <div id="arrow" className="floatMenu roundCorder blur">
       <ButtonGroup
         size="large"
         color="secondary"

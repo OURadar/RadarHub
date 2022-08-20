@@ -715,7 +715,7 @@ function reviseGridPaths() {
   grid.pathsActive[1] = index != 0;
   grid.pathsActive[2] = index != grid.items.length - 1;
   grid.pathsActive[3] = index != last.index;
-  if (state.verbose) {
-    console.log("reviseGridPaths()", first, last, grid.pathsActive);
+  if (state.verbose == 0) {
+    console.log("reviseGridPaths()", scan, first, last, grid.pathsActive);
   }
 }

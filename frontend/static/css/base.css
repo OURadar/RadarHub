@@ -8,15 +8,16 @@ Copyright Boonleng Cheong
   --padding: 20px;
   --half-padding: 10px;
   --base-size: 14;
-  --background-color: rgba(0, 111, 146, 1);
-  --background-color-translucent: rgba(0, 111, 146, 0.9);
-  --background-color-secondary: rgba(0, 20, 27, 0.85);
+  --background-color: hsl(194, 100%, 29%);
+  --background-color-translucent: hsla(194, 100%, 29%, 0.9);
+  --background-color-secondary: hsla(194, 100%, 5%, 0.85);
   --topbar-height: 56px;
   --tabbar-height: 48px;
   --calendar-height: 56px;
   --navbar-button-height: 56px;
   --navbar-padding-bottom: 28px;
   --small-button-height: 32px;
+  --button-border-radius: 4px;
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
   box-sizing: border-box;
 }
@@ -66,6 +67,7 @@ Copyright Boonleng Cheong
     var(--background-color-translucent) 15%,
     var(--background-color) 75%
   );
+  --background-image: linear-gradient(transparent 60%, hsl(194, 100%, 35%));
 }
 
 [theme="dark"] {
@@ -113,6 +115,7 @@ Copyright Boonleng Cheong
     var(--background-color-translucent) 15%,
     var(--background-color) 75%
   );
+  --background-image: linear-gradient(transparent 60%, hsl(194, 100%, 20%));
 }
 
 @font-face {
@@ -265,7 +268,7 @@ canvas {
   display: none !important;
 }
 .roundCorder {
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
 }
 .fadeIn {
   opacity: 1;
@@ -395,7 +398,7 @@ h3 {
 
 .scopeWrapper {
   background-color: var(--system-background);
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
 }
 .scopeSingle {
   height: 200px;
@@ -504,7 +507,7 @@ h3 {
   width: 100vw;
 }
 #backdrop {
-  background: var(--background-gradient);
+  background-image: var(--background-image);
   background-color: var(--background-color);
   height: 100vh;
 }
@@ -513,7 +516,6 @@ h3 {
   overflow: hidden;
   position: fixed;
   width: 100vw;
-  height: 100vh;
   top: 0;
   left: 0;
   transition: opacity 0.5s;
@@ -602,7 +604,7 @@ h3 {
   margin-left: 10px;
   padding: 0 10px;
   text-align: middle;
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
 }
 #console {
   display: block;
@@ -613,7 +615,7 @@ h3 {
 #notification {
   background-color: var(--overlay-background);
   border: solid 1px var(--border-accent);
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
   color: var(--system-foreground);
   font-size: 16px;
   left: 50%;
@@ -739,7 +741,7 @@ h3 {
 }
 
 a.radarButton {
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
   color: white;
   display: inline-block;
   font-size: 24pt;
@@ -756,7 +758,7 @@ a.radarButton:hover {
 
 .link {
   border: none;
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
   display: inline-block;
   font-size: inherit;
   padding: 5px 10px;
@@ -782,7 +784,7 @@ a.radarButton:hover {
   color: var(--system-foreground);
   background-color: var(--system-background);
   border: var(--ui-border);
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
   cursor: pointer;
   font-size: inherit;
   line-height: 24px;
@@ -933,5 +935,5 @@ div.key {
   font-weight: 500;
   border: solid 1px var(--gray2);
   padding: 0 10px;
-  border-radius: 4px;
+  border-radius: var(--button-border-radius);
 }

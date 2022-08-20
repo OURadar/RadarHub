@@ -10,6 +10,7 @@ import EventNoteIcon from "@mui/icons-material/EventNote";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import GamepadIcon from "@mui/icons-material/Gamepad";
 
+import { removeSplash } from "./splash";
 import { colorDict, makeTheme } from "./theme";
 import { TopBar } from "./topbar";
 import { Browser } from "./browser-mobile";
@@ -79,6 +80,7 @@ export function App(props) {
   const handleOverlayLoaded = () => {
     console.log(`AppX.handleOverlayLoaded()`);
     archive.current.catchup();
+    removeSplash();
   };
 
   const handleThemeChange = () => {

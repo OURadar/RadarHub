@@ -12,7 +12,7 @@ import { DensityLarge, DensitySmall } from "@mui/icons-material";
 
 export function MenuUpdate(props) {
   return (
-    <div id="update" className="floatMenu">
+    <div id="update" className="floatMenu roundCorder blur">
       <ToggleButtonGroup
         color="primary"
         variant="control"

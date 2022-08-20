@@ -43,8 +43,8 @@ def make_vars(request, radar='px1000'):
         'user': email,
         'css_hash': css_hash,
         'version': settings.VERSION,
-        'radar': radar,
-        'origin': origin
+        'origin': origin,
+        'radar': radar
     }
 
 #

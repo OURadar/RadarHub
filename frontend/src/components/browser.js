@@ -33,7 +33,7 @@ const createFileButtons = (list, index, load) => {
 };
 
 function Browser(props) {
-  const ok = props.archive.grid !== undefined;
+  const ok = props.archive.grid !== null;
   const day = ok ? props.archive.grid.day : new Date("2013/05/20");
   const hour = ok ? props.archive.grid.hour : -1;
   const count = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);

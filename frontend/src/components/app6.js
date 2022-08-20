@@ -9,6 +9,7 @@ import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 import { colorDict, makeTheme } from "./theme";
+import { removeSplash } from "./splash";
 import { detectMob } from "./common";
 import { Layout } from "./layout";
 import { Browser } from "./browser";
@@ -149,6 +150,7 @@ export class App extends React.Component {
   handleOverlayLoaded() {
     console.log(`App6.handleOverlayLoaded()`);
     this.setState({ overlayLoaded: true });
+    removeSplash();
   }
 
   handleThemeChange() {
