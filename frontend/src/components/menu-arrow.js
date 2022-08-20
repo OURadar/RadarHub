@@ -46,16 +46,8 @@ MenuArrow.defaultProps = {
   leftDisabled: false,
   rightDisabled: false,
   doubleRightDisabled: false,
-  onDoubleLeft: () => {
-    console.log("double-left");
-  },
-  onLeft: () => {
-    console.log("left");
-  },
-  onRight: () => {
-    console.log("right");
-  },
-  onDoubleRight: () => {
-    console.log("double-right");
-  },
+  onDoubleLeft: () => console.log("MenuArrow.onDoubleLeft"),
+  onLeft: () => console.log("MenuArrow.onLeft"),
+  onRight: () => console.log("MenuArrow.onRight"),
+  onDoubleRight: () => console.log("MenuArrow.onDoubleRight"),
 };

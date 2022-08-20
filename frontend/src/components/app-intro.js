@@ -15,13 +15,20 @@ import { HelpPage } from "./help";
 class App extends Component {
   constructor(props) {
     super(props);
+    this.isMobile = detectMob();
+    if (this.isMobile)
+      document
+        .getElementById("device-style")
+        .setAttribute(
+          "href",
+          `/static/css/mobile.css?h=${this.props.css_hash}`
+        );
     this.state = {
       colors: colorDict(),
       theme: makeTheme(),
       time: new Date("2013-05-20T19:00"),
       open: false,
     };
-    this.isMobile = detectMob();
     this.handleInfoOpen = this.handleInfoOpen.bind(this);
     this.handleInfoClose = this.handleInfoClose.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
@@ -41,6 +48,9 @@ class App extends Component {
           theme: makeTheme(mode),
         });
       });
+    setTimeout(() => {
+      document.getElementById("backdrop").classList.remove("hide");
+    }, 300);
   }
 
   render() {

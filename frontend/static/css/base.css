@@ -509,6 +509,9 @@ h3 {
   transition: opacity 0.5s;
   z-index: 0;
 }
+#backdrop {
+  transition: opacity 0.5s;
+}
 #topbar {
   background: var(--background-gradient);
   color: white;

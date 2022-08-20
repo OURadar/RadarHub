@@ -43,7 +43,7 @@ function Navigation(props) {
 
 Navigation.defaultProps = {
   value: 0,
-  onChange: () => {},
+  onChange: () => console.log("Navigation.onChange"),
 };
 
 export function App(props) {
