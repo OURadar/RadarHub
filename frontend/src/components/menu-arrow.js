@@ -18,16 +18,22 @@ export function MenuArrow(props) {
         orientation="vertical"
         arial-label="navigation-button-group"
       >
-        <Button onClick={props.onDoubleLeft}>
+        <Button
+          onClick={props.onDoubleLeft}
+          disabled={props.doubleLeftDisabled}
+        >
           <KeyboardDoubleArrowLeft />
         </Button>
-        <Button onClick={props.onLeft}>
+        <Button onClick={props.onLeft} disabled={props.leftDisabled}>
           <KeyboardArrowLeft />
         </Button>
-        <Button onClick={props.onRight}>
+        <Button onClick={props.onRight} disabled={props.rightDisabled}>
           <KeyboardArrowRight />
         </Button>
-        <Button onClick={props.onDoubleRight}>
+        <Button
+          onClick={props.onDoubleRight}
+          disabled={props.doubleRightDisabled}
+        >
           <KeyboardDoubleArrowRight />
         </Button>
       </ButtonGroup>
@@ -36,6 +42,10 @@ export function MenuArrow(props) {
 }
 
 MenuArrow.defaultProps = {
+  doubleLeftDisabled: false,
+  leftDisabled: false,
+  rightDisabled: false,
+  doubleRightDisabled: false,
   onDoubleLeft: () => {
     console.log("double-left");
   },

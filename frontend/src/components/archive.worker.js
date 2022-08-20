@@ -18,6 +18,7 @@ let grid = {
   daysActive: {},
   hoursActive: new Array(24).fill(0),
   yearsActive: new Array(200).fill(0),
+  pathsActive: new Array(4).fill(false),
   latestScan: "",
   latestHour: -1,
   items: [],
@@ -369,6 +370,7 @@ function list(day, hour, symbol) {
           } else {
             grid.index = grid.items.length ? grid.items.length - 1 : -1;
           }
+          reviseGridPaths();
           self.postMessage({
             type: "list",
             payload: grid,
@@ -571,10 +573,7 @@ function catchup() {
           } else {
             grid.index = grid.items.length ? grid.items.length - 1 : -1;
           }
-          if (grid.index >= 0) {
-            let file = grid.items[grid.index];
-            grid.scan = file.split("-")[3];
-          }
+          reviseGridPaths();
           if (state.verbose > 1) {
             console.info(grid.items);
             console.info(grid.itemsGrouped);
@@ -612,7 +611,11 @@ function updateGridIndex(index) {
     return;
   }
   grid.index = index;
-  self.postMessage({ type: "index", payload: index });
+  reviseGridPaths();
+  self.postMessage({
+    type: "index",
+    payload: { index: index, pathsActive: grid.pathsActive },
+  });
 }
 
 function navigateForward() {
@@ -689,5 +692,30 @@ function toggle(name) {
     }
   } else {
     self.postMessage({ type: "state", payload: { update: state.update } });
+  }
+}
+
+function reviseGridPaths() {
+  if (grid.items.length == 0 || !(grid.scan in grid.itemsGrouped)) {
+    grid.pathsActive.fill(false);
+    return;
+  }
+  if (grid.index < 0 || grid.index >= grid.items.length) {
+    console.log(`grid.index = ${grid.index} should not happen here.`);
+    return;
+  }
+  const file = grid.items[grid.index];
+  const scan = file.split("-")[3];
+  const index = grid.index;
+  const length = grid.itemsGrouped[scan].length;
+  const first = grid.itemsGrouped[scan][0];
+  const last = grid.itemsGrouped[scan][length - 1];
+  grid.scan = scan;
+  grid.pathsActive[0] = index != first.index;
+  grid.pathsActive[1] = index != 0;
+  grid.pathsActive[2] = index != grid.items.length - 1;
+  grid.pathsActive[3] = index != last.index;
+  if (state.verbose) {
+    console.log("reviseGridPaths()", first, last, grid.pathsActive);
   }
 }

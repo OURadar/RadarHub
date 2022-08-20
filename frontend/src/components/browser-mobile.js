@@ -14,7 +14,7 @@ import Box from "@mui/material/Box";
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 
 function Calender(props) {
-  const ok = props.archive.grid !== undefined;
+  const ok = props.archive.grid !== null;
   const day = ok ? props.archive.grid.day : new Date("2013/05/20");
   const hour = ok ? props.archive.grid.hour : -1;
 
@@ -69,7 +69,7 @@ function Calender(props) {
 }
 
 function HourList(props) {
-  const ok = props.archive.grid !== undefined;
+  const ok = props.archive.grid !== null;
   const day = ok ? props.archive.grid.day : new Date("2013/05/20");
   const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
   return (
@@ -90,7 +90,7 @@ function HourList(props) {
 }
 
 function FileList(props) {
-  const ok = props.archive.grid !== undefined;
+  const ok = props.archive.grid !== null;
   const items = ok ? props.archive.grid.items : [];
   const index = ok ? props.archive.grid?.index : -1;
 
@@ -119,7 +119,7 @@ function FileList(props) {
             variant="file"
             onClick={() => {
               props.archive.load(k);
-              props.onLoad(k);
+              props.onSelect(k);
             }}
             selected={k == index}
           >
@@ -153,7 +153,7 @@ export function Browser(props) {
 }
 
 Browser.defaultProps = {
-  onLoad: () => {
-    console.log("Browser.onLoad()");
+  onSelect: () => {
+    console.log("Browser.onSelect()");
   },
 };

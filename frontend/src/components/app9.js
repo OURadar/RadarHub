@@ -33,7 +33,7 @@ export class App extends Component {
       tabIndex: 0,
     };
     this.archive = new Archive(props.radar);
-    this.archive.onupdate = (_dontcare) => {
+    this.archive.onUpdate = (_dontcare) => {
       this.forceUpdate();
     };
     this.handleThemeChange = this.handleThemeChange.bind(this);

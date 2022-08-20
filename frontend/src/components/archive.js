@@ -12,6 +12,7 @@ class Archive {
     this.data = {
       sweep: null,
     };
+    this.grid = null;
     this.state = {
       liveUpdate: null,
       daysActiveUpdating: false,
@@ -27,8 +28,10 @@ class Archive {
     this.messageTimer = null;
     this.message = "";
     this.response = "";
-    this.onupdate = () => {};
-    this.onlist = () => {};
+    this.onUpdate = () => {};
+    this.onIndex = () => {};
+    this.onList = () => {};
+    this.onLoad = () => {};
 
     this.handleMessage = this.handleMessage.bind(this);
     this.showMessage = this.showMessage.bind(this);
@@ -65,6 +68,7 @@ class Archive {
         this.disableLiveUpdate();
       }
       this.showMessage(`${payload.name} loaded`);
+      this.onLoad(this.grid);
     } else if (type == "index") {
       if (this.state.verbose) {
         console.log(
@@ -74,8 +78,11 @@ class Archive {
           ""
         );
       }
-      this.grid.index = payload;
+      // this.grid.index = payload.index;
+      // this.grid.pathsActive = payload.pathsActive;
+      this.grid = { ...this.grid, ...payload };
       this.loadIfNecessary();
+      this.onIndex(this.grid);
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
@@ -89,10 +96,10 @@ class Archive {
           ""
         );
       }
-      //let index = this.grid.index;
       this.grid = payload;
       this.state.loadCount = 0;
       this.loadIfNecessary();
+      this.onList(this.grid);
       this.state.itemsUpdating = false;
     } else if (type == "message") {
       this.showMessage(payload, 2500);
@@ -151,7 +158,7 @@ class Archive {
       }
       this.list(this.radar, payload.day, hour, this.grid.symbol);
     }
-    this.onupdate(this.state.tic++);
+    this.onUpdate(this.state.tic++);
   }
 
   //
@@ -163,7 +170,7 @@ class Archive {
       if (this.message == message) {
         this.message = "";
         this.messageTimer = null;
-        this.onupdate(this.state.tic++);
+        this.onUpdate(this.state.tic++);
       }
     }, duration);
   }
@@ -237,7 +244,7 @@ class Archive {
     this.message = `Loading ${name} ...`;
     this.worker.postMessage({ task: "load", name: name });
     this.state.loadCount++;
-    this.onupdate(this.state.tic++);
+    this.onUpdate(this.state.tic++);
   }
 
   loadIfNecessary() {
@@ -375,7 +382,7 @@ class Archive {
     }
     if (this.data.sweep.age != ageString) {
       this.data.sweep.age = ageString;
-      this.onupdate(this.state.tic++);
+      this.onUpdate(this.state.tic++);
     }
   }
 
@@ -400,7 +407,7 @@ class Archive {
   }
 
   setDayHour(day, hour) {
-    if (this.state.verbose == 0) {
+    if (this.state.verbose) {
       let t = day instanceof Date ? "Date" : "Not Date";
       let n = day.toISOString().slice(0, 10);
       let o = day.toISOString().slice(0, 10);

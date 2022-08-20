@@ -26,7 +26,7 @@ class App extends Component {
       theme: makeTheme(),
     };
     this.ingest = new Ingest(props.radar);
-    this.ingest.onupdate = () => {
+    this.ingest.onUpdate = () => {
       this.forceUpdate();
     };
     this.handleModeChange = this.handleModeChange.bind(this);

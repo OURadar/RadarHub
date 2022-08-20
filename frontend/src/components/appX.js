@@ -50,10 +50,15 @@ export function App(props) {
   const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
+  const [disabled, setDisabled] = React.useState([false, false, false, false]);
 
   const archive = React.useRef(null);
 
-  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+  const [, handleUpdate] = React.useReducer((x) => x + 1, 0);
+
+  const handleLoad = () => {
+    setDisabled(archive.current?.grid.pathsActive.map((x) => !x));
+  };
 
   useConstructor(() => {
     document
@@ -61,7 +66,8 @@ export function App(props) {
       .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
 
     archive.current = new Archive(props.radar);
-    archive.current.onupdate = forceUpdate;
+    archive.current.onUpdate = handleUpdate;
+    archive.current.onLoad = handleLoad;
   });
 
   const setMode = (mode) => {
@@ -85,29 +91,15 @@ export function App(props) {
     setValue(newValue);
   };
 
-  const handleLoad = (k) => {
-    console.log(`AppX.handleLoad()  k = ${k}`);
-    setTimeout(() => {
-      setValue(0);
-    }, 300);
+  const handleSelect = (k) => {
+    console.log(`AppX.handleSelect()  k = ${k}`);
+    setTimeout(() => setValue(0), 300);
   };
 
-  const handleDoubleLeft = () => {
-    console.log("AppX.handleDoubleLeft()");
-    archive.current.navigateBackwardScan();
-  };
-
-  const handleLeft = () => {
-    archive.current.navigateBackward();
-  };
-
-  const handleRight = () => {
-    archive.current.navigateForward();
-  };
-
-  const handleDoubleRight = () => {
-    archive.current.navigateForwardScan();
-  };
+  const handleDoubleLeft = () => archive.current.navigateBackwardScan();
+  const handleLeft = () => archive.current.navigateBackward();
+  const handleRight = () => archive.current.navigateForward();
+  const handleDoubleRight = () => archive.current.navigateForwardScan();
 
   React.useEffect(() => {
     window
@@ -132,6 +124,10 @@ export function App(props) {
             onOverlayLoaded={handleOverlayLoaded}
           />
           <MenuArrow
+            doubleLeftDisabled={disabled[0]}
+            leftDisabled={disabled[1]}
+            rightDisabled={disabled[2]}
+            doubleRightDisabled={disabled[3]}
             onDoubleLeft={handleDoubleLeft}
             onLeft={handleLeft}
             onRight={handleRight}
@@ -139,7 +135,7 @@ export function App(props) {
           />
         </div>
         <div className={value === 1 ? "active" : "inactive"}>
-          <Browser archive={archive.current} onLoad={handleLoad} />
+          <Browser archive={archive.current} onSelect={handleSelect} />
         </div>
         <Navigation value={value} onChange={handleNavigationChange} />
       </ThemeProvider>

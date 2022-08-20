@@ -31,7 +31,7 @@ export class App extends React.Component {
     };
     this.isMobile = detectMob();
     this.archive = new Archive(props.radar);
-    this.archive.onupdate = (_dontcare) => {
+    this.archive.onUpdate = (_dontcare) => {
       this.forceUpdate();
     };
     this.handleInfoOpen = this.handleInfoOpen.bind(this);

@@ -24,7 +24,7 @@ class App extends Component {
       tic: 0,
     };
     this.ingest = new Ingest(props.radar);
-    this.ingest.onupdate = () => {
+    this.ingest.onUpdate = () => {
       this.forceUpdate();
     };
     this.isMobile = detectMob();
