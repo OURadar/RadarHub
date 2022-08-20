@@ -35,11 +35,6 @@ Copyright Boonleng Cheong
   );
 }
 
-.extraLarge {
-  font-size: 60px;
-  margin-bottom: 25px;
-  margin-top: 25px;
-}
 .controlContainer,
 .healthContainer {
   display: block;

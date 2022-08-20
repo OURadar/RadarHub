@@ -48,9 +48,6 @@ class App extends Component {
           theme: makeTheme(mode),
         });
       });
-    setTimeout(() => {
-      document.getElementById("backdrop").classList.remove("hide");
-    }, 300);
   }
 
   render() {

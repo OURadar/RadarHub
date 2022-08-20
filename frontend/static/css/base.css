@@ -291,6 +291,16 @@ canvas {
   user-select: none;
   vertical-align: 5px;
 }
+.extraLarge {
+  font-size: 60px;
+  margin-bottom: 25px;
+  margin-top: 25px;
+}
+@media screen and (min-width: 640px) {
+  .extraLarge {
+    font-size: 100px;
+  }
+}
 h1,
 h2,
 h3 {

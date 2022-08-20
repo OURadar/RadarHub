@@ -14,11 +14,6 @@ Copyright Boonleng Cheong
   --button-margin-bottom: 5px;
   --content-height: calc(100vh - var(--topbar-height));
 }
-.extraLarge {
-  font-size: 100px;
-  margin-bottom: 25px;
-  margin-top: 25px;
-}
 
 .controlContainer,
 .healthContainer {

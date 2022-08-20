@@ -9,8 +9,6 @@ import React from "react";
 
 import { detectMob } from "./common";
 
-const isMobile = detectMob();
-
 function draw(context, params) {
   const scale = window.devicePixelRatio;
   const lineWidth = 3.5 * scale;
@@ -277,13 +275,12 @@ export function Colorbar(props) {
     });
   }, [props.count]);
 
-  return (
-    <canvas
-      id={props.id}
-      ref={canvasRef}
-      className={(isMobile && "blur") || ""}
-    />
-  );
+  var params = {
+    id: props.id,
+    ref: canvasRef,
+  };
+  if (props.gravity == "top") params.className = "blur";
+  return <canvas {...params} />;
 }
 
 Colorbar.defaultProps = {
