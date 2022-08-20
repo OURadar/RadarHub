@@ -82,6 +82,10 @@ Copyright Boonleng Cheong
   padding-left: var(--padding);
   padding-right: var(--padding);
 }
+
+#statusBody {
+  padding: 5px 10px;
+}
 #notification {
   max-width: calc(100vw - 200px);
   padding: 8px 80px;

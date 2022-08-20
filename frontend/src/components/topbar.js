@@ -105,7 +105,7 @@ export function TopBar(props) {
     status = <StatusBody />;
     notify = <Notification message={message} />;
   }
-  // status = <StatusBody message="PX-20200202-123456-E1.0-Z loaded" />;
+  // status = <StatusBody message="PX-20200202-123456-E1.0-Z loaded and ready" />;
 
   const handleAccount = () => {
     setMessage("Fetching User Information ...");

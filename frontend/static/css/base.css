@@ -597,13 +597,7 @@ h3 {
 }
 #statusBody {
   background-color: hsla(193, 43%, 44%, 0.817);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  position: absolute;
-  left: 5px;
   border-radius: var(--button-border-radius);
-  width: calc(100vw - 120px);
   z-index: 2;
 }
 #console {
