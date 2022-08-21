@@ -142,7 +142,7 @@ function OtherList(props) {
 export function Browser(props) {
   return (
     <div>
-      <div id="cake" className="fullWidth container fog blur">
+      <div id="browserTop" className="fullWidth container fog blur">
         <Calender {...props} />
         <HourList {...props} />
         <OtherList {...props} />

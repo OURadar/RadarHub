@@ -31,7 +31,14 @@ Copyright Boonleng Cheong
     rgba(34, 37, 42, 0.65)
   );
 }
-
+.active {
+  position: absolute;
+  z-index: 1;
+}
+.inactive {
+  position: absolute;
+  z-index: 0;
+}
 .notification {
   width: 88vw;
   padding: 8px;
@@ -152,26 +159,15 @@ Copyright Boonleng Cheong
   background: var(--colorbar-background);
   border-bottom: var(--ui-border);
 }
-
-.active {
-  position: absolute;
-  z-index: 2;
-}
-.inactive {
-  position: absolute;
-  z-index: 0;
-}
-
-#cake {
+#browserTop {
   border-bottom: var(--ui-border);
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
 }
-
 #arrow {
-  bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 40px);
-  right: 25px;
+  bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 35px);
+  right: 22px;
 }
 #update {
-  bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 220px);
-  right: 25px;
+  bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 210px);
+  right: 22px;
 }
