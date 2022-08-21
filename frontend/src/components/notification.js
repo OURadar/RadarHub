@@ -59,8 +59,7 @@ class Notification extends React.Component {
   render() {
     return (
       <div
-        id="notification"
-        className={`${this.state.class} blur`}
+        className={`notification blur ${this.state.class}`}
         dangerouslySetInnerHTML={{
           __html: "<p>" + this.state.message + "</p>",
         }}

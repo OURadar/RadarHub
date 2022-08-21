@@ -1,5 +1,5 @@
 //
-//  preference.js
+//  menu-update.js
 //  RadarHub
 //
 //  Created by Boonleng Cheong
@@ -15,10 +15,9 @@ export function MenuUpdate(props) {
     <div id="update" className="floatMenu roundCorder blur">
       <ToggleButtonGroup
         color="primary"
-        variant="control"
         size="small"
         value={props.value}
-        onChange={props.handleChange}
+        onChange={props.onChange}
         orientation="vertical"
         exclusive
       >
@@ -35,7 +34,7 @@ export function MenuUpdate(props) {
 
 MenuUpdate.defaultProps = {
   ingest: null,
-  handleChange: (_e, value) => {
-    console.log(`Preference.handleChange()  value = ${value}`);
+  onChange: (_e, value) => {
+    console.log(`Preference.onChange()  value = ${value}`);
   },
 };

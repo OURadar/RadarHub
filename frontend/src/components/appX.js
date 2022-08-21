@@ -20,6 +20,8 @@ import { Archive } from "./archive";
 import { MenuUpdate } from "./menu-update";
 import { MenuArrow } from "./menu-arrow";
 
+const emojis = require("emoji-name-map");
+
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);
   if (used.current) return;
@@ -51,6 +53,7 @@ export function App(props) {
   const [value, setValue] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
+  const [message, setMessage] = React.useState("");
   const [disabled, setDisabled] = React.useState([false, false, false, false]);
 
   const archive = React.useRef(null);
@@ -71,7 +74,7 @@ export function App(props) {
     archive.current.onLoad = handleLoad;
   });
 
-  const setMode = (mode) => {
+  const setDocumentTheme = (mode) => {
     document.documentElement.setAttribute("theme", mode);
     setColors(() => colorDict(mode));
     setTheme(() => makeTheme(mode));
@@ -85,8 +88,43 @@ export function App(props) {
 
   const handleThemeChange = () => {
     console.log("AppX.handleThemeChange()");
-    let mode = colors.name == "light" ? "dark" : "light";
-    setMode(mode);
+    let theme = colors.name == "light" ? "dark" : "light";
+    setDocumentTheme(theme);
+  };
+
+  const handleLiveModeChange = (_, value) => {
+    archive.current.toggleLiveUpdate(value);
+  };
+
+  const handleAccount = () => {
+    setMessage("Fetching User Information ...");
+    fetch("/profile/")
+      .then((response) => {
+        if (response.status == 200) {
+          response.json().then(({ user, ip, emoji }) => {
+            let title = user == "None" ? "Anonymous User" : `Hello ${user}`;
+            let symbol = emojis.get(emoji) || "";
+            setMessage(
+              user == "None"
+                ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
+                    window.location.pathname +
+                    "'>Sign In Here</a><div class='emotion'>⛅️</div>"
+                : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
+            );
+            setTimeout(() => setMessage(""), 3500);
+          });
+        } else {
+          setMessage(
+            `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+          );
+        }
+      })
+      .catch((_error) => {
+        setMessage(
+          `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
+        );
+        setTimeout(() => setMessage(""), 3500);
+      });
   };
 
   const handleNavigationChange = (event, newValue) => {
@@ -108,7 +146,7 @@ export function App(props) {
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", (e) => {
         let mode = e.matches ? "dark" : "light";
-        setMode(mode);
+        setDocumentTheme(mode);
       });
     document.documentElement.setAttribute("theme", theme.palette.mode);
   }, []);
@@ -117,7 +155,9 @@ export function App(props) {
     <div className="fullHeight">
       <TopBar
         isMobile={true}
+        message={message}
         ingest={archive.current}
+        onAccount={handleAccount}
         onThemeChange={handleThemeChange}
       />
       <ThemeProvider theme={theme}>
@@ -138,6 +178,10 @@ export function App(props) {
             onLeft={handleLeft}
             onRight={handleRight}
             onDoubleRight={handleDoubleRight}
+          />
+          <MenuUpdate
+            value={archive.current?.state.liveUpdate}
+            onChange={handleLiveModeChange}
           />
         </div>
         <div className={value === 1 ? "active" : "inactive"}>

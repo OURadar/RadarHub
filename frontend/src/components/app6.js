@@ -137,7 +137,7 @@ export class App extends React.Component {
         />
         <MenuUpdate
           value={this.archive.state.liveUpdate}
-          handleChange={this.handleLiveModeChange}
+          onChange={this.handleLiveModeChange}
         />
         <HelpPage
           open={this.state.showHelp}

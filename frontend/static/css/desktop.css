@@ -14,6 +14,11 @@ Copyright Boonleng Cheong
   --content-height: calc(100vh - var(--topbar-height));
 }
 
+.notification {
+  max-width: calc(100vw - 200px);
+  padding: 8px 80px;
+}
+
 .controlContainer,
 .healthContainer {
   background-color: var(--system-background);
@@ -85,10 +90,6 @@ Copyright Boonleng Cheong
 
 #statusBody {
   padding: 5px 10px;
-}
-#notification {
-  max-width: calc(100vw - 200px);
-  padding: 8px 80px;
 }
 
 /* Split */

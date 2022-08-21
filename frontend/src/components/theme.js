@@ -28,6 +28,7 @@ const paletteLight = {
     main: "rgb(255, 175, 25)",
   },
   divider: "rgba(0, 0, 0, 0.04)",
+  bound: "rgba(0, 0, 0, 0.15)",
 };
 
 const paletteDark = {
@@ -54,6 +55,7 @@ const paletteDark = {
     main: "rgb(255, 175, 25)",
   },
   divider: "rgba(255, 255, 255, 0.04)",
+  bound: "rgba(255, 255, 255, 0.15)",
 };
 
 //
@@ -95,16 +97,17 @@ export function makePalette(theme = "light") {
 }
 
 export function makeTheme(inputMode) {
+  let { mode } = reviseMode(inputMode);
   const border =
     window.devicePixelRatio > 1
       ? "solid 0.5px var(--gray3)"
       : "solid 1.0px var(--gray5)";
-  const isMobile = detectMob();
-  let { mode } = reviseMode(inputMode);
+  const floatMenuBorder =
+    mode == "light" ? "rgba(0, 0, 0, 0.12)" : "rgba(255, 255, 255, 0.12)";
   let theme = createTheme({
     palette: {
       mode,
-      ...(mode === "light" ? paletteLight : paletteDark),
+      ...(mode == "light" ? paletteLight : paletteDark),
     },
     typography: {
       fontFamily: [
@@ -224,6 +227,17 @@ export function makeTheme(inputMode) {
           },
         ],
       },
+      MuiToggleButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "none",
+            borderColor: theme.palette.bound,
+            "&.Mui-disabled": {
+              borderColor: theme.palette.bound,
+            },
+          },
+        },
+      },
       // MuiToggleButton: {
       //   styleOverrides: {
       //     root: {
@@ -268,7 +282,6 @@ export function makeTheme(inputMode) {
           {
             props: { variant: "control" },
             style: {
-              color: "primary",
               boxSizing: "border-box",
               fontSize: "var(--font-size)",
               overflow: "hidden",
@@ -282,10 +295,9 @@ export function makeTheme(inputMode) {
       MuiToggleButtonGroup: {
         variants: [
           {
-            props: { variant: "control" },
+            props: { variant: "blur" },
             style: {
-              backgroundColor: "var(--preference-background)",
-              backdropFilter: "blur(4px)",
+              backdropFilter: "blur(5px)",
             },
           },
         ],
@@ -293,7 +305,7 @@ export function makeTheme(inputMode) {
       MuiBackdrop: {
         styleOverrides: {
           root: {
-            backdropFilter: "blur(4px)",
+            backdropFilter: "blur(5px)",
           },
         },
       },

@@ -493,6 +493,51 @@ h3 {
   );
 }
 
+.notification {
+  background-color: var(--overlay-background);
+  border: solid 1px var(--border-accent);
+  border-radius: var(--button-border-radius);
+  color: var(--system-foreground);
+  font-size: 16px;
+  left: 50%;
+  line-height: 24px;
+  min-height: 50px;
+  min-width: 260px;
+  position: fixed;
+  text-align: center;
+  top: 10px;
+  transform: translate(-50%, 0);
+  vertical-align: middle;
+  z-index: 69;
+}
+.emotion {
+  font-size: 64px;
+  display: block;
+  position: absolute;
+  top: 10px;
+  right: 5px;
+}
+.floatText {
+  position: absolute;
+  font-family: LabelFont;
+  paint-order: stroke fill;
+  stroke: var(--map-background);
+  stroke-width: 3.5px;
+  user-select: none;
+}
+.floatMenu {
+  color: var(--gray);
+  background-color: var(--menu-background);
+  display: block;
+  font-size: 0.8em;
+  line-height: 1.2em;
+  position: fixed;
+  z-index: 2;
+}
+.scrollable {
+  overflow-y: scroll;
+}
+
 #loading {
   background-color: var(--background-color);
   color: white;
@@ -578,7 +623,7 @@ h3 {
   width: 10px;
 }
 .always {
-  background-color: white;
+  background-color: rgb(52, 255, 89);
 }
 .scan,
 .online {
@@ -594,7 +639,7 @@ h3 {
   padding: 0 10px;
 }
 #statusBody {
-  background-color: hsla(193, 43%, 44%, 0.817);
+  background-color: hsla(193, 55%, 44%, 0.817);
   border-radius: var(--button-border-radius);
   z-index: 2;
 }
@@ -604,54 +649,6 @@ h3 {
   top: 20px;
   right: var(--padding);
 }
-#notification {
-  background-color: var(--overlay-background);
-  border: solid 1px var(--border-accent);
-  border-radius: var(--button-border-radius);
-  color: var(--system-foreground);
-  font-size: 16px;
-  left: 50%;
-  line-height: 24px;
-  min-height: 50px;
-  min-width: 260px;
-  position: fixed;
-  text-align: center;
-  top: 10px;
-  transform: translate(-50%, 0);
-  vertical-align: middle;
-  z-index: 69;
-}
-.emotion {
-  font-size: 64px;
-  display: block;
-  position: absolute;
-  top: 10px;
-  right: 5px;
-}
-
-.floatText {
-  position: absolute;
-  font-family: LabelFont;
-  paint-order: stroke fill;
-  stroke: var(--map-background);
-  stroke-width: 3.5px;
-  user-select: none;
-}
-
-.floatMenu {
-  color: var(--gray);
-  background-color: var(--menu-background);
-  display: block;
-  font-size: 0.8em;
-  line-height: 1.2em;
-  position: fixed;
-  z-index: 2;
-}
-
-.scrollable {
-  overflow-y: scroll;
-}
-
 #calendarContainer {
   text-align: center;
 }

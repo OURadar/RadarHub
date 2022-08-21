@@ -1,6 +1,13 @@
+//
+//  menu-arrow.js
+//  RadarHub
+//
+//  Created by Boonleng Cheong
+//
+
 import React from "react";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
@@ -11,32 +18,41 @@ import {
 export function MenuArrow(props) {
   return (
     <div id="arrow" className="floatMenu roundCorder blur">
-      <ButtonGroup
-        size="large"
+      <ToggleButtonGroup
         color="secondary"
-        variant="outlined"
+        size="small"
+        value={-1}
         orientation="vertical"
-        arial-label="navigation-button-group"
       >
-        <Button
+        <ToggleButton
+          value={0}
           onClick={props.onDoubleLeft}
           disabled={props.doubleLeftDisabled}
         >
           <KeyboardDoubleArrowLeft />
-        </Button>
-        <Button onClick={props.onLeft} disabled={props.leftDisabled}>
+        </ToggleButton>
+        <ToggleButton
+          value={1}
+          onClick={props.onLeft}
+          disabled={props.leftDisabled}
+        >
           <KeyboardArrowLeft />
-        </Button>
-        <Button onClick={props.onRight} disabled={props.rightDisabled}>
+        </ToggleButton>
+        <ToggleButton
+          value={2}
+          onClick={props.onRight}
+          disabled={props.rightDisabled}
+        >
           <KeyboardArrowRight />
-        </Button>
-        <Button
+        </ToggleButton>
+        <ToggleButton
+          value={3}
           onClick={props.onDoubleRight}
           disabled={props.doubleRightDisabled}
         >
           <KeyboardDoubleArrowRight />
-        </Button>
-      </ButtonGroup>
+        </ToggleButton>
+      </ToggleButtonGroup>
     </div>
   );
 }
