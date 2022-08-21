@@ -546,7 +546,7 @@ h3 {
   position: absolute;
   text-align: center;
   padding-top: 25vh;
-  transition: opacity 0.5s;
+  transition: opacity 0.4s;
   width: 100vw;
 }
 #backdrop {
@@ -567,11 +567,11 @@ h3 {
   width: 100vw;
   top: 0;
   left: 0;
-  transition: opacity 0.5s;
+  transition: opacity 0.4s;
   z-index: 0;
 }
 #backdrop {
-  transition: opacity 0.5s;
+  transition: opacity 0.4s;
 }
 #topbar {
   background: var(--background-gradient);

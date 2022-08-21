@@ -50,7 +50,7 @@ Navigation.defaultProps = {
 };
 
 export function App(props) {
-  const [value, setValue] = React.useState(0);
+  const [panel, setPanel] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
   const [message, setMessage] = React.useState("");
@@ -64,26 +64,10 @@ export function App(props) {
     setDisabled(archive.current?.grid.pathsActive.map((x) => !x));
   };
 
-  useConstructor(() => {
-    document
-      .getElementById("device-style")
-      .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
-
-    archive.current = new Archive(props.radar);
-    archive.current.onUpdate = handleUpdate;
-    archive.current.onLoad = handleLoad;
-  });
-
   const setDocumentTheme = (mode) => {
     document.documentElement.setAttribute("theme", mode);
     setColors(() => colorDict(mode));
     setTheme(() => makeTheme(mode));
-  };
-
-  const handleOverlayLoaded = () => {
-    console.log(`AppX.handleOverlayLoaded()`);
-    archive.current.catchup();
-    removeSplash();
   };
 
   const handleThemeChange = () => {
@@ -91,11 +75,9 @@ export function App(props) {
     let theme = colors.name == "light" ? "dark" : "light";
     setDocumentTheme(theme);
   };
-
   const handleLiveModeChange = (_, value) => {
     archive.current.toggleLiveUpdate(value);
   };
-
   const handleAccount = () => {
     setMessage("Fetching User Information ...");
     fetch("/profile/")
@@ -127,19 +109,33 @@ export function App(props) {
       });
   };
 
-  const handleNavigationChange = (event, newValue) => {
-    setValue(newValue);
+  const handleNavigationChange = (_, newValue) => setPanel(newValue);
+
+  const handleBrowserSelect = (k) => {
+    console.log(`AppX.handleBrowserSelect()  k = ${k}`);
+    setTimeout(() => setPanel(0), 300);
   };
 
-  const handleSelect = (k) => {
-    console.log(`AppX.handleSelect()  k = ${k}`);
-    setTimeout(() => setValue(0), 300);
+  const handleOverlayLoaded = () => {
+    console.log(`AppX.handleOverlayLoaded()`);
+    archive.current.catchup();
+    removeSplash();
   };
 
   const handleDoubleLeft = () => archive.current.navigateBackwardScan();
   const handleLeft = () => archive.current.navigateBackward();
   const handleRight = () => archive.current.navigateForward();
   const handleDoubleRight = () => archive.current.navigateForwardScan();
+
+  useConstructor(() => {
+    document
+      .getElementById("device-style")
+      .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
+
+    archive.current = new Archive(props.radar);
+    archive.current.onUpdate = handleUpdate;
+    archive.current.onLoad = handleLoad;
+  });
 
   React.useEffect(() => {
     window
@@ -161,7 +157,7 @@ export function App(props) {
         onThemeChange={handleThemeChange}
       />
       <ThemeProvider theme={theme}>
-        <div className={value === 0 ? "active" : "inactive"}>
+        <div className={panel === 0 ? "active" : "inactive"}>
           <Product
             gravity="top"
             colors={colors}
@@ -184,10 +180,10 @@ export function App(props) {
             onChange={handleLiveModeChange}
           />
         </div>
-        <div className={value === 1 ? "active" : "inactive"}>
-          <Browser archive={archive.current} onSelect={handleSelect} />
+        <div className={panel === 1 ? "active" : "inactive"}>
+          <Browser archive={archive.current} onSelect={handleBrowserSelect} />
         </div>
-        <Navigation value={value} onChange={handleNavigationChange} />
+        <Navigation value={panel} onChange={handleNavigationChange} />
       </ThemeProvider>
     </div>
   );

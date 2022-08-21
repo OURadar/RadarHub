@@ -79,7 +79,7 @@ function reviseMode(mode) {
     }
   }
   // If the previous step failed, choose based on the brightness of the body
-  if (mode === undefined || mode == "auto") {
+  if (mode === undefined || mode === "auto") {
     let brightness = 0.2125 * body[0] + 0.7152 * body[1] + 0.0722 * body[2];
     if (brightness > 0.5) {
       mode = "light";
@@ -91,7 +91,7 @@ function reviseMode(mode) {
 }
 
 export function makePalette(theme = "light") {
-  return theme == "light"
+  return theme === "light"
     ? createTheme({ palette: paletteLight })
     : createTheme({ palette: paletteDark });
 }
@@ -102,12 +102,10 @@ export function makeTheme(inputMode) {
     window.devicePixelRatio > 1
       ? "solid 0.5px var(--gray3)"
       : "solid 1.0px var(--gray5)";
-  const floatMenuBorder =
-    mode == "light" ? "rgba(0, 0, 0, 0.12)" : "rgba(255, 255, 255, 0.12)";
   let theme = createTheme({
     palette: {
       mode,
-      ...(mode == "light" ? paletteLight : paletteDark),
+      ...(mode === "light" ? paletteLight : paletteDark),
     },
     typography: {
       fontFamily: [
