@@ -104,7 +104,9 @@ function init(newRadar) {
 function connect(force = false) {
   if (source?.readyState == 1) {
     if (force) {
-      console.debug(`Closing existing connection ... force = ${force}`);
+      if (state.verbose > 1) {
+        console.debug(`Closing existing connection ... force = ${force}`);
+      }
       source.close();
     } else {
       self.postMessage({
@@ -343,7 +345,9 @@ function list(day, hour, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          console.log(buffer);
+          if (state.verbose > 1) {
+            console.debug(buffer);
+          }
           let hourString = clamp(grid.hour, 0, 23).toString().padStart(2, "0");
           grid.day = day;
           grid.hour = buffer.hour;

@@ -165,9 +165,9 @@ Copyright Boonleng Cheong
 }
 #arrow {
   bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 35px);
-  right: 22px;
+  right: 20px;
 }
 #update {
   bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 210px);
-  right: 22px;
+  right: 20px;
 }

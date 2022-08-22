@@ -18,7 +18,7 @@ import { Product } from "./product";
 import { TopBar } from "./topbar";
 import { Ingest } from "./ingest";
 
-class App extends Component {
+export class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -138,5 +138,3 @@ class App extends Component {
     });
   }
 }
-
-export default App;

@@ -147,7 +147,7 @@ export function makeTheme(inputMode) {
             style: {
               color: theme.palette.text.secondary,
               height: "var(--small-button-height)",
-              fontSize: "16px",
+              fontSize: "15px",
               padding: "0 2px",
               textAlign: "center",
               width: "100%",
@@ -188,6 +188,7 @@ export function makeTheme(inputMode) {
               display: "inline-block",
               height: 36,
               overflow: "hidden",
+              fontSize: "15px",
               padding: "0 20px",
               textAlign: "center",
               textTransform: "none",
