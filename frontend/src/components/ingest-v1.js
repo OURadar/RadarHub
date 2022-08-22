@@ -33,7 +33,7 @@ class Ingest {
     this.wait = 0;
     this.message = "Loading ...";
     this.response = "";
-    this.onupdate = (_data) => {};
+    this.onUpdate = (_data) => {};
     this.enums = {
       Definition: 1,
       Control: 1,
@@ -56,7 +56,7 @@ class Ingest {
 
   connect() {
     this.message = "Connecting ...";
-    this.onupdate(this.tic++);
+    this.onUpdate(this.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
     const url = `${p}://${window.location.host}/ws/${this.radar}/`;
     this.socket = new WebSocket(url);
@@ -66,7 +66,7 @@ class Ingest {
       setTimeout(() => {
         if (this.message == "Hub connected") {
           this.message = "";
-          this.onupdate(this.tic++);
+          this.onUpdate(this.tic++);
         }
       }, 2000);
       this.socket.send(
@@ -75,7 +75,7 @@ class Ingest {
           command: "userConnect",
         })
       );
-      this.onupdate(this.tic++);
+      this.onUpdate(this.tic++);
     };
     this.socket.onmessage = (e) => {
       const type = new Int8Array(e.data.slice(0, 1));
@@ -140,7 +140,7 @@ class Ingest {
         setTimeout(() => {
           if (this.response == text) {
             this.response = "";
-            this.onupdate(this.tic++);
+            this.onUpdate(this.tic++);
           }
         }, 2000);
       } else {
@@ -148,13 +148,13 @@ class Ingest {
         this.u += 1;
       }
       this.data = { ...this.data, ...newData };
-      this.onupdate(this.tic++);
+      this.onUpdate(this.tic++);
     };
     this.socket.onclose = (_e) => {
       this.wait = 5.0;
       this.message = "No connection";
       setTimeout(this.waitOrConnect, 200);
-      this.onupdate(this.tic++);
+      this.onUpdate(this.tic++);
     };
     this.socket.onerror = (_e) => {
       this.socket.close();
@@ -172,7 +172,7 @@ class Ingest {
       const t = this.wait.toFixed(0);
       if (t <= 3) {
         this.message = `Connect in ${t} second${t > 1 ? "s" : ""}`;
-        this.onupdate(this.tic++);
+        this.onUpdate(this.tic++);
       }
       setTimeout(this.waitOrConnect, 200);
       this.wait = this.wait - 0.2;

@@ -1,5 +1,8 @@
-import React from "react";
+import React, { memo } from "react";
+import memoize from "memoize-one";
+import { FixedSizeList, areEqual } from "react-window";
 
+import Box from "@mui/material/Box";
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
@@ -11,6 +14,28 @@ import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 import { SectionHeader } from "./section-header";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
+const Item = memo(({ data, index, style }) => {
+  const { list, selectedIndex, loadItem } = data;
+  const selected = index == selectedIndex;
+  const item = list[index];
+
+  return (
+    <Button
+      key={index}
+      onClick={() => loadItem(item, index)}
+      style={{ ...style, overflow: "hidden", textOverflow: "ellipsis" }}
+      selected={selected}
+    >
+      {item}
+    </Button>
+  );
+}, areEqual);
+
+const createFileList = memoize((list, index, load) => ({
+  list: list,
+  loadItem: load,
+  selectedIndex: index,
+}));
 
 const createFileButtons = (list, index, load) => {
   if (list.length == 0) return [];
@@ -33,12 +58,13 @@ const createFileButtons = (list, index, load) => {
 };
 
 function Browser(props) {
-  const ok = props.archive.grid !== null;
+  const ok = props.archive.grid !== undefined;
   const day = ok ? props.archive.grid.day : new Date("2013/05/20");
   const hour = ok ? props.archive.grid.hour : -1;
   const count = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
   const items = ok ? props.archive.grid.items : [];
   const index = ok ? props.archive.grid?.index : -1;
+  const radar = props.radar;
 
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
@@ -54,14 +80,9 @@ function Browser(props) {
     ) {
       return;
     }
-    // Expect loadCount == 1 during live update
+    // Expect loadCount <= 1 during live update
     // console.log(`loadCount = ${props.archive.state.loadCount}`);
-    // let visible = elements.children[index];
-    // let child = elements.children[index];
-    // let style = window.getComputedStyle(elements.children[index]);
-    // console.log(child.offsetHeight, child.getClientRects().length);
-    // console.log(`index = ${index}`);
-    if (props.archive.state.loadCount <= 1) {
+    if (props.archive.state.loadCount == 1) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
     } else if (props.archive.grid.latestHour) {
@@ -70,8 +91,26 @@ function Browser(props) {
   };
 
   React.useEffect(() => {
-    const newFileBrowser = (
-      <div id="filesContainer" ref={setElements}>
+    const newFileBrowser = props.useMemo ? (
+      <Box
+        sx={{
+          width: "100%",
+          height: 600,
+          backgroundColor: "var(--system-background)",
+        }}
+      >
+        <FixedSizeList
+          height={600}
+          itemSize={32}
+          itemCount={items.length}
+          itemData={createFileList(items, index, props.archive.load)}
+          overscanCount={5}
+        >
+          {Item}
+        </FixedSizeList>
+      </Box>
+    ) : (
+      <div className="filesContainer" ref={setElements}>
         {createFileButtons(items, index, props.archive.load)}
       </div>
     );
@@ -90,7 +129,9 @@ function Browser(props) {
           variant="hour"
           disabled={disabled}
           selected={selected}
-          onClick={() => setDayHour(day, k)}
+          onClick={() => {
+            setDayHour(day, k);
+          }}
         >
           {hourString}
         </Button>
@@ -106,13 +147,6 @@ function Browser(props) {
   }, []);
 
   const setDayHour = (newDay, newHour) => {
-    if (
-      isNaN(newDay) ||
-      newDay.getFullYear() < 2000 ||
-      newDay.getFullYear() > 2023
-    ) {
-      return;
-    }
     let symbol = props.archive.grid.symbol;
     let t = day instanceof Date ? "Date" : "Not Date";
     let n = newDay.toISOString().slice(0, 10);
@@ -120,36 +154,42 @@ function Browser(props) {
     console.log(
       `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
       "color: deeppink",
-      "",
+      "color: inherit",
       "color: mediumpurple",
-      "",
+      "color: inherit",
       "color: mediumpurple",
-      ""
+      "color: inherit"
     );
-    props.archive.count(newDay, newHour, symbol);
+    if (parseInt(n.slice(0, 4)) < 2000) {
+      return;
+    }
+    props.archive.count(radar, newDay, newHour, symbol);
   };
 
   const getMonthTable = (newMonth) => {
     let tmp = newMonth.toISOString();
     let yyyymm = tmp.slice(0, 4) + tmp.slice(5, 7);
-    props.archive.month(yyyymm);
+    props.archive.month(radar, yyyymm);
   };
 
   return (
-    <div className="fill paper">
-      <div className="spacerTop" />
+    <div className="fill">
       <SectionHeader name="archive" />
-      <div id="calendarContainer">
+      <div className="calendarContainer">
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DatePicker
             label="Date"
             value={value}
             onOpen={() => getMonthTable(day)}
             onYearChange={(newDay) => getMonthTable(newDay)}
-            onMonthChange={(newDay) => getMonthTable(newDay)}
+            onMonthChange={(newDay) => {
+              if (day != newDay) {
+                getMonthTable(newDay);
+              }
+            }}
             onChange={(newValue) => {
               setValue(newValue);
-              if (newValue instanceof Date) {
+              if (newValue instanceof Date && newValue.getFullYear() > 2000) {
                 setDayHour(newValue, hour);
               }
             }}
@@ -160,30 +200,31 @@ function Browser(props) {
                 key in props.archive.grid.daysActive
                   ? props.archive.grid.daysActive[key]
                   : 0;
-              return num ? (
+              let variant = num ? "dot" : undefined;
+              return (
                 <Badge
                   key={key}
                   color={badgeColors[num]}
                   overlap="circular"
-                  variant="dot"
+                  variant={variant}
                 >
                   <PickersDay {...pickersDayProps} />
                 </Badge>
-              ) : (
-                <PickersDay {...pickersDayProps} disabled={true} />
               );
             }}
             shouldDisableYear={(date) => {
-              let y = date.getYear();
+              let year = date.getYear();
               return (
-                y < 0 || y >= 200 || props.archive.grid.yearsActive[y] == 0
+                year < 0 ||
+                year >= 200 ||
+                props.archive.grid.yearsActive[year] == 0
               );
             }}
             disableHighlightToday={true}
           />
         </LocalizationProvider>
       </div>
-      <div id="hoursContainer">{hourButtons}</div>
+      <div className="hoursContainer">{hourButtons}</div>
       <SectionHeader name="files" />
       {fileBrowser}
     </div>

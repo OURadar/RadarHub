@@ -12,6 +12,7 @@ class Archive {
     this.data = {
       sweep: null,
     };
+    this.grid = null;
     this.state = {
       liveUpdate: null,
       daysActiveUpdating: false,
@@ -27,8 +28,10 @@ class Archive {
     this.messageTimer = null;
     this.message = "";
     this.response = "";
-    this.onupdate = () => {};
-    this.onlist = () => {};
+    this.onUpdate = () => {};
+    this.onIndex = () => {};
+    this.onList = () => {};
+    this.onLoad = () => {};
 
     this.handleMessage = this.handleMessage.bind(this);
     this.showMessage = this.showMessage.bind(this);
@@ -48,7 +51,6 @@ class Archive {
   handleMessage({ data: { type, payload } }) {
     if (type == "load") {
       this.data.sweep = payload;
-      // console.log(this.data.sweep);
       this.updateAge();
       this.state.sweepLoading = false;
       if (this.state.verbose) {
@@ -66,6 +68,7 @@ class Archive {
         this.disableLiveUpdate();
       }
       this.showMessage(`${payload.name} loaded`);
+      this.onLoad(this.grid);
     } else if (type == "index") {
       if (this.state.verbose) {
         console.log(
@@ -75,8 +78,11 @@ class Archive {
           ""
         );
       }
-      this.grid.index = payload;
+      // this.grid.index = payload.index;
+      // this.grid.pathsActive = payload.pathsActive;
+      this.grid = { ...this.grid, ...payload };
       this.loadIfNecessary();
+      this.onIndex(this.grid);
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
@@ -90,10 +96,10 @@ class Archive {
           ""
         );
       }
-      //let index = this.grid.index;
       this.grid = payload;
       this.state.loadCount = 0;
       this.loadIfNecessary();
+      this.onList(this.grid);
       this.state.itemsUpdating = false;
     } else if (type == "message") {
       this.showMessage(payload, 2500);
@@ -152,7 +158,7 @@ class Archive {
       }
       this.list(this.radar, payload.day, hour, this.grid.symbol);
     }
-    this.onupdate(this.state.tic++);
+    this.onUpdate(this.state.tic++);
   }
 
   //
@@ -164,7 +170,7 @@ class Archive {
       if (this.message == message) {
         this.message = "";
         this.messageTimer = null;
-        this.onupdate(this.state.tic++);
+        this.onUpdate(this.state.tic++);
       }
     }, duration);
   }
@@ -202,6 +208,7 @@ class Archive {
         "color: lightseagreen",
         ""
       );
+      console.log(this.grid);
       return;
     }
     this.state.itemsUpdating = true;
@@ -238,7 +245,7 @@ class Archive {
     this.message = `Loading ${name} ...`;
     this.worker.postMessage({ task: "load", name: name });
     this.state.loadCount++;
-    this.onupdate(this.state.tic++);
+    this.onUpdate(this.state.tic++);
   }
 
   loadIfNecessary() {
@@ -278,7 +285,7 @@ class Archive {
   }
 
   // Expect something like day = Date('2013-05-20')
-  count(day, hour, symbol) {
+  count(day, hour, symbol = this.grid.symbol) {
     if (this.state.verbose) {
       console.log(
         `%carchive.count()%c` +
@@ -288,6 +295,9 @@ class Archive {
         ""
       );
     }
+    if (isNaN(day)) return;
+    let year = day.getFullYear();
+    if (year < 2000 || year > 2023) return;
     if (this.grid.day == day) {
       if (this.state.verbose) {
         console.log(
@@ -347,13 +357,15 @@ class Archive {
   }
 
   updateAge() {
-    if (this.data.sweep == null) {
+    if (this.data.sweep === null) {
       return;
     }
     let age = Date.now() / 1000 - this.data.sweep.time;
     let ageString;
-    if (age > 3 * 86400) {
+    if (age > 14 * 86400) {
       ageString = "";
+    } else if (age > 7 * 86400) {
+      ageString = "> 1 week";
     } else if (age > 86400) {
       let d = Math.floor(age / 86400);
       let s = d > 1 ? "s" : "";
@@ -371,7 +383,7 @@ class Archive {
     }
     if (this.data.sweep.age != ageString) {
       this.data.sweep.age = ageString;
-      this.onupdate(this.state.tic++);
+      this.onUpdate(this.state.tic++);
     }
   }
 
@@ -393,6 +405,30 @@ class Archive {
     this.worker.postMessage({
       task: "backward-scan",
     });
+  }
+
+  setDayHour(day, hour) {
+    if (this.state.verbose) {
+      let t = day instanceof Date ? "Date" : "Not Date";
+      let n = day.toISOString().slice(0, 10);
+      let o = day.toISOString().slice(0, 10);
+      console.log(
+        `%cArchive.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${hour}%c ← ${this.grid.hour}    ${this.grid.symbol}`,
+        "color: deeppink",
+        "",
+        "color: mediumpurple",
+        "",
+        "color: mediumpurple",
+        ""
+      );
+    }
+    this.count(day, hour);
+  }
+
+  getMonthTable(day) {
+    let s = day.toISOString();
+    let yyyymm = s.slice(0, 4) + s.slice(5, 7);
+    this.month(yyyymm);
   }
 }
 

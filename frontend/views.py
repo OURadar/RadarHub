@@ -1,6 +1,7 @@
 import os
 import glob
 import logging
+from turtle import color
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponse
@@ -29,72 +30,64 @@ if settings.DEBUG:
 
 #
 
-def get_user_info(request):
+def make_vars(request, radar='px1000'):
     user = get_user(request)
     try:
         email = user.email
     except:
         email = None
-    return {'ip': get_client_ip(request), 'user': email}
+    origin = location(radar)
 
-# Create your views here.
-def index(request):
-    params = get_user_info(request)
-    context = {
-        'vars': params,
-        'css': css_hash,
-        'version': settings.VERSION
+    return {
+        'ip': get_client_ip(request),
+        'user': email,
+        'css_hash': css_hash,
+        'version': settings.VERSION,
+        'origin': origin,
+        'radar': radar
     }
-    return render(request, 'frontend/index.html', context)
 
-def dev(request):
-    return render(request, 'frontend/dev.html', {'css': css_hash})
+#
+
+def index(request):
+    vars = make_vars(request)
+    return render(request, 'frontend/index.html', {'vars': vars, 'css': css_hash, 'version': settings.VERSION})
+
+def dev(request, radar):
+    vars = make_vars(request, radar)
+    return render(request, 'frontend/dev.html', {'vars': vars, 'css': css_hash})
 
 # Control
 
 def control_radar(request, radar):
-    into = get_user_info(request)
+    vars = make_vars(request, radar)
     show = colorize('views.control()', 'green')
     show += '   ' + color_name_value('radar', radar)
-    show += '   ' + color_name_value('ip', into['ip'])
-    show += '   ' + color_name_value('user', into['user'])
+    show += '   ' + color_name_value('ip', vars['ip'])
+    show += '   ' + color_name_value('user', vars['user'])
     logger.info(show)
-    origin = location(radar)
-    context = {
-        'vars': {
-            'radar': radar,
-            'origin': origin
-        },
-        'css': css_hash
-    }
-    return render(request, 'frontend/control.html', context)
+    return render(request, 'frontend/control.html', {'vars': vars, 'css': css_hash})
 
 def control(request):
     return control_radar(request, "demo")
 
 # Archive
 
-def archive_radar_profile(request, radar, profileGL):
-    info = get_user_info(request)
+def archive_radar_profile(request, radar, profileGL = False):
+    vars = make_vars(request, radar)
     show = colorize('views.archive()', 'green')
     show += '   ' + color_name_value('radar', radar)
-    show += '   ' + color_name_value('ip', info['ip'])
-    show += '   ' + color_name_value('user', info['user'])
+    show += '   ' + color_name_value('ip', vars['ip'])
+    show += '   ' + color_name_value('user', vars['user'])
     if settings.DEBUG and settings.VERBOSE:
         show += '   ' + color_name_value('profileGL', profileGL)
     logger.info(show)
     if radar not in radars:
         raise Http404
-    origin = location(radar)
-    context = {
-        'vars': {
-            'radar': radar,
-            'origin': origin,
-            'profileGL': profileGL
-        },
-        'css': css_hash
-    }
-    return render(request, 'frontend/archive.html', context)
+    if profileGL:
+        vars['profileGL'] = True
+    print(vars)
+    return render(request, 'frontend/archive.html', {'vars': vars, 'css': css_hash})
 
 def archive_radar(request, radar):
     return archive_radar_profile(request, radar, False)
@@ -118,17 +111,4 @@ def robots_txt(request):
     return HttpResponse('\n'.join(lines), content_type='text/plain')
 
 def view(request, page):
-    context = {'css': css_hash}
-    return render(request, f'{page}.html', context, status=200)
-
-def page400(request, exception):
-    context = {'css': css_hash}
-    return render(request, f'400.html', context, status=400)
-
-def page403(request, exception):
-    context = {'css': css_hash}
-    return render(request, f'403.html', context, status=403)
-
-def page404(request, exception):
-    context = {'css': css_hash}
-    return render(request, f'404.html', context, status=404)
+    return render(request, f'{page}.html', {'css': css_hash}, status=200)

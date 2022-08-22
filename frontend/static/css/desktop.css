@@ -10,20 +10,18 @@ Copyright Boonleng Cheong
   --button-border-right: solid 1px var(--border-accent);
   --button-border-bottom: solid 1px var(--border-accent);
   --button-border-left: solid 1px var(--border-accent);
-  --button-border-radius: 5px;
   --button-margin-bottom: 5px;
   --content-height: calc(100vh - var(--topbar-height));
 }
-.extraLarge {
-  font-size: 100px;
-  margin-bottom: 25px;
-  margin-top: 25px;
+
+.notification {
+  padding: 8px 80px;
 }
 
 .controlContainer,
 .healthContainer {
   background-color: var(--system-background);
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
   padding: var(--padding);
   padding-bottom: calc(var(--padding) - var(--button-margin-bottom));
 }
@@ -75,7 +73,7 @@ Copyright Boonleng Cheong
   right: 0;
   width: 50%;
   height: var(--indicator-height);
-  border-radius: 4px;
+  border-radius: var(--button-border-radius);
   border: 1px solid var(--border-accent);
   box-sizing: border-box;
   padding-top: calc(var(--indicator-height) * 0.2 - 1px);
@@ -88,19 +86,12 @@ Copyright Boonleng Cheong
   padding-left: var(--padding);
   padding-right: var(--padding);
 }
-#notification {
-  max-width: calc(100vw - 200px);
-  padding: 8px 80px;
+
+#statusBody {
+  padding: 5px 10px;
 }
 
-#right {
-  display: flex;
-  flex-direction: column;
-  height: var(--content-height);
-  margin-top: var(--topbar-height);
-  overflow-y: scroll;
-}
-
+/* Split */
 .split {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -123,36 +114,59 @@ Copyright Boonleng Cheong
 .gutter.gutter-vertical {
   cursor: row-resize;
 }
-
 .gutter.gutter-horizontal {
   cursor: col-resize;
   width: 8px !important;
 }
+#split-panel {
+  display: flex;
+  flex-direction: row;
+  background-color: var(--gray6);
+}
+#split-panel-left,
+#split-panel-right {
+  display: block;
+  height: 100vh;
+}
 
-.calendarContainer {
-  background-color: var(--system-background);
+/* Browser */
+#calendarContainer {
   padding-top: var(--padding);
   padding-bottom: calc(0.5 * var(--padding));
-  text-align: center;
 }
-.hoursContainer {
+#hoursContainer {
   column-count: 4;
 }
-.filesContainer {
+#filesContainer {
   background-color: var(--system-background);
   height: calc(var(--content-height) - 44px - 86px - 192px - 44px);
   overflow-y: scroll;
 }
 
-.preferenceMenu {
-  color: var(--gray);
-  display: block;
-  font-size: 0.8em;
-  left: var(--padding);
-  line-height: 1.2em;
-  padding: var(--half-padding);
-  position: fixed;
-  text-align: center;
+/* Product */
+#ageString {
+  bottom: 50px;
+  left: 30px;
+}
+#infoString {
+  bottom: 90px;
+  left: 30px;
+}
+#title {
+  font-size: 32px;
+  font-weight: 500;
+  text-align: right;
+  bottom: 50px;
+  right: 50px;
+  stroke: var(--map-background);
+  stroke-width: 6px;
+  width: 80%;
+  max-width: calc(100% - 200px);
+}
+#title text {
+  text-anchor: end;
+}
+#update {
   top: calc(var(--topbar-height) + 2 * var(--padding));
-  z-index: 2;
+  left: 30px;
 }

@@ -23,7 +23,7 @@ SIMULATE = False
 
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
 # SECURITY WARNING
-# SECURITY WARNING    Don't run with debug turned on in production!
+# SECURITY WARNING    Do not run with DEBUG = True in production!
 # SECURITY WARNING
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
 
@@ -249,10 +249,12 @@ else:
 
 # frontend/package.json
 file = FRONTEND_DIR / 'package.json'
-with open(file, 'r') as fid:
-    s = json.load(fid)
-VERSION = s['version']
-
+if os.path.exists(file):
+    with open(file, 'r') as fid:
+        s = json.load(fid)
+    VERSION = s['version'] if 'version' in s else '0.0.0'
+else:
+    VERSION = '0.0.0'
 
 # FIFO source to list for new files
 # FIFO = { 'tcp': '_IP_ADDRESS_:_PORT_' }

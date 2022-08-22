@@ -343,3 +343,19 @@ export const vec4String = function (v, dec = 3, len = 9) {
   let v3 = v[3].toFixed(dec).padStart(len, " ");
   return `${v0} ${v1} ${v2} ${v3}`;
 };
+
+/**
+ *
+ * @param {string} text
+ * @param {string} font
+ * @returns width of text rendered using font
+ */
+export function displayTextWidth(text, font) {
+  let canvas =
+    displayTextWidth.canvas ||
+    (displayTextWidth.canvas = document.createElement("canvas"));
+  let context = canvas.getContext("2d");
+  context.font = font;
+  let metrics = context.measureText(text);
+  return metrics.width;
+}

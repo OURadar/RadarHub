@@ -24,10 +24,10 @@ class Product extends GLView {
   constructor(props) {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
-    this.colorbar = new Colorbar();
-    this.geometry.dashport.y = 100;
-    this.geometry.dashport.width = this.colorbar.canvas.width;
-    this.geometry.dashport.height = this.colorbar.canvas.height;
+    // this.colorbar = new Colorbar(props.style);
+    // this.geometry.dashport.y = 100;
+    // this.geometry.dashport.width = this.colorbar.canvas.width;
+    // this.geometry.dashport.height = this.colorbar.canvas.height;
     this.offset = (Date.now() % 86400000) / 5000;
     this.state = {
       ...this.state,
@@ -35,16 +35,17 @@ class Product extends GLView {
       useEuler: true,
       ageString: "",
       titleString: "",
+      palette: null,
+      style: null,
+      count: 0,
     };
     this.labelFaceColor = this.props.colors.label.face;
     this.assets = {
       age: 0,
       time: 0,
-      index: 0.5 / 6,
       symbol: "Z",
-      palette: null,
       colormap: null,
-      style: null,
+      index: 0,
       data: null,
       points: null,
       origins: null,
@@ -55,7 +56,6 @@ class Product extends GLView {
     var image = new Image();
     image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
-      this.assets.palette = image;
       if (this.assets.colormap) {
         this.assets.colormap.destroy();
       }
@@ -64,6 +64,10 @@ class Product extends GLView {
         wrapS: "clamp",
         wrapT: "clamp",
         premultiplyAlpha: true,
+      });
+      this.setState({
+        palette: image,
+        style: this.makeStyle("Z"),
       });
       this.assets.index = 0.5 / this.assets.colormap.height;
       if (this.assets.data != null) this.assets.complete = true;
@@ -79,6 +83,7 @@ class Product extends GLView {
       longitude: -97.422413,
       latitude: 35.25527,
     },
+    gravity: "right",
     onOverlayLoaded: () => {},
   };
 
@@ -174,39 +179,42 @@ class Product extends GLView {
     }
   }
 
-  loadDashboard(sweep = null) {
-    if (sweep && this.assets.symbol != sweep.symbol) {
+  loadDashboard() {
+    if (this.props.sweep && this.assets.symbol != this.props.sweep.symbol) {
       this.updateData();
     }
-    this.assets.style = this.makeStyle(this.assets.symbol);
     if (this.assets.colormap) {
-      this.assets.index =
-        (this.assets.style.index + 0.5) / this.assets.colormap.height;
+      let style = this.makeStyle(this.assets.symbol);
+      this.assets.index = (style.index + 0.5) / this.assets.colormap.height;
+      this.setState((state) => ({
+        style: style,
+        count: state.count + 1,
+      }));
     }
-    this.colorbar
-      .load(
-        {
-          palette: this.assets.palette,
-          style: this.assets.style,
-          time: sweep ? sweep.timeString : "-",
-        },
-        this.props.colors
-      )
-      .then((buffer) => {
-        this.dashboardTexture?.texture.destroy();
-        this.dashboardTexture = {
-          bound: [buffer.image.width, buffer.image.height],
-          texture: this.regl.texture({
-            height: buffer.image.height,
-            width: buffer.image.width,
-            data: buffer.image.data,
-            min: "linear",
-            mag: "linear",
-            flipY: true,
-            premultiplyAlpha: true,
-          }),
-        };
-      });
+    // this.colorbar
+    //   .load(
+    //     {
+    //       palette: this.assets.palette,
+    //       style: this.assets.style,
+    //       time: sweep ? sweep.timeString : "-",
+    //     },
+    //     this.props.colors
+    //   )
+    //   .then((buffer) => {
+    //     this.dashboardTexture?.texture.destroy();
+    //     this.dashboardTexture = {
+    //       bound: [buffer.image.width, buffer.image.height],
+    //       texture: this.regl.texture({
+    //         height: buffer.image.height,
+    //         width: buffer.image.width,
+    //         data: buffer.image.data,
+    //         min: "linear",
+    //         mag: "linear",
+    //         flipY: true,
+    //         premultiplyAlpha: true,
+    //       }),
+    //     };
+    //   });
   }
 
   toggleSpin() {
@@ -263,11 +271,24 @@ class Product extends GLView {
 
   render() {
     return (
-      <div className="fullHeight">
+      <div>
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
+        <Colorbar
+          {...this.props}
+          id="colorbar"
+          count={this.state.count}
+          style={this.state.style}
+          palette={this.state.palette}
+          debug={false}
+        />
         <Caption id="ageString" string={this.props.sweep?.age || ""} />
-        <Caption id="infoString" string={this.props.sweep?.infoString || ""} />
-        <Title string={this.props.sweep?.timeString || ""} />
+        <Caption
+          id="infoString"
+          string={this.props.sweep?.infoString || "Gatewidth: -\nWaveform: -"}
+        />
+        <Title
+          string={this.props.sweep?.titleString || "----/--/-- --:--:-- UTC"}
+        />
       </div>
     );
   }
@@ -352,14 +373,16 @@ class Product extends GLView {
 
   draw() {
     if (this.mount === null) return;
+    if (this.geometry.needsUpdate) {
+      this.updateProjection();
+    }
     if (
-      this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth * this.ratio ||
       this.canvas.height != this.mount.offsetHeight * this.ratio
     ) {
       this.updateProjection();
-    }
-    if (this.labelFaceColor != this.props.colors.label.face) {
+      this.loadDashboard();
+    } else if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
       this.loadDashboard();
@@ -395,13 +418,13 @@ class Product extends GLView {
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);
-    if (this.dashboardTexture) {
-      this.michelangelo({
-        projection: this.geometry.orthoprojection,
-        viewport: this.geometry.dashport,
-        texture: this.dashboardTexture.texture,
-      });
-    }
+    // if (this.dashboardTexture) {
+    //   this.michelangelo({
+    //     projection: this.geometry.orthoprojection,
+    //     viewport: this.geometry.dashport,
+    //     texture: this.dashboardTexture.texture,
+    //   });
+    // }
     if (this.state.spin && !this.gesture.panInProgress) {
       this.updateViewPoint();
     }

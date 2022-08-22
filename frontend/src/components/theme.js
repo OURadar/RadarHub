@@ -1,36 +1,8 @@
-// import { createTheme } from "@mui/material/styles";
-// import { Hidden } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 
-function reviseMode(mode) {
-  // Retrieve the body color so we can match the canvas with it
-  let bg = window.getComputedStyle(document.body).backgroundColor;
-  let body = new Array(bg.match(/\d+/g).map((x) => x / 255));
-  if (body.length == 3) {
-    body.push(1.0);
-  }
-  // Check for browser preference if 'theme' was not specified
-  if (mode === undefined) {
-    const matchMedia = window.matchMedia("(prefers-color-scheme: dark)");
-    if (matchMedia.media != "not all") {
-      if (matchMedia.matches === true) {
-        mode = "dark";
-      } else {
-        mode = "light";
-      }
-    }
-  }
-  // If the previous step failed, choose based on the brightness of the body
-  if (mode === undefined || mode == "auto") {
-    let brightness = 0.2125 * body[0] + 0.7152 * body[1] + 0.0722 * body[2];
-    if (brightness > 0.5) {
-      mode = "light";
-    } else {
-      mode = "dark";
-    }
-  }
-  return { body, mode };
-}
+import { detectMob } from "./common";
+
+//
 
 const paletteLight = {
   primary: {
@@ -56,6 +28,7 @@ const paletteLight = {
     main: "rgb(255, 175, 25)",
   },
   divider: "rgba(0, 0, 0, 0.04)",
+  bound: "rgba(0, 0, 0, 0.15)",
 };
 
 const paletteDark = {
@@ -82,20 +55,53 @@ const paletteDark = {
     main: "rgb(255, 175, 25)",
   },
   divider: "rgba(255, 255, 255, 0.04)",
+  bound: "rgba(255, 255, 255, 0.15)",
 };
 
+//
+
+function reviseMode(mode) {
+  // Retrieve the body color so we can match the canvas with it
+  let bg = window.getComputedStyle(document.body).backgroundColor;
+  let body = new Array(bg.match(/\d+/g).map((x) => x / 255));
+  if (body.length == 3) {
+    body.push(1.0);
+  }
+  // Check for browser preference if 'theme' was not specified
+  if (mode === undefined) {
+    const matchMedia = window.matchMedia("(prefers-color-scheme: dark)");
+    if (matchMedia.media != "not all") {
+      if (matchMedia.matches === true) {
+        mode = "dark";
+      } else {
+        mode = "light";
+      }
+    }
+  }
+  // If the previous step failed, choose based on the brightness of the body
+  if (mode === undefined || mode === "auto") {
+    let brightness = 0.2125 * body[0] + 0.7152 * body[1] + 0.0722 * body[2];
+    if (brightness > 0.5) {
+      mode = "light";
+    } else {
+      mode = "dark";
+    }
+  }
+  return { body, mode };
+}
+
 export function makePalette(theme = "light") {
-  return theme == "light"
+  return theme === "light"
     ? createTheme({ palette: paletteLight })
     : createTheme({ palette: paletteDark });
 }
 
 export function makeTheme(inputMode) {
+  let { mode } = reviseMode(inputMode);
   const border =
     window.devicePixelRatio > 1
       ? "solid 0.5px var(--gray3)"
       : "solid 1.0px var(--gray5)";
-  let { mode } = reviseMode(inputMode);
   let theme = createTheme({
     palette: {
       mode,
@@ -122,14 +128,43 @@ export function makeTheme(inputMode) {
   });
   theme = createTheme(theme, {
     components: {
+      MuiAvatar: {
+        styleOverrides: {
+          img: { width: "auto" },
+        },
+      },
       MuiButton: {
         styleOverrides: {
           root: {
             borderRadius: 4,
             textTransform: "inherit",
+            padding: "var(--half-padding)",
           },
         },
         variants: [
+          {
+            props: { variant: "hour" },
+            style: {
+              color: theme.palette.text.secondary,
+              height: "var(--small-button-height)",
+              fontSize: "15px",
+              padding: "0 2px",
+              textAlign: "center",
+              width: "100%",
+              minWidth: 32,
+            },
+          },
+          {
+            props: { variant: "hour", selected: true },
+            style: {
+              color: theme.palette.primary.main,
+              backgroundColor: theme.palette.primary.light,
+              "&:hover": {
+                backgroundColor: theme.palette.primary.dark,
+              },
+              fontWeight: 600,
+            },
+          },
           {
             props: { variant: "control" },
             style: {
@@ -151,7 +186,11 @@ export function makeTheme(inputMode) {
               borderBottom: border,
               color: theme.palette.text.secondary,
               display: "inline-block",
+              height: 36,
+              overflow: "hidden",
+              fontSize: "15px",
               padding: "0 20px",
+              textAlign: "center",
               textTransform: "none",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -165,37 +204,12 @@ export function makeTheme(inputMode) {
             props: { variant: "file", selected: true },
             style: {
               color: theme.palette.secondary.main,
-              "&:hover": {
-                color: "white",
-              },
               backgroundColor: theme.palette.secondary.light,
               "&:hover": {
                 backgroundColor: theme.palette.secondary.dark,
               },
-              height: 32,
               fontWeight: 600,
-            },
-          },
-          {
-            props: { variant: "hour" },
-            style: {
-              color: theme.palette.text.secondary,
               height: 32,
-              width: "25%",
-            },
-          },
-          {
-            props: { variant: "hour", selected: true },
-            style: {
-              color: theme.palette.primary.main,
-              "&:hover": {
-                color: "white",
-              },
-              backgroundColor: theme.palette.primary.light,
-              "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
-              },
-              fontWeight: 600,
             },
           },
           {
@@ -216,9 +230,27 @@ export function makeTheme(inputMode) {
         styleOverrides: {
           root: {
             textTransform: "none",
+            borderColor: theme.palette.bound,
+            "&.Mui-disabled": {
+              borderColor: theme.palette.bound,
+            },
           },
         },
       },
+      // MuiToggleButton: {
+      //   styleOverrides: {
+      //     root: {
+      //       textTransform: "none",
+      //       "&.Mui-selected": {
+      //         color: theme.palette.primary.main,
+      //         backgroundColor: theme.palette.primary.light,
+      //       },
+      //       "&.Mui-selected:hover": {
+      //         backgroundColor: theme.palette.primary.dark,
+      //       },
+      //     },
+      //   },
+      // },
       // MuiListItemText: {
       //   styleOverrides: {
       //     root: {
@@ -262,10 +294,9 @@ export function makeTheme(inputMode) {
       MuiToggleButtonGroup: {
         variants: [
           {
-            props: { variant: "control" },
+            props: { variant: "blur" },
             style: {
-              backgroundColor: "var(--preference-background)",
-              backdropFilter: "blur(4px)",
+              backdropFilter: "blur(5px)",
             },
           },
         ],
@@ -273,7 +304,7 @@ export function makeTheme(inputMode) {
       MuiBackdrop: {
         styleOverrides: {
           root: {
-            backdropFilter: "blur(4px)",
+            backdropFilter: "blur(5px)",
           },
         },
       },

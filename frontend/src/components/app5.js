@@ -18,7 +18,7 @@ import { Product } from "./product";
 import { TopBar } from "./topbar";
 import { Ingest } from "./ingest";
 
-class App extends Component {
+export class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -26,7 +26,7 @@ class App extends Component {
       theme: makeTheme(),
     };
     this.ingest = new Ingest(props.radar);
-    this.ingest.onupdate = () => {
+    this.ingest.onUpdate = () => {
       this.forceUpdate();
     };
     this.handleModeChange = this.handleModeChange.bind(this);
@@ -62,7 +62,7 @@ class App extends Component {
         w = 300;
       }
       let v = (w / window.innerWidth) * 100;
-      Split(["#left", "#right"], {
+      Split(["#split-panel-left", "#split-panel-right"], {
         sizes: [100 - v, v],
         minSize: [400, 500],
         expandToMin: true,
@@ -105,7 +105,7 @@ class App extends Component {
         <TopBar
           mode={this.state.colors.name}
           ingest={this.ingest}
-          handleModeChange={this.handleModeChange}
+          onModeChange={this.handleModeChange}
         />
         <div id="flex">
           <div id="left">
@@ -138,5 +138,3 @@ class App extends Component {
     });
   }
 }
-
-export default App;

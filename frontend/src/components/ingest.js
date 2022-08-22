@@ -30,7 +30,7 @@ class Ingest {
     };
     this.message = "";
     this.response = "";
-    this.onupdate = (_data) => {};
+    this.onUpdate = (_data) => {};
 
     this.handleMessage = this.handleMessage.bind(this);
     this.showMessage = this.showMessage.bind(this);
@@ -49,7 +49,7 @@ class Ingest {
       setTimeout(() => {
         if (this.message == payload) {
           this.message = "";
-          this.onupdate(this.state.tic++);
+          this.onUpdate(this.state.tic++);
         }
       }, 2000);
     } else if (type == "scope") {
@@ -69,11 +69,11 @@ class Ingest {
       setTimeout(() => {
         if (this.response == payload) {
           this.response = "";
-          this.onupdate(this.state.tic++);
+          this.onUpdate(this.state.tic++);
         }
       }, 2000);
     }
-    this.onupdate(this.state.tic++);
+    this.onUpdate(this.state.tic++);
   }
 
   showMessage(message, duration = 2000) {
@@ -83,14 +83,14 @@ class Ingest {
       if (this.message == message) {
         this.message = "";
         this.messageTimer = null;
-        this.onupdate(this.state.tic++);
+        this.onUpdate(this.state.tic++);
       }
     }, duration);
   }
 
   connect() {
     this.message = "Connecting ...";
-    this.onupdate(this.state.tic++);
+    this.onUpdate(this.state.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
     const url = `${p}://${window.location.host}/ws/${this.radar}/`;
     this.worker.postMessage({

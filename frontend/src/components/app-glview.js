@@ -23,7 +23,7 @@ class App extends Component {
     };
     this.isMobile = detectMob();
     this.archive = new Archive(props.radar);
-    this.archive.onupdate = (_dontcare) => {
+    this.archive.onUpdate = (_dontcare) => {
       this.forceUpdate();
     };
     console.log(props);

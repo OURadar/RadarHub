@@ -18,6 +18,7 @@ let grid = {
   daysActive: {},
   hoursActive: new Array(24).fill(0),
   yearsActive: new Array(200).fill(0),
+  pathsActive: new Array(4).fill(false),
   latestScan: "",
   latestHour: -1,
   items: [],
@@ -103,7 +104,9 @@ function init(newRadar) {
 function connect(force = false) {
   if (source?.readyState == 1) {
     if (force) {
-      console.debug(`Closing existing connection ... force = ${force}`);
+      if (state.verbose > 1) {
+        console.debug(`Closing existing connection ... force = ${force}`);
+      }
       source.close();
     } else {
       self.postMessage({
@@ -228,6 +231,7 @@ function createSweep(name = "dummy") {
     nx: 0,
     time: 42,
     timeString: "1970/01/01 00:00:42 UTC",
+    titleString: "----/--/-- --:--:-- --- -- -.-°",
     symbol: "U",
     isRHI: false,
     scanElevation: 4.0,
@@ -341,12 +345,15 @@ function list(day, hour, symbol) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          // console.log(buffer);
-          grid.dateTimeString = dateTimeString;
+          if (state.verbose > 1) {
+            console.debug(buffer);
+          }
+          let hourString = clamp(grid.hour, 0, 23).toString().padStart(2, "0");
           grid.day = day;
           grid.hour = buffer.hour;
           grid.symbol = symbol;
           grid.hoursActive = buffer.hoursActive;
+          grid.dateTimeString = `${dayString}-${hourString}00`;
           grid.latestHour =
             23 -
             grid.hoursActive
@@ -368,6 +375,7 @@ function list(day, hour, symbol) {
           } else {
             grid.index = grid.items.length ? grid.items.length - 1 : -1;
           }
+          reviseGridPaths();
           self.postMessage({
             type: "list",
             payload: grid,
@@ -412,6 +420,13 @@ function load(name) {
             `${components[2].slice(0, 2)}:` +
             `${components[2].slice(2, 4)}:` +
             `${components[2].slice(4, 6)} UTC`;
+          sweep.titleString =
+            sweep.timeString +
+            "   " +
+            (sweep.isRHI
+              ? `Az ${sweep.scanAzimuth.toFixed(1)}`
+              : `El ${sweep.scanElevation.toFixed(1)}`) +
+            "°";
           sweep.symbol = components[4].split(".")[0];
           sweep.info = JSON.parse(sweep.info);
           sweep.infoString =
@@ -563,10 +578,7 @@ function catchup() {
           } else {
             grid.index = grid.items.length ? grid.items.length - 1 : -1;
           }
-          if (grid.index >= 0) {
-            let file = grid.items[grid.index];
-            grid.scan = file.split("-")[3];
-          }
+          reviseGridPaths();
           if (state.verbose > 1) {
             console.info(grid.items);
             console.info(grid.itemsGrouped);
@@ -604,7 +616,11 @@ function updateGridIndex(index) {
     return;
   }
   grid.index = index;
-  self.postMessage({ type: "index", payload: index });
+  reviseGridPaths();
+  self.postMessage({
+    type: "index",
+    payload: { index: index, pathsActive: grid.pathsActive },
+  });
 }
 
 function navigateForward() {
@@ -681,5 +697,41 @@ function toggle(name) {
     }
   } else {
     self.postMessage({ type: "state", payload: { update: state.update } });
+  }
+}
+
+function reviseGridPaths() {
+  if (grid.items.length == 0) {
+    grid.pathsActive.fill(false);
+    return;
+  }
+  if (grid.index < 0 || grid.index >= grid.items.length) {
+    console.log(`grid.index = ${grid.index} should not happen here.`);
+    return;
+  }
+  const file = grid.items[grid.index];
+  const scan = file.split("-")[3];
+  const index = grid.index;
+  const length = grid.itemsGrouped[scan].length;
+  const first = grid.itemsGrouped[scan][0];
+  const last = grid.itemsGrouped[scan][length - 1];
+  grid.scan = scan;
+  grid.pathsActive[0] = index != first.index;
+  grid.pathsActive[1] = index != 0;
+  grid.pathsActive[2] = index != grid.items.length - 1;
+  grid.pathsActive[3] = index != last.index;
+  if (state.verbose) {
+    console.log(
+      `%carchive.worker.reviseGridPaths() %c${scan}%c`,
+      `color: ${namecolor}`,
+      "color: dodgerblue",
+      "",
+      "first",
+      first,
+      "last",
+      last,
+      "pathsActive",
+      grid.pathsActive
+    );
   }
 }

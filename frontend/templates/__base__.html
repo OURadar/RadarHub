@@ -15,12 +15,12 @@
     <link rel="icon" type="image/png" sizes="64x64" href="{% static 'images/icon64.png' %}" />
     <link rel="apple-touch-icon" sizes="114x114" href="{% static 'images/icon114.png' %}" />
     <link rel="apple-touch-icon" sizes="144x144" href="{% static 'images/icon144.png' %}" />
+    <link rel="apple-touch-icon" sizes="256x256" href="{% static 'images/icon256.png' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}?h={{css}}" />
-    <link rel="stylesheet" type="text/css" media="screen and (min-device-width: 550px)" href="{% static 'css/desktop.css' %}?h={{css}}" />
-    <link rel="stylesheet" type="text/css" media="screen and (max-device-width: 550px)" href="{% static 'css/mobile.css' %}?h={{css}}" />
+    <link rel="stylesheet" type="text/css" id="device-style" href="{% static 'css/desktop.css' %}?h={{css}}" />
     {% block extra_head %}{% endblock %}
   </head>
-  <body class="backgrad">
+  <body>
     {% block body %}{% endblock %}
   </body>
   {% block extra_html %}{% endblock %}
