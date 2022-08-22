@@ -1,7 +1,5 @@
-import os
 import glob
 import logging
-from turtle import color
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponse
@@ -37,7 +35,6 @@ def make_vars(request, radar='px1000'):
     except:
         email = None
     origin = location(radar)
-
     return {
         'ip': get_client_ip(request),
         'user': email,
@@ -51,7 +48,12 @@ def make_vars(request, radar='px1000'):
 
 def index(request):
     vars = make_vars(request)
-    return render(request, 'frontend/index.html', {'vars': vars, 'css': css_hash, 'version': settings.VERSION})
+    context = {
+        'vars': vars,
+        'css': css_hash,
+        'version': settings.VERSION
+    }
+    return render(request, 'frontend/index.html', context)
 
 def dev(request, radar):
     vars = make_vars(request, radar)
@@ -66,7 +68,11 @@ def control_radar(request, radar):
     show += '   ' + color_name_value('ip', vars['ip'])
     show += '   ' + color_name_value('user', vars['user'])
     logger.info(show)
-    return render(request, 'frontend/control.html', {'vars': vars, 'css': css_hash})
+    context = {
+        'vars': vars,
+        'css': css_hash
+    }
+    return render(request, 'frontend/control.html', context)
 
 def control(request):
     return control_radar(request, "demo")
@@ -86,8 +92,28 @@ def archive_radar_profile(request, radar, profileGL = False):
         raise Http404
     if profileGL:
         vars['profileGL'] = True
-    print(vars)
-    return render(request, 'frontend/archive.html', {'vars': vars, 'css': css_hash})
+    context = {
+        'vars': vars,
+        'css': css_hash
+    }
+    return render(request, 'frontend/archive.html', context)
+
+def archive_radar_profile(request, radar, profileGL):
+    vars = make_vars(request, radar)
+    show = colorize('views.archive()', 'green')
+    show += '   ' + color_name_value('radar', radar)
+    show += '   ' + color_name_value('ip', vars['ip'])
+    show += '   ' + color_name_value('user', vars['user'])
+    if settings.DEBUG and settings.VERBOSE:
+        show += '   ' + color_name_value('profileGL', profileGL)
+    logger.info(show)
+    if radar not in radars:
+        raise Http404
+    context = {
+        'vars': vars,
+        'css': css_hash
+    }
+    return render(request, 'frontend/archive.html', context)
 
 def archive_radar(request, radar):
     return archive_radar_profile(request, radar, False)
@@ -111,4 +137,17 @@ def robots_txt(request):
     return HttpResponse('\n'.join(lines), content_type='text/plain')
 
 def view(request, page):
-    return render(request, f'{page}.html', {'css': css_hash}, status=200)
+    context = {'css': css_hash}
+    return render(request, f'{page}.html', context, status=200)
+
+def page400(request, exception):
+    context = {'css': css_hash}
+    return render(request, f'400.html', context, status=400)
+
+def page403(request, exception):
+    context = {'css': css_hash}
+    return render(request, f'403.html', context, status=403)
+
+def page404(request, exception):
+    context = {'css': css_hash}
+    return render(request, f'404.html', context, status=404)
