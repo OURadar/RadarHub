@@ -75,9 +75,6 @@ export function App(props) {
     let theme = colors.name == "light" ? "dark" : "light";
     setDocumentTheme(theme);
   };
-  const handleLiveModeChange = (_, value) => {
-    archive.current.toggleLiveUpdate(value);
-  };
   const handleAccount = () => {
     setMessage("Fetching User Information ...");
     fetch("/profile/")
@@ -109,7 +106,7 @@ export function App(props) {
       });
   };
 
-  const handleNavigationChange = (_, newValue) => setPanel(newValue);
+  const handleNavigationChange = (_, value) => setPanel(value);
 
   const handleBrowserSelect = (k) => {
     console.log(`AppX.handleBrowserSelect()  k = ${k}`);
@@ -121,6 +118,9 @@ export function App(props) {
     archive.current.catchup();
     removeSplash();
   };
+
+  const handleLiveModeChange = (_, value) =>
+    archive.current.toggleLiveUpdate(value);
 
   const handleDoubleLeft = () => archive.current.navigateBackwardScan();
   const handleLeft = () => archive.current.navigateBackward();
@@ -150,6 +150,7 @@ export function App(props) {
   return (
     <div className="fullHeight">
       <TopBar
+        mode={colors.name}
         isMobile={true}
         message={message}
         ingest={archive.current}

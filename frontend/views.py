@@ -57,7 +57,8 @@ def index(request):
 
 def dev(request, radar):
     vars = make_vars(request, radar)
-    return render(request, 'frontend/dev.html', {'vars': vars, 'css': css_hash})
+    context = {'vars': vars, 'css': css_hash}
+    return render(request, 'frontend/dev.html', context)
 
 # Control
 
