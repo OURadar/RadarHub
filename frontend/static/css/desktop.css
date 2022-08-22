@@ -15,7 +15,6 @@ Copyright Boonleng Cheong
 }
 
 .notification {
-  max-width: calc(100vw - 200px);
   padding: 8px 80px;
 }
 

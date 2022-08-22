@@ -503,6 +503,7 @@ h3 {
   line-height: 24px;
   min-height: 50px;
   min-width: 260px;
+  max-width: 480px;
   position: fixed;
   text-align: center;
   top: 10px;

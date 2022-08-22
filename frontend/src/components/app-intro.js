@@ -12,6 +12,8 @@ import { detectMob } from "./common";
 import { TopBar } from "./topbar";
 import { HelpPage } from "./help";
 
+const version = require("/package.json").version;
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -48,6 +50,7 @@ class App extends Component {
           theme: makeTheme(mode),
         });
       });
+    document.getElementById("versionTag").innerHTML = `v${version}`;
   }
 
   render() {
