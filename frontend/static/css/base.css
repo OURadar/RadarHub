@@ -200,8 +200,8 @@ canvas {
   line-height: 1.8em;
 }
 .message {
-  font-family: LabelFont, "Helvetica Neue", Helvetica, Arial;
-  font-size: 28pt;
+  font-family: "Helvetica Neue", Helvetica, Arial, LabelFont;
+  font-size: 24pt;
   font-weight: 200;
   margin: 20px auto;
   line-height: 40pt;
@@ -824,8 +824,16 @@ a.radarButton:hover {
 }
 .logo {
   height: 15vh;
-  fill: #ddff00;
-  stroke: #ddff00;
+  fill: #bbff00;
+  stroke: #bbff00;
+}
+.seal {
+  height: 15vh;
+  fill: hsl(48, 100%, 50%);
+  stroke: white;
+}
+.glow {
+  filter: drop-shadow(0 0 7px hsla(173, 100%, 50%, 0.7));
 }
 .square15 {
   height: 15vh;
@@ -877,7 +885,6 @@ a.radarButton:hover {
 @keyframes breathe {
   15% {
     opacity: 1;
-    scale: 1;
   }
   25% {
     opacity: 0;
@@ -887,7 +894,36 @@ a.radarButton:hover {
   }
   85% {
     opacity: 1;
-    scale: 1;
+  }
+}
+
+.beacon {
+  animation: beacon 4s linear infinite;
+}
+@keyframes beacon {
+  15% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 0;
+  }
+  75% {
+    opacity: 0;
+  }
+  77% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 0;
+  }
+  79% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0;
+  }
+  85% {
+    opacity: 1;
   }
 }
 

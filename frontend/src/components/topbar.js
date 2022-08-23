@@ -51,7 +51,7 @@ function RightDash(props) {
   return (
     <div className="topbarComponent right">
       {!props.isMobile && (
-        <IconButton aria-label="Info" onClick={props.handleInfoRequest}>
+        <IconButton aria-label="Info" onClick={props.onInfoRequest}>
           <Info />
         </IconButton>
       )}

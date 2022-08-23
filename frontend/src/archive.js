@@ -12,7 +12,7 @@ const params = JSON.parse(text);
 const container = document.getElementById("app");
 const root = createRoot(container);
 
-const mobile = detectMob();
+const mobile = detectMob() || window.innerWidth < 600;
 if (mobile) {
   console.info("Using mobile ...");
   root.render(<AppMobile {...params} />);

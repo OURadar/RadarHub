@@ -148,13 +148,13 @@ export class App extends React.Component {
   }
 
   handleOverlayLoaded() {
-    console.log(`App6.handleOverlayLoaded()`);
+    console.log("App6.handleOverlayLoaded()");
     this.setState({ overlayLoaded: true });
     removeSplash();
   }
 
   handleThemeChange() {
-    console.log("app6.handleThemeChange()");
+    console.log("App6.handleThemeChange()");
     this.setState((state) => {
       let mode = state.colors.name == "light" ? "dark" : "light";
       document.documentElement.setAttribute("theme", mode);
@@ -166,6 +166,7 @@ export class App extends React.Component {
   }
 
   handleInfoOpen() {
+    console.log("App6.handleInfoOpen()");
     this.setState({ showHelp: true });
   }
 
