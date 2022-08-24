@@ -333,7 +333,7 @@ class Archive {
   }
 
   disableLiveUpdate() {
-    this.worker.postMessage({ task: "toggle", name: null });
+    this.worker.postMessage({ task: "toggle", name: "offline" });
   }
 
   enableLiveUpdate() {

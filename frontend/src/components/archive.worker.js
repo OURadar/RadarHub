@@ -675,7 +675,7 @@ function toggle(name) {
     } else if (state.update == "scan") {
       state.update = "always";
     } else {
-      state.update = null;
+      state.update = "offline";
     }
   } else {
     state.update = name;
@@ -690,7 +690,7 @@ function toggle(name) {
     );
   }
   if (state.update != update) {
-    if (state.update == null) {
+    if (state.update == "offline") {
       disconnect();
     } else {
       catchup();

@@ -16,7 +16,11 @@ export function Splash(props) {
   const [value, setValue] = React.useState(0);
   const progress = props.progress;
 
-  React.useEffect(() => setValue(progress), [progress]);
+  React.useEffect(() => {
+    if (value <= 1) {
+      setValue(progress);
+    }
+  }, [progress]);
 
   React.useEffect(() => {
     if (value === 1) {

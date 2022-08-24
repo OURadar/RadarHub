@@ -150,7 +150,8 @@ export class App extends React.Component {
 
   handleOverlayLoad(x = 1) {
     this.setState({ load: x });
-    if (x == 1) {
+    // console.log(`liveUpdate = ${this.archive.state.liveUpdate}`);
+    if (x == 1 && this.archive.state.liveUpdate === null) {
       this.archive.catchup();
     }
   }
