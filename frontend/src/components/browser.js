@@ -100,11 +100,6 @@ function Browser(props) {
     setValue(day);
   }, [day, hour, count]);
 
-  // View did mount
-  React.useEffect(() => {
-    props.archive.catchup();
-  }, []);
-
   const setDayHour = (newDay, newHour) => {
     if (
       isNaN(newDay) ||

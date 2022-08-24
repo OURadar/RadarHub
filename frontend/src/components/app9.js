@@ -2,7 +2,7 @@ import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
-import { removeSplash } from "./splash";
+import { Splash } from "./splash";
 import { colorDict, makeTheme } from "./theme";
 
 import { TopBar } from "./topbar";
@@ -24,6 +24,7 @@ const useConstructor = (callback = () => {}) => {
 };
 
 export function App(props) {
+  const [load, setLoad] = React.useState(0);
   const [panel, setPanel] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
@@ -83,15 +84,15 @@ export function App(props) {
   const handleNavigationChange = (_, value) => setPanel(value);
 
   const handleBrowserSelect = (k) => {
-    console.log(`App9.handleBrowserSelect()  k = ${k}`);
+    console.log(`AppX.handleBrowserSelect()  k = ${k}`);
     setTimeout(() => setPanel(0), 300);
   };
 
   const handleOverlayLoad = (x = 1) => {
-    // console.log(`App9.handleOverlayLoad()  x = ${x}`);
-    if (x == 1) {
+    console.log(`AppX.handleOverlayLoad()   x = ${x}`);
+    setLoad(x);
+    if (x === 1) {
       archive.current.catchup();
-      removeSplash();
     }
   };
 
@@ -124,44 +125,47 @@ export function App(props) {
   }, []);
 
   return (
-    <div className="fullHeight">
-      <TopBar
-        mode={colors.name}
-        isMobile={true}
-        message={message}
-        ingest={archive.current}
-        onAccount={handleAccount}
-        onThemeChange={handleThemeChange}
-      />
-      <ThemeProvider theme={theme}>
-        <div className={panel === 0 ? "active" : "inactive"}>
-          <Product
-            gravity="top"
-            colors={colors}
-            origin={props.origin}
-            sweep={archive.current?.data.sweep}
-            onOverlayLoad={handleOverlayLoad}
-          />
-          <MenuArrow
-            doubleLeftDisabled={disabled[0]}
-            leftDisabled={disabled[1]}
-            rightDisabled={disabled[2]}
-            doubleRightDisabled={disabled[3]}
-            onDoubleLeft={handleDoubleLeft}
-            onLeft={handleLeft}
-            onRight={handleRight}
-            onDoubleRight={handleDoubleRight}
-          />
-          <MenuUpdate
-            value={archive.current?.state.liveUpdate}
-            onChange={handleLiveModeChange}
-          />
-        </div>
-        <div className={panel === 1 ? "active" : "inactive"}>
-          <Browser archive={archive.current} onSelect={handleBrowserSelect} />
-        </div>
-        <Navigation value={panel} onChange={handleNavigationChange} />
-      </ThemeProvider>
+    <div>
+      <Splash progress={load} />
+      <div id="main" className="fullHeight">
+        <TopBar
+          mode={colors.name}
+          isMobile={true}
+          message={message}
+          ingest={archive.current}
+          onAccount={handleAccount}
+          onThemeChange={handleThemeChange}
+        />
+        <ThemeProvider theme={theme}>
+          <div className={panel === 0 ? "active" : "inactive"}>
+            <Product
+              gravity="top"
+              colors={colors}
+              origin={props.origin}
+              sweep={archive.current?.data.sweep}
+              onOverlayLoad={handleOverlayLoad}
+            />
+            <MenuArrow
+              doubleLeftDisabled={disabled[0]}
+              leftDisabled={disabled[1]}
+              rightDisabled={disabled[2]}
+              doubleRightDisabled={disabled[3]}
+              onDoubleLeft={handleDoubleLeft}
+              onLeft={handleLeft}
+              onRight={handleRight}
+              onDoubleRight={handleDoubleRight}
+            />
+            <MenuUpdate
+              value={archive.current?.state.liveUpdate}
+              onChange={handleLiveModeChange}
+            />
+          </div>
+          <div className={panel === 1 ? "active" : "inactive"}>
+            <Browser archive={archive.current} onSelect={handleBrowserSelect} />
+          </div>
+          <Navigation value={panel} onChange={handleNavigationChange} />
+        </ThemeProvider>
+      </div>
     </div>
   );
 }

@@ -276,22 +276,7 @@ canvas {
   opacity: 0;
   transition: opacity linear 0.3s;
 }
-.sectionHeader {
-  background-color: var(--gray6);
-  height: 24px;
-  padding: var(--half-padding) var(--padding);
-  user-select: none;
-}
-.sectionTitle {
-  display: inline-block;
-  font-size: 20px;
-  font-weight: 600;
-  height: 20px;
-  padding-left: 10px;
-  text-transform: capitalize;
-  user-select: none;
-  vertical-align: 5px;
-}
+
 .extraLarge {
   font-size: 60px;
   margin-bottom: 25px;
@@ -371,6 +356,25 @@ h3 {
   width: 100vw;
   overflow-x: hidden;
 }
+
+/* App */
+.sectionHeader {
+  background-color: var(--gray6);
+  height: 24px;
+  padding: var(--half-padding) var(--padding);
+  user-select: none;
+}
+.sectionTitle {
+  display: inline-block;
+  font-size: 20px;
+  font-weight: 600;
+  height: 20px;
+  padding-left: 10px;
+  text-transform: capitalize;
+  user-select: none;
+  vertical-align: 5px;
+}
+
 .sampleContainer {
   margin: -5px;
 }
@@ -538,7 +542,7 @@ h3 {
 .scrollable {
   overflow-y: scroll;
 }
-.transcend {
+#main {
   background-color: var(--background-color);
   overflow: hidden;
   position: fixed;

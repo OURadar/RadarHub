@@ -126,10 +126,8 @@ export function App(props) {
 
   return (
     <div>
-      {/* {load < 3 && <Splash progress={load} />}
-       */}
       <Splash progress={load} />
-      <div className="fullHeight transcend">
+      <div id="main" className="fullHeight">
         <TopBar
           mode={colors.name}
           isMobile={true}
