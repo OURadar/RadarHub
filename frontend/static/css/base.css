@@ -538,30 +538,7 @@ h3 {
 .scrollable {
   overflow-y: scroll;
 }
-
-#loading {
-  background-color: var(--background-color);
-  color: white;
-  fill: white;
-  height: 100vh;
-  position: absolute;
-  text-align: center;
-  padding-top: 25vh;
-  transition: opacity 0.4s;
-  width: 100vw;
-}
-#backdrop {
-  background-image: var(--background-image);
-  background-color: var(--background-color);
-  height: 100vh;
-}
-#versionTag {
-  bottom: 5vh;
-  position: fixed;
-  text-align: center;
-  width: 100%;
-}
-#app {
+.transcend {
   background-color: var(--background-color);
   overflow: hidden;
   position: fixed;
@@ -571,8 +548,29 @@ h3 {
   transition: opacity 0.4s;
   z-index: 0;
 }
-#backdrop {
+#splash {
+  background-color: var(--background-color);
+  color: white;
+  fill: white;
+  height: 100vh;
+  position: absolute;
+  text-align: center;
+  padding-top: 25vh;
   transition: opacity 0.4s;
+  width: 100vw;
+  z-index: 100;
+}
+#backdrop {
+  background-image: var(--background-image);
+  background-color: var(--background-color);
+  height: 100vh;
+  transition: opacity 0.4s;
+}
+#versionTag {
+  bottom: 5vh;
+  position: fixed;
+  text-align: center;
+  width: 100%;
 }
 #topbar {
   background: var(--background-gradient);

@@ -7,42 +7,9 @@
 {% endblock %}
 
 {% block body %}
-<div id="loading">
-  <svg class="logo50 spin" version="1.1" viewBox="0 0 96 96" stroke="white" fill="none">
-    <g stroke-width="6" fill="none">
-      <circle cx="48" cy="48" r="25" />
-      <circle cx="48" cy="84" r="9" />
-      <circle cx="48" cy="84" r="9" transform="rotate(120,48,48)" />
-      <circle cx="48" cy="84" r="9" transform="rotate(240,48,48)" />
-    </g>
-    <g stroke-linecap="round" stroke-width="10">
-      <path d="M48,5l0,15" />
-      <path d="M48,5l0,15" transform="rotate(120,48,48)" />
-      <path d="M48,5l0,15" transform="rotate(240,48,48)" />
-    </g>
-  </svg>
-  <br />
-  <br />
-  Loading ...
-</div>
-<div id="app" class="hide"></div>
+<div id="app"></div>
 {% endblock %}
 
 {% block extra_html %}
   {% block main_js %}{% endblock %}
-  <script>
-    // Force transition removing the splash screen after 6942 ms
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        let o = document.getElementById('loading')
-        if (o) {
-          o.style.opacity = 0
-          setTimeout(() => {
-            document.getElementById('loading')?.remove()
-            document.getElementById("app").classList.remove("hide")
-          }, 300);
-        }
-      }, 6942)
-    })
-  </script>
 {% endblock %}

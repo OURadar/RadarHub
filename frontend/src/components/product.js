@@ -73,7 +73,7 @@ class Product extends GLView {
       if (this.assets.data != null) this.assets.complete = true;
       this.loadDashboard();
     });
-    this.overlay.onload = props.onOverlayLoaded;
+    this.overlay.onLoad = props.onOverlayLoad;
   }
 
   static defaultProps = {
@@ -84,7 +84,9 @@ class Product extends GLView {
       latitude: 35.25527,
     },
     gravity: "right",
-    onOverlayLoaded: () => {},
+    onOverlayLoad: () => {
+      console.log("Product.onOverlayLoad()");
+    },
   };
 
   makeStyle(symbol = "Z") {

@@ -38,7 +38,7 @@ export class App extends React.Component {
     this.handleInfoOpen = this.handleInfoOpen.bind(this);
     this.handleInfoClose = this.handleInfoClose.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
-    this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
+    this.handleOverlayLoad = this.handleOverlayLoad.bind(this);
     this.handleLiveModeChange = this.handleLiveModeChange.bind(this);
     document.documentElement.setAttribute("theme", this.state.colors.name);
     window.addEventListener("keydown", (e) => (this.state.key = e.key));
@@ -102,7 +102,7 @@ export class App extends React.Component {
             debug={this.props.debug}
             showStats={false}
             profileGL={this.props.profileGL}
-            onOverlayLoaded={this.handleOverlayLoaded}
+            onOverlayLoad={this.handleOverlayLoad}
           />
         </ThemeProvider>
       );
@@ -124,7 +124,7 @@ export class App extends React.Component {
               debug={this.props.debug}
               showStats={false}
               profileGL={this.props.profileGL}
-              onOverlayLoaded={this.handleOverlayLoaded}
+              onOverlayLoad={this.handleOverlayLoad}
             />
           }
           right={
@@ -147,8 +147,8 @@ export class App extends React.Component {
     );
   }
 
-  handleOverlayLoaded() {
-    console.log("App6.handleOverlayLoaded()");
+  handleOverlayLoad() {
+    console.log("App6.handleOverlayLoad()");
     this.setState({ overlayLoaded: true });
     removeSplash();
   }
