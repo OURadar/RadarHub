@@ -237,10 +237,12 @@ if 'radars' in settings:
 else:
     RADARS = {
         'PX-': {
+            'name': 'PX-1000',
             'folder': 'PX1000',
             'summary': 'E4.0',
         },
         'RAXPOL-': {
+            'name': 'RaXPol',
             'folder': 'RaXPol',
             'summary': 'E4.0',
         }
