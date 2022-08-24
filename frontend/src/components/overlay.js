@@ -40,7 +40,7 @@ class Overlay {
     this.worker.onmessage = this.handleMessage;
     this.workerReady = false;
 
-    this.onload = () => {};
+    this.onLoad = () => {};
 
     this.tic = 0;
   }
@@ -163,9 +163,10 @@ class Overlay {
         // this.loadDashboard();
         this.loadLabels();
       }
+      this.onLoad(k / overlays.length);
     }
     this.loaded = true;
-    this.onload();
+    this.onLoad();
   }
 
   loadLabels() {

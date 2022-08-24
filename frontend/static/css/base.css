@@ -276,22 +276,7 @@ canvas {
   opacity: 0;
   transition: opacity linear 0.3s;
 }
-.sectionHeader {
-  background-color: var(--gray6);
-  height: 24px;
-  padding: var(--half-padding) var(--padding);
-  user-select: none;
-}
-.sectionTitle {
-  display: inline-block;
-  font-size: 20px;
-  font-weight: 600;
-  height: 20px;
-  padding-left: 10px;
-  text-transform: capitalize;
-  user-select: none;
-  vertical-align: 5px;
-}
+
 .extraLarge {
   font-size: 60px;
   margin-bottom: 25px;
@@ -371,6 +356,25 @@ h3 {
   width: 100vw;
   overflow-x: hidden;
 }
+
+/* App */
+.sectionHeader {
+  background-color: var(--gray6);
+  height: 24px;
+  padding: var(--half-padding) var(--padding);
+  user-select: none;
+}
+.sectionTitle {
+  display: inline-block;
+  font-size: 20px;
+  font-weight: 600;
+  height: 20px;
+  padding-left: 10px;
+  text-transform: capitalize;
+  user-select: none;
+  vertical-align: 5px;
+}
+
 .sampleContainer {
   margin: -5px;
 }
@@ -538,30 +542,7 @@ h3 {
 .scrollable {
   overflow-y: scroll;
 }
-
-#loading {
-  background-color: var(--background-color);
-  color: white;
-  fill: white;
-  height: 100vh;
-  position: absolute;
-  text-align: center;
-  padding-top: 25vh;
-  transition: opacity 0.4s;
-  width: 100vw;
-}
-#backdrop {
-  background-image: var(--background-image);
-  background-color: var(--background-color);
-  height: 100vh;
-}
-#versionTag {
-  bottom: 5vh;
-  position: fixed;
-  text-align: center;
-  width: 100%;
-}
-#app {
+#main {
   background-color: var(--background-color);
   overflow: hidden;
   position: fixed;
@@ -571,8 +552,37 @@ h3 {
   transition: opacity 0.4s;
   z-index: 0;
 }
-#backdrop {
+#splash {
+  background-color: var(--background-color);
+  color: white;
+  fill: white;
+  height: 100vh;
+  position: absolute;
+  text-align: center;
+  padding-top: 30vh;
   transition: opacity 0.4s;
+  width: 100vw;
+  z-index: 100;
+}
+#splashLogo {
+  height: 72px;
+}
+@media screen and (min-width: 640px) {
+  #splashLogo {
+    height: 128px;
+  }
+}
+#backdrop {
+  background-image: var(--background-image);
+  background-color: var(--background-color);
+  height: 100vh;
+  transition: opacity 0.4s;
+}
+#versionTag {
+  bottom: 5vh;
+  position: fixed;
+  text-align: center;
+  width: 100%;
 }
 #topbar {
   background: var(--background-gradient);

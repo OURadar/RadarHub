@@ -9,12 +9,12 @@ import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 import { colorDict, makeTheme } from "./theme";
-import { removeSplash } from "./splash";
 import { detectMob } from "./common";
-import { Layout } from "./layout";
-import { Browser } from "./browser";
-import { Product } from "./product";
+import { Splash } from "./splash";
 import { TopBar } from "./topbar";
+import { Layout } from "./layout";
+import { Product } from "./product";
+import { Browser } from "./browser";
 import { Archive } from "./archive";
 import { HelpPage } from "./help";
 import { MenuUpdate } from "./menu-update";
@@ -26,7 +26,7 @@ export class App extends React.Component {
       colors: colorDict(),
       theme: makeTheme(),
       time: new Date("2013-05-20T19:00"),
-      overlayLoaded: false,
+      load: 0,
       showHelp: false,
       key: "",
     };
@@ -38,7 +38,7 @@ export class App extends React.Component {
     this.handleInfoOpen = this.handleInfoOpen.bind(this);
     this.handleInfoClose = this.handleInfoClose.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
-    this.handleOverlayLoaded = this.handleOverlayLoaded.bind(this);
+    this.handleOverlayLoad = this.handleOverlayLoad.bind(this);
     this.handleLiveModeChange = this.handleLiveModeChange.bind(this);
     document.documentElement.setAttribute("theme", this.state.colors.name);
     window.addEventListener("keydown", (e) => (this.state.key = e.key));
@@ -97,60 +97,62 @@ export class App extends React.Component {
         <ThemeProvider theme={this.state.theme}>
           <TopBar isMobile={true} />
           <Product
-            sweep={this.archive.data.sweep}
             colors={this.state.colors}
-            debug={this.props.debug}
-            showStats={false}
-            profileGL={this.props.profileGL}
-            onOverlayLoaded={this.handleOverlayLoaded}
+            onOverlayLoad={this.handleOverlayLoad}
           />
         </ThemeProvider>
       );
     return (
-      <ThemeProvider theme={this.state.theme}>
-        <TopBar
-          mode={this.state.colors.name}
-          ingest={this.archive}
-          onThemeChange={this.handleThemeChange}
-          onInfoRequest={this.handleInfoOpen}
-        />
-        <Layout
-          name="split-archive-width"
-          left={
-            <Product
-              origin={this.props.origin}
-              sweep={this.archive.data.sweep}
-              colors={this.state.colors}
-              debug={this.props.debug}
-              showStats={false}
-              profileGL={this.props.profileGL}
-              onOverlayLoaded={this.handleOverlayLoaded}
+      <div>
+        <Splash progress={this.state.load} />
+        <div id="main" className="fullHeight">
+          <TopBar
+            mode={this.state.colors.name}
+            ingest={this.archive}
+            onThemeChange={this.handleThemeChange}
+            onInfoRequest={this.handleInfoOpen}
+          />
+          <ThemeProvider theme={this.state.theme}>
+            <Layout
+              name="split-archive-width"
+              left={
+                <Product
+                  origin={this.props.origin}
+                  sweep={this.archive.data.sweep}
+                  colors={this.state.colors}
+                  debug={this.props.debug}
+                  showStats={false}
+                  profileGL={this.props.profileGL}
+                  onOverlayLoad={this.handleOverlayLoad}
+                />
+              }
+              right={
+                <Browser
+                  archive={this.archive}
+                  radar={this.props.radar}
+                  debug={this.props.debug}
+                />
+              }
             />
-          }
-          right={
-            <Browser
-              archive={this.archive}
-              radar={this.props.radar}
-              debug={this.props.debug}
+            <MenuUpdate
+              value={this.archive.state.liveUpdate}
+              onChange={this.handleLiveModeChange}
             />
-          }
-        />
-        <MenuUpdate
-          value={this.archive.state.liveUpdate}
-          onChange={this.handleLiveModeChange}
-        />
-        <HelpPage
-          open={this.state.showHelp}
-          handleClose={this.handleInfoClose}
-        />
-      </ThemeProvider>
+            <HelpPage
+              open={this.state.showHelp}
+              handleClose={this.handleInfoClose}
+            />
+          </ThemeProvider>
+        </div>
+      </div>
     );
   }
 
-  handleOverlayLoaded() {
-    console.log("App6.handleOverlayLoaded()");
-    this.setState({ overlayLoaded: true });
-    removeSplash();
+  handleOverlayLoad(x = 1) {
+    this.setState({ load: x });
+    if (x == 1) {
+      this.archive.catchup();
+    }
   }
 
   handleThemeChange() {

@@ -2,19 +2,13 @@ import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
-import BottomNavigation from "@mui/material/BottomNavigation";
-import BottomNavigationAction from "@mui/material/BottomNavigationAction";
-
-import RadarIcon from "@mui/icons-material/Radar";
-import EventNoteIcon from "@mui/icons-material/EventNote";
-import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
-import GamepadIcon from "@mui/icons-material/Gamepad";
-
-import { removeSplash } from "./splash";
+import { Splash } from "./splash";
 import { colorDict, makeTheme } from "./theme";
+
 import { TopBar } from "./topbar";
 import { Browser } from "./browser-mobile";
 import { Product } from "./product";
+import { Navigation } from "./navigation";
 
 import { Archive } from "./archive";
 import { MenuUpdate } from "./menu-update";
@@ -29,27 +23,8 @@ const useConstructor = (callback = () => {}) => {
   used.current = true;
 };
 
-function Navigation(props) {
-  return (
-    <BottomNavigation
-      id="navbar"
-      className="blur"
-      value={props.value}
-      onChange={props.onChange}
-      showLabels
-    >
-      <BottomNavigationAction label="View" icon={<RadarIcon />} />
-      <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
-    </BottomNavigation>
-  );
-}
-
-Navigation.defaultProps = {
-  value: 0,
-  onChange: () => console.log("Navigation.onChange"),
-};
-
 export function App(props) {
+  const [load, setLoad] = React.useState(0);
   const [panel, setPanel] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
@@ -113,10 +88,11 @@ export function App(props) {
     setTimeout(() => setPanel(0), 300);
   };
 
-  const handleOverlayLoaded = () => {
-    console.log(`AppX.handleOverlayLoaded()`);
-    archive.current.catchup();
-    removeSplash();
+  const handleOverlayLoad = (x = 1) => {
+    setLoad(x);
+    if (x === 1) {
+      archive.current.catchup();
+    }
   };
 
   const handleLiveModeChange = (_, value) =>
@@ -148,44 +124,47 @@ export function App(props) {
   }, []);
 
   return (
-    <div className="fullHeight">
-      <TopBar
-        mode={colors.name}
-        isMobile={true}
-        message={message}
-        ingest={archive.current}
-        onAccount={handleAccount}
-        onThemeChange={handleThemeChange}
-      />
-      <ThemeProvider theme={theme}>
-        <div className={panel === 0 ? "active" : "inactive"}>
-          <Product
-            gravity="top"
-            colors={colors}
-            origin={props.origin}
-            sweep={archive.current?.data.sweep}
-            onOverlayLoaded={handleOverlayLoaded}
-          />
-          <MenuArrow
-            doubleLeftDisabled={disabled[0]}
-            leftDisabled={disabled[1]}
-            rightDisabled={disabled[2]}
-            doubleRightDisabled={disabled[3]}
-            onDoubleLeft={handleDoubleLeft}
-            onLeft={handleLeft}
-            onRight={handleRight}
-            onDoubleRight={handleDoubleRight}
-          />
-          <MenuUpdate
-            value={archive.current?.state.liveUpdate}
-            onChange={handleLiveModeChange}
-          />
-        </div>
-        <div className={panel === 1 ? "active" : "inactive"}>
-          <Browser archive={archive.current} onSelect={handleBrowserSelect} />
-        </div>
-        <Navigation value={panel} onChange={handleNavigationChange} />
-      </ThemeProvider>
+    <div>
+      <Splash progress={load} />
+      <div id="main" className="fullHeight">
+        <TopBar
+          mode={colors.name}
+          isMobile={true}
+          message={message}
+          ingest={archive.current}
+          onAccount={handleAccount}
+          onThemeChange={handleThemeChange}
+        />
+        <ThemeProvider theme={theme}>
+          <div className={panel === 0 ? "active" : "inactive"}>
+            <Product
+              gravity="top"
+              colors={colors}
+              origin={props.origin}
+              sweep={archive.current?.data.sweep}
+              onOverlayLoad={handleOverlayLoad}
+            />
+            <MenuArrow
+              doubleLeftDisabled={disabled[0]}
+              leftDisabled={disabled[1]}
+              rightDisabled={disabled[2]}
+              doubleRightDisabled={disabled[3]}
+              onDoubleLeft={handleDoubleLeft}
+              onLeft={handleLeft}
+              onRight={handleRight}
+              onDoubleRight={handleDoubleRight}
+            />
+            <MenuUpdate
+              value={archive.current?.state.liveUpdate}
+              onChange={handleLiveModeChange}
+            />
+          </div>
+          <div className={panel === 1 ? "active" : "inactive"}>
+            <Browser archive={archive.current} onSelect={handleBrowserSelect} />
+          </div>
+          <Navigation value={panel} onChange={handleNavigationChange} />
+        </ThemeProvider>
+      </div>
     </div>
   );
 }
