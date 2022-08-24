@@ -26,12 +26,11 @@ export function Splash(props) {
     }
   }, [value]);
 
-  const classes = value === 2 ? "hide" : false;
   if (value == 3) {
     return;
   }
   return (
-    <div id="splash" className={classes}>
+    <div id="splash" className={value === 2 ? "hide" : undefined}>
       <svg
         id="splashLogo"
         version="1.1"
