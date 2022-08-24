@@ -641,6 +641,7 @@ h3 {
   background-color: var(--green);
 }
 .unknown,
+.offline,
 .ready {
   background-color: var(--orange);
 }

@@ -90,7 +90,7 @@ export function App(props) {
 
   const handleOverlayLoad = (x = 1) => {
     setLoad(x);
-    if (x === 1) {
+    if (x == 1 && archive.current.state.liveUpdate === null) {
       archive.current.catchup();
     }
   };
