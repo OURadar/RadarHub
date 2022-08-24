@@ -6,8 +6,9 @@
 //
 
 class Ingest {
-  constructor(radar) {
+  constructor(radar, label = "") {
     this.radar = radar;
+    this.label = label == "" ? radar : label;
     this.ready = true;
     this.data = {
       t: null,

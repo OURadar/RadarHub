@@ -13,6 +13,7 @@ from .archives import location
 logger = logging.getLogger('frontend')
 
 radars = [x['folder'].lower() for x in settings.RADARS.values()]
+radar_names = dict([(x['folder'].lower(), x['name']) for x in settings.RADARS.values()])
 default_radar = radars[0]
 
 lines = []
@@ -28,7 +29,9 @@ if settings.DEBUG:
 
 #
 
-def make_vars(request, radar='px1000'):
+def make_vars(request, radar=default_radar):
+    if radar not in radar_names:
+        raise Http404
     user = get_user(request)
     try:
         email = user.email
@@ -41,7 +44,8 @@ def make_vars(request, radar='px1000'):
         'css_hash': css_hash,
         'version': settings.VERSION,
         'origin': origin,
-        'radar': radar
+        'radar': radar,
+        'name': radar_names[radar]
     }
 
 #

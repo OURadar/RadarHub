@@ -87,7 +87,7 @@ function RightDash(props) {
 
 function LeftDash(props) {
   const ok = props.ingest !== undefined && props.ingest !== null;
-  const name = ok ? props.ingest.radar : "";
+  const name = ok ? props.ingest.label : "";
   const online = (ok && props.ingest.state.liveUpdate) || "unknown";
   const message = ok ? props.ingest.message : "";
   // const message = "PX-20200202-123456-E1.0-Z loaded and ready";

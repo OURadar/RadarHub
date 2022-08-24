@@ -31,7 +31,7 @@ export class App extends React.Component {
       key: "",
     };
     this.isMobile = detectMob();
-    this.archive = new Archive(props.radar);
+    this.archive = new Archive(props.radar, props.name);
     this.archive.onUpdate = (_dontcare) => {
       this.forceUpdate();
     };

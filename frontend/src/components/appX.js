@@ -109,7 +109,7 @@ export function App(props) {
       .getElementById("device-style")
       .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
 
-    archive.current = new Archive(props.radar);
+    archive.current = new Archive(props.radar, props.name);
     archive.current.onUpdate = handleUpdate;
     archive.current.onLoad = handleLoad;
   });

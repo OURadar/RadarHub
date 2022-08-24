@@ -54,7 +54,8 @@ class App extends Component {
           theme: makeTheme(mode),
         });
       });
-    document.getElementById("versionTag").innerHTML = `v${version}`;
+    document.getElementById("versionTag").innerHTML =
+      `v${version}` + ` <div class="lite">(${this.props.css_hash})</div>`;
   }
 
   render() {

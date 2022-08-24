@@ -770,6 +770,11 @@ a.radarButton:hover {
   transition: background-color linear 0.17s;
 }
 
+.lite {
+  color: var(--gray4);
+  font-size: 0.7em;
+  vertical-align: middle;
+}
 .subtle {
   background-color: rgba(255, 255, 255, 0.15);
   color: white;
