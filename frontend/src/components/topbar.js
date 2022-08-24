@@ -15,6 +15,8 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { RadarHubIcon } from "./radarhub-icon";
 import { Notification } from "./notification";
 
+import { Notification as Notification2 } from "./notification-v2";
+
 const topbarTheme = createTheme({
   components: {
     MuiSvgIcon: {
@@ -123,6 +125,7 @@ export function TopBar(props) {
       </div>
       <Notification message={props.ingest?.response || ""} />
       <Notification message={props.message} />
+      <Notification2 message="Hello" />
     </ThemeProvider>
   );
 }
