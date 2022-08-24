@@ -559,10 +559,18 @@ h3 {
   height: 100vh;
   position: absolute;
   text-align: center;
-  padding-top: 25vh;
+  padding-top: 30vh;
   transition: opacity 0.4s;
   width: 100vw;
   z-index: 100;
+}
+#splashLogo {
+  height: 72px;
+}
+@media screen and (min-width: 640px) {
+  #splashLogo {
+    height: 128px;
+  }
 }
 #backdrop {
   background-image: var(--background-image);

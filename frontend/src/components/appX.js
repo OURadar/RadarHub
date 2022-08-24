@@ -125,7 +125,7 @@ export function App(props) {
   }, []);
 
   return (
-    <div>
+    <ThemeProvider theme={theme}>
       <Splash progress={load} />
       <div id="main" className="fullHeight">
         <TopBar
@@ -136,37 +136,35 @@ export function App(props) {
           onAccount={handleAccount}
           onThemeChange={handleThemeChange}
         />
-        <ThemeProvider theme={theme}>
-          <div className={panel === 0 ? "active" : "inactive"}>
-            <Product
-              gravity="top"
-              colors={colors}
-              origin={props.origin}
-              sweep={archive.current?.data.sweep}
-              onOverlayLoad={handleOverlayLoad}
-            />
-            <MenuArrow
-              doubleLeftDisabled={disabled[0]}
-              leftDisabled={disabled[1]}
-              rightDisabled={disabled[2]}
-              doubleRightDisabled={disabled[3]}
-              onDoubleLeft={handleDoubleLeft}
-              onLeft={handleLeft}
-              onRight={handleRight}
-              onDoubleRight={handleDoubleRight}
-            />
-            <MenuUpdate
-              value={archive.current?.state.liveUpdate}
-              onChange={handleLiveModeChange}
-            />
-          </div>
-          <div className={panel === 1 ? "active" : "inactive"}>
-            <Browser archive={archive.current} onSelect={handleBrowserSelect} />
-          </div>
-          <Navigation value={panel} onChange={handleNavigationChange} />
-        </ThemeProvider>
+        <div className={panel === 0 ? "active" : "inactive"}>
+          <Product
+            gravity="top"
+            colors={colors}
+            origin={props.origin}
+            sweep={archive.current?.data.sweep}
+            onOverlayLoad={handleOverlayLoad}
+          />
+          <MenuArrow
+            doubleLeftDisabled={disabled[0]}
+            leftDisabled={disabled[1]}
+            rightDisabled={disabled[2]}
+            doubleRightDisabled={disabled[3]}
+            onDoubleLeft={handleDoubleLeft}
+            onLeft={handleLeft}
+            onRight={handleRight}
+            onDoubleRight={handleDoubleRight}
+          />
+          <MenuUpdate
+            value={archive.current?.state.liveUpdate}
+            onChange={handleLiveModeChange}
+          />
+        </div>
+        <div className={panel === 1 ? "active" : "inactive"}>
+          <Browser archive={archive.current} onSelect={handleBrowserSelect} />
+        </div>
+        <Navigation value={panel} onChange={handleNavigationChange} />
       </div>
-    </div>
+    </ThemeProvider>
   );
 }
 

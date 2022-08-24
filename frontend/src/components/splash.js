@@ -1,10 +1,13 @@
 import React from "react";
 
+import Box from "@mui/material/Box";
+import LinearProgress from "@mui/material/LinearProgress";
+
 export function removeSplash() {
-  let o = document.getElementById("loading");
+  let o = document.getElementById("splash");
   if (o) o.style.opacity = 0;
   setTimeout(() => {
-    document.getElementById("loading")?.remove();
+    document.getElementById("splash")?.remove();
     document.getElementById("app").classList.remove("hide");
   }, 500);
 }
@@ -17,20 +20,20 @@ export function Splash(props) {
 
   React.useEffect(() => {
     if (value === 1) {
-      setTimeout(() => setValue(2), 100);
+      setTimeout(() => setValue(2), 300);
     } else if (value === 2) {
       setTimeout(() => setValue(3), 600);
     }
   }, [value]);
 
-  const classes = value === 2 ? "hide" : "";
+  const classes = value === 2 ? "hide" : false;
   if (value == 3) {
     return;
   }
   return (
     <div id="splash" className={classes}>
       <svg
-        className="logo50 spin"
+        id="splashLogo"
         version="1.1"
         viewBox="0 0 96 96"
         stroke="white"
@@ -48,9 +51,14 @@ export function Splash(props) {
           <path d="M48,5l0,15" transform="rotate(240,48,48)" />
         </g>
       </svg>
-      <br />
-      <br />
-      Loading ... {(props.progress * 100).toFixed(0)}%
+      <Box sx={{ width: "42%", margin: "40px auto", maxWidth: "300px" }}>
+        <LinearProgress
+          color="inherit"
+          variant="determinate"
+          value={props.progress * 100}
+          sx={{ borderRadius: "2px" }}
+        />
+      </Box>
     </div>
   );
 }
