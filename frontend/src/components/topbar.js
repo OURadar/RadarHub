@@ -112,11 +112,22 @@ function LeftDash(props) {
   );
 }
 
+function getMessage() {
+  const randomIndex = Math.floor((Math.random() * 100) % messages.length);
+  return messages[randomIndex];
+}
+
 // Supply props with
 // - ingest - real-time data ingest
 // - xxx - archived data ingest
 
 export function TopBar(props) {
+  const [message, setMessage] = React.useState("one");
+  React.useEffect(() => {
+    setInterval(() => {
+      setMessage(getMessage());
+    }, 5000);
+  }, []);
   return (
     <ThemeProvider theme={topbarTheme}>
       <div id="topbar" role="banner" className="blur">
@@ -125,7 +136,7 @@ export function TopBar(props) {
       </div>
       <Notification message={props.ingest?.response || ""} />
       <Notification message={props.message} />
-      <Notification2 message="Hello" />
+      <Notification2 message={message} />
     </ThemeProvider>
   );
 }
@@ -144,3 +155,10 @@ TopBar.defaultProps = {
     console.log("Topbar.onAccount()");
   },
 };
+
+const messages = [
+  "New Reciple",
+  "Radar Online",
+  "Maintenance",
+  "Archiving ...",
+];
