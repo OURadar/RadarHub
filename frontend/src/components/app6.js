@@ -19,6 +19,8 @@ import { Archive } from "./archive";
 import { HelpPage } from "./help";
 import { MenuUpdate } from "./menu-update";
 
+const emojis = require("emoji-name-map");
+
 export class App extends React.Component {
   constructor(props) {
     super(props);
@@ -28,6 +30,7 @@ export class App extends React.Component {
       time: new Date("2013-05-20T19:00"),
       load: 0,
       showHelp: false,
+      message: "",
       key: "",
     };
     this.isMobile = detectMob();
@@ -35,6 +38,7 @@ export class App extends React.Component {
     this.archive.onUpdate = (_dontcare) => {
       this.forceUpdate();
     };
+    this.handleAccount = this.handleAccount.bind(this);
     this.handleInfoOpen = this.handleInfoOpen.bind(this);
     this.handleInfoClose = this.handleInfoClose.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
@@ -109,8 +113,10 @@ export class App extends React.Component {
           <TopBar
             mode={this.state.colors.name}
             ingest={this.archive}
+            message={this.state.message}
             onThemeChange={this.handleThemeChange}
             onInfoRequest={this.handleInfoOpen}
+            onAccount={this.handleAccount}
           />
           <ThemeProvider theme={this.state.theme}>
             <Layout
@@ -154,6 +160,40 @@ export class App extends React.Component {
     if (x == 1 && this.archive.state.liveUpdate === null) {
       this.archive.catchup();
     }
+  }
+
+  handleAccount() {
+    console.log("App.handleAccount()");
+    this.setState({ message: "Fetching User Information ..." });
+    fetch("/profile/")
+      .then((response) => {
+        if (response.status == 200) {
+          response.json().then(({ user, ip, emoji }) => {
+            let title = user == "None" ? "Anonymous User" : `Hello ${user}`;
+            let symbol = emojis.get(emoji) || "";
+            this.setState({
+              message:
+                user == "None"
+                  ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
+                    window.location.pathname +
+                    "'>Sign In Here</a><div class='emotion'>⛅️</div>"
+                  : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`,
+            });
+            setTimeout(() => this.setState({ message: "" }), 3500);
+          });
+        } else {
+          this.setState({
+            message: `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`,
+          });
+        }
+      })
+      .catch((_error) => {
+        this.setState({
+          message: `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`,
+        });
+        console.error(_error);
+        setTimeout(() => setMessage(""), 3500);
+      });
   }
 
   handleThemeChange() {

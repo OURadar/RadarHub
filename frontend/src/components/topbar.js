@@ -15,8 +15,6 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { RadarHubIcon } from "./radarhub-icon";
 import { Notification } from "./notification";
 
-import { Notification as Notification2 } from "./notification-v2";
-
 const topbarTheme = createTheme({
   components: {
     MuiSvgIcon: {
@@ -28,23 +26,6 @@ const topbarTheme = createTheme({
     },
   },
 });
-
-class StatusBody extends Notification {
-  render() {
-    return (
-      <div id="statusBody" className={`${this.state.class} blur`}>
-        {this.state.message}
-      </div>
-    );
-  }
-}
-
-function StatusBodyQuick(props) {
-  if (props.message.length > 1) {
-    return <div id="statusBody">{props.message}</div>;
-  }
-  return <div className="invisible"></div>;
-}
 
 function RightDash(props) {
   const [fullscreen, setFullscreen] = React.useState(
@@ -106,7 +87,7 @@ function LeftDash(props) {
       <div className="statusWrapper">
         <div className={online} id="statusLed"></div>
         <div id="radarName">{`${name}`}</div>
-        <StatusBody message={message} />
+        <Notification id="statusBody" message={message} timeout={10000} />
       </div>
     </div>
   );
@@ -114,6 +95,7 @@ function LeftDash(props) {
 
 function getMessage() {
   const randomIndex = Math.floor((Math.random() * 100) % messages.length);
+  console.log(randomIndex);
   return messages[randomIndex];
 }
 
@@ -122,11 +104,18 @@ function getMessage() {
 // - xxx - archived data ingest
 
 export function TopBar(props) {
-  const [message, setMessage] = React.useState("one");
+  const [message, setMessage] = React.useState(props.message);
   React.useEffect(() => {
-    setInterval(() => {
-      setMessage(getMessage());
-    }, 5000);
+    if (props.test == 1) {
+      let k = 0;
+      setInterval(() => {
+        if (k % 2 == 0) setMessage("");
+        else setMessage(getMessage());
+        k += 1;
+      }, 1000);
+    } else if (props.test == 2) {
+      setInterval(() => setMessage(getMessage()), 2000);
+    }
   }, []);
   return (
     <ThemeProvider theme={topbarTheme}>
@@ -134,9 +123,14 @@ export function TopBar(props) {
         <LeftDash {...props} />
         <RightDash {...props} onAccount={props.onAccount} />
       </div>
-      <Notification message={props.ingest?.response || ""} />
-      <Notification message={props.message} />
-      <Notification2 message={message} />
+      {props.test > 0 && <Notification message={message} />}
+      <Notification id="appMessage" message={props.message} />
+      {!props.isMobile && (
+        <Notification
+          id="ingestResponse"
+          message={props.ingest?.response || ""}
+        />
+      )}
     </ThemeProvider>
   );
 }
@@ -145,6 +139,8 @@ TopBar.defaultProps = {
   ingest: null,
   mode: "light",
   message: "",
+  isMobile: false,
+  test: 0,
   onThemeChange: () => {
     console.log("Topbar.onThemeChange()");
   },

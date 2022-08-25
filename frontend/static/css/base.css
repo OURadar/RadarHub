@@ -499,22 +499,27 @@ h3 {
 
 .notification {
   background-color: var(--overlay-background);
-  border: solid 1px var(--border-accent);
   border-radius: var(--button-border-radius);
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+#nora,
+#appMessage,
+#ingestResponse {
+  border: solid 1px var(--border-accent);
   color: var(--system-foreground);
   font-size: 16px;
   left: 50%;
   line-height: 24px;
-  min-height: 50px;
-  min-width: 260px;
-  max-width: 480px;
+  padding: 24px 40px;
   position: fixed;
   text-align: center;
   top: 10px;
   transform: translate(-50%, 0);
-  vertical-align: middle;
   z-index: 69;
 }
+
 .emotion {
   font-size: 64px;
   display: block;
@@ -651,10 +656,9 @@ h3 {
   padding: 0 10px;
 }
 #statusBody {
-  background-color: hsla(193, 55%, 44%, 0.817);
-  border-radius: var(--button-border-radius);
-  z-index: 2;
+  background-color: hsla(193, 50%, 45%, 0.817);
 }
+
 #console {
   display: block;
   position: absolute;

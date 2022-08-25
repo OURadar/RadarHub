@@ -1,71 +1,45 @@
-import React from "react";
+import React, { useEffect } from "react";
 
-class Notification extends React.Component {
-  constructor(props) {
-    super(props);
-    this.timer = null;
-    this.state = {
-      message: props.message,
-      class: props.message.length ? "fadeIn" : "invisible",
-    };
+export function Notification(props) {
+  const [display, setDisplay] = React.useState(props.message);
+  const [transition, setTransition] = React.useState("invisible");
+
+  function fadeOutText() {
+    setTransition("fadeOut");
+    return setTimeout(() => {
+      setTransition("invisible");
+      setDisplay("&nbsp;");
+    }, 500);
   }
 
-  static defaultProps = {
-    message: "",
-  };
-
-  componentWillUnmount() {
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
+  function fadeInText(text) {
+    setDisplay(text);
+    setTransition("fadeIn");
+    return setTimeout(fadeOutText, props.timeout);
   }
 
-  update() {
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
-    let stateToChange = {
-      class: this.props.message == "" ? "fadeOut" : "fadeIn",
-    };
-    if (this.props.message == "") {
-      this.timer = setTimeout(() => {
-        this.setState({
-          message: this.props.message,
-          class: "invisible",
-        });
-        this.timer = null;
-      }, 300);
-    } else {
-      stateToChange = { ...stateToChange, message: this.props.message };
-    }
-    this.setState(stateToChange);
-  }
+  useEffect(() => {
+    const timer = props.message.length
+      ? fadeInText(props.message)
+      : fadeOutText();
+    return () => clearTimeout(timer);
+  }, [props.message]);
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.message != this.props.message) {
-      if (this.state.class == "invisible") {
-        this.setState({
-          class: "fadeOut",
-        });
-      }
-      setTimeout(() => {
-        this.update();
-      }, 25);
-    }
-  }
+  const classes = "notification blur " + transition;
 
-  render() {
-    return (
-      <div
-        className={`notification blur ${this.state.class}`}
-        dangerouslySetInnerHTML={{
-          __html: "<p>" + this.state.message + "</p>",
-        }}
-      />
-    );
-  }
+  return (
+    <div
+      id={props.id}
+      className={classes}
+      dangerouslySetInnerHTML={{
+        __html: display,
+      }}
+    />
+  );
 }
 
-export { Notification };
+Notification.defaultProps = {
+  id: "nora",
+  message: "",
+  timeout: 5000,
+};

@@ -15,7 +15,12 @@ Copyright Boonleng Cheong
 }
 
 .notification {
-  padding: 8px 80px;
+  max-width: 600px;
+}
+#nora,
+#appMessage,
+#ingestResponse {
+  min-width: 350px;
 }
 
 .controlContainer,
