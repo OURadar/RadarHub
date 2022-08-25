@@ -117,7 +117,7 @@ export class App extends React.Component {
             message={this.state.message}
             onThemeChange={this.handleThemeChange}
             onInfoRequest={this.handleInfoOpen}
-            onAccount={this.handleAccount}
+            onAccount={this.user.greet}
           />
           <ThemeProvider theme={this.state.theme}>
             <Layout
