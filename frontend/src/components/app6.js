@@ -8,18 +8,19 @@
 import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
+
 import { colorDict, makeTheme } from "./theme";
 import { detectMob } from "./common";
+import { Archive } from "./archive";
+import { User } from "./user";
+
 import { Splash } from "./splash";
 import { TopBar } from "./topbar";
 import { Layout } from "./layout";
 import { Product } from "./product";
 import { Browser } from "./browser";
-import { Archive } from "./archive";
 import { HelpPage } from "./help";
 import { MenuUpdate } from "./menu-update";
-
-const emojis = require("emoji-name-map");
 
 export class App extends React.Component {
   constructor(props) {
@@ -35,10 +36,10 @@ export class App extends React.Component {
     };
     this.isMobile = detectMob();
     this.archive = new Archive(props.radar, props.name);
-    this.archive.onUpdate = (_dontcare) => {
-      this.forceUpdate();
-    };
-    this.handleAccount = this.handleAccount.bind(this);
+    this.archive.onUpdate = (_) => this.forceUpdate();
+    this.user = new User();
+    this.user.onMessage = (message) => this.setState({ message: message });
+
     this.handleInfoOpen = this.handleInfoOpen.bind(this);
     this.handleInfoClose = this.handleInfoClose.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
@@ -160,40 +161,6 @@ export class App extends React.Component {
     if (x == 1 && this.archive.state.liveUpdate === null) {
       this.archive.catchup();
     }
-  }
-
-  handleAccount() {
-    console.log("App.handleAccount()");
-    this.setState({ message: "Fetching User Information ..." });
-    fetch("/profile/")
-      .then((response) => {
-        if (response.status == 200) {
-          response.json().then(({ user, ip, emoji }) => {
-            let title = user == "None" ? "Anonymous User" : `Hello ${user}`;
-            let symbol = emojis.get(emoji) || "";
-            this.setState({
-              message:
-                user == "None"
-                  ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
-                    window.location.pathname +
-                    "'>Sign In Here</a><div class='emotion'>⛅️</div>"
-                  : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`,
-            });
-            setTimeout(() => this.setState({ message: "" }), 3500);
-          });
-        } else {
-          this.setState({
-            message: `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`,
-          });
-        }
-      })
-      .catch((_error) => {
-        this.setState({
-          message: `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`,
-        });
-        console.error(_error);
-        setTimeout(() => setMessage(""), 3500);
-      });
   }
 
   handleThemeChange() {

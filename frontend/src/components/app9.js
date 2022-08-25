@@ -2,19 +2,17 @@ import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
-import { Splash } from "./splash";
 import { colorDict, makeTheme } from "./theme";
+import { Archive } from "./archive";
+import { User } from "./user";
 
+import { Splash } from "./splash";
 import { TopBar } from "./topbar";
 import { Browser } from "./browser-mobile";
 import { Product } from "./product";
 import { Navigation } from "./navigation";
-
-import { Archive } from "./archive";
 import { MenuUpdate } from "./menu-update";
 import { MenuArrow } from "./menu-arrow";
-
-const emojis = require("emoji-name-map");
 
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);
@@ -32,12 +30,15 @@ export function App(props) {
   const [disabled, setDisabled] = React.useState([false, false, false, false]);
 
   const archive = React.useRef(null);
+  const user = React.useRef(null);
 
   const [, handleUpdate] = React.useReducer((x) => x + 1, 0);
 
   const handleLoad = () => {
     setDisabled(archive.current?.grid.pathsActive.map((x) => !x));
   };
+
+  const handleUserMessage = (message) => setMessage(message);
 
   const setDocumentTheme = (mode) => {
     document.documentElement.setAttribute("theme", mode);
@@ -49,36 +50,6 @@ export function App(props) {
     console.log("AppX.handleThemeChange()");
     let theme = colors.name == "light" ? "dark" : "light";
     setDocumentTheme(theme);
-  };
-  const handleAccount = () => {
-    setMessage("Fetching User Information ...");
-    fetch("/profile/")
-      .then((response) => {
-        if (response.status == 200) {
-          response.json().then(({ user, ip, emoji }) => {
-            let title = user == "None" ? "Anonymous User" : `Hello ${user}`;
-            let symbol = emojis.get(emoji) || "";
-            setMessage(
-              user == "None"
-                ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
-                    window.location.pathname +
-                    "'>Sign In Here</a><div class='emotion'>⛅️</div>"
-                : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
-            );
-            setTimeout(() => setMessage(""), 3500);
-          });
-        } else {
-          setMessage(
-            `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
-          );
-        }
-      })
-      .catch((_error) => {
-        setMessage(
-          `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
-        );
-        setTimeout(() => setMessage(""), 3500);
-      });
   };
 
   const handleNavigationChange = (_, value) => setPanel(value);
@@ -111,6 +82,9 @@ export function App(props) {
     archive.current = new Archive(props.radar, props.name);
     archive.current.onUpdate = handleUpdate;
     archive.current.onLoad = handleLoad;
+
+    user.current = new User();
+    user.current.onMessage = handleUserMessage;
   });
 
   React.useEffect(() => {
@@ -132,7 +106,7 @@ export function App(props) {
           isMobile={true}
           message={message}
           ingest={archive.current}
-          onAccount={handleAccount}
+          onAccount={user.current.greet}
           onThemeChange={handleThemeChange}
         />
         <ThemeProvider theme={theme}>

@@ -2,15 +2,15 @@ import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
-import { Splash } from "./splash";
 import { colorDict, makeTheme } from "./theme";
+import { Archive } from "./archive";
+import { User } from "./user";
 
+import { Splash } from "./splash";
 import { TopBar } from "./topbar";
 import { Browser } from "./browser-mobile";
 import { Product } from "./product";
 import { Navigation } from "./navigation";
-
-import { Archive } from "./archive";
 import { MenuUpdate } from "./menu-update";
 import { MenuArrow } from "./menu-arrow";
 
@@ -32,12 +32,15 @@ export function App(props) {
   const [disabled, setDisabled] = React.useState([false, false, false, false]);
 
   const archive = React.useRef(null);
+  const user = React.useRef(null);
 
   const [, handleUpdate] = React.useReducer((x) => x + 1, 0);
 
   const handleLoad = () => {
     setDisabled(archive.current?.grid.pathsActive.map((x) => !x));
   };
+
+  const handleUserMessage = (message) => setMessage(message);
 
   const setDocumentTheme = (mode) => {
     document.documentElement.setAttribute("theme", mode);
@@ -50,36 +53,8 @@ export function App(props) {
     let theme = colors.name == "light" ? "dark" : "light";
     setDocumentTheme(theme);
   };
-  const handleAccount = () => {
-    setMessage("Fetching User Information ...");
-    fetch("/profile/")
-      .then((response) => {
-        if (response.status == 200) {
-          response.json().then(({ user, ip, emoji }) => {
-            let title = user == "None" ? "Anonymous User" : `Hello ${user}`;
-            let symbol = emojis.get(emoji) || "";
-            setMessage(
-              user == "None"
-                ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
-                    window.location.pathname +
-                    "'>Sign In Here</a><div class='emotion'>⛅️</div>"
-                : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
-            );
-            setTimeout(() => setMessage(""), 3500);
-          });
-        } else {
-          setMessage(
-            `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
-          );
-        }
-      })
-      .catch((_error) => {
-        setMessage(
-          `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
-        );
-        setTimeout(() => setMessage(""), 3500);
-      });
-  };
+
+  const handleAccount = () => user.current.greet();
 
   const handleNavigationChange = (_, value) => setPanel(value);
 
@@ -89,7 +64,6 @@ export function App(props) {
   };
 
   const handleOverlayLoad = (x = 1) => {
-    console.log(`AppX.handleOverlayLoad()   x = ${x}`);
     setLoad(x);
     if (x == 1 && archive.current.state.liveUpdate === null) {
       archive.current.catchup();
@@ -112,6 +86,9 @@ export function App(props) {
     archive.current = new Archive(props.radar, props.name);
     archive.current.onUpdate = handleUpdate;
     archive.current.onLoad = handleLoad;
+
+    user.current = new User();
+    user.current.onMessage = handleUserMessage;
   });
 
   React.useEffect(() => {
@@ -125,7 +102,7 @@ export function App(props) {
   }, []);
 
   return (
-    <ThemeProvider theme={theme}>
+    <div>
       <Splash progress={load} />
       <div id="main" className="fullHeight">
         <TopBar
@@ -136,35 +113,37 @@ export function App(props) {
           onAccount={handleAccount}
           onThemeChange={handleThemeChange}
         />
-        <div className={panel === 0 ? "active" : "inactive"}>
-          <Product
-            gravity="top"
-            colors={colors}
-            origin={props.origin}
-            sweep={archive.current?.data.sweep}
-            onOverlayLoad={handleOverlayLoad}
-          />
-          <MenuArrow
-            doubleLeftDisabled={disabled[0]}
-            leftDisabled={disabled[1]}
-            rightDisabled={disabled[2]}
-            doubleRightDisabled={disabled[3]}
-            onDoubleLeft={handleDoubleLeft}
-            onLeft={handleLeft}
-            onRight={handleRight}
-            onDoubleRight={handleDoubleRight}
-          />
-          <MenuUpdate
-            value={archive.current?.state.liveUpdate}
-            onChange={handleLiveModeChange}
-          />
-        </div>
-        <div className={panel === 1 ? "active" : "inactive"}>
-          <Browser archive={archive.current} onSelect={handleBrowserSelect} />
-        </div>
-        <Navigation value={panel} onChange={handleNavigationChange} />
+        <ThemeProvider theme={theme}>
+          <div className={panel === 0 ? "active" : "inactive"}>
+            <Product
+              gravity="top"
+              colors={colors}
+              origin={props.origin}
+              sweep={archive.current?.data.sweep}
+              onOverlayLoad={handleOverlayLoad}
+            />
+            <MenuArrow
+              doubleLeftDisabled={disabled[0]}
+              leftDisabled={disabled[1]}
+              rightDisabled={disabled[2]}
+              doubleRightDisabled={disabled[3]}
+              onDoubleLeft={handleDoubleLeft}
+              onLeft={handleLeft}
+              onRight={handleRight}
+              onDoubleRight={handleDoubleRight}
+            />
+            <MenuUpdate
+              value={archive.current?.state.liveUpdate}
+              onChange={handleLiveModeChange}
+            />
+          </div>
+          <div className={panel === 1 ? "active" : "inactive"}>
+            <Browser archive={archive.current} onSelect={handleBrowserSelect} />
+          </div>
+          <Navigation value={panel} onChange={handleNavigationChange} />
+        </ThemeProvider>
       </div>
-    </ThemeProvider>
+    </div>
   );
 }
 
