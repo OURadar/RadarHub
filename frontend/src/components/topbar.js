@@ -121,7 +121,7 @@ export function TopBar(props) {
     <ThemeProvider theme={topbarTheme}>
       <div id="topbar" role="banner" className="blur">
         <LeftDash {...props} />
-        <RightDash {...props} onAccount={props.onAccount} />
+        <RightDash {...props} />
       </div>
       {props.test > 0 && <Notification message={message} />}
       <Notification id="appMessage" message={props.message} />

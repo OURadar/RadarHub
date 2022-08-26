@@ -1,8 +1,16 @@
+//
+//  appX.js - Single Endpoint
+//  RadarHub
+//
+//  Created by Boonleng Cheong
+//
+
 import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
 import { colorDict, makeTheme } from "./theme";
+import { detectMob } from "./common";
 import { Archive } from "./archive";
 import { User } from "./user";
 
@@ -13,8 +21,6 @@ import { Product } from "./product";
 import { Navigation } from "./navigation";
 import { MenuUpdate } from "./menu-update";
 import { MenuArrow } from "./menu-arrow";
-
-const emojis = require("emoji-name-map");
 
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);
@@ -53,8 +59,6 @@ export function App(props) {
     let theme = colors.name == "light" ? "dark" : "light";
     setDocumentTheme(theme);
   };
-
-  const handleAccount = () => user.current.greet();
 
   const handleNavigationChange = (_, value) => setPanel(value);
 
@@ -110,7 +114,7 @@ export function App(props) {
           isMobile={true}
           message={message}
           ingest={archive.current}
-          onAccount={handleAccount}
+          onAccount={user.current.greet}
           onThemeChange={handleThemeChange}
         />
         <ThemeProvider theme={theme}>
