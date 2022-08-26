@@ -270,11 +270,13 @@ canvas {
 }
 .fadeIn {
   opacity: 1;
+  z-index: 69;
   transition: opacity linear 0.12s;
 }
 .fadeOut {
   opacity: 0;
-  transition: opacity linear 0.3s;
+  z-index: 0;
+  transition: opacity linear 0.3s, z-index linear 0.01s 0.3s;
 }
 
 .extraLarge {
@@ -521,7 +523,6 @@ h3 {
   text-align: center;
   top: 10px;
   transform: translate(-50%, 0);
-  z-index: 69;
 }
 
 .emotion {

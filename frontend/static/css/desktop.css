@@ -23,6 +23,8 @@ Copyright Boonleng Cheong
   min-width: 350px;
 }
 
+/* Control */
+
 .controlContainer,
 .healthContainer {
   background-color: var(--system-background);
