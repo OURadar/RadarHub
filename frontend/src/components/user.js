@@ -2,6 +2,8 @@
 //  user.js
 //  RadarHub
 //
+//  This is a model
+//
 //  Created by Boonleng Cheong on 8/25/2022.
 //
 

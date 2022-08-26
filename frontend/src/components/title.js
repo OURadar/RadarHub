@@ -1,13 +1,14 @@
+//
+//  title.js - Title
+//  RadarHub
+//
+//  This is a view
+//
+//  Created by Boonleng Cheong
+//
+
 import React from "react";
 
-import { displayTextWidth } from "./common";
-// function Title(props) {
-//   return (
-//     <div id={props.id} className="floatText">
-//       {props.string}
-//     </div>
-//   );
-// }
 function Title(props) {
   const svgRef = React.useRef(null);
 

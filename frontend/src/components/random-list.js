@@ -49,7 +49,7 @@ export function RandomList(props) {
 
 const messageExamples = [
   {
-    primary: "Brunch this week?",
+    primary: "Brunch?",
     secondary:
       "I'll be in the neighbourhood this week. Let's grab a bite to eat",
     person: "/static/images/logo-apple.svg",
@@ -61,14 +61,14 @@ const messageExamples = [
     person: "/static/images/logo-facebook.svg",
   },
   {
-    primary: "Recipe to try",
+    primary: "Recipe to Try",
     secondary:
       "I am try out this new BBQ recipe, I think this might be amazing",
     person: "/static/images/logo-facebook.svg",
   },
   {
     primary: "Yes!",
-    secondary: "I have the tickets to the ReactConf for this year.",
+    secondary: "I have the tickets to the RadarConf for this year.",
     person: "/static/images/logo-google.svg",
   },
   {
@@ -91,3 +91,16 @@ const messageExamples = [
     person: "/static/images/icon144.png",
   },
 ];
+
+export function getRandomMessage() {
+  const i = Math.floor((Math.random() * 100) % messageExamples.length);
+  return messageExamples[i];
+}
+
+export function getRandomMessageInHTML() {
+  const message = getRandomMessage();
+  return (
+    `<h3>${message.primary}</h3><p>${message.secondary}</p>` +
+    `<div class='emotion'><img class="logo32" src="${message.person}" /></div>`
+  );
+}

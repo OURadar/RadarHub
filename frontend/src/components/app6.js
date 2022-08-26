@@ -2,6 +2,8 @@
 //  app6.js - Archive Browser
 //  RadarHub
 //
+//  This is a controller
+//
 //  Created by Boonleng Cheong
 //
 

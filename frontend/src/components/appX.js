@@ -2,6 +2,8 @@
 //  appX.js - Single Endpoint
 //  RadarHub
 //
+//  This is a controller
+//
 //  Created by Boonleng Cheong
 //
 

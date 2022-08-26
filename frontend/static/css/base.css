@@ -201,11 +201,11 @@ canvas {
 }
 .message {
   font-family: "Helvetica Neue", Helvetica, Arial, LabelFont;
-  font-size: 24pt;
+  font-size: 22pt;
   font-weight: 200;
   margin: 20px auto;
-  line-height: 40pt;
-  padding: 0 100px;
+  line-height: 32pt;
+  padding: 0 50px;
 }
 .w100 {
   font-weight: 100;
@@ -285,6 +285,10 @@ canvas {
 @media screen and (min-width: 640px) {
   .extraLarge {
     font-size: 100px;
+  }
+  .message {
+    font-size: 24pt;
+    line-height: 34pt;
   }
 }
 h1,
@@ -525,7 +529,7 @@ h3 {
   display: block;
   position: absolute;
   top: 10px;
-  right: 5px;
+  right: 10px;
 }
 .floatText {
   position: absolute;
@@ -559,8 +563,6 @@ h3 {
 }
 #splash {
   background-color: var(--background-color);
-  color: white;
-  fill: white;
   height: 100vh;
   position: absolute;
   text-align: center;
@@ -591,7 +593,6 @@ h3 {
 }
 #topbar {
   background: var(--background-gradient);
-  color: white;
   display: block;
   height: var(--topbar-height);
   width: 100%;
@@ -606,6 +607,12 @@ h3 {
   height: var(--topbar-height);
 }
 
+#splash,
+#topbar,
+#versionTag {
+  color: white;
+  fill: white;
+}
 #tabbar,
 #navbar {
   position: fixed;
@@ -776,9 +783,8 @@ a.radarButton:hover {
 }
 
 .lite {
-  color: var(--gray6-translucent);
-  font-size: 0.8em;
   margin-top: 0.5em;
+  opacity: 0.5;
 }
 .subtle {
   background-color: rgba(255, 255, 255, 0.15);
@@ -836,6 +842,9 @@ a.radarButton:hover {
   background-image: url(/static/images/logo-facebook.svg);
 }
 
+.logo32 {
+  height: 32px;
+}
 .logo50 {
   height: 50px;
 }

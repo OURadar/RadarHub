@@ -1,6 +1,8 @@
 //
-//  glview.js
+//  glview.js - WebGL 3D View
 //  RadarHub
+//
+//  This is a view
 //
 //  Created by Boonleng Cheong
 //

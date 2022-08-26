@@ -1,6 +1,8 @@
 //
-//  product.js
+//  product.js - Product View
 //  RadarHub
+//
+//  This is a view
 //
 //  Created by Boonleng Cheong
 //

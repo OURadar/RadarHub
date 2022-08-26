@@ -1,3 +1,12 @@
+//
+//  browser.js - Data Browser
+//  RadarHub
+//
+//  This is a view
+//
+//  Created by Boonleng Cheong
+//
+
 import React from "react";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";

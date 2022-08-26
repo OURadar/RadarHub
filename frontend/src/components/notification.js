@@ -1,3 +1,12 @@
+//
+//  notification.js - Notification
+//  RadarHub
+//
+//  This is a view
+//
+//  Created by Boonleng Cheong
+//
+
 import React, { useEffect } from "react";
 
 export function Notification(props) {
@@ -7,7 +16,6 @@ export function Notification(props) {
   function fadeOutText() {
     setTransition("fadeOut");
     return setTimeout(() => {
-      setTransition("invisible");
       setDisplay("&nbsp;");
     }, 500);
   }

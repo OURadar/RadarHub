@@ -1,4 +1,15 @@
+//
+//  topbar.js - Top Bar
+//  RadarHub
+//
+//  This is a view
+//
+//  Created by Boonleng Cheong
+//
+
 import React from "react";
+
+import { getRandomMessageInHTML } from "./random-list";
 
 import IconButton from "@mui/material/IconButton";
 import {
@@ -93,12 +104,6 @@ function LeftDash(props) {
   );
 }
 
-function getMessage() {
-  const randomIndex = Math.floor((Math.random() * 100) % messages.length);
-  console.log(randomIndex);
-  return messages[randomIndex];
-}
-
 // Supply props with
 // - ingest - real-time data ingest
 // - xxx - archived data ingest
@@ -110,11 +115,11 @@ export function TopBar(props) {
       let k = 0;
       setInterval(() => {
         if (k % 2 == 0) setMessage("");
-        else setMessage(getMessage());
+        else setMessage(getRandomMessageInHTML());
         k += 1;
-      }, 1000);
+      }, 2000);
     } else if (props.test == 2) {
-      setInterval(() => setMessage(getMessage()), 2000);
+      setInterval(() => setMessage(getRandomMessageInHTML()), 3000);
     }
   }, []);
   return (
@@ -151,10 +156,3 @@ TopBar.defaultProps = {
     console.log("Topbar.onAccount()");
   },
 };
-
-const messages = [
-  "New Reciple",
-  "Radar Online",
-  "Maintenance",
-  "Archiving ...",
-];

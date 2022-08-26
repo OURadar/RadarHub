@@ -2,6 +2,8 @@
 //  archive.js
 //  RadarHub
 //
+//  This is a model
+//
 //  Created by Boonleng Cheong on 9/23/2021.
 //
 

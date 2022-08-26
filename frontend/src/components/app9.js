@@ -2,6 +2,8 @@
 //  app9.js - Archive Browser Mobile UI
 //  RadarHub
 //
+//  This is a controller
+//
 //  Created by Boonleng Cheong
 //
 
