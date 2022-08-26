@@ -1,27 +1,19 @@
-import glob
-
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.conf import settings
 
 from allauth.account import views as allauth_views
-
-lines = []
-for file in glob.glob('frontend/static/css/*.css'):
-    with open(file) as fid:
-        lines = [*lines, *fid.readlines()]
-css_hash = hash('\n'.join(lines))
-css_hash = f'{css_hash:08x}'[-8:]
 
 # Create your views here.
 
 def signin(request):
-    return render(request, 'reception/signin.html', {'css': css_hash})
+    return render(request, 'reception/signin.html', {'css': settings.CSS_HASH})
 
 def signout(request):
     return allauth_views.logout(request)
 
 def conflict(request):
-    return render(request, 'reception/conflict.html', {'css': css_hash})
+    return render(request, 'reception/conflict.html', {'css': settings.CSS_HASH})
 
 def privacy(request):
     lines = [

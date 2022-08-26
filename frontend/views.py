@@ -1,4 +1,3 @@
-import glob
 import logging
 
 from django.shortcuts import render
@@ -16,15 +15,8 @@ radars = [x['folder'].lower() for x in settings.RADARS.values()]
 radar_names = dict([(x['folder'].lower(), x['name']) for x in settings.RADARS.values()])
 default_radar = radars[0]
 
-lines = []
-for file in glob.glob('frontend/static/css/*.css'):
-    with open(file) as fid:
-        lines = [*lines, *fid.readlines()]
-css_hash = hash('\n'.join(lines))
-css_hash = f'{css_hash:08x}'[-8:]
-
 if settings.DEBUG:
-    show = color_name_value('css_hash', css_hash)
+    show = color_name_value('settings.CSS_HASH', settings.CSS_HASH)
     print(show)
 
 #
@@ -41,7 +33,7 @@ def make_vars(request, radar=default_radar):
     return {
         'ip': get_client_ip(request),
         'user': email,
-        'css_hash': css_hash,
+        'css_hash': settings.CSS_HASH,
         'version': settings.VERSION,
         'origin': origin,
         'radar': radar,
@@ -54,14 +46,14 @@ def index(request):
     vars = make_vars(request)
     context = {
         'vars': vars,
-        'css': css_hash,
+        'css': settings.CSS_HASH,
         'version': settings.VERSION
     }
     return render(request, 'frontend/index.html', context)
 
 def dev(request, radar):
     vars = make_vars(request, radar)
-    context = {'vars': vars, 'css': css_hash}
+    context = {'vars': vars, 'css': settings.CSS_HASH}
     return render(request, 'frontend/dev.html', context)
 
 # Control
@@ -75,7 +67,7 @@ def control_radar(request, radar):
     logger.info(show)
     context = {
         'vars': vars,
-        'css': css_hash
+        'css': settings.CSS_HASH
     }
     return render(request, 'frontend/control.html', context)
 
@@ -99,7 +91,7 @@ def archive_radar_profile(request, radar, profileGL = False):
         vars['profileGL'] = True
     context = {
         'vars': vars,
-        'css': css_hash
+        'css': settings.CSS_HASH
     }
     return render(request, 'frontend/archive.html', context)
 
@@ -116,7 +108,7 @@ def archive_radar_profile(request, radar, profileGL):
         raise Http404
     context = {
         'vars': vars,
-        'css': css_hash
+        'css': settings.CSS_HASH
     }
     return render(request, 'frontend/archive.html', context)
 
@@ -142,17 +134,17 @@ def robots_txt(request):
     return HttpResponse('\n'.join(lines), content_type='text/plain')
 
 def view(request, page):
-    context = {'css': css_hash}
+    context = {'css': settings.CSS_HASH}
     return render(request, f'{page}.html', context, status=200)
 
 def page400(request, exception):
-    context = {'css': css_hash}
+    context = {'css': settings.CSS_HASH}
     return render(request, f'400.html', context, status=400)
 
 def page403(request, exception):
-    context = {'css': css_hash}
+    context = {'css': settings.CSS_HASH}
     return render(request, f'403.html', context, status=403)
 
 def page404(request, exception):
-    context = {'css': css_hash}
+    context = {'css': settings.CSS_HASH}
     return render(request, f'404.html', context, status=404)

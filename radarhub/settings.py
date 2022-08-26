@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
+import glob
 import json
 
 from pathlib import Path
@@ -28,6 +29,9 @@ SIMULATE = False
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
 
 DEBUG = bool(os.getenv('DJANGO_DEBUG'))
+
+# Disable Python random has seed
+os.environ['PYTHONHASHSEED'] = '0'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -410,3 +414,14 @@ WEBPACK_LOADER = {
         'STATS_FILE': str(FRONTEND_DIR / 'webpack-output.json'),
     },
 }
+
+# CSS Hash
+
+text = ''
+for file in sorted(glob.glob('frontend/static/css/*.css')):
+    with open(file) as fid:
+        lines = fid.readlines()
+        text += ''.join(lines)
+x = hash(text)
+CSS_HASH = f'{x:08x}'[-8:]
+del x
