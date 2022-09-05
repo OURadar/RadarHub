@@ -124,12 +124,6 @@ function Browser(props) {
     props.archive.count(newDay, newHour, symbol);
   };
 
-  const getMonthTable = (newMonth) => {
-    let tmp = newMonth.toISOString();
-    let yyyymm = tmp.slice(0, 4) + tmp.slice(5, 7);
-    props.archive.month(yyyymm);
-  };
-
   return (
     <div className="fill paper">
       <div className="spacerTop" />
@@ -139,9 +133,9 @@ function Browser(props) {
           <DatePicker
             label="Date"
             value={value}
-            onOpen={() => getMonthTable(day)}
-            onYearChange={(newDay) => getMonthTable(newDay)}
-            onMonthChange={(newDay) => getMonthTable(newDay)}
+            onOpen={() => props.archive.getMonthTable(day)}
+            onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
+            onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
             onChange={(newValue) => {
               setValue(newValue);
               if (newValue instanceof Date) {
@@ -152,7 +146,8 @@ function Browser(props) {
             renderDay={(day, _selectedDay, pickersDayProps) => {
               let key = day.toISOString().slice(0, 10);
               let num =
-                key in props.archive.grid.daysActive
+                key in props.archive.grid.daysActive &&
+                !pickersDayProps.outsideCurrentMonth
                   ? props.archive.grid.daysActive[key]
                   : 0;
               return num ? (

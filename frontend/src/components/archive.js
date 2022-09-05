@@ -108,6 +108,7 @@ class Archive {
       this.showMessage(payload, 2500);
     } else if (type == "month") {
       this.grid.daysActive = { ...payload, ...this.grid.daysActive };
+      //console.debug(this.grid.daysActive);
       this.state.daysActiveUpdating = false;
     } else if (type == "reset") {
       this.showMessage(payload);
