@@ -50,7 +50,8 @@ function Calender(props) {
           renderDay={(day, _selected, pickersDayProps) => {
             let key = day.toISOString().slice(0, 10);
             let num =
-              key in props.archive.grid.daysActive
+              key in props.archive.grid.daysActive &&
+              !pickersDayProps.outsideCurrentMonth
                 ? props.archive.grid.daysActive[key]
                 : 0;
             return num ? (

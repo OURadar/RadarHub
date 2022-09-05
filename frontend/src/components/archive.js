@@ -107,7 +107,7 @@ class Archive {
     } else if (type == "message") {
       this.showMessage(payload, 2500);
     } else if (type == "month") {
-      this.grid.daysActive = payload;
+      this.grid.daysActive = { ...payload, ...this.grid.daysActive };
       this.state.daysActiveUpdating = false;
     } else if (type == "reset") {
       this.showMessage(payload);
@@ -430,8 +430,12 @@ class Archive {
 
   getMonthTable(day) {
     let s = day.toISOString();
-    let yyyymm = s.slice(0, 4) + s.slice(5, 7);
-    this.month(yyyymm);
+    let key = s.slice(0, 10);
+    if (key in this.grid.daysActive) {
+      return;
+    }
+    let m = s.slice(0, 4) + s.slice(5, 7);
+    this.month(m);
   }
 }
 
