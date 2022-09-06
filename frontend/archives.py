@@ -95,17 +95,10 @@ def stats(request, mode=''):
     day - a string in the forms of
           - YYYYMM
 '''
-def month(_, radar, day):
-    if settings.VERBOSE > 1:
-        show = colorize('archive.month()', 'green')
-        show += '   ' + color_name_value('radar', radar)
-        show += '   ' + color_name_value('day', day)
-        logger.debug(show)
-    if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
-        return invalid_query
+
+def _month(prefix, day):
     y = int(day[0:4])
     m = int(day[4:6])
-    prefix = radar_prefix[radar]
     entries = Day.objects.filter(date__year=y, date__month=m, name=prefix)
     date = datetime.date(y, m, 1)
     step = datetime.timedelta(days=1)
@@ -115,6 +108,18 @@ def month(_, radar, day):
         entry = entries.filter(date=date).last()
         array[key] = entry.weather_condition() if entry else 0
         date += step
+    return array
+
+def month(_, radar, day):
+    if settings.VERBOSE > 1:
+        show = colorize('archive.month()', 'green')
+        show += '   ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('day', day)
+        logger.debug(show)
+    if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
+        return invalid_query
+    prefix = radar_prefix[radar]
+    array = _month(prefix, day)
     payload = json.dumps(array, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
 
@@ -135,7 +140,7 @@ def _count(prefix, day):
         return [int(n) for n in d.hourly_count.split(',')]
     return [0] * 24
 
-def count(request, radar, day):
+def count(_, radar, day):
     if settings.VERBOSE > 1:
         show = colorize('archive.count()', 'green')
         show += '   ' + color_name_value('radar', radar)
@@ -416,22 +421,24 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
         data = {
             'dateTimeString': '19700101-0000',
             'dayISOString': '1970/01/01',
-            'latestScan': '',
+            'daysActive': {},
             'yearsActive': [],
             'hoursActive': [0] * 24,
             'hour': -1,
             'items': [],
+            'latestScan': '',
         }
     else:
         date_time_string = f'{ymd}-{hour:02d}00'
         data = {
             'dateTimeString': date_time_string,
             'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
-            'latestScan': _file(prefix, scan, symbol),
+            'daysActive': _month(prefix, ymd),
             'yearsActive': _years(prefix),
             'hoursActive': _count(prefix, ymd),
             'hour': hour,
             'items': _list(prefix, f'{date_time_string}-{symbol}'),
+            'latestScan': _file(prefix, scan, symbol),
         }
     payload = json.dumps(data, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')

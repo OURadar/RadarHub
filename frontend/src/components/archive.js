@@ -81,8 +81,6 @@ class Archive {
           ""
         );
       }
-      // this.grid.index = payload.index;
-      // this.grid.pathsActive = payload.pathsActive;
       this.grid = { ...this.grid, ...payload };
       this.loadIfNecessary();
       this.onIndex(this.grid);
@@ -107,8 +105,8 @@ class Archive {
     } else if (type == "message") {
       this.showMessage(payload, 2500);
     } else if (type == "month") {
-      this.grid.daysActive = { ...payload, ...this.grid.daysActive };
-      //console.debug(this.grid.daysActive);
+      this.grid.daysActive = payload;
+      // console.debug(this.grid.daysActive);
       this.state.daysActiveUpdating = false;
     } else if (type == "reset") {
       this.showMessage(payload);
@@ -430,12 +428,13 @@ class Archive {
   }
 
   getMonthTable(day) {
-    let s = day.toISOString();
-    let key = s.slice(0, 10);
+    const m =
+      day.getFullYear().toString() +
+      (day.getMonth() + 1).toString().padStart(2, "0");
+    const key = `${m.slice(0, 4)}-${m.slice(4, 6)}-01`;
     if (key in this.grid.daysActive) {
       return;
     }
-    let m = s.slice(0, 4) + s.slice(5, 7);
     this.month(m);
   }
 }

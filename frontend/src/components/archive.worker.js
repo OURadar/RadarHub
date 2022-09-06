@@ -251,8 +251,8 @@ function month(day) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          grid.daysActive = buffer;
-          self.postMessage({ type: "month", payload: buffer });
+          grid.daysActive = { ...buffer, ...grid.daysActive };
+          self.postMessage({ type: "month", payload: grid.daysActive });
         });
       else
         response.text().then((error) => {
@@ -552,6 +552,7 @@ function catchup() {
           }
           grid.dateTimeString = buffer.dateTimeString;
           grid.hoursActive = buffer.hoursActive;
+          grid.daysActive = buffer.daysActive;
           grid.latestScan = buffer.latestScan;
           grid.latestHour = buffer.hour;
           grid.day = day;
