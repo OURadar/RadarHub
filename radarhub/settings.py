@@ -415,7 +415,7 @@ WEBPACK_LOADER = {
     },
 }
 
-# CSS Hash
+# CSS / JS Hash
 
 text = ''
 for file in sorted(glob.glob('frontend/static/css/*.css')):
@@ -424,4 +424,10 @@ for file in sorted(glob.glob('frontend/static/css/*.css')):
         text += ''.join(lines)
 x = hash(text)
 CSS_HASH = f'{x:08x}'[-8:]
+for file in sorted(glob.glob('frontend/src/components/*.js')):
+    with open(file) as fid:
+        lines = fid.readlines()
+        text += ''.join(lines)
+x = hash(text)
+CODE_HASH = f'{x:08x}'[-8:]
 del x

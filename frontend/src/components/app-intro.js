@@ -58,7 +58,7 @@ class App extends React.Component {
         });
       });
     document.getElementById("versionTag").innerHTML =
-      `v${version}` + ` <div class="lite">(${this.props.css_hash})</div>`;
+      `v${version}` + ` <div class="lite">(${this.props.code_hash})</div>`;
   }
 
   render() {

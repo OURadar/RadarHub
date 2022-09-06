@@ -34,6 +34,7 @@ def make_vars(request, radar=default_radar):
         'ip': get_client_ip(request),
         'user': email,
         'css_hash': settings.CSS_HASH,
+        'code_hash': settings.CODE_HASH,
         'version': settings.VERSION,
         'origin': origin,
         'radar': radar,
