@@ -81,7 +81,8 @@ def get_user_agent_string(user_agent, width=25, reload=False):
 
 @lru_cache
 def get_ip_location(ip, show_city=False):
-    if ip[:3] == '10.' or ip[:4] == '192.':
+    ip_num = [int(x) for x in ip.split('.')]
+    if ip_num[0] == 10 or (ip_num[0] == 192 and ip_num[1] == 168) or (ip_num[0] == 172 and ip_num[1] >= 16 and ip_num[1] < 32):
         return 'Internal / VPN'
     global ip_location_db_fid
     if ip_location_db_fid is None:
