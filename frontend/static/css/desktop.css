@@ -173,6 +173,10 @@ Copyright Boonleng Cheong
 #title text {
   text-anchor: end;
 }
+#arrow {
+  top: calc(var(--topbar-height) + 2 * var(--padding) + 100px);
+  left: 30px;
+}
 #update {
   top: calc(var(--topbar-height) + 2 * var(--padding));
   left: 30px;

@@ -22,6 +22,7 @@ import { Layout } from "./layout";
 import { Product } from "./product";
 import { Browser } from "./browser";
 import { HelpPage } from "./help";
+import { MenuArrow } from "./menu-arrow";
 import { MenuUpdate } from "./menu-update";
 
 export class App extends React.Component {
@@ -35,18 +36,28 @@ export class App extends React.Component {
       showHelp: false,
       message: "",
       key: "",
+      disabled: [false, false, false, false],
     };
     this.isMobile = detectMob();
-    this.archive = new Archive(props.radar, props.name);
-    this.archive.onUpdate = (_) => this.forceUpdate();
-    this.user = new User();
-    this.user.onMessage = (message) => this.setState({ message: message });
 
     this.handleInfoOpen = this.handleInfoOpen.bind(this);
     this.handleInfoClose = this.handleInfoClose.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
     this.handleOverlayLoad = this.handleOverlayLoad.bind(this);
+    this.handleRadarDataLoad = this.handleRadarDataLoad.bind(this);
     this.handleLiveModeChange = this.handleLiveModeChange.bind(this);
+    this.handleDoubleLeft = this.handleDoubleLeft.bind(this);
+    this.handleLeft = this.handleLeft.bind(this);
+    this.handleRight = this.handleRight.bind(this);
+    this.handleDoubleRight = this.handleDoubleRight.bind(this);
+
+    this.archive = new Archive(props.radar, props.name);
+    this.archive.onUpdate = (_) => this.forceUpdate();
+    this.archive.onLoad = this.handleRadarDataLoad;
+
+    this.user = new User();
+    this.user.onMessage = (message) => this.setState({ message: message });
+
     document.documentElement.setAttribute("theme", this.state.colors.name);
     window.addEventListener("keydown", (e) => (this.state.key = e.key));
     window.addEventListener("keyup", (e) => {
@@ -147,6 +158,16 @@ export class App extends React.Component {
               value={this.archive.state.liveUpdate}
               onChange={this.handleLiveModeChange}
             />
+            <MenuArrow
+              doubleLeftDisabled={this.state.disabled[0]}
+              leftDisabled={this.state.disabled[1]}
+              rightDisabled={this.state.disabled[2]}
+              doubleRightDisabled={this.state.disabled[3]}
+              onDoubleLeft={this.handleDoubleLeft}
+              onLeft={this.handleLeft}
+              onRight={this.handleRight}
+              onDoubleRight={this.handleDoubleRight}
+            />
             <HelpPage
               open={this.state.showHelp}
               handleClose={this.handleInfoClose}
@@ -163,6 +184,15 @@ export class App extends React.Component {
     if (x == 1 && this.archive.state.liveUpdate === null) {
       this.archive.catchup();
     }
+  }
+
+  handleRadarDataLoad() {
+    if (this.archive.grid === null || this.archive.grid === undefined) {
+      return;
+    }
+    this.setState({
+      disabled: this.archive.grid.pathsActive.map((x) => !x),
+    });
   }
 
   handleThemeChange() {
@@ -188,5 +218,21 @@ export class App extends React.Component {
 
   handleLiveModeChange(_e, value) {
     this.archive.toggleLiveUpdate(value);
+  }
+
+  handleDoubleLeft() {
+    this.archive.navigateBackwardScan();
+  }
+
+  handleLeft() {
+    this.archive.navigateBackward();
+  }
+
+  handleRight() {
+    this.archive.navigateForward();
+  }
+
+  handleDoubleRight() {
+    this.archive.navigateForwardScan();
   }
 }
