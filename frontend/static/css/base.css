@@ -852,6 +852,9 @@ a.radarButton:hover {
 .logo100 {
   height: 100px;
 }
+.logo256 {
+  height: 256px;
+}
 .logo {
   height: 15vh;
   fill: #ffdd00;
