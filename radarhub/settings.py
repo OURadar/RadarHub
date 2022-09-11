@@ -238,6 +238,11 @@ CHANNEL_LAYERS = {
 # RADARS = { '_PREFIX_': {'folder': '_RADAR_NAME_', 'summary': '_SCAN_' } }
 if 'radars' in settings:
     RADARS = settings['radars']
+    RADARS['DEMO-'] = {
+            'name': 'demo',
+            'folder': 'demo',
+            'summary': 'E4.0',
+        }
 else:
     RADARS = {
         'PX-': {

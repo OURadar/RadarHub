@@ -107,8 +107,8 @@ export class App extends Component {
           ingest={this.ingest}
           onModeChange={this.handleModeChange}
         />
-        <div id="flex">
-          <div id="left">
+        <div id="split-panel">
+          <div id="split-panel-left" className="container">
             <div>
               <SectionHeader name="product" isMobile={false} />
               <Product
@@ -118,7 +118,7 @@ export class App extends Component {
               />
             </div>
           </div>
-          <div id="right">
+          <div id="split-panel-right" className="container">
             <Health dict={this.ingest.data.health} />
             <Control ingest={this.ingest} />
             <Scope2 data={this.ingest.data} colors={this.state.colors} />
