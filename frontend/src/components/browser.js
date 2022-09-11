@@ -174,7 +174,7 @@ function Browser(props) {
         </LocalizationProvider>
       </div>
       <div id="hoursContainer">{hourButtons}</div>
-      <SectionHeader name="files" />
+      <SectionHeader name="scans" />
       {fileBrowser}
     </div>
   );

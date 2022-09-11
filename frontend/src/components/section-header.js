@@ -21,7 +21,7 @@ export function SectionHeader(props) {
     icon = <TrackChanges style={{ color: "var(--green)" }} />;
   } else if (props.name == "archive") {
     icon = <History style={{ color: "var(--mint)" }} />;
-  } else if (props.name == "files") {
+  } else if (props.name == "scans") {
     icon = <Storage style={{ color: "var(--brown)" }} />;
   }
   return (
