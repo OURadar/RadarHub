@@ -135,6 +135,9 @@ Copyright Boonleng Cheong
   display: block;
   height: 100vh;
 }
+#split-panel-right {
+  overflow-y: scroll;
+}
 
 /* Browser */
 #calendarContainer {

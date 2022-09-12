@@ -119,6 +119,7 @@ export class App extends Component {
             </div>
           </div>
           <div id="split-panel-right" className="container">
+            <div className="spacerTop" />
             <Health dict={this.ingest.data.health} />
             <Control ingest={this.ingest} />
             <Scope2 data={this.ingest.data} colors={this.state.colors} />
