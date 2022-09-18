@@ -271,6 +271,11 @@ export function Colorbar(props) {
       style: props.style,
       debug: props.debug,
     });
+
+    const onTouch = (e) => props.onTouch(e);
+    canvas.addEventListener("touchend", onTouch);
+
+    return () => canvas.removeEventListener("touchend", onTouch);
   }, [props.count]);
 
   var params = {
@@ -283,4 +288,5 @@ export function Colorbar(props) {
 
 Colorbar.defaultProps = {
   gravity: "top",
+  onTouch: () => console.log("Colorbar.onTouch"),
 };

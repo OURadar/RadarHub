@@ -86,9 +86,8 @@ class Product extends GLView {
       latitude: 35.25527,
     },
     gravity: "right",
-    onOverlayLoad: () => {
-      console.log("Product.onOverlayLoad()");
-    },
+    onOverlayLoad: () => console.log("Product.onOverlayLoad()"),
+    onColorbarTouch: () => console.log("Product.onColorbarTouch()"),
   };
 
   makeStyle(symbol = "Z") {
@@ -283,6 +282,7 @@ class Product extends GLView {
           count={this.state.count}
           style={this.state.style}
           palette={this.state.palette}
+          onTouch={this.props.onColorbarTouch}
           debug={false}
         />
         <Caption id="ageString" string={this.props.sweep?.age || ""} />

@@ -83,6 +83,16 @@ export function App(props) {
   const handleRight = () => archive.current.navigateForward();
   const handleDoubleRight = () => archive.current.navigateForwardScan();
 
+  const handleColorbarTouch = (e) => {
+    // console.log(e);
+    console.log(e.pageX / e.target.offsetWidth);
+    if (e.pageX / e.target.offsetWidth < 0.5) {
+      archive.current.prevProduct();
+    } else {
+      archive.current.nextProduct();
+    }
+  };
+
   useConstructor(() => {
     document
       .getElementById("device-style")
@@ -126,6 +136,7 @@ export function App(props) {
               origin={props.origin}
               sweep={archive.current?.data.sweep}
               onOverlayLoad={handleOverlayLoad}
+              onColorbarTouch={handleColorbarTouch}
             />
             <MenuArrow
               doubleLeftDisabled={disabled[0]}

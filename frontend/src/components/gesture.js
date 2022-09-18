@@ -172,6 +172,10 @@ class Gesture {
       ) {
         e.preventDefault();
         this.panInProgress = true;
+        if (e.targetTouches.length == 2) {
+          this.tiltInProgress = true;
+          console.log("touchstart -> tiltInProgress = true");
+        }
       }
       this.pointX = x;
       this.pointY = y;
@@ -186,6 +190,10 @@ class Gesture {
     this.element.addEventListener("touchend", (e) => {
       if (e.targetTouches.length > 0) {
         let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
+        if (e.targetTouches.length < 2) {
+          this.tiltInProgress = false;
+          console.log("touchend -> tiltInProgress = false");
+        }
         this.pointX = x;
         this.pointY = y;
         this.pointU = u;
@@ -200,6 +208,8 @@ class Gesture {
         this.singleTapTimeout = null;
       }
       this.panInProgress = false;
+      this.tiltInProgress = false;
+      this.rollInProgress = false;
       if (delta > 90 && delta < 300 && now - this.lastMagnifyTime > 300) {
         this.message = `touchend: double tap (${delta} ms)`;
         this.handleDoubleTap(this.pointX, this.pointY);
@@ -216,13 +226,43 @@ class Gesture {
     });
     this.element.addEventListener("touchcancel", (_e) => {
       this.panInProgress = false;
+      this.tiltInProgress = false;
+      this.rollInProgress = false;
       this.message = "touchcancel";
     });
     this.element.addEventListener("touchmove", (e) => {
       let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
       let s = 1.0;
       let m = "";
-      if (this.panInProgress === true) {
+      if (this.tiltInProgress === true) {
+        e.preventDefault();
+        if (e.targetTouches.length == 1) {
+          this.tiltInProgress = false;
+        } else if (e.targetTouches.length == 2) {
+          this.tiltInProgress = true;
+          if (e.scale) {
+            s = e.scale / this.scale;
+            this.scale = e.scale;
+            m = "s";
+          } else if (d > 10) {
+            s = d / this.pointD;
+            m = "d";
+          }
+          this.handleDolly(
+            u > 10 ? u / this.pointU : 1,
+            v > 10 ? v / this.pointV : 1,
+            s,
+            x,
+            y
+          );
+        }
+        this.handleTilt(x - this.pointX, this.pointY - y);
+        this.pointX = x;
+        this.pointY = y;
+        this.pointU = u;
+        this.pointV = v;
+        this.pointD = d;
+      } else if (this.panInProgress === true) {
         e.preventDefault();
         if (e.targetTouches.length == 2) {
           if (e.scale) {

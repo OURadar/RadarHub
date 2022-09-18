@@ -333,6 +333,30 @@ class Archive {
     this.list(this.grid.day, this.grid.hour, symbol);
   }
 
+  nextProduct() {
+    const switches = {
+      Z: "V",
+      V: "W",
+      W: "D",
+      D: "P",
+      P: "R",
+      R: "Z",
+    };
+    this.switch(switches[this.grid.symbol]);
+  }
+
+  prevProduct() {
+    const switches = {
+      Z: "R",
+      V: "Z",
+      W: "V",
+      D: "W",
+      P: "D",
+      R: "P",
+    };
+    this.switch(switches[this.grid.symbol]);
+  }
+
   disableLiveUpdate() {
     this.worker.postMessage({ task: "toggle", name: "offline" });
   }
