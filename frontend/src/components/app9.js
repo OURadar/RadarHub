@@ -83,6 +83,15 @@ export function App(props) {
   const handleRight = () => archive.current.navigateForward();
   const handleDoubleRight = () => archive.current.navigateForwardScan();
 
+  const handleColorbarTouch = (e) => {
+    // console.log(e);
+    if (e.pageX / e.target.offsetWidth < 0.5) {
+      archive.current.prevProduct();
+    } else {
+      archive.current.nextProduct();
+    }
+  };
+
   useConstructor(() => {
     document
       .getElementById("device-style")
