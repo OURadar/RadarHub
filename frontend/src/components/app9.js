@@ -85,7 +85,6 @@ export function App(props) {
 
   const handleColorbarTouch = (e) => {
     // console.log(e);
-    console.log(e.pageX / e.target.offsetWidth);
     if (e.pageX / e.target.offsetWidth < 0.5) {
       archive.current.prevProduct();
     } else {

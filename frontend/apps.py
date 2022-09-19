@@ -85,7 +85,9 @@ class FrontendConfig(AppConfig):
                 return
 
         for radar_prefix in radar_prefix_pairs:
-            if settings.SIMULATE:
+            if radar_prefix == ('demo', 'DEMO-'):
+                continue
+            elif settings.SIMULATE:
                 thread = threading.Thread(target=simulate, args=radar_prefix)
             else:
                 thread = threading.Thread(target=monitor, args=radar_prefix)
