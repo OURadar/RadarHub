@@ -243,7 +243,7 @@ class Archive {
     this.loadByName(this.grid.items[index]);
   }
 
-  loadByName(name = "PX-20130520-195944-E2.6-Z.nc") {
+  loadByName(name = "PX-20130520-195944-E2.6-Z") {
     this.message = `Loading ${name} ...`;
     this.worker.postMessage({ task: "load", name: name });
     this.state.loadCount++;
