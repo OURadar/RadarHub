@@ -87,6 +87,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.9.1 Separated user model for account info (8/25/2022)
   - [x] 0.9.2 Improved month table retrieval (UTC+ timezones) (9/6/2022)
   - [x] 0.9.3 Added arrow-navigation buttons desktop UI (9/8/2022)
+  - [x] 0.9.4 Added scroll behavior to split-panel-right (9/17/2022)
+  - [x] 0.9.5 Fixed issues with switching live/offline modes (9/22/2022)
   - [ ] 0.9.x 3D view manipulation through touch gestures
   - [ ] 0.9.x Fixed scroll view track
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
