@@ -64,8 +64,6 @@ function Browser(props) {
     if (props.archive.state.loadCount <= 1) {
       // console.log(`Scroll row ${index} into view`);
       elements.children[index].scrollIntoView();
-    } else if (props.archive.grid.latestHour) {
-      props.archive.disableLiveUpdate();
     }
   };
 
