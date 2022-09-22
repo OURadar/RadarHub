@@ -380,13 +380,13 @@ def location(radar):
 '''
     prefix - prefix of a radar, e.g., PX- for PX-1000, RAXPOL- for RaXPol
 '''
-def _file(prefix, scan='E4.0', symbol='Z'):
+def _latest_scan(prefix, scan='E4.0', symbol='Z'):
     day = Day.objects.filter(name=prefix).latest('date')
     last = day.last_hour_range()
     files = File.objects.filter(name__startswith=prefix, name__endswith=f'{scan}-{symbol}.nc', date__range=last)
     if files.exists():
         file = files.latest('date')
-        return file.name
+        return file.name.rstrip('.nc')
     else:
         return ''
 
@@ -438,7 +438,7 @@ def catchup(request, radar, scan='E4.0', symbol='Z'):
             'hoursActive': _count(prefix, ymd),
             'hour': hour,
             'items': _list(prefix, f'{date_time_string}-{symbol}'),
-            'latestScan': _file(prefix, scan, symbol),
+            'latestScan': _latest_scan(prefix, scan, symbol),
         }
     payload = json.dumps(data, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')

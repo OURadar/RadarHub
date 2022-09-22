@@ -137,6 +137,10 @@ def monitor(radar='px1000', prefix='PX-'):
             'hoursActive': [int(c) for c in hourly_count.split(',')],
             'time': datetime.datetime.utcnow().isoformat()
         }
+        if any(['.nc' in item for item in payload['items']]):
+            print('This should not happen:')
+            print(payload['items'])
+            print(delta)
         send_event('sse', radar, payload)
         files = latest_files
 
@@ -165,7 +169,7 @@ def simulate(radar='px1000', prefix='PX-'):
                 files.append(filename)
                 hourly_count[sweep_time.hour] += 1
             payload = {
-                'items': files,
+                'items': [file.rstrip('.nc') for file in files],
                 'hoursActive': hourly_count,
                 'time': sweep_time.isoformat()
             }
