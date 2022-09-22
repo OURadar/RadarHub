@@ -403,6 +403,10 @@ function load(name) {
       "color: dodgerblue"
     );
   }
+  if (name.indexOf(".nc") > -1) {
+    console.log(`name = ${name}`);
+    console.log(grid);
+  }
   grid.index = grid.items.indexOf(name);
   fetch(url, { cache: "force-cache" })
     .then((response) => {
@@ -661,7 +665,7 @@ function navigateBackwardScan() {
   updateGridIndexByScan(-1);
 }
 
-function toggle(name) {
+function toggle(name = "toggle") {
   if (state.verbose > 1) {
     console.info(
       `%carchive.worker.toggle()%c ${name}`,
@@ -671,7 +675,7 @@ function toggle(name) {
   }
   const update = state.update;
   if (name == "auto") {
-    if (state.update === null) {
+    if (state.update === null || state.update == "offline") {
       state.update = "scan";
     } else if (state.update == "scan") {
       state.update = "always";
