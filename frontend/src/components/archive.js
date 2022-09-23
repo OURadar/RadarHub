@@ -83,7 +83,6 @@ class Archive {
         );
       }
       this.grid = { ...this.grid, ...payload };
-      // this.loadIfNecessary();
       this.onIndex(this.grid);
     } else if (type == "list") {
       if (this.state.verbose) {
@@ -100,14 +99,12 @@ class Archive {
       }
       this.grid = payload;
       this.state.loadCount = 0;
-      // this.loadIfNecessary();
       this.onList(this.grid);
       this.state.itemsUpdating = false;
     } else if (type == "message") {
       this.showMessage(payload, 2500);
     } else if (type == "month") {
       this.grid.daysActive = payload;
-      // console.debug(this.grid.daysActive);
       this.state.daysActiveUpdating = false;
     } else if (type == "reset") {
       this.showMessage(payload);
@@ -223,15 +220,6 @@ class Archive {
     });
   }
 
-  load(arg) {
-    this.state.sweepLoading = true;
-    if (Number.isInteger(arg)) {
-      this.loadByIndex(arg);
-    } else {
-      this.loadByName(arg);
-    }
-  }
-
   loadIndex(index) {
     if (index < 0 || index >= this.grid.items.length) {
       console.error(
@@ -244,6 +232,15 @@ class Archive {
     this.message = `Loading ${scan} ...`;
     this.worker.postMessage({ task: "set", name: index });
   }
+
+  // load(arg) {
+  //   this.state.sweepLoading = true;
+  //   if (Number.isInteger(arg)) {
+  //     this.loadByIndex(arg);
+  //   } else {
+  //     this.loadByName(arg);
+  //   }
+  // }
 
   // loadByIndex(index = -1) {
   //   if (index < 0 || index >= this.grid.items.length) {

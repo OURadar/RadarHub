@@ -63,7 +63,8 @@ function Browser(props) {
     // console.log(`index = ${index}`);
     if (props.archive.state.loadCount <= 1) {
       // console.log(`Scroll ${index} / ${elements.children.length}`);
-      elements.children[index].scrollIntoView();
+      // console.log(elements.children[index]);
+      elements.children[index]?.scrollIntoViewIfNeeded();
     }
   };
 

@@ -316,7 +316,7 @@ function list(day, hour, symbol) {
   let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
   console.info(
-    `%carchive.worker.list()%c ${radar} ${dateTimeString} ${symbol} ${grid.index}`,
+    `%carchive.worker.list()%c ${radar} ${dateTimeString} / ${grid.dateTimeString} ${symbol} ${grid.index}`,
     `color: ${namecolor}`,
     ""
   );
@@ -351,15 +351,14 @@ function list(day, hour, symbol) {
       if (response.status == 200) {
         response.json().then((buffer) => {
           if (state.verbose > 1) {
-            console.debug(buffer);
+            console.debug("list buffer", buffer);
           }
-          let hourString = clamp(grid.hour, 0, 23).toString().padStart(2, "0");
           grid.day = day;
           grid.hour = buffer.hour;
           grid.index = -1;
           grid.symbol = symbol;
           grid.hoursActive = buffer.hoursActive;
-          grid.dateTimeString = `${dayString}-${hourString}00`;
+          grid.dateTimeString = dateTimeString;
           grid.latestHour =
             23 -
             grid.hoursActive
@@ -380,16 +379,19 @@ function list(day, hour, symbol) {
           if (grid.scan in grid.itemsGrouped) {
             index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
           }
-          setGridIndex(index);
-          self.postMessage({
-            type: "list",
-            payload: grid,
-          });
+          self.postMessage({ type: "list", payload: grid });
           if (grid.hour < 0) {
             self.postMessage({ type: "message", payload: "No Data" });
+            return;
           }
+          setGridIndex(index);
         });
       } else {
+        console.info(
+          `%carchive.worker.list()%c response.status = ${response.status} != 200`,
+          `color: ${namecolor}`,
+          ""
+        );
         response.text().then((response) => {
           self.postMessage({ type: "message", payload: response });
         });
@@ -460,7 +462,6 @@ function load(name) {
             return;
           }
           self.postMessage({ type: "load", payload: sweep });
-          // updateGridIndex(newIndex);
         });
       } else {
         response.text().then((text) => {
@@ -615,6 +616,13 @@ function setGridIndex(index) {
       "color: dodgerblue"
     );
   }
+  if (index < 0 || index >= grid.items.length) {
+    console.error(
+      `%carchive.worker.updateGridIndex()%c ${index} invalid`,
+      `color: ${namecolor}`,
+      "color: dodgerblue"
+    );
+  }
   if (index == grid.index) {
     if (state.verbose > 1) {
       console.debug(
@@ -685,6 +693,10 @@ function toggle(name = "toggle") {
       "color: dodgerblue"
     );
   }
+  if (name == state.update) {
+    self.postMessage({ type: "state", payload: { update: state.update } });
+    return;
+  }
   const update = state.update;
   if (name == "auto") {
     if (state.update === null || state.update == "offline") {
@@ -706,14 +718,10 @@ function toggle(name = "toggle") {
       ""
     );
   }
-  if (state.update != update) {
-    if (state.update == "offline") {
-      disconnect();
-    } else {
-      catchup();
-    }
+  if (state.update == "offline") {
+    disconnect();
   } else {
-    self.postMessage({ type: "state", payload: { update: state.update } });
+    catchup();
   }
 }
 
