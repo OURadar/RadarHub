@@ -40,10 +40,11 @@ class Archive {
     this.showMessage = this.showMessage.bind(this);
     this.init = this.init.bind(this);
     this.list = this.list.bind(this);
-    this.load = this.load.bind(this);
+    // this.load = this.load.bind(this);
     this.month = this.month.bind(this);
     this.count = this.count.bind(this);
     this.catchup = this.catchup.bind(this);
+    this.loadIndex = this.loadIndex.bind(this);
     this.updateAge = this.updateAge.bind(this);
 
     this.worker = new Worker(new URL("./archive.worker.js", import.meta.url));
@@ -82,7 +83,7 @@ class Archive {
         );
       }
       this.grid = { ...this.grid, ...payload };
-      this.loadIfNecessary();
+      // this.loadIfNecessary();
       this.onIndex(this.grid);
     } else if (type == "list") {
       if (this.state.verbose) {
@@ -99,7 +100,7 @@ class Archive {
       }
       this.grid = payload;
       this.state.loadCount = 0;
-      this.loadIfNecessary();
+      // this.loadIfNecessary();
       this.onList(this.grid);
       this.state.itemsUpdating = false;
     } else if (type == "message") {
@@ -231,54 +232,66 @@ class Archive {
     }
   }
 
-  loadByIndex(index = -1) {
+  loadIndex(index) {
     if (index < 0 || index >= this.grid.items.length) {
-      console.log(
-        `archive.load() index = ${index} is out of range ${this.grid.items.length}.`
+      console.error(
+        `archive.loadIndex()  ${index} != [0, ${this.grid.items.length}).`
       );
-      console.log(this.grid.items);
+      console.debug(this.grid.items);
       return;
     }
-    this.grid.index = index;
-    this.loadByName(this.grid.items[index]);
+    const scan = this.grid.items[index];
+    this.message = `Loading ${scan} ...`;
+    this.worker.postMessage({ task: "set", name: index });
   }
 
-  loadByName(name = "PX-20130520-195944-E2.6-Z") {
-    this.message = `Loading ${name} ...`;
-    this.worker.postMessage({ task: "load", name: name });
-    this.state.loadCount++;
-    this.onUpdate(this.state.tic++);
-  }
+  // loadByIndex(index = -1) {
+  //   if (index < 0 || index >= this.grid.items.length) {
+  //     console.log(
+  //       `archive.load() index = ${index} is out of range ${this.grid.items.length}.`
+  //     );
+  //     console.log(this.grid.items);
+  //     return;
+  //   }
+  //   //this.grid.index = index;
+  //   this.loadByName(this.grid.items[index]);
+  // }
 
-  loadIfNecessary() {
-    if (this.state.productSwitching) {
-      this.state.productSwitching = false;
-      this.state.loadCount = 0;
-      //this.grid.index = index;
-      this.loadByIndex(this.grid.index);
-    } else if (this.grid.index >= 0) {
-      this.loadByIndex(this.grid.index);
-    } else if (this.grid.index == -1) {
-      if (this.grid.latestScan == "" || this.grid.latestScan == null) {
-        this.state.itemsUpdating = false;
-        return;
-      }
-      let fileDayString = this.grid.latestScan.split("-")[1];
-      let gridDayString = this.grid.dateTimeString.split("-")[0];
-      console.log(
-        `%carchive.loadIfNecessary()%c` +
-          `   fileDayString: ${fileDayString}` +
-          `   gridDayString: ${gridDayString}` +
-          `   loadCount = ${this.state.loadCount}`,
-        "color: lightseagreen",
-        ""
-      );
-      if (this.state.liveUpdate != null) {
-        console.log(`Live update with ${this.grid.latestScan}`);
-        this.loadByName(this.grid.latestScan);
-      }
-    }
-  }
+  // loadByName(name = "PX-20130520-195944-E2.6-Z") {
+  //   this.message = `Loading ${name} ...`;
+  //   this.worker.postMessage({ task: "load", name: name });
+  //   this.state.loadCount++;
+  //   this.onUpdate(this.state.tic++);
+  // }
+
+  // loadIfNecessary() {
+  //   if (this.state.productSwitching) {
+  //     this.state.productSwitching = false;
+  //     this.state.loadCount = 0;
+  //     this.loadByIndex(this.grid.index);
+  //   } else if (this.grid.index >= 0) {
+  //     this.loadByIndex(this.grid.index);
+  //   } else if (this.grid.index == -1) {
+  //     if (this.grid.latestScan == "" || this.grid.latestScan == null) {
+  //       this.state.itemsUpdating = false;
+  //       return;
+  //     }
+  //     let fileDayString = this.grid.latestScan.split("-")[1];
+  //     let gridDayString = this.grid.dateTimeString.split("-")[0];
+  //     console.log(
+  //       `%carchive.loadIfNecessary()%c` +
+  //         `   fileDayString: ${fileDayString}` +
+  //         `   gridDayString: ${gridDayString}` +
+  //         `   loadCount = ${this.state.loadCount}`,
+  //       "color: lightseagreen",
+  //       ""
+  //     );
+  //     if (this.state.liveUpdate != null) {
+  //       console.log(`Live update with ${this.grid.latestScan}`);
+  //       this.loadByName(this.grid.latestScan);
+  //     }
+  //   }
+  // }
 
   // Expect something like day = 201305
   month(day) {

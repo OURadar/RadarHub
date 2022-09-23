@@ -128,7 +128,7 @@ function FileList(props) {
             key={`file-${k}`}
             variant="file"
             onClick={() => {
-              props.archive.load(k);
+              props.archive.loadIndex(k);
               props.onSelect(k);
             }}
             selected={k == index}

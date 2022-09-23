@@ -31,7 +31,7 @@ let grid = {
 };
 let state = {
   update: "scan",
-  verbose: 0,
+  verbose: 1,
 };
 const namecolor = "#bf9140";
 
@@ -62,6 +62,8 @@ const sweepParser = new Parser()
 self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
   if (task == "init") {
     init(name);
+  } else if (task == "set") {
+    setGridIndex(name);
   } else if (task == "load") {
     load(name);
   } else if (task == "list") {
@@ -314,11 +316,12 @@ function list(day, hour, symbol) {
   let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
   console.info(
-    `%carchive.worker.list()%c ${radar} ${dateTimeString} ${symbol}`,
+    `%carchive.worker.list()%c ${radar} ${dateTimeString} ${symbol} ${grid.index}`,
     `color: ${namecolor}`,
     ""
   );
   if (dateTimeString == grid.dateTimeString) {
+    let index = grid.index;
     let currentItems = grid.items;
     grid.items = [];
     grid.itemsGrouped = {};
@@ -334,6 +337,8 @@ function list(day, hour, symbol) {
       grid.itemsGrouped[scanType].push({ item: item, index: index });
     });
     grid.symbol = symbol;
+    grid.index = -1;
+    setGridIndex(index);
     self.postMessage({
       type: "list",
       payload: grid,
@@ -343,7 +348,7 @@ function list(day, hour, symbol) {
   const url = `/data/list/${radar}/${dateTimeString}-${symbol}/`;
   fetch(url)
     .then((response) => {
-      if (response.status == 200)
+      if (response.status == 200) {
         response.json().then((buffer) => {
           if (state.verbose > 1) {
             console.debug(buffer);
@@ -351,6 +356,7 @@ function list(day, hour, symbol) {
           let hourString = clamp(grid.hour, 0, 23).toString().padStart(2, "0");
           grid.day = day;
           grid.hour = buffer.hour;
+          grid.index = -1;
           grid.symbol = symbol;
           grid.hoursActive = buffer.hoursActive;
           grid.dateTimeString = `${dayString}-${hourString}00`;
@@ -370,12 +376,11 @@ function list(day, hour, symbol) {
             }
             grid.itemsGrouped[scanType].push({ item: item, index: index });
           });
+          let index = grid.items.length ? grid.items.length - 1 : -1;
           if (grid.scan in grid.itemsGrouped) {
-            grid.index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-          } else {
-            grid.index = grid.items.length ? grid.items.length - 1 : -1;
+            index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
           }
-          reviseGridPaths();
+          setGridIndex(index);
           self.postMessage({
             type: "list",
             payload: grid,
@@ -384,10 +389,11 @@ function list(day, hour, symbol) {
             self.postMessage({ type: "message", payload: "No Data" });
           }
         });
-      else
+      } else {
         response.text().then((response) => {
           self.postMessage({ type: "message", payload: response });
         });
+      }
     })
     .catch((error) => {
       console.error(`Unexpected error ${error}`);
@@ -407,7 +413,7 @@ function load(name) {
     console.log(`name = ${name}`);
     console.log(grid);
   }
-  grid.index = grid.items.indexOf(name);
+  const newIndex = grid.items.indexOf(name);
   fetch(url, { cache: "force-cache" })
     .then((response) => {
       if (response.status == 200) {
@@ -436,13 +442,10 @@ function load(name) {
           sweep.infoString =
             `Gatewidth: ${sweep.info.gatewidth} m\n` +
             `Waveform: ${sweep.info.waveform}`;
-          // console.log(
-          //   `timeString = ${sweep.timeString}   symbol = ${sweep.symbol}`
-          // );
           let scan = components[3];
           if (state.verbose > 1) {
             console.debug(
-              `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}`,
+              `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}   grid.index ${grid.index} -> ${newIndex}`,
               `color: ${namecolor}`,
               "color: dodgerblue"
             );
@@ -457,6 +460,7 @@ function load(name) {
             return;
           }
           self.postMessage({ type: "load", payload: sweep });
+          // updateGridIndex(newIndex);
         });
       } else {
         response.text().then((text) => {
@@ -576,19 +580,18 @@ function catchup() {
             buffer.yearsActive.length,
             ...buffer.yearsActive
           );
+          let index = grid.items.length ? grid.items.length - 1 : -1;
           if (state.update == "always") {
-            grid.index = grid.items.length - 1;
+            index = grid.items.length - 1;
           } else if (grid.scan in grid.itemsGrouped) {
-            grid.index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+            index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
           } else {
-            grid.index = grid.items.length ? grid.items.length - 1 : -1;
+            index = grid.items.length ? grid.items.length - 1 : -1;
           }
-          reviseGridPaths();
+          setGridIndex(index);
           if (state.verbose > 1) {
-            console.info(grid.items);
-            console.info(grid.itemsGrouped);
-            console.info(`grid.scan = ${grid.scan}`);
-            console.info(`grid.index = ${grid.index}`);
+            console.debug(grid.items);
+            console.debug(grid.itemsGrouped);
           }
           self.postMessage({
             type: "list",
@@ -604,9 +607,9 @@ function catchup() {
   });
 }
 
-function updateGridIndex(index) {
+function setGridIndex(index) {
   if (state.verbose > 1) {
-    console.info(
+    console.debug(
       `%carchive.worker.updateGridIndex()%c ${grid.index} -> ${index}`,
       `color: ${namecolor}`,
       "color: dodgerblue"
@@ -621,6 +624,15 @@ function updateGridIndex(index) {
     return;
   }
   grid.index = index;
+  const scan = grid.items[index];
+  if (state.verbose > 1) {
+    console.debug(
+      `%carchive.worker.updateGridIndex()%c Calling load() ${scan} ...`,
+      `color: ${namecolor}`,
+      "color: dodgerblue"
+    );
+  }
+  load(scan);
   reviseGridPaths();
   self.postMessage({
     type: "index",
@@ -630,17 +642,17 @@ function updateGridIndex(index) {
 
 function navigateForward() {
   let index = clamp(grid.index + 1, 0, grid.items.length - 1);
-  updateGridIndex(index);
+  setGridIndex(index);
 }
 
 function navigateBackward() {
   let index = clamp(grid.index - 1, 0, grid.items.length - 1);
-  updateGridIndex(index);
+  setGridIndex(index);
 }
 
 function navigateToEnd() {
   let index = grid.items.length - 1;
-  updateGridIndex(index);
+  setGridIndex(index);
 }
 
 function updateGridIndexByScan(delta) {
@@ -654,7 +666,7 @@ function updateGridIndexByScan(delta) {
     }
   });
   let index = ii[clamp(k + delta, 0, ii.length - 1)];
-  updateGridIndex(index);
+  setGridIndex(index);
 }
 
 function navigateForwardScan() {
@@ -667,7 +679,7 @@ function navigateBackwardScan() {
 
 function toggle(name = "toggle") {
   if (state.verbose > 1) {
-    console.info(
+    console.debug(
       `%carchive.worker.toggle()%c ${name}`,
       `color: ${namecolor}`,
       "color: dodgerblue"
@@ -725,8 +737,8 @@ function reviseGridPaths() {
   grid.pathsActive[1] = index != 0;
   grid.pathsActive[2] = index != grid.items.length - 1;
   grid.pathsActive[3] = index != last.index;
-  if (state.verbose) {
-    console.log(
+  if (state.verbose > 1) {
+    console.debug(
       `%carchive.worker.reviseGridPaths() %c${scan}%c`,
       `color: ${namecolor}`,
       "color: dodgerblue",

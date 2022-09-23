@@ -62,7 +62,7 @@ function Browser(props) {
     // console.log(child.offsetHeight, child.getClientRects().length);
     // console.log(`index = ${index}`);
     if (props.archive.state.loadCount <= 1) {
-      // console.log(`Scroll row ${index} into view`);
+      // console.log(`Scroll ${index} / ${elements.children.length}`);
       elements.children[index].scrollIntoView();
     }
   };
@@ -70,7 +70,7 @@ function Browser(props) {
   React.useEffect(() => {
     const newFileBrowser = (
       <div id="filesContainer" ref={setElements}>
-        {createFileButtons(items, index, props.archive.load)}
+        {createFileButtons(items, index, props.archive.loadIndex)}
       </div>
     );
     setFileBrowser(newFileBrowser);
