@@ -172,7 +172,7 @@ class Gesture {
       ) {
         e.preventDefault();
         this.panInProgress = true;
-        if (e.targetTouches.length == 2) {
+        if (e.targetTouches.length == 3) {
           this.tiltInProgress = true;
           console.log("touchstart -> tiltInProgress = true");
         }
@@ -190,7 +190,7 @@ class Gesture {
     this.element.addEventListener("touchend", (e) => {
       if (e.targetTouches.length > 0) {
         let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
-        if (e.targetTouches.length < 2) {
+        if (e.targetTouches.length < 3) {
           this.tiltInProgress = false;
           console.log("touchend -> tiltInProgress = false");
         }
@@ -236,9 +236,9 @@ class Gesture {
       let m = "";
       if (this.tiltInProgress === true) {
         e.preventDefault();
-        if (e.targetTouches.length == 1) {
+        if (e.targetTouches.length != 3) {
           this.tiltInProgress = false;
-        } else if (e.targetTouches.length == 2) {
+        } else if (e.targetTouches.length == 3) {
           this.tiltInProgress = true;
           if (e.scale) {
             s = e.scale / this.scale;
@@ -248,13 +248,6 @@ class Gesture {
             s = d / this.pointD;
             m = "d";
           }
-          this.handleDolly(
-            u > 10 ? u / this.pointU : 1,
-            v > 10 ? v / this.pointV : 1,
-            s,
-            x,
-            y
-          );
         }
         this.handleTilt(x - this.pointX, this.pointY - y);
         this.pointX = x;
@@ -342,7 +335,7 @@ function delta2scale(x) {
 
 function positionAndDistanceFromTouches(touches) {
   let x, y, u, v, d;
-  if (touches.length > 1) {
+  if (touches.length == 2) {
     x = 0.5 * (touches[0].clientX + touches[1].clientX);
     y = 0.5 * (touches[0].clientY + touches[1].clientY);
     u = Math.abs(touches[0].clientX - touches[1].clientX);
