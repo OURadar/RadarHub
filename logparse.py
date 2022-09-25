@@ -246,18 +246,20 @@ if __name__ == '__main__':
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('-w', dest='width', type=int, help='uses specific width')
     parser.add_argument('-x', action='store_true', help='experimental')
-    parser.add_argument('--all', action='store_true', help='shows all entries, including WSCONNECTING and WSDISCONNECT (default = False)')
+    parser.add_argument('--all', action='store_true', help='same as -f all')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     args = parser.parse_args()
 
     if args.quiet:
         args.verbose = 0
+    if args.all:
+        args.format = 'all'
 
     if len(args.source) and args.parser is None:
         parser = 'radarhub' if 'radarhub' in args.source[0] else 'nginx'
     else:
         parser = args.parser
-    hope = LogParser(parser=parser, format=args.format, all=args.all, width=args.width)
+    hope = LogParser(parser=parser, format=args.format, width=args.width)
 
     signal(SIGPIPE, SIG_DFL)
 
