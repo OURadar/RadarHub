@@ -22,6 +22,7 @@ class Gesture {
     this.pointV = 0;
     this.pointD = 0;
     this.scale = 1;
+    this.tick = 0;
     this.hasTouch = false;
     this.mouseDown = false;
     this.panInProgress = false;
@@ -40,6 +41,7 @@ class Gesture {
     this.handleMagnify = (_mx, _my, _m, _x, _y) => {};
     this.handleDolly = (_mx, _my, _m, _x, _y) => {};
     this.inbound = this.inbound.bind(this);
+    this.setTilt = this.setTilt(this);
 
     this.element.addEventListener("mousedown", (e) => {
       if (this.inbound(e)) {
@@ -190,16 +192,18 @@ class Gesture {
     this.element.addEventListener("touchend", (e) => {
       if (e.targetTouches.length > 0) {
         let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
-        if (e.targetTouches.length < 3) {
-          this.tiltInProgress = false;
-          console.log("touchend -> tiltInProgress = false");
-        }
         this.pointX = x;
         this.pointY = y;
         this.pointU = u;
         this.pointV = v;
         this.pointD = d;
+        if (e.targetTouches.length < 2) {
+          this.tiltInProgress = false;
+          this.rollInProgress = false;
+        }
         return;
+      } else {
+        this.tick = 0;
       }
       const now = Date.now();
       const delta = now - this.lastTapTime;
@@ -207,9 +211,6 @@ class Gesture {
         clearTimeout(this.singleTapTimeout);
         this.singleTapTimeout = null;
       }
-      this.panInProgress = false;
-      this.tiltInProgress = false;
-      this.rollInProgress = false;
       if (delta > 90 && delta < 300 && now - this.lastMagnifyTime > 300) {
         this.message = `touchend: double tap (${delta} ms)`;
         this.handleDoubleTap(this.pointX, this.pointY);
@@ -234,22 +235,11 @@ class Gesture {
       let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
       let s = 1.0;
       let m = "";
+      let dx = x - this.pointX;
+      let dy = this.pointY - y;
       if (this.tiltInProgress === true) {
         e.preventDefault();
-        if (e.targetTouches.length != 3) {
-          this.tiltInProgress = false;
-        } else if (e.targetTouches.length == 3) {
-          this.tiltInProgress = true;
-          if (e.scale) {
-            s = e.scale / this.scale;
-            this.scale = e.scale;
-            m = "s";
-          } else if (d > 10) {
-            s = d / this.pointD;
-            m = "d";
-          }
-        }
-        this.handleTilt(x - this.pointX, this.pointY - y);
+        this.handleTilt(dx, dy);
         this.pointX = x;
         this.pointY = y;
         this.pointU = u;
@@ -274,7 +264,21 @@ class Gesture {
             y
           );
         }
-        this.handlePan(x - this.pointX, this.pointY - y);
+        if (
+          e.targetTouches.length == 2 &&
+          this.tick < 3 &&
+          dy > 1.0 &&
+          s < 1.02 &&
+          d < 150
+        ) {
+          // console.log(
+          //   `tick = ${this.tick}  touches = ${e.targetTouches.length}  dy = ${dy}   s = ${s}  d = ${d}`
+          // );
+          this.tiltInProgress = true;
+          this.handleTilt(dx, dy);
+        } else {
+          this.handlePan(dx, dy);
+        }
         this.pointX = x;
         this.pointY = y;
         this.pointU = u;
@@ -282,6 +286,8 @@ class Gesture {
         this.pointD = d;
       }
       this.message = `touchmove (${x}, ${y}) / ${s.toFixed(4)}${m} `;
+      this.tick++;
+      // console.log(`tick = ${this.tick}`);
     });
     this.element.addEventListener("dblclick", (e) => {
       this.pointX = e.offsetX;
@@ -320,6 +326,10 @@ class Gesture {
       e.offsetX > this.bounds.left &&
       e.offsetY < this.element.height - this.bounds.bottom
     );
+  }
+
+  setTilt(mode) {
+    this.tiltInProgress = mode;
   }
 }
 
