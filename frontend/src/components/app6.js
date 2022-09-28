@@ -44,6 +44,7 @@ export class App extends React.Component {
     this.handleInfoClose = this.handleInfoClose.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
     this.handleOverlayLoad = this.handleOverlayLoad.bind(this);
+    this.handleColorbarClick = this.handleColorbarClick.bind(this);
     this.handleRadarDataLoad = this.handleRadarDataLoad.bind(this);
     this.handleLiveModeChange = this.handleLiveModeChange.bind(this);
     this.handleDoubleLeft = this.handleDoubleLeft.bind(this);
@@ -144,6 +145,7 @@ export class App extends React.Component {
                   showStats={false}
                   profileGL={this.props.profileGL}
                   onOverlayLoad={this.handleOverlayLoad}
+                  onColorbarClick={this.handleColorbarClick}
                 />
               }
               right={
@@ -183,6 +185,15 @@ export class App extends React.Component {
     // console.log(`liveUpdate = ${this.archive.state.liveUpdate}`);
     if (x == 1 && this.archive.state.liveUpdate === null) {
       this.archive.catchup();
+    }
+  }
+
+  handleColorbarClick(e) {
+    let dy = e.pageY - e.target.offsetTop;
+    if (dy / e.target.offsetHeight < 0.5) {
+      this.archive.prevProduct();
+    } else {
+      this.archive.nextProduct();
     }
   }
 

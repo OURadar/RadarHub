@@ -278,7 +278,7 @@ else:
     }
 
 # Prevent HttpResponse 301 for permanent forwards
-APPEND_SLASH = False
+# APPEND_SLASH = False
 
 # # LDAP stuff
 # import ldap

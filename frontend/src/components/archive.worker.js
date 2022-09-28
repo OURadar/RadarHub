@@ -104,7 +104,7 @@ function init(newRadar) {
 }
 
 function connect(force = false) {
-  if (source?.readyState == 1) {
+  if (source?.readyState == EventSource.OPEN) {
     if (force) {
       if (state.verbose > 1) {
         console.debug(`Closing existing connection ... force = ${force}`);
@@ -148,6 +148,16 @@ function connect(force = false) {
       payload: grid,
     });
   });
+  source.addEventListener("error", (_event) => {
+    console.log(`EventSource error`, source.readyState, EventSource.CONNECTING);
+    if (source.readyState == EventSource.CONNECTING) {
+      console.log("EventSource connecting ...");
+      return;
+    } else if (source.readyState == EventSource.CLOSED) {
+      console.log("EventSource closed. Starting a new one ...");
+      setTimeout(() => connect(), 10000);
+    }
+  });
   self.postMessage({
     type: "state",
     payload: {
@@ -182,7 +192,7 @@ function updateListWithItem(item) {
   const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
   if (state.verbose) {
     console.info(
-      `%carchive.worker.updateListWithFile()%c ${item} ${day}`,
+      `%carchive.worker.updateListWithItem()%c ${item} ${day}`,
       `color: ${namecolor}`,
       ""
     );
