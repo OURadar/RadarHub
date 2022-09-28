@@ -81,6 +81,7 @@ class LogParser:
             self.width = max(25, get_terminal_width() - 35)
         self.ws = kwargs['all'] if 'all' in kwargs else False
         self.__blank__()
+        self.reset()
         if line:
             self.decode(line)
 
@@ -109,6 +110,13 @@ class LogParser:
             self.status = int(x['status']) if x['status'] != '-' else 0
             self.bytes = int(x['bytes']) if x['bytes'] != '-' else 0
             self.url = x['url']
+            if self.status or self.ws:
+                if self.ip in self.visitors:
+                    self.visitors[self.ip]['count'] += 1
+                    self.visitors[self.ip]['network'] += self.bytes
+                    self.visitors[self.ip]['payload'] += int(self.bytes * self.compression)
+                else:
+                    self.visitors[self.ip] = {'count': 1, 'network': self.bytes, 'payload': int(self.bytes * self.compression)}
         else:
             self.__blank__()
 
@@ -180,8 +188,23 @@ class LogParser:
     def show(self, line=None):
         if line:
             self.decode(line)
-        if self.status or self.ws:
             print(self)
+
+    def reset(self):
+        self.visitors = {}
+        self.payload = 0
+        self.network = 0
+
+    def summary(self):
+        count = len(self.visitors)
+        network = 0
+        payload = 0
+        for _, stat in self.visitors.items():
+            network += stat['network']
+            payload += stat['payload']
+        print(f'Visitors: {count}')
+        print(f'Payload: {payload:13,d} B')
+        print(f'Network: {network:13,d} B')
 
 def readlines(source):
     if not os.path.exists(source):
@@ -240,6 +263,7 @@ if __name__ == '__main__':
         epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
     parser.add_argument('-a', dest='access', action='store_true', help='checks nginx access log')
+    parser.add_argument('-c', dest='count', action='store_true', help='counts number of unique visitors')
     parser.add_argument('-f', dest='format', choices={'all', 'url', 'loc', 'agent'}, default='loc', help='sets output format (default = loc)')
     parser.add_argument('-p', dest='parser', choices={'radarhub', 'nginx'}, help='sets the log parser (default = nginx)')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
@@ -283,6 +307,7 @@ if __name__ == '__main__':
                 sys.exit()
             for line in readlines(source):
                 hope.show(line)
+            hope.summary()
             sys.exit()
         for source in args.source:
             if not os.path.exists(source):
@@ -297,3 +322,4 @@ if __name__ == '__main__':
             sys.exit()
         for line in readlines(source):
             hope.show(line)
+        hope.summary()
