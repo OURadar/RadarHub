@@ -281,6 +281,7 @@ if __name__ == '__main__':
     parser.add_argument('-f', dest='format', choices={'all', 'url', 'loc', 'agent'}, default='loc', help='sets output format (default = loc)')
     parser.add_argument('-p', dest='parser', choices={'radarhub', 'nginx'}, help='sets the log parser (default = nginx)')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode and shows summary only')
+    parser.add_argument('-s', dest='summary', action='store_true', help='shows summary')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('-w', dest='width', type=int, help='uses specific width')
     parser.add_argument('-x', action='store_true', help='experimental')
@@ -290,6 +291,7 @@ if __name__ == '__main__':
 
     if args.quiet:
         args.verbose = 0
+        args.summary = True
     if args.all:
         args.format = 'all'
 
@@ -309,6 +311,8 @@ if __name__ == '__main__':
         # There is something piped through the stdin
         for line in sys.stdin:
             hope.process(line, args.verbose)
+        if args.summary:
+            hope.summary()
     elif len(args.source):
         if args.source[0][0] == '-':
             source = '/var/log/nginx/access.log'
