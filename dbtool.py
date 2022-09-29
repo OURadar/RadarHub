@@ -998,7 +998,7 @@ def update_visitors(verbose=1):
         visitor.user_agent = parser.user_agent
         visitor.last_visited = parser.datetime
         if verbose:
-            parser.show()
+            print(parser)
 
     for _, visitor in visitors.items():
         if verbose:
@@ -1110,7 +1110,7 @@ def dbtool_main():
     parser.add_argument('-p', '--check-path', action='store_true', help='checks the storage path')
     parser.add_argument('--progress', action='store_true', help='shows progress bar')
     parser.add_argument('-q', dest='quiet', action='store_true', help='runs the tool in silent mode (verbose = 0)')
-    parser.add_argument('--recent', default=14, type=int, help='shows recent days of entries')
+    parser.add_argument('--recent', default=7, type=int, help='shows recent N days of entries')
     parser.add_argument('--remove', action='store_true', help='removes entries when combined with --find-duplicates')
     parser.add_argument('-s', dest='sweep', action='store_true', help='shows a sweep summary')
     parser.add_argument('--show-city', action='store_true', help='shows city of IP location')

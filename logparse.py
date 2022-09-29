@@ -111,6 +111,8 @@ class LogParser:
             self.bytes = int(x['bytes']) if x['bytes'] != '-' else 0
             self.url = x['url']
             if self.status or self.ws:
+                if self.first is None:
+                    self.first = self.datetime
                 if self.ip in self.visitors:
                     self.visitors[self.ip]['count'] += 1
                     self.visitors[self.ip]['network'] += self.bytes
@@ -185,15 +187,18 @@ class LogParser:
             return f'{t} | {self.ip:>15} | {self.os_browser:>20} | {u}'
         return f'{t} | {self.ip:>15} | {l:>25} | {b} | {c} | {self.os_browser:>20} | {u}'
 
-    def show(self, line=None):
-        if line:
-            self.decode(line)
+    def process(self, line=None, show=False):
+        if line is None:
+            return
+        self.decode(line)
+        if show:
             print(self)
 
     def reset(self):
         self.visitors = {}
         self.payload = 0
         self.network = 0
+        self.first = None
 
     def summary(self):
         count = len(self.visitors)
@@ -202,6 +207,9 @@ class LogParser:
         for _, stat in self.visitors.items():
             network += stat['network']
             payload += stat['payload']
+        s = self.first.strftime(r'%m/%d %H:%M') if self.first else '--/-- --:--'
+        e = self.datetime.strftime(r'%H:%M') if self.datetime else '--:--'
+        print(f'Date Range: {s} - {e}')
         print(f'Visitors: {count}')
         print(f'Payload: {payload:13,d} B')
         print(f'Network: {network:13,d} B')
@@ -226,6 +234,12 @@ def find_previous_log(file):
     if os.path.exists(previous):
         return previous
     return None
+
+def process_source(source, show):
+    print(f'\033[4;38;5;45m{source}\033[m')
+    for line in readlines(source):
+        hope.process(line, show=show)
+    hope.summary()
 
 def xfunc(parser, verbose=0):
     ips = {}
@@ -266,7 +280,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', dest='count', action='store_true', help='counts number of unique visitors')
     parser.add_argument('-f', dest='format', choices={'all', 'url', 'loc', 'agent'}, default='loc', help='sets output format (default = loc)')
     parser.add_argument('-p', dest='parser', choices={'radarhub', 'nginx'}, help='sets the log parser (default = nginx)')
-    parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode (verbosity = 0')
+    parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode and shows summary only')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
     parser.add_argument('-w', dest='width', type=int, help='uses specific width')
     parser.add_argument('-x', action='store_true', help='experimental')
@@ -294,32 +308,26 @@ if __name__ == '__main__':
     if select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin
         for line in sys.stdin:
-            hope.show(line)
+            hope.process(line, args.verbose)
     elif len(args.source):
         if args.source[0][0] == '-':
             source = '/var/log/nginx/access.log'
             n = int(args.source[0][1:])
             for _ in range(n):
                 source = find_previous_log(source)
-            print(f'\033[4;38;5;45m{source}\033[m')
             if source is None:
                 print(f'ERROR. Unable to find the previous source #{n}')
                 sys.exit()
-            for line in readlines(source):
-                hope.show(line)
-            hope.summary()
+            process_source(source, args.verbose)
             sys.exit()
         for source in args.source:
             if not os.path.exists(source):
                 print(f'ERROR. File {source} does not exist')
                 sys.exit()
-            for line in readlines(source):
-                hope.show(line)
+            process_source(source, args.verbose)
     else:
         source = '/var/log/nginx/access.log'
         if not os.path.exists(source):
             print(f'ERROR. File {source} does not exist')
             sys.exit()
-        for line in readlines(source):
-            hope.show(line)
-        hope.summary()
+        process_source(source, args.verbose)
