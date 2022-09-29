@@ -40,7 +40,6 @@ class Archive {
     this.showMessage = this.showMessage.bind(this);
     this.init = this.init.bind(this);
     this.list = this.list.bind(this);
-    // this.load = this.load.bind(this);
     this.month = this.month.bind(this);
     this.count = this.count.bind(this);
     this.catchup = this.catchup.bind(this);
@@ -232,34 +231,6 @@ class Archive {
     this.message = `Loading ${scan} ...`;
     this.worker.postMessage({ task: "set", name: index });
   }
-
-  // load(arg) {
-  //   this.state.sweepLoading = true;
-  //   if (Number.isInteger(arg)) {
-  //     this.loadByIndex(arg);
-  //   } else {
-  //     this.loadByName(arg);
-  //   }
-  // }
-
-  // loadByIndex(index = -1) {
-  //   if (index < 0 || index >= this.grid.items.length) {
-  //     console.log(
-  //       `archive.load() index = ${index} is out of range ${this.grid.items.length}.`
-  //     );
-  //     console.log(this.grid.items);
-  //     return;
-  //   }
-  //   //this.grid.index = index;
-  //   this.loadByName(this.grid.items[index]);
-  // }
-
-  // loadByName(name = "PX-20130520-195944-E2.6-Z") {
-  //   this.message = `Loading ${name} ...`;
-  //   this.worker.postMessage({ task: "load", name: name });
-  //   this.state.loadCount++;
-  //   this.onUpdate(this.state.tic++);
-  // }
 
   // loadIfNecessary() {
   //   if (this.state.productSwitching) {

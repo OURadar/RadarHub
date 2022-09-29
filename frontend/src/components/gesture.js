@@ -204,6 +204,9 @@ class Gesture {
         return;
       } else {
         this.tick = 0;
+        this.panInProgress = false;
+        this.tiltInProgress = false;
+        this.rollInProgress = false;
       }
       const now = Date.now();
       const delta = now - this.lastTapTime;
