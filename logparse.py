@@ -38,10 +38,10 @@ __version__ = '1.0'
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 re_nginx = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})([0-9\., ]+)'
-    + r'\[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}).+\]'
-    + r' "([A-Z]+) (?P<url>.+) (?P<protocol>HTTP/[0-9\.]+)"'
-    + r' (?P<status>\d{3}) (?P<bytes>\d+)'
-    + r' "(?P<user_agent>.+)" "(?P<compression>[0-9\.-]+)"'
+    + r'\[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}).+\] '
+    + r'"([A-Z]+) (?P<url>.+) (?P<protocol>HTTP/[0-9\.]+)" '
+    + r'(?P<status>\d{3}) (?P<bytes>\d+) '
+    + r'"(?P<user_agent>.+)" "(?P<compression>[0-9\.-]+)"'
 )
 re_radarhub = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d{1,5} - -'
@@ -188,11 +188,13 @@ class LogParser:
             return f'{t} | {self.ip:>15} | {self.os_browser:>20} | {u}'
         return f'{t} | {self.ip:>15} | {l:>25} | {b} | {c} | {self.os_browser:>20} | {u}'
 
-    def process(self, line=None, show=False):
+    def process(self, line=None, show=False, ignore_bot=True):
         if line is None:
             return
         self.decode(line)
         if show:
+            if ignore_bot and 'Expanse' in self.user_agent:
+                return
             print(self)
 
     def reset(self):
