@@ -37,11 +37,11 @@ __prog__ = os.path.basename(sys.argv[0])
 __version__ = '1.0'
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 re_nginx = re.compile(
-    r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
-    + r' \[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}).+\]'
-    + r' "([A-Z]+) (?P<url>.+) (?P<protocol>HTTP/[0-9.]+)"'
+    r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})([0-9\., ]+)'
+    + r'\[(?P<time>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}).+\]'
+    + r' "([A-Z]+) (?P<url>.+) (?P<protocol>HTTP/[0-9\.]+)"'
     + r' (?P<status>\d{3}) (?P<bytes>\d+)'
-    + r' "(?P<user_agent>.+)" "(?P<compression>[0-9.-]+)"'
+    + r' "(?P<user_agent>.+)" "(?P<compression>[0-9\.-]+)"'
 )
 re_radarhub = re.compile(
     r'(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d{1,5} - -'
@@ -71,6 +71,7 @@ class LogParser:
     def __init__(self, line=None, **kwargs):
         self.format = kwargs['format'] if 'format' in kwargs else 'loc'
         self.parser = re_radarhub if 'parser' in kwargs and kwargs['parser'] == 'radarhub' else re_nginx
+        self.show_bot_message = True
         if 'width' in kwargs and kwargs['width'] is not None and kwargs['width'] > 40:
             self.width = kwargs['width']
         elif self.format == 'loc':
@@ -86,7 +87,7 @@ class LogParser:
             self.decode(line)
 
     def __blank__(self):
-        self.ip = '127.0.0.1'
+        self.ip = '0.0.0.0'
         self.datetime = None
         self.compression = 0
         self.user_agent = '-'
@@ -199,6 +200,9 @@ class LogParser:
         self.payload = 0
         self.network = 0
         self.first = None
+
+    def hide_bot_message(self):
+        self.show_bot_message = False
 
     def summary(self):
         count = len(self.visitors)
