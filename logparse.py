@@ -188,13 +188,14 @@ class LogParser:
             return f'{t} | {self.ip:>15} | {self.os_browser:>20} | {u}'
         return f'{t} | {self.ip:>15} | {l:>25} | {b} | {c} | {self.os_browser:>20} | {u}'
 
-    def process(self, line=None, show=False, ignore_bot=True):
+    def process(self, line=None):
         if line is None:
             return
         self.decode(line)
-        if show:
-            if ignore_bot and 'Expanse' in self.user_agent:
-                return
+        if self.show_line:
+            if self.hide_bot:
+                if 'Expanse' in self.user_agent:
+                    return
             print(self)
 
     def reset(self):
@@ -202,6 +203,8 @@ class LogParser:
         self.payload = 0
         self.network = 0
         self.first = None
+        self.show_line = True
+        self.hide_bot = False
 
     def hide_bot_message(self):
         self.show_bot_message = False
@@ -241,15 +244,19 @@ def find_previous_log(file):
         return previous
     return None
 
-def process_source(source, show):
+def process_source(source, **kwargs):
+    # print(kwargs)
+    hope.show_line = kwargs['verbose'] > 0 if 'verbose' in kwargs else False
+    hope.hide_bot = kwargs['hide_bot'] if 'hide_bot' in kwargs else False
     print(f'\033[4;38;5;45m{source}\033[m')
     for line in readlines(source):
-        hope.process(line, show=show)
+        hope.process(line)
     hope.summary()
 
-def xfunc(parser, verbose=0):
+def xfunc(parser, **kwargs):
     ips = {}
     source = '/var/log/nginx/access.log'
+    verbose = kwargs['verbose'] if 'verbose' in kwargs else 0
     while source:
         if verbose:
             if verbose > 1:
@@ -292,6 +299,7 @@ if __name__ == '__main__':
     parser.add_argument('-w', dest='width', type=int, help='uses specific width')
     parser.add_argument('-x', action='store_true', help='experimental')
     parser.add_argument('--all', action='store_true', help='same as -f all')
+    parser.add_argument('--hide-bot', action='store_true', help='hides traffic created by bots')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     args = parser.parse_args()
 
@@ -306,6 +314,8 @@ if __name__ == '__main__':
     else:
         parser = args.parser
     hope = LogParser(parser=parser, format=args.format, width=args.width)
+    hope.show_line = args.verbose > 0
+    hope.hide_bot = args.hide_bot
 
     signal(SIGPIPE, SIG_DFL)
 
@@ -316,7 +326,7 @@ if __name__ == '__main__':
     if select.select([sys.stdin, ], [], [], 0.0)[0]:
         # There is something piped through the stdin
         for line in sys.stdin:
-            hope.process(line, args.verbose)
+            hope.process(line)
         if args.summary:
             hope.summary()
     elif len(args.source):
@@ -328,16 +338,16 @@ if __name__ == '__main__':
             if source is None:
                 print(f'ERROR. Unable to find the previous source #{n}')
                 sys.exit()
-            process_source(source, args.verbose)
+            process_source(source, verbose=args.verbose, hide_bot=args.hide_bot)
             sys.exit()
         for source in args.source:
             if not os.path.exists(source):
                 print(f'ERROR. File {source} does not exist')
                 sys.exit()
-            process_source(source, args.verbose)
+        process_source(source, verbose=args.verbose, hide_bot=args.hide_bot)
     else:
         source = '/var/log/nginx/access.log'
         if not os.path.exists(source):
             print(f'ERROR. File {source} does not exist')
             sys.exit()
-        process_source(source, args.verbose)
+        process_source(source, verbose=args.verbose, hide_bot=args.hide_bot)
