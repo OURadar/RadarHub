@@ -115,11 +115,12 @@ class LogParser:
             self.datetime = datetime.datetime.strptime(x['time'], r'%d/%b/%Y:%H:%M:%S').replace(tzinfo=datetime.timezone.utc)
             self.compression = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 1
             self.user_agent = x['user_agent'] if 'user_agent' in x else ''
-            self.os_browser = get_user_agent_string(self.user_agent if len(self.user_agent) else '-', width=20)
+            self.os_browser = get_user_agent_string(self.user_agent, width=20)
             self.location = get_ip_location(x['ip']).replace('United States', 'USA')
             self.status = int(x['status']) if x['status'] != '-' else 0
             self.bytes = int(x['bytes']) if x['bytes'] != '-' else 0
             self.url = x['url']
+            self.bot = False
             if self.first is None:
                 self.first = self.datetime
             if self.status or self.ws:

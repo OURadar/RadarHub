@@ -41,6 +41,8 @@ def get_user_agent_string(user_agent, width=25, reload=False):
         return oses[key] if key in oses else key
     if not user_agent[0].isalpha():
         return f'- {user_agent[:18]}'
+    if len(user_agent) == 0:
+        return '-'
     # API reference: http://www.useragentstring.com/pages/api.php
     global user_agent_strings
     if len(user_agent_strings) == 0:
@@ -80,7 +82,7 @@ def get_user_agent_string(user_agent, width=25, reload=False):
     return f'- {user_agent[:18]}'
 
 @lru_cache
-def get_ip_location(ip, show_city=False):
+def get_ip_location(ip, show_city=False, abbreviate=False):
     ip_num = [int(x) for x in ip.split('.')]
     if ip_num[0] == 10 or (ip_num[0] == 192 and ip_num[1] == 168) or (ip_num[0] == 172 and ip_num[1] >= 16 and ip_num[1] < 32):
         return 'Internal / VPN'
@@ -101,4 +103,7 @@ def get_ip_location(ip, show_city=False):
     if show_city:
         city = re_space.sub('', info['city']['names']['en'])
         origin = f'{city}, ' + origin
+    if abbreviate:
+        origin = origin.replace('United States', 'USA')
+        origin = origin.replace('United Kingdom', 'UK')
     return origin
