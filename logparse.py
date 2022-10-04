@@ -96,6 +96,15 @@ class LogParser:
         self.status = 0
         self.bytes = 0
         self.url = None
+        self.bot = False
+
+    def reset(self):
+        self.visitors = {}
+        self.payload = 0
+        self.network = 0
+        self.first = None
+        self.show_line = True
+        self.hide_bot = False
 
     def decode(self, line):
         line = line.rstrip()
@@ -111,9 +120,12 @@ class LogParser:
             self.status = int(x['status']) if x['status'] != '-' else 0
             self.bytes = int(x['bytes']) if x['bytes'] != '-' else 0
             self.url = x['url']
+            if self.first is None:
+                self.first = self.datetime
             if self.status or self.ws:
-                if self.first is None:
-                    self.first = self.datetime
+                if 'Expanse' in self.user_agent:
+                    self.bot = True
+                    return
                 if self.ip in self.visitors:
                     self.visitors[self.ip]['count'] += 1
                     self.visitors[self.ip]['network'] += self.bytes
@@ -193,18 +205,9 @@ class LogParser:
             return
         self.decode(line)
         if self.show_line:
-            if self.hide_bot:
-                if 'Expanse' in self.user_agent:
-                    return
+            if self.bot and self.hide_bot:
+                return
             print(self)
-
-    def reset(self):
-        self.visitors = {}
-        self.payload = 0
-        self.network = 0
-        self.first = None
-        self.show_line = True
-        self.hide_bot = False
 
     def hide_bot_message(self):
         self.show_bot_message = False
