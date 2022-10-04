@@ -116,7 +116,7 @@ class LogParser:
             self.compression = float(x['compression']) if 'compression' in x and '-' not in x['compression'] else 1
             self.user_agent = x['user_agent'] if 'user_agent' in x else ''
             self.os_browser = get_user_agent_string(self.user_agent, width=20)
-            self.location = get_ip_location(x['ip']).replace('United States', 'USA')
+            self.location = get_ip_location(x['ip'], abbreviate=True)
             self.status = int(x['status']) if x['status'] != '-' else 0
             self.bytes = int(x['bytes']) if x['bytes'] != '-' else 0
             self.url = x['url']
@@ -303,6 +303,7 @@ if __name__ == '__main__':
     parser.add_argument('-w', dest='width', type=int, help='uses specific width')
     parser.add_argument('-x', action='store_true', help='experimental')
     parser.add_argument('--all', action='store_true', help='same as -f all')
+    parser.add_argument('--no-bot', dest='hide_bot', action='store_true', help='hides traffic created by bots')
     parser.add_argument('--hide-bot', action='store_true', help='hides traffic created by bots')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     args = parser.parse_args()
