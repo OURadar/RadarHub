@@ -46,8 +46,9 @@ function draw(context, params) {
       context.fillText(tick.text, xx, yy);
     });
 
-    // Colorbar shades. The first shade is transparent so only paint shades 1 - 255
     context.rotate(-0.5 * Math.PI);
+
+    // Colorbar shades. The first shade is transparent so only paint shades 1 - 255
     if (params.blank) {
       context.fillStyle = params.face;
       context.fillRect(-scale, -scale, height + 2 * scale, width + 2 * scale);
@@ -66,7 +67,6 @@ function draw(context, params) {
         width
       );
     }
-    context.rotate(0.5 * Math.PI);
 
     // Title of the colorbar
     context.font = `${20 * scale}px LabelFont`;
@@ -77,6 +77,8 @@ function draw(context, params) {
     let x = 0.5 * (height - meas.width);
     context.strokeText(params.style.name, x, -18 * scale);
     context.fillText(params.style.name, x, -18 * scale);
+
+    context.rotate(0.5 * Math.PI);
 
     // Outline of the colorbar
     context.strokeStyle = params.face;
