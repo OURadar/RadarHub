@@ -7,16 +7,15 @@
 //  Created by Boonleng Cheong on 9/23/2021.
 //
 
-class Archive {
+import { Ingest } from "./ingest";
+
+class Archive extends Ingest {
   constructor(radar, label = "") {
-    this.radar = radar;
-    this.label = label == "" ? radar : label;
-    this.ready = false;
-    this.data = {
-      sweep: null,
-    };
+    super(radar, label);
+
     this.grid = null;
     this.state = {
+      ...this.state,
       liveUpdate: null,
       daysActiveUpdating: false,
       hoursActiveUpdating: false,
@@ -25,19 +24,10 @@ class Archive {
       sweepLoading: false,
       loadCount: 0,
       verbose: 0,
-      tic: 0,
     };
     this.ageTimer = setInterval(() => this.updateAge(), 1000);
     this.messageTimer = null;
-    this.message = "";
-    this.response = "";
-    this.onUpdate = () => {};
-    this.onIndex = () => {};
-    this.onList = () => {};
-    this.onLoad = () => {};
 
-    this.handleMessage = this.handleMessage.bind(this);
-    this.showMessage = this.showMessage.bind(this);
     this.init = this.init.bind(this);
     this.list = this.list.bind(this);
     this.month = this.month.bind(this);
@@ -161,18 +151,6 @@ class Archive {
   }
 
   //
-
-  showMessage(message, duration = 2000) {
-    this.message = message;
-    if (this.messageTimer) clearTimeout(this.messageTimer);
-    this.messageTimer = setTimeout(() => {
-      if (this.message == message) {
-        this.message = "";
-        this.messageTimer = null;
-        this.onUpdate(this.state.tic++);
-      }
-    }, duration);
-  }
 
   init() {
     if (this.state.verbose) {

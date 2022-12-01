@@ -13,7 +13,7 @@ import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
 import { TopBar } from "./topbar";
-import { Ingest } from "./ingest";
+import { Live } from "./live";
 import { theme, colorDict } from "./theme";
 
 class App extends Component {
@@ -23,7 +23,7 @@ class App extends Component {
       colors: colorDict(),
       tic: 0,
     };
-    this.ingest = new Ingest(props.radar);
+    this.ingest = new Live(props.radar);
     this.ingest.onUpdate = () => {
       this.forceUpdate();
     };

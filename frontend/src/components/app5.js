@@ -16,7 +16,7 @@ import { Health } from "./health";
 import { Control } from "./control";
 import { Product } from "./product";
 import { TopBar } from "./topbar";
-import { Ingest } from "./ingest";
+import { Live } from "./live";
 
 export class App extends Component {
   constructor(props) {
@@ -25,7 +25,7 @@ export class App extends Component {
       colors: colorDict(),
       theme: makeTheme(),
     };
-    this.ingest = new Ingest(props.radar);
+    this.ingest = new Live(props.radar);
     this.ingest.onUpdate = () => {
       this.forceUpdate();
     };
