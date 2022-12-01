@@ -2,6 +2,8 @@
 //  ingest.js
 //  RadarHub
 //
+//  This is a model
+//
 //  Created by Boonleng Cheong on 7/25/2021.
 //
 
