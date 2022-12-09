@@ -403,6 +403,13 @@ python manage.py runserver 0:8000
 python manage.py runworker backhaul
 ```
 
+4. demo radar
+
+```shell
+cd reporter
+dgen -v localhost:8000
+```
+
 Off you go, you should be able to view the RadarHub interface through a web browser at http://localhost:8000 and tinker with the source codes and see the changes when you reload the page. Happy coding.
 
 # Deploy RadarHub
