@@ -39,13 +39,14 @@ class Live extends Ingest {
 
   handleMessage({ data: { type, payload } }) {
     if (type == "message") {
-      this.message = payload;
-      setTimeout(() => {
-        if (this.message == payload) {
-          this.message = "";
-          this.onUpdate(this.state.tic++);
-        }
-      }, 2000);
+      // this.message = payload;
+      // setTimeout(() => {
+      //   if (this.message == payload) {
+      //     this.message = "";
+      //     this.onUpdate(this.state.tic++);
+      //   }
+      // }, 2000);
+      this.showMessage(payload, 2500);
     } else if (type == "scope") {
       //if (this.state.tic < 5) console.log(payload);
       this.data.ch1 = payload.ch1;

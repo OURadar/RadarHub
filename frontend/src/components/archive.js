@@ -42,7 +42,9 @@ class Archive extends Ingest {
   }
 
   handleMessage({ data: { type, payload } }) {
-    if (type == "load") {
+    if (type == "message") {
+      this.showMessage(payload, 2500);
+    } else if (type == "load") {
       this.data.sweep = payload;
       this.updateAge();
       this.state.sweepLoading = false;
@@ -90,8 +92,6 @@ class Archive extends Ingest {
       this.state.loadCount = 0;
       this.onList(this.grid);
       this.state.itemsUpdating = false;
-    } else if (type == "message") {
-      this.showMessage(payload, 2500);
     } else if (type == "month") {
       this.grid.daysActive = payload;
       this.state.daysActiveUpdating = false;
