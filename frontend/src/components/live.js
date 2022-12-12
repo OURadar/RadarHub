@@ -7,6 +7,8 @@
 //  Created by Boonleng Cheong on 7/25/2021.
 //
 
+import { Ingest } from "./ingest";
+
 class Live extends Ingest {
   constructor(radar, label = "") {
     super(radar, label);
@@ -46,7 +48,17 @@ class Live extends Ingest {
       //     this.onUpdate(this.state.tic++);
       //   }
       // }, 2000);
-      this.showMessage(payload, 2500);
+      this.showMessage(payload);
+    } else if (type == "response") {
+      // console.log(payload);
+      // this.response = payload;
+      // setTimeout(() => {
+      //   if (this.response == payload) {
+      //     this.response = "";
+      //     this.onUpdate(this.state.tic++);
+      //   }
+      // }, 2000);
+      this.showResponse(payload, 2500);
     } else if (type == "scope") {
       //if (this.state.tic < 5) console.log(payload);
       this.data.ch1 = payload.ch1;
@@ -58,15 +70,6 @@ class Live extends Ingest {
       this.data.health = payload;
     } else if (type == "control") {
       this.data.control = payload;
-    } else if (type == "response") {
-      // console.log(payload);
-      this.response = payload;
-      setTimeout(() => {
-        if (this.response == payload) {
-          this.response = "";
-          this.onUpdate(this.state.tic++);
-        }
-      }, 2000);
     }
     this.onUpdate(this.state.tic++);
   }

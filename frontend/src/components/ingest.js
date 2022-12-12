@@ -41,8 +41,27 @@ class Ingest {
     }, duration);
   }
 
+  showResponse(message, duration = 2000) {
+    console.log("parent.showResponse");
+    this.response = message;
+    if (this.responseTimer) clearTimeout(this.responseTimer);
+    this.responseTimer = setTimeout(() => {
+      if (this.response == message) {
+        this.response = "";
+        this.responseTimer = null;
+        this.onUpdate(this.state.tic++);
+      }
+    }, duration);
+  }
+
   handleMessage({ data: { type, payload } }) {
-    console.log(`Ingest.handleMessage()`, type, payload);
+    if (type == "message") {
+      this.showMessage(payload);
+    } else if (type == "response") {
+      this.showResponse(payload);
+    } else {
+      console.log(`Ingest.handleMessage()`, type, payload);
+    }
   }
 }
 
