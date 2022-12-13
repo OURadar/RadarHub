@@ -91,6 +91,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.9.5 Fixed issues with switching live/offline modes (9/22/2022)
   - [x] 0.9.6 Fixed product switching bugs (9/24/2022)
   - [x] 0.9.7 New tilt state initialization (9/27/2022)
+  - [x] 0.9.8 Fixed colorbar title issues (10/7/2022)
   - [ ] 0.9.x 3D view manipulation through touch gestures
   - [ ] 0.9.x Fixed scroll view track
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
@@ -400,6 +401,13 @@ python manage.py runserver 0:8000
 
 ```shell
 python manage.py runworker backhaul
+```
+
+4. demo radar
+
+```shell
+cd reporter
+dgen -v localhost:8000
 ```
 
 Off you go, you should be able to view the RadarHub interface through a web browser at http://localhost:8000 and tinker with the source codes and see the changes when you reload the page. Happy coding.
