@@ -23,7 +23,6 @@ class Archive extends Ingest {
       productSwitching: false,
       sweepLoading: false,
       loadCount: 0,
-      verbose: 0,
     };
     this.ageTimer = setInterval(() => this.updateAge(), 1000);
     this.messageTimer = null;
@@ -211,35 +210,6 @@ class Archive extends Ingest {
     this.message = `Loading ${scan} ...`;
     this.worker.postMessage({ task: "set", name: index });
   }
-
-  // loadIfNecessary() {
-  //   if (this.state.productSwitching) {
-  //     this.state.productSwitching = false;
-  //     this.state.loadCount = 0;
-  //     this.loadByIndex(this.grid.index);
-  //   } else if (this.grid.index >= 0) {
-  //     this.loadByIndex(this.grid.index);
-  //   } else if (this.grid.index == -1) {
-  //     if (this.grid.latestScan == "" || this.grid.latestScan == null) {
-  //       this.state.itemsUpdating = false;
-  //       return;
-  //     }
-  //     let fileDayString = this.grid.latestScan.split("-")[1];
-  //     let gridDayString = this.grid.dateTimeString.split("-")[0];
-  //     console.log(
-  //       `%carchive.loadIfNecessary()%c` +
-  //         `   fileDayString: ${fileDayString}` +
-  //         `   gridDayString: ${gridDayString}` +
-  //         `   loadCount = ${this.state.loadCount}`,
-  //       "color: lightseagreen",
-  //       ""
-  //     );
-  //     if (this.state.liveUpdate != null) {
-  //       console.log(`Live update with ${this.grid.latestScan}`);
-  //       this.loadByName(this.grid.latestScan);
-  //     }
-  //   }
-  // }
 
   // Expect something like day = 201305
   month(day) {

@@ -14,6 +14,7 @@ class Ingest {
     this.ready = false;
     this.state = {
       tic: 0,
+      verbose: 0,
     };
     this.data = {
       sweep: null,
@@ -54,6 +55,7 @@ class Ingest {
     }, duration);
   }
 
+  // The method handleMessage() should be overriden in subclass
   handleMessage({ data: { type, payload } }) {
     if (type == "message") {
       this.showMessage(payload);
