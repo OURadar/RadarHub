@@ -207,7 +207,7 @@ function updateListWithItem(item) {
     grid.day = new Date(day);
     if (state.verbose) {
       console.info(
-        `%carchive.worker.updateListWithFile()%c   ${day} ${grid.hour}`,
+        `%carchive.worker.updateListWithItem()%c   ${day} ${grid.hour}`,
         `color: ${namecolor}`,
         ""
       );
@@ -220,18 +220,17 @@ function updateListWithItem(item) {
     console.warn(`Item ${item} exists.`);
     return;
   }
-  const index = grid.items.length;
+  let index = grid.items.length;
   grid.items.push(item);
   grid.itemsGrouped[scan].push({ item: item, index: index });
   if (state.update == "always") {
-    grid.index = index;
+    index = grid.items.length - 1;
+  } else if (grid.scan in grid.itemsGrouped) {
+    index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
   } else {
-    if (grid.scan in grid.itemsGrouped) {
-      grid.index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-    } else {
-      grid.index = -1;
-    }
+    index = -1;
   }
+  setGridIndex(index);
 }
 
 function createSweep(name = "dummy") {
