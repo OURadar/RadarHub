@@ -41,23 +41,8 @@ class Live extends Ingest {
 
   handleMessage({ data: { type, payload } }) {
     if (type == "message") {
-      // this.message = payload;
-      // setTimeout(() => {
-      //   if (this.message == payload) {
-      //     this.message = "";
-      //     this.onUpdate(this.state.tic++);
-      //   }
-      // }, 2000);
       this.showMessage(payload);
     } else if (type == "response") {
-      // console.log(payload);
-      // this.response = payload;
-      // setTimeout(() => {
-      //   if (this.response == payload) {
-      //     this.response = "";
-      //     this.onUpdate(this.state.tic++);
-      //   }
-      // }, 2000);
       this.showResponse(payload, 2500);
     } else if (type == "scope") {
       //if (this.state.tic < 5) console.log(payload);

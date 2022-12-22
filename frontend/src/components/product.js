@@ -56,7 +56,7 @@ class Product extends GLView {
       needsUpdate: false,
     };
     var image = new Image();
-    image.src = "/static/images/colormap.png";
+    image.src = "/static/images/colormap.png?v=2.10";
     image.addEventListener("load", () => {
       if (this.assets.colormap) {
         this.assets.colormap.destroy();
@@ -170,7 +170,8 @@ class Product extends GLView {
       // sticklabels = np.arange(-25, 81, 15)
       // sticks = sticklabels * 2.0 + 64.0
       let ticks = [];
-      for (let v = -25; v < 81; v += 15) {
+      // for (let v = -25; v < 81; v += 15) {
+      for (let v = -20; v < 91; v += 10) {
         let pos = v * 2.0 + 64.0;
         let text = v.toFixed(0);
         ticks.push({ pos: pos, text: text });
