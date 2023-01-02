@@ -8,17 +8,24 @@
 //
 
 const emojis = require("emoji-name-map");
+const key = "radarhub-user-mode";
 
 class User {
   constructor() {
     this.user = undefined;
     this.email = undefined;
+    var m = localStorage.getItem(key);
+    if (m) {
+      this.mode = m;
+      console.log(`Using previously saved mode = ${m}`);
+    } else {
+      this.mode = "auto";
+    }
     this.onMessage = (message) => {
       console.log(`Account.onMessage() ${message}`);
     };
     this.greet = this.greet.bind(this);
     this.retrieve = this.retrieve.bind(this);
-    this.mode = "auto";
   }
 
   greet() {
@@ -55,6 +62,12 @@ class User {
         );
         console.error(error);
       });
+  }
+
+  setMode(mode = "auto") {
+    this.mode = (mode !== undefined && mode) || "auto";
+    // Save it somewhere
+    localStorage.setItem(key, this.mode);
   }
 }
 

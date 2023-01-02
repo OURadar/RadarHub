@@ -56,7 +56,7 @@ class Product extends GLView {
       needsUpdate: false,
     };
     var image = new Image();
-    image.src = "/static/images/colormap.png?v=2.10";
+    image.src = "/static/images/colormap.png?v=1.11";
     image.addEventListener("load", () => {
       if (this.assets.colormap) {
         this.assets.colormap.destroy();
@@ -171,11 +171,18 @@ class Product extends GLView {
       // sticks = sticklabels * 2.0 + 64.0
       let ticks = [];
       // for (let v = -25; v < 81; v += 15) {
-      for (let v = -20; v < 91; v += 10) {
+      // for (let v = -10; v < 91; v += 10) {
+      //   let pos = v * 2.0 + 64.0;
+      //   let text = v.toFixed(0);
+      //   ticks.push({ pos: pos, text: text });
+      // }
+      let vv = [-15, 0, 10, 20, 30, 40, 50, 60, 70, 80];
+      vv.forEach((v) => {
         let pos = v * 2.0 + 64.0;
         let text = v.toFixed(0);
         ticks.push({ pos: pos, text: text });
-      }
+      });
+      // ticks = vv.map((v) => {pos: v * 2.0 + 64.0, text: v.toFixed(0)})
       return {
         name: "Reflectivity (dBZ)",
         ticks: ticks,

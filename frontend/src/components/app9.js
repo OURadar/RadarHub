@@ -33,8 +33,8 @@ const useConstructor = (callback = () => {}) => {
 export function App(props) {
   const [load, setLoad] = React.useState(0);
   const [panel, setPanel] = React.useState(0);
-  const [theme, setTheme] = React.useState(makeTheme());
-  const [colors, setColors] = React.useState(colorDict());
+  const [theme, setTheme] = React.useState(null);
+  const [colors, setColors] = React.useState(null);
   const [message, setMessage] = React.useState("");
   const [disabled, setDisabled] = React.useState([false, false, false, false]);
 
@@ -49,23 +49,36 @@ export function App(props) {
 
   const handleUserMessage = (message) => setMessage(message);
 
-  const setDocumentTheme = (mode) => {
-    document.documentElement.setAttribute("theme", mode);
-    setColors(() => colorDict(mode));
+  const setColorMode = (mode) => {
+    user.current.setMode(mode);
+    let colors = colorDict(mode);
+    // console.debug(`setDocumentTheme() ${mode} -> ${colors.name}`);
+    document.documentElement.setAttribute("theme", colors.name);
+    setColors(colors);
     setTheme(() => makeTheme(mode));
   };
 
   const handleThemeChange = () => {
     // auto, light, dark
-    let theme =
-      colors.name == "auto"
-        ? "light"
-        : colors.name == "light"
-        ? "dark"
-        : "auto";
-    console.log(`AppX.handleThemeChange() ${colors.name} -> ${theme}`);
-    setDocumentTheme(theme);
+    if (user.current.mode == "auto") setColorMode("light");
+    else if (user.current.mode == "light") setColorMode("dark");
+    else setColorMode("auto");
   };
+
+  useConstructor(() => {
+    document
+      .getElementById("device-style")
+      .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
+
+    archive.current = new Archive(props.radar, props.name);
+    archive.current.onUpdate = handleUpdate;
+    archive.current.onLoad = handleLoad;
+
+    user.current = new User();
+    user.current.onMessage = handleUserMessage;
+
+    setColorMode(user.current.mode);
+  });
 
   const handleNavigationChange = (_, value) => setPanel(value);
 
@@ -98,25 +111,12 @@ export function App(props) {
     }
   };
 
-  useConstructor(() => {
-    document
-      .getElementById("device-style")
-      .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
-
-    archive.current = new Archive(props.radar, props.name);
-    archive.current.onUpdate = handleUpdate;
-    archive.current.onLoad = handleLoad;
-
-    user.current = new User();
-    user.current.onMessage = handleUserMessage;
-  });
-
   React.useEffect(() => {
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", (e) => {
         let mode = e.matches ? "dark" : "light";
-        setDocumentTheme(mode);
+        setColorMode(mode);
       });
     document.documentElement.setAttribute("theme", theme.palette.mode);
   }, []);
@@ -126,7 +126,7 @@ export function App(props) {
       <Splash progress={load} />
       <div id="main" className="fullHeight">
         <TopBar
-          mode={colors.name}
+          mode={user.current?.mode || "auto"}
           isMobile={true}
           message={message}
           ingest={archive.current}

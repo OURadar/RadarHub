@@ -68,7 +68,7 @@ function reviseMode(mode) {
     body.push(1.0);
   }
   // Check for browser preference if 'theme' was not specified
-  if (mode === undefined) {
+  if (mode === undefined || mode === "auto") {
     const matchMedia = window.matchMedia("(prefers-color-scheme: dark)");
     if (matchMedia.media != "not all") {
       if (matchMedia.matches === true) {
@@ -81,7 +81,7 @@ function reviseMode(mode) {
   // If the previous step failed, choose based on the brightness of the body
   if (mode === undefined || mode === "auto") {
     let brightness = 0.2125 * body[0] + 0.7152 * body[1] + 0.0722 * body[2];
-    if (brightness > 0.5) {
+    if (brightness > 0.5 || body[3] == 0.0) {
       mode = "light";
     } else {
       mode = "dark";
@@ -338,7 +338,7 @@ export function array2rgba(array) {
 
 export function colorDict(inputMode) {
   let { body, mode } = reviseMode(inputMode);
-  // console.log(`body = ${body}`);
+  // console.debug(`reviseMode()   body = ${body}   mode = ${inputMode} -> ${mode}`);
   // Pick the dictionary according to the final theme value
   const themes = {
     light: {

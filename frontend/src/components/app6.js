@@ -30,6 +30,8 @@ export class App extends React.Component {
     super(props);
     this.isMobile = detectMob();
 
+    this.setColorMode = this.setColorMode.bind(this);
+
     this.handleInfoOpen = this.handleInfoOpen.bind(this);
     this.handleInfoClose = this.handleInfoClose.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
@@ -49,11 +51,11 @@ export class App extends React.Component {
     this.user = new User();
     this.user.onMessage = (message) => this.setState({ message: message });
 
-    console.log(`User.mode = ${this.user.mode}`);
+    let colors = colorDict(this.user.mode);
 
     this.state = {
-      colors: colorDict(),
-      theme: makeTheme(),
+      colors: colors,
+      theme: makeTheme(colors.name),
       time: new Date("2013-05-20T19:00"),
       load: 0,
       showHelp: false,
@@ -62,7 +64,9 @@ export class App extends React.Component {
       disabled: [false, false, false, false],
     };
 
-    document.documentElement.setAttribute("theme", this.state.colors.name);
+    console.log(`User.mode = ${this.user.mode} -> ${colors.name}`);
+
+    document.documentElement.setAttribute("theme", colors.name);
     window.addEventListener("keydown", (e) => (this.state.key = e.key));
     window.addEventListener("keyup", (e) => {
       if (e.key != this.state.key) {
@@ -104,6 +108,7 @@ export class App extends React.Component {
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", (e) => {
+        if (this.user.mode !== "auto") return;
         let mode = e.matches ? "dark" : "light";
         document.documentElement.setAttribute("theme", mode);
         this.setState({
@@ -129,7 +134,7 @@ export class App extends React.Component {
         <Splash progress={this.state.load} />
         <div id="main" className="fullHeight">
           <TopBar
-            mode={this.user.name}
+            mode={this.user.mode}
             ingest={this.archive}
             message={this.state.message}
             onThemeChange={this.handleThemeChange}
@@ -183,6 +188,16 @@ export class App extends React.Component {
     );
   }
 
+  setColorMode(mode) {
+    this.user.setMode(mode);
+    let colors = colorDict(this.user.mode);
+    document.documentElement.setAttribute("theme", colors.name);
+    this.setState({
+      colors: colors,
+      theme: makeTheme(colors.name),
+    });
+  }
+
   handleOverlayLoad(x = 1) {
     this.setState({ load: x });
     // console.log(`liveUpdate = ${this.archive.state.liveUpdate}`);
@@ -210,26 +225,13 @@ export class App extends React.Component {
   }
 
   handleThemeChange() {
-    console.log("App6.handleThemeChange()");
-    // setDocumentTheme(theme);
-    this.setState((state) => {
-      let mode = state.colors.name == "light" ? "dark" : "light";
-      // auto, light, dark
-      let theme =
-        state.colors.name == "auto"
-          ? "light"
-          : state.colors.name == "light"
-          ? "dark"
-          : "auto";
-      console.log(
-        `App6.handleThemeChange() ${state.colors.name} -> ${theme} / ${mode}`
-      );
-      document.documentElement.setAttribute("theme", mode);
-      return {
-        colors: colorDict(mode),
-        theme: makeTheme(mode),
-      };
-    });
+    if (this.user.mode == "auto") {
+      this.setColorMode("light");
+    } else if (this.user.mode == "light") {
+      this.setColorMode("dark");
+    } else {
+      this.setColorMode("auto");
+    }
   }
 
   handleInfoOpen() {

@@ -40,9 +40,9 @@ const topbarTheme = createTheme({
 });
 
 const themeModes = {
-  dark: <DarkMode />,
   light: <LightMode />,
-  system: <Brightness4 />,
+  dark: <DarkMode />,
+  auto: <Brightness4 />,
 };
 
 function RightDash(props) {
@@ -152,7 +152,7 @@ export function TopBar(props) {
 
 TopBar.defaultProps = {
   ingest: null,
-  mode: "light",
+  mode: "auto",
   message: "",
   isMobile: false,
   test: 0,
