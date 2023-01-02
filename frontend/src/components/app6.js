@@ -28,16 +28,6 @@ import { MenuUpdate } from "./menu-update";
 export class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      colors: colorDict(),
-      theme: makeTheme(),
-      time: new Date("2013-05-20T19:00"),
-      load: 0,
-      showHelp: false,
-      message: "",
-      key: "",
-      disabled: [false, false, false, false],
-    };
     this.isMobile = detectMob();
 
     this.handleInfoOpen = this.handleInfoOpen.bind(this);
@@ -58,6 +48,19 @@ export class App extends React.Component {
 
     this.user = new User();
     this.user.onMessage = (message) => this.setState({ message: message });
+
+    console.log(`User.mode = ${this.user.mode}`);
+
+    this.state = {
+      colors: colorDict(),
+      theme: makeTheme(),
+      time: new Date("2013-05-20T19:00"),
+      load: 0,
+      showHelp: false,
+      message: "",
+      key: "",
+      disabled: [false, false, false, false],
+    };
 
     document.documentElement.setAttribute("theme", this.state.colors.name);
     window.addEventListener("keydown", (e) => (this.state.key = e.key));
@@ -126,7 +129,7 @@ export class App extends React.Component {
         <Splash progress={this.state.load} />
         <div id="main" className="fullHeight">
           <TopBar
-            mode={this.state.colors.name}
+            mode={this.user.name}
             ingest={this.archive}
             message={this.state.message}
             onThemeChange={this.handleThemeChange}
@@ -208,8 +211,19 @@ export class App extends React.Component {
 
   handleThemeChange() {
     console.log("App6.handleThemeChange()");
+    // setDocumentTheme(theme);
     this.setState((state) => {
       let mode = state.colors.name == "light" ? "dark" : "light";
+      // auto, light, dark
+      let theme =
+        state.colors.name == "auto"
+          ? "light"
+          : state.colors.name == "light"
+          ? "dark"
+          : "auto";
+      console.log(
+        `App6.handleThemeChange() ${state.colors.name} -> ${theme} / ${mode}`
+      );
       document.documentElement.setAttribute("theme", mode);
       return {
         colors: colorDict(mode),

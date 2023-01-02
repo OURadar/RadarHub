@@ -13,13 +13,14 @@ import { getRandomMessageInHTML } from "./random-list";
 
 import IconButton from "@mui/material/IconButton";
 import {
+  Info,
   Refresh,
   Fullscreen,
   WebAsset,
   AccountCircle,
   LightMode,
   DarkMode,
-  Info,
+  Brightness4,
 } from "@mui/icons-material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
@@ -38,10 +39,17 @@ const topbarTheme = createTheme({
   },
 });
 
+const themeModes = {
+  dark: <DarkMode />,
+  light: <LightMode />,
+  system: <Brightness4 />,
+};
+
 function RightDash(props) {
   const [fullscreen, setFullscreen] = React.useState(
     () => window.innerHeight == screen.height
   );
+
   return (
     <div className="topbarComponent right">
       {!props.isMobile && (
@@ -70,7 +78,9 @@ function RightDash(props) {
         </IconButton>
       )}
       <IconButton aria-label="Change Mode" onClick={props.onThemeChange}>
-        {(props.mode == "light" && <LightMode />) || <DarkMode />}
+        {(props.mode in themeModes && themeModes[props.mode]) || (
+          <Brightness4 />
+        )}
       </IconButton>
       <IconButton aria-label="Account" onClick={props.onAccount}>
         <AccountCircle />

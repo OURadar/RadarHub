@@ -56,8 +56,14 @@ export function App(props) {
   };
 
   const handleThemeChange = () => {
-    console.log("AppX.handleThemeChange()");
-    let theme = colors.name == "light" ? "dark" : "light";
+    // auto, light, dark
+    let theme =
+      colors.name == "auto"
+        ? "light"
+        : colors.name == "light"
+        ? "dark"
+        : "auto";
+    console.log(`AppX.handleThemeChange() ${colors.name} -> ${theme}`);
     setDocumentTheme(theme);
   };
 

@@ -18,6 +18,7 @@ class User {
     };
     this.greet = this.greet.bind(this);
     this.retrieve = this.retrieve.bind(this);
+    this.mode = "auto";
   }
 
   greet() {

@@ -498,3 +498,10 @@ export function colorDict(inputMode) {
   };
   return themes[mode];
 }
+
+export function makeColorDictAndTheme(mode) {
+  return {
+    colors: colorDict(mode),
+    theme: makeTheme(mode),
+  };
+}
