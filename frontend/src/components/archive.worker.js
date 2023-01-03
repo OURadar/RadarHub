@@ -443,8 +443,6 @@ function load(name) {
             `${components[2].slice(4, 6)} UTC`;
           sweep.symbol = components[4].split(".")[0];
           sweep.titleString =
-            sweep.symbol +
-            "   " +
             sweep.timeString +
             "   " +
             (sweep.isRHI

@@ -295,6 +295,7 @@ export function Colorbar(props) {
 
 Colorbar.defaultProps = {
   gravity: "top",
+  count: 0,
   onTouch: () => console.log("Colorbar.onTouch"),
   onClick: () => console.log("Colorbar.onClick"),
 };

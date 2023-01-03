@@ -705,6 +705,17 @@ h3 {
   font-weight: 400;
   line-height: 20px;
 }
+#symbol {
+  fill: var(--system-foreground);
+}
+#symbol text#symbol {
+  font-size: 50px;
+  font-weight: 500;
+}
+#symbol text#text {
+  font-size: 14px;
+  font-weight: 400;
+}
 #title {
   display: block;
   position: absolute;

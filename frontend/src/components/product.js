@@ -15,6 +15,7 @@ import { GLView } from "./glview";
 import { Overlay } from "./overlay";
 import { Colorbar } from "./colorbar";
 import { Caption } from "./caption";
+import { Symbol } from "./symbol";
 import { Title } from "./title";
 //
 // Use as <Product data={input} />
@@ -299,6 +300,13 @@ class Product extends GLView {
         <Caption
           id="infoString"
           string={this.props.sweep?.infoString || "Gatewidth: -\nWaveform: -"}
+        />
+        <Symbol
+          id="symbol"
+          text={this.state.style?.name || "Unknown"}
+          symbol={this.props.sweep?.symbol || "U"}
+          onTouch={this.props.onColorbarTouch}
+          onClick={this.props.onColorbarClick}
         />
         <Title
           string={this.props.sweep?.titleString || "----/--/-- --:--:-- UTC"}
