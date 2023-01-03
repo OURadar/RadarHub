@@ -33,8 +33,8 @@ const useConstructor = (callback = () => {}) => {
 export function App(props) {
   const [load, setLoad] = React.useState(0);
   const [panel, setPanel] = React.useState(0);
-  const [theme, setTheme] = React.useState(null);
-  const [colors, setColors] = React.useState(null);
+  const [theme, setTheme] = React.useState({});
+  const [colors, setColors] = React.useState({});
   const [message, setMessage] = React.useState("");
   const [disabled, setDisabled] = React.useState([false, false, false, false]);
 
@@ -52,10 +52,9 @@ export function App(props) {
   const setColorMode = (mode) => {
     user.current.setMode(mode);
     let colors = colorDict(mode);
-    // console.debug(`setDocumentTheme() ${mode} -> ${colors.name}`);
     document.documentElement.setAttribute("theme", colors.name);
     setColors(colors);
-    setTheme(() => makeTheme(mode));
+    setTheme(makeTheme(mode));
   };
 
   const handleThemeChange = () => {
