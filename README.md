@@ -92,6 +92,9 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.9.6 Fixed product switching bugs (9/24/2022)
   - [x] 0.9.7 New tilt state initialization (9/27/2022)
   - [x] 0.9.8 Fixed colorbar title issues (10/7/2022)
+  - [x] 0.9.9 Reworked data ingest for live and archive modes (12/13/2022)
+  - [x] 0.9.10 Fixed an issue on item list not loading (12/14/2022)
+  - [x] 0.9.11 Introduced new color tables (1/3/2023)
   - [ ] 0.9.x 3D view manipulation through touch gestures
   - [ ] 0.9.x Fixed scroll view track
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
