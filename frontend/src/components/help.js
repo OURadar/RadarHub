@@ -127,8 +127,12 @@ export function HelpPage(props) {
         <div className="sheetContent">
           <div className="title">Data Request</div>
           <p>
-            If you are interested in obtaining the original archive, please send
-            us an email to: radar@arrc.ou.edu
+            The original archives of the datasets that are viewable through the
+            RadarHub can be requested offline. However, there are datasets that
+            were collected without access by the RadarHub, which we cannot
+            guarantee availability. If you are interested in the original
+            archives, please send us an email to:
+            <a href="mailto:radar@arrc.ou.edu">radar@arrc.ou.edu</a>.
           </p>
         </div>
 
