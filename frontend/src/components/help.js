@@ -131,8 +131,9 @@ export function HelpPage(props) {
             RadarHub can be requested offline. However, there are datasets that
             were collected without access by the RadarHub, which we cannot
             guarantee availability. If you are interested in the original
-            archives, please send us an email to:
-            <a href="mailto:radar@arrc.ou.edu">radar@arrc.ou.edu</a>.
+            archives, please send us an email and indicate the date of interest
+            to:
+            <a href="mailto:data@arrc.ou.edu">data@arrc.ou.edu</a>.
           </p>
         </div>
 
