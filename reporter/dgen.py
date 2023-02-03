@@ -172,7 +172,7 @@ class Reporter():
 
         if self.verbose:
             print('Run loop retired')
-            
+
 # Global variables
 R = None
 
@@ -195,7 +195,7 @@ def handleOpen(ws):
         print(f'ONOPEN')
     if R.verbose < 3:
         websocket.enableTrace(False)
-    message = json.dumps({'radar':R.name, 'command':'radarConnect'})
+    message = json.dumps({'name':R.name, 'command':'radarConnect'})
     payload = RadarHubType.Handshake.to_bytes(1, 'little') + bytes(message, 'utf-8')
     ws.send(payload)
     controls = {
@@ -277,7 +277,7 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter,
         description=textwrap.dedent('''\
         Data Generator in Python
-        
+
         Examples:
             dgen -n nancy radarhub.arrc.ou.edu:443
             dgen -v -n bumblebee radarhub.arrc.ou.edu:443

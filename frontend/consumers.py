@@ -87,7 +87,7 @@ class Radar(AsyncWebsocketConsumer):
         type = bytes_data[0]
 
         if type == RadarHubType.Handshake:
-            # Type RadarHubType.Handshake (1) should come in as {"radar":"demo", "command":"radarConnect"}
+            # Type RadarHubType.Handshake (1) should come in as {"name":"Demo", "command":"radarConnect"}
             text = bytes_data[1:].decode('utf-8')
 
             try:
@@ -96,15 +96,15 @@ class Radar(AsyncWebsocketConsumer):
                 logger.error(f'Radar.receive() invalid JSON = {text}')
                 return
 
-            if request.keys() < {'radar', 'command'}:
+            if request.keys() < {'name', 'command'}:
                 logger.error(f'Radar.receive() incomplete message {text}')
                 return
 
-            radar = request['radar']
-            if radar != self.radar:
-                text = colorize('BUG', 'red')
-                logger.error(f'{text} radar = {radar} != self.radar = {self.radar}')
-                return
+            self.name = request['name']
+            if self.name.lower() != self.radar:
+                text = colorize('WARNING', 'red')
+                logger.error(f'{text} name = {self.name} != self.radar = {self.radar}')
+                # return
 
             await self.channel_layer.send(
                 'backhaul',

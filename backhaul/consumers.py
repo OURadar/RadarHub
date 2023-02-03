@@ -44,7 +44,7 @@ payload_types = json.dumps({e.name: e.value for e in RadarHubType})
 lock = threading.Lock()
 tic = 0
 
-pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
+pp = pprint.PrettyPrinter(indent=1, depth=3, width=60, sort_dicts=False)
 
 async def _reset():
     await channel_layer.send(
@@ -313,7 +313,9 @@ class Backhaul(AsyncConsumer):
                     print('radar_channels =')
                     pp.pprint(radar_channels)
         elif radar not in radar_channels:
-            logger.warning(f'Radar {radar} not found')
+            show = colorize('Backhaul.radarDisconnect()', 'green')
+            show += f' Radar {radar} not found'
+            logger.warning(show)
         else:
             with lock:
                 logger.info(f'Channel {channel} no match')

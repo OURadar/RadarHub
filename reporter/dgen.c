@@ -96,7 +96,7 @@ void *run(void *in) {
 
     // Noise magnitude of 1000
     const int nm = 1000;
-    
+
     // Gate count
     const int count = 1000;
 
@@ -109,7 +109,7 @@ void *run(void *in) {
     void *hbuf = malloc(hdepth * HEALH_CAPACITY);
     float *window = (float *)malloc(count * sizeof(float));
     float *noise = (float *)malloc(3 * count * sizeof(float));
-    
+
     tukeywin(window, count, 0.1);
 
     // Convert healthStrings to type + healthStrings
@@ -279,7 +279,7 @@ void handleOpen(RKWebSocket *w) {
     int r;
     r = sprintf(R->welcome,
         "%c{"
-            "\"radar\":\"%s\", "
+            "\"name\":\"%s\", "
             "\"command\":\"radarConnect\""
         "}",
         RadarHubTypeHandshake, R->name);
@@ -391,7 +391,7 @@ int main(int argc, const char *argv[]) {
     // Reporter struct
     R = (RKReporter *)malloc(sizeof(RKReporter));
     memset(R, 0, sizeof(RKReporter));
-    sprintf(R->name, "demo");
+    sprintf(R->name, "Demo");
     R->wantActive = true;
     R->value = 1000;
     R->fps = 15;
@@ -436,7 +436,13 @@ int main(int argc, const char *argv[]) {
         sprintf(R->host, "localhost:8000");
     }
 
-    sprintf(R->address, "/ws/radar/%s/", R->name);
+    char name[80];
+    strcpy(name, R->name);
+    char *c = name, *e = c + strlen(c);
+    do {
+        *c = *c > 0x40 && *c < 0x5b ? *c | 0x60 : *c;
+    } while (c++ < e);
+    sprintf(R->address, "/ws/radar/%s/", name);
 
     R->ws = RKWebSocketInit(R->host, R->address, R->flag);
     RKWebSocketSetOpenHandler(R->ws, &handleOpen);

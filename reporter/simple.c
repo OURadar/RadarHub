@@ -65,7 +65,7 @@ void *run(void *in) {
 }
 
 void handleOpen(RKWebSocket *W) {
-    int r = sprintf(R->welcome, "\1{\"radar\":\"" RADAR "\",\"command\":\"radarConnect\"}");
+    int r = sprintf(R->welcome, "\1{\"name\":\"" RADAR "\",\"command\":\"radarConnect\"}");
     RKWebSocketSend(W, R->welcome, r);
 }
 
