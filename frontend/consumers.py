@@ -63,7 +63,7 @@ class Radar(AsyncWebsocketConsumer):
                 'channel': self.channel_name
             }
         )
-        logger.info(f'radar {self.radar} disconnected {code}.')
+        logger.info(f'Radar {self.name} @ /ws/{self.radar}/ disconnected {code}.')
 
     # Receive message from a radar through frontend
     # Type 1 - JSON {"radar":"px1000","command":"radarConnect"}
@@ -101,9 +101,10 @@ class Radar(AsyncWebsocketConsumer):
                 return
 
             self.name = request['name']
+            logger.info(f'Radar {self.name} @ /ws/{self.radar}/ connected.')
             if self.name.lower() != self.radar:
                 text = colorize('WARNING', 'red')
-                logger.error(f'{text} name = {self.name} != self.radar = {self.radar}')
+                logger.warning(f'{text} name = {self.name} != self.radar = {self.radar}')
                 # return
 
             await self.channel_layer.send(
