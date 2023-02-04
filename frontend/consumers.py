@@ -39,16 +39,16 @@ class Null(AsyncWebsocketConsumer):
 
 class Radar(AsyncWebsocketConsumer):
     async def connect(self):
-        if 'radar' not in self.scope['url_route']['kwargs']:
-            logger.error('Keyword "radar" is expected.')
+        if 'pathway' not in self.scope['url_route']['kwargs']:
+            logger.error('Keyword "pathway" is expected.')
             return await self.close()
-        self.radar = self.scope['url_route']['kwargs']['radar']
+        self.pathway = self.scope['url_route']['kwargs']['pathway']
         self.client_ip = self.scope['client'][0]
         await self.channel_layer.send(
             'backhaul',
             {
                 'type': 'radarInit',
-                'radar': self.radar,
+                'pathway': self.pathway,
                 'channel': self.channel_name,
                 'client_ip': self.client_ip
             }
@@ -59,13 +59,13 @@ class Radar(AsyncWebsocketConsumer):
             'backhaul',
             {
                 'type': 'radarDisconnect',
-                'radar': self.radar,
+                'pathway': self.pathway,
                 'channel': self.channel_name
             }
         )
-        logger.info(f'Radar {self.name} @ /ws/{self.radar}/ disconnected {code}.')
+        logger.info(f'Radar {self.name} @ /ws/{self.pathway}/ disconnected {code}.')
 
-    # Receive message from a radar through frontend
+    # Receive message from a pathway through frontend
     # Type 1 - JSON {"radar":"px1000","command":"radarConnect"}
     # Type 2 - Controls in JSON {"Go":{...},"Stop":{...},...}
     # Type 3 - Health in JSON {"Transceiver":{...},"Pedestal":{...},...}
@@ -82,7 +82,7 @@ class Radar(AsyncWebsocketConsumer):
             if len(show) > 30:
                 show = f'{bytes_data[:25]} ... {bytes_data[-5:]}'
             show = colorize(show, 'green')
-            logger.debug(f'Radar.receive() {self.radar} {show} ({len(bytes_data)})')
+            logger.debug(f'Radar.receive() {self.pathway} {show} ({len(bytes_data)})')
 
         type = bytes_data[0]
 
@@ -101,17 +101,17 @@ class Radar(AsyncWebsocketConsumer):
                 return
 
             self.name = request['name']
-            logger.info(f'Radar {self.name} @ /ws/{self.radar}/ connected.')
-            if self.name.lower() != self.radar:
+            logger.info(f'Radar {self.name} @ /ws/{self.pathway}/ connected.')
+            if self.name.lower() != self.pathway:
                 text = colorize('WARNING', 'red')
-                logger.warning(f'{text} name = {self.name} != self.radar = {self.radar}')
+                logger.warning(f'{text} name = {self.name} != self.pathway = {self.pathway}')
                 # return
 
             await self.channel_layer.send(
                 'backhaul',
                 {
                     'type': request['command'],
-                    'radar': self.radar,
+                    'pathway': self.pathway,
                     'channel': self.channel_name,
                     'command': request['payload'] if 'payload' in request else None
                 }
@@ -121,7 +121,7 @@ class Radar(AsyncWebsocketConsumer):
                 'backhaul',
                 {
                     'type': 'radarMessage',
-                    'radar': self.radar,
+                    'pathway': self.pathway,
                     'channel': self.channel_name,
                     'payload': bytes_data
                 }
@@ -144,17 +144,17 @@ class Radar(AsyncWebsocketConsumer):
 
 class User(AsyncWebsocketConsumer):
     async def connect(self):
-        if 'radar' not in self.scope['url_route']['kwargs']:
-            logger.error('Keyword "radar" is expected.')
+        if 'pathway' not in self.scope['url_route']['kwargs']:
+            logger.error('Keyword "pathway" is expected.')
             return await self.close()
-        self.radar = self.scope['url_route']['kwargs']['radar']
+        self.pathway = self.scope['url_route']['kwargs']['pathway']
         self.client_ip = self.scope['client'][0]
         # await self.accept()
         await self.channel_layer.send(
             'backhaul',
             {
                 'type': 'userInit',
-                'radar': self.radar,
+                'pathway': self.pathway,
                 'channel': self.channel_name,
                 'client_ip': self.client_ip
             }
@@ -165,12 +165,12 @@ class User(AsyncWebsocketConsumer):
             'backhaul',
             {
                 'type': 'userDisconnect',
-                'radar': self.radar,
+                'pathway': self.pathway,
                 'channel': self.channel_name
             }
         )
 
-        logger.info(f'user for {self.radar} disconnected {code}.')
+        logger.info(f'user for {self.pathway} disconnected {code}.')
 
     # Receive message from frontend, which relays commands from the web app, serialized JSON data.
     async def receive(self, text_data=None):
@@ -183,14 +183,16 @@ class User(AsyncWebsocketConsumer):
             logger.error(f'User.receive() json.loads() failed.')
             return
 
-        if request.keys() < {'radar', 'command'}:
+        if request.keys() < {'pathway', 'command'}:
             logger.error(f'User.receive() incomplete message {request}')
             return
 
-        radar = request['radar']
-        if radar != self.radar:
+        print(request)
+
+        pathway = request['pathway']
+        if pathway != self.pathway:
             text = colorize('BUG', 'red')
-            logger.warning(f'{text}: radar = {radar} != self.radar = {self.radar}')
+            logger.warning(f'{text}: pathway = {pathway} != self.pathway = {self.pathway}')
 
         if get_channel_layer() != self.channel_layer:
             logger.warning(colorize('Channel layer changed', 'red'))
@@ -206,7 +208,7 @@ class User(AsyncWebsocketConsumer):
             'backhaul',
             {
                 'type': request['command'],
-                'radar': self.radar,
+                'pathway': self.pathway,
                 'channel': self.channel_name,
                 'command': request['payload'] if 'payload' in request else None
             }
