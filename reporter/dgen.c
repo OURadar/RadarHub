@@ -436,13 +436,13 @@ int main(int argc, const char *argv[]) {
         sprintf(R->host, "localhost:8000");
     }
 
-    char name[80];
-    strcpy(name, R->name);
-    char *c = name, *e = c + strlen(c);
+    char pathway[80];
+    strcpy(pathway, R->name);
+    char *c = pathway, *e = c + strlen(c);
     do {
         *c = *c > 0x40 && *c < 0x5b ? *c | 0x60 : *c;
     } while (c++ < e);
-    sprintf(R->address, "/ws/radar/%s/", name);
+    sprintf(R->address, "/ws/radar/%s/", pathway);
 
     R->ws = RKWebSocketInit(R->host, R->address, R->flag);
     RKWebSocketSetOpenHandler(R->ws, &handleOpen);
