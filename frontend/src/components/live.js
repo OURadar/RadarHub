@@ -10,8 +10,8 @@
 import { Ingest } from "./ingest";
 
 class Live extends Ingest {
-  constructor(radar, label = "") {
-    super(radar, label);
+  constructor(pathway, label = "") {
+    super(pathway, label);
 
     this.data = {
       ...this.data,
@@ -64,12 +64,12 @@ class Live extends Ingest {
   init() {
     if (this.state.verbose) {
       console.log(
-        `%live.init()%c   radar = ${this.radar}`,
+        `%live.init()%c   pathway = ${this.pathway}`,
         "color: lightseagreen",
         ""
       );
     }
-    this.worker.postMessage({ task: "init", name: this.radar });
+    this.worker.postMessage({ task: "init", name: this.pathway });
     // this.worker.postMessage({ task: "init" });
   }
 
@@ -77,12 +77,12 @@ class Live extends Ingest {
     this.message = "Connecting ...";
     this.onUpdate(this.state.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
-    const url = `${p}://${window.location.host}/ws/${this.radar}/`;
+    const url = `${p}://${window.location.host}/ws/${this.pathway}/`;
     this.worker.postMessage({
       task: "connect",
       payload: {
         url: url,
-        radar: this.radar,
+        pathway: this.pathway,
       },
     });
   }

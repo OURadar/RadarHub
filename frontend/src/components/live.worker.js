@@ -8,7 +8,7 @@
 //
 
 let socket = null;
-let radar;
+let pathway;
 let url;
 let enums = {
   Definition: 1,
@@ -41,7 +41,7 @@ let scope = {
 
 self.onmessage = ({ data: { task, payload } }) => {
   if (task == "connect") {
-    radar = payload.radar || "demo";
+    pathway = payload.radar || "demo";
     url = payload.url || "localhost:8000";
     if (url === undefined) {
       return self.postMessage({
@@ -56,7 +56,7 @@ self.onmessage = ({ data: { task, payload } }) => {
       JSON.stringify({
         command: "userMessage",
         payload: payload,
-        radar: radar,
+        radar: pathway,
       })
     );
   } else if (task == "init") {
@@ -64,8 +64,8 @@ self.onmessage = ({ data: { task, payload } }) => {
   }
 };
 
-function connect(newRadar, url) {
-  radar = newRadar;
+function connect(target, url) {
+  pathway = target;
   self.postMessage({ type: "message", payload: "Connecting ..." });
 
   socket = new WebSocket(url);
@@ -75,7 +75,7 @@ function connect(newRadar, url) {
     self.postMessage({ type: "message", payload: "Hub Connected" });
     socket.send(
       JSON.stringify({
-        radar: radar,
+        pathway: pathway,
         command: "userConnect",
       })
     );
@@ -89,18 +89,18 @@ function connect(newRadar, url) {
       const text = new TextDecoder().decode(e.data.slice(1));
       const update = JSON.parse(text);
       enums = { ...enums, ...update };
-      //   console.log(enums);
+      // console.log(enums);
     } else if (type == enums.Control) {
       // Control data in JSON
       const text = new TextDecoder().decode(e.data.slice(1));
       const dict = JSON.parse(text);
-      if (dict.name == radar) {
+      if (dict.name == pathway) {
         self.postMessage({
           type: "control",
           payload: dict.Controls,
         });
       } else {
-        console.log(`dict.name = ${dict.name} /= ${radar}`);
+        console.log(`dict.name = ${dict.name} /= ${pathway}`);
       }
     } else if (type == enums.Health) {
       // Health data in JSON
@@ -175,7 +175,7 @@ function connect(newRadar, url) {
 
 function waitOrConnect() {
   if (wait <= 0.5) {
-    connect(radar, url);
+    connect(pathway, url);
   } else {
     const t = wait.toFixed(0);
     if (t <= 3) {

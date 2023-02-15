@@ -10,8 +10,8 @@
 import { Ingest } from "./ingest";
 
 class Archive extends Ingest {
-  constructor(radar, label = "") {
-    super(radar, label);
+  constructor(pathway, label = "") {
+    super(pathway, label);
 
     this.grid = null;
     this.state = {
@@ -146,7 +146,7 @@ class Archive extends Ingest {
           console.log("Unexpeted results.");
         }
       }
-      this.list(this.radar, payload.day, hour, this.grid.symbol);
+      this.list(this.pathway, payload.day, hour, this.grid.symbol);
     }
     this.onUpdate(this.state.tic++);
   }
@@ -156,12 +156,12 @@ class Archive extends Ingest {
   init() {
     if (this.state.verbose) {
       console.log(
-        `%carchive.init()%c   radar = ${this.radar}`,
+        `%carchive.init()%c   pathway = ${this.pathway}`,
         "color: lightseagreen",
         ""
       );
     }
-    this.worker.postMessage({ task: "init", name: this.radar });
+    this.worker.postMessage({ task: "init", name: this.pathway });
   }
 
   // Expect something like day = Date('2013-05-20'), hour = 19

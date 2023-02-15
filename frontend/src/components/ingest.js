@@ -8,9 +8,9 @@
 //
 
 class Ingest {
-  constructor(radar, label = "") {
-    this.radar = radar;
-    this.label = label == "" ? radar : label;
+  constructor(pathway, label = "") {
+    this.pathway = pathway;
+    this.label = label == "" ? pathway : label;
     this.ready = false;
     this.state = {
       tic: 0,

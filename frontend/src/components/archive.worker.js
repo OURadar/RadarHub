@@ -12,7 +12,7 @@ import { deg2rad, clamp } from "./common";
 // import { logger } from "./logger";
 
 let source = null;
-let radar;
+let pathway;
 let grid = {
   dateTimeString: "20130520-1900",
   daysActive: {},
@@ -91,11 +91,11 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
   }
 };
 
-function init(newRadar) {
-  radar = newRadar;
+function init(newPathway) {
+  pathway = newPathway;
   if (state.verbose) {
     console.info(
-      `%carchive.worker.init()%c ${radar}`,
+      `%carchive.worker.init()%c ${pathway}`,
       `color: ${namecolor}`,
       "color: dodgerblue"
     );
@@ -126,12 +126,12 @@ function connect(force = false) {
   }
   if (state.verbose)
     console.info(
-      `Connecting live update to %c${radar}%c ...`,
+      `Connecting live update to %c${pathway}%c ...`,
       "color: dodgerblue",
       ""
     );
   source = new EventSource("/events/");
-  source.addEventListener(radar, (event) => {
+  source.addEventListener(pathway, (event) => {
     const payload = JSON.parse(event.data);
     payload.items.forEach((item) => {
       updateListWithItem(item);
@@ -162,7 +162,7 @@ function connect(force = false) {
     type: "state",
     payload: {
       update: state.update,
-      message: `Connecting to ${radar} stream ...`,
+      message: `Connecting to ${pathway} stream ...`,
     },
   });
 }
@@ -257,7 +257,7 @@ function createSweep(name = "dummy") {
 
 function month(day) {
   console.info(`%carchive.worker.month()%c ${day}`, `color: ${namecolor}`, "");
-  const url = `/data/month/${radar}/${day}/`;
+  const url = `/data/month/${pathway}/${day}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -275,11 +275,11 @@ function month(day) {
     });
 }
 
-function count(radar, day) {
+function count(pathway, day) {
   let t = day instanceof Date ? "Date" : "Not Date";
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
   console.info(
-    `%carchive.worker.count()%c ${radar} ${dayString} (${t})`,
+    `%carchive.worker.count()%c ${pathway} ${dayString} (${t})`,
     `color: ${namecolor}`,
     ""
   );
@@ -288,7 +288,7 @@ function count(radar, day) {
     console.info("No data prior to 2013");
     return;
   }
-  const url = `/data/count/${radar}/${dayString}/`;
+  const url = `/data/count/${pathway}/${dayString}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -325,7 +325,7 @@ function list(day, hour, symbol) {
   let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
   console.info(
-    `%carchive.worker.list()%c ${radar} ${dateTimeString} / ${grid.dateTimeString} ${symbol} ${grid.index}`,
+    `%carchive.worker.list()%c ${pathway} ${dateTimeString} / ${grid.dateTimeString} ${symbol} ${grid.index}`,
     `color: ${namecolor}`,
     ""
   );
@@ -354,7 +354,7 @@ function list(day, hour, symbol) {
     });
     return;
   }
-  const url = `/data/list/${radar}/${dateTimeString}-${symbol}/`;
+  const url = `/data/list/${pathway}/${dateTimeString}-${symbol}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200) {
@@ -545,11 +545,11 @@ function geometry(sweep) {
 
 function catchup() {
   console.info(
-    `%carchive.worker.catchup()%c ${radar}`,
+    `%carchive.worker.catchup()%c ${pathway}`,
     `color: ${namecolor}`,
     "color: dodgerblue"
   );
-  fetch(`/data/catchup/${radar}/`).then((response) => {
+  fetch(`/data/catchup/${pathway}/`).then((response) => {
     if (response.status == 200) {
       response
         .json()

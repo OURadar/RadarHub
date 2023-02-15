@@ -9,6 +9,8 @@ import { App as AppMobile } from "./components/app9";
 const text = document.getElementById("params")?.textContent || "{}";
 const params = JSON.parse(text);
 
+console.log("params", params);
+
 const container = document.getElementById("app");
 const root = createRoot(container);
 

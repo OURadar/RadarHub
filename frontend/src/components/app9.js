@@ -69,7 +69,7 @@ export function App(props) {
       .getElementById("device-style")
       .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
 
-    archive.current = new Archive(props.radar, props.name);
+    archive.current = new Archive(props.pathway, props.name);
     archive.current.onUpdate = handleUpdate;
     archive.current.onLoad = handleLoad;
 
@@ -168,7 +168,7 @@ export function App(props) {
 }
 
 App.defaultProps = {
-  radar: "px1000",
+  pathway: "px1000",
   origin: {
     longitude: -97.422413,
     latitude: 35.25527,

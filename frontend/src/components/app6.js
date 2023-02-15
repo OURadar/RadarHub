@@ -44,7 +44,7 @@ export class App extends React.Component {
     this.handleRight = this.handleRight.bind(this);
     this.handleDoubleRight = this.handleDoubleRight.bind(this);
 
-    this.archive = new Archive(props.radar, props.name);
+    this.archive = new Archive(props.pathway, props.name);
     this.archive.onUpdate = (_) => this.forceUpdate();
     this.archive.onLoad = this.handleRadarDataLoad;
 
@@ -93,7 +93,7 @@ export class App extends React.Component {
     });
   }
   static defaultProps = {
-    radar: "radar",
+    pathway: "radar",
     origin: {
       longitude: -97.422413,
       latitude: 35.25527,
@@ -159,7 +159,7 @@ export class App extends React.Component {
               right={
                 <Browser
                   archive={this.archive}
-                  radar={this.props.radar}
+                  pathway={this.props.pathway}
                   debug={this.props.debug}
                 />
               }
