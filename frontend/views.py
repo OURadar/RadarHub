@@ -23,7 +23,9 @@ if settings.DEBUG:
 
 def make_vars(request, radar=default_radar):
     if radar not in radar_names:
-        raise Http404
+        logger.warning(f'Pathway {radar} not in radar_names. Not registered.')
+        # raise Http404
+        radar_names[radar] = radar
     user = get_user(request)
     try:
         email = user.email
