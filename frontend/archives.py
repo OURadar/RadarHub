@@ -33,8 +33,8 @@ forbidden_request = HttpResponseForbidden('Forbidden. Mistaken? Tell my father.\
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
-    radar = item['folder'].lower()
-    radar_prefix[radar] = prefix
+    pathway = item['folder'].lower()
+    radar_prefix[pathway] = prefix
 
 # Learning modules
 
@@ -89,7 +89,7 @@ def stats(request, mode=''):
 # Data
 
 '''
-    radar - a string of the radar name
+    pathway - a string of the pathway name
           - e.g., px1000, raxpol, or px10k
 
     day - a string in the forms of
@@ -110,15 +110,15 @@ def _month(prefix, day):
         date += step
     return array
 
-def month(_, radar, day):
+def month(_, pathway, day):
     if settings.VERBOSE > 1:
         show = colorize('archive.month()', 'green')
-        show += '   ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('pathway', pathway)
         show += '   ' + color_name_value('day', day)
         logger.debug(show)
-    if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
+    if pathway == 'undefined' or pathway not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
         return invalid_query
-    prefix = radar_prefix[radar]
+    prefix = radar_prefix[pathway]
     array = _month(prefix, day)
     payload = json.dumps(array, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
@@ -126,7 +126,7 @@ def month(_, radar, day):
 '''
     Count of data - returns an array of 24 elements
 
-    radar - a string of the radar name
+    pathway - a string of the pathway name
           - e.g., px1000, raxpol, or px10k
 
     day - a string in the forms of
@@ -140,15 +140,15 @@ def _count(prefix, day):
         return [int(n) for n in d.hourly_count.split(',')]
     return [0] * 24
 
-def count(_, radar, day):
+def count(_, pathway, day):
     if settings.VERBOSE > 1:
         show = colorize('archive.count()', 'green')
-        show += '   ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('pathway', pathway)
         show += '   ' + color_name_value('day', day)
         logger.debug(show)
-    if radar == 'undefined' or radar not in radar_prefix or day == 'undefined' or not is_valid_time(day):
+    if pathway == 'undefined' or pathway not in radar_prefix or day == 'undefined' or not is_valid_time(day):
         return invalid_query
-    prefix = radar_prefix[radar]
+    prefix = radar_prefix[pathway]
     data = {
         'count': _count(prefix, day)
     }
@@ -158,7 +158,7 @@ def count(_, radar, day):
 '''
     List of files - returns an array of strings
 
-    radar - a string of the radar name
+    pathway - a string of the pathway name
           - e.g., px1000, raxpol, or px10k
 
     day_hour_symbol - a string with day, hour, and product symbol in the forms of
@@ -182,20 +182,20 @@ def _list(prefix, day_hour_symbol):
     matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     return [o.name.rstrip('.nc') for o in matches]
 
-def list(request, radar, day_hour_symbol):
+def list(request, pathway, day_hour_symbol):
     show = colorize('archive.list()', 'green')
     show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
     logger.debug(show)
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if radar == 'undefined' or radar not in radar_prefix or day_hour_symbol == 'undefined':
+    if pathway == 'undefined' or pathway not in radar_prefix or day_hour_symbol == 'undefined':
         return invalid_query
     if len(day_hour_symbol) not in [8, 13, 15]:
         return invalid_query
     if not is_valid_time(day_hour_symbol[:13]):
         return invalid_query
-    prefix = radar_prefix[radar]
+    prefix = radar_prefix[pathway]
     c = day_hour_symbol.split('-')
     day = c[0]
     if len(day) > 8:
@@ -225,7 +225,7 @@ def list(request, radar, day_hour_symbol):
         else:
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
-                show += '   ' + color_name_value('radar', radar)
+                show += '   ' + color_name_value('pathway', pathway)
                 show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
                 show += '   ' + color_name_value('hourly_count', '0\'s')
                 logger.debug(show)
@@ -308,7 +308,7 @@ def load(request, name):
 '''
     Latest date - returns the latest YYYYMMDD and HH
 
-    prefix - prefix of a radar, e.g., PX- for PX-1000, RAXPOL- for RaXPol
+    prefix - prefix of a pathway, e.g., PX- for PX-1000, RAXPOL- for RaXPol
 '''
 def latest(prefix):
     if prefix is None:
@@ -341,32 +341,32 @@ def latest(prefix):
 '''
     Location - returns a dictionary with latitude, longitude
 
-    radar - Input radar name, e.g., px1000, raxpol, etc.
+    pathway - Input pathway name, e.g., px1000, raxpol, etc.
 '''
-def location(radar):
+def location(pathway):
     global origins
     if settings.VERBOSE > 1:
         show = colorize('archive.location()', 'green')
-        show += '   ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('pathway', pathway)
         logger.debug(show)
-    if radar in radar_prefix:
-        prefix = radar_prefix[radar]
+    if pathway in radar_prefix:
+        prefix = radar_prefix[pathway]
     else:
         prefix = None
     ymd, hour = latest(prefix)
     if ymd is None:
-        origins[radar] = {
+        origins[pathway] = {
           'longitude': -97.422413,
           'latitude': 35.25527,
           'last': '20220125'
         }
     else:
         ymd_hm = f'{ymd}-{hour:02d}00'
-        if radar not in origins or origins[radar] is None or origins[radar]['last'] != ymd_hm:
+        if pathway not in origins or origins[pathway] is None or origins[pathway]['last'] != ymd_hm:
             name = _list(prefix, ymd_hm)[-1] + '.nc'
             file = File.objects.filter(name=name).first()
             data = file.read()
-            origins[radar] = {
+            origins[pathway] = {
                 'longitude': float(data['longitude']),
                 'latitude': float(data['latitude']),
                 'last': ymd_hm
@@ -375,10 +375,10 @@ def location(radar):
         logger.debug(colorize('archive.location()', 'green'))
         logger.debug(f'origins = {origins}')
         pp.pprint(origins)
-    return origins[radar]
+    return origins[pathway]
 
 '''
-    prefix - prefix of a radar, e.g., PX- for PX-1000, RAXPOL- for RaXPol
+    prefix - prefix of a pathway, e.g., PX- for PX-1000, RAXPOL- for RaXPol
 '''
 def _latest_scan(prefix, scan='E4.0', symbol='Z'):
     day = Day.objects.filter(name=prefix).latest('date')
@@ -400,22 +400,22 @@ def _years(prefix):
     return []
 
 '''
-    radar - Input radar name, e.g., px1000, raxpol, etc.
+    pathway - Input pathway name, e.g., px1000, raxpol, etc.
     scan - The 4-th component of filename describing the scan, e.g., E4.0, A120.0, etc.
     symbol - The symbol of a product, e.g., Z, V, W, etc.
 '''
 @never_cache
-def catchup(request, radar, scan='E4.0', symbol='Z'):
+def catchup(request, pathway, scan='E4.0', symbol='Z'):
     if settings.VERBOSE > 1:
         show = colorize('archive.catchup()', 'green')
-        show += '   ' + color_name_value('radar', radar)
+        show += '   ' + color_name_value('pathway', pathway)
         logger.debug(show)
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if radar == 'undefined' or radar not in radar_prefix:
+    if pathway == 'undefined' or pathway not in radar_prefix:
         return invalid_query
-    prefix = radar_prefix[radar]
+    prefix = radar_prefix[pathway]
     ymd, hour = latest(prefix)
     if ymd is None:
         data = {

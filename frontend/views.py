@@ -11,9 +11,9 @@ from .archives import location
 
 logger = logging.getLogger('frontend')
 
-radars = [x['folder'].lower() for x in settings.RADARS.values()]
+pathways = [x['folder'].lower() for x in settings.RADARS.values()]
 radar_names = dict([(x['folder'].lower(), x['name']) for x in settings.RADARS.values()])
-default_radar = radars[0]
+default_pathway = pathways[0]
 
 if settings.DEBUG:
     show = color_name_value('settings.CSS_HASH', settings.CSS_HASH)
@@ -21,17 +21,17 @@ if settings.DEBUG:
 
 #
 
-def make_vars(request, radar=default_radar):
-    if radar not in radar_names:
-        logger.warning(f'Pathway {radar} not in radar_names. Not registered.')
+def make_vars(request, pathway=default_pathway):
+    if pathway not in radar_names:
+        logger.warning(f'Pathway {pathway} not in radar_names. Not registered.')
         # raise Http404
-        radar_names[radar] = radar
+        radar_names[pathway] = pathway
     user = get_user(request)
     try:
         email = user.email
     except:
         email = None
-    origin = location(radar)
+    origin = location(pathway)
     return {
         'ip': get_client_ip(request),
         'user': email,
@@ -39,8 +39,8 @@ def make_vars(request, radar=default_radar):
         'code_hash': settings.CODE_HASH,
         'version': settings.VERSION,
         'origin': origin,
-        'radar': radar,
-        'name': radar_names[radar]
+        'pathway': pathway,
+        'name': radar_names[pathway]
     }
 
 #
@@ -54,17 +54,17 @@ def index(request):
     }
     return render(request, 'frontend/index.html', context)
 
-def dev(request, radar):
-    vars = make_vars(request, radar)
+def dev(request, pathway):
+    vars = make_vars(request, pathway)
     context = {'vars': vars, 'css': settings.CSS_HASH}
     return render(request, 'frontend/dev.html', context)
 
 # Control
 
-def control_radar(request, radar):
-    vars = make_vars(request, radar)
+def control(request, pathway):
+    vars = make_vars(request, pathway)
     show = colorize('views.control()', 'green')
-    show += '   ' + color_name_value('radar', radar)
+    show += '   ' + color_name_value('pathway', pathway)
     show += '   ' + color_name_value('ip', vars['ip'])
     show += '   ' + color_name_value('user', vars['user'])
     logger.info(show)
@@ -74,21 +74,18 @@ def control_radar(request, radar):
     }
     return render(request, 'frontend/control.html', context)
 
-def control(request):
-    return control_radar(request, "demo")
-
 # Archive
 
-def archive_radar_profile(request, radar, profileGL = False):
-    vars = make_vars(request, radar)
+def _archive(request, pathway, profileGL = False):
+    vars = make_vars(request, pathway)
     show = colorize('views.archive()', 'green')
-    show += '   ' + color_name_value('radar', radar)
+    show += '   ' + color_name_value('pathway', pathway)
     show += '   ' + color_name_value('ip', vars['ip'])
     show += '   ' + color_name_value('user', vars['user'])
     if settings.DEBUG and settings.VERBOSE:
         show += '   ' + color_name_value('profileGL', profileGL)
     logger.info(show)
-    if radar not in radars:
+    if pathway not in pathways:
         raise Http404
     if profileGL:
         vars['profileGL'] = True
@@ -98,31 +95,11 @@ def archive_radar_profile(request, radar, profileGL = False):
     }
     return render(request, 'frontend/archive.html', context)
 
-def archive_radar_profile(request, radar, profileGL):
-    vars = make_vars(request, radar)
-    show = colorize('views.archive()', 'green')
-    show += '   ' + color_name_value('radar', radar)
-    show += '   ' + color_name_value('ip', vars['ip'])
-    show += '   ' + color_name_value('user', vars['user'])
-    if settings.DEBUG and settings.VERBOSE:
-        show += '   ' + color_name_value('profileGL', profileGL)
-    logger.info(show)
-    if radar not in radars:
-        raise Http404
-    context = {
-        'vars': vars,
-        'css': settings.CSS_HASH
-    }
-    return render(request, 'frontend/archive.html', context)
-
-def archive_radar(request, radar):
-    return archive_radar_profile(request, radar, False)
+def archive(request, pathway):
+    return _archive(request, pathway, False)
 
 def archive_profile(request):
-    return archive_radar_profile(request, default_radar, True)
-
-def archive(request):
-    return archive_radar_profile(request, default_radar, False)
+    return _archive(request, default_pathway, True)
 
 #
 
