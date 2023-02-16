@@ -44,10 +44,16 @@ class Radar(AsyncWebsocketConsumer):
             return await self.close()
         self.pathway = self.scope['url_route']['kwargs']['pathway']
         self.client_ip = self.scope['client'][0]
+        if 'name' in self.scope['url_route']['kwargs']:
+            self.name = self.scope['url_route']['kwargs']['name']
+            print(f'Radar provided name as {self.name}')
+        else:
+            self.name = self.pathway;
         await self.channel_layer.send(
             'backhaul',
             {
                 'type': 'radarInit',
+                'name': self.name,
                 'pathway': self.pathway,
                 'channel': self.channel_name,
                 'client_ip': self.client_ip
@@ -66,7 +72,7 @@ class Radar(AsyncWebsocketConsumer):
         logger.info(f'Radar {self.name} @ /ws/{self.pathway}/ disconnected {code}.')
 
     # Receive message from a pathway through frontend
-    # Type 1 - JSON {"radar":"px1000","command":"radarConnect"}
+    # Type 1 - JSON {"command":"radarConnect","pathway":"px1000","name":"PX-1000"}
     # Type 2 - Controls in JSON {"Go":{...},"Stop":{...},...}
     # Type 3 - Health in JSON {"Transceiver":{...},"Pedestal":{...},...}
     # Type 4 -
@@ -87,7 +93,7 @@ class Radar(AsyncWebsocketConsumer):
         type = bytes_data[0]
 
         if type == RadarHubType.Handshake:
-            # Type RadarHubType.Handshake (1) should come in as {"name":"Demo", "command":"radarConnect"}
+            # Type RadarHubType.Handshake (1) should come in as {"command":"radarConnect", "pathway":"demo", "name":"Demo"}
             text = bytes_data[1:].decode('utf-8')
 
             try:
@@ -96,11 +102,19 @@ class Radar(AsyncWebsocketConsumer):
                 logger.error(f'Radar.receive() invalid JSON = {text}')
                 return
 
-            if request.keys() < {'name', 'command'}:
-                logger.error(f'Radar.receive() incomplete message {text}')
+            pp.pprint(request)
+
+            if request.keys() < {'command', 'pathway'}:
+                text = colorize('ERROR', 'red')
+                logger.error(f'{text} Radar.receive() incomplete message {text}')
                 return
 
-            self.name = request['name']
+            if 'name' in request:
+                self.name = request['name']
+                print(f'Radar provided name as {self.name}')
+            else:
+                self.name = self.pathway
+
             logger.info(f'Radar {self.name} @ /ws/{self.pathway}/ connected.')
             if self.name.lower() != self.pathway:
                 text = colorize('WARNING', 'red')
@@ -186,8 +200,6 @@ class User(AsyncWebsocketConsumer):
         if request.keys() < {'pathway', 'command'}:
             logger.error(f'User.receive() incomplete message {request}')
             return
-
-        print(request)
 
         pathway = request['pathway']
         if pathway != self.pathway:

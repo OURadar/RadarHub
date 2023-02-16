@@ -19,7 +19,7 @@ from pathlib import Path
 from common import color_name_value
 
 # My additional parameters
-VERBOSE = 1
+VERBOSE = 2
 SIMULATE = False
 
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
