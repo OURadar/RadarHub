@@ -25,7 +25,7 @@ export class App extends Component {
       colors: colorDict(),
       theme: makeTheme(),
     };
-    this.ingest = new Live(props.radar);
+    this.ingest = new Live(props.pathway);
     this.ingest.onUpdate = () => {
       this.forceUpdate();
     };
@@ -36,7 +36,7 @@ export class App extends Component {
   }
 
   static defaultProps = {
-    radar: "demo",
+    pathway: "demo",
     debug: false,
     profileGL: false,
   };

@@ -279,8 +279,8 @@ void handleOpen(RKWebSocket *w) {
     int r;
     r = sprintf(R->welcome,
         "%c{"
-            "\"name\":\"%s\", "
-            "\"command\":\"radarConnect\""
+            "\"command\":\"radarConnect\", "
+            "\"pathway\":\"%s\""
         "}",
         RadarHubTypeHandshake, R->name);
     RKWebSocketSend(R->ws, R->welcome, r);

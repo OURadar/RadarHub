@@ -41,7 +41,7 @@ let scope = {
 
 self.onmessage = ({ data: { task, payload } }) => {
   if (task == "connect") {
-    pathway = payload.radar || "demo";
+    pathway = payload.pathway || "unspecified";
     url = payload.url || "localhost:8000";
     if (url === undefined) {
       return self.postMessage({
@@ -49,14 +49,14 @@ self.onmessage = ({ data: { task, payload } }) => {
         payload: "Error using connect",
       });
     }
-    connect(payload.radar || "demo", payload.url);
+    connect(pathway, payload.url);
   } else if (task == "execute") {
     console.log(`Sending in command ${payload}`);
     socket?.send(
       JSON.stringify({
         command: "userMessage",
+        pathway: pathway,
         payload: payload,
-        radar: pathway,
       })
     );
   } else if (task == "init") {

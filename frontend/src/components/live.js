@@ -78,6 +78,7 @@ class Live extends Ingest {
     this.onUpdate(this.state.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
     const url = `${p}://${window.location.host}/ws/${this.pathway}/`;
+    console.log(`live.js Connecting ${this.pathway}`)
     this.worker.postMessage({
       task: "connect",
       payload: {
