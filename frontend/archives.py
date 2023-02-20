@@ -341,7 +341,7 @@ def latest(prefix):
 '''
     Location - returns a dictionary with latitude, longitude
 
-    pathway - Input pathway name, e.g., px1000, raxpol, etc.
+    pathway - Input pathway, e.g., px1000, raxpol, etc.
 '''
 def location(pathway):
     global origins

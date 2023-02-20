@@ -231,8 +231,8 @@ void *run(void *in) {
 void sendControl(RKWebSocket *w) {
     int r = sprintf(R->control,
         "%c{"
-            "\"name\": \"%s\", "
-            "\"Controls\": ["
+            "\"pathway\": \"%s\", "
+            "\"controls\": ["
                 "{\"Label\":\"Go\", \"Command\":\"t y\"}, "
                 "{\"Label\":\"Stop\", \"Command\":\"t z\"}, "
                 "{\"Label\":\"Try Me 1\", \"Command\":\"t w 1\"}, "

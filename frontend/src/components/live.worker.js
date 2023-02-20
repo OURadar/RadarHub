@@ -7,6 +7,8 @@
 //  Created by Boonleng Cheong
 //
 
+import { Parser } from "binary-parser";
+
 let socket = null;
 let pathway;
 let url;
@@ -38,6 +40,22 @@ let scope = {
   },
   count: 0,
 };
+
+const sweepHeaderParser = new Parser()
+  .endianess("little")
+  .uint16("nb")
+  .uint16("nr")
+  .uint16("nx")
+  .uint16("reserved")
+  .doublele("time")
+  .doublele("longitude")
+  .doublele("latitude")
+  .doublele("doubleReserved")
+  .floatle("scanElevation")
+  .floatle("scanAzimuth")
+  .floatle("rangeStart")
+  .floatle("rangeSpacing")
+  .string("info", { length: "nx" });
 
 self.onmessage = ({ data: { task, payload } }) => {
   if (task == "connect") {
@@ -92,15 +110,17 @@ function connect(target, url) {
       // console.log(enums);
     } else if (type == enums.Control) {
       // Control data in JSON
+      console.log("received control sequence");
       const text = new TextDecoder().decode(e.data.slice(1));
+      console.log(text);
       const dict = JSON.parse(text);
-      if (dict.name == pathway) {
+      if (dict.pathway == pathway) {
         self.postMessage({
           type: "control",
-          payload: dict.Controls,
+          payload: dict.controls,
         });
       } else {
-        console.log(`dict.name = ${dict.name} /= ${pathway}`);
+        console.log(`dict.pathway = ${dict.pathway} /= ${pathway}`);
       }
     } else if (type == enums.Health) {
       // Health data in JSON
@@ -159,6 +179,8 @@ function connect(target, url) {
           payload: response,
         });
       }
+    } else if (type == enums.RadialZ) {
+      // Display of a radial of Z
     }
   };
 
