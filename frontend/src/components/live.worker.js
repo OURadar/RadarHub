@@ -75,8 +75,8 @@ function connect(target, url) {
     self.postMessage({ type: "message", payload: "Hub Connected" });
     socket.send(
       JSON.stringify({
-        pathway: pathway,
         command: "userConnect",
+        pathway: pathway,
       })
     );
   };

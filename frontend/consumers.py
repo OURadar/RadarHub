@@ -72,9 +72,9 @@ class Radar(AsyncWebsocketConsumer):
         logger.info(f'Radar {self.name} @ /ws/{self.pathway}/ disconnected {code}.')
 
     # Receive message from a pathway through frontend
-    # Type 1 - JSON {"command":"radarConnect","pathway":"px1000","name":"PX-1000"}
-    # Type 2 - Controls in JSON {"Go":{...},"Stop":{...},...}
-    # Type 3 - Health in JSON {"Transceiver":{...},"Pedestal":{...},...}
+    # Type 1 - JSON {"command":"radarConnect", "pathway":"px1000", "name":"PX-1000"}
+    # Type 2 - Controls in JSON {"Go":{...}, "Stop":{...}, ...}
+    # Type 3 - Health in JSON {"Transceiver":{...}, "Pedestal":{...}, ...}
     # Type 4 -
     # Type 5 - Scope binary
     # Type 6 - Command response
@@ -88,6 +88,7 @@ class Radar(AsyncWebsocketConsumer):
             if len(show) > 30:
                 show = f'{bytes_data[:25]} ... {bytes_data[-5:]}'
             show = colorize(show, 'green')
+            #if bytes_data[0] == 5 and len(bytes_data) != 801:
             logger.debug(f'Radar.receive() {self.pathway} {show} ({len(bytes_data)})')
 
         type = bytes_data[0]

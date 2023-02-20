@@ -81,7 +81,7 @@ async def _runloop(pathway):
                 if len(payload) > 30:
                     show = f'{payload[:20]} ... {payload[-5:]}'
                 show = colorize(show, 'green')
-                logger.debug(f'_runloop {qsize} {name} {show} ({len(payload)})')
+                logger.debug(f'_runloop {name} q{qsize:02d} {show} ({len(payload)})')
             await channel_layer.group_send(
                 pathway,
                 {
