@@ -117,7 +117,7 @@ function connect(target, url) {
       if (dict.pathway == pathway) {
         self.postMessage({
           type: "control",
-          payload: dict.controls,
+          payload: dict.control,
         });
       } else {
         console.log(`dict.pathway = ${dict.pathway} /= ${pathway}`);

@@ -232,7 +232,7 @@ void sendControl(RKWebSocket *w) {
     int r = sprintf(R->control,
         "%c{"
             "\"pathway\": \"%s\", "
-            "\"controls\": ["
+            "\"control\": ["
                 "{\"Label\":\"Go\", \"Command\":\"t y\"}, "
                 "{\"Label\":\"Stop\", \"Command\":\"t z\"}, "
                 "{\"Label\":\"Try Me 1\", \"Command\":\"t w 1\"}, "
