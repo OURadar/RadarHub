@@ -190,6 +190,7 @@ class User(AsyncWebsocketConsumer):
     # Receive message from frontend, which relays commands from the web app, serialized JSON data.
     async def receive(self, text_data=None):
         if text_data is None or len(text_data) == 0:
+            logger.warning('User.receive() empty text_data')
             return
 
         try:

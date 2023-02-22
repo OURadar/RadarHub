@@ -173,10 +173,11 @@ class Backhaul(AsyncConsumer):
             if settings.DEBUG and settings.VERBOSE:
                 print('user_channels =')
                 pp.pprint(user_channels)
+                print('pathway_channels = ')
+                pp.pprint(pathway_channels)
 
             await channel_layer.group_add(pathway, channel)
 
-        if pathway in pathway_channels:
             # Always send the type definition first
             await channel_layer.send(
                 channel,
@@ -185,6 +186,8 @@ class Backhaul(AsyncConsumer):
                     'message': b'\1' + bytearray(payload_types, 'utf-8')
                 }
             )
+
+        if pathway in pathway_channels:
             # Send the last seen payloads of all types as a welcome message
             for _, payload in pathway_channels[pathway]['welcome'].items():
                 await channel_layer.send(
@@ -280,6 +283,12 @@ class Backhaul(AsyncConsumer):
             if settings.DEBUG and settings.VERBOSE:
                 print('pathway_channels =')
                 pp.pprint(pathway_channels)
+                print('user_channels = ')
+                pp.pprint(user_channels)
+
+            for user_channel in user_channels.keys():
+                print(f'Subscribe {user_channel} to {pathway}')
+                await channel_layer.group_add(pathway, user_channel)
 
         threading.Thread(target=runloop, args=(pathway,)).start()
 
@@ -307,6 +316,7 @@ class Backhaul(AsyncConsumer):
                 pathway_channels[pathway]['channel'] = None
                 pathway_channels[pathway]['commands'].join()
                 pathway_channels[pathway]['payloads'].join()
+                pathway_channels[pathway]['welcome'] = {}
                 name = colorize(pathway, 'pink')
                 logger.info(f'Pathway {name} removed from pathway_channels')
                 if settings.DEBUG and settings.VERBOSE:

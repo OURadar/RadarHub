@@ -107,7 +107,7 @@ function connect(target, url) {
       const text = new TextDecoder().decode(e.data.slice(1));
       const update = JSON.parse(text);
       enums = { ...enums, ...update };
-      // console.log(enums);
+      console.log(enums);
     } else if (type == enums.Control) {
       // Control data in JSON
       console.log("received control sequence");
