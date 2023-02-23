@@ -1,7 +1,7 @@
 # backhaul/consumers.py
 #
 #   RadarHub
-#   Backhaul worker
+#   Backhaul Worker
 #
 #   Consumers that interact with frontend.User and frontend.Radar
 #   through redis channels. There is a run loop for each pathway to
@@ -33,7 +33,7 @@ from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
 from reporter.enums import RadarHubType
-from common import colorize, color_name_value
+from common import colorize, color_name_value, byte_string
 
 logger = logging.getLogger('backhaul')
 
@@ -62,26 +62,24 @@ async def _runloop(pathway):
     global pathway_channels
     name = colorize(pathway, 'pink')
     with lock:
-        logger.info(f'runloop {name} started')
+        logger.info(f'Backhaul._runloop {name} started')
 
     payload_queue = pathway_channels[pathway]['payloads']
 
     # Now we just keep sending the group everything from the pathway
     while pathway_channels[pathway]['channel']:
-        qsize = payload_queue.qsize()
-        if qsize > 80:
-            logger.warning(f'{name} qsize = {qsize}, purging ...')
+        qs = payload_queue.qsize()
+        if qs > 80:
+            logger.warning(f'{name} qs:{qs}, purging ...')
             while payload_queue.qsize() > 5:
                 payload_queue.get()
                 payload_queue.task_done()
         if not payload_queue.empty():
             payload = payload_queue.get()
             if settings.VERBOSE > 1:
-                show = payload
-                if len(payload) > 30:
-                    show = f'{payload[:20]} ... {payload[-5:]}'
-                show = colorize(show, 'green')
-                logger.debug(f'_runloop {name} q{qsize:02d} {show} ({len(payload)})')
+                show = byte_string(payload)
+                show = colorize(show, 'orange')
+                logger.debug(f'Backhaul._runloop qs:{qs:02d} {name} {show} ({len(payload)})')
             await channel_layer.group_send(
                 pathway,
                 {
@@ -398,12 +396,11 @@ class Backhaul(AsyncConsumer):
         payload = message['payload']
 
         if settings.VERBOSE > 1:
-            show = payload
-            if len(payload) > 30:
-                show = f'{payload[:20]} ... {payload[-5:]}'
-            show = colorize(show, 'green')
+            name = colorize(pathway, 'pink')
+            show = byte_string(payload)
+            show = colorize(show, 'mint')
             with lock:
-                logger.debug(f'Backhaul.radarMessage() {show} ({len(payload)})')
+                logger.debug(f'Backhaul.radarMessage() {name} {show} ({len(payload)})')
 
         # Look up the queue of this pathway
         global pathway_channels

@@ -24,7 +24,7 @@ from channels.layers import get_channel_layer
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from reporter.enums import RadarHubType
-from common import colorize
+from common import colorize, byte_string
 
 logger = logging.getLogger('frontend')
 
@@ -84,12 +84,11 @@ class Radar(AsyncWebsocketConsumer):
             return
 
         if settings.VERBOSE > 1:
-            show = bytes_data
-            if len(show) > 30:
-                show = f'{bytes_data[:25]} ... {bytes_data[-5:]}'
+            name = colorize(self.pathway, 'pink')
+            show = byte_string(bytes_data)
             show = colorize(show, 'green')
             #if bytes_data[0] == 5 and len(bytes_data) != 801:
-            logger.debug(f'Radar.receive() {self.pathway} {show} ({len(bytes_data)})')
+            logger.debug(f'Radar.receive() {name} {show} ({len(bytes_data)})')
 
         type = bytes_data[0]
 

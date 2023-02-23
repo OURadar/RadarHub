@@ -48,3 +48,22 @@ def color_name_value(name, value):
     show += colorize(' = ', 'red')
     show += colorize(value, 'yellow' if isinstance(value, str) else 'purple')
     return show
+
+def byte_string(payload):
+    lower_bound = int.from_bytes(b'\x20', 'big')
+    upper_bound = int.from_bytes(b'\x73', 'big')
+    count = 0
+    bound = min(25, len(payload))
+    for s in bytes(payload[:bound]):
+        if lower_bound <= s <= upper_bound:
+            count += 1
+    if len(payload) < 30:
+        return f'{payload}'
+    if count > bound / 2:
+        return f'{payload[:25]} ... {payload[-5:]}'
+    else:
+        def payload_binary(payload):
+            h = [f'{d:02x}' for d in payload]
+            return '[.' + '.'.join(h) + ']'
+        p = f'{payload[0:1]}'
+        return p + payload_binary(payload[1:8]) + ' ... ' + payload_binary(payload[-3:])

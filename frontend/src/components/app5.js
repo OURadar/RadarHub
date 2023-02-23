@@ -5,9 +5,11 @@
 //  Created by Boonleng Cheong
 //
 
-import React, { Component } from "react";
+import React from "react";
 import Split from "split.js";
+
 import { ThemeProvider } from "@mui/material/styles";
+
 import { colorDict, makeTheme } from "./theme";
 import { detectMob, clamp } from "./common";
 import { SectionHeader } from "./section-header";
@@ -18,7 +20,7 @@ import { Product } from "./product";
 import { TopBar } from "./topbar";
 import { Live } from "./live";
 
-export class App extends Component {
+export class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -30,6 +32,9 @@ export class App extends Component {
       this.forceUpdate();
     };
     this.handleModeChange = this.handleModeChange.bind(this);
+
+    this.handleOverlayLoad = this.handleOverlayLoad.bind(this);
+
     document.documentElement.setAttribute("theme", this.state.colors.name);
     this.isMobile = detectMob();
     console.log(props);
@@ -115,6 +120,7 @@ export class App extends Component {
                 colors={this.state.colors}
                 debug={this.props.debug}
                 profileGL={this.props.profileGL}
+                onOverlayLoad={this.handleOverlayLoad}
               />
             </div>
           </div>
@@ -137,5 +143,9 @@ export class App extends Component {
       colors: colorDict(mode),
       theme: makeTheme(mode),
     });
+  }
+
+  handleOverlayLoad() {
+    console.log("App5.handleOverlayLoad()");
   }
 }
