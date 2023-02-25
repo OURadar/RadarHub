@@ -264,7 +264,7 @@ class Backhaul(AsyncConsumer):
                 channel,
                 {
                     'type': 'disconnectRadar',
-                    'message': f'Someone is connected to {pathway}. Bye.'
+                    'message': f'Someone is using /ws/{pathway}/. Bye.'
                 }
             )
             return
