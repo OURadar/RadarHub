@@ -81,6 +81,7 @@ class Radar(AsyncWebsocketConsumer):
     #
     async def receive(self, bytes_data=None):
         if bytes_data is None or len(bytes_data) == 0:
+            logger.info('Radar.receive() nothing')
             return
 
         if settings.VERBOSE > 1:
