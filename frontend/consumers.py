@@ -227,7 +227,7 @@ class User(AsyncWebsocketConsumer):
 
         global tic
 
-        show = colorize('User.receive()', 'gree')
+        show = colorize('User.receive()', 'green')
         show += ' ' + colorize(text_data, 'yellow')
         show += '   ' + color_name_value('tic', tic)
         logger.info(show)
