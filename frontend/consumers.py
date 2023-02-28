@@ -24,7 +24,7 @@ from channels.layers import get_channel_layer
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from reporter.enums import RadarHubType
-from common import colorize, byte_string
+from common import colorize, color_name_value, byte_string
 
 logger = logging.getLogger('frontend')
 
@@ -60,7 +60,16 @@ class Radar(AsyncWebsocketConsumer):
             }
         )
 
-    async def disconnect(self, code):
+    # async def disconnect(self, code):
+    #     show = colorize(self.name, 'pink')
+    #     logger.info(f'Radar.disconnect() {show} @ /ws/{self.pathway}/   code = {code}.')
+    #     return await super().disconnect(code)
+
+    async def websocket_disconnect(self, message):
+        show = colorize('Radar.websocket_disconnect()', 'green')
+        show += ' ' + colorize(self.name, 'yellow')
+        show += ' @ /ws/radar/' + colorize(self.pathway, 'pink') + '/'
+        logger.info(show)
         await self.channel_layer.send(
             'backhaul',
             {
@@ -69,7 +78,7 @@ class Radar(AsyncWebsocketConsumer):
                 'channel': self.channel_name
             }
         )
-        logger.info(f'Radar {self.name} @ /ws/{self.pathway}/ disconnected {code}.')
+        return await super().websocket_disconnect(message)
 
     # Receive message from a pathway through frontend
     # Type 1 - JSON {"command":"radarConnect", "pathway":"px1000", "name":"PX-1000"}
@@ -115,7 +124,11 @@ class Radar(AsyncWebsocketConsumer):
             else:
                 self.name = self.pathway
 
-            logger.info(f'Radar {self.name} @ /ws/{self.pathway}/ connected.')
+            show = colorize('Radar.received()', 'green')
+            show += ' ' + colorize(self.name, 'yellow')
+            show += ' @ /ws/radar/' + colorize(self.pathway, 'pink') + '/'
+            show += ' connected'
+            logger.info(show)
             if self.name.lower() != self.pathway:
                 text = colorize('WARNING', 'red')
                 logger.warning(f'{text} name = {self.name} != self.pathway = {self.pathway}')
@@ -148,7 +161,9 @@ class Radar(AsyncWebsocketConsumer):
 
     async def disconnectRadar(self, event):
         message = event['message']
-        logger.info(f'Radar.disconnectRadar() event.message = {message}')
+        show = colorize('Radar.disconnectRadar()', 'green')
+        show += ' ' + color_name_value('event.message', message)
+        logger.info(show)
         await self.send(event['message'])
         await self.close()
 
@@ -212,8 +227,10 @@ class User(AsyncWebsocketConsumer):
 
         global tic
 
-        text = colorize(text_data, 'green')
-        logger.info(f'User.receive() {text} ({tic})')
+        show = colorize('User.receive()', 'gree')
+        show += ' ' + colorize(text_data, 'yellow')
+        show += '   ' + color_name_value('tic', tic)
+        logger.info(show)
 
         tic += 1
 

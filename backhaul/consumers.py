@@ -21,6 +21,7 @@
 #
 
 import json
+import time
 import queue
 import pprint
 import asyncio
@@ -56,6 +57,7 @@ async def _reset():
     )
 
 def reset():
+    print('Backhaul.consumers.reset()')
     asyncio.get_event_loop().run_until_complete(_reset())
 
 async def _runloop(pathway):
@@ -259,15 +261,26 @@ class Backhaul(AsyncConsumer):
 
         global pathway_channels
         if pathway in pathway_channels and pathway_channels[pathway]['channel'] is not None:
-            print(f'Pathway {pathway} is currently being used, disconnecting ...')
-            await channel_layer.send(
-                channel,
-                {
-                    'type': 'disconnectRadar',
-                    'message': f'Someone is using /ws/{pathway}/. Bye.'
-                }
-            )
-            return
+            age = time.mktime(time.gmtime()) - pathway_channels[pathway]['last']
+            print(f'Pathway {pathway} is currently being used (age = {age}), disconnecting ...')
+            if age > 30.0:
+                print(f'Kicking out {pathway} (age = {age:.2f} s) ...')
+                await channel_layer.send(
+                    pathway_channels[pathway]['channel'],
+                    {
+                        'type': 'disconnectRadar',
+                        'message': f'You are so quiet. Someone else wants /ws/{pathway}/. Bye.'
+                    }
+                )
+            else:
+                await channel_layer.send(
+                    channel,
+                    {
+                        'type': 'disconnectRadar',
+                        'message': f'Someone is using /ws/{pathway}/. Bye.'
+                    }
+                )
+                return
 
         with lock:
             pathway_channels[pathway] = {
@@ -411,8 +424,8 @@ class Backhaul(AsyncConsumer):
             return
 
         # Payload type Response, direct to the earliest request, assumes FIFO
-        type = payload[0]
-        if type == RadarHubType.Response:
+        type_name = payload[0]
+        if type_name == RadarHubType.Response:
             with lock:
                 name = colorize(pathway, 'pink')
                 show = colorize(payload[1:].decode('utf-8'), 'green')
@@ -433,7 +446,8 @@ class Backhaul(AsyncConsumer):
         # Queue up the payload, keep this latest copy as welcome message for others
         if not pathway_channels[pathway]['payloads'].full():
             pathway_channels[pathway]['payloads'].put(payload)
-            pathway_channels[pathway]['welcome'][type] = payload
+            pathway_channels[pathway]['welcome'][type_name] = payload
+            pathway_channels[pathway]['last'] = time.mktime(time.gmtime())
 
     async def reset(self, message='Reset'):
         global user_channels, pathway_channels
@@ -454,11 +468,11 @@ class Backhaul(AsyncConsumer):
                         pathway['channel'] = None
                         pathway['commands'] = None
                         pathway['payloads'] = None
+                        pathway['welcome'] = {}
 
                 if settings.DEBUG and settings.VERBOSE:
                     print('pathway_channels =')
                     pp.pprint(pathway_channels)
-
 
             if len(user_channels):
                 logger.info('Resetting user_channels ...')

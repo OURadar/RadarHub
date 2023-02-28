@@ -15,6 +15,8 @@ from common import color_name_value
 from common.cosmetics import colorize
 from common.dailylog import MultiLineFormatter
 
+from backhaul import consumers
+
 logger = logging.getLogger('frontend')
 
 worker_started = False
@@ -83,6 +85,9 @@ class FrontendConfig(AppConfig):
             bail = tid[0] != '0' if tid else False
             if bail:
                 return
+
+        # print('Telling backhaul to reset')
+        # consumers.reset()
 
         for radar_prefix in radar_prefix_pairs:
             if radar_prefix == ('demo', 'DEMO-'):
