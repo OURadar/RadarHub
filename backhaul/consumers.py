@@ -21,6 +21,7 @@
 #
 
 import json
+import time
 import queue
 import pprint
 import asyncio
@@ -44,7 +45,34 @@ payload_types = json.dumps({e.name: e.value for e in RadarHubType})
 lock = threading.Lock()
 tic = 0
 
-pp = pprint.PrettyPrinter(indent=1, depth=3, width=60, sort_dicts=False)
+pp = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
+
+def pathway_channel_init(pathway, channel=None):
+    global pathway_channels
+    with lock:
+        if pathway in pathway_channels:
+            if pathway_channels[pathway]['commands'] is not None:
+                pathway_channels[pathway]['commands'].join()
+                pathway_channels[pathway]['payloads'].join()
+            welcome = pathway_channels[pathway]['welcome']
+        else:
+            welcome = {}
+        if channel is None:
+            pathway_channels[pathway] = {
+                'channel': None,
+                'commands': None,
+                'payloads': None,
+                'updated': 0,
+                'welcome': welcome
+            }
+        else:
+            pathway_channels[pathway] = {
+                'channel': channel,
+                'commands': queue.Queue(maxsize=10),
+                'payloads': queue.Queue(maxsize=100),
+                'updated': time.monotonic(),
+                'welcome': welcome
+            }
 
 async def _reset():
     await channel_layer.send(
@@ -56,6 +84,7 @@ async def _reset():
     )
 
 def reset():
+    print('Backhaul.consumers.reset()')
     asyncio.get_event_loop().run_until_complete(_reset())
 
 async def _runloop(pathway):
@@ -89,7 +118,28 @@ async def _runloop(pathway):
             )
             payload_queue.task_done()
         else:
-            await asyncio.sleep(0.01)
+            age = time.monotonic() - pathway_channels[pathway]['updated']
+            if age >= 30.0:
+                channel = pathway_channels[pathway]['channel']
+                with lock:
+                    logger.info(f'Kicking out {name} (age = {age:.2f} s) ...')
+                    logger.info(f'Channel {channel}')
+                await channel_layer.send(
+                    pathway_channels[pathway]['channel'],
+                    {
+                        'type': 'disconnectRadar',
+                        'message': f'You are so quiet. Someone else wants /ws/{pathway}/. Bye.'
+                    }
+                )
+                await channel_layer.send(
+                    'backhaul',
+                    {
+                        'type': 'radarDisconnect',
+                        'pathway': pathway,
+                        'channel': channel,
+                    }
+                )
+            await asyncio.sleep(0.02)
 
     with lock:
         logger.info(f'runloop {name} retired')
@@ -257,33 +307,46 @@ class Backhaul(AsyncConsumer):
         pathway = message['pathway']
         channel = message['channel']
 
-        global pathway_channels
         if pathway in pathway_channels and pathway_channels[pathway]['channel'] is not None:
-            print(f'Pathway {pathway} is currently being used, disconnecting ...')
+            age = time.monotonic() - pathway_channels[pathway]['updated']
+            if age < 5.0:
+                print(f'Pathway {pathway} is currently being used (age = {age}), disconnecting ...')
+                await channel_layer.send(
+                    channel,
+                    {
+                        'type': 'disconnectRadar',
+                        'message': f'Someone is using /ws/radar/{pathway}/. Bye.'
+                    }
+                )
+                return
+
+            logger.info(f'Overriding {pathway} (age = {age:.2f} s) ...')
             await channel_layer.send(
-                channel,
+                pathway_channels[pathway]['channel'],
                 {
                     'type': 'disconnectRadar',
-                    'message': f'Someone is using /ws/{pathway}/. Bye.'
+                    'message': f'You\'re so quiet. Someone wants /ws/radar/{pathway}/. Bye.'
                 }
             )
-            return
+            await channel_layer.send(
+                'backhaul',
+                {
+                    'type': 'radarDisconnect',
+                    'pathway': pathway,
+                    'channel': channel,
+                }
+            )
+
+        pathway_channel_init(pathway, channel)
+        name = colorize(pathway, 'pink')
+        logger.info(f'Pathway {name} added to pathway_channels')
 
         with lock:
-            pathway_channels[pathway] = {
-                'channel': channel,
-                'commands': queue.Queue(maxsize=10),
-                'payloads': queue.Queue(maxsize=100),
-                'welcome': {}
-            }
-            name = colorize(pathway, 'pink')
-            logger.info(f'Pathway {name} added to pathway_channels')
             if settings.DEBUG and settings.VERBOSE:
                 print('pathway_channels =')
                 pp.pprint(pathway_channels)
                 print('user_channels = ')
                 pp.pprint(user_channels)
-
             for user_channel in user_channels.keys():
                 print(f'Subscribe {user_channel} to {pathway}')
                 await channel_layer.group_add(pathway, user_channel)
@@ -307,22 +370,19 @@ class Backhaul(AsyncConsumer):
             return
         pathway = message['pathway']
         channel = message['channel']
+        name = colorize(pathway, 'pink')
 
-        global pathway_channels
-        if pathway in pathway_channels and channel == pathway_channels[pathway]['channel']:
-            with lock:
-                pathway_channels[pathway]['channel'] = None
-                pathway_channels[pathway]['commands'].join()
-                pathway_channels[pathway]['payloads'].join()
-                pathway_channels[pathway]['welcome'] = {}
-                name = colorize(pathway, 'pink')
-                logger.info(f'Pathway {name} removed from pathway_channels')
-                if settings.DEBUG and settings.VERBOSE:
+        # global pathway_channels
+        if channel == pathway_channels[pathway]['channel']:
+            pathway_channel_init(pathway)
+            logger.info(f'Pathway {name} removed from pathway_channels')
+            if settings.DEBUG and settings.VERBOSE:
+                with lock:
                     print('pathway_channels =')
                     pp.pprint(pathway_channels)
         elif pathway not in pathway_channels:
             show = colorize('Backhaul.radarDisconnect()', 'green')
-            show += f' Pathway {pathway} not found'
+            show += f' Pathway {name} not found'
             logger.warning(show)
         else:
             with lock:
@@ -411,8 +471,8 @@ class Backhaul(AsyncConsumer):
             return
 
         # Payload type Response, direct to the earliest request, assumes FIFO
-        type = payload[0]
-        if type == RadarHubType.Response:
+        type_name = payload[0]
+        if type_name == RadarHubType.Response:
             with lock:
                 name = colorize(pathway, 'pink')
                 show = colorize(payload[1:].decode('utf-8'), 'green')
@@ -433,7 +493,8 @@ class Backhaul(AsyncConsumer):
         # Queue up the payload, keep this latest copy as welcome message for others
         if not pathway_channels[pathway]['payloads'].full():
             pathway_channels[pathway]['payloads'].put(payload)
-            pathway_channels[pathway]['welcome'][type] = payload
+            pathway_channels[pathway]['welcome'][type_name] = payload
+            pathway_channels[pathway]['updated'] = time.monotonic()
 
     async def reset(self, message='Reset'):
         global user_channels, pathway_channels
@@ -451,14 +512,17 @@ class Backhaul(AsyncConsumer):
                                 'message': message
                             }
                         )
-                        pathway['channel'] = None
-                        pathway['commands'] = None
-                        pathway['payloads'] = None
+                        pathway_channel_init(pathway)
+                        # pathway = pathway_channel_init(None)
+                        # pathway['channel'] = None
+                        # pathway['commands'] = None
+                        # pathway['payloads'] = None
+                        # pathway['updated'] = 0
+                        # pathway['welcome'] = {}
 
                 if settings.DEBUG and settings.VERBOSE:
                     print('pathway_channels =')
                     pp.pprint(pathway_channels)
-
 
             if len(user_channels):
                 logger.info('Resetting user_channels ...')
