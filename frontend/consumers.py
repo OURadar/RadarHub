@@ -60,13 +60,8 @@ class Radar(AsyncWebsocketConsumer):
             }
         )
 
-    # async def disconnect(self, code):
-    #     show = colorize(self.name, 'pink')
-    #     logger.info(f'Radar.disconnect() {show} @ /ws/{self.pathway}/   code = {code}.')
-    #     return await super().disconnect(code)
-
-    async def websocket_disconnect(self, message):
-        show = colorize('Radar.websocket_disconnect()', 'green')
+    async def disconnect(self, code):
+        show = colorize('Radar.disconnect()', 'green')
         show += ' ' + colorize(self.name, 'yellow')
         show += ' @ /ws/radar/' + colorize(self.pathway, 'pink') + '/'
         logger.info(show)
@@ -78,7 +73,7 @@ class Radar(AsyncWebsocketConsumer):
                 'channel': self.channel_name
             }
         )
-        return await super().websocket_disconnect(message)
+        return await super().disconnect(code)
 
     # Receive message from a pathway through frontend
     # Type 1 - JSON {"command":"radarConnect", "pathway":"px1000", "name":"PX-1000"}

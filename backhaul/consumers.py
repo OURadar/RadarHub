@@ -305,17 +305,25 @@ class Backhaul(AsyncConsumer):
                     channel,
                     {
                         'type': 'disconnectRadar',
-                        'message': f'Someone is using /ws/{pathway}/. Bye.'
+                        'message': f'Someone is using /ws/radar/{pathway}/. Bye.'
                     }
                 )
                 return
 
-            print(f'Kicking out {pathway} (age = {age:.2f} s) ...')
+            logger.info(f'Overriding {pathway} (age = {age:.2f} s) ...')
             await channel_layer.send(
                 pathway_channels[pathway]['channel'],
                 {
                     'type': 'disconnectRadar',
-                    'message': f'You are so quiet. Someone else wants /ws/{pathway}/. Bye.'
+                    'message': f'You\'re so quiet. Someone wants /ws/radar/{pathway}/. Bye.'
+                }
+            )
+            await channel_layer.send(
+                'backhaul',
+                {
+                    'type': 'radarDisconnect',
+                    'pathway': pathway,
+                    'channel': channel,
                 }
             )
 
@@ -357,10 +365,8 @@ class Backhaul(AsyncConsumer):
         global pathway_channels
         if pathway in pathway_channels and channel == pathway_channels[pathway]['channel']:
             with lock:
-                # pathway_channels[pathway]['channel'] = None
                 pathway_channels[pathway]['commands'].join()
                 pathway_channels[pathway]['payloads'].join()
-                # pathway_channels[pathway]['welcome'] = {}
                 pathway_channels[pathway] = pathway_channel_init(None)
                 logger.info(f'Pathway {name} removed from pathway_channels')
                 if settings.DEBUG and settings.VERBOSE:
