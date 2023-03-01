@@ -167,11 +167,13 @@ class Backhaul(AsyncConsumer):
         pathway = message['pathway']
         channel = message['channel']
         client_ip = message['client_ip']
+
+        pathway_colored = colorize(pathway, 'pink')
+        client_ip_colored = colorize(client_ip, 'yellow')
+
         if settings.VERBOSE:
             show = colorize('Backhaul.userInit()', 'green')
-            show += ' accepting ' + colorize(client_ip, 'yellow')
-            show += ' for ' + colorize(pathway, 'pink')
-            show += ' ...'
+            show += f' accepting {client_ip_colored} for {pathway_colored} ...'
             logger.info(show)
         await channel_layer.send(
             channel,
@@ -190,6 +192,8 @@ class Backhaul(AsyncConsumer):
             return
         pathway = message['pathway']
         channel = message['channel']
+
+        pathway_colored = colorize(pathway, 'pink')
 
         global user_channels
         if channel in user_channels:
@@ -215,8 +219,7 @@ class Backhaul(AsyncConsumer):
             # - f'{pathway}-z' for z (reflectivity)
             # - f'{pathway}-v' for v (velocity)
             # - ...
-            show = colorize(pathway, 'pink')
-            show += colorize(f' + {channel}', 'mint')
+            show = pathway_colored + colorize(f' + {channel}', 'mint')
             logger.info(show)
             if settings.DEBUG and settings.VERBOSE:
                 print('user_channels =')
@@ -284,10 +287,12 @@ class Backhaul(AsyncConsumer):
         pathway = message['pathway']
         channel = message['channel']
         client_ip = message['client_ip']
+
+        pathway_colored = colorize(pathway, 'pink')
+        client_ip_colored = colorize(client_ip, 'yellow')
+
         show = colorize('Backhaul.radarInit()', 'green')
-        show += ' accepting ' + colorize(pathway, 'pink')
-        show += ' from ' + colorize(client_ip, 'yellow')
-        show += ' ...'
+        show += f' accepting {pathway_colored} from {client_ip_colored} ...'
         logger.info(show)
         await channel_layer.send(
             channel,
@@ -307,10 +312,12 @@ class Backhaul(AsyncConsumer):
         pathway = message['pathway']
         channel = message['channel']
 
+        pathway_colored = colorize(pathway, 'pink')
+
         if pathway in pathway_channels and pathway_channels[pathway]['channel'] is not None:
             age = time.monotonic() - pathway_channels[pathway]['updated']
             if age < 5.0:
-                print(f'Pathway {pathway} is currently being used (age = {age}), disconnecting ...')
+                logger.info(f'Pathway {pathway_colored} is currently being used (age = {age}), disconnecting conflict ...')
                 await channel_layer.send(
                     channel,
                     {
@@ -320,7 +327,7 @@ class Backhaul(AsyncConsumer):
                 )
                 return
 
-            logger.info(f'Overriding {pathway} (age = {age:.2f} s) ...')
+            logger.info(f'Overriding {pathway_colored} (age = {age:.2f} s), allowing the new connection ...')
             await channel_layer.send(
                 pathway_channels[pathway]['channel'],
                 {
@@ -338,8 +345,7 @@ class Backhaul(AsyncConsumer):
             )
 
         pathway_channel_init(pathway, channel)
-        name = colorize(pathway, 'pink')
-        logger.info(f'Pathway {name} added to pathway_channels')
+        logger.info(f'Pathway {pathway_colored} added to pathway_channels')
 
         with lock:
             if settings.DEBUG and settings.VERBOSE:
@@ -370,19 +376,20 @@ class Backhaul(AsyncConsumer):
             return
         pathway = message['pathway']
         channel = message['channel']
-        name = colorize(pathway, 'pink')
+
+        pathway_colored = colorize(pathway, 'pink')
 
         # global pathway_channels
         if channel == pathway_channels[pathway]['channel']:
             pathway_channel_init(pathway)
-            logger.info(f'Pathway {name} removed from pathway_channels')
+            logger.info(f'Pathway {pathway_colored} removed from pathway_channels')
             if settings.DEBUG and settings.VERBOSE:
                 with lock:
                     print('pathway_channels =')
                     pp.pprint(pathway_channels)
         elif pathway not in pathway_channels:
             show = colorize('Backhaul.radarDisconnect()', 'green')
-            show += f' Pathway {name} not found'
+            show += f' Pathway {pathway_colored} not found'
             logger.warning(show)
         else:
             with lock:
@@ -400,14 +407,15 @@ class Backhaul(AsyncConsumer):
         channel = message['channel']
         command = message['command']
 
+        pathway_colored = colorize(pathway, 'pink')
+
         # Intercept the 's' commands, consolidate the data stream the update the
         # request from the pathway. Everything else gets relayed to the pathway and
         # the response is relayed to the user that triggered the Nexus event
         global pathway_channels
         if pathway not in pathway_channels or pathway_channels[pathway]['channel'] is None:
             show = colorize('Backhaul.userMessage()', 'green')
-            show += ' ' + colorize(pathway, 'pink')
-            show += ' not connected'
+            show += f' {pathway_colored} not connected'
             logger.info(show)
             await channel_layer.send(
                 channel,
@@ -427,9 +435,8 @@ class Backhaul(AsyncConsumer):
 
         if settings.VERBOSE:
             # with lock:
-            name = colorize(pathway, 'pink')
             text = colorize(command, 'green')
-            logger.info(f'Backhaul.userMessage() {name} {text} ({command_queue.qsize()}) ({tic})')
+            logger.info(f'Backhaul.userMessage() {pathway_colored} {text} ({command_queue.qsize()}) ({tic})')
 
         tic += 1
 
@@ -455,12 +462,13 @@ class Backhaul(AsyncConsumer):
         channel = message['channel']
         payload = message['payload']
 
+        pathway_colored = colorize(pathway, 'pink')
+
         if settings.VERBOSE > 1:
-            name = colorize(pathway, 'pink')
             show = byte_string(payload)
             show = colorize(show, 'mint')
             with lock:
-                logger.debug(f'Backhaul.radarMessage() {name} {show} ({len(payload)})')
+                logger.debug(f'Backhaul.radarMessage() {pathway_colored} {show} ({len(payload)})')
 
         # Look up the queue of this pathway
         global pathway_channels
@@ -474,9 +482,8 @@ class Backhaul(AsyncConsumer):
         type_name = payload[0]
         if type_name == RadarHubType.Response:
             with lock:
-                name = colorize(pathway, 'pink')
                 show = colorize(payload[1:].decode('utf-8'), 'green')
-                logger.info(f'Backhaul.radarMessage() {name} {show}')
+                logger.info(f'Backhaul.radarMessage() {pathway_colored} {show}')
             # Relay the response to the user, FIFO style
             command_queue = pathway_channels[pathway]['commands']
             user = command_queue.get()
@@ -490,11 +497,12 @@ class Backhaul(AsyncConsumer):
             command_queue.task_done()
             return
 
-        # Queue up the payload, keep this latest copy as welcome message for others
+        # Queue up the payload. Keep the latest copy of Control, Health, or Scope as welcome message for others
         if not pathway_channels[pathway]['payloads'].full():
             pathway_channels[pathway]['payloads'].put(payload)
-            pathway_channels[pathway]['welcome'][type_name] = payload
             pathway_channels[pathway]['updated'] = time.monotonic()
+            if type_name in [RadarHubType.Control, RadarHubType.Health, RadarHubType.Scope]:
+                pathway_channels[pathway]['welcome'][type_name] = payload
 
     async def reset(self, message='Reset'):
         global user_channels, pathway_channels
