@@ -31,6 +31,7 @@ logger = logging.getLogger('frontend')
 tic = 0
 
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
+bug_red = colorize('BUG', 'red')
 
 class Null(AsyncWebsocketConsumer):
     async def connect(self):
@@ -44,11 +45,7 @@ class Radar(AsyncWebsocketConsumer):
             return await self.close()
         self.pathway = self.scope['url_route']['kwargs']['pathway']
         self.client_ip = self.scope['client'][0]
-        if 'name' in self.scope['url_route']['kwargs']:
-            self.name = self.scope['url_route']['kwargs']['name']
-            print(f'Radar provided name as {self.name}')
-        else:
-            self.name = self.pathway;
+        self.name = self.pathway;
         await self.channel_layer.send(
             'backhaul',
             {
@@ -85,40 +82,40 @@ class Radar(AsyncWebsocketConsumer):
     # Type 6 - Command response
     #
     async def receive(self, bytes_data=None):
+        func_name = colorize('Radar.receive()', 'green')
         if bytes_data is None or len(bytes_data) == 0:
-            logger.info('Radar.receive() nothing')
+            logger.info(f'{func_name} nothing')
             return
 
         if settings.VERBOSE > 1:
-            name = colorize(self.pathway, 'pink')
-            show = byte_string(bytes_data)
-            show = colorize(show, 'green')
-            #if bytes_data[0] == 5 and len(bytes_data) != 801:
-            logger.debug(f'Radar.receive() {name} {show} ({len(bytes_data)})')
+            show = func_name
+            show += ' ' + colorize(self.pathway, 'pink')
+            show += ' ' + byte_string(bytes_data)
+            show += f' ({len(bytes_data)})'
+            logger.debug(show)
 
         payload_type = bytes_data[0]
 
         if payload_type == RadarHubType.Handshake:
             # Type RadarHubType.Handshake (1) should come in as {"command":"radarConnect", "pathway":"demo", "name":"Demo"}
-            text = bytes_data[1:].decode('utf-8')
+            text_data = bytes_data[1:].decode('utf-8')
 
             try:
-                request = json.loads(text)
+                request = json.loads(text_data)
             except:
-                logger.error(f'Radar.receive() invalid JSON = {text}')
+                logger.error(f'{func_name} invalid JSON = {text_data}')
                 return
 
             if request.keys() < {'pathway', 'command'}:
-                logger.error(f'User.receive() incomplete message {request}')
+                logger.error(f'{func_name} incomplete message {request}')
                 return
 
             pathway = request['pathway']
             if pathway != self.pathway:
-                text = colorize('BUG', 'red')
-                logger.warning(f'{text}: pathway = {pathway} != self.pathway = {self.pathway}')
+                logger.warning(f'{func_name} {bug_red} pathway = {pathway} != self.pathway = {self.pathway}')
 
-            show = colorize('Radar.receive()', 'green')
-            show += ' ' + colorize(text, 'yellow')
+            show = func_name
+            show += ' ' + colorize(text_data, 'yellow')
             logger.info(show)
 
             if 'name' in request:
@@ -126,7 +123,7 @@ class Radar(AsyncWebsocketConsumer):
             else:
                 self.name = self.pathway
 
-            show = colorize('Radar.receive()', 'green')
+            show = func_name
             show += ' ' + colorize(self.name, 'yellow')
             show += ' @ /ws/radar/' + colorize(self.pathway, 'pink') + '/'
             show += ' connected'
@@ -159,9 +156,9 @@ class Radar(AsyncWebsocketConsumer):
 
     async def disconnectRadar(self, event):
         message = event['message']
-        show = colorize('Radar.disconnectRadar()', 'green')
-        show += ' ' + color_name_value('event.message', message)
-        logger.info(show)
+        func_name = colorize('Radar.disconnectRadar()', 'green')
+        m = color_name_value('event.message', message)
+        logger.info(f'{func_name} {m}')
         await self.send(event['message'])
         await self.close()
 
@@ -176,6 +173,9 @@ class User(AsyncWebsocketConsumer):
             return await self.close()
         self.pathway = self.scope['url_route']['kwargs']['pathway']
         self.client_ip = self.scope['client'][0]
+        show = colorize('User.connect()', 'green')
+        show += ' @ /ws/' + colorize(self.pathway, 'pink') + '/'
+        logger.info(show)
         await self.channel_layer.send(
             'backhaul',
             {
@@ -203,31 +203,31 @@ class User(AsyncWebsocketConsumer):
 
     # Receive message from frontend, which relays commands from the web app, serialized JSON data.
     async def receive(self, text_data=None):
+        func_name = colorize('User.receive()', 'green')
         if text_data is None or len(text_data) == 0:
-            logger.warning('User.receive() empty text_data')
+            logger.warning(f'{func_name} empty text_data')
             return
 
         try:
             request = json.loads(text_data)
         except:
-            logger.error(f'User.receive() json.loads() failed.')
+            logger.error(f'{func_name} invalid JSON = {text_data}')
             return
 
         if request.keys() < {'pathway', 'command'}:
-            logger.error(f'User.receive() incomplete message {request}')
+            logger.error(f'{func_name} incomplete message {request}')
             return
 
         pathway = request['pathway']
         if pathway != self.pathway:
-            text = colorize('BUG', 'red')
-            logger.warning(f'{text}: pathway = {pathway} != self.pathway = {self.pathway}')
+            logger.warning(f'{func_name} {bug_red} pathway = {pathway} != self.pathway = {self.pathway}')
 
         if get_channel_layer() != self.channel_layer:
-            logger.warning(colorize('Channel layer changed', 'red'))
+            logger.warning(f'{func_name} {bug_red} channel_layer changed')
 
         global tic
 
-        show = colorize('User.receive()', 'green')
+        show = func_name
         show += ' ' + colorize(text_data, 'yellow')
         show += '   ' + color_name_value('tic', tic)
         logger.info(show)
@@ -252,10 +252,10 @@ class User(AsyncWebsocketConsumer):
 
     async def disconnectUser(self, event):
         message = event['message']
-        show = colorize('Radar.disconnectUser()', 'green')
-        show += ' ' + color_name_value('event.message', message)
-        logger.info(show)
-        await self.send(event['message'])
+        func_name = colorize('Radar.disconnectUser()', 'green')
+        m = color_name_value('event.message', message)
+        logger.info(f'{func_name} {m}')
+        await self.send(message)
         await self.close()
 
     async def messageUser(self, event):
