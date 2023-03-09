@@ -207,7 +207,7 @@ npm install
 
 ## Configure PostgreSQL
 
-Again, you may skip this section if you do not wish to use [PostgreSQL] as the database backend.
+You can skip this section if you do not wish to use [PostgreSQL] as the database backend.
 
 Switch to user `postgres` and run `psql` using the following commands:
 
