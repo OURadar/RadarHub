@@ -405,12 +405,16 @@ def xz_folder(folder, hour=0, check_db=True, bulk_update=True, args=None):
     else:
         for archive in tqdm.tqdm(archives) if progress else archives:
             xx = []
-            with tarfile.open(archive) as tar:
-                for info in tar.getmembers():
-                    xx.append([info.name, info.offset, info.offset_data, info.size, archive])
-            key = os.path.basename(archive)
-            keys.append(key)
-            output[key] = {'name': key, 'xx': xx}
+            try:
+                with tarfile.open(archive) as tar:
+                    for info in tar.getmembers():
+                        xx.append([info.name, info.offset, info.offset_data, info.size, archive])
+                key = os.path.basename(archive)
+                keys.append(key)
+                output[key] = {'name': key, 'xx': xx}
+            except:
+                logger.warning(f'Archive {archive} failed.')
+                pass
 
     # Consolidating results
     keys = sorted(keys)
