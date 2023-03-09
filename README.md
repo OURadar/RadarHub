@@ -95,6 +95,8 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
   - [x] 0.9.9 Reworked data ingest for live and archive modes (12/13/2022)
   - [x] 0.9.10 Fixed an issue on item list not loading (12/14/2022)
   - [x] 0.9.11 Introduced new color tables (1/3/2023)
+  - [x] 0.9.12 Reworked backhaul for dropped connections (2/26/2023)
+  - [ ] 0.9.13 Improved handling of corrupted archive
   - [ ] 0.9.x 3D view manipulation through touch gestures
   - [ ] 0.9.x Fixed scroll view track
 - [ ] 1.0 Single end point, landing page, radar selection, etc.
@@ -205,7 +207,7 @@ cd frontend
 npm install
 ```
 
-## Configure PostgreSQL
+## Configure PostgreSQL (Optional)
 
 You can skip this section if you do not wish to use [PostgreSQL] as the database backend.
 
@@ -274,16 +276,19 @@ drwxrwxr-x 2 boonleng users 4.0K Jan  6 19:53 tools/
 -rwxrwxr-x 1 boonleng users  100 Oct  2 14:23 update.sh*
 ```
 
+## Creating Database
+
 Now, you are ready to create the RadarHub default database
 
 ```shell
+python manage.py makemigrations frontend
 python manage.py makemigrations
 python manage.py migrate
 ```
 
 That's it, the project should be ready to go for more development or deployment.
 
-## Some Useful SQL Commands
+## Useful SQL Commands
 
 To login remotely, use:
 
@@ -303,7 +308,7 @@ SELECT column_name, data_type, character_maximum_length FROM information_schema.
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
 ```
 
-## Migrate PostgreSQL to another machine:
+## Migrate PostgreSQL to Another Machine:
 
 On the source machine, edit `/etc/postgresql/12/main/pg_hba.conf` by adding the following line:
 
