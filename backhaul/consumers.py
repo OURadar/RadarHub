@@ -105,7 +105,7 @@ async def _runloop(pathway):
                 payload_queue.task_done()
         if not payload_queue.empty():
             payload = payload_queue.get()
-            if settings.VERBOSE > 1:
+            if settings.DEBUG and settings.VERBOSE > 2:
                 show = byte_string(payload)
                 show = colorize(show, 'orange')
                 logger.debug(f'Backhaul._runloop qs:{qs:02d} {name} {show} ({len(payload)})')
@@ -464,7 +464,7 @@ class Backhaul(AsyncConsumer):
 
         pathway_colored = colorize(pathway, 'pink')
 
-        if settings.VERBOSE > 1:
+        if settings.DEBUG and settings.VERBOSE > 2:
             show = byte_string(payload)
             show = colorize(show, 'mint')
             with lock:

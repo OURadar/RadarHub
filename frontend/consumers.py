@@ -87,7 +87,7 @@ class Radar(AsyncWebsocketConsumer):
             logger.info(f'{func_name} nothing')
             return
 
-        if settings.VERBOSE > 1:
+        if settings.VERBOSE > 2:
             show = func_name
             show += ' ' + colorize(self.pathway, 'pink')
             show += ' ' + byte_string(bytes_data)
