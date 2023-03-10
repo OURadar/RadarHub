@@ -8,14 +8,13 @@ import threading
 
 from django.apps import AppConfig
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 from django_eventstream import send_event
 
 from common import color_name_value
 from common.cosmetics import colorize
 from common.dailylog import MultiLineFormatter
-
-from backhaul import consumers
 
 logger = logging.getLogger('frontend')
 
@@ -86,8 +85,21 @@ class FrontendConfig(AppConfig):
             if bail:
                 return
 
-        # print('Telling backhaul to reset')
-        # consumers.reset()
+        # Check map assets
+        if not os.path.exists('frontend/static/maps'):
+            file_dst = '~maps.tgz'
+            if not os.path.exists(file_dst):
+                logger.info('No map assets. Retrieving from RadarHub ...')
+                import urllib
+                file_url = 'https://radarhub.arrc.ou.edu/static/maps.tgz'
+                urllib.request.urlretrieve(file_url, file_dst)
+            if not os.path.exists(file_dst):
+                raise ImproperlyConfigured('Unable to continue')
+            logger.info('Extracting maps ...')
+            import tarfile
+            with tarfile.open(file_dst) as aid:
+                aid.extractall('frontend/static/')
+            os.remove(file_dst)
 
         for radar_prefix in radar_prefix_pairs:
             if radar_prefix == ('demo', 'DEMO-'):
