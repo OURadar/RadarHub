@@ -7,10 +7,12 @@ objects
 stash
 
 database
+frontend/migrations
 frontend/migrations/[0-9]*.py
 frontend/static/frontend
 frontend/static/maps
 frontend/static/media
+screenshot
 screenlog.*
 *.a
 
