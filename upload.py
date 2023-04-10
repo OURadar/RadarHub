@@ -78,12 +78,20 @@ if __name__ == '__main__':
         description=textwrap.dedent(f'''\
         Upload Tool
 
+           {__prog__} [OPTIONS] [DATA_FOLDER]
+
+           where OPTIONS can be one of the following
+             -v    increases verbosity
+
+           DATA_FOLDER is the folder that contains a bunch of day folders, i.e., YYYYMMDD
+
         Examples:
 
             {__prog__}
             {__prog__} -v ~/Downloads/gdrive
+            {__prog__} -vv /Volumes/seagate1/peril-20230405
         '''),
-        epilog='Copyright (c) 2022 Boonleng Cheong')
+        epilog='Copyright (c) 2022-2023 Boonleng Cheong')
     parser.add_argument('-v', dest='verbose', default=0, action='count', help='increases verbosity')
     parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
