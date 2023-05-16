@@ -170,6 +170,7 @@ class File(models.Model):
                 elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
                 azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
                 values = np.array(nc.variables[name][:], dtype=np.float32)
+                createdBy = nc.getncattr('CreatedBy')
                 if finite:
                     values = np.nan_to_num(values)
                 else:
@@ -198,8 +199,9 @@ class File(models.Model):
                     'sweepTime': sweepTime,
                     'sweepElevation': sweepElevation,
                     'sweepAzimuth': sweepAzimuth,
-                    'waveform': waveform,
                     'gatewidth': gatewidth,
+                    'waveform': waveform,
+                    'createdBy': createdBy,
                     'elevations': elevations,
                     'azimuths': azimuths,
                     'values': values,
