@@ -23,13 +23,16 @@ origins = {}
 
 pp = pprint.PrettyPrinter(indent=1, depth=3, width=80, sort_dicts=False)
 
-pattern_x_yyyymmdd_hhmmss = re.compile(r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
+pattern_x_yyyymmdd_hhmmss = re.compile(
+    r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
 invalid_query = HttpResponse(f'Invalid Query\n', status=204)
-unsupported_request = HttpResponse(f'Unsupported query. Feel free to email a data request to: data@arrc.ou.edu\n', status=405)
-forbidden_request = HttpResponseForbidden('Forbidden. Mistaken? Tell my father.\n')
+unsupported_request = HttpResponse(
+    f'Unsupported query. Feel free to email a data request to: data@arrc.ou.edu\n', status=405)
+forbidden_request = HttpResponseForbidden(
+    'Forbidden. Mistaken? Tell my father.\n')
 
 radar_prefix = {}
 for prefix, item in settings.RADARS.items():
@@ -37,6 +40,7 @@ for prefix, item in settings.RADARS.items():
     radar_prefix[pathway] = prefix
 
 # Learning modules
+
 
 def binary(request, name):
     ip = get_client_ip(request)
@@ -50,6 +54,7 @@ def binary(request, name):
     response = HttpResponse(payload, content_type='application/octet-stream')
     return response
 
+
 def header(_, name):
     show = colorize('header()', 'green')
     show += '   ' + color_name_value('name', name)
@@ -60,6 +65,7 @@ def header(_, name):
     return response
 
 # Helper functions
+
 
 def screen(request):
     headers = dict(request.headers)
@@ -72,6 +78,7 @@ def screen(request):
     return dirty
 
 # Stats
+
 
 def stats(request, mode=''):
     dirty = screen(request)
@@ -88,6 +95,7 @@ def stats(request, mode=''):
 
 # Data
 
+
 '''
     pathway - a string of the pathway name
           - e.g., px1000, raxpol, or px10k
@@ -95,6 +103,7 @@ def stats(request, mode=''):
     day - a string in the forms of
           - YYYYMM
 '''
+
 
 def _month(prefix, day):
     y = int(day[0:4])
@@ -110,6 +119,7 @@ def _month(prefix, day):
         date += step
     return array
 
+
 def month(_, pathway, day):
     if settings.VERBOSE > 1:
         show = colorize('archive.month()', 'green')
@@ -123,6 +133,7 @@ def month(_, pathway, day):
     payload = json.dumps(array, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
 
+
 '''
     Count of data - returns an array of 24 elements
 
@@ -132,6 +143,8 @@ def month(_, pathway, day):
     day - a string in the forms of
           - YYYYMMDD
 '''
+
+
 def _count(prefix, day):
     date = time.strftime(r'%Y-%m-%d', time.strptime(day[:8], r'%Y%m%d'))
     d = Day.objects.filter(date=date, name=prefix)
@@ -139,6 +152,7 @@ def _count(prefix, day):
         d = d[0]
         return [int(n) for n in d.hourly_count.split(',')]
     return [0] * 24
+
 
 def count(_, pathway, day):
     if settings.VERBOSE > 1:
@@ -155,6 +169,7 @@ def count(_, pathway, day):
     payload = json.dumps(data, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
 
+
 '''
     List of files - returns an array of strings
 
@@ -166,6 +181,8 @@ def count(_, pathway, day):
         - YYYYMMDD-HH00    (assumes Z here)
         - YYYYMMDD-HH00-S
 '''
+
+
 def _list(prefix, day_hour_symbol):
     c = day_hour_symbol.split('-')
     if len(c) == 1:
@@ -179,8 +196,11 @@ def _list(prefix, day_hour_symbol):
     ss = time.strftime(r'%Y-%m-%d %H:%M:%SZ', s)
     ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
     date_range = [ss, ee]
-    matches = File.objects.filter(date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
-    return [o.name.rstrip('.nc') for o in matches]
+    matches = File.objects.filter(
+        date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
+    head = prefix + '-'
+    return [o.name.lstrip(head).rstrip('.nc') for o in matches]
+
 
 def list(request, pathway, day_hour_symbol):
     show = colorize('archive.list()', 'green')
@@ -199,7 +219,8 @@ def list(request, pathway, day_hour_symbol):
     c = day_hour_symbol.split('-')
     day = c[0]
     if len(day) > 8:
-        logger.warning(f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
+        logger.warning(
+            f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
         return invalid_query
     hourly_count = _count(prefix, day)
     if len(c) > 1:
@@ -220,13 +241,15 @@ def list(request, pathway, day_hour_symbol):
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
                 show += '   ' + colorize('override', 'red')
-                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
+                show += '   ' + \
+                    color_name_value('day_hour_symbol', day_hour_symbol)
                 logger.debug(show)
         else:
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
                 show += '   ' + color_name_value('pathway', pathway)
-                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
+                show += '   ' + \
+                    color_name_value('day_hour_symbol', day_hour_symbol)
                 show += '   ' + color_name_value('hourly_count', '0\'s')
                 logger.debug(show)
             message = 'empty'
@@ -243,11 +266,14 @@ def list(request, pathway, day_hour_symbol):
     payload = json.dumps(data, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
 
+
 '''
     Load a sweep - returns a dictionary
 
     name - filename
 '''
+
+
 @lru_cache(maxsize=1000)
 def _load(name):
     if settings.SIMULATE:
@@ -272,7 +298,7 @@ def _load(name):
     # Down-sample the sweep if the gate spacing is too fine
     gatewidth = 1.0e-3 * sweep['gatewidth']
     if gatewidth < 0.05:
-        gatewidth *= 2.0;
+        gatewidth *= 2.0
         sweep['u8'] = sweep['u8'][:, ::2]
     info = json.dumps({
         'gatewidth': sweep['gatewidth'],
@@ -280,16 +306,17 @@ def _load(name):
     }, separators=(',', ':'))
 
     head = struct.pack('hhhhddddffff', *sweep['u8'].shape, len(info), 0,
-        sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
-        sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)
+                       sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
+                       sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)
     payload = bytes(head) \
-            + bytes(info, 'utf-8') \
-            + bytes(sweep['elevations']) \
-            + bytes(sweep['azimuths']) \
-            + bytes(sweep['u8'])
+        + bytes(info, 'utf-8') \
+        + bytes(sweep['elevations']) \
+        + bytes(sweep['azimuths']) \
+        + bytes(sweep['u8'])
     return payload
 
-def load(request, name):
+
+def load(request, pathway, name):
     if settings.VERBOSE > 1:
         show = colorize('archive.load()', 'green')
         show += '   ' + color_name_value('name', name)
@@ -297,7 +324,10 @@ def load(request, name):
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    payload = _load(name + '.nc')
+    if pathway == 'undefined' or pathway not in radar_prefix:
+        return invalid_query
+    prefix = radar_prefix[pathway]
+    payload = _load(prefix + name + '.nc')
     if payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
     response = HttpResponse(payload, content_type='application/octet-stream')
@@ -310,6 +340,8 @@ def load(request, name):
 
     prefix - prefix of a pathway, e.g., PX- for PX-1000, RAXPOL- for RaXPol
 '''
+
+
 def latest(prefix):
     if prefix is None:
         return None, None
@@ -343,6 +375,8 @@ def latest(prefix):
 
     pathway - Input pathway, e.g., px1000, raxpol, etc.
 '''
+
+
 def location(pathway):
     global origins
     if settings.VERBOSE > 1:
@@ -356,14 +390,15 @@ def location(pathway):
     ymd, hour = latest(prefix)
     if ymd is None:
         origins[pathway] = {
-          'longitude': -97.422413,
-          'latitude': 35.25527,
-          'last': '20220125'
+            'longitude': -97.422413,
+            'latitude': 35.25527,
+            'last': '20220125'
         }
     else:
         ymd_hm = f'{ymd}-{hour:02d}00'
         if pathway not in origins or origins[pathway] is None or origins[pathway]['last'] != ymd_hm:
-            name = _list(prefix, ymd_hm)[-1] + '.nc'
+            name = prefix + _list(prefix, ymd_hm)[-1] + '.nc'
+            print(f'prefix = {prefix}   name = {name}')
             file = File.objects.filter(name=name).first()
             data = file.read()
             origins[pathway] = {
@@ -377,18 +412,23 @@ def location(pathway):
         pp.pprint(origins)
     return origins[pathway]
 
+
 '''
     prefix - prefix of a pathway, e.g., PX- for PX-1000, RAXPOL- for RaXPol
 '''
+
+
 def _latest_scan(prefix, scan='E4.0', symbol='Z'):
     day = Day.objects.filter(name=prefix).latest('date')
     last = day.last_hour_range()
-    files = File.objects.filter(name__startswith=prefix, name__endswith=f'{scan}-{symbol}.nc', date__range=last)
+    files = File.objects.filter(
+        name__startswith=prefix, name__endswith=f'{scan}-{symbol}.nc', date__range=last)
     if files.exists():
         file = files.latest('date')
         return file.name.rstrip('.nc')
     else:
         return ''
+
 
 def _years(prefix):
     if prefix == 'PX-':
@@ -399,11 +439,14 @@ def _years(prefix):
         return [int(x == 19) for x in range(23)]
     return []
 
+
 '''
     pathway - Input pathway name, e.g., px1000, raxpol, etc.
     scan - The 4-th component of filename describing the scan, e.g., E4.0, A120.0, etc.
     symbol - The symbol of a product, e.g., Z, V, W, etc.
 '''
+
+
 @never_cache
 def catchup(request, pathway, scan='E4.0', symbol='Z'):
     if settings.VERBOSE > 1:
@@ -420,7 +463,7 @@ def catchup(request, pathway, scan='E4.0', symbol='Z'):
     if ymd is None:
         data = {
             'dateTimeString': '19700101-0000',
-            'dayISOString': '1970/01/01',
+            'dayISOString': '1970/01/01Z',
             'daysActive': {},
             'yearsActive': [],
             'hoursActive': [0] * 24,
@@ -432,7 +475,7 @@ def catchup(request, pathway, scan='E4.0', symbol='Z'):
         date_time_string = f'{ymd}-{hour:02d}00'
         data = {
             'dateTimeString': date_time_string,
-            'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}',
+            'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}Z',
             'daysActive': _month(prefix, ymd),
             'yearsActive': _years(prefix),
             'hoursActive': _count(prefix, ymd),
