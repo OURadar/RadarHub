@@ -424,7 +424,7 @@ function load(name) {
             "°";
           sweep.info = JSON.parse(sweep.info);
           sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\n` + `Waveform: ${sweep.info.waveform}`;
-          let scan = components[3];
+          let scan = components[2];
           if (state.verbose > 1) {
             console.debug(
               `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}   grid.index ${grid.index} -> ${newIndex}`,
@@ -563,8 +563,8 @@ function catchup() {
           }
           setGridIndex(index);
           if (state.verbose > 1) {
-            console.debug(grid.items);
-            console.debug(grid.itemsGrouped);
+            console.debug("grid.items", grid.items);
+            console.debug("grid.itemsGrouped", grid.itemsGrouped);
           }
           self.postMessage({
             type: "list",
