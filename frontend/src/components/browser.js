@@ -4,14 +4,21 @@ import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+// import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { PickersDay } from "@mui/x-date-pickers/PickersDay";
+
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
+
+import "dayjs/locale/en";
+dayjs.locale("en");
 
 import { SectionHeader } from "./section-header";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
-// const tzOffset = new Date().getTimezoneOffset() * 60000;
 
 const createFileButtons = (list, index, load) => {
   if (list.length == 0) return [];
@@ -35,7 +42,8 @@ const createFileButtons = (list, index, load) => {
 
 function Browser(props) {
   const ok = props.archive.grid !== null;
-  const day = ok ? props.archive.grid.day : new Date("2013/05/20");
+  // const day = ok ? props.archive.grid.day : new Date("2013/05/20");
+  const day = dayjs.utc();
   const hour = ok ? props.archive.grid.hour : -1;
   const count = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
   const items = ok ? props.archive.grid.items : [];
@@ -45,7 +53,7 @@ function Browser(props) {
   const [fileBrowser, setFileBrowser] = React.useState([]);
   const [value, setValue] = React.useState(day);
 
-  console.log(`day = ${day}   hour = ${hour}`);
+  // console.log(`day = ${day}   hour = ${hour}`);
   const setElements = (elements) => {
     if (elements == null || elements.children == null || elements.children.length == 0 || index < 0) {
       return;
@@ -90,11 +98,11 @@ function Browser(props) {
   }, [day, hour, count]);
 
   const setDayHour = (newDay, newHour) => {
-    if (isNaN(newDay) || newDay.getFullYear() < 2000 || newDay.getFullYear() > 2023) {
+    if (isNaN(newDay) || newDay.year() < 2000 || newDay.year() > 2023) {
       return;
     }
     let symbol = props.archive.grid.symbol;
-    let t = day instanceof Date ? "Date" : "Not Date";
+    let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
     let n = newDay.toISOString().slice(0, 10);
     let o = day.toISOString().slice(0, 10);
     console.log(
@@ -114,23 +122,24 @@ function Browser(props) {
       <div className="spacerTop" />
       <SectionHeader name="archive" />
       <div id="calendarContainer">
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
           <DatePicker
             label="Date"
             value={value}
+            minDate={dayjs.utc().startOf("month")}
             onOpen={() => props.archive.getMonthTable(day)}
             onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
             onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
             onChange={(newValue) => {
               setValue(newValue);
-              if (newValue instanceof Date) {
+              if (newValue instanceof dayjs) {
                 setDayHour(newValue, hour);
               }
             }}
-            renderInput={(params) => <TextField {...params} />}
+            textField={(params) => <TextField {...params} />}
             renderDay={(day, _selectedDay, pickersDayProps) => {
               let key = day.toISOString().slice(0, 10);
-              console.log(day, key);
+              // console.log(day, key);
               let num =
                 key in props.archive.grid.daysActive && !pickersDayProps.outsideCurrentMonth
                   ? props.archive.grid.daysActive[key]
@@ -144,7 +153,7 @@ function Browser(props) {
               );
             }}
             shouldDisableYear={(date) => {
-              let y = date.getYear();
+              let y = date.year();
               return y < 0 || y >= 200 || props.archive.grid.yearsActive[y] == 0;
             }}
             disableHighlightToday={true}

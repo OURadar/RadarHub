@@ -11,6 +11,10 @@ import { Parser } from "binary-parser";
 import { deg2rad, clamp } from "./common";
 // import { logger } from "./logger";
 
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
+
 let source = null;
 let pathway;
 let grid = {
@@ -23,7 +27,7 @@ let grid = {
   latestHour: -1,
   items: [],
   itemsGrouped: {},
-  day: new Date("2013/05/20"),
+  day: dayjs.utc("2023/05/20"),
   hour: -1,
   index: -1,
   symbol: "Z",
@@ -67,11 +71,11 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
   } else if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(day, hour, symbol);
+    list(dayjs.utc(day), hour, symbol);
   } else if (task == "count") {
-    count(day);
+    count(dayjs.utc(day));
   } else if (task == "month") {
-    month(day);
+    month(dayjs.utc(day));
   } else if (task == "toggle") {
     toggle(name);
   } else if (task == "catchup") {
@@ -191,7 +195,7 @@ function updateListWithItem(item) {
     grid.itemsGrouped = {};
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
-    grid.day = new Date(day);
+    grid.day = dayjs.utc(day);
     if (state.verbose) {
       console.info(`%carchive.worker.updateListWithItem()%c   ${day} ${grid.hour}`, `color: ${namecolor}`, "");
     }
@@ -259,8 +263,9 @@ function month(day) {
 }
 
 function count(pathway, day) {
-  let t = day instanceof Date ? "Date" : "Not Date";
+  let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
   let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
+  console.log("archive.worker.count()", day, dayString);
   console.info(`%carchive.worker.count()%c ${pathway} ${dayString} (${t})`, `color: ${namecolor}`, "");
   let y = parseInt(dayString.slice(0, 4));
   if (y < 2012) {
@@ -521,7 +526,8 @@ function catchup() {
       response
         .json()
         .then((buffer) => {
-          let day = new Date(buffer.dayISOString);
+          // let day = new Date(buffer.dayISOString);
+          let day = dayjs.utc(buffer.dayISOString);
           if (state.verbose) {
             console.info(
               `%carchive.worker.catchup()%c` +

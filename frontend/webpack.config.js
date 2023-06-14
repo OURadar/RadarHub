@@ -1,6 +1,7 @@
 const Path = require("path");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const BundleTracker = require("webpack-bundle-tracker");
+const webpack = require("webpack");
 
 module.exports = [
   {
@@ -45,10 +46,7 @@ module.exports = [
     watchOptions: {
       ignored: "**/node_modules",
     },
-    plugins: [
-      new CleanWebpackPlugin({ verbose: true }),
-      new BundleTracker({ filename: "webpack-output.json" }),
-    ],
+    plugins: [new CleanWebpackPlugin({ verbose: true }), new BundleTracker({ filename: "webpack-output.json" })],
   },
 ];
 
