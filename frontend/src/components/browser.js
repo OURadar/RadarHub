@@ -11,6 +11,7 @@ import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 import { SectionHeader } from "./section-header";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
+// const tzOffset = new Date().getTimezoneOffset() * 60000;
 
 const createFileButtons = (list, index, load) => {
   if (list.length == 0) return [];
@@ -44,14 +45,9 @@ function Browser(props) {
   const [fileBrowser, setFileBrowser] = React.useState([]);
   const [value, setValue] = React.useState(day);
 
-  // console.log(`hour = ${hour}`);
+  console.log(`day = ${day}   hour = ${hour}`);
   const setElements = (elements) => {
-    if (
-      elements == null ||
-      elements.children == null ||
-      elements.children.length == 0 ||
-      index < 0
-    ) {
+    if (elements == null || elements.children == null || elements.children.length == 0 || index < 0) {
       return;
     }
     // Expect loadCount == 1 during live update
@@ -84,13 +80,7 @@ function Browser(props) {
       const selected = count[k] > 0 && k == hour;
       const disabled = count[k] == 0;
       newButtons[k] = (
-        <Button
-          key={k}
-          variant="hour"
-          disabled={disabled}
-          selected={selected}
-          onClick={() => setDayHour(day, k)}
-        >
+        <Button key={k} variant="hour" disabled={disabled} selected={selected} onClick={() => setDayHour(day, k)}>
           {hourString}
         </Button>
       );
@@ -100,11 +90,7 @@ function Browser(props) {
   }, [day, hour, count]);
 
   const setDayHour = (newDay, newHour) => {
-    if (
-      isNaN(newDay) ||
-      newDay.getFullYear() < 2000 ||
-      newDay.getFullYear() > 2023
-    ) {
+    if (isNaN(newDay) || newDay.getFullYear() < 2000 || newDay.getFullYear() > 2023) {
       return;
     }
     let symbol = props.archive.grid.symbol;
@@ -144,18 +130,13 @@ function Browser(props) {
             renderInput={(params) => <TextField {...params} />}
             renderDay={(day, _selectedDay, pickersDayProps) => {
               let key = day.toISOString().slice(0, 10);
+              console.log(day, key);
               let num =
-                key in props.archive.grid.daysActive &&
-                !pickersDayProps.outsideCurrentMonth
+                key in props.archive.grid.daysActive && !pickersDayProps.outsideCurrentMonth
                   ? props.archive.grid.daysActive[key]
                   : 0;
               return num ? (
-                <Badge
-                  key={key}
-                  color={badgeColors[num]}
-                  overlap="circular"
-                  variant="dot"
-                >
+                <Badge key={key} color={badgeColors[num]} overlap="circular" variant="dot">
                   <PickersDay {...pickersDayProps} />
                 </Badge>
               ) : (
@@ -164,9 +145,7 @@ function Browser(props) {
             }}
             shouldDisableYear={(date) => {
               let y = date.getYear();
-              return (
-                y < 0 || y >= 200 || props.archive.grid.yearsActive[y] == 0
-              );
+              return y < 0 || y >= 200 || props.archive.grid.yearsActive[y] == 0;
             }}
             disableHighlightToday={true}
           />
