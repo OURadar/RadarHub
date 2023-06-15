@@ -340,7 +340,7 @@ function list(day, hour, symbol) {
       elements[3] = symbol;
       item = elements.join("-");
       grid.items.push(item);
-      let scanType = elements[3];
+      let scanType = elements[2];
       if (!(scanType in grid.itemsGrouped)) {
         grid.itemsGrouped[scanType] = [];
       }
@@ -719,8 +719,8 @@ function reviseGridPaths() {
     console.log(`grid.index = ${grid.index} should not happen here.`);
     return;
   }
-  const file = grid.items[grid.index];
-  const scan = file.split("-")[2];
+  const item = grid.items[grid.index];
+  const scan = item.split("-")[2];
   const index = grid.index;
   const length = grid.itemsGrouped[scan].length;
   const first = grid.itemsGrouped[scan][0];
