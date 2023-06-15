@@ -4,6 +4,10 @@
 //
 //  A separate web worker to load and parse arhived data in the background
 //
+//  Because dayjs cannot be passed with the utc extension, the date object
+//  is currently being passed as an ISO string, i.e., using the dayjs.utc
+//  method dayjs.utc.toISOString() from the front end
+//
 //  Created by Boonleng Cheong
 //
 
@@ -27,7 +31,7 @@ let grid = {
   latestHour: -1,
   items: [],
   itemsGrouped: {},
-  day: dayjs.utc("2023/05/20"),
+  //day: dayjs.utc("20230520 1900"),
   hour: -1,
   index: -1,
   symbol: "Z",
@@ -63,7 +67,12 @@ const sweepParser = new Parser()
     },
   });
 
-self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
+self.onmessage = ({ data: { task, name, date, hour, symbol } }) => {
+  let day = dayjs.utc(0);
+  if (date !== undefined) {
+    day = dayjs.utc(date * 1000);
+  }
+  console.log(`%carchive.worker.onmessage() task = ${task}`, "color: hotpink", day.format("YYYYMMDD-HH"), hour);
   if (task == "init") {
     init(name);
   } else if (task == "set") {
@@ -71,11 +80,11 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
   } else if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(dayjs.utc(day), hour, symbol);
+    list(day, hour, symbol);
   } else if (task == "count") {
-    count(dayjs.utc(day));
+    count(day);
   } else if (task == "month") {
-    month(dayjs.utc(day));
+    month(day);
   } else if (task == "toggle") {
     toggle(name);
   } else if (task == "catchup") {
@@ -189,15 +198,19 @@ function updateListWithItem(item) {
     console.info(`%carchive.worker.updateListWithItem()%c ${item} ${day}`, `color: ${namecolor}`, "");
   }
   const listHour = elements[2].slice(0, 2);
-  const dateTimeString = `${elements[1]}-${listHour}00Z`;
+  const dateTimeString = `${elements[1]}-${listHour}00`;
   if (grid.dateTimeString != dateTimeString) {
-    grid.items = [];
-    grid.itemsGrouped = {};
     grid.dateTimeString = dateTimeString;
+    grid.itemsGrouped = {};
+    grid.items = [];
     grid.hour = parseInt(listHour);
-    grid.day = dayjs.utc(day);
+    // grid.day = dayjs.utc(day);
     if (state.verbose) {
-      console.info(`%carchive.worker.updateListWithItem()%c   ${day} ${grid.hour}`, `color: ${namecolor}`, "");
+      console.info(
+        `%carchive.worker.updateListWithItem()%c   ${dateTimeString} ${grid.hour}`,
+        `color: ${namecolor}`,
+        ""
+      );
     }
   }
   if (!(scan in grid.itemsGrouped)) {
@@ -243,7 +256,7 @@ function createSweep(name = "dummy") {
 }
 
 function month(day) {
-  console.info(`%carchive.worker.month()%c ${day}`, `color: ${namecolor}`, "");
+  console.info(`%carchive.worker.month()%c`, `color: ${namecolor}`, "", day);
   const url = `/data/month/${pathway}/${day}/`;
   fetch(url)
     .then((response) => {
@@ -262,9 +275,11 @@ function month(day) {
     });
 }
 
-function count(pathway, day) {
-  let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
-  let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
+function count(day) {
+  // let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
+  //let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
+  // let dayString = day.format("YYYYMMDD");
+  let dayString = dayjs.utc(day).format("YYYYMMDD");
   console.log("archive.worker.count()", day, dayString);
   console.info(`%carchive.worker.count()%c ${pathway} ${dayString} (${t})`, `color: ${namecolor}`, "");
   let y = parseInt(dayString.slice(0, 4));
@@ -278,7 +293,7 @@ function count(pathway, day) {
       if (response.status == 200)
         response.json().then((buffer) => {
           console.log(buffer);
-          grid.day = day;
+          grid.dateTimeString = day.format("YYYYMMDD-HHmm");
           grid.hoursActive = buffer.hoursActive;
           grid.latestHour =
             23 -
@@ -289,7 +304,7 @@ function count(pathway, day) {
           self.postMessage({
             type: "count",
             payload: {
-              day: day,
+              dateTimeString: grid.dateTimeString,
               hoursActive: grid.hoursActive,
             },
           });
@@ -305,7 +320,8 @@ function count(pathway, day) {
 }
 
 function list(day, hour, symbol) {
-  let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
+  // let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
+  let dayString = day.format("YYYYMMDD");
   let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
   console.info(
@@ -346,7 +362,7 @@ function list(day, hour, symbol) {
           if (state.verbose > 1) {
             console.debug("list buffer", buffer);
           }
-          grid.day = day;
+          // grid.day = day;
           grid.hour = buffer.hour;
           grid.index = -1;
           grid.symbol = symbol;
@@ -546,7 +562,7 @@ function catchup() {
           grid.daysActive = buffer.daysActive;
           grid.latestScan = buffer.latestScan;
           grid.latestHour = buffer.hour;
-          grid.day = day;
+          // grid.day = day;
           grid.hour = buffer.hour;
           grid.items = buffer.items;
           grid.itemsGrouped = {};

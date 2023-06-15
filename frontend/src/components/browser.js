@@ -103,8 +103,8 @@ function Browser(props) {
     }
     let symbol = props.archive.grid.symbol;
     let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
-    let n = newDay.toISOString().slice(0, 10);
-    let o = day.toISOString().slice(0, 10);
+    let n = newDay.format("YYYYMMDD");
+    let o = day.format("YYYYMMDD");
     console.log(
       `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
       "color: deeppink",
@@ -136,22 +136,21 @@ function Browser(props) {
                 setDayHour(newValue, hour);
               }
             }}
-            textField={(params) => <TextField {...params} />}
-            renderDay={(day, _selectedDay, pickersDayProps) => {
-              let key = day.toISOString().slice(0, 10);
-              // console.log(day, key);
-              let num =
-                key in props.archive.grid.daysActive && !pickersDayProps.outsideCurrentMonth
-                  ? props.archive.grid.daysActive[key]
-                  : 0;
-              return num ? (
-                <Badge key={key} color={badgeColors[num]} overlap="circular" variant="dot">
-                  <PickersDay {...pickersDayProps} />
-                </Badge>
-              ) : (
-                <PickersDay {...pickersDayProps} disabled={true} />
-              );
-            }}
+            // textField={(params) => <TextField {...params} />}
+            // renderDay={(day, _selectedDay, pickersDayProps) => {
+            //   let key = day.format("YYYYMMDD");
+            //   let num =
+            //     key in props.archive.grid.daysActive && !pickersDayProps.outsideCurrentMonth
+            //       ? props.archive.grid.daysActive[key]
+            //       : 0;
+            //   return num ? (
+            //     <Badge key={key} color={badgeColors[num]} overlap="circular" variant="dot">
+            //       <PickersDay {...pickersDayProps} />
+            //     </Badge>
+            //   ) : (
+            //     <PickersDay {...pickersDayProps} disabled={true} />
+            //   );
+            // }}
             shouldDisableYear={(date) => {
               let y = date.year();
               return y < 0 || y >= 200 || props.archive.grid.yearsActive[y] == 0;
