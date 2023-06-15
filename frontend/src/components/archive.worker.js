@@ -4,12 +4,20 @@
 //
 //  A separate web worker to load and parse arhived data in the background
 //
+//  Because dayjs cannot be passed with the utc extension, the date object
+//  is currently being passed as a UNIX time, i.e., using the dayjs.utc
+//  method dayjs.utc.unix() from the front end
+//
 //  Created by Boonleng Cheong
 //
 
 import { Parser } from "binary-parser";
 import { deg2rad, clamp } from "./common";
 // import { logger } from "./logger";
+
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 
 let source = null;
 let pathway;
@@ -23,7 +31,7 @@ let grid = {
   latestHour: -1,
   items: [],
   itemsGrouped: {},
-  day: new Date("2013/05/20"),
+  //day: dayjs.utc("20230520 1900"),
   hour: -1,
   index: -1,
   symbol: "Z",
@@ -31,7 +39,7 @@ let grid = {
 };
 let state = {
   update: "scan",
-  verbose: 1,
+  verbose: 0,
 };
 const namecolor = "#bf9140";
 
@@ -59,7 +67,14 @@ const sweepParser = new Parser()
     },
   });
 
-self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
+self.onmessage = ({ data: { task, name, date, hour, symbol } }) => {
+  let day = dayjs.utc(0);
+  if (date !== undefined) {
+    day = dayjs.utc(date * 1000);
+  }
+  if (state.verbose) {
+    console.log(`%carchive.worker.onmessage() task = ${task}`, "color: hotpink", day.format("YYYYMMDD-HH"), hour);
+  }
   if (task == "init") {
     init(name);
   } else if (task == "set") {
@@ -94,11 +109,7 @@ self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
 function init(newPathway) {
   pathway = newPathway;
   if (state.verbose) {
-    console.info(
-      `%carchive.worker.init()%c ${pathway}`,
-      `color: ${namecolor}`,
-      "color: dodgerblue"
-    );
+    console.info(`%carchive.worker.init()%c ${pathway}`, `color: ${namecolor}`, "color: dodgerblue");
   }
   self.postMessage({ type: "init", payload: grid });
 }
@@ -124,13 +135,9 @@ function connect(force = false) {
       return;
     }
   }
-  if (state.verbose)
-    console.info(
-      `Connecting live update to %c${pathway}%c ...`,
-      "color: dodgerblue",
-      ""
-    );
+  console.info(`EventSource connecting %c${pathway}%c ...`, "color: dodgerblue", "");
   source = new EventSource("/events/");
+  // Only pick up event that matches the pathway
   source.addEventListener(pathway, (event) => {
     const payload = JSON.parse(event.data);
     payload.items.forEach((item) => {
@@ -149,12 +156,12 @@ function connect(force = false) {
     });
   });
   source.addEventListener("error", (_event) => {
-    console.log(`EventSource error`, source.readyState, EventSource.CONNECTING);
+    console.error(`EventSource error`, source.readyState, EventSource.CONNECTING);
     if (source.readyState == EventSource.CONNECTING) {
-      console.log("EventSource connecting ...");
+      console.info(`EventSource connecting %c${pathway}%c ...`, "color: dodgerblue", "");
       return;
     } else if (source.readyState == EventSource.CLOSED) {
-      console.log("EventSource closed. Starting a new one ...");
+      console.info("EventSource closed. Starting a new one ...");
       setTimeout(() => connect(), 10000);
     }
   });
@@ -183,31 +190,26 @@ function disconnect() {
 
 function updateListWithItem(item) {
   const elements = item.split("-");
-  const symbol = elements[4].split(".")[0];
+  const symbol = elements[3];
+  const scan = elements[2];
+  const t = elements[1];
+  const d = elements[0];
+  if (state.verbose) {
+    console.info(`%carchive.worker.updateListWithItem()%c ${d} ${t} ${scan} ${symbol}`, `color: ${namecolor}`, "");
+  }
   if (symbol != grid.symbol) {
     return;
   }
-  const scan = elements[3];
-  const s = elements[1];
-  const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
-  if (state.verbose) {
-    console.info(
-      `%carchive.worker.updateListWithItem()%c ${item} ${day}`,
-      `color: ${namecolor}`,
-      ""
-    );
-  }
-  const listHour = elements[2].slice(0, 2);
-  const dateTimeString = `${elements[1]}-${listHour}00`;
+  const listHour = t.slice(0, 2);
+  const dateTimeString = `${d}-${listHour}00`;
   if (grid.dateTimeString != dateTimeString) {
-    grid.items = [];
-    grid.itemsGrouped = {};
     grid.dateTimeString = dateTimeString;
+    grid.itemsGrouped = {};
+    grid.items = [];
     grid.hour = parseInt(listHour);
-    grid.day = new Date(day);
     if (state.verbose) {
       console.info(
-        `%carchive.worker.updateListWithItem()%c   ${day} ${grid.hour}`,
+        `%carchive.worker.updateListWithItem()%c   ${dateTimeString} ${grid.hour}`,
         `color: ${namecolor}`,
         ""
       );
@@ -225,12 +227,13 @@ function updateListWithItem(item) {
   grid.itemsGrouped[scan].push({ item: item, index: index });
   if (state.update == "always") {
     index = grid.items.length - 1;
+    setGridIndex(index);
   } else if (grid.scan in grid.itemsGrouped) {
     index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+    setGridIndex(index);
   } else {
     index = -1;
   }
-  setGridIndex(index);
 }
 
 function createSweep(name = "dummy") {
@@ -256,7 +259,8 @@ function createSweep(name = "dummy") {
 }
 
 function month(day) {
-  console.info(`%carchive.worker.month()%c ${day}`, `color: ${namecolor}`, "");
+  day = day.format("YYYYMM01");
+  console.info(`%carchive.worker.month()%c`, `color: ${namecolor}`, "", day);
   const url = `/data/month/${pathway}/${day}/`;
   fetch(url)
     .then((response) => {
@@ -275,14 +279,10 @@ function month(day) {
     });
 }
 
-function count(pathway, day) {
-  let t = day instanceof Date ? "Date" : "Not Date";
-  let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
-  console.info(
-    `%carchive.worker.count()%c ${pathway} ${dayString} (${t})`,
-    `color: ${namecolor}`,
-    ""
-  );
+function count(day) {
+  let dayString = dayjs.utc(day).format("YYYYMMDD");
+  console.log("archive.worker.count()", day, dayString);
+  console.info(`%carchive.worker.count()%c ${pathway} ${dayString} (${t})`, `color: ${namecolor}`, "");
   let y = parseInt(dayString.slice(0, 4));
   if (y < 2012) {
     console.info("No data prior to 2013");
@@ -294,7 +294,7 @@ function count(pathway, day) {
       if (response.status == 200)
         response.json().then((buffer) => {
           console.log(buffer);
-          grid.day = day;
+          grid.dateTimeString = day.format("YYYYMMDD-HHmm");
           grid.hoursActive = buffer.hoursActive;
           grid.latestHour =
             23 -
@@ -305,7 +305,7 @@ function count(pathway, day) {
           self.postMessage({
             type: "count",
             payload: {
-              day: day,
+              dateTimeString: grid.dateTimeString,
               hoursActive: grid.hoursActive,
             },
           });
@@ -321,9 +321,10 @@ function count(pathway, day) {
 }
 
 function list(day, hour, symbol) {
-  let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
+  let dayString = day.format("YYYYMMDD");
   let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
+  // let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
     `%carchive.worker.list()%c ${pathway} ${dateTimeString} / ${grid.dateTimeString} ${symbol} ${grid.index}`,
     `color: ${namecolor}`,
@@ -336,7 +337,7 @@ function list(day, hour, symbol) {
     grid.itemsGrouped = {};
     currentItems.forEach((item, index) => {
       let elements = item.split("-");
-      elements[4] = symbol;
+      elements[3] = symbol;
       item = elements.join("-");
       grid.items.push(item);
       let scanType = elements[3];
@@ -362,7 +363,6 @@ function list(day, hour, symbol) {
           if (state.verbose > 1) {
             console.debug("list buffer", buffer);
           }
-          grid.day = day;
           grid.hour = buffer.hour;
           grid.index = -1;
           grid.symbol = symbol;
@@ -378,7 +378,7 @@ function list(day, hour, symbol) {
           grid.itemsGrouped = {};
           grid.items.forEach((item, index) => {
             let elements = item.split("-");
-            let scanType = elements[3];
+            let scanType = elements[2];
             if (!(scanType in grid.itemsGrouped)) {
               grid.itemsGrouped[scanType] = [];
             }
@@ -412,13 +412,9 @@ function list(day, hour, symbol) {
 }
 
 function load(name) {
-  const url = `/data/load/${name}/`;
+  const url = `/data/load/${pathway}/${name}/`;
   if (state.verbose) {
-    console.info(
-      `%carchive.worker.load() %c${url}`,
-      `color: ${namecolor}`,
-      "color: dodgerblue"
-    );
+    console.info(`%carchive.worker.load() %c${url}`, `color: ${namecolor}`, "color: dodgerblue");
   }
   if (name.indexOf(".nc") > -1) {
     console.log(`name = ${name}`);
@@ -435,25 +431,21 @@ function load(name) {
           });
           let components = sweep.name.split("-");
           sweep.timeString =
-            `${components[1].slice(0, 4)}/` +
-            `${components[1].slice(4, 6)}/` +
-            `${components[1].slice(6, 8)} ` +
-            `${components[2].slice(0, 2)}:` +
-            `${components[2].slice(2, 4)}:` +
-            `${components[2].slice(4, 6)} UTC`;
-          sweep.symbol = components[4].split(".")[0];
+            `${components[0].slice(0, 4)}/` +
+            `${components[0].slice(4, 6)}/` +
+            `${components[0].slice(6, 8)} ` +
+            `${components[1].slice(0, 2)}:` +
+            `${components[1].slice(2, 4)}:` +
+            `${components[1].slice(4, 6)} UTC`;
+          sweep.symbol = components[3].split(".")[0];
           sweep.titleString =
             sweep.timeString +
             "   " +
-            (sweep.isRHI
-              ? `Az ${sweep.scanAzimuth.toFixed(1)}`
-              : `El ${sweep.scanElevation.toFixed(1)}`) +
+            (sweep.isRHI ? `Az ${sweep.scanAzimuth.toFixed(1)}` : `El ${sweep.scanElevation.toFixed(1)}`) +
             "°";
           sweep.info = JSON.parse(sweep.info);
-          sweep.infoString =
-            `Gatewidth: ${sweep.info.gatewidth} m\n` +
-            `Waveform: ${sweep.info.waveform}`;
-          let scan = components[3];
+          sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\n` + `Waveform: ${sweep.info.waveform}`;
+          let scan = components[2];
           if (state.verbose > 1) {
             console.debug(
               `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}   grid.index ${grid.index} -> ${newIndex}`,
@@ -491,7 +483,7 @@ function dummy() {
 }
 
 function geometry(sweep) {
-  let scan = sweep["name"].split("-")[3];
+  let scan = sweep["name"].split("-")[2];
   const rs = sweep.rangeStart;
   const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
   let el_pad = 0.0;
@@ -544,17 +536,14 @@ function geometry(sweep) {
 }
 
 function catchup() {
-  console.info(
-    `%carchive.worker.catchup()%c ${pathway}`,
-    `color: ${namecolor}`,
-    "color: dodgerblue"
-  );
+  console.info(`%carchive.worker.catchup()%c ${pathway}`, `color: ${namecolor}`, "color: dodgerblue");
   fetch(`/data/catchup/${pathway}/`).then((response) => {
     if (response.status == 200) {
       response
         .json()
         .then((buffer) => {
-          let day = new Date(buffer.dayISOString);
+          // let day = new Date(buffer.dayISOString);
+          let day = dayjs.utc(buffer.dayISOString);
           if (state.verbose) {
             console.info(
               `%carchive.worker.catchup()%c` +
@@ -573,23 +562,19 @@ function catchup() {
           grid.daysActive = buffer.daysActive;
           grid.latestScan = buffer.latestScan;
           grid.latestHour = buffer.hour;
-          grid.day = day;
+          // grid.day = day;
           grid.hour = buffer.hour;
           grid.items = buffer.items;
           grid.itemsGrouped = {};
           grid.items.forEach((item, index) => {
             let elements = item.split("-");
-            let scanType = elements[3];
+            let scanType = elements[2];
             if (!(scanType in grid.itemsGrouped)) {
               grid.itemsGrouped[scanType] = [];
             }
             grid.itemsGrouped[scanType].push({ item: item, index: index });
           });
-          grid.yearsActive.splice(
-            100,
-            buffer.yearsActive.length,
-            ...buffer.yearsActive
-          );
+          grid.yearsActive.splice(100, buffer.yearsActive.length, ...buffer.yearsActive);
           let index = grid.items.length ? grid.items.length - 1 : -1;
           if (state.update == "always") {
             index = grid.items.length - 1;
@@ -600,8 +585,8 @@ function catchup() {
           }
           setGridIndex(index);
           if (state.verbose > 1) {
-            console.debug(grid.items);
-            console.debug(grid.itemsGrouped);
+            console.debug("grid.items", grid.items);
+            console.debug("grid.itemsGrouped", grid.itemsGrouped);
           }
           self.postMessage({
             type: "list",
@@ -626,17 +611,12 @@ function setGridIndex(index) {
     );
   }
   if (index < 0 || index >= grid.items.length) {
-    console.error(
-      `%carchive.worker.updateGridIndex()%c ${index} invalid`,
-      `color: ${namecolor}`,
-      "color: dodgerblue"
-    );
+    console.error(`%carchive.worker.updateGridIndex()%c ${index} invalid`, `color: ${namecolor}`, "color: dodgerblue");
+    return;
   }
   if (index == grid.index) {
     if (state.verbose > 1) {
-      console.debug(
-        `index = ${index} == grid.index = ${grid.index}. Do nothing.`
-      );
+      console.debug(`index = ${index} == grid.index = ${grid.index}. Do nothing.`);
     }
     return;
   }
@@ -696,11 +676,7 @@ function navigateBackwardScan() {
 
 function toggle(name = "toggle") {
   if (state.verbose > 1) {
-    console.debug(
-      `%carchive.worker.toggle()%c ${name}`,
-      `color: ${namecolor}`,
-      "color: dodgerblue"
-    );
+    console.debug(`%carchive.worker.toggle()%c ${name}`, `color: ${namecolor}`, "color: dodgerblue");
   }
   if (name == state.update) {
     self.postMessage({ type: "state", payload: { update: state.update } });
@@ -744,7 +720,7 @@ function reviseGridPaths() {
     return;
   }
   const file = grid.items[grid.index];
-  const scan = file.split("-")[3];
+  const scan = file.split("-")[2];
   const index = grid.index;
   const length = grid.itemsGrouped[scan].length;
   const first = grid.itemsGrouped[scan][0];

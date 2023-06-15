@@ -25,6 +25,7 @@ for prefix, item in settings.RADARS.items():
     radar = item['folder'].lower()
     radar_prefix_pairs.append((radar, prefix))
 
+
 class FrontendConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'frontend'
@@ -111,6 +112,7 @@ class FrontendConfig(AppConfig):
             thread.daemon = True
             thread.start()
 
+
 def monitor(radar='px1000', prefix='PX-'):
     show = colorize('apps.monitor()', 'green')
     show += '   ' + color_name_value('radar', radar)
@@ -150,7 +152,7 @@ def monitor(radar='px1000', prefix='PX-'):
         if len(delta) == 0:
             continue
         payload = {
-            'items':  [file.name.rstrip('.nc') for file in delta],
+            'items':  [file.name.lstrip(prefix).rstrip('.nc') for file in delta],
             'hoursActive': [int(c) for c in hourly_count.split(',')],
             'time': datetime.datetime.utcnow().isoformat()
         }
@@ -160,6 +162,7 @@ def monitor(radar='px1000', prefix='PX-'):
             print(delta)
         send_event('sse', radar, payload)
         files = latest_files
+
 
 def simulate(radar='px1000', prefix='PX-'):
     show = colorize('apps.simulate()', 'green')
@@ -195,6 +198,7 @@ def simulate(radar='px1000', prefix='PX-'):
         time.sleep(2.5)
         tic += 1
 
+
 def tableEventExists():
     from django.db import DatabaseError
     from django_eventstream.models import Event
@@ -206,6 +210,7 @@ def tableEventExists():
         logger.error('DatabaseError. Need to make a new table Event.')
         logger.error('Run manage.py makemigrations && manage.py migrate --database=event')
         return False
+
 
 def announce(sender, **kwargs):
     file = kwargs['instance']
