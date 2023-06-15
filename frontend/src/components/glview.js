@@ -265,11 +265,7 @@ class GLView extends Component {
     geo.pixelDensity = geo.eye.scale[1] / h / n ** 1.5;
     geo.pointDensity = geo.pixelDensity * this.ratio;
 
-    let u = vec3.fromValues(
-      geo.eye.model[4],
-      geo.eye.model[5],
-      geo.eye.model[6]
-    );
+    let u = vec3.fromValues(geo.eye.model[4], geo.eye.model[5], geo.eye.model[6]);
     // vec3.normalize(u, u);
     // console.log(common.vec3String(u));
 
@@ -431,10 +427,7 @@ class GLView extends Component {
 
     geo.needsUpdate = true;
     if (this.props.debug) {
-      geo.message +=
-        ` delta (${x}, ${y}) ` +
-        `-> (${deltaX.toFixed(3)}, ${deltaY.toFixed(3)})` +
-        `-> ${s.toFixed(5)}`;
+      geo.message += ` delta (${x}, ${y}) ` + `-> (${deltaX.toFixed(3)}, ${deltaY.toFixed(3)})` + `-> ${s.toFixed(5)}`;
       this.setState({
         lastPanTime: window.performance.now(),
       });
@@ -448,11 +441,7 @@ class GLView extends Component {
     let deltaX = (-x / this.mount.clientWidth) * z;
     let deltaY = (y / this.mount.clientHeight) * z;
 
-    let u = vec3.fromValues(
-      geo.eye.model[0],
-      geo.eye.model[1],
-      geo.eye.model[2]
-    );
+    let u = vec3.fromValues(geo.eye.model[0], geo.eye.model[1], geo.eye.model[2]);
     // console.log(
     //   `zenith = ${geo.zenith}` +
     //     `  y = ${y}` +
