@@ -65,5 +65,9 @@
     "**/.vscode",
     "**/.vscode/**"
   ],
-  "C_Cpp.default.compilerPath": "/usr/local/bin/gcc-11"
+  "C_Cpp.default.compilerPath": "/usr/local/bin/gcc-11",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "python.formatting.provider": "none"
 }
