@@ -28,7 +28,7 @@
     "@emotion/styled": "^11.10.4",
     "@mui/icons-material": "^5.8.4",
     "@mui/material": "^5.10.7",
-    "@mui/x-date-pickers": "^5.0.0-alpha.6",
+    "@mui/x-date-pickers": "^5.0.20",
     "binary-parser": "^1.9.2",
     "date-fns": "^2.24.0",
     "emoji-name-map": "^1.2.9",
