@@ -4,12 +4,20 @@
 //
 //  A separate web worker to load and parse arhived data in the background
 //
+//  Because dayjs cannot be passed with the utc extension, the date object
+//  is currently being passed as a UNIX time, i.e., using the dayjs.utc
+//  method dayjs.utc.unix() from the front end
+//
 //  Created by Boonleng Cheong
 //
 
 import { Parser } from "binary-parser";
 import { deg2rad, clamp } from "./common";
 // import { logger } from "./logger";
+
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 
 let source = null;
 let pathway;
@@ -23,7 +31,7 @@ let grid = {
   latestHour: -1,
   items: [],
   itemsGrouped: {},
-  day: new Date("2013/05/20"),
+  //day: dayjs.utc("20230520 1900"),
   hour: -1,
   index: -1,
   symbol: "Z",
@@ -31,7 +39,7 @@ let grid = {
 };
 let state = {
   update: "scan",
-  verbose: 1,
+  verbose: 0,
 };
 const namecolor = "#bf9140";
 
@@ -59,7 +67,14 @@ const sweepParser = new Parser()
     },
   });
 
-self.onmessage = ({ data: { task, name, day, hour, symbol } }) => {
+self.onmessage = ({ data: { task, name, date, hour, symbol } }) => {
+  let day = dayjs.utc(0);
+  if (date !== undefined) {
+    day = dayjs.utc(date * 1000);
+  }
+  if (state.verbose) {
+    console.log(`%carchive.worker.onmessage() task = ${task}`, "color: hotpink", day.format("YYYYMMDD-HH"), hour);
+  }
   if (task == "init") {
     init(name);
   } else if (task == "set") {
@@ -185,15 +200,19 @@ function updateListWithItem(item) {
     console.info(`%carchive.worker.updateListWithItem()%c ${item} ${day}`, `color: ${namecolor}`, "");
   }
   const listHour = elements[2].slice(0, 2);
-  const dateTimeString = `${elements[1]}-${listHour}00Z`;
+  const dateTimeString = `${elements[1]}-${listHour}00`;
   if (grid.dateTimeString != dateTimeString) {
-    grid.items = [];
-    grid.itemsGrouped = {};
     grid.dateTimeString = dateTimeString;
+    grid.itemsGrouped = {};
+    grid.items = [];
     grid.hour = parseInt(listHour);
-    grid.day = new Date(day);
+    // grid.day = dayjs.utc(day);
     if (state.verbose) {
-      console.info(`%carchive.worker.updateListWithItem()%c   ${day} ${grid.hour}`, `color: ${namecolor}`, "");
+      console.info(
+        `%carchive.worker.updateListWithItem()%c   ${dateTimeString} ${grid.hour}`,
+        `color: ${namecolor}`,
+        ""
+      );
     }
   }
   if (!(scan in grid.itemsGrouped)) {
@@ -239,7 +258,8 @@ function createSweep(name = "dummy") {
 }
 
 function month(day) {
-  console.info(`%carchive.worker.month()%c ${day}`, `color: ${namecolor}`, "");
+  day = day.format("YYYYMM01");
+  console.info(`%carchive.worker.month()%c`, `color: ${namecolor}`, "", day);
   const url = `/data/month/${pathway}/${day}/`;
   fetch(url)
     .then((response) => {
@@ -258,9 +278,9 @@ function month(day) {
     });
 }
 
-function count(pathway, day) {
-  let t = day instanceof Date ? "Date" : "Not Date";
-  let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
+function count(day) {
+  let dayString = dayjs.utc(day).format("YYYYMMDD");
+  console.log("archive.worker.count()", day, dayString);
   console.info(`%carchive.worker.count()%c ${pathway} ${dayString} (${t})`, `color: ${namecolor}`, "");
   let y = parseInt(dayString.slice(0, 4));
   if (y < 2012) {
@@ -273,7 +293,7 @@ function count(pathway, day) {
       if (response.status == 200)
         response.json().then((buffer) => {
           console.log(buffer);
-          grid.day = day;
+          grid.dateTimeString = day.format("YYYYMMDD-HHmm");
           grid.hoursActive = buffer.hoursActive;
           grid.latestHour =
             23 -
@@ -284,7 +304,7 @@ function count(pathway, day) {
           self.postMessage({
             type: "count",
             payload: {
-              day: day,
+              dateTimeString: grid.dateTimeString,
               hoursActive: grid.hoursActive,
             },
           });
@@ -300,9 +320,10 @@ function count(pathway, day) {
 }
 
 function list(day, hour, symbol) {
-  let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
+  let dayString = day.format("YYYYMMDD");
   let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
+  // let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
     `%carchive.worker.list()%c ${pathway} ${dateTimeString} / ${grid.dateTimeString} ${symbol} ${grid.index}`,
     `color: ${namecolor}`,
@@ -341,7 +362,6 @@ function list(day, hour, symbol) {
           if (state.verbose > 1) {
             console.debug("list buffer", buffer);
           }
-          grid.day = day;
           grid.hour = buffer.hour;
           grid.index = -1;
           grid.symbol = symbol;
@@ -521,7 +541,8 @@ function catchup() {
       response
         .json()
         .then((buffer) => {
-          let day = new Date(buffer.dayISOString);
+          // let day = new Date(buffer.dayISOString);
+          let day = dayjs.utc(buffer.dayISOString);
           if (state.verbose) {
             console.info(
               `%carchive.worker.catchup()%c` +
@@ -540,7 +561,7 @@ function catchup() {
           grid.daysActive = buffer.daysActive;
           grid.latestScan = buffer.latestScan;
           grid.latestHour = buffer.hour;
-          grid.day = day;
+          // grid.day = day;
           grid.hour = buffer.hour;
           grid.items = buffer.items;
           grid.itemsGrouped = {};

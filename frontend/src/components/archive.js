@@ -9,6 +9,10 @@
 
 import { Ingest } from "./ingest";
 
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
+
 class Archive extends Ingest {
   constructor(pathway, label = "") {
     super(pathway, label);
@@ -51,7 +55,7 @@ class Archive extends Ingest {
       this.state.sweepLoading = false;
       if (this.state.verbose) {
         console.log(
-          `%carchive.onmessage()%c load` +
+          `%carchive.handleMessage()%c load` +
             `   hour = ${this.grid.hour}` +
             `   index = ${this.grid.index}` +
             `   latestHour = ${this.grid.latestHour}` +
@@ -68,8 +72,7 @@ class Archive extends Ingest {
     } else if (type == "index") {
       if (this.state.verbose) {
         console.log(
-          `%carchive.onmessage()%c index` +
-            `   index = ${this.grid.index} -> ${payload}`,
+          `%carchive.handleMessage()%c index` + `   index = ${this.grid.index} -> ${payload}`,
           "color: lightseagreen",
           ""
         );
@@ -79,7 +82,7 @@ class Archive extends Ingest {
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
-          `%carchive.onmessage()%c list` +
+          `%carchive.handleMessage()%c list` +
             `   ${this.grid.dateTimeString}` +
             `   ${payload.latestScan}` +
             `   hour = ${this.grid.hour} -> ${payload.hour}` +
@@ -93,6 +96,28 @@ class Archive extends Ingest {
       this.state.loadCount = 0;
       this.onList(this.grid);
       this.state.itemsUpdating = false;
+    } else if (type == "count") {
+      this.grid.hoursActive = payload.hoursActive;
+      this.state.hoursActiveUpdating = false;
+      let hour = this.grid.hour;
+      if (hour == -1 || this.grid.hoursActive[hour] == 0) {
+        let best = this.grid.hoursActive.findIndex((x) => x > 0);
+        if (best >= 0) {
+          hour = best;
+          if (this.state.verbose) {
+            console.log(
+              `%carchive.handleMessage()%c count   No data.  hour = ${hour} -> ${best} ...`,
+              "color: lightseagreen",
+              ""
+            );
+          }
+        } else {
+          console.log("Unexpeted results.");
+        }
+      }
+      let day = dayjs.utc(payload.dateTimeString.replace("-", ""), "YYYYMMDD") + hour.toString().padStart(2, "0");
+      console.log(`%carchive.handleMessage()%c count   day = ${day}`, "color: lightseagreen", "");
+      this.list(day, hour, this.grid.symbol);
     } else if (type == "month") {
       this.grid.daysActive = payload;
       this.state.daysActiveUpdating = false;
@@ -104,7 +129,7 @@ class Archive extends Ingest {
     } else if (type == "state") {
       if (this.state.verbose) {
         console.log(
-          `%carchive.onmessage()%c state` +
+          `%carchive.handleMessage()%c state` +
             `   state.liveUpdate = ${this.state.liveUpdate} -> ${payload.update}` +
             ` (${payload.update === null})`,
           "color: lightseagreen",
@@ -119,34 +144,10 @@ class Archive extends Ingest {
       }
     } else if (type == "init") {
       if (this.state.verbose) {
-        console.log(
-          `%carchive.onmessage()%c init` + `   index = ${payload.index}`,
-          "color: lightseagreen",
-          ""
-        );
+        console.log(`%carchive.handleMessage()%c init` + `   index = ${payload.index}`, "color: lightseagreen", "");
       }
       this.grid = payload;
       this.ready = true;
-    } else if (type == "count") {
-      this.grid.hoursActive = payload.hoursActive;
-      this.state.hoursActiveUpdating = false;
-      let hour = this.grid.hour;
-      if (hour == -1 || this.grid.hoursActive[hour] == 0) {
-        let best = this.grid.hoursActive.findIndex((x) => x > 0);
-        if (best >= 0) {
-          hour = best;
-          if (this.state.verbose) {
-            console.log(
-              `%carchive.onmessage()%c count   No data.  hour = ${hour} -> ${best} ...`,
-              "color: lightseagreen",
-              ""
-            );
-          }
-        } else {
-          console.log("Unexpeted results.");
-        }
-      }
-      this.list(this.pathway, payload.day, hour, this.grid.symbol);
     }
     this.onUpdate(this.state.tic++);
   }
@@ -155,44 +156,70 @@ class Archive extends Ingest {
 
   init() {
     if (this.state.verbose) {
-      console.log(
-        `%carchive.init()%c   pathway = ${this.pathway}`,
-        "color: lightseagreen",
-        ""
-      );
+      console.log(`%carchive.init()%c   pathway = ${this.pathway}`, "color: lightseagreen", "");
     }
     this.worker.postMessage({ task: "init", name: this.pathway });
   }
 
-  // Expect something like day = Date('2013-05-20'), hour = 19
+  // Expect day as a dayjs.utc object
+  month(day) {
+    if (this.state.verbose) {
+      console.log(`%carchive.month()%c` + `   day = ${day.format("YYYYMMDD-HH00")}`, "color: lightseagreen", "");
+    }
+    this.state.daysActiveUpdating = true;
+    this.worker.postMessage({ task: "month", date: day.unix() });
+  }
+
+  // Expect day as a dayjs.utc object
+  count(day, hour, symbol = this.grid.symbol) {
+    if (this.state.verbose) {
+      console.log(
+        `%carchive.count()%c` + `   day = ${day.format("YYYYMMDD-HH00")}` + `   hour = ${hour}   symbol = ${symbol}`,
+        "color: lightseagreen",
+        ""
+      );
+    }
+    if (isNaN(day)) return;
+    let year = day.year();
+    if (year < 2000 || year > 2023) return;
+    if (this.grid.day == day) {
+      if (this.state.verbose) {
+        console.log(`%carchive.count()%c same day, list directly`, "color: lightseagreen", "");
+      }
+      this.list(day.unix(), hour, symbol);
+      return;
+    }
+    this.state.hoursActiveUpdating = true;
+    this.worker.postMessage({
+      task: "list",
+      date: day.unix(),
+      hour: hour,
+      symbol: symbol,
+    });
+  }
+
+  // Expect day = dayjs.utc('2013-05-20'), hour = 19
   list(day, hour, symbol) {
     if (this.state.verbose) {
       console.log(
         `%carchive.list()%c` +
-          `   day = ${day.toISOString().slice(0, 10)}` +
+          `   day = ${day.format("YYYYMMDD")}` +
           `   hour = ${hour}` +
           `   symbol = ${symbol} / ${this.grid.symbol}`,
         "color: lightseagreen",
         ""
       );
     }
-    if (
-      day == this.grid.day &&
-      hour == this.grid.hour &&
-      symbol == this.grid.symbol
-    ) {
-      console.log(
-        `%carchive.list()%c same day, hour & symbol, do nothing`,
-        "color: lightseagreen",
-        ""
-      );
+    let dateTimeString = day.format("YYYYMMDD-HHmm");
+    if (dateTimeString == this.grid.dateTimeString && hour == this.grid.hour && symbol == this.grid.symbol) {
+      console.log(`%carchive.list()%c same day, hour & symbol, do nothing`, "color: lightseagreen", "");
       console.log(this.grid);
       return;
     }
     this.state.itemsUpdating = true;
     this.worker.postMessage({
       task: "list",
-      day: day,
+      date: day.unix(),
       hour: hour,
       symbol: symbol,
     });
@@ -200,55 +227,13 @@ class Archive extends Ingest {
 
   loadIndex(index) {
     if (index < 0 || index >= this.grid.items.length) {
-      console.error(
-        `archive.loadIndex()  ${index} != [0, ${this.grid.items.length}).`
-      );
+      console.error(`archive.loadIndex()  ${index} != [0, ${this.grid.items.length}).`);
       console.debug(this.grid.items);
       return;
     }
     const scan = this.grid.items[index];
     this.message = `Loading ${scan} ...`;
     this.worker.postMessage({ task: "set", name: index });
-  }
-
-  // Expect something like day = 201305
-  month(day) {
-    this.state.daysActiveUpdating = true;
-    this.worker.postMessage({ task: "month", day: day });
-  }
-
-  // Expect something like day = Date('2013-05-20')
-  count(day, hour, symbol = this.grid.symbol) {
-    if (this.state.verbose) {
-      console.log(
-        `%carchive.count()%c` +
-          `   day = ${day.toISOString().slice(0, 10)}` +
-          `   hour = ${hour}   symbol = ${symbol}`,
-        "color: lightseagreen",
-        ""
-      );
-    }
-    if (isNaN(day)) return;
-    let year = day.getFullYear();
-    if (year < 2000 || year > 2023) return;
-    if (this.grid.day == day) {
-      if (this.state.verbose) {
-        console.log(
-          `%carchive.count()%c same day, list directly`,
-          "color: lightseagreen",
-          ""
-        );
-      }
-      this.list(day, hour, symbol);
-      return;
-    }
-    this.state.hoursActiveUpdating = true;
-    this.worker.postMessage({
-      task: "list",
-      day: day,
-      hour: hour,
-      symbol: symbol,
-    });
   }
 
   switch(symbol = "Z") {
@@ -303,9 +288,7 @@ class Archive extends Ingest {
   toggleLiveUpdate(mode = "auto") {
     if (this.state.verbose) {
       console.log(
-        `%carchive.toggleLiveUpdate()%c` +
-          `   liveUpdate = ${this.state.liveUpdate}` +
-          `   mode = ${mode}`,
+        `%carchive.toggleLiveUpdate()%c` + `   liveUpdate = ${this.state.liveUpdate}` + `   mode = ${mode}`,
         "color: lightseagreen",
         ""
       );
@@ -366,11 +349,11 @@ class Archive extends Ingest {
 
   setDayHour(day, hour) {
     if (this.state.verbose) {
-      let t = day instanceof Date ? "Date" : "Not Date";
-      let n = day.toISOString().slice(0, 10);
-      let o = day.toISOString().slice(0, 10);
+      let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
+      let n = day.format("YYYYMMDD-HH00");
+      let o = this.grid ? this.grid.dateTimeString : "";
       console.log(
-        `%cArchive.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${hour}%c ← ${this.grid.hour}    ${this.grid.symbol}`,
+        `%carchive.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${hour}%c ← ${this.grid.hour}    ${this.grid.symbol}`,
         "color: deeppink",
         "",
         "color: mediumpurple",
@@ -383,14 +366,12 @@ class Archive extends Ingest {
   }
 
   getMonthTable(day) {
-    const m =
-      day.getFullYear().toString() +
-      (day.getMonth() + 1).toString().padStart(2, "0");
-    const key = `${m.slice(0, 4)}-${m.slice(4, 6)}-01`;
+    const key = day.format("YYYYMMDD");
+    // console.log(`%carchive.getMonthTable()%c ${key}`, "color: deeppink", "", this.grid.daysActive);
     if (key in this.grid.daysActive) {
       return;
     }
-    this.month(m);
+    this.month(dayjs.utc(key));
   }
 }
 

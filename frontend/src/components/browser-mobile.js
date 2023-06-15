@@ -42,7 +42,7 @@ function Calender(props) {
           onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
           onChange={(newDay) => {
             setValue(newDay);
-            if (newDay instanceof Date) {
+            if (newDay instanceof dayjs) {
               props.archive.setDayHour(newDay, hour);
             }
           }}
@@ -50,17 +50,11 @@ function Calender(props) {
           renderDay={(day, _selected, pickersDayProps) => {
             let key = day.toISOString().slice(0, 10);
             let num =
-              key in props.archive.grid.daysActive &&
-              !pickersDayProps.outsideCurrentMonth
+              key in props.archive.grid.daysActive && !pickersDayProps.outsideCurrentMonth
                 ? props.archive.grid.daysActive[key]
                 : 0;
             return num ? (
-              <Badge
-                key={key}
-                color={badgeColors[num]}
-                overlap="circular"
-                variant="dot"
-              >
+              <Badge key={key} color={badgeColors[num]} overlap="circular" variant="dot">
                 <PickersDay {...pickersDayProps} />
               </Badge>
             ) : (
@@ -107,10 +101,7 @@ function FileList(props) {
   const fileListRef = React.useRef(null);
 
   React.useEffect(() => {
-    if (
-      fileListRef.current == null ||
-      fileListRef.current.children.length == 0
-    ) {
+    if (fileListRef.current == null || fileListRef.current.children.length == 0) {
       return;
     }
     if (props.archive.state.loadCount <= 1 && index != -1) {

@@ -113,7 +113,7 @@ def _month(prefix, day):
     step = datetime.timedelta(days=1)
     array = {}
     while date.month == m:
-        key = date.strftime(r'%Y-%m-%d')
+        key = date.strftime(r'%Y%m%d')
         entry = entries.filter(date=date).last()
         array[key] = entry.weather_condition() if entry else 0
         date += step

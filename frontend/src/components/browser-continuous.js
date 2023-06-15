@@ -72,12 +72,7 @@ function Browser(props) {
 
   // console.log(`hour = ${hour}`);
   const setElements = (elements) => {
-    if (
-      elements == null ||
-      elements.children == null ||
-      elements.children.length == 0 ||
-      index < 0
-    ) {
+    if (elements == null || elements.children == null || elements.children.length == 0 || index < 0) {
       return;
     }
     // Expect loadCount <= 1 during live update
@@ -148,7 +143,7 @@ function Browser(props) {
 
   const setDayHour = (newDay, newHour) => {
     let symbol = props.archive.grid.symbol;
-    let t = day instanceof Date ? "Date" : "Not Date";
+    let t = day instanceof dayjs ? "Date" : "Not Date";
     let n = newDay.toISOString().slice(0, 10);
     let o = day.toISOString().slice(0, 10);
     console.log(
@@ -189,36 +184,24 @@ function Browser(props) {
             }}
             onChange={(newValue) => {
               setValue(newValue);
-              if (newValue instanceof Date && newValue.getFullYear() > 2000) {
+              if (newValue dayjs Date && newValue.year() > 2000) {
                 setDayHour(newValue, hour);
               }
             }}
-            renderInput={(params) => <TextField {...params} />}
+            textField={(params) => <TextField {...params} />}
             renderDay={(day, _selectedDay, pickersDayProps) => {
               let key = day.toISOString().slice(0, 10);
-              let num =
-                key in props.archive.grid.daysActive
-                  ? props.archive.grid.daysActive[key]
-                  : 0;
+              let num = key in props.archive.grid.daysActive ? props.archive.grid.daysActive[key] : 0;
               let variant = num ? "dot" : undefined;
               return (
-                <Badge
-                  key={key}
-                  color={badgeColors[num]}
-                  overlap="circular"
-                  variant={variant}
-                >
+                <Badge key={key} color={badgeColors[num]} overlap="circular" variant={variant}>
                   <PickersDay {...pickersDayProps} />
                 </Badge>
               );
             }}
             shouldDisableYear={(date) => {
               let year = date.getYear();
-              return (
-                year < 0 ||
-                year >= 200 ||
-                props.archive.grid.yearsActive[year] == 0
-              );
+              return year < 0 || year >= 200 || props.archive.grid.yearsActive[year] == 0;
             }}
             disableHighlightToday={true}
           />
