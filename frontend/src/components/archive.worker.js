@@ -5,8 +5,8 @@
 //  A separate web worker to load and parse arhived data in the background
 //
 //  Because dayjs cannot be passed with the utc extension, the date object
-//  is currently being passed as an ISO string, i.e., using the dayjs.utc
-//  method dayjs.utc.toISOString() from the front end
+//  is currently being passed as a UNIX time, i.e., using the dayjs.utc
+//  method dayjs.utc.unix() from the front end
 //
 //  Created by Boonleng Cheong
 //
@@ -39,7 +39,7 @@ let grid = {
 };
 let state = {
   update: "scan",
-  verbose: 1,
+  verbose: 0,
 };
 const namecolor = "#bf9140";
 
@@ -72,7 +72,9 @@ self.onmessage = ({ data: { task, name, date, hour, symbol } }) => {
   if (date !== undefined) {
     day = dayjs.utc(date * 1000);
   }
-  console.log(`%carchive.worker.onmessage() task = ${task}`, "color: hotpink", day.format("YYYYMMDD-HH"), hour);
+  if (state.verbose) {
+    console.log(`%carchive.worker.onmessage() task = ${task}`, "color: hotpink", day.format("YYYYMMDD-HH"), hour);
+  }
   if (task == "init") {
     init(name);
   } else if (task == "set") {
@@ -256,6 +258,7 @@ function createSweep(name = "dummy") {
 }
 
 function month(day) {
+  day = day.format("YYYYMM01");
   console.info(`%carchive.worker.month()%c`, `color: ${namecolor}`, "", day);
   const url = `/data/month/${pathway}/${day}/`;
   fetch(url)
@@ -276,9 +279,6 @@ function month(day) {
 }
 
 function count(day) {
-  // let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
-  //let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
-  // let dayString = day.format("YYYYMMDD");
   let dayString = dayjs.utc(day).format("YYYYMMDD");
   console.log("archive.worker.count()", day, dayString);
   console.info(`%carchive.worker.count()%c ${pathway} ${dayString} (${t})`, `color: ${namecolor}`, "");
@@ -320,10 +320,10 @@ function count(day) {
 }
 
 function list(day, hour, symbol) {
-  // let dayString = day.toISOString().slice(0, 10).replace(/-/g, "");
   let dayString = day.format("YYYYMMDD");
   let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
   let dateTimeString = `${dayString}-${hourString}00`;
+  // let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
     `%carchive.worker.list()%c ${pathway} ${dateTimeString} / ${grid.dateTimeString} ${symbol} ${grid.index}`,
     `color: ${namecolor}`,
@@ -362,7 +362,6 @@ function list(day, hour, symbol) {
           if (state.verbose > 1) {
             console.debug("list buffer", buffer);
           }
-          // grid.day = day;
           grid.hour = buffer.hour;
           grid.index = -1;
           grid.symbol = symbol;

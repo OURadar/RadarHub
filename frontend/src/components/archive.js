@@ -27,7 +27,6 @@ class Archive extends Ingest {
       productSwitching: false,
       sweepLoading: false,
       loadCount: 0,
-      verbose: 1,
     };
     this.ageTimer = setInterval(() => this.updateAge(), 1000);
     this.messageTimer = null;
@@ -116,7 +115,7 @@ class Archive extends Ingest {
           console.log("Unexpeted results.");
         }
       }
-      let day = dayjs.utc(payload.dateTimeString.replace("-", ""), "YYYYMMDDHHmm");
+      let day = dayjs.utc(payload.dateTimeString.replace("-", ""), "YYYYMMDD") + hour.toString().padStart(2, "0");
       console.log(`%carchive.handleMessage()%c count   day = ${day}`, "color: lightseagreen", "");
       this.list(day, hour, this.grid.symbol);
     } else if (type == "month") {
@@ -181,7 +180,6 @@ class Archive extends Ingest {
       );
     }
     if (isNaN(day)) return;
-    console.log("archive.count()", day);
     let year = day.year();
     if (year < 2000 || year > 2023) return;
     if (this.grid.day == day) {
@@ -369,7 +367,7 @@ class Archive extends Ingest {
 
   getMonthTable(day) {
     const key = day.format("YYYYMMDD");
-    console.log(`%carchive.getMonthTable()%c ${key}`, "color: deeppink", "", this.grid.daysActive);
+    // console.log(`%carchive.getMonthTable()%c ${key}`, "color: deeppink", "", this.grid.daysActive);
     if (key in this.grid.daysActive) {
       return;
     }
