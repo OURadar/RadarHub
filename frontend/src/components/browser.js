@@ -54,7 +54,7 @@ function Browser(props) {
   const archive = props.archive;
 
   const ok = archive.grid !== null;
-  const day = dayjs.utc();
+  const day = ok ? dayjs.utc(archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hour = ok ? archive.grid.hour : -1;
   const count = ok ? archive.grid.hoursActive : new Array(24).fill(0);
   const items = ok ? archive.grid.items : [];
@@ -109,7 +109,7 @@ function Browser(props) {
   }, [day, hour, count]);
 
   const setDayHour = (newDay, newHour) => {
-    if (isNaN(newDay) || newDay.year() < 2000 || newDay.year() > 2023) {
+    if (isNaN(newDay) || newDay.year() < 2000 || newDay.year() > 2100) {
       return;
     }
     let symbol = props.archive.grid.symbol;
@@ -118,14 +118,14 @@ function Browser(props) {
     let o = day.format("YYYYMMDD");
     console.log(
       `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
-      "color: deeppink",
+      "color: lightseagreen",
       "",
       "color: mediumpurple",
       "",
       "color: mediumpurple",
       ""
     );
-    archive.count(newDay, newHour, symbol);
+    archive.list(newDay, newHour, symbol);
   };
 
   return (
@@ -137,6 +137,7 @@ function Browser(props) {
           <DatePicker
             defaultValue={value}
             minDate={dayjs.utc("20000101")}
+            maxDate={dayjs.utc().endOf("month")}
             onOpen={() => archive.getMonthTable(day)}
             onYearChange={(newDay) => archive.getMonthTable(newDay)}
             onMonthChange={(newDay) => archive.getMonthTable(newDay)}
@@ -147,9 +148,7 @@ function Browser(props) {
               }
             }}
             slots={{ day: ServerDay }}
-            slotProps={{
-              day: { archive: archive },
-            }}
+            slotProps={{ day: { archive: archive } }}
             disableHighlightToday={true}
           />
         </LocalizationProvider>

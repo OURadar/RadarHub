@@ -31,7 +31,6 @@ let grid = {
   latestHour: -1,
   items: [],
   itemsGrouped: {},
-  //day: dayjs.utc("20230520 1900"),
   hour: -1,
   index: -1,
   symbol: "Z",
@@ -67,13 +66,17 @@ const sweepParser = new Parser()
     },
   });
 
-self.onmessage = ({ data: { task, name, date, hour, symbol } }) => {
+self.onmessage = ({ data: { task, name, date, symbol } }) => {
   let day = dayjs.utc(0);
   if (date !== undefined) {
     day = dayjs.utc(date * 1000);
   }
   if (state.verbose) {
-    console.log(`%carchive.worker.onmessage() task = ${task}`, "color: hotpink", day.format("YYYYMMDD-HH"), hour);
+    console.log(
+      `%carchive.worker.onmessage()%c task = ${task}   day = ${day.format("YYYYMMDD-HHMM")}`,
+      "color: hotpink",
+      ""
+    );
   }
   if (task == "init") {
     init(name);
@@ -82,7 +85,7 @@ self.onmessage = ({ data: { task, name, date, hour, symbol } }) => {
   } else if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(day, hour, symbol);
+    list(day, symbol);
   } else if (task == "count") {
     count(day);
   } else if (task == "month") {
@@ -258,10 +261,11 @@ function createSweep(name = "dummy") {
   };
 }
 
+// Expect something like day = dayjs.utc('2013-05-20'), hour = 19, symbol = 'Z'
 function month(day) {
-  day = day.format("YYYYMM01");
-  console.info(`%carchive.worker.month()%c`, `color: ${namecolor}`, "", day);
-  const url = `/data/month/${pathway}/${day}/`;
+  let dayString = day.format("YYYYMM01");
+  console.info(`%carchive.worker.month()%c ${pathway} ${dayString}`, `color: ${namecolor}`, "");
+  const url = `/data/month/${pathway}/${dayString}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -279,57 +283,17 @@ function month(day) {
     });
 }
 
-function count(day) {
-  let dayString = dayjs.utc(day).format("YYYYMMDD");
-  console.log("archive.worker.count()", day, dayString);
-  console.info(`%carchive.worker.count()%c ${pathway} ${dayString} (${t})`, `color: ${namecolor}`, "");
-  let y = parseInt(dayString.slice(0, 4));
-  if (y < 2012) {
-    console.info("No data prior to 2013");
-    return;
-  }
-  const url = `/data/count/${pathway}/${dayString}/`;
-  fetch(url)
-    .then((response) => {
-      if (response.status == 200)
-        response.json().then((buffer) => {
-          console.log(buffer);
-          grid.dateTimeString = day.format("YYYYMMDD-HHmm");
-          grid.hoursActive = buffer.hoursActive;
-          grid.latestHour =
-            23 -
-            grid.hoursActive
-              .slice()
-              .reverse()
-              .findIndex((x) => x > 0);
-          self.postMessage({
-            type: "count",
-            payload: {
-              dateTimeString: grid.dateTimeString,
-              hoursActive: grid.hoursActive,
-            },
-          });
-        });
-      else
-        response.text().then((error) => {
-          self.postMessage({ type: "message", payload: error });
-        });
-    })
-    .catch((error) => {
-      console.error(`Unexpected error ${error}`);
-    });
-}
-
-function list(day, hour, symbol) {
-  let dayString = day.format("YYYYMMDD");
-  let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
-  let dateTimeString = `${dayString}-${hourString}00`;
-  // let dateTimeString = day.format("YYYYMMDD-HH00");
+// Expect something like day = dayjs.utc('2013-05-20'), symbol = 'Z'
+function list(day, symbol) {
+  let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
-    `%carchive.worker.list()%c ${pathway} ${dateTimeString} / ${grid.dateTimeString} ${symbol} ${grid.index}`,
+    `%carchive.worker.list()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
     `color: ${namecolor}`,
+    "",
+    "color: mediumpurple",
     ""
   );
+  // Same time, just a symbol change
   if (dateTimeString == grid.dateTimeString) {
     let index = grid.index;
     let currentItems = grid.items;
@@ -355,6 +319,7 @@ function list(day, hour, symbol) {
     });
     return;
   }
+  // Different time, fetch from the server
   const url = `/data/list/${pathway}/${dateTimeString}-${symbol}/`;
   fetch(url)
     .then((response) => {
@@ -562,7 +527,6 @@ function catchup() {
           grid.daysActive = buffer.daysActive;
           grid.latestScan = buffer.latestScan;
           grid.latestHour = buffer.hour;
-          // grid.day = day;
           grid.hour = buffer.hour;
           grid.items = buffer.items;
           grid.itemsGrouped = {};
@@ -716,7 +680,7 @@ function reviseGridPaths() {
     return;
   }
   if (grid.index < 0 || grid.index >= grid.items.length) {
-    console.log(`grid.index = ${grid.index} should not happen here.`);
+    console.log(`grid.index = ${grid.index} should not happen here   length = ${grid.items.length}`);
     return;
   }
   const item = grid.items[grid.index];
@@ -744,4 +708,46 @@ function reviseGridPaths() {
       grid.pathsActive
     );
   }
+}
+
+// Deprecating ... count() is now part of list.
+function count(day) {
+  let dayString = day.format("YYYYMMDD");
+  console.warn(`%carchive.worker.count()%c DEPRECATING. You should not be using this.`, `color: ${namecolor}`, "");
+  console.log(`%carchive.worker.count()%c ${pathway} ${dayString}`, `color: ${namecolor}`, "");
+  let y = parseInt(dayString.slice(0, 4));
+  if (y < 2012) {
+    console.info("No data prior to 2013");
+    return;
+  }
+  const url = `/data/count/${pathway}/${dayString}/`;
+  fetch(url)
+    .then((response) => {
+      if (response.status == 200)
+        response.json().then((buffer) => {
+          console.log(buffer);
+          grid.dateTimeString = day.format("YYYYMMDD-HHmm");
+          grid.hoursActive = buffer.hoursActive;
+          grid.latestHour =
+            23 -
+            grid.hoursActive
+              .slice()
+              .reverse()
+              .findIndex((x) => x > 0);
+          self.postMessage({
+            type: "count",
+            payload: {
+              dateTimeString: grid.dateTimeString,
+              hoursActive: grid.hoursActive,
+            },
+          });
+        });
+      else
+        response.text().then((error) => {
+          self.postMessage({ type: "message", payload: error });
+        });
+    })
+    .catch((error) => {
+      console.error(`Unexpected error ${error}`);
+    });
 }
