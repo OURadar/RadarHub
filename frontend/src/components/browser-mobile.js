@@ -55,6 +55,7 @@ function Calender(props) {
           label="Date"
           defaultValue={value}
           minDate={dayjs.utc("20000101")}
+          maxDate={dayjs.utc().endOf("month")}
           onOpen={() => props.archive.getMonthTable(value)}
           onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
           onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
