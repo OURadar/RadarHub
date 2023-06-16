@@ -51,23 +51,13 @@
   "C_Cpp_Runner.warningsAsError": false,
   "C_Cpp_Runner.compilerArgs": [],
   "C_Cpp_Runner.linkerArgs": [],
-  "C_Cpp_Runner.includePaths": [
-    ".",
-    "/usr/local/include",
-    "/usr/local/opt/openssl@1.1/include"
-  ],
+  "C_Cpp_Runner.includePaths": [".", "/usr/local/include", "/usr/local/opt/openssl@1.1/include"],
   "C_Cpp_Runner.includeSearch": ["*", "**/*"],
-  "C_Cpp_Runner.excludeSearch": [
-    "**/build",
-    "**/build/**",
-    "**/.*",
-    "**/.*/**",
-    "**/.vscode",
-    "**/.vscode/**"
-  ],
+  "C_Cpp_Runner.excludeSearch": ["**/build", "**/build/**", "**/.*", "**/.*/**", "**/.vscode", "**/.vscode/**"],
   "C_Cpp.default.compilerPath": "/usr/local/bin/gcc-11",
   "[python]": {
     "editor.defaultFormatter": "ms-python.autopep8"
   },
-  "python.formatting.provider": "none"
+  "python.formatting.provider": "autopep8",
+  "python.formatting.autopep8Args": ["--ignore", "E402"]
 }
