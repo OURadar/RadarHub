@@ -10,7 +10,6 @@
 import React from "react";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-// import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { PickersDay } from "@mui/x-date-pickers/PickersDay";
@@ -41,10 +40,11 @@ function ServerDay(props) {
 }
 
 function Calender(props) {
-  // const ok = props.archive.grid !== null;
-  const hour = props.archive.grid?.hour || -1;
+  const ok = props.archive.grid !== null;
+  const day = ok ? dayjs.utc(archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
+  const hour = ok ? props.archive.grid.hour : -1;
 
-  const [value, setValue] = React.useState(dayjs.utc());
+  const [value, setValue] = React.useState(day);
 
   React.useEffect(() => setValue(value), [value]);
 
@@ -78,8 +78,9 @@ function Calender(props) {
 }
 
 function HourList(props) {
-  const day = dayjs.utc(props.archive.grid?.dateTimeString.slice(0, 8), "YYYYMMDD" || "20230520");
-  const hours = props.archive.grid?.hoursActive || new Array(24).fill(0);
+  const ok = props.archive.grid !== null;
+  const day = ok ? dayjs.utc(archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
+  const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
   return (
     <div id="hoursContainer">
       {hours.map((_, k) => (

@@ -8,7 +8,6 @@
 //
 
 import { Ingest } from "./ingest";
-import { clamp } from "./common";
 
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -181,9 +180,6 @@ class Archive extends Ingest {
       return;
     }
     day = day.hour(hour);
-    // let dayString = day.format("YYYYMMDD");
-    // let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
-    // let dateTimeString = `${dayString}-${hourString}00`;
     if (this.state.verbose) {
       let dateTimeString = day.format("YYYYMMDD-HH00");
       console.log(
