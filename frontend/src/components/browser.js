@@ -143,9 +143,7 @@ function Browser(props) {
             onMonthChange={(newDay) => archive.getMonthTable(newDay)}
             onChange={(newValue) => {
               setValue(newValue);
-              if (newValue instanceof dayjs) {
-                setDayHour(newValue, hour);
-              }
+              setDayHour(newValue, hour);
             }}
             slots={{ day: ServerDay }}
             slotProps={{ day: { archive: archive } }}

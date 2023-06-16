@@ -61,16 +61,10 @@ function Calender(props) {
           onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
           onChange={(newDay) => {
             setValue(newDay);
-            if (newDay instanceof dayjs) {
-              props.archive.setDayHour(newDay, hour);
-            }
+            props.archive.setDayHour(newDay, hour);
           }}
-          slots={{
-            day: ServerDay,
-          }}
-          slotProps={{
-            day: { archive: props.archive },
-          }}
+          slots={{ day: ServerDay }}
+          slotProps={{ day: { archive: props.archive } }}
           disableHighlightToday={true}
         />
       </LocalizationProvider>
