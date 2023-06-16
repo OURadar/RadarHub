@@ -41,7 +41,7 @@ function ServerDay(props) {
 
 function Calender(props) {
   const ok = props.archive.grid !== null;
-  const day = ok ? dayjs.utc(archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
+  const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hour = ok ? props.archive.grid.hour : -1;
 
   const [value, setValue] = React.useState(day);
@@ -79,7 +79,7 @@ function Calender(props) {
 
 function HourList(props) {
   const ok = props.archive.grid !== null;
-  const day = ok ? dayjs.utc(archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
+  const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
   return (
     <div id="hoursContainer">
