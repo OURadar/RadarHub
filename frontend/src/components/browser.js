@@ -116,7 +116,7 @@ function Browser(props) {
     let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
     let n = newDay.format("YYYYMMDD");
     let o = day.format("YYYYMMDD");
-    console.log(
+    console.info(
       `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
       "color: lightseagreen",
       "",
