@@ -58,7 +58,7 @@ function Browser(props) {
   const hour = ok ? archive.grid.hour : -1;
   const count = ok ? archive.grid.hoursActive : new Array(24).fill(0);
   const items = ok ? archive.grid.items : [];
-  const index = ok ? archive.grid?.index : -1;
+  const index = ok ? archive.grid.index : -1;
 
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
