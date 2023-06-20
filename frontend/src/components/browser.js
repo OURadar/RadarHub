@@ -2,18 +2,15 @@ import React from "react";
 
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
+
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { PickersDay } from "@mui/x-date-pickers/PickersDay";
 
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
-
-import "dayjs/locale/en";
-dayjs.locale("en");
 
 import { SectionHeader } from "./section-header";
 
@@ -57,8 +54,7 @@ function Browser(props) {
   const archive = props.archive;
 
   const ok = archive.grid !== null;
-  // const day = ok ? props.archive.grid.day : new Date("2013/05/20");
-  const day = dayjs.utc();
+  const day = ok ? dayjs.utc(archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hour = ok ? archive.grid.hour : -1;
   const count = ok ? archive.grid.hoursActive : new Array(24).fill(0);
   const items = ok ? archive.grid.items : [];
@@ -113,23 +109,23 @@ function Browser(props) {
   }, [day, hour, count]);
 
   const setDayHour = (newDay, newHour) => {
-    if (isNaN(newDay) || newDay.year() < 2000 || newDay.year() > 2023) {
+    if (isNaN(newDay) || newDay.year() < 2000 || newDay.year() > 2100) {
       return;
     }
     let symbol = props.archive.grid.symbol;
     let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
     let n = newDay.format("YYYYMMDD");
     let o = day.format("YYYYMMDD");
-    console.log(
+    console.info(
       `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
-      "color: deeppink",
+      "color: lightseagreen",
       "",
       "color: mediumpurple",
       "",
       "color: mediumpurple",
       ""
     );
-    archive.count(newDay, newHour, symbol);
+    archive.list(newDay, newHour, symbol);
   };
 
   return (
@@ -141,42 +137,16 @@ function Browser(props) {
           <DatePicker
             defaultValue={value}
             minDate={dayjs.utc("20000101")}
+            maxDate={dayjs.utc().endOf("month")}
             onOpen={() => archive.getMonthTable(day)}
             onYearChange={(newDay) => archive.getMonthTable(newDay)}
             onMonthChange={(newDay) => archive.getMonthTable(newDay)}
             onChange={(newValue) => {
               setValue(newValue);
-              if (newValue instanceof dayjs) {
-                setDayHour(newValue, hour);
-              }
+              setDayHour(newValue, hour);
             }}
-            // textField={(params) => <TextField {...params} />}
-            // renderDay={(day, _selectedDay, pickersDayProps) => {
-            //   let key = day.format("YYYYMMDD");
-            //   let num =
-            //     key in props.archive.grid.daysActive && !pickersDayProps.outsideCurrentMonth
-            //       ? props.archive.grid.daysActive[key]
-            //       : 0;
-            //   return num ? (
-            //     <Badge key={key} color={badgeColors[num]} overlap="circular" variant="dot">
-            //       <PickersDay {...pickersDayProps} />
-            //     </Badge>
-            //   ) : (
-            //     <PickersDay {...pickersDayProps} disabled={true} />
-            //   );
-            // }}
-            slots={{
-              day: ServerDay,
-            }}
-            slotProps={{
-              day: {
-                archive,
-              },
-            }}
-            // shouldDisableYear={(date) => {
-            //   let y = date.year();
-            //   return y < 0 || y >= 200 || props.archive.grid.yearsActive[y] == 0;
-            // }}
+            slots={{ day: ServerDay }}
+            slotProps={{ day: { archive: archive } }}
             disableHighlightToday={true}
           />
         </LocalizationProvider>

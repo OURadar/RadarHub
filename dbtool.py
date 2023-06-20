@@ -785,15 +785,16 @@ def compute_bgor(day):
     stride = datetime.timedelta(minutes=20)
     hour = datetime.timedelta(hours=1)
 
-    files = File.objects.filter(name__startswith=day.name, name__contains='-E', date__range=day.day_range())
+    files = File.objects.filter(name__startswith=day.name, date__range=day.day_range())
     if files.count() == 0:
         return
-    scans = [file.name.split('-')[3] for file in files]
-    scans = list(np.unique(scans))
-    if 'E0.0' in scans and len(scans) > 1:
-        scans.remove('E0.0')
-    scan = 'E4.0' if 'E4.0' in scans else scans[0]
-    logger.debug(f'scans = {scans}  selected scan = {scan}')
+
+    def scans_from_files(files):
+        scans = [file.name.split('-')[3] for file in files]
+        scans = list(np.unique(scans))
+        if len(scans) > 1 and 'E0.0' in scans:
+            scans.remove('E0.0')
+        return scans
 
     b = 0
     g = 0
@@ -805,12 +806,15 @@ def compute_bgor(day):
             continue
         logger.debug(f'{k} {count}')
         s = day_datetime + k * hour
-        for _ in range(int(hour / stride)):
-            e = s + stride
-            date_range = [s, e]
-            file = File.objects.filter(name__startswith=day.name, name__endswith=f'-{scan}-Z.nc', date__range=date_range)
-            if file.exists():
-                file = file.first()
+        e = s + hour
+        date_range = [s, e]
+        files = File.objects.filter(name__startswith=day.name, name__endswith=f'-Z.nc', date__range=date_range)
+        scans = scans_from_files(files)
+        for j, scan in enumerate(scans):
+            files = File.objects.filter(name__startswith=day.name, name__endswith=f'-{scan}-Z.nc', date__range=date_range)
+            if files.exists():
+                select = j * len(files) // len(scans)
+                file = files[select] if select < len(files) else files.first()
                 logger.debug(file.__repr__())
                 sweep = file.read(finite=True)
                 z = sweep['values']
@@ -1171,9 +1175,9 @@ def dbtool_main():
             print(textwrap.dedent(f'''
                 -d needs a source, e.g.,
 
-                { __prog__} -b 20130520
-                { __prog__} -b PX-20220224
-                { __prog__} -b /mnt/data/PX1000/2022/20220224
+                { __prog__} -d 20130520
+                { __prog__} -d PX-20220224
+                { __prog__} -d /mnt/data/PX1000/2022/20220224
             '''))
             return
         for day in args.source:

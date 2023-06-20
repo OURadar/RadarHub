@@ -31,7 +31,6 @@ let grid = {
   latestHour: -1,
   items: [],
   itemsGrouped: {},
-  //day: dayjs.utc("20230520 1900"),
   hour: -1,
   index: -1,
   symbol: "Z",
@@ -67,13 +66,17 @@ const sweepParser = new Parser()
     },
   });
 
-self.onmessage = ({ data: { task, name, date, hour, symbol } }) => {
+self.onmessage = ({ data: { task, name, date, symbol } }) => {
   let day = dayjs.utc(0);
   if (date !== undefined) {
     day = dayjs.utc(date * 1000);
   }
   if (state.verbose) {
-    console.log(`%carchive.worker.onmessage() task = ${task}`, "color: hotpink", day.format("YYYYMMDD-HH"), hour);
+    console.log(
+      `%carchive.worker.onmessage()%c task = ${task}   day = ${day.format("YYYYMMDD-HHMM")}`,
+      "color: hotpink",
+      ""
+    );
   }
   if (task == "init") {
     init(name);
@@ -82,7 +85,7 @@ self.onmessage = ({ data: { task, name, date, hour, symbol } }) => {
   } else if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(day, hour, symbol);
+    list(day, symbol);
   } else if (task == "count") {
     count(day);
   } else if (task == "month") {
@@ -135,8 +138,9 @@ function connect(force = false) {
       return;
     }
   }
-  if (state.verbose) console.info(`Connecting live update to %c${pathway}%c ...`, "color: dodgerblue", "");
+  console.info(`EventSource connecting %c${pathway}%c ...`, "color: dodgerblue", "");
   source = new EventSource("/events/");
+  // Only pick up event that matches the pathway
   source.addEventListener(pathway, (event) => {
     const payload = JSON.parse(event.data);
     payload.items.forEach((item) => {
@@ -155,12 +159,12 @@ function connect(force = false) {
     });
   });
   source.addEventListener("error", (_event) => {
-    console.log(`EventSource error`, source.readyState, EventSource.CONNECTING);
+    console.error(`EventSource error`, source.readyState, EventSource.CONNECTING);
     if (source.readyState == EventSource.CONNECTING) {
-      console.log("EventSource connecting ...");
+      console.info(`EventSource connecting %c${pathway}%c ...`, "color: dodgerblue", "");
       return;
     } else if (source.readyState == EventSource.CLOSED) {
-      console.log("EventSource closed. Starting a new one ...");
+      console.info("EventSource closed. Starting a new one ...");
       setTimeout(() => connect(), 10000);
     }
   });
@@ -189,24 +193,23 @@ function disconnect() {
 
 function updateListWithItem(item) {
   const elements = item.split("-");
-  const symbol = elements[3].split(".")[0];
+  const symbol = elements[3];
+  const scan = elements[2];
+  const t = elements[1];
+  const d = elements[0];
+  if (state.verbose) {
+    console.info(`%carchive.worker.updateListWithItem()%c ${d} ${t} ${scan} ${symbol}`, `color: ${namecolor}`, "");
+  }
   if (symbol != grid.symbol) {
     return;
   }
-  const scan = elements[3];
-  const s = elements[1];
-  const day = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
-  if (state.verbose) {
-    console.info(`%carchive.worker.updateListWithItem()%c ${item} ${day}`, `color: ${namecolor}`, "");
-  }
-  const listHour = elements[2].slice(0, 2);
-  const dateTimeString = `${elements[1]}-${listHour}00`;
+  const listHour = t.slice(0, 2);
+  const dateTimeString = `${d}-${listHour}00`;
   if (grid.dateTimeString != dateTimeString) {
     grid.dateTimeString = dateTimeString;
     grid.itemsGrouped = {};
     grid.items = [];
     grid.hour = parseInt(listHour);
-    // grid.day = dayjs.utc(day);
     if (state.verbose) {
       console.info(
         `%carchive.worker.updateListWithItem()%c   ${dateTimeString} ${grid.hour}`,
@@ -227,12 +230,13 @@ function updateListWithItem(item) {
   grid.itemsGrouped[scan].push({ item: item, index: index });
   if (state.update == "always") {
     index = grid.items.length - 1;
+    setGridIndex(index);
   } else if (grid.scan in grid.itemsGrouped) {
     index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+    setGridIndex(index);
   } else {
     index = -1;
   }
-  setGridIndex(index);
 }
 
 function createSweep(name = "dummy") {
@@ -257,10 +261,11 @@ function createSweep(name = "dummy") {
   };
 }
 
+// Expect something like day = dayjs.utc('2013-05-20'), hour = 19, symbol = 'Z'
 function month(day) {
-  day = day.format("YYYYMM01");
-  console.info(`%carchive.worker.month()%c`, `color: ${namecolor}`, "", day);
-  const url = `/data/month/${pathway}/${day}/`;
+  let dayString = day.format("YYYYMM01");
+  console.info(`%carchive.worker.month()%c ${pathway} ${dayString}`, `color: ${namecolor}`, "");
+  const url = `/data/month/${pathway}/${dayString}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200)
@@ -278,57 +283,17 @@ function month(day) {
     });
 }
 
-function count(day) {
-  let dayString = dayjs.utc(day).format("YYYYMMDD");
-  console.log("archive.worker.count()", day, dayString);
-  console.info(`%carchive.worker.count()%c ${pathway} ${dayString} (${t})`, `color: ${namecolor}`, "");
-  let y = parseInt(dayString.slice(0, 4));
-  if (y < 2012) {
-    console.info("No data prior to 2013");
-    return;
-  }
-  const url = `/data/count/${pathway}/${dayString}/`;
-  fetch(url)
-    .then((response) => {
-      if (response.status == 200)
-        response.json().then((buffer) => {
-          console.log(buffer);
-          grid.dateTimeString = day.format("YYYYMMDD-HHmm");
-          grid.hoursActive = buffer.hoursActive;
-          grid.latestHour =
-            23 -
-            grid.hoursActive
-              .slice()
-              .reverse()
-              .findIndex((x) => x > 0);
-          self.postMessage({
-            type: "count",
-            payload: {
-              dateTimeString: grid.dateTimeString,
-              hoursActive: grid.hoursActive,
-            },
-          });
-        });
-      else
-        response.text().then((error) => {
-          self.postMessage({ type: "message", payload: error });
-        });
-    })
-    .catch((error) => {
-      console.error(`Unexpected error ${error}`);
-    });
-}
-
-function list(day, hour, symbol) {
-  let dayString = day.format("YYYYMMDD");
-  let hourString = clamp(hour, 0, 23).toString().padStart(2, "0");
-  let dateTimeString = `${dayString}-${hourString}00`;
-  // let dateTimeString = day.format("YYYYMMDD-HH00");
+// Expect something like day = dayjs.utc('2013-05-20'), symbol = 'Z'
+function list(day, symbol) {
+  let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
-    `%carchive.worker.list()%c ${pathway} ${dateTimeString} / ${grid.dateTimeString} ${symbol} ${grid.index}`,
+    `%carchive.worker.list()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
     `color: ${namecolor}`,
+    "",
+    "color: mediumpurple",
     ""
   );
+  // Same time, just a symbol change
   if (dateTimeString == grid.dateTimeString) {
     let index = grid.index;
     let currentItems = grid.items;
@@ -339,7 +304,7 @@ function list(day, hour, symbol) {
       elements[3] = symbol;
       item = elements.join("-");
       grid.items.push(item);
-      let scanType = elements[3];
+      let scanType = elements[2];
       if (!(scanType in grid.itemsGrouped)) {
         grid.itemsGrouped[scanType] = [];
       }
@@ -354,6 +319,7 @@ function list(day, hour, symbol) {
     });
     return;
   }
+  // Different time, fetch from the server
   const url = `/data/list/${pathway}/${dateTimeString}-${symbol}/`;
   fetch(url)
     .then((response) => {
@@ -561,7 +527,6 @@ function catchup() {
           grid.daysActive = buffer.daysActive;
           grid.latestScan = buffer.latestScan;
           grid.latestHour = buffer.hour;
-          // grid.day = day;
           grid.hour = buffer.hour;
           grid.items = buffer.items;
           grid.itemsGrouped = {};
@@ -611,6 +576,7 @@ function setGridIndex(index) {
   }
   if (index < 0 || index >= grid.items.length) {
     console.error(`%carchive.worker.updateGridIndex()%c ${index} invalid`, `color: ${namecolor}`, "color: dodgerblue");
+    return;
   }
   if (index == grid.index) {
     if (state.verbose > 1) {
@@ -714,11 +680,11 @@ function reviseGridPaths() {
     return;
   }
   if (grid.index < 0 || grid.index >= grid.items.length) {
-    console.log(`grid.index = ${grid.index} should not happen here.`);
+    console.log(`grid.index = ${grid.index} should not happen here   length = ${grid.items.length}`);
     return;
   }
-  const file = grid.items[grid.index];
-  const scan = file.split("-")[2];
+  const item = grid.items[grid.index];
+  const scan = item.split("-")[2];
   const index = grid.index;
   const length = grid.itemsGrouped[scan].length;
   const first = grid.itemsGrouped[scan][0];
@@ -742,4 +708,46 @@ function reviseGridPaths() {
       grid.pathsActive
     );
   }
+}
+
+// Deprecating ... count() is now part of list.
+function count(day) {
+  let dayString = day.format("YYYYMMDD");
+  console.warn(`%carchive.worker.count()%c DEPRECATING. You should not be using this.`, `color: ${namecolor}`, "");
+  console.log(`%carchive.worker.count()%c ${pathway} ${dayString}`, `color: ${namecolor}`, "");
+  let y = parseInt(dayString.slice(0, 4));
+  if (y < 2012) {
+    console.info("No data prior to 2013");
+    return;
+  }
+  const url = `/data/count/${pathway}/${dayString}/`;
+  fetch(url)
+    .then((response) => {
+      if (response.status == 200)
+        response.json().then((buffer) => {
+          console.log(buffer);
+          grid.dateTimeString = day.format("YYYYMMDD-HHmm");
+          grid.hoursActive = buffer.hoursActive;
+          grid.latestHour =
+            23 -
+            grid.hoursActive
+              .slice()
+              .reverse()
+              .findIndex((x) => x > 0);
+          self.postMessage({
+            type: "count",
+            payload: {
+              dateTimeString: grid.dateTimeString,
+              hoursActive: grid.hoursActive,
+            },
+          });
+        });
+      else
+        response.text().then((error) => {
+          self.postMessage({ type: "message", payload: error });
+        });
+    })
+    .catch((error) => {
+      console.error(`Unexpected error ${error}`);
+    });
 }
