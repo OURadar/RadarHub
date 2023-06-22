@@ -20,7 +20,7 @@ import { Splash } from "./splash";
 import { TopBar } from "./topbar";
 import { Layout } from "./layout";
 import { Product } from "./product";
-import { Browser } from "./browser-continuous";
+import { Browser } from "./browser";
 import { HelpPage } from "./help";
 import { MenuArrow } from "./menu-arrow";
 import { MenuUpdate } from "./menu-update";

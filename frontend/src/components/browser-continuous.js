@@ -48,8 +48,6 @@ function Calender(props) {
 
   const [value, setValue] = React.useState(day);
 
-  React.useEffect(() => setValue(value), [value]);
-
   return (
     <div id="calendarContainer">
       <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
@@ -58,13 +56,10 @@ function Calender(props) {
           defaultValue={value}
           minDate={dayjs.utc("20000101")}
           maxDate={dayjs.utc().endOf("month")}
-          onOpen={() => props.archive.getMonthTable(value)}
+          onOpen={() => props.archive.getMonthTable(day)}
+          onChange={(newDay) => props.archive.setDayHour(newDay, hour)}
           onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
           onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
-          onChange={(newDay) => {
-            setValue(newDay);
-            props.archive.setDayHour(newDay, hour);
-          }}
           slots={{ day: ServerDay }}
           slotProps={{ day: { archive: props.archive } }}
           disableHighlightToday={true}
@@ -106,15 +101,15 @@ function FileList(props) {
     amount: 20,
     tolerance: 5,
     minIndex: -9,
-    maxIndex: items.length,
+    maxIndex: 100,
     startIndex: 1,
   };
 
-  const getData = (offset, limit) => {
+  const subset = (offset, limit) => {
     const data = [];
     const start = Math.max(settings.minIndex, offset);
     const end = Math.min(offset + limit - 1, settings.maxIndex);
-    console.log(`request [${offset}..${offset + limit - 1}] -> [${start}..${end}] items`);
+    console.log(`subset [${offset}..${offset + limit - 1}] -> [${start}..${end}] items  ${items.length}`);
     if (start <= end) {
       for (let i = start; i <= end; i++) {
         data.push({ index: i, text: `item ${i}` });
@@ -153,7 +148,7 @@ function FileList(props) {
     console.log("loading more ...");
   };
 
-  return <Scroller get={getData} settings={settings} row={row} />;
+  return <Scroller get={subset} settings={settings} row={row} />;
 }
 
 function OtherList(props) {

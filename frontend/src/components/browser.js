@@ -62,7 +62,6 @@ function Browser(props) {
 
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
-  const [value, setValue] = React.useState(day);
 
   // console.log(`day = ${day}   hour = ${hour}`);
   const setElements = (elements) => {
@@ -111,7 +110,6 @@ function Browser(props) {
       );
     }
     setHourButtons(newButtons);
-    setValue(day);
   }, [day, hour, count]);
 
   return (
@@ -121,16 +119,14 @@ function Browser(props) {
       <div id="calendarContainer">
         <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
           <DatePicker
-            defaultValue={value}
+            label="Date"
+            defaultValue={day}
             minDate={dayjs.utc("20000101")}
             maxDate={dayjs.utc().endOf("month")}
             onOpen={() => archive.getMonthTable(day)}
             onYearChange={(newDay) => archive.getMonthTable(newDay)}
             onMonthChange={(newDay) => archive.getMonthTable(newDay)}
-            onChange={(newValue) => {
-              setValue(newValue);
-              archive.setDayHour(newValue, hour);
-            }}
+            onChange={(newDay) => archive.setDayHour(newDay, hour)}
             slots={{ day: ServerDay }}
             slotProps={{ day: { archive: archive } }}
             disableHighlightToday={true}

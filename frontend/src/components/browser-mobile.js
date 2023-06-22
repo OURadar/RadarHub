@@ -44,25 +44,18 @@ function Calender(props) {
   const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hour = ok ? props.archive.grid.hour : -1;
 
-  const [value, setValue] = React.useState(day);
-
-  React.useEffect(() => setValue(value), [value]);
-
   return (
     <div id="calendarContainer">
       <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
         <DatePicker
           label="Date"
-          defaultValue={value}
+          defaultValue={day}
           minDate={dayjs.utc("20000101")}
           maxDate={dayjs.utc().endOf("month")}
-          onOpen={() => props.archive.getMonthTable(value)}
+          onOpen={() => props.archive.getMonthTable(day)}
+          onChange={(newDay) => props.archive.setDayHour(newDay, hour)}
           onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
           onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
-          onChange={(newDay) => {
-            setValue(newDay);
-            props.archive.setDayHour(newDay, hour);
-          }}
           slots={{ day: ServerDay }}
           slotProps={{ day: { archive: props.archive } }}
           disableHighlightToday={true}
