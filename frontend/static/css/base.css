@@ -62,11 +62,7 @@ Copyright Boonleng Cheong
   --map-background: #f9f5ed;
   --menu-background: rgba(249, 245, 237, 0.8);
   --colorbar-background: rgba(249, 245, 237, 0.7);
-  --background-gradient: linear-gradient(
-    0,
-    var(--background-color-translucent) 15%,
-    var(--background-color) 75%
-  );
+  --background-gradient: linear-gradient(0, var(--background-color-translucent) 15%, var(--background-color) 75%);
   --background-image: linear-gradient(transparent 69%, hsl(194, 100%, 35%));
 }
 
@@ -110,11 +106,7 @@ Copyright Boonleng Cheong
   --map-background: #22252a;
   --menu-background: rgba(34, 37, 42, 0.8);
   --colorbar-background: rgba(34, 37, 42, 0.7);
-  --background-gradient: linear-gradient(
-    0,
-    var(--background-color-translucent) 15%,
-    var(--background-color) 75%
-  );
+  --background-gradient: linear-gradient(0, var(--background-color-translucent) 15%, var(--background-color) 75%);
   --background-image: linear-gradient(transparent 69%, hsl(194, 100%, 20%));
 }
 
@@ -137,8 +129,7 @@ html {
 
 html {
   background-color: var(--background-color);
-  font-family: -apple-system, Helvetica, Arial, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: -apple-system, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
 body {
@@ -497,10 +488,7 @@ h3 {
   background: linear-gradient(rgba(0, 0, 0, 0.85), black 50%);
 }
 .lightBackground {
-  background: linear-gradient(
-    rgba(255, 255, 255, 0.6),
-    rgba(255, 255, 255, 0.8) 50%
-  );
+  background: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.8) 50%);
 }
 
 .notification {
@@ -1021,4 +1009,9 @@ div.key {
   padding-top: 100px;
   padding-bottom: 100px;
   border-radius: var(--button-border-radius);
+}
+
+.viewport {
+  width: 100%;
+  overflow-y: auto;
 }

@@ -4,7 +4,7 @@ django-auth-ldap
 Twisted[tls,http2]
 psycopg2
 asgiref
-channels
+channels==3
 channels_redis
 websocket_client
 pyparsing
