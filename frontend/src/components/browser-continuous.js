@@ -23,8 +23,6 @@ import Button from "@mui/material/Button";
 
 import Box from "@mui/material/Box";
 
-// import Scroller from "./scroller";
-
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 
 function ServerDay(props) {
@@ -46,14 +44,12 @@ function Calender(props) {
   const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hour = ok ? props.archive.grid.hour : -1;
 
-  const [value, setValue] = React.useState(day);
-
   return (
     <div id="calendarContainer">
       <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
         <DatePicker
           label="Date"
-          defaultValue={value}
+          defaultValue={day}
           minDate={dayjs.utc("20000101")}
           maxDate={dayjs.utc().endOf("month")}
           onOpen={() => props.archive.getMonthTable(day)}
@@ -98,7 +94,7 @@ function FileList(props) {
 
   const count = 30;
   const minIndex = 0;
-  const maxIndex = 100;
+  const maxIndex = items.length;
   const tolerance = 5;
   const toleranceHeight = tolerance * props.h;
 
@@ -113,44 +109,28 @@ function FileList(props) {
     const tail = Math.min(maxIndex, offset + stride - 1);
     const data = [];
     for (let i = head; i <= tail; i++) {
-      data.push({ index: i, text: `item ${i}` });
+      data.push(items[i]);
     }
     setSubsetItems(data);
 
     console.log(`udpate [${offset}..${offset + stride - 1}] -> [${head}..${tail}] out of ${items.length}`);
 
-    setHeadPadding(Math.max((offset - minIndex) * props.h, 0));
-    setTailPadding(Math.max((maxIndex - minIndex + 1) * props.h - data.length * props.h, 0));
+    let t = Math.max((offset - minIndex) * props.h, 0);
+    setHeadPadding(t);
+    setTailPadding(Math.max((maxIndex - minIndex + 1) * props.h - t - data.length * props.h, 0));
   };
-
-  const row = (item) => (
-    <Button
-      key={`file-${item.index}`}
-      variant="file"
-      onClick={() => {
-        props.archive.loadIndex(item.index);
-        props.archive.onSelect(item.index);
-      }}
-      selected={item.index == index}
-    >
-      {item.text}
-    </Button>
-  );
-
-  React.useEffect(() => {
-    update({ target: { scrollTop: 0 } });
-  }, []);
 
   React.useEffect(() => {
     if (fileListRef.current == null || fileListRef.current?.children?.length == 0) {
       return;
     }
     if (props.archive.state.loadCount <= 1 && index != -1) {
-      //fileListRef.current.children[index].scrollIntoViewIfNeeded();
+      // fileListRef.current.children[index].scrollIntoViewIfNeeded();
       console.log("fileListRef", fileListRef.current);
     } else if (props.archive.grid?.latestHour > -1) {
       props.archive.disableLiveUpdate();
     }
+    update({ target: { scrollTop: 0 } });
   }, [items, index]);
 
   const loadFunc = () => {
@@ -161,7 +141,19 @@ function FileList(props) {
     <div id="filesContainer" onScroll={update}>
       <div id="fileList" ref={fileListRef}>
         <div style={{ height: headPadding }}></div>
-        {subsetItems.map(row)}
+        {subsetItems.map((item, k) => (
+          <Button
+            key={`file-${k}`}
+            variant="file"
+            onClick={() => {
+              props.archive.loadIndex(k);
+              props.onSelect(k);
+            }}
+            selected={k == index}
+          >
+            {item}
+          </Button>
+        ))}
         <div style={{ height: tailPadding }}></div>
       </div>
     </div>

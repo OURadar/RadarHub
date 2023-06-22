@@ -37,6 +37,7 @@ const getItemHeight = (theme) => {
 };
 
 export function App(props) {
+  const [load, setLoad] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
   const [message, setMessage] = React.useState("");
@@ -67,6 +68,13 @@ export function App(props) {
     setDocumentTheme(theme);
   };
 
+  const handleOverlayLoad = (x = 1) => {
+    setLoad(x);
+    if (x == 1 && archive.current.state.liveUpdate === null) {
+      archive.current.catchup();
+    }
+  };
+
   useConstructor(() => {
     // document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
 
@@ -84,6 +92,7 @@ export function App(props) {
       setDocumentTheme(mode);
     });
     document.documentElement.setAttribute("theme", theme.palette.mode);
+    handleOverlayLoad();
   }, []);
 
   return (
