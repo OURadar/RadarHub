@@ -68,7 +68,7 @@ export function App(props) {
   };
 
   useConstructor(() => {
-    document.getElementById("device-style").setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
+    // document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
 
     archive.current = new Archive(props.pathway, props.name);
     archive.current.onUpdate = handleUpdate;

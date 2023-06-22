@@ -16,21 +16,12 @@ Copyright Boonleng Cheong
 }
 
 [theme="light"] {
-  --colorbar-background-map: linear-gradient(
-    rgba(249, 245, 237, 0.9),
-    rgba(249, 245, 237, 0.7)
-  );
-  --colorbar-background: linear-gradient(
-    rgba(242, 242, 247, 0.9),
-    rgba(242, 242, 247, 0.7)
-  );
+  --colorbar-background-map: linear-gradient(rgba(249, 245, 237, 0.9), rgba(249, 245, 237, 0.7));
+  --colorbar-background: linear-gradient(rgba(242, 242, 247, 0.9), rgba(242, 242, 247, 0.7));
 }
 
 [theme="dark"] {
-  --colorbar-background: linear-gradient(
-    rgba(34, 37, 42, 0.85),
-    rgba(34, 37, 42, 0.65)
-  );
+  --colorbar-background: linear-gradient(rgba(34, 37, 42, 0.85), rgba(34, 37, 42, 0.65));
 }
 .active {
   position: absolute;
@@ -135,20 +126,28 @@ Copyright Boonleng Cheong
 }
 #fileList {
   padding-top: calc(
-    var(--topbar-height) + var(--padding) + var(--calendar-height) +
-      var(--half-padding) + 4 * var(--small-button-height) + 1px
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
+      var(--small-button-height) + 1px
   );
-  padding-bottom: calc(
-    var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px
+  padding-bottom: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
+}
+#listContainer {
+  overflow-y: auto;
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  top: 0;
+  padding-top: calc(
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
+      var(--small-button-height) + 1px
   );
+  padding-bottom: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
 }
 
 /* Product view */
 
 #ageString {
-  bottom: calc(
-    var(--navbar-padding-bottom) + var(--button-height) + var(--padding) + 70px
-  );
+  bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + var(--padding) + 70px);
   left: var(--padding);
 }
 #infoString {

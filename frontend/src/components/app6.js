@@ -113,6 +113,7 @@ export class App extends React.Component {
         theme: makeTheme(mode),
       });
     });
+    document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${this.props.css_hash}`);
   }
 
   render() {

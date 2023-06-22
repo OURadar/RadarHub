@@ -23,7 +23,7 @@ import Button from "@mui/material/Button";
 
 import Box from "@mui/material/Box";
 
-import Scroller from "./scroller";
+// import Scroller from "./scroller";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 
@@ -96,26 +96,31 @@ function FileList(props) {
 
   const fileListRef = React.useRef(null);
 
-  const settings = {
-    itemHeight: props.h,
-    amount: 20,
-    tolerance: 5,
-    minIndex: -9,
-    maxIndex: 100,
-    startIndex: 1,
-  };
+  const count = 30;
+  const minIndex = 0;
+  const maxIndex = 100;
+  const tolerance = 5;
+  const toleranceHeight = tolerance * props.h;
 
-  const subset = (offset, limit) => {
+  const [headPadding, setHeadPadding] = React.useState(0);
+  const [tailPadding, setTailPadding] = React.useState(maxIndex * props.h);
+  const [subsetItems, setSubsetItems] = React.useState([]);
+
+  const update = ({ target: { scrollTop } }) => {
+    const offset = minIndex + Math.floor((scrollTop - toleranceHeight) / props.h);
+    const stride = count + 2 * tolerance;
+    const head = Math.max(minIndex, offset);
+    const tail = Math.min(maxIndex, offset + stride - 1);
     const data = [];
-    const start = Math.max(settings.minIndex, offset);
-    const end = Math.min(offset + limit - 1, settings.maxIndex);
-    console.log(`subset [${offset}..${offset + limit - 1}] -> [${start}..${end}] items  ${items.length}`);
-    if (start <= end) {
-      for (let i = start; i <= end; i++) {
-        data.push({ index: i, text: `item ${i}` });
-      }
+    for (let i = head; i <= tail; i++) {
+      data.push({ index: i, text: `item ${i}` });
     }
-    return data;
+    setSubsetItems(data);
+
+    console.log(`udpate [${offset}..${offset + stride - 1}] -> [${head}..${tail}] out of ${items.length}`);
+
+    setHeadPadding(Math.max((offset - minIndex) * props.h, 0));
+    setTailPadding(Math.max((maxIndex - minIndex + 1) * props.h - data.length * props.h, 0));
   };
 
   const row = (item) => (
@@ -133,6 +138,10 @@ function FileList(props) {
   );
 
   React.useEffect(() => {
+    update({ target: { scrollTop: 0 } });
+  }, []);
+
+  React.useEffect(() => {
     if (fileListRef.current == null || fileListRef.current?.children?.length == 0) {
       return;
     }
@@ -148,7 +157,15 @@ function FileList(props) {
     console.log("loading more ...");
   };
 
-  return <Scroller get={subset} settings={settings} row={row} />;
+  return (
+    <div id="filesContainer" onScroll={update}>
+      <div id="fileList" ref={fileListRef}>
+        <div style={{ height: headPadding }}></div>
+        {subsetItems.map(row)}
+        <div style={{ height: tailPadding }}></div>
+      </div>
+    </div>
+  );
 }
 
 function OtherList(props) {
