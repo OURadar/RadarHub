@@ -345,8 +345,8 @@ class Archive extends Ingest {
   setDayHour(day, hour) {
     if (this.state.verbose) {
       let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
-      let n = day.format("YYYYMMDD-HH00");
-      let o = this.grid ? this.grid.dateTimeString : "";
+      let n = day.format("YYYYMMDD");
+      let o = this.grid ? this.grid.dateTimeString.slice(0, 8) : "";
       console.log(
         `%carchive.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${hour}%c ← ${this.grid.hour}    ${this.grid.symbol}`,
         "color: deeppink",
@@ -357,7 +357,7 @@ class Archive extends Ingest {
         ""
       );
     }
-    this.count(day, hour);
+    this.list(day, hour);
   }
 
   getMonthTable(day) {

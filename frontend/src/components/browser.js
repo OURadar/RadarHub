@@ -99,7 +99,13 @@ function Browser(props) {
       const selected = count[k] > 0 && k == hour;
       const disabled = count[k] == 0;
       newButtons[k] = (
-        <Button key={k} variant="hour" disabled={disabled} selected={selected} onClick={() => setDayHour(day, k)}>
+        <Button
+          key={k}
+          variant="hour"
+          disabled={disabled}
+          selected={selected}
+          onClick={() => archive.setDayHour(day, k)}
+        >
           {hourString}
         </Button>
       );
@@ -107,26 +113,6 @@ function Browser(props) {
     setHourButtons(newButtons);
     setValue(day);
   }, [day, hour, count]);
-
-  const setDayHour = (newDay, newHour) => {
-    if (isNaN(newDay) || newDay.year() < 2000 || newDay.year() > 2100) {
-      return;
-    }
-    let symbol = props.archive.grid.symbol;
-    let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
-    let n = newDay.format("YYYYMMDD");
-    let o = day.format("YYYYMMDD");
-    console.info(
-      `%cbrowser.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${newHour}%c ← ${hour}    ${symbol}`,
-      "color: lightseagreen",
-      "",
-      "color: mediumpurple",
-      "",
-      "color: mediumpurple",
-      ""
-    );
-    archive.list(newDay, newHour, symbol);
-  };
 
   return (
     <div className="fill paper">
@@ -143,9 +129,7 @@ function Browser(props) {
             onMonthChange={(newDay) => archive.getMonthTable(newDay)}
             onChange={(newValue) => {
               setValue(newValue);
-              if (newValue instanceof dayjs) {
-                setDayHour(newValue, hour);
-              }
+              archive.setDayHour(newValue, hour);
             }}
             slots={{ day: ServerDay }}
             slotProps={{ day: { archive: archive } }}
