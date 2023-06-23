@@ -93,31 +93,36 @@ function FileList(props) {
   const fileListRef = React.useRef(null);
 
   const count = 30;
-  const minIndex = 0;
-  const maxIndex = items.length;
   const tolerance = 5;
   const toleranceHeight = tolerance * props.h;
+  const stride = count + 2 * tolerance;
+  const maxIndex = items.length - 1;
+  const minIndex = 0;
 
+  const [offset, setOffset] = React.useState(0);
+  const [subsetItems, setSubsetItems] = React.useState([]);
   const [headPadding, setHeadPadding] = React.useState(0);
   const [tailPadding, setTailPadding] = React.useState(maxIndex * props.h);
-  const [subsetItems, setSubsetItems] = React.useState([]);
 
   const update = ({ target: { scrollTop } }) => {
-    const offset = minIndex + Math.floor((scrollTop - toleranceHeight) / props.h);
-    const stride = count + 2 * tolerance;
+    let o = minIndex + Math.floor((scrollTop - toleranceHeight) / props.h);
+    if (o == offset) {
+      return;
+    }
+    setOffset(o);
     const head = Math.max(minIndex, offset);
     const tail = Math.min(maxIndex, offset + stride - 1);
     const data = [];
     for (let i = head; i <= tail; i++) {
-      data.push(items[i]);
+      data.push({ index: i, label: items[i] });
     }
     setSubsetItems(data);
 
     console.log(`udpate [${offset}..${offset + stride - 1}] -> [${head}..${tail}] out of ${items.length}`);
 
-    let t = Math.max((offset - minIndex) * props.h, 0);
-    setHeadPadding(t);
-    setTailPadding(Math.max((maxIndex - minIndex + 1) * props.h - t - data.length * props.h, 0));
+    let p = Math.max((offset - minIndex) * props.h, 0);
+    setHeadPadding(p);
+    setTailPadding(Math.max((maxIndex - minIndex + 1) * props.h - data.length * props.h - p, 0));
   };
 
   React.useEffect(() => {
@@ -126,11 +131,12 @@ function FileList(props) {
     }
     if (props.archive.state.loadCount <= 1 && index != -1) {
       // fileListRef.current.children[index].scrollIntoViewIfNeeded();
-      console.log("fileListRef", fileListRef.current);
+      let o = minIndex + fileListRef.current.children.length;
+      console.log("fileListRef", fileListRef.current, o);
+      update({ target: { scrollTop: o * props.h } });
     } else if (props.archive.grid?.latestHour > -1) {
       props.archive.disableLiveUpdate();
     }
-    update({ target: { scrollTop: 0 } });
   }, [items, index]);
 
   const loadFunc = () => {
@@ -141,17 +147,17 @@ function FileList(props) {
     <div id="filesContainer" onScroll={update}>
       <div id="fileList" ref={fileListRef}>
         <div style={{ height: headPadding }}></div>
-        {subsetItems.map((item, k) => (
+        {subsetItems.map((item) => (
           <Button
-            key={`file-${k}`}
+            key={`file-${item.index}`}
             variant="file"
             onClick={() => {
-              props.archive.loadIndex(k);
-              props.onSelect(k);
+              props.archive.loadIndex(item.index);
+              props.onSelect(item.index);
             }}
-            selected={k == index}
+            selected={item.index == index}
           >
-            {item}
+            {item.label}
           </Button>
         ))}
         <div style={{ height: tailPadding }}></div>
@@ -182,7 +188,7 @@ export function Browser(props) {
 }
 
 Browser.defaultProps = {
-  onSelect: () => {
-    console.log("Browser.onSelect()");
+  onSelect: (k) => {
+    console.log(`Browser.onSelect() k = ${k}`);
   },
 };
