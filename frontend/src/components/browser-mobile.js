@@ -146,7 +146,7 @@ export function Browser(props) {
 }
 
 Browser.defaultProps = {
-  onSelect: () => {
-    console.log("Browser.onSelect()");
+  onSelect: (k) => {
+    console.log(`Browser.onSelect() k = ${k}`);
   },
 };

@@ -99,41 +99,53 @@ function FileList(props) {
   const maxIndex = items.length - 1;
   const minIndex = 0;
 
-  const [offset, setOffset] = React.useState(0);
+  const [offset, setOffset] = React.useState(index - count);
   const [subsetItems, setSubsetItems] = React.useState([]);
   const [headPadding, setHeadPadding] = React.useState(0);
   const [tailPadding, setTailPadding] = React.useState(maxIndex * props.h);
 
   const update = ({ target: { scrollTop } }) => {
-    let o = minIndex + Math.floor((scrollTop - toleranceHeight) / props.h);
+    let v = minIndex + (scrollTop - toleranceHeight) / props.h;
+    let o = Math.min(maxIndex, Math.round(v));
+    // console.log(
+    //   `scrollTop = ${scrollTop}   toleranceHeight = ${toleranceHeight}   props.h = ${props.h}  o = ${o} / ${v}`
+    // );
     if (o == offset) {
       return;
     }
-    setOffset(o);
-    const head = Math.max(minIndex, offset);
-    const tail = Math.min(maxIndex, offset + stride - 1);
+    const head = Math.max(minIndex, o);
+    const tail = Math.min(maxIndex, o + stride - 1);
     const data = [];
     for (let i = head; i <= tail; i++) {
       data.push({ index: i, label: items[i] });
     }
-    setSubsetItems(data);
 
-    console.log(`udpate [${offset}..${offset + stride - 1}] -> [${head}..${tail}] out of ${items.length}`);
+    console.log(
+      `udpate scrollTop = ${scrollTop} ${props.h}  [${o}..${o + stride - 1}] -> [${head}..${tail}] out of ${
+        items.length
+      }`
+    );
 
-    let p = Math.max((offset - minIndex) * props.h, 0);
+    let p = Math.max((o - minIndex) * props.h, 0);
+    setOffset(o);
     setHeadPadding(p);
     setTailPadding(Math.max((maxIndex - minIndex + 1) * props.h - data.length * props.h - p, 0));
+    setSubsetItems(data);
   };
 
   React.useEffect(() => {
     if (fileListRef.current == null || fileListRef.current?.children?.length == 0) {
       return;
     }
+    // console.log(`props.archive.state.loadCount = ${props.archive.state.loadCount}`);
     if (props.archive.state.loadCount <= 1 && index != -1) {
-      // fileListRef.current.children[index].scrollIntoViewIfNeeded();
-      let o = minIndex + fileListRef.current.children.length;
-      console.log("fileListRef", fileListRef.current, o);
-      update({ target: { scrollTop: o * props.h } });
+      let o = minIndex + items.length - count - tolerance + 1;
+      let scrollTop = o * props.h + toleranceHeight;
+      console.log(`React.useEffect -> o = ${o} -> ${scrollTop} (${toleranceHeight})`);
+      update({ target: { scrollTop } });
+      setTimeout(() => {
+        fileListRef.current.children[fileListRef.current.children.length - 2].scrollIntoViewIfNeeded();
+      }, 100);
     } else if (props.archive.grid?.latestHour > -1) {
       props.archive.disableLiveUpdate();
     }
