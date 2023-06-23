@@ -30,7 +30,7 @@ const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 function ServerDay(props) {
   const { day, outsideCurrentMonth, ...other } = props;
   let key = day.format("YYYYMMDD");
-  let num = key in props.archive.grid.daysActive && !outsideCurrentMonth ? props.archive.grid.daysActive[key] : 0;
+  let num = key in props.archive.grid.daysActive ? props.archive.grid.daysActive[key] : 0;
 
   return num ? (
     <Badge key={key} color={badgeColors[num]} overlap="circular" variant="dot">

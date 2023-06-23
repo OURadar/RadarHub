@@ -86,6 +86,8 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
     load(name);
   } else if (task == "list") {
     list(day, symbol);
+  } else if (task == "list2") {
+    list2(day, symbol);
   } else if (task == "count") {
     count(day);
   } else if (task == "month") {
@@ -321,6 +323,98 @@ function list(day, symbol) {
   }
   // Different time, fetch from the server
   const url = `/data/list/${pathway}/${dateTimeString}-${symbol}/`;
+  fetch(url)
+    .then((response) => {
+      if (response.status == 200) {
+        response.json().then((buffer) => {
+          if (state.verbose > 1) {
+            console.debug("list buffer", buffer);
+          }
+          grid.hour = buffer.hour;
+          grid.index = -1;
+          grid.symbol = symbol;
+          grid.hoursActive = buffer.hoursActive;
+          grid.dateTimeString = dateTimeString;
+          grid.latestHour =
+            23 -
+            grid.hoursActive
+              .slice()
+              .reverse()
+              .findIndex((x) => x > 0);
+          grid.items = buffer.items;
+          grid.itemsGrouped = {};
+          grid.items.forEach((item, index) => {
+            let elements = item.split("-");
+            let scanType = elements[2];
+            if (!(scanType in grid.itemsGrouped)) {
+              grid.itemsGrouped[scanType] = [];
+            }
+            grid.itemsGrouped[scanType].push({ item: item, index: index });
+          });
+          let index = grid.items.length ? grid.items.length - 1 : -1;
+          if (grid.scan in grid.itemsGrouped) {
+            index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+          }
+          self.postMessage({ type: "list", payload: grid });
+          if (grid.hour < 0) {
+            self.postMessage({ type: "message", payload: "No Data" });
+            return;
+          }
+          setGridIndex(index);
+        });
+      } else {
+        console.info(
+          `%carchive.worker.list()%c response.status = ${response.status} != 200`,
+          `color: ${namecolor}`,
+          ""
+        );
+        response.text().then((response) => {
+          self.postMessage({ type: "message", payload: response });
+        });
+      }
+    })
+    .catch((error) => {
+      console.error(`Unexpected error ${error}`);
+    });
+}
+
+function list2(day, symbol) {
+  let dateTimeString = day.format("YYYYMMDD-HH00");
+  console.info(
+    `%carchive.worker.list2()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
+    `color: ${namecolor}`,
+    "",
+    "color: mediumpurple",
+    ""
+  );
+  // Same time, just a symbol change
+  if (dateTimeString == grid.dateTimeString) {
+    let index = grid.index;
+    let currentItems = grid.items;
+    grid.items = [];
+    grid.itemsGrouped = {};
+    currentItems.forEach((item, index) => {
+      let elements = item.split("-");
+      elements[3] = symbol;
+      item = elements.join("-");
+      grid.items.push(item);
+      let scanType = elements[2];
+      if (!(scanType in grid.itemsGrouped)) {
+        grid.itemsGrouped[scanType] = [];
+      }
+      grid.itemsGrouped[scanType].push({ item: item, index: index });
+    });
+    grid.symbol = symbol;
+    grid.index = -1;
+    setGridIndex(index);
+    self.postMessage({
+      type: "list",
+      payload: grid,
+    });
+    return;
+  }
+  // Different time, fetch from the server
+  const url = `/data/list2/${pathway}/${dateTimeString}-${symbol}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200) {

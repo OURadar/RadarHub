@@ -241,15 +241,13 @@ def list(request, pathway, day_hour_symbol):
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
                 show += '   ' + colorize('override', 'red')
-                show += '   ' + \
-                    color_name_value('day_hour_symbol', day_hour_symbol)
+                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
                 logger.debug(show)
         else:
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
                 show += '   ' + color_name_value('pathway', pathway)
-                show += '   ' + \
-                    color_name_value('day_hour_symbol', day_hour_symbol)
+                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
                 show += '   ' + color_name_value('hourly_count', '0\'s')
                 logger.debug(show)
             message = 'empty'
@@ -266,6 +264,87 @@ def list(request, pathway, day_hour_symbol):
     payload = json.dumps(data, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
 
+
+def _list2(prefix, day_hour_symbol):
+    c = day_hour_symbol.split('-')
+    if len(c) == 1:
+        c.append('0000')
+    elif len(c[1]) == 2:
+        c[1] = f'{c[1]}00'
+    symbol = c[2] if len(c) == 3 else 'Z'
+    t = '-'.join(c[:2])
+    s = time.strptime(t, r'%Y%m%d-%H%M')
+    s = time.localtime(time.mktime(s) - 3600)
+    e = time.localtime(time.mktime(s) + 7199)
+    ss = time.strftime(r'%Y-%m-%d %H:%M:%SZ', s)
+    ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
+    date_range = [ss, ee]
+    matches = File.objects.filter(
+        date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
+    head = prefix + '-'
+    return [o.name.lstrip(head).rstrip('.nc') for o in matches]
+
+def list2(request, pathway, day_hour_symbol):
+    show = colorize('archive.list2()', 'green')
+    show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
+    logger.debug(show)
+    dirty = screen(request)
+    if dirty:
+        return unsupported_request
+    if pathway == 'undefined' or pathway not in radar_prefix or day_hour_symbol == 'undefined':
+        return invalid_query
+    if len(day_hour_symbol) not in [8, 13, 15]:
+        return invalid_query
+    if not is_valid_time(day_hour_symbol[:13]):
+        return invalid_query
+    prefix = radar_prefix[pathway]
+    c = day_hour_symbol.split('-')
+    day = c[0]
+    if len(day) > 8:
+        logger.warning(
+            f'Invalid day_hour_symbol = {day_hour_symbol} -> day = {day}')
+        return invalid_query
+    hourly_count = _count(prefix, day)
+    if len(c) > 1:
+        hour = int(c[1][:2])
+    else:
+        hour = 0
+    if len(c) == 3:
+        symbol = c[2]
+    else:
+        symbol = 'Z'
+    day_hour_symbol = f'{day}-{hour:02d}00-{symbol}'
+    hours_with_data = [i for i, v in enumerate(hourly_count) if v]
+    if hourly_count[hour] == 0:
+        if len(hours_with_data):
+            message = f'Hour {hour} has no files. Auto-select hour {hours_with_data[0]}.'
+            hour = hours_with_data[0]
+            day_hour_symbol = f'{day}-{hour:02d}00-{symbol}'
+            if settings.VERBOSE > 1:
+                show = colorize('archive.list()', 'green')
+                show += '   ' + colorize('override', 'red')
+                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
+                logger.debug(show)
+        else:
+            if settings.VERBOSE > 1:
+                show = colorize('archive.list()', 'green')
+                show += '   ' + color_name_value('pathway', pathway)
+                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
+                show += '   ' + color_name_value('hourly_count', '0\'s')
+                logger.debug(show)
+            message = 'empty'
+            hour = -1
+    else:
+        message = 'okay'
+    data = {
+        'hoursActive': _count(prefix, day),
+        'hour': hour,
+        'items': _list2(prefix, day_hour_symbol) if hour >= 0 else [],
+        'symbol': symbol,
+        'message': message
+    }
+    payload = json.dumps(data, separators=(',', ':'))
+    return HttpResponse(payload, content_type='application/json')
 
 '''
     Load a sweep - returns a dictionary
