@@ -126,8 +126,10 @@ function FileList(props) {
 
     if (o < tolerance) {
       console.log(`%cupdate%c fetch <<< ${head}`, "color: deeppink", "");
+      props.archive.prepend();
     } else if (o > maxIndex - count) {
       console.log(`%cupdate%c fetch >>>`, "color: deeppink", "");
+      props.archive.append();
     }
 
     let p = Math.max((o - minIndex) * props.h, 0);
@@ -143,7 +145,8 @@ function FileList(props) {
     }
     // console.log(`props.archive.state.loadCount = ${props.archive.state.loadCount}`);
     if (props.archive.state.loadCount <= 1 && index != -1) {
-      let o = minIndex + items.length - count - tolerance + 1;
+      // let o = minIndex + items.length - count - tolerance + 1;
+      let o = minIndex + props.archive.grid.index - count - tolerance + 1;
       let scrollTop = o * props.h + toleranceHeight;
       console.log(`React.useEffect -> o = ${o} -> ${scrollTop} (${toleranceHeight})`);
       update({ target: { scrollTop } });
@@ -160,24 +163,24 @@ function FileList(props) {
   };
 
   return (
-    <div id="filesContainer" onScroll={update}>
-      <div id="fileList" ref={fileListRef}>
-        <div style={{ height: headPadding }}></div>
-        {subsetItems.map((item) => (
-          <Button
-            key={`file-${item.index}`}
-            variant="file"
-            onClick={() => {
-              props.archive.loadIndex(item.index);
-              props.onSelect(item.index);
-            }}
-            selected={item.index == index}
-          >
-            {item.label}
-          </Button>
-        ))}
-        <div style={{ height: tailPadding }}></div>
-      </div>
+    <div id="filesContainer" ref={fileListRef} onScroll={update}>
+      <div id="filesContainerHead"></div>
+      <div style={{ height: headPadding }}></div>
+      {subsetItems.map((item) => (
+        <Button
+          key={`file-${item.index}`}
+          variant="file"
+          onClick={() => {
+            props.archive.loadIndex(item.index);
+            props.onSelect(props.archive, item.index);
+          }}
+          selected={item.index == index}
+        >
+          {item.label}
+        </Button>
+      ))}
+      <div style={{ height: tailPadding }}></div>
+      <div id="filesContainerTail"></div>
     </div>
   );
 }
@@ -204,7 +207,8 @@ export function Browser(props) {
 }
 
 Browser.defaultProps = {
-  onSelect: (k) => {
+  onSelect: (archive, k) => {
     console.log(`Browser.onSelect() k = ${k}`);
+    archive.disableLiveUpdate();
   },
 };

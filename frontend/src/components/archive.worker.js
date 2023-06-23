@@ -66,6 +66,23 @@ const sweepParser = new Parser()
     },
   });
 
+function reviseGridItemsGrouped() {
+  grid.itemsGrouped = {};
+  grid.items.forEach((item, index) => {
+    let elements = item.split("-");
+    let scanType = elements[2];
+    if (!(scanType in grid.itemsGrouped)) {
+      grid.itemsGrouped[scanType] = [];
+    }
+    grid.itemsGrouped[scanType].push({ item: item, index: index });
+  });
+  let index = grid.items.length ? grid.items.length - 1 : -1;
+  if (grid.scan in grid.itemsGrouped) {
+    index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+  }
+  return index;
+}
+
 self.onmessage = ({ data: { task, name, date, symbol } }) => {
   let day = dayjs.utc(0);
   if (date !== undefined) {
@@ -86,8 +103,6 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
     load(name);
   } else if (task == "list") {
     list(day, symbol);
-  } else if (task == "list2") {
-    list2(day, symbol);
   } else if (task == "count") {
     count(day);
   } else if (task == "month") {
@@ -96,6 +111,10 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
     toggle(name);
   } else if (task == "catchup") {
     catchup();
+  } else if (task == "prepend") {
+    prepend();
+  } else if (task == "append") {
+    append();
   } else if (task == "forward") {
     navigateForward();
   } else if (task == "backward") {
@@ -342,19 +361,20 @@ function list(day, symbol) {
               .reverse()
               .findIndex((x) => x > 0);
           grid.items = buffer.items;
-          grid.itemsGrouped = {};
-          grid.items.forEach((item, index) => {
-            let elements = item.split("-");
-            let scanType = elements[2];
-            if (!(scanType in grid.itemsGrouped)) {
-              grid.itemsGrouped[scanType] = [];
-            }
-            grid.itemsGrouped[scanType].push({ item: item, index: index });
-          });
-          let index = grid.items.length ? grid.items.length - 1 : -1;
-          if (grid.scan in grid.itemsGrouped) {
-            index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-          }
+          // grid.itemsGrouped = {};
+          // grid.items.forEach((item, index) => {
+          //   let elements = item.split("-");
+          //   let scanType = elements[2];
+          //   if (!(scanType in grid.itemsGrouped)) {
+          //     grid.itemsGrouped[scanType] = [];
+          //   }
+          //   grid.itemsGrouped[scanType].push({ item: item, index: index });
+          // });
+          // let index = grid.items.length ? grid.items.length - 1 : -1;
+          // if (grid.scan in grid.itemsGrouped) {
+          //   index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+          // }
+          let index = reviseGridItemsGrouped();
           self.postMessage({ type: "list", payload: grid });
           if (grid.hour < 0) {
             self.postMessage({ type: "message", payload: "No Data" });
@@ -363,7 +383,7 @@ function list(day, symbol) {
           setGridIndex(index);
         });
       } else {
-        console.info(
+        console.warn(
           `%carchive.worker.list()%c response.status = ${response.status} != 200`,
           `color: ${namecolor}`,
           ""
@@ -658,6 +678,55 @@ function catchup() {
       console.error("Unable to catch up.");
     }
   });
+}
+
+function prepend() {
+  let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).subtract(1, "hour");
+  let dateTimeString = day.format("YYYYMMDD-HH00");
+  console.log(
+    `%carchive.worker.prepend()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString}`,
+    `color: ${namecolor}`,
+    "",
+    "color: mediumpurple",
+    ""
+  );
+  // Fetch the previous hour from the server
+  const url = `/data/list/${pathway}/${dateTimeString}-${grid.symbol}/`;
+  fetch(url).then((response) => {
+    if (response.status == 200) {
+      response.json().then((buffer) => {
+        // if (state.verbose > 1) {
+        console.debug("list buffer", buffer);
+        // }
+        grid.hour = buffer.hour;
+        grid.index = grid.index + buffer.items.length;
+        grid.hoursActive = grid.hoursActive;
+        grid.dateTimeString = dateTimeString;
+        grid.latestHour =
+          23 -
+          grid.hoursActive
+            .slice()
+            .reverse()
+            .findIndex((x) => x > 0);
+        grid.items = [...buffer.items, ...grid.items];
+        reviseGridItemsGrouped();
+        self.postMessage({ type: "list", payload: grid });
+      });
+    } else {
+      console.warn(
+        `%carchive.worker.prepend()%c response.status = ${response.status} != 200`,
+        `color: ${namecolor}`,
+        ""
+      );
+      response.text().then((response) => {
+        self.postMessage({ type: "message", payload: response });
+      });
+    }
+  });
+}
+
+function append() {
+  console.log(`%carchive.worker.append()%c`, `color: ${namecolor}`, "color: dodgerblue");
 }
 
 function setGridIndex(index) {

@@ -124,12 +124,14 @@ Copyright Boonleng Cheong
   width: 100%;
   top: 0;
 }
-#fileList {
-  padding-top: calc(
+#filesContainerHead {
+  height: calc(
     var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
       var(--small-button-height) + 1px
   );
-  padding-bottom: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
+}
+#filesContainerTail {
+  height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
 }
 #listContainer {
   overflow-y: auto;

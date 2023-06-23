@@ -37,6 +37,9 @@ class Archive extends Ingest {
     this.month = this.month.bind(this);
     this.count = this.count.bind(this);
     this.catchup = this.catchup.bind(this);
+    this.prepend = this.prepend.bind(this);
+    this.append = this.append.bind(this);
+
     this.loadIndex = this.loadIndex.bind(this);
     this.updateAge = this.updateAge.bind(this);
 
@@ -175,6 +178,9 @@ class Archive extends Ingest {
 
   // Expect something like day = dayjs.utc('2013-05-20'), hour = 19, symbol = 'Z'
   list(day, hour, symbol = this.grid.symbol) {
+    if (this.state.itemsUpdating) {
+      return;
+    }
     if (day === undefined || isNaN(day)) {
       console.error(`%carchive.list()%c Invalid input day`, "color: lightseagreen", "");
       return;
@@ -190,24 +196,6 @@ class Archive extends Ingest {
     }
     this.state.itemsUpdating = true;
     this.worker.postMessage({ task: "list", date: day.unix(), hour: hour, symbol: symbol });
-  }
-
-  list2(day, hour, symbol = this.grid.symbol) {
-    if (day === undefined || isNaN(day)) {
-      console.error(`%carchive.list2()%c Invalid input day`, "color: lightseagreen", "");
-      return;
-    }
-    day = day.hour(hour);
-    if (this.state.verbose) {
-      let dateTimeString = day.format("YYYYMMDD-HH00");
-      console.log(
-        `%carchive.list()%c   day = ${dateTimeString}   hour = ${hour}   symbol = ${symbol} / ${this.grid.symbol}`,
-        "color: lightseagreen",
-        ""
-      );
-    }
-    this.state.itemsUpdating = true;
-    this.worker.postMessage({ task: "list2", date: day.unix(), hour: hour, symbol: symbol });
   }
 
   loadIndex(index) {
@@ -269,6 +257,22 @@ class Archive extends Ingest {
 
   catchup() {
     this.worker.postMessage({ task: "catchup" });
+  }
+
+  prepend() {
+    if (this.state.itemsUpdating) {
+      return;
+    }
+    this.state.itemsUpdating = true;
+    this.worker.postMessage({ task: "prepend" });
+  }
+
+  append() {
+    if (this.state.itemsUpdating) {
+      return;
+    }
+    this.state.itemsUpdating = true;
+    this.worker.postMessage({ task: "append" });
   }
 
   toggleLiveUpdate(mode = "auto") {
