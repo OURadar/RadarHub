@@ -9,6 +9,8 @@
 
 import React from "react";
 
+import { clamp } from "./common";
+
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -105,26 +107,28 @@ function FileList(props) {
   const [tailPadding, setTailPadding] = React.useState(maxIndex * props.h);
 
   const update = ({ target: { scrollTop } }) => {
-    let v = minIndex + (scrollTop - toleranceHeight) / props.h;
-    let o = Math.min(maxIndex, Math.round(v));
-    // console.log(
-    //   `scrollTop = ${scrollTop}   toleranceHeight = ${toleranceHeight}   props.h = ${props.h}  o = ${o} / ${v}`
-    // );
+    const o = clamp(minIndex + Math.round((scrollTop - toleranceHeight) / props.h), 0, maxIndex);
     if (o == offset) {
       return;
     }
     const head = Math.max(minIndex, o);
-    const tail = Math.min(maxIndex, o + stride - 1);
+    const tail = Math.min(maxIndex, o + stride);
     const data = [];
-    for (let i = head; i <= tail; i++) {
-      data.push({ index: i, label: items[i] });
+    for (let k = head; k < tail; k++) {
+      data.push({ index: k, label: items[k] });
     }
 
-    console.log(
-      `udpate scrollTop = ${scrollTop} ${props.h}  [${o}..${o + stride - 1}] -> [${head}..${tail}] out of ${
-        items.length
-      }`
+    console.debug(
+      `%cudpate%c scrollTop = ${scrollTop}  o = ${o} -> [${head}..${tail}] out of ${items.length}`,
+      "color: deeppink",
+      ""
     );
+
+    if (o < tolerance) {
+      console.log(`%cupdate%c fetch <<< ${head}`, "color: deeppink", "");
+    } else if (o > maxIndex - count) {
+      console.log(`%cupdate%c fetch >>>`, "color: deeppink", "");
+    }
 
     let p = Math.max((o - minIndex) * props.h, 0);
     setOffset(o);

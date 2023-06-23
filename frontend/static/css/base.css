@@ -1010,8 +1010,3 @@ div.key {
   padding-bottom: 100px;
   border-radius: var(--button-border-radius);
 }
-
-.viewport {
-  width: 100%;
-  overflow-y: auto;
-}
