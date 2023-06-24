@@ -99,8 +99,9 @@ function FileList(props) {
 
   const fileListRef = React.useRef(null);
 
-  const body = 10;
   const stem = 5;
+  const body = 15;
+  const fetch = 20;
   const extent = body + 2 * stem;
 
   const [subsetItems, setSubsetItems] = React.useState([]);
@@ -125,7 +126,8 @@ function FileList(props) {
         s -= 1;
       }
     }
-    if (s != subsetStart) {
+    setHeadPadding(o);
+    if (!pending && s != subsetStart) {
       // console.debug(
       //   `%cudpate-%c o = ${o} -> [${s}..${s + extent}] out of ${items.length} ${items[s]}`,
       //   "color: deeppink",
@@ -138,15 +140,14 @@ function FileList(props) {
       setSubsetItems(data);
       setSubsetStart(s);
       setHourlyStart(s > props.archive.grid.counts[0] ? s - props.archive.grid.counts[0] : s);
-      if (!pending && s < 10) {
+      if (s < fetch) {
         setPending(true);
         props.archive.prepend();
-      } else if (!pending && s > items.length - extent - 10) {
+      } else if (s > items.length - extent - fetch) {
         setPending(true);
         props.archive.append();
       }
     }
-    setHeadPadding(o);
   };
 
   React.useEffect(() => {
@@ -154,27 +155,26 @@ function FileList(props) {
       return;
     }
     if (props.archive.state.loadCount <= 1 && index != -1) {
-      let origin;
+      let s;
       if (props.archive.grid.listMode == -1) {
-        origin = props.archive.grid.counts[0] + hourlyStart;
+        s = props.archive.grid.counts[0] + hourlyStart;
         // console.debug(`prepend ${items[origin]}`);
-        setPending(false);
       } else if (props.archive.grid.listMode == 1) {
-        origin = hourlyStart;
+        s = hourlyStart;
         // console.debug(`append ${items[origin]}`);
-        setPending(false);
       } else {
-        origin = props.archive.grid.counts[0] - stem;
+        s = props.archive.grid.counts[0] - stem;
         setHeadPadding(-stem * props.h);
       }
       const data = [];
-      for (let k = origin; k < Math.min(items.length, origin + extent); k++) {
+      for (let k = s; k < Math.min(items.length, s + extent); k++) {
         data.push({ index: k, label: items[k] });
       }
       setSubsetItems(data);
-      setSubsetStart(origin);
+      setSubsetStart(s);
+      setPending(false);
     }
-  }, [items, index]);
+  }, [items]);
 
   return (
     <div className="fill" onWheel={update}>
