@@ -103,6 +103,7 @@ class Archive extends Ingest {
       this.onList(this.grid);
       this.state.itemsUpdating = false;
     } else if (type == "count") {
+      // DEPRECATING
       this.grid.hoursActive = payload.hoursActive;
       this.state.hoursActiveUpdating = false;
       let hour = this.grid.hour;

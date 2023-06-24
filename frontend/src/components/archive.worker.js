@@ -29,6 +29,7 @@ let grid = {
   pathsActive: new Array(4).fill(false),
   latestScan: "",
   latestHour: -1,
+  counts: [0, 0],
   items: [],
   itemsGrouped: {},
   hour: -1,
@@ -102,7 +103,7 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
   } else if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list(day, symbol);
+    list2(day, symbol);
   } else if (task == "count") {
     count(day);
   } else if (task == "month") {
@@ -453,6 +454,7 @@ function list2(day, symbol) {
               .slice()
               .reverse()
               .findIndex((x) => x > 0);
+          grid.counts = buffer.counts;
           grid.items = buffer.items;
           grid.itemsGrouped = {};
           grid.items.forEach((item, index) => {

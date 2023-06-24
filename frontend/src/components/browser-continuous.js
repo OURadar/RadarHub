@@ -94,7 +94,7 @@ function FileList(props) {
 
   const fileListRef = React.useRef(null);
 
-  const body = 30;
+  const body = 10;
   const stem = 5;
   const extent = body + 2 * stem;
   const maxIndex = items.length - 1;
@@ -103,45 +103,40 @@ function FileList(props) {
   const [subsetItems, setSubsetItems] = React.useState([]);
   const [subsetStart, setSubsetStart] = React.useState(0);
   const [headPadding, setHeadPadding] = React.useState(0);
-  const [tailPadding, setTailPadding] = React.useState(maxIndex * props.h);
 
   const update = (e) => {
     e.preventDefault();
     let o = headPadding - e.deltaY;
-    // console.log("update", e.deltaY, o);
-    if (e.deltaY > 0 && o < -stem * props.h && subsetStart < maxIndex - extent) {
-      o += props.h;
-      let s = subsetStart + 1;
-      const head = Math.max(minIndex, minIndex + s);
-      const tail = Math.min(maxIndex, minIndex + s + extent);
-      console.debug(`%cudpate-%c o = ${o} -> [${head}..${tail}] out of ${items.length}`, "color: deeppink", "");
-      const data = [];
-      for (let k = head; k < tail; k++) {
-        data.push({ index: k, label: items[k] });
+    let s = subsetStart;
+    if (e.deltaY > 0) {
+      while (o < -stem * props.h && s < maxIndex - extent) {
+        o += props.h;
+        s += 1;
       }
-      setSubsetItems(data);
-      setSubsetStart(s);
-    } else if (e.deltaY < 0 && o > -(stem - 1) * props.h && subsetStart > 1) {
-      o -= props.h;
-      let s = subsetStart - 1;
-      const head = Math.max(minIndex, minIndex + s);
-      const tail = Math.min(maxIndex, minIndex + s + extent);
-      console.debug(`%cudpate+%c o = ${o} -> [${head}..${tail}] out of ${items.length}`, "color: deeppink", "");
+    } else if (e.deltaY < 0) {
+      while (o > (1 - stem) * props.h && s > 1) {
+        o -= props.h;
+        s -= 1;
+      }
+    }
+    if (s != subsetStart) {
+      console.debug(
+        `%cudpate-%c o = ${o} -> [${s}..${s + extent}] out of ${items.length} [${props.h}]`,
+        "color: deeppink",
+        ""
+      );
+      if (s < stem) {
+        console.log(`%cupdate%c prepend ${s}`, "color: deeppink", "");
+      } else if (s > maxIndex - stem) {
+        console.log(`%cupdate%c append ${s}`, "color: deeppink", "");
+      }
       const data = [];
-      for (let k = head; k < tail; k++) {
+      for (let k = s; k < s + extent; k++) {
         data.push({ index: k, label: items[k] });
       }
       setSubsetItems(data);
       setSubsetStart(s);
     }
-
-    // if (o < tolerance) {
-    //   console.log(`%cupdate%c fetch <<< ${head}`, "color: deeppink", "");
-    //   props.archive.prepend();
-    // } else if (o > maxIndex - count) {
-    //   console.log(`%cupdate%c fetch >>>`, "color: deeppink", "");
-    //   props.archive.append();
-    // }
     setHeadPadding(o);
   };
 
@@ -151,21 +146,14 @@ function FileList(props) {
     }
     // console.log(`props.archive.state.loadCount = ${props.archive.state.loadCount}`);
     if (props.archive.state.loadCount <= 1 && index != -1) {
-      // let o = minIndex + items.length - count - tolerance + 1;
-      // let o = minIndex + props.archive.grid.index - count - tolerance + 1;
-      // let s = o * props.h + toleranceHeight;
-      // console.log(`React.useEffect -> o = ${o} -> ${s} (${toleranceHeight})`);
-      // update({ target: { scrollTop: s } });
       const data = [];
-      for (let k = minIndex; k < Math.min(maxIndex, minIndex + extent); k++) {
+      const origin = props.archive.grid.counts[0] - stem;
+      for (let k = origin; k < Math.min(maxIndex, origin + extent); k++) {
         data.push({ index: k, label: items[k] });
       }
-      setHeadPadding(0);
+      setHeadPadding(-stem * props.h);
       setSubsetItems(data);
-      setSubsetStart(0);
-      // } else if (props.archive.grid?.latestHour > -1) {
-      //   props.archive.disableLiveUpdate();
-      // console.log(`current scrollTop = ${origin}`);
+      setSubsetStart(origin);
     }
   }, [items, index]);
 
@@ -174,22 +162,24 @@ function FileList(props) {
   };
 
   return (
-    <div id="filesContainer" ref={fileListRef} onWheel={update} style={{ marginTop: headPadding }}>
-      <div id="filesContainerHead"></div>
-      {subsetItems.map((item) => (
-        <Button
-          key={`file-${item.index}`}
-          variant="file"
-          onClick={() => {
-            props.archive.loadIndex(item.index);
-            props.onSelect(props.archive, item.index);
-          }}
-          selected={item.index == index}
-        >
-          {item.label}
-        </Button>
-      ))}
-      <div id="filesContainerTail"></div>
+    <div className="fill" onWheel={update}>
+      <div id="filesContainer" ref={fileListRef} style={{ marginTop: headPadding }}>
+        <div id="filesContainerHead"></div>
+        {subsetItems.map((item) => (
+          <Button
+            key={`file-${item.index}`}
+            variant="file"
+            onClick={() => {
+              props.archive.loadIndex(item.index);
+              props.onSelect(props.archive, item.index);
+            }}
+            selected={item.index == index}
+          >
+            {item.label}
+          </Button>
+        ))}
+        <div id="filesContainerTail"></div>
+      </div>
     </div>
   );
 }

@@ -273,16 +273,23 @@ def _list2(prefix, day_hour_symbol):
         c[1] = f'{c[1]}00'
     symbol = c[2] if len(c) == 3 else 'Z'
     t = '-'.join(c[:2])
-    s = time.strptime(t, r'%Y%m%d-%H%M')
-    s = time.localtime(time.mktime(s) - 3600)
-    e = time.localtime(time.mktime(s) + 7199)
-    ss = time.strftime(r'%Y-%m-%d %H:%M:%SZ', s)
-    ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
-    date_range = [ss, ee]
-    matches = File.objects.filter(
-        date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
-    head = prefix + '-'
-    return [o.name.lstrip(head).rstrip('.nc') for o in matches]
+    def subitems(timeString, offset=[0, 3599]):
+        t = time.strptime(timeString, r'%Y%m%d-%H%M')
+        s = time.localtime(time.mktime(t) + offset[0]);
+        e = time.localtime(time.mktime(t) + offset[1]);
+        ss = time.strftime(r'%Y-%m-%d %H:%M:%SZ', s)
+        ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
+        date_range = [ss, ee]
+        matches = File.objects.filter(
+            date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
+        head = prefix + '-'
+        return [o.name.lstrip(head).rstrip('.nc') for o in matches]
+    previous = subitems(t, [-3600, -1])
+    current = subitems(t)
+    return {
+        'counts': [len(previous), len(current)],
+        'items': [*previous, *current]
+    }
 
 def list2(request, pathway, day_hour_symbol):
     show = colorize('archive.list2()', 'green')
@@ -336,13 +343,16 @@ def list2(request, pathway, day_hour_symbol):
             hour = -1
     else:
         message = 'okay'
+    add = _list2(prefix, day_hour_symbol) if hour >= 0 else {'counts': [0, 0], 'items': []}
     data = {
         'hoursActive': _count(prefix, day),
         'hour': hour,
-        'items': _list2(prefix, day_hour_symbol) if hour >= 0 else [],
         'symbol': symbol,
         'message': message
     }
+    data['counts'] = add['counts']
+    data['items'] = add['items']
+    # pp.pprint(add)
     payload = json.dumps(data, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
 

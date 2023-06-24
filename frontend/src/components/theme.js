@@ -204,7 +204,6 @@ export function makeTheme(inputMode) {
                 backgroundColor: theme.palette.secondary.dark,
               },
               fontWeight: 600,
-              height: 32,
             },
           },
           {

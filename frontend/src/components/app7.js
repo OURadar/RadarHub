@@ -30,9 +30,12 @@ const useConstructor = (callback = () => {}) => {
 const getItemHeight = (theme) => {
   let h = 20;
   theme.components.MuiButton.variants.forEach((variant) => {
-    if (variant.props.variant == "file") h = variant.style.height;
+    if (variant.props.variant == "file" && variant.style.height !== undefined) {
+      h = variant.style.height;
+      return false;
+    }
+    // console.log(variant);
   });
-  // console.log(`h = ${h}`);
   return h;
 };
 
