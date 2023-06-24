@@ -96,47 +96,49 @@ function FileList(props) {
 
   const count = 30;
   const tolerance = 5;
-  const toleranceHeight = tolerance * props.h;
   const stride = count + 2 * tolerance;
   const maxIndex = items.length - 1;
   const minIndex = 0;
 
-  const [offset, setOffset] = React.useState(index - count);
+  const [origin, setOrigin] = React.useState(props.h);
+  const [offset, setOffset] = React.useState(0);
   const [subsetItems, setSubsetItems] = React.useState([]);
   const [headPadding, setHeadPadding] = React.useState(0);
   const [tailPadding, setTailPadding] = React.useState(maxIndex * props.h);
 
-  const update = ({ target: { scrollTop } }) => {
-    const o = clamp(minIndex + Math.round((scrollTop - toleranceHeight) / props.h), 0, maxIndex);
-    if (o == offset) {
-      return;
+  const update = (e) => {
+    e.preventDefault();
+    let o = origin - e.deltaY;
+    console.log("update", e.deltaY, o);
+    if (o < -tolerance * props.h) {
+      o += props.h;
+      let newOffset = offset + 1;
+      const head = Math.max(minIndex, minIndex + newOffset);
+      const tail = Math.min(maxIndex, minIndex + newOffset + stride);
+      console.debug(`%cudpate%c o = ${o} -> [${head}..${tail}] out of ${items.length}`, "color: deeppink", "");
+      const data = [];
+      for (let k = head; k < tail; k++) {
+        data.push({ index: k, label: items[k] });
+      }
+      setSubsetItems(data);
+      setOffset(newOffset);
     }
-    const head = Math.max(minIndex, o);
-    const tail = Math.min(maxIndex, o + stride);
-    const data = [];
-    for (let k = head; k < tail; k++) {
-      data.push({ index: k, label: items[k] });
-    }
+    // if (o == offset) {
+    //   return;
+    // }
 
-    console.debug(
-      `%cudpate%c scrollTop = ${scrollTop}  o = ${o} -> [${head}..${tail}] out of ${items.length}`,
-      "color: deeppink",
-      ""
-    );
+    // if (o < tolerance) {
+    //   console.log(`%cupdate%c fetch <<< ${head}`, "color: deeppink", "");
+    //   props.archive.prepend();
+    // } else if (o > maxIndex - count) {
+    //   console.log(`%cupdate%c fetch >>>`, "color: deeppink", "");
+    //   props.archive.append();
+    // }
 
-    if (o < tolerance) {
-      console.log(`%cupdate%c fetch <<< ${head}`, "color: deeppink", "");
-      props.archive.prepend();
-    } else if (o > maxIndex - count) {
-      console.log(`%cupdate%c fetch >>>`, "color: deeppink", "");
-      props.archive.append();
-    }
-
-    let p = Math.max((o - minIndex) * props.h, 0);
-    setOffset(o);
-    setHeadPadding(p);
-    setTailPadding(Math.max((maxIndex - minIndex + 1) * props.h - data.length * props.h - p, 0));
-    setSubsetItems(data);
+    setHeadPadding(o);
+    // setTailPadding(Math.max((maxIndex - minIndex + 1) * props.h - data.length * props.h - p, 0));
+    setOrigin(o);
+    // setOffset(o);
   };
 
   React.useEffect(() => {
@@ -146,15 +148,22 @@ function FileList(props) {
     // console.log(`props.archive.state.loadCount = ${props.archive.state.loadCount}`);
     if (props.archive.state.loadCount <= 1 && index != -1) {
       // let o = minIndex + items.length - count - tolerance + 1;
-      let o = minIndex + props.archive.grid.index - count - tolerance + 1;
-      let scrollTop = o * props.h + toleranceHeight;
-      console.log(`React.useEffect -> o = ${o} -> ${scrollTop} (${toleranceHeight})`);
-      update({ target: { scrollTop } });
-      setTimeout(() => {
-        fileListRef.current.children[fileListRef.current.children.length - 2].scrollIntoViewIfNeeded();
-      }, 100);
-    } else if (props.archive.grid?.latestHour > -1) {
-      props.archive.disableLiveUpdate();
+      // let o = minIndex + props.archive.grid.index - count - tolerance + 1;
+      // let s = o * props.h + toleranceHeight;
+      // console.log(`React.useEffect -> o = ${o} -> ${s} (${toleranceHeight})`);
+      // update({ target: { scrollTop: s } });
+      const data = [];
+      for (let k = minIndex; k < Math.min(maxIndex, minIndex + stride); k++) {
+        data.push({ index: k, label: items[k] });
+      }
+      setSubsetItems(data);
+      setOffset(0);
+      // setTimeout(() => {
+      //   fileListRef.current.children[fileListRef.current.children.length - 2].scrollIntoViewIfNeeded();
+      // }, 100);
+      // } else if (props.archive.grid?.latestHour > -1) {
+      //   props.archive.disableLiveUpdate();
+      // console.log(`current scrollTop = ${origin}`);
     }
   }, [items, index]);
 
@@ -163,8 +172,7 @@ function FileList(props) {
   };
 
   return (
-    <div id="filesContainer" ref={fileListRef} onScroll={update}>
-      <div id="filesContainerHead"></div>
+    <div id="filesContainer" ref={fileListRef} onWheel={update}>
       <div style={{ height: headPadding }}></div>
       {subsetItems.map((item) => (
         <Button

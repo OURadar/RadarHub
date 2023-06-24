@@ -118,7 +118,7 @@ Copyright Boonleng Cheong
 }
 #filesContainer {
   background-color: var(--system-background);
-  overflow-y: scroll;
+  overflow-y: hidden;
   position: fixed;
   height: 100vh;
   width: 100%;
