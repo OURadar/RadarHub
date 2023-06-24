@@ -94,38 +94,46 @@ function FileList(props) {
 
   const fileListRef = React.useRef(null);
 
-  const count = 30;
-  const tolerance = 5;
-  const stride = count + 2 * tolerance;
+  const body = 30;
+  const stem = 5;
+  const extent = body + 2 * stem;
   const maxIndex = items.length - 1;
   const minIndex = 0;
 
-  const [origin, setOrigin] = React.useState(props.h);
-  const [offset, setOffset] = React.useState(0);
   const [subsetItems, setSubsetItems] = React.useState([]);
+  const [subsetStart, setSubsetStart] = React.useState(0);
   const [headPadding, setHeadPadding] = React.useState(0);
   const [tailPadding, setTailPadding] = React.useState(maxIndex * props.h);
 
   const update = (e) => {
     e.preventDefault();
-    let o = origin - e.deltaY;
-    console.log("update", e.deltaY, o);
-    if (o < -tolerance * props.h) {
+    let o = headPadding - e.deltaY;
+    // console.log("update", e.deltaY, o);
+    if (e.deltaY > 0 && o < -stem * props.h && subsetStart < maxIndex - extent) {
       o += props.h;
-      let newOffset = offset + 1;
-      const head = Math.max(minIndex, minIndex + newOffset);
-      const tail = Math.min(maxIndex, minIndex + newOffset + stride);
-      console.debug(`%cudpate%c o = ${o} -> [${head}..${tail}] out of ${items.length}`, "color: deeppink", "");
+      let s = subsetStart + 1;
+      const head = Math.max(minIndex, minIndex + s);
+      const tail = Math.min(maxIndex, minIndex + s + extent);
+      console.debug(`%cudpate-%c o = ${o} -> [${head}..${tail}] out of ${items.length}`, "color: deeppink", "");
       const data = [];
       for (let k = head; k < tail; k++) {
         data.push({ index: k, label: items[k] });
       }
       setSubsetItems(data);
-      setOffset(newOffset);
+      setSubsetStart(s);
+    } else if (e.deltaY < 0 && o > -(stem - 1) * props.h && subsetStart > 1) {
+      o -= props.h;
+      let s = subsetStart - 1;
+      const head = Math.max(minIndex, minIndex + s);
+      const tail = Math.min(maxIndex, minIndex + s + extent);
+      console.debug(`%cudpate+%c o = ${o} -> [${head}..${tail}] out of ${items.length}`, "color: deeppink", "");
+      const data = [];
+      for (let k = head; k < tail; k++) {
+        data.push({ index: k, label: items[k] });
+      }
+      setSubsetItems(data);
+      setSubsetStart(s);
     }
-    // if (o == offset) {
-    //   return;
-    // }
 
     // if (o < tolerance) {
     //   console.log(`%cupdate%c fetch <<< ${head}`, "color: deeppink", "");
@@ -134,11 +142,7 @@ function FileList(props) {
     //   console.log(`%cupdate%c fetch >>>`, "color: deeppink", "");
     //   props.archive.append();
     // }
-
     setHeadPadding(o);
-    // setTailPadding(Math.max((maxIndex - minIndex + 1) * props.h - data.length * props.h - p, 0));
-    setOrigin(o);
-    // setOffset(o);
   };
 
   React.useEffect(() => {
@@ -153,14 +157,12 @@ function FileList(props) {
       // console.log(`React.useEffect -> o = ${o} -> ${s} (${toleranceHeight})`);
       // update({ target: { scrollTop: s } });
       const data = [];
-      for (let k = minIndex; k < Math.min(maxIndex, minIndex + stride); k++) {
+      for (let k = minIndex; k < Math.min(maxIndex, minIndex + extent); k++) {
         data.push({ index: k, label: items[k] });
       }
+      setHeadPadding(0);
       setSubsetItems(data);
-      setOffset(0);
-      // setTimeout(() => {
-      //   fileListRef.current.children[fileListRef.current.children.length - 2].scrollIntoViewIfNeeded();
-      // }, 100);
+      setSubsetStart(0);
       // } else if (props.archive.grid?.latestHour > -1) {
       //   props.archive.disableLiveUpdate();
       // console.log(`current scrollTop = ${origin}`);
@@ -172,8 +174,8 @@ function FileList(props) {
   };
 
   return (
-    <div id="filesContainer" ref={fileListRef} onWheel={update}>
-      <div style={{ height: headPadding }}></div>
+    <div id="filesContainer" ref={fileListRef} onWheel={update} style={{ marginTop: headPadding }}>
+      <div id="filesContainerHead"></div>
       {subsetItems.map((item) => (
         <Button
           key={`file-${item.index}`}
@@ -187,7 +189,6 @@ function FileList(props) {
           {item.label}
         </Button>
       ))}
-      <div style={{ height: tailPadding }}></div>
       <div id="filesContainerTail"></div>
     </div>
   );

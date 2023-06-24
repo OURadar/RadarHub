@@ -91,17 +91,12 @@ function reviseMode(mode) {
 }
 
 export function makePalette(theme = "light") {
-  return theme === "light"
-    ? createTheme({ palette: paletteLight })
-    : createTheme({ palette: paletteDark });
+  return theme === "light" ? createTheme({ palette: paletteLight }) : createTheme({ palette: paletteDark });
 }
 
 export function makeTheme(inputMode) {
   let { mode } = reviseMode(inputMode);
-  const border =
-    window.devicePixelRatio > 1
-      ? "solid 0.5px var(--gray3)"
-      : "solid 1.0px var(--gray5)";
+  const border = window.devicePixelRatio > 1 ? "solid 0.5px var(--gray3)" : "solid 1.0px var(--gray5)";
   let theme = createTheme({
     palette: {
       mode,
