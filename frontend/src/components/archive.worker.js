@@ -29,6 +29,7 @@ let grid = {
   pathsActive: new Array(4).fill(false),
   latestScan: "",
   latestHour: -1,
+  listMode: 0,
   counts: [0, 0],
   items: [],
   itemsGrouped: {},
@@ -399,7 +400,7 @@ function list(day, symbol) {
     });
 }
 
-function list2(day, symbol) {
+function list2(day, symbol, mode = 0) {
   let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
     `%carchive.worker.list2()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
@@ -412,6 +413,7 @@ function list2(day, symbol) {
   if (dateTimeString == grid.dateTimeString) {
     let index = grid.index;
     let currentItems = grid.items;
+    grid.listMode = mode;
     grid.items = [];
     grid.itemsGrouped = {};
     currentItems.forEach((item, index) => {
@@ -454,6 +456,7 @@ function list2(day, symbol) {
               .slice()
               .reverse()
               .findIndex((x) => x > 0);
+          grid.listMode = mode;
           grid.counts = buffer.counts;
           grid.items = buffer.items;
           grid.itemsGrouped = {};
@@ -495,32 +498,13 @@ function list2(day, symbol) {
 function prepend() {
   console.log(`%carchive.worker.prepend()%c`, `color: ${namecolor}`, "color: dodgerblue");
   let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).subtract(1, "hour");
-  list2(day, grid.symbol);
-  // let dateTimeString = day.format("YYYYMMDD-HH00");
-  // const url = `/data/list2/${pathway}/${dateTimeString}-${symbol}/`;
-  // fetch(url).then((response) => {
-  //   if (response.status == 200) {
-  //     response.json().then((buffer) => {
-  //       if (state.verbose > 1) {
-  //         console.debug("list buffer", buffer);
-  //       }
-  //       grid.hour = buffer.hour;
-  //       grid.index = -1;
-  //       grid.hoursActive = buffer.hoursActive;
-  //       grid.dateTimeString = dateTimeString;
-  //       grid.latestHour =
-  //       23 -
-  //       grid.hoursActive
-  //         .slice()
-  //         .reverse()
-  //         .findIndex((x) => x > 0);
-  //     });
-  //   }
-  // });
+  list2(day, grid.symbol, -1);
 }
 
 function append() {
   console.log(`%carchive.worker.append()%c`, `color: ${namecolor}`, "color: dodgerblue");
+  let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).add(1, "hour");
+  list2(day, grid.symbol, 1);
 }
 
 function load(name) {

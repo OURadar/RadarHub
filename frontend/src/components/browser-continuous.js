@@ -104,19 +104,17 @@ function FileList(props) {
   const body = 10;
   const stem = 5;
   const extent = body + 2 * stem;
-  const maxIndex = items.length - 1;
-  const minIndex = 0;
 
   const [subsetItems, setSubsetItems] = React.useState([]);
   const [subsetStart, setSubsetStart] = React.useState(0);
-  const [headPadding, setHeadPadding] = React.useState(0);
+  const [headPadding, setHeadPadding] = React.useState(-stem * props.h);
 
   const update = (e) => {
     e.preventDefault();
     let o = headPadding - e.deltaY;
     let s = subsetStart;
     if (e.deltaY > 0) {
-      while (o < -stem * props.h && s < maxIndex - extent) {
+      while (o < -stem * props.h && s < items.length - extent) {
         o += props.h;
         s += 1;
       }
@@ -127,22 +125,24 @@ function FileList(props) {
       }
     }
     if (s != subsetStart) {
+      let hour = parseInt(items[s].slice(9, 11));
       console.debug(
-        `%cudpate-%c o = ${o} -> [${s}..${s + extent}] out of ${items.length} [${props.h}]`,
+        `%cudpate-%c o = ${o} -> [${s}..${s + extent}] out of ${items.length} ${items[s]} -> ${hour}`,
         "color: deeppink",
         ""
       );
-      if (s < stem) {
-        props.archive.prepend();
-      } else if (s > maxIndex - stem) {
-        console.log(`%cupdate%c append ${s}`, "color: deeppink", "");
-      }
+      props.archive.grid.hour = hour;
       const data = [];
       for (let k = s; k < s + extent; k++) {
         data.push({ index: k, label: items[k] });
       }
       setSubsetItems(data);
       setSubsetStart(s);
+      if (s < stem) {
+        props.archive.prepend();
+      } else if (s > items.length - extent) {
+        props.archive.append();
+      }
     }
     setHeadPadding(o);
   };
@@ -151,14 +151,24 @@ function FileList(props) {
     if (fileListRef.current == null || fileListRef.current?.children?.length == 0) {
       return;
     }
-    // console.log(`props.archive.state.loadCount = ${props.archive.state.loadCount}`);
     if (props.archive.state.loadCount <= 1 && index != -1) {
+      let origin = props.archive.grid.counts[0];
+      let compensate = 0;
+      if (props.archive.grid.listMode == -1) {
+        origin += subsetStart;
+        console.debug(`prepend ${items[origin]}`);
+      } else if (props.archive.grid.listMode == +1) {
+        origin -= subsetStart;
+        console.debug(`append ${items[origin]}`);
+      } else {
+        origin -= stem;
+        setHeadPadding(-stem * props.h);
+      }
+      console.log(props.archive.grid.listMode, subsetStart, compensate);
       const data = [];
-      const origin = props.archive.grid.counts[0] - stem;
-      for (let k = origin; k < Math.min(maxIndex, origin + extent); k++) {
+      for (let k = origin; k < Math.min(items.length, origin + extent); k++) {
         data.push({ index: k, label: items[k] });
       }
-      setHeadPadding(-stem * props.h);
       setSubsetItems(data);
       setSubsetStart(origin);
     }

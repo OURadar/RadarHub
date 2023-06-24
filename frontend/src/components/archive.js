@@ -261,7 +261,11 @@ class Archive extends Ingest {
   }
 
   prepend() {
-    console.log(`%carchive.prepend()%c   liveUpdate = ${this.state.liveUpdate}`, "color: lightseagreen", "");
+    console.log(
+      `%carchive.prepend()%c   liveUpdate = ${this.state.liveUpdate}   itemsUpdating = ${this.state.itemsUpdating}`,
+      "color: lightseagreen",
+      ""
+    );
     if (this.state.itemsUpdating) {
       return;
     }
@@ -270,6 +274,11 @@ class Archive extends Ingest {
   }
 
   append() {
+    console.log(
+      `%carchive.append()%c   liveUpdate = ${this.state.liveUpdate}   itemsUpdating = ${this.state.itemsUpdating}`,
+      "color: lightseagreen",
+      ""
+    );
     if (this.state.itemsUpdating) {
       return;
     }
