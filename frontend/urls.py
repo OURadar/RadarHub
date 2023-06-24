@@ -14,7 +14,6 @@ urlpatterns = [
     path('data/month/<str:pathway>/<str:day>/', archives.month, name='data-month-json'),
     path('data/count/<str:pathway>/<str:day>/', archives.count, name='data-count-json'),
     path('data/list/<str:pathway>/<str:day_hour_symbol>/', archives.list, name='data-list-json'),
-    path('data/list2/<str:pathway>/<str:day_hour_symbol>/', archives.list2, name='data-list-json'),
     path('data/load/<str:pathway>/<str:name>/', archives.load, name='data-load-binary'),
     path('stats/<str:mode>/', archives.stats, name='stats'),
     path('view/<str:page>/', views.view, name='page-name'),

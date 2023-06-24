@@ -78,9 +78,27 @@ function reviseGridItemsGrouped() {
     }
     grid.itemsGrouped[scanType].push({ item: item, index: index });
   });
-  let index = grid.items.length ? grid.items.length - 1 : -1;
-  if (grid.scan in grid.itemsGrouped) {
-    index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+}
+
+// WARNING: Use this before grid.counts is replaced by buffer.counts after fetch(/data/list/...)
+function suggestGridIndex(mode, counts) {
+  let index = -1;
+  if (mode == -1 && grid.index < grid.counts[0]) {
+    // prepend
+    index = grid.index + counts[0];
+    console.log(`suggestGridIndex  prepend  ${grid.index} -> ${index}`);
+  } else if (mode == 1 && grid.index >= grid.counts[0]) {
+    // append
+    index = grid.index - grid.counts[0];
+    console.log(`suggestGridIndex  append  ${grid.index} -> ${index}`);
+  } else {
+    if (state.update == "always") {
+      index = grid.items.length - 1;
+    } else if (grid.scan in grid.itemsGrouped) {
+      index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+    } else {
+      index = grid.items.length ? grid.items.length - 1 : -1;
+    }
   }
   return index;
 }
@@ -104,7 +122,7 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
   } else if (task == "load") {
     load(name);
   } else if (task == "list") {
-    list2(day, symbol);
+    list(day, symbol);
   } else if (task == "count") {
     count(day);
   } else if (task == "month") {
@@ -306,104 +324,11 @@ function month(day) {
     });
 }
 
-// Expect something like day = dayjs.utc('2013-05-20'), symbol = 'Z'
-function list(day, symbol) {
+// Expect something like day = dayjs.utc('2013-05-20'), symbol = 'Z', mode = -1 (prepend), 1 (append), 0 (none)
+function list(day, symbol, mode = 0) {
   let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
     `%carchive.worker.list()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
-    `color: ${namecolor}`,
-    "",
-    "color: mediumpurple",
-    ""
-  );
-  // Same time, just a symbol change
-  if (dateTimeString == grid.dateTimeString) {
-    let index = grid.index;
-    let currentItems = grid.items;
-    grid.items = [];
-    grid.itemsGrouped = {};
-    currentItems.forEach((item, index) => {
-      let elements = item.split("-");
-      elements[3] = symbol;
-      item = elements.join("-");
-      grid.items.push(item);
-      let scanType = elements[2];
-      if (!(scanType in grid.itemsGrouped)) {
-        grid.itemsGrouped[scanType] = [];
-      }
-      grid.itemsGrouped[scanType].push({ item: item, index: index });
-    });
-    grid.symbol = symbol;
-    grid.index = -1;
-    setGridIndex(index);
-    self.postMessage({
-      type: "list",
-      payload: grid,
-    });
-    return;
-  }
-  // Different time, fetch from the server
-  const url = `/data/list/${pathway}/${dateTimeString}-${symbol}/`;
-  fetch(url)
-    .then((response) => {
-      if (response.status == 200) {
-        response.json().then((buffer) => {
-          if (state.verbose > 1) {
-            console.debug("list buffer", buffer);
-          }
-          grid.hour = buffer.hour;
-          grid.index = -1;
-          grid.symbol = symbol;
-          grid.hoursActive = buffer.hoursActive;
-          grid.dateTimeString = dateTimeString;
-          grid.latestHour =
-            23 -
-            grid.hoursActive
-              .slice()
-              .reverse()
-              .findIndex((x) => x > 0);
-          grid.items = buffer.items;
-          // grid.itemsGrouped = {};
-          // grid.items.forEach((item, index) => {
-          //   let elements = item.split("-");
-          //   let scanType = elements[2];
-          //   if (!(scanType in grid.itemsGrouped)) {
-          //     grid.itemsGrouped[scanType] = [];
-          //   }
-          //   grid.itemsGrouped[scanType].push({ item: item, index: index });
-          // });
-          // let index = grid.items.length ? grid.items.length - 1 : -1;
-          // if (grid.scan in grid.itemsGrouped) {
-          //   index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-          // }
-          let index = reviseGridItemsGrouped();
-          self.postMessage({ type: "list", payload: grid });
-          if (grid.hour < 0) {
-            self.postMessage({ type: "message", payload: "No Data" });
-            return;
-          }
-          setGridIndex(index);
-        });
-      } else {
-        console.warn(
-          `%carchive.worker.list()%c response.status = ${response.status} != 200`,
-          `color: ${namecolor}`,
-          ""
-        );
-        response.text().then((response) => {
-          self.postMessage({ type: "message", payload: response });
-        });
-      }
-    })
-    .catch((error) => {
-      console.error(`Unexpected error ${error}`);
-    });
-}
-
-function list2(day, symbol, mode = 0) {
-  let dateTimeString = day.format("YYYYMMDD-HH00");
-  console.info(
-    `%carchive.worker.list2()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
     `color: ${namecolor}`,
     "",
     "color: mediumpurple",
@@ -437,7 +362,7 @@ function list2(day, symbol, mode = 0) {
     return;
   }
   // Different time, fetch from the server
-  const url = `/data/list2/${pathway}/${dateTimeString}-${symbol}/`;
+  const url = `/data/list/${pathway}/${dateTimeString}-${symbol}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200) {
@@ -445,8 +370,8 @@ function list2(day, symbol, mode = 0) {
           if (state.verbose > 1) {
             console.debug("list buffer", buffer);
           }
+          let index = suggestGridIndex(mode, buffer.counts);
           grid.hour = buffer.hour;
-          grid.index = -1;
           grid.symbol = symbol;
           grid.hoursActive = buffer.hoursActive;
           grid.dateTimeString = dateTimeString;
@@ -459,19 +384,7 @@ function list2(day, symbol, mode = 0) {
           grid.listMode = mode;
           grid.counts = buffer.counts;
           grid.items = buffer.items;
-          grid.itemsGrouped = {};
-          grid.items.forEach((item, index) => {
-            let elements = item.split("-");
-            let scanType = elements[2];
-            if (!(scanType in grid.itemsGrouped)) {
-              grid.itemsGrouped[scanType] = [];
-            }
-            grid.itemsGrouped[scanType].push({ item: item, index: index });
-          });
-          let index = grid.items.length ? grid.items.length - 1 : -1;
-          if (grid.scan in grid.itemsGrouped) {
-            index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-          }
+          reviseGridItemsGrouped();
           self.postMessage({ type: "list", payload: grid });
           if (grid.hour < 0) {
             self.postMessage({ type: "message", payload: "No Data" });
@@ -498,13 +411,13 @@ function list2(day, symbol, mode = 0) {
 function prepend() {
   console.log(`%carchive.worker.prepend()%c`, `color: ${namecolor}`, "color: dodgerblue");
   let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).subtract(1, "hour");
-  list2(day, grid.symbol, -1);
+  list(day, grid.symbol, -1);
 }
 
 function append() {
   console.log(`%carchive.worker.append()%c`, `color: ${namecolor}`, "color: dodgerblue");
   let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).add(1, "hour");
-  list2(day, grid.symbol, 1);
+  list(day, grid.symbol, 1);
 }
 
 function load(name) {
@@ -660,24 +573,16 @@ function catchup() {
           grid.latestHour = buffer.hour;
           grid.hour = buffer.hour;
           grid.items = buffer.items;
-          grid.itemsGrouped = {};
-          grid.items.forEach((item, index) => {
-            let elements = item.split("-");
-            let scanType = elements[2];
-            if (!(scanType in grid.itemsGrouped)) {
-              grid.itemsGrouped[scanType] = [];
-            }
-            grid.itemsGrouped[scanType].push({ item: item, index: index });
-          });
+          reviseGridItemsGrouped();
           grid.yearsActive.splice(100, buffer.yearsActive.length, ...buffer.yearsActive);
-          let index = grid.items.length ? grid.items.length - 1 : -1;
-          if (state.update == "always") {
-            index = grid.items.length - 1;
-          } else if (grid.scan in grid.itemsGrouped) {
-            index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-          } else {
-            index = grid.items.length ? grid.items.length - 1 : -1;
-          }
+          let index = suggestGridIndex(0, [0, 0]);
+          // if (state.update == "always") {
+          //   index = grid.items.length - 1;
+          // } else if (grid.scan in grid.itemsGrouped) {
+          //   index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+          // } else {
+          //   index = grid.items.length ? grid.items.length - 1 : -1;
+          // }
           setGridIndex(index);
           if (state.verbose > 1) {
             console.debug("grid.items", grid.items);
