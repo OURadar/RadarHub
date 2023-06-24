@@ -81,24 +81,28 @@ function reviseGridItemsGrouped() {
 }
 
 // WARNING: Use this before grid.counts is replaced by buffer.counts after fetch(/data/list/...)
-function suggestGridIndex(mode, counts) {
+function suggestGridIndex(mode, { counts, items }) {
+  // console.log("suggestGridIndex", counts, items);
   let index = -1;
   if (mode == -1 && grid.index < grid.counts[0]) {
     // prepend
     index = grid.index + counts[0];
-    console.log(`suggestGridIndex  prepend  ${grid.index} -> ${index}`);
   } else if (mode == 1 && grid.index >= grid.counts[0]) {
     // append
     index = grid.index - grid.counts[0];
-    console.log(`suggestGridIndex  append  ${grid.index} -> ${index}`);
-  } else {
-    if (state.update == "always") {
-      index = grid.items.length - 1;
-    } else if (grid.scan in grid.itemsGrouped) {
-      index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-    } else {
-      index = grid.items.length ? grid.items.length - 1 : -1;
+  } else if (state.update == "always") {
+    index = grid.items.length - 1;
+  } else if (grid.scan in grid.itemsGrouped) {
+    let k = counts[0];
+    while (k < items.length) {
+      const scan = items[k].split("-")[2];
+      if (scan == grid.scan) {
+        break;
+      }
+      k++;
     }
+    index = k;
+    // grid.itemsGrouped[grid.scan].slice(-1)[0].index;
   }
   return index;
 }
@@ -370,7 +374,7 @@ function list(day, symbol, mode = 0) {
           if (state.verbose > 1) {
             console.debug("list buffer", buffer);
           }
-          let index = suggestGridIndex(mode, buffer.counts);
+          let index = suggestGridIndex(mode, buffer);
           grid.hour = buffer.hour;
           grid.symbol = symbol;
           grid.hoursActive = buffer.hoursActive;
@@ -575,14 +579,15 @@ function catchup() {
           grid.items = buffer.items;
           reviseGridItemsGrouped();
           grid.yearsActive.splice(100, buffer.yearsActive.length, ...buffer.yearsActive);
-          let index = suggestGridIndex(0, [0, 0]);
-          // if (state.update == "always") {
-          //   index = grid.items.length - 1;
-          // } else if (grid.scan in grid.itemsGrouped) {
-          //   index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-          // } else {
-          //   index = grid.items.length ? grid.items.length - 1 : -1;
-          // }
+          // let index = suggestGridIndex(0, { counts: [0, 0], items: [] });
+          let index;
+          if (state.update == "always") {
+            index = grid.items.length - 1;
+          } else if (grid.scan in grid.itemsGrouped) {
+            index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+          } else {
+            index = grid.items.length ? grid.items.length - 1 : -1;
+          }
           setGridIndex(index);
           if (state.verbose > 1) {
             console.debug("grid.items", grid.items);
