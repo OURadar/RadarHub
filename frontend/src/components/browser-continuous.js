@@ -9,8 +9,6 @@
 
 import React from "react";
 
-import { clamp } from "./common";
-
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -107,7 +105,10 @@ function FileList(props) {
 
   const [subsetItems, setSubsetItems] = React.useState([]);
   const [subsetStart, setSubsetStart] = React.useState(0);
+  const [hourlyStart, setHourlyStart] = React.useState(0);
   const [headPadding, setHeadPadding] = React.useState(-stem * props.h);
+
+  const [pending, setPending] = React.useState(false);
 
   const update = (e) => {
     e.preventDefault();
@@ -125,22 +126,23 @@ function FileList(props) {
       }
     }
     if (s != subsetStart) {
-      let hour = parseInt(items[s].slice(9, 11));
-      console.debug(
-        `%cudpate-%c o = ${o} -> [${s}..${s + extent}] out of ${items.length} ${items[s]} -> ${hour}`,
-        "color: deeppink",
-        ""
-      );
-      props.archive.grid.hour = hour;
+      // console.debug(
+      //   `%cudpate-%c o = ${o} -> [${s}..${s + extent}] out of ${items.length} ${items[s]}`,
+      //   "color: deeppink",
+      //   ""
+      // );
       const data = [];
       for (let k = s; k < s + extent; k++) {
         data.push({ index: k, label: items[k] });
       }
       setSubsetItems(data);
       setSubsetStart(s);
-      if (s < stem) {
+      setHourlyStart(s > props.archive.grid.counts[0] ? s - props.archive.grid.counts[0] : s);
+      if (!pending && s < 10) {
+        setPending(true);
         props.archive.prepend();
-      } else if (s > items.length - extent) {
+      } else if (!pending && s > items.length - extent - 10) {
+        setPending(true);
         props.archive.append();
       }
     }
@@ -152,19 +154,19 @@ function FileList(props) {
       return;
     }
     if (props.archive.state.loadCount <= 1 && index != -1) {
-      let origin = props.archive.grid.counts[0];
-      let compensate = 0;
+      let origin;
       if (props.archive.grid.listMode == -1) {
-        origin += subsetStart;
-        console.debug(`prepend ${items[origin]}`);
-      } else if (props.archive.grid.listMode == +1) {
-        origin -= subsetStart;
-        console.debug(`append ${items[origin]}`);
+        origin = props.archive.grid.counts[0] + hourlyStart;
+        // console.debug(`prepend ${items[origin]}`);
+        setPending(false);
+      } else if (props.archive.grid.listMode == 1) {
+        origin = hourlyStart;
+        // console.debug(`append ${items[origin]}`);
+        setPending(false);
       } else {
-        origin -= stem;
+        origin = props.archive.grid.counts[0] - stem;
         setHeadPadding(-stem * props.h);
       }
-      console.log(props.archive.grid.listMode, subsetStart, compensate);
       const data = [];
       for (let k = origin; k < Math.min(items.length, origin + extent); k++) {
         data.push({ index: k, label: items[k] });
@@ -173,10 +175,6 @@ function FileList(props) {
       setSubsetStart(origin);
     }
   }, [items, index]);
-
-  const loadFunc = () => {
-    console.log("loading more ...");
-  };
 
   return (
     <div className="fill" onWheel={update}>
