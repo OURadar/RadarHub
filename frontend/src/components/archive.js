@@ -261,6 +261,7 @@ class Archive extends Ingest {
   }
 
   prepend() {
+    console.log(`%carchive.prepend()%c   liveUpdate = ${this.state.liveUpdate}`, "color: lightseagreen", "");
     if (this.state.itemsUpdating) {
       return;
     }
@@ -279,7 +280,7 @@ class Archive extends Ingest {
   toggleLiveUpdate(mode = "auto") {
     if (this.state.verbose) {
       console.log(
-        `%carchive.toggleLiveUpdate()%c` + `   liveUpdate = ${this.state.liveUpdate}` + `   mode = ${mode}`,
+        `%carchive.toggleLiveUpdate()%c   liveUpdate = ${this.state.liveUpdate}   mode = ${mode}`,
         "color: lightseagreen",
         ""
       );
@@ -327,15 +328,11 @@ class Archive extends Ingest {
   }
 
   navigateForwardScan() {
-    this.worker.postMessage({
-      task: "forward-scan",
-    });
+    this.worker.postMessage({ task: "forward-scan" });
   }
 
   navigateBackwardScan() {
-    this.worker.postMessage({
-      task: "backward-scan",
-    });
+    this.worker.postMessage({ task: "backward-scan" });
   }
 
   setDayHour(day, hour) {

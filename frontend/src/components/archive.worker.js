@@ -492,6 +492,37 @@ function list2(day, symbol) {
     });
 }
 
+function prepend() {
+  console.log(`%carchive.worker.prepend()%c`, `color: ${namecolor}`, "color: dodgerblue");
+  let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).subtract(1, "hour");
+  list2(day, grid.symbol);
+  // let dateTimeString = day.format("YYYYMMDD-HH00");
+  // const url = `/data/list2/${pathway}/${dateTimeString}-${symbol}/`;
+  // fetch(url).then((response) => {
+  //   if (response.status == 200) {
+  //     response.json().then((buffer) => {
+  //       if (state.verbose > 1) {
+  //         console.debug("list buffer", buffer);
+  //       }
+  //       grid.hour = buffer.hour;
+  //       grid.index = -1;
+  //       grid.hoursActive = buffer.hoursActive;
+  //       grid.dateTimeString = dateTimeString;
+  //       grid.latestHour =
+  //       23 -
+  //       grid.hoursActive
+  //         .slice()
+  //         .reverse()
+  //         .findIndex((x) => x > 0);
+  //     });
+  //   }
+  // });
+}
+
+function append() {
+  console.log(`%carchive.worker.append()%c`, `color: ${namecolor}`, "color: dodgerblue");
+}
+
 function load(name) {
   const url = `/data/load/${pathway}/${name}/`;
   if (state.verbose) {
@@ -680,55 +711,6 @@ function catchup() {
       console.error("Unable to catch up.");
     }
   });
-}
-
-function prepend() {
-  let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).subtract(1, "hour");
-  let dateTimeString = day.format("YYYYMMDD-HH00");
-  console.log(
-    `%carchive.worker.prepend()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString}`,
-    `color: ${namecolor}`,
-    "",
-    "color: mediumpurple",
-    ""
-  );
-  // Fetch the previous hour from the server
-  const url = `/data/list/${pathway}/${dateTimeString}-${grid.symbol}/`;
-  fetch(url).then((response) => {
-    if (response.status == 200) {
-      response.json().then((buffer) => {
-        // if (state.verbose > 1) {
-        console.debug("list buffer", buffer);
-        // }
-        grid.hour = buffer.hour;
-        grid.index = grid.index + buffer.items.length;
-        grid.hoursActive = grid.hoursActive;
-        grid.dateTimeString = dateTimeString;
-        grid.latestHour =
-          23 -
-          grid.hoursActive
-            .slice()
-            .reverse()
-            .findIndex((x) => x > 0);
-        grid.items = [...buffer.items, ...grid.items];
-        reviseGridItemsGrouped();
-        self.postMessage({ type: "list", payload: grid });
-      });
-    } else {
-      console.warn(
-        `%carchive.worker.prepend()%c response.status = ${response.status} != 200`,
-        `color: ${namecolor}`,
-        ""
-      );
-      response.text().then((response) => {
-        self.postMessage({ type: "message", payload: response });
-      });
-    }
-  });
-}
-
-function append() {
-  console.log(`%carchive.worker.append()%c`, `color: ${namecolor}`, "color: dodgerblue");
 }
 
 function setGridIndex(index) {

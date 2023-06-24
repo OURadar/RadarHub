@@ -71,6 +71,13 @@ function HourList(props) {
   const ok = props.archive.grid !== null;
   const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
+  const hour = ok ? props.archive.grid.hour : -1;
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+
+  React.useEffect(() => {
+    forceUpdate();
+  }, [hour]);
+
   return (
     <div id="hoursContainer">
       {hours.map((_, k) => (
@@ -78,7 +85,7 @@ function HourList(props) {
           key={`hour-${k}`}
           variant="hour"
           disabled={hours[k] == 0}
-          selected={hours[k] > 0 && k == props.archive.grid.hour}
+          selected={hours[k] > 0 && k == hour}
           onClick={() => props.archive.setDayHour(day, k)}
         >
           {k.toString().padStart(2, "0")}
@@ -126,7 +133,7 @@ function FileList(props) {
         ""
       );
       if (s < stem) {
-        console.log(`%cupdate%c prepend ${s}`, "color: deeppink", "");
+        props.archive.prepend();
       } else if (s > maxIndex - stem) {
         console.log(`%cupdate%c append ${s}`, "color: deeppink", "");
       }
