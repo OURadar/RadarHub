@@ -143,7 +143,7 @@ function FileList(props) {
       if (s < fetch) {
         setPending(true);
         props.archive.prepend();
-      } else if (s > items.length - extent - fetch && props.archive.grid.listMode != 2) {
+      } else if (s > items.length - extent - fetch && props.archive.grid.moreAfter) {
         setPending(true);
         props.archive.append();
       }

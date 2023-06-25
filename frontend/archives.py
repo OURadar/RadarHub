@@ -210,7 +210,7 @@ def _list2(prefix, day_hour_symbol):
         c[1] = f'{c[1]}00'
     symbol = c[2] if len(c) == 3 else 'Z'
     t = '-'.join(c[:2])
-    def subitems(timeString, offset=[0, 3599]):
+    def subitems(timeString, offset=[0, 3599], pretty=True):
         t = time.strptime(timeString, r'%Y%m%d-%H%M')
         s = time.localtime(time.mktime(t) + offset[0]);
         e = time.localtime(time.mktime(t) + offset[1]);
@@ -220,12 +220,16 @@ def _list2(prefix, day_hour_symbol):
         matches = File.objects.filter(
             date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
         head = prefix + '-'
-        return [o.name.lstrip(head).rstrip('.nc') for o in matches]
+        return [o.name.lstrip(head).rstrip('.nc') for o in matches] if pretty else matches
     previous = subitems(t, [-3600, -1])
-    current = subitems(t)
+    current = subitems(t, [0, 3599])
+    before = subitems(t, [-7200, -3599], False)
+    after = subitems(t, [3600, 7199], False)
     return {
         'counts': [len(previous), len(current)],
-        'items': [*previous, *current]
+        'items': [*previous, *current],
+        'moreBefore': len(before) > 0,
+        'moreAfter': len(after) > 0
     }
 
 def list(request, pathway, day_hour_symbol):
@@ -287,8 +291,7 @@ def list(request, pathway, day_hour_symbol):
         'symbol': symbol,
         'message': message
     }
-    data['counts'] = add['counts']
-    data['items'] = add['items']
+    data = {**data, **add}
     # pp.pprint(add)
     payload = json.dumps(data, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
@@ -508,9 +511,8 @@ def catchup(request, pathway, scan='E4.0', symbol='Z'):
             'yearsActive': _years(prefix),
             'hoursActive': _count(prefix, ymd),
             'hour': hour,
-            'counts': add['counts'],
-            'items': add['items'],
             'latestScan': _latest_scan(prefix, scan, symbol),
         }
+        data = {**data, **add}
     payload = json.dumps(data, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')

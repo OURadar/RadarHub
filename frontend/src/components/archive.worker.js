@@ -33,6 +33,8 @@ let grid = {
   counts: [0, 0],
   items: [],
   itemsGrouped: {},
+  moreBefore: false,
+  moreAfter: false,
   hour: -1,
   index: -1,
   symbol: "Z",
@@ -396,6 +398,8 @@ function list(day, symbol, mode = 0) {
           grid.listMode = mode;
           grid.counts = buffer.counts;
           grid.items = buffer.items;
+          grid.moreBefore = buffer.moreBefore;
+          grid.moreAfter = buffer.moreAfter;
           reviseGridItemsGrouped();
           setGridIndex(index);
           self.postMessage({ type: "list", payload: grid });
@@ -572,6 +576,8 @@ function catchup() {
           grid.hour = buffer.hour;
           grid.items = buffer.items;
           grid.counts = buffer.counts;
+          grid.moreBefore = buffer.moreBefore;
+          grid.moreAfter = buffer.moreAfter;
           grid.listMode = 2;
           reviseGridItemsGrouped();
           grid.yearsActive.splice(100, buffer.yearsActive.length, ...buffer.yearsActive);
