@@ -183,7 +183,7 @@ def count(_, pathway, day):
 '''
 
 
-def _list(prefix, day_hour_symbol):
+def _list(prefix, day_hour_symbol, offset=[0, 3599], pretty=True):
     c = day_hour_symbol.split('-')
     if len(c) == 1:
         c.append('0000')
@@ -191,40 +191,23 @@ def _list(prefix, day_hour_symbol):
         c[1] = f'{c[1]}00'
     symbol = c[2] if len(c) == 3 else 'Z'
     t = '-'.join(c[:2])
-    s = time.strptime(t, r'%Y%m%d-%H%M')
-    e = time.localtime(time.mktime(s) + 3599)
+    t = time.strptime(t, r'%Y%m%d-%H%M')
+    s = time.localtime(time.mktime(t) + offset[0])
+    e = time.localtime(time.mktime(t) + offset[1])
     ss = time.strftime(r'%Y-%m-%d %H:%M:%SZ', s)
     ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
     date_range = [ss, ee]
     matches = File.objects.filter(
         date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     head = prefix + '-'
-    return [o.name.lstrip(head).rstrip('.nc') for o in matches]
+    return [o.name.lstrip(head).rstrip('.nc') for o in matches] if pretty else matches
 
 
-def _list2(prefix, day_hour_symbol):
-    c = day_hour_symbol.split('-')
-    if len(c) == 1:
-        c.append('0000')
-    elif len(c[1]) == 2:
-        c[1] = f'{c[1]}00'
-    symbol = c[2] if len(c) == 3 else 'Z'
-    t = '-'.join(c[:2])
-    def subitems(timeString, offset=[0, 3599], pretty=True):
-        t = time.strptime(timeString, r'%Y%m%d-%H%M')
-        s = time.localtime(time.mktime(t) + offset[0]);
-        e = time.localtime(time.mktime(t) + offset[1]);
-        ss = time.strftime(r'%Y-%m-%d %H:%M:%SZ', s)
-        ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
-        date_range = [ss, ee]
-        matches = File.objects.filter(
-            date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
-        head = prefix + '-'
-        return [o.name.lstrip(head).rstrip('.nc') for o in matches] if pretty else matches
-    previous = subitems(t, [-3600, -1])
-    current = subitems(t, [0, 3599])
-    before = subitems(t, [-7200, -3599], False)
-    after = subitems(t, [3600, 7199], False)
+def _list_block(prefix, day_hour_symbol):
+    previous = _list(prefix, day_hour_symbol, [-3600, -1])
+    current = _list(prefix, day_hour_symbol, [0, 3599])
+    before = _list(prefix, day_hour_symbol, [-7200, -3599], False)
+    after = _list(prefix, day_hour_symbol, [3600, 7199], False)
     return {
         'counts': [len(previous), len(current)],
         'items': [*previous, *current],
@@ -284,7 +267,7 @@ def list(request, pathway, day_hour_symbol):
             hour = -1
     else:
         message = 'okay'
-    add = _list2(prefix, day_hour_symbol) if hour >= 0 else {'counts': [0, 0], 'items': []}
+    add = _list_block(prefix, day_hour_symbol) if hour >= 0 else {'counts': [0, 0], 'items': []}
     data = {
         'hoursActive': _count(prefix, day),
         'hour': hour,
@@ -503,7 +486,7 @@ def catchup(request, pathway, scan='E4.0', symbol='Z'):
         }
     else:
         date_time_string = f'{ymd}-{hour:02d}00'
-        add = _list2(prefix, f'{date_time_string}-{symbol}')
+        add = _list_block(prefix, f'{date_time_string}-{symbol}')
         data = {
             'dateTimeString': date_time_string,
             'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}Z',

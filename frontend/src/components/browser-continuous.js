@@ -140,7 +140,7 @@ function FileList(props) {
       setSubsetItems(data);
       setSubsetStart(s);
       setHourlyStart(s >= props.archive.grid.counts[0] ? s - props.archive.grid.counts[0] : s);
-      if (s < fetch) {
+      if (s < fetch && props.archive.grid.moreBefore) {
         setPending(true);
         props.archive.prepend();
       } else if (s > items.length - extent - fetch && props.archive.grid.moreAfter) {
