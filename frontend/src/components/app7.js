@@ -49,13 +49,21 @@ export function App(props) {
   const archive = React.useRef(null);
   const user = React.useRef(null);
 
+  const h = getItemHeight(theme);
+
+  const setColorMode = (mode) => {
+    user.current.setMode(mode);
+    let colors = colorDict(mode);
+    document.documentElement.setAttribute("theme", colors.name);
+    setColors(colors);
+    setTheme(makeTheme(mode));
+  };
+
   const [, handleUpdate] = React.useReducer((x) => x + 1, 0);
 
   const handleLoad = () => {
     setDisabled(archive.current?.grid.pathsActive.map((x) => !x));
   };
-
-  const [h, setH] = React.useState(getItemHeight(theme));
 
   const handleUserMessage = (message) => setMessage(message);
 
@@ -87,6 +95,8 @@ export function App(props) {
 
     user.current = new User();
     user.current.onMessage = handleUserMessage;
+
+    setColorMode(user.current.mode);
   });
 
   React.useEffect(() => {

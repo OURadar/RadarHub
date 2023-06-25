@@ -494,11 +494,13 @@ def catchup(request, pathway, scan='E4.0', symbol='Z'):
             'yearsActive': [],
             'hoursActive': [0] * 24,
             'hour': -1,
+            'counts': [0, 0],
             'items': [],
             'latestScan': '',
         }
     else:
         date_time_string = f'{ymd}-{hour:02d}00'
+        add = _list2(prefix, f'{date_time_string}-{symbol}')
         data = {
             'dateTimeString': date_time_string,
             'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}Z',
@@ -506,7 +508,8 @@ def catchup(request, pathway, scan='E4.0', symbol='Z'):
             'yearsActive': _years(prefix),
             'hoursActive': _count(prefix, ymd),
             'hour': hour,
-            'items': _list(prefix, f'{date_time_string}-{symbol}'),
+            'counts': add['counts'],
+            'items': add['items'],
             'latestScan': _latest_scan(prefix, scan, symbol),
         }
     payload = json.dumps(data, separators=(',', ':'))

@@ -139,11 +139,11 @@ function FileList(props) {
       }
       setSubsetItems(data);
       setSubsetStart(s);
-      setHourlyStart(s > props.archive.grid.counts[0] ? s - props.archive.grid.counts[0] : s);
+      setHourlyStart(s >= props.archive.grid.counts[0] ? s - props.archive.grid.counts[0] : s);
       if (s < fetch) {
         setPending(true);
         props.archive.prepend();
-      } else if (s > items.length - extent - fetch) {
+      } else if (s > items.length - extent - fetch && props.archive.grid.listMode != 2) {
         setPending(true);
         props.archive.append();
       }
@@ -151,29 +151,37 @@ function FileList(props) {
   };
 
   React.useEffect(() => {
-    if (fileListRef.current == null || fileListRef.current?.children?.length == 0) {
+    if (props.archive?.grid == null || fileListRef.current == null || fileListRef.current?.children?.length == 0) {
       return;
     }
-    if (props.archive.state.loadCount <= 1 && index != -1) {
-      let s;
-      if (props.archive.grid.listMode == -1) {
-        s = props.archive.grid.counts[0] + hourlyStart;
-        // console.debug(`prepend ${items[origin]}`);
-      } else if (props.archive.grid.listMode == 1) {
-        s = hourlyStart;
-        // console.debug(`append ${items[origin]}`);
-      } else {
-        s = props.archive.grid.counts[0] - stem;
-        setHeadPadding(-stem * props.h);
-      }
-      const data = [];
-      for (let k = s; k < Math.min(items.length, s + extent); k++) {
-        data.push({ index: k, label: items[k] });
-      }
-      setSubsetItems(data);
-      setSubsetStart(s);
-      setPending(false);
+    let s;
+    if (props.archive.grid.listMode == -1) {
+      s = props.archive.grid.counts[0] + hourlyStart;
+      // console.debug(
+      //   `%cReact.useEffect%c prepend ${s}...  index = ${index} / ${props.archive.grid.index}`,
+      //   "color: dodgerblue",
+      //   ""
+      // );
+    } else if (props.archive.grid.listMode == 1) {
+      s = hourlyStart;
+      // console.debug(`append ${items[s]}`);
+    } else if (props.archive.grid.listMode == 2) {
+      s = Math.max(props.archive.grid.index - body - stem, 0);
+      console.debug(`catchup s = ${s} / ${items.length} [${props.archive.grid.counts}]`);
+      console.debug(`catchup hour = ${props.archive.grid.hour}   hourlyStart = ${hourlyStart}`);
+      setHeadPadding(-stem * props.h);
+    } else {
+      s = props.archive.grid.counts[0] - stem;
+      setHeadPadding(-stem * props.h);
     }
+    const data = [];
+    for (let k = s; k < Math.min(items.length, s + extent); k++) {
+      data.push({ index: k, label: items[k] });
+    }
+    setSubsetItems(data);
+    setSubsetStart(s);
+    setHourlyStart(s >= props.archive.grid.counts[0] ? s - props.archive.grid.counts[0] : s);
+    setPending(false);
   }, [items]);
 
   return (
