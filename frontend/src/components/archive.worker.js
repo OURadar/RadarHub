@@ -42,7 +42,7 @@ let grid = {
 };
 let state = {
   update: "scan",
-  verbose: 1,
+  verbose: 0,
 };
 const namecolor = "#bf9140";
 
@@ -88,13 +88,17 @@ function reviseGridItemsGrouped() {
 function suggestGridIndex(mode, { counts, items }) {
   // console.log("suggestGridIndex", counts, items);
   let index = -1;
-  if (mode == -1 && grid.index >= 0 && grid.index < grid.counts[0]) {
-    // scroll-prepend
+  if (mode == "prepend" && grid.index >= 0 && grid.index < grid.counts[0]) {
     index = grid.index + counts[0];
-  } else if (mode == 1 && grid.index >= grid.counts[0]) {
-    // scroll-append
+  } else if (mode == "append" && grid.index >= grid.counts[0]) {
     index = grid.index - grid.counts[0];
-  } else if (mode == 0) {
+  } else if (mode == "catchup") {
+    if (grid.scan in grid.itemsGrouped && state.update == "scan") {
+      index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+    } else {
+      index = grid.items.length - 1;
+    }
+  } else if (mode == "select") {
     if (grid.scan in grid.itemsGrouped) {
       let k = counts[0];
       while (k < items.length) {
@@ -107,13 +111,6 @@ function suggestGridIndex(mode, { counts, items }) {
       index = k;
     } else {
       index = 0;
-    }
-  } else if (mode == 2) {
-    // catch up
-    if (grid.scan in grid.itemsGrouped && state.update == "scan") {
-      index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-    } else {
-      index = grid.items.length - 1;
     }
   }
   return index;
@@ -273,7 +270,7 @@ function updateListWithItem(item) {
   if (grid.dateTimeString != dateTimeString) {
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
-    grid.listMode = 0;
+    grid.listMode = "update";
     // grid.items = [];
     // grid.counts = [0, 0];
     // grid.itemsGrouped = {};
@@ -342,8 +339,8 @@ function month(day) {
     });
 }
 
-// Expect something like day = dayjs.utc('2013-05-20'), symbol = 'Z', mode = -1 (prepend), 1 (append), 0 (none)
-function list(day, symbol, mode = 0) {
+// Expect something like day = dayjs.utc('2013-05-20'), symbol = 'Z', mode = prepend, append, select, catchup
+function list(day, symbol, mode = "select") {
   let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
     `%carchive.worker.list()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
@@ -431,25 +428,26 @@ function prepend() {
   console.log(`%carchive.worker.prepend()%c`, `color: ${namecolor}`, "color: dodgerblue");
   toggle("offline");
   let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).subtract(1, "hour");
-  list(day, grid.symbol, -1);
+  list(day, grid.symbol, "prepend");
 }
 
 function append() {
   console.log(`%carchive.worker.append()%c`, `color: ${namecolor}`, "color: dodgerblue");
   let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).add(1, "hour");
-  list(day, grid.symbol, 1);
+  list(day, grid.symbol, "append");
 }
 
 function load(name) {
   const url = `/data/load/${pathway}/${name}/`;
+  const index = grid.items.indexOf(name);
   if (state.verbose) {
-    console.info(`%carchive.worker.load() %c${url}`, `color: ${namecolor}`, "color: dodgerblue");
+    console.info(
+      `%carchive.worker.load() %c${url}%c   index = ${index}`,
+      `color: ${namecolor}`,
+      "color: dodgerblue",
+      ""
+    );
   }
-  if (name.indexOf(".nc") > -1) {
-    console.log(`name = ${name}`);
-    console.log(grid);
-  }
-  const newIndex = grid.items.indexOf(name);
   fetch(url, { cache: "force-cache" })
     .then((response) => {
       if (response.status == 200) {
@@ -477,12 +475,13 @@ function load(name) {
           let scan = components[2];
           if (state.verbose > 1) {
             console.debug(
-              `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}   grid.index ${grid.index} -> ${newIndex}`,
+              `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}   grid.index ${grid.index} -> ${index} / ${grid.items.length}`,
               `color: ${namecolor}`,
               "color: dodgerblue"
             );
           }
           grid.scan = scan;
+          grid.index = index;
           if (sweep.nb == 0 || sweep.nr == 0) {
             console.log(sweep);
             self.postMessage({
@@ -491,7 +490,7 @@ function load(name) {
             });
             return;
           }
-          self.postMessage({ type: "load", payload: sweep });
+          self.postMessage({ type: "load", index: grid.index, payload: sweep });
         });
       } else {
         response.text().then((text) => {
@@ -581,10 +580,10 @@ function catchup() {
           grid.counts = buffer.counts;
           grid.moreBefore = buffer.moreBefore;
           grid.moreAfter = buffer.moreAfter;
-          grid.listMode = 2;
+          grid.listMode = "catchup";
           reviseGridItemsGrouped();
           grid.yearsActive.splice(100, buffer.yearsActive.length, ...buffer.yearsActive);
-          let index = suggestGridIndex(2, buffer);
+          let index = suggestGridIndex("catchup", buffer);
           if (state.verbose) {
             console.info(
               `%carchive.worker.catchup()%c` +
@@ -603,6 +602,8 @@ function catchup() {
             console.debug("grid.items", grid.items);
             console.debug("grid.itemsGrouped", grid.itemsGrouped);
           }
+          // Go ahead a set grid.index before setGridIndex() finishes loading the file
+          grid.index = index;
           self.postMessage({
             type: "list",
             payload: grid,
@@ -625,7 +626,6 @@ function setGridIndex(index) {
       "color: dodgerblue"
     );
   }
-  grid.index = index;
   if (index < 0 || index >= grid.items.length) {
     if (state.verbose > 1) {
       console.debug(
@@ -634,6 +634,7 @@ function setGridIndex(index) {
         "color: dodgerblue"
       );
     }
+    grid.index = index;
     reviseGridPaths();
     return;
   }
@@ -647,10 +648,10 @@ function setGridIndex(index) {
   }
   load(scan);
   reviseGridPaths();
-  self.postMessage({
-    type: "index",
-    payload: { index: index, pathsActive: grid.pathsActive },
-  });
+  // self.postMessage({
+  //   type: "index",
+  //   payload: { index: grid.index, pathsActive: grid.pathsActive },
+  // });
 }
 
 function navigateForward() {

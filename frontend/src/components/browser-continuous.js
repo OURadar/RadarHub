@@ -160,19 +160,20 @@ function FileList(props) {
     if (props.archive?.grid == null || fileListRef.current == null || fileListRef.current?.children?.length == 0) {
       return;
     }
-    // console.debug(
-    //   `%cReact.useEffect%c([items])   items.length = ${items.length} [${props.archive.grid.counts}]` +
-    //     `   hour = ${props.archive.grid.hour}` +
-    //     `   hourlyStart = ${hourlyStart}`,
-    //   "color: dodgerblue",
-    //   ""
-    // );
+    console.debug(
+      `%cReact.useEffect%c([items])   items.length = ${items.length} [${props.archive.grid.counts}]` +
+        `   hour = ${props.archive.grid.hour}` +
+        `   hourlyStart = ${hourlyStart}` +
+        `   index = ${index}`,
+      "color: dodgerblue",
+      ""
+    );
     let start;
-    if (props.archive.grid.listMode == -1) {
+    if (props.archive.grid.listMode == "prepend") {
       start = props.archive.grid.counts[0] + hourlyStart;
-    } else if (props.archive.grid.listMode == 1) {
+    } else if (props.archive.grid.listMode == "append") {
       start = hourlyStart;
-    } else if (props.archive.grid.listMode == 2) {
+    } else if (props.archive.grid.listMode == "catchup") {
       start = Math.max(0, props.archive.grid.index - body - stem);
       setHeadPadding(-stem * props.h);
     } else {

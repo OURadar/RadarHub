@@ -48,13 +48,14 @@ class Archive extends Ingest {
     this.init();
   }
 
-  handleMessage({ data: { type, payload } }) {
+  handleMessage({ data: { type, index, payload } }) {
     if (type == "message") {
       this.showMessage(payload);
     } else if (type == "response") {
       this.showResponse(payload);
     } else if (type == "load") {
       this.data.sweep = payload;
+      this.grid.index = index;
       this.updateAge();
       this.state.sweepLoading = false;
       if (this.state.verbose) {
