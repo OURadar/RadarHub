@@ -42,7 +42,7 @@ let grid = {
 };
 let state = {
   update: "scan",
-  verbose: 0,
+  verbose: 1,
 };
 const namecolor = "#bf9140";
 
@@ -109,9 +109,8 @@ function suggestGridIndex(mode, { counts, items }) {
       index = 0;
     }
   } else if (mode == 2) {
-    console.log("suggestGridIndex", mode);
     // catch up
-    if (grid.scan in grid.itemsGrouped) {
+    if (grid.scan in grid.itemsGrouped && state.update == "scan") {
       index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
     } else {
       index = grid.items.length - 1;
@@ -256,9 +255,17 @@ function updateListWithItem(item) {
   const t = elements[1];
   const d = elements[0];
   if (state.verbose) {
-    console.info(`%carchive.worker.updateListWithItem()%c ${d} ${t} ${scan} ${symbol}`, `color: ${namecolor}`, "");
+    console.info(
+      `%carchive.worker.updateListWithItem()%c ${d} ${t} ${scan} ${symbol} ${state.update}`,
+      `color: ${namecolor}`,
+      ""
+    );
   }
   if (symbol != grid.symbol) {
+    return;
+  }
+  if (grid.items.indexOf(item) > 0) {
+    console.warn(`Item ${item} exists.`);
     return;
   }
   const listHour = t.slice(0, 2);
@@ -267,9 +274,12 @@ function updateListWithItem(item) {
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
     grid.listMode = 0;
-    grid.items = [];
-    grid.counts = [0, 0];
-    grid.itemsGrouped = {};
+    // grid.items = [];
+    // grid.counts = [0, 0];
+    // grid.itemsGrouped = {};
+    grid.items = grid.items.slice(grid.counts[0]);
+    grid.counts = [grid.counts[1], 0];
+    reviseGridItemsGrouped();
     if (state.verbose) {
       console.info(
         `%carchive.worker.updateListWithItem()%c   ${dateTimeString} ${grid.hour}`,
@@ -277,13 +287,6 @@ function updateListWithItem(item) {
         ""
       );
     }
-  }
-  if (!(scan in grid.itemsGrouped)) {
-    grid.itemsGrouped[scan] = [];
-  }
-  if (grid.items.indexOf(item) > 0) {
-    console.warn(`Item ${item} exists.`);
-    return;
   }
   grid.items.push(item);
   grid.itemsGrouped[scan].push({ item: item, index: grid.items.length });

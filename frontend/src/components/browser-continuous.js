@@ -107,9 +107,22 @@ function FileList(props) {
   const [subsetItems, setSubsetItems] = React.useState([]);
   const [subsetStart, setSubsetStart] = React.useState(0);
   const [hourlyStart, setHourlyStart] = React.useState(0);
+  const [taskPending, setTaskPending] = React.useState(false);
   const [headPadding, setHeadPadding] = React.useState(-stem * props.h);
 
-  const [pending, setPending] = React.useState(false);
+  const updateSubset = (s) => {
+    setSubsetStart(s);
+    if (s >= props.archive.grid.counts[0]) {
+      setHourlyStart(s - props.archive.grid.counts[0]);
+    } else {
+      setHourlyStart(s);
+    }
+    let data = [];
+    for (let k = s; k < s + extent; k++) {
+      data.push({ index: k, label: items[k] });
+    }
+    setSubsetItems(data);
+  };
 
   const update = (e) => {
     e.preventDefault();
@@ -127,24 +140,18 @@ function FileList(props) {
       }
     }
     setHeadPadding(o);
-    if (!pending && s != subsetStart) {
+    if (!taskPending && s != subsetStart) {
       // console.debug(
       //   `%cudpate-%c o = ${o} -> [${s}..${s + extent}] out of ${items.length} ${items[s]}`,
       //   "color: deeppink",
       //   ""
       // );
-      const data = [];
-      for (let k = s; k < s + extent; k++) {
-        data.push({ index: k, label: items[k] });
-      }
-      setSubsetItems(data);
-      setSubsetStart(s);
-      setHourlyStart(s >= props.archive.grid.counts[0] ? s - props.archive.grid.counts[0] : s);
+      updateSubset(s);
       if (s < fetch && props.archive.grid.moreBefore) {
-        setPending(true);
+        setTaskPending(true);
         props.archive.prepend();
       } else if (s > items.length - extent - fetch && props.archive.grid.moreAfter) {
-        setPending(true);
+        setTaskPending(true);
         props.archive.append();
       }
     }
@@ -154,34 +161,27 @@ function FileList(props) {
     if (props.archive?.grid == null || fileListRef.current == null || fileListRef.current?.children?.length == 0) {
       return;
     }
+    console.debug(
+      `%cReact.useEffect%c([items])   items.length = ${items.length} [${props.archive.grid.counts}]` +
+        `   hour = ${props.archive.grid.hour}` +
+        `   hourlyStart = ${hourlyStart}`,
+      "color: dodgerblue",
+      ""
+    );
     let s;
     if (props.archive.grid.listMode == -1) {
       s = props.archive.grid.counts[0] + hourlyStart;
-      // console.debug(
-      //   `%cReact.useEffect%c prepend ${s}...  index = ${index} / ${props.archive.grid.index}`,
-      //   "color: dodgerblue",
-      //   ""
-      // );
     } else if (props.archive.grid.listMode == 1) {
       s = hourlyStart;
-      // console.debug(`append ${items[s]}`);
     } else if (props.archive.grid.listMode == 2) {
-      s = Math.max(props.archive.grid.index - body - stem, 0);
-      console.debug(`catchup s = ${s} / ${items.length} [${props.archive.grid.counts}]`);
-      console.debug(`catchup hour = ${props.archive.grid.hour}   hourlyStart = ${hourlyStart}`);
+      s = Math.max(0, props.archive.grid.index - body - stem);
       setHeadPadding(-stem * props.h);
     } else {
-      s = props.archive.grid.counts[0] - stem;
+      s = Math.max(0, props.archive.grid.counts[0] - stem);
       setHeadPadding(-stem * props.h);
     }
-    const data = [];
-    for (let k = s; k < Math.min(items.length, s + extent); k++) {
-      data.push({ index: k, label: items[k] });
-    }
-    setSubsetItems(data);
-    setSubsetStart(s);
-    setHourlyStart(s >= props.archive.grid.counts[0] ? s - props.archive.grid.counts[0] : s);
-    setPending(false);
+    updateSubset(s);
+    setTaskPending(false);
   }, [items]);
 
   return (
