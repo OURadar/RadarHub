@@ -103,6 +103,7 @@ function FileList(props) {
   const body = 15;
   const fetch = 20;
   const extent = body + 2 * stem;
+  const fetchEnd = items.length - stem - body - fetch;
 
   const [subsetItems, setSubsetItems] = React.useState([]);
   const [subsetStart, setSubsetStart] = React.useState(0);
@@ -110,15 +111,15 @@ function FileList(props) {
   const [taskPending, setTaskPending] = React.useState(false);
   const [headPadding, setHeadPadding] = React.useState(-stem * props.h);
 
-  const updateSubset = (s) => {
-    setSubsetStart(s);
-    if (s >= props.archive.grid.counts[0]) {
-      setHourlyStart(s - props.archive.grid.counts[0]);
+  const updateSubset = (start) => {
+    setSubsetStart(start);
+    if (start >= props.archive.grid.counts[0]) {
+      setHourlyStart(start - props.archive.grid.counts[0]);
     } else {
-      setHourlyStart(s);
+      setHourlyStart(start);
     }
     let data = [];
-    for (let k = s; k < s + extent; k++) {
+    for (let k = start; k < start + extent; k++) {
       data.push({ index: k, label: items[k] });
     }
     setSubsetItems(data);
@@ -126,34 +127,29 @@ function FileList(props) {
 
   const update = (e) => {
     e.preventDefault();
-    let o = headPadding - e.deltaY;
-    let s = subsetStart;
+    let start = subsetStart;
+    let padding = headPadding - e.deltaY;
     if (e.deltaY > 0) {
-      while (o < -stem * props.h && s < items.length - extent) {
-        o += props.h;
-        s += 1;
+      while (padding < -stem * props.h && start < items.length - extent) {
+        padding += props.h;
+        start += 1;
       }
     } else if (e.deltaY < 0) {
-      while (o > (1 - stem) * props.h && s > 1) {
-        o -= props.h;
-        s -= 1;
+      while (padding > (1 - stem) * props.h && start > 1) {
+        padding -= props.h;
+        start -= 1;
       }
     }
     // console.log(`Browser.update ${o} / ${stem * props.h}`);
-    if (o > -stem * props.h && o < stem * props.h) {
-      setHeadPadding(o);
+    if (padding > -stem * props.h && padding < stem * props.h) {
+      setHeadPadding(padding);
     }
-    if (!taskPending && s != subsetStart) {
-      // console.debug(
-      //   `%cudpate-%c o = ${o} -> [${s}..${s + extent}] out of ${items.length} ${items[s]}`,
-      //   "color: deeppink",
-      //   ""
-      // );
-      updateSubset(s);
-      if (s < fetch && props.archive.grid.moreBefore) {
+    if (!taskPending && start != subsetStart) {
+      updateSubset(start);
+      if (start < fetch && props.archive.grid.moreBefore) {
         setTaskPending(true);
         props.archive.prepend();
-      } else if (s > items.length - extent - fetch && props.archive.grid.moreAfter) {
+      } else if (start > fetchEnd && props.archive.grid.moreAfter) {
         setTaskPending(true);
         props.archive.append();
       }
@@ -171,19 +167,19 @@ function FileList(props) {
     //   "color: dodgerblue",
     //   ""
     // );
-    let s;
+    let start;
     if (props.archive.grid.listMode == -1) {
-      s = props.archive.grid.counts[0] + hourlyStart;
+      start = props.archive.grid.counts[0] + hourlyStart;
     } else if (props.archive.grid.listMode == 1) {
-      s = hourlyStart;
+      start = hourlyStart;
     } else if (props.archive.grid.listMode == 2) {
-      s = Math.max(0, props.archive.grid.index - body - stem);
+      start = Math.max(0, props.archive.grid.index - body - stem);
       setHeadPadding(-stem * props.h);
     } else {
-      s = Math.max(0, props.archive.grid.counts[0] - stem);
+      start = Math.max(0, props.archive.grid.counts[0] - stem);
       setHeadPadding(-stem * props.h);
     }
-    updateSubset(s);
+    updateSubset(start);
     setTaskPending(false);
   }, [items]);
 
