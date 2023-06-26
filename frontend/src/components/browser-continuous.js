@@ -101,7 +101,7 @@ function FileList(props) {
 
   const stem = 5;
   const body = 15;
-  const fetch = 20;
+  const fetch = 50;
   const extent = body + 2 * stem;
   const fetchEnd = items.length - stem - body - fetch;
 

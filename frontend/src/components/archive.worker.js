@@ -88,7 +88,7 @@ function reviseGridItemsGrouped() {
 function suggestGridIndex(mode, { counts, items }) {
   // console.log("suggestGridIndex", counts, items);
   let index = -1;
-  if (mode == -1 && grid.index < grid.counts[0]) {
+  if (mode == -1 && grid.index >= 0 && grid.index < grid.counts[0]) {
     // scroll-prepend
     index = grid.index + counts[0];
   } else if (mode == 1 && grid.index >= grid.counts[0]) {
