@@ -170,6 +170,23 @@ def count(_, pathway, day):
     return HttpResponse(payload, content_type='application/json')
 
 
+def _hour_offset_has_data(prefix, day_hour, hour_offset):
+    c = day_hour.split('-')
+    if len(c) == 1:
+        c.append('0000')
+    elif len(c[1]) == 2:
+        c[1] = f'{c[1]}00'
+    t = '-'.join(c[:2])
+    t = time.strptime(t, r'%Y%m%d-%H%M')
+    s = time.localtime(time.mktime(t) + hour_offset * 3600)
+    date = time.strftime(r'%Y-%m-%d', s)
+    days = Day.objects.filter(date=date, name=prefix)
+    if days:
+        hour = s.tm_hour
+        return days.first().hourly_count.split(',')[hour] != '0'
+    return False
+
+
 '''
     List of files - returns an array of strings
 
@@ -206,13 +223,13 @@ def _list(prefix, day_hour_symbol, offset=[0, 3599], pretty=True):
 def _list_block(prefix, day_hour_symbol):
     previous = _list(prefix, day_hour_symbol, [-3600, -1])
     current = _list(prefix, day_hour_symbol, [0, 3599])
-    before = _list(prefix, day_hour_symbol, [-7200, -3599], False)
-    after = _list(prefix, day_hour_symbol, [3600, 7199], False)
+    moreBefore = _hour_offset_has_data(prefix, day_hour_symbol, -2)
+    moreAfter = _hour_offset_has_data(prefix, day_hour_symbol, 1)
     return {
         'counts': [len(previous), len(current)],
         'items': [*previous, *current],
-        'moreBefore': len(before) > 0,
-        'moreAfter': len(after) > 0
+        'moreBefore': moreBefore,
+        'moreAfter': moreAfter
     }
 
 def list(request, pathway, day_hour_symbol):
@@ -267,7 +284,8 @@ def list(request, pathway, day_hour_symbol):
             hour = -1
     else:
         message = 'okay'
-    add = _list_block(prefix, day_hour_symbol) if hour >= 0 else {'counts': [0, 0], 'items': []}
+    # add = _list_block(prefix, day_hour_symbol) if hour >= 0 else {'counts': [0, 0], 'items': []}
+    add = _list_block(prefix, day_hour_symbol)
     data = {
         'hoursActive': _count(prefix, day),
         'hour': hour,
