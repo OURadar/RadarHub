@@ -65,9 +65,7 @@ export function App(props) {
   };
 
   useConstructor(() => {
-    document
-      .getElementById("device-style")
-      .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
+    document.getElementById("device-style").setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
 
     archive.current = new Archive(props.pathway, props.name);
     archive.current.onUpdate = handleUpdate;
@@ -93,8 +91,7 @@ export function App(props) {
     }
   };
 
-  const handleLiveModeChange = (_, value) =>
-    archive.current.toggleLiveUpdate(value);
+  const handleLiveModeChange = (_, value) => archive.current.toggleLiveUpdate(value);
 
   const handleDoubleLeft = () => archive.current.navigateBackwardScan();
   const handleLeft = () => archive.current.navigateBackward();
@@ -111,12 +108,10 @@ export function App(props) {
   };
 
   React.useEffect(() => {
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        let mode = e.matches ? "dark" : "light";
-        setColorMode(mode);
-      });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      let mode = e.matches ? "dark" : "light";
+      setColorMode(mode);
+    });
     document.documentElement.setAttribute("theme", theme.palette.mode);
   }, []);
 
@@ -152,10 +147,7 @@ export function App(props) {
               onRight={handleRight}
               onDoubleRight={handleDoubleRight}
             />
-            <MenuUpdate
-              value={archive.current?.state.liveUpdate}
-              onChange={handleLiveModeChange}
-            />
+            <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
           </div>
           <div className={panel === 1 ? "active" : "inactive"}>
             <Browser archive={archive.current} onSelect={handleBrowserSelect} />

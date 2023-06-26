@@ -22,7 +22,6 @@ class Ingest {
     this.message = "";
     this.response = "";
     this.onUpdate = (_data) => {};
-    this.onIndex = () => {};
     this.onList = () => {};
     this.onLoad = () => {};
 

@@ -74,17 +74,6 @@ class Archive extends Ingest {
       }
       this.showMessage(`${payload.name} loaded`);
       this.onLoad(this.grid);
-    } else if (type == "index") {
-      if (this.state.verbose) {
-        console.log(
-          `%carchive.handleMessage()%c index` + `   index = ${this.grid.index}`,
-          "color: lightseagreen",
-          "",
-          payload
-        );
-      }
-      this.grid = { ...this.grid, ...payload };
-      this.onIndex(this.grid);
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(

@@ -107,7 +107,7 @@ function FileList(props) {
 
   const [subsetItems, setSubsetItems] = React.useState([]);
   const [subsetStart, setSubsetStart] = React.useState(0);
-  const [hourlyStart, setHourlyStart] = React.useState(0);
+  const [hourlyStart, setHourlyStart] = React.useState(-1);
   const [taskPending, setTaskPending] = React.useState(false);
   const [headPadding, setHeadPadding] = React.useState(-stem * props.h);
 
@@ -140,7 +140,6 @@ function FileList(props) {
         start -= 1;
       }
     }
-    // console.log(`Browser.update ${o} / ${stem * props.h}`);
     if (padding > -stem * props.h && padding < stem * props.h) {
       setHeadPadding(padding);
     }
@@ -160,14 +159,6 @@ function FileList(props) {
     if (props.archive?.grid == null || fileListRef.current == null || fileListRef.current?.children?.length == 0) {
       return;
     }
-    console.debug(
-      `%cReact.useEffect%c([items])   items.length = ${items.length} [${props.archive.grid.counts}]` +
-        `   hour = ${props.archive.grid.hour}` +
-        `   hourlyStart = ${hourlyStart}` +
-        `   index = ${index}`,
-      "color: dodgerblue",
-      ""
-    );
     let start;
     if (props.archive.grid.listMode == "prepend") {
       start = props.archive.grid.counts[0] + hourlyStart;
@@ -180,6 +171,16 @@ function FileList(props) {
       start = Math.max(0, props.archive.grid.counts[0] - stem);
       setHeadPadding(-stem * props.h);
     }
+    console.debug(
+      `%cReact.useEffect%c([items])` +
+        `   items.length = ${items.length} [${props.archive.grid.counts}]` +
+        `   start = ${start}` +
+        `   hour = ${props.archive.grid.hour}` +
+        `   hourlyStart = ${hourlyStart}` +
+        `   index = ${index}`,
+      "color: dodgerblue",
+      ""
+    );
     updateSubset(start);
     setTaskPending(false);
   }, [items]);

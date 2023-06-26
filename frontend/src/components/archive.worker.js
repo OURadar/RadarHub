@@ -29,7 +29,7 @@ let grid = {
   pathsActive: new Array(4).fill(false),
   latestScan: "",
   latestHour: -1,
-  listMode: 0,
+  listMode: null,
   counts: [0, 0],
   items: [],
   itemsGrouped: {},
@@ -271,9 +271,6 @@ function updateListWithItem(item) {
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
     grid.listMode = "update";
-    // grid.items = [];
-    // grid.counts = [0, 0];
-    // grid.itemsGrouped = {};
     grid.items = grid.items.slice(grid.counts[0]);
     grid.counts = [grid.counts[1], 0];
     reviseGridItemsGrouped();
@@ -401,7 +398,11 @@ function list(day, symbol, mode = "select") {
           grid.moreBefore = buffer.moreBefore;
           grid.moreAfter = buffer.moreAfter;
           reviseGridItemsGrouped();
-          setGridIndex(index);
+          if (mode == "prepend" || mode == "append") {
+            grid.index = index;
+          } else {
+            setGridIndex(index);
+          }
           self.postMessage({ type: "list", payload: grid });
           if (grid.hour < 0) {
             self.postMessage({ type: "message", payload: "No Data" });
@@ -648,10 +649,6 @@ function setGridIndex(index) {
   }
   load(scan);
   reviseGridPaths();
-  // self.postMessage({
-  //   type: "index",
-  //   payload: { index: grid.index, pathsActive: grid.pathsActive },
-  // });
 }
 
 function navigateForward() {
