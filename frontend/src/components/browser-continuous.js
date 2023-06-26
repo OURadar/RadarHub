@@ -139,7 +139,10 @@ function FileList(props) {
         s -= 1;
       }
     }
-    setHeadPadding(o);
+    // console.log(`Browser.update ${o} / ${stem * props.h}`);
+    if (o > -stem * props.h && o < stem * props.h) {
+      setHeadPadding(o);
+    }
     if (!taskPending && s != subsetStart) {
       // console.debug(
       //   `%cudpate-%c o = ${o} -> [${s}..${s + extent}] out of ${items.length} ${items[s]}`,
@@ -161,13 +164,13 @@ function FileList(props) {
     if (props.archive?.grid == null || fileListRef.current == null || fileListRef.current?.children?.length == 0) {
       return;
     }
-    console.debug(
-      `%cReact.useEffect%c([items])   items.length = ${items.length} [${props.archive.grid.counts}]` +
-        `   hour = ${props.archive.grid.hour}` +
-        `   hourlyStart = ${hourlyStart}`,
-      "color: dodgerblue",
-      ""
-    );
+    // console.debug(
+    //   `%cReact.useEffect%c([items])   items.length = ${items.length} [${props.archive.grid.counts}]` +
+    //     `   hour = ${props.archive.grid.hour}` +
+    //     `   hourlyStart = ${hourlyStart}`,
+    //   "color: dodgerblue",
+    //   ""
+    // );
     let s;
     if (props.archive.grid.listMode == -1) {
       s = props.archive.grid.counts[0] + hourlyStart;
