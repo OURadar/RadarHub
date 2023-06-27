@@ -39,65 +39,20 @@ function ServerDay(props) {
   );
 }
 
-function Calender(props) {
+export function Browser(props) {
   const ok = props.archive.grid !== null;
   const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hour = ok ? props.archive.grid.hour : -1;
+  const items = ok ? props.archive.grid.items : [];
+  const index = ok ? props.archive.grid?.index : -1;
+  const hoursActive = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
 
-  return (
-    <div id="calendarContainer">
-      <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
-        <DatePicker
-          label="Date"
-          defaultValue={day}
-          minDate={dayjs.utc("20000101")}
-          maxDate={dayjs.utc().endOf("month")}
-          onOpen={() => props.archive.getMonthTable(day)}
-          onChange={(newDay) => props.archive.setDayHour(newDay, hour)}
-          onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
-          onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
-          slots={{ day: ServerDay }}
-          slotProps={{ day: { archive: props.archive } }}
-          disableHighlightToday={true}
-        />
-      </LocalizationProvider>
-    </div>
-  );
-}
-
-function HourList(props) {
-  const ok = props.archive.grid !== null;
-  const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
-  const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
-  const hour = ok ? props.archive.grid.hour : -1;
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+  const fileListRef = React.useRef(null);
 
   React.useEffect(() => {
     forceUpdate();
-  }, [hour]);
-
-  return (
-    <div id="hoursContainer">
-      {hours.map((_, k) => (
-        <Button
-          key={`hour-${k}`}
-          variant="hour"
-          disabled={hours[k] == 0}
-          selected={hours[k] > 0 && k == hour}
-          onClick={() => props.archive.setDayHour(day, k)}
-        >
-          {k.toString().padStart(2, "0")}
-        </Button>
-      ))}
-    </div>
-  );
-}
-
-function FileList(props) {
-  const items = props.archive.grid?.items || [];
-  const index = props.archive.grid?.index || -1;
-
-  const fileListRef = React.useRef(null);
+  }, [day, hour]);
 
   const stem = 5;
   const body = 15;
@@ -140,7 +95,13 @@ function FileList(props) {
         start -= 1;
       }
     }
-    if (padding > -stem * props.h && padding < stem * props.h) {
+    let delta = Math.abs(start - index);
+    if (delta > 30 && props.archive.state.liveUpdate != "offline") {
+      console.log("Scrolled far enough, disabling live update ...");
+      props.archive.disableLiveUpdate();
+    }
+    if (padding > -2 * stem * props.h && padding < stem * props.h) {
+      // console.log(padding);
       setHeadPadding(padding);
     }
     if (!taskPending && start != subsetStart) {
@@ -186,45 +147,61 @@ function FileList(props) {
   }, [items]);
 
   return (
-    <div className="fill" onWheel={update}>
-      <div id="filesContainer" ref={fileListRef} style={{ marginTop: headPadding }}>
-        <div id="filesContainerHead"></div>
-        {subsetItems.map((item) => (
-          <Button
-            key={`file-${item.index}`}
-            variant="file"
-            onClick={() => {
-              props.archive.loadIndex(item.index);
-              props.onSelect(props.archive, item.index);
-            }}
-            selected={item.index == index}
-          >
-            {item.label}
-          </Button>
-        ))}
-        <div id="filesContainerTail"></div>
-      </div>
-    </div>
-  );
-}
-
-function OtherList(props) {
-  return (
-    <Box sx={{ pt: 1, pb: 1 }}>
-      <div className="fullWidth center disabled">Hours</div>
-    </Box>
-  );
-}
-
-export function Browser(props) {
-  return (
     <div>
       <div id="browserTop" className="fullWidth container fog blur">
-        <Calender {...props} />
-        <HourList {...props} />
-        <OtherList {...props} />
+        <div id="calendarContainer">
+          <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
+            <DatePicker
+              label="Date"
+              value={day}
+              minDate={dayjs.utc("20000101")}
+              maxDate={dayjs.utc().endOf("month")}
+              onOpen={() => props.archive.getMonthTable(day)}
+              onChange={(newDay) => props.archive.setDayHour(newDay, hour)}
+              onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
+              onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
+              slots={{ day: ServerDay }}
+              slotProps={{ day: { archive: props.archive } }}
+              disableHighlightToday={true}
+            />
+          </LocalizationProvider>
+        </div>
+        <div id="hoursContainer">
+          {hoursActive.map((_, k) => (
+            <Button
+              key={`hour-${k}`}
+              variant="hour"
+              disabled={hoursActive[k] == 0}
+              selected={hoursActive[k] > 0 && k == hour}
+              onClick={() => props.archive.setDayHour(day, k)}
+            >
+              {k.toString().padStart(2, "0")}
+            </Button>
+          ))}
+        </div>
+        <Box sx={{ pt: 1, pb: 1 }}>
+          <div className="fullWidth center disabled">Hours</div>
+        </Box>
       </div>
-      <FileList {...props} />
+      <div className="fill" onWheel={update}>
+        <div id="filesContainer" ref={fileListRef} style={{ marginTop: headPadding }}>
+          <div id="filesContainerHead"></div>
+          {subsetItems.map((item) => (
+            <Button
+              key={`file-${item.index}`}
+              variant="file"
+              onClick={() => {
+                props.archive.loadIndex(item.index);
+                props.onSelect(props.archive, item.index);
+              }}
+              selected={item.index == index}
+            >
+              {item.label}
+            </Button>
+          ))}
+          <div id="filesContainerTail"></div>
+        </div>
+      </div>
     </div>
   );
 }

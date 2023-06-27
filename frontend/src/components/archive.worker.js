@@ -22,7 +22,7 @@ dayjs.extend(utc);
 let source = null;
 let pathway;
 let grid = {
-  dateTimeString: "20130520-1900",
+  dateTimeString: dayjs.utc().format("YYYYMMDD-HHmm"),
   daysActive: {},
   hoursActive: new Array(24).fill(0),
   yearsActive: new Array(200).fill(0),
@@ -346,6 +346,9 @@ function list(day, symbol, mode = "select") {
     "color: mediumpurple",
     ""
   );
+  if (mode != "catchup") {
+    toggle("offline");
+  }
   // Same time, just a symbol change (this part should be phased out, no need to have symbol in the list)
   if (dateTimeString == grid.dateTimeString) {
     let index = grid.index;
@@ -427,7 +430,6 @@ function list(day, symbol, mode = "select") {
 
 function prepend() {
   console.log(`%carchive.worker.prepend()%c`, `color: ${namecolor}`, "color: dodgerblue");
-  toggle("offline");
   let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).subtract(1, "hour");
   list(day, grid.symbol, "prepend");
 }
