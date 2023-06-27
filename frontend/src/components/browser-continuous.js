@@ -80,23 +80,22 @@ export function Browser(props) {
     setSubsetItems(data);
   };
 
-  const update = (e) => {
-    e.preventDefault();
+  const scroll = (delta) => {
     let start = subsetStart;
-    let padding = headPadding - e.deltaY;
-    if (e.deltaY > 0) {
+    let padding = headPadding - delta;
+    if (delta > 0) {
       while (padding < -stem * props.h && start < items.length - extent) {
         padding += props.h;
         start += 1;
       }
-    } else if (e.deltaY < 0) {
+    } else if (delta < 0) {
       while (padding > (1 - stem) * props.h && start > 1) {
         padding -= props.h;
         start -= 1;
       }
     }
-    let delta = Math.abs(start - index);
-    if (delta > 30 && props.archive.state.liveUpdate != "offline") {
+    let travel = Math.abs(start - index);
+    if (travel > 30 && props.archive.state.liveUpdate != "offline") {
       console.log("Scrolled far enough, disabling live update ...");
       props.archive.disableLiveUpdate();
     }
@@ -114,6 +113,11 @@ export function Browser(props) {
         props.archive.append();
       }
     }
+  };
+
+  const update = (e) => {
+    // e.preventDefault();
+    scroll(e.deltaY);
   };
 
   React.useEffect(() => {
@@ -183,7 +187,7 @@ export function Browser(props) {
           <div className="fullWidth center disabled">Hours</div>
         </Box>
       </div>
-      <div className="fill" onWheel={update}>
+      <div className="fill" onWheel={update} onTouchMove={update}>
         <div id="filesContainer" ref={fileListRef} style={{ marginTop: headPadding }}>
           <div id="filesContainerHead"></div>
           {subsetItems.map((item) => (
