@@ -48,13 +48,53 @@ function ServerDay(props) {
   );
 }
 
+function Calendar(props) {
+  return (
+    <div id="calendarContainer">
+      <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
+        <DatePicker
+          label="Date"
+          value={props.day}
+          minDate={dayjs.utc("20000101")}
+          maxDate={dayjs.utc().endOf("month")}
+          onOpen={() => props.archive.getMonthTable(props.day)}
+          onChange={(newDay) => props.archive.setDayHour(newDay, hour)}
+          onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
+          onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
+          slots={{ day: ServerDay }}
+          slotProps={{ day: { archive: props.archive } }}
+          disableHighlightToday={true}
+        />
+      </LocalizationProvider>
+    </div>
+  );
+}
+
+function Hours(props) {
+  return (
+    <div id="hoursContainer">
+      {props.hours.map((_, k) => (
+        <Button
+          key={`h-${k}`}
+          variant="hour"
+          disabled={props.hours[k] == 0}
+          selected={props.hours[k] > 0 && k == props.selected}
+          onClick={() => props.archive.setDayHour(day, k)}
+        >
+          {k.toString().padStart(2, "0")}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
 export function Browser(props) {
   const ok = props.archive.grid !== null;
   const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hour = ok ? props.archive.grid.hour : -1;
   const items = ok ? props.archive.grid.items : [];
   const index = ok ? props.archive.grid?.index : -1;
-  const hoursActive = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
+  const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
 
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
   const fileList = React.useRef(null);
@@ -169,36 +209,8 @@ export function Browser(props) {
   return (
     <div>
       <div id="browserTop" className="fullWidth container fog blur">
-        <div id="calendarContainer">
-          <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
-            <DatePicker
-              label="Date"
-              value={day}
-              minDate={dayjs.utc("20000101")}
-              maxDate={dayjs.utc().endOf("month")}
-              onOpen={() => props.archive.getMonthTable(day)}
-              onChange={(newDay) => props.archive.setDayHour(newDay, hour)}
-              onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
-              onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
-              slots={{ day: ServerDay }}
-              slotProps={{ day: { archive: props.archive } }}
-              disableHighlightToday={true}
-            />
-          </LocalizationProvider>
-        </div>
-        <div id="hoursContainer">
-          {hoursActive.map((_, k) => (
-            <Button
-              key={`hour-${k}`}
-              variant="hour"
-              disabled={hoursActive[k] == 0}
-              selected={hoursActive[k] > 0 && k == hour}
-              onClick={() => props.archive.setDayHour(day, k)}
-            >
-              {k.toString().padStart(2, "0")}
-            </Button>
-          ))}
-        </div>
+        <Calendar archive={props.archive} day={day} />
+        <Hours archive={props.archive} selected={hour} hours={hours} />
         <Box sx={{ pt: 1, pb: 1 }}>
           <div className="fullWidth center disabled">Hours</div>
         </Box>
@@ -207,9 +219,9 @@ export function Browser(props) {
       <div className="fill" onWheel={handleWheel}>
         <div id="filesContainer" ref={fileList} style={{ marginTop: headPadding }}>
           <div id="filesContainerHead"></div>
-          {subsetItems.map((item, k) => (
+          {subsetItems.map((item) => (
             <Button
-              key={`file-${item.label.slice(0, 15)}`}
+              key={`f-${item.label.slice(0, 15)}`}
               variant="file"
               onClick={() => {
                 props.archive.loadIndex(item.index);
