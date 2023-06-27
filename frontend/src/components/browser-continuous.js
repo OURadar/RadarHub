@@ -23,7 +23,16 @@ import Button from "@mui/material/Button";
 
 import Box from "@mui/material/Box";
 
+import { Scroller } from "./gesture";
+
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
+
+const useConstructor = (callback = () => {}) => {
+  const used = React.useRef(false);
+  if (used.current) return;
+  callback();
+  used.current = true;
+};
 
 function ServerDay(props) {
   const { day, outsideCurrentMonth, ...other } = props;
@@ -48,11 +57,8 @@ export function Browser(props) {
   const hoursActive = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
 
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
-  const fileListRef = React.useRef(null);
-
-  React.useEffect(() => {
-    forceUpdate();
-  }, [day, hour]);
+  const fileList = React.useRef(null);
+  const scroller = React.useRef(null);
 
   const stem = 5;
   const body = 15;
@@ -74,13 +80,14 @@ export function Browser(props) {
       setHourlyStart(start);
     }
     let data = [];
-    for (let k = start; k < start + extent; k++) {
+    for (let k = start; k < Math.min(items.length, start + extent); k++) {
       data.push({ index: k, label: items[k] });
     }
     setSubsetItems(data);
   };
 
   const scroll = (delta) => {
+    // console.log(`Browser.scroll ${delta}`);
     let start = subsetStart;
     let padding = headPadding - delta;
     if (delta > 0) {
@@ -88,7 +95,7 @@ export function Browser(props) {
         padding += props.h;
         start += 1;
       }
-    } else if (delta < 0) {
+    } else {
       while (padding > (1 - stem) * props.h && start > 1) {
         padding -= props.h;
         start -= 1;
@@ -115,13 +122,22 @@ export function Browser(props) {
     }
   };
 
-  const update = (e) => {
-    // e.preventDefault();
+  const handleWheel = (e) => {
     scroll(e.deltaY);
   };
 
+  useConstructor(() => {
+    scroller.current = new Scroller();
+    scroller.current.handlePanY = scroll;
+    // scroller.current.setHandler(scroll);
+  });
+
   React.useEffect(() => {
-    if (props.archive?.grid == null || fileListRef.current == null || fileListRef.current?.children?.length == 0) {
+    forceUpdate();
+  }, [day, hour]);
+
+  React.useEffect(() => {
+    if (props.archive?.grid == null || fileList.current == null || fileList.current?.children?.length == 0) {
       return;
     }
     let start;
@@ -187,12 +203,13 @@ export function Browser(props) {
           <div className="fullWidth center disabled">Hours</div>
         </Box>
       </div>
-      <div className="fill" onWheel={update} onTouchMove={update}>
-        <div id="filesContainer" ref={fileListRef} style={{ marginTop: headPadding }}>
+      {/* <div className="fill" onWheel={scroller.current.onWheel}> */}
+      <div className="fill" onWheel={handleWheel}>
+        <div id="filesContainer" ref={fileList} style={{ marginTop: headPadding }}>
           <div id="filesContainerHead"></div>
-          {subsetItems.map((item) => (
+          {subsetItems.map((item, k) => (
             <Button
-              key={`file-${item.index}`}
+              key={`file-${item.label.slice(0, 15)}`}
               variant="file"
               onClick={() => {
                 props.archive.loadIndex(item.index);

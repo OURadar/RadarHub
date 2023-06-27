@@ -158,20 +158,15 @@ class Gesture {
       }
       this.message =
         `wheel (${e.offsetX}, ${e.offsetY})` +
-        ` x: ${this.bounds.left} < ${e.offsetX} < ${
-          this.element.width - this.bounds.right
-        } y: ${this.bounds.top} < ${e.offsetY} < ${
-          this.element.height - this.bounds.bottom
-        }`;
+        ` x: ${this.bounds.left} < ${e.offsetX} < ${this.element.width - this.bounds.right} y: ${this.bounds.top} < ${
+          e.offsetY
+        } < ${this.element.height - this.bounds.bottom}`;
       this.bounds.top + ", " + this.element.height;
     });
     this.element.addEventListener("touchstart", (e) => {
       let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
       const rect = this.element.getBoundingClientRect();
-      if (
-        x - rect.left > this.bounds.left &&
-        rect.bottom - y > this.bounds.bottom
-      ) {
+      if (x - rect.left > this.bounds.left && rect.bottom - y > this.bounds.bottom) {
         e.preventDefault();
         this.panInProgress = true;
         if (e.targetTouches.length == 3) {
@@ -259,21 +254,9 @@ class Gesture {
             s = d / this.pointD;
             m = "d";
           }
-          this.handleDolly(
-            u > 10 ? u / this.pointU : 1,
-            v > 10 ? v / this.pointV : 1,
-            s,
-            x,
-            y
-          );
+          this.handleDolly(u > 10 ? u / this.pointU : 1, v > 10 ? v / this.pointV : 1, s, x, y);
         }
-        if (
-          e.targetTouches.length == 2 &&
-          this.tick < 3 &&
-          dy > 1.0 &&
-          s < 1.02 &&
-          d < 150
-        ) {
+        if (e.targetTouches.length == 2 && this.tick < 3 && dy > 1.0 && s < 1.02 && d < 150) {
           // console.log(
           //   `tick = ${this.tick}  touches = ${e.targetTouches.length}  dy = ${dy}   s = ${s}  d = ${d}`
           // );
@@ -325,10 +308,7 @@ class Gesture {
   }
 
   inbound(e) {
-    return (
-      e.offsetX > this.bounds.left &&
-      e.offsetY < this.element.height - this.bounds.bottom
-    );
+    return e.offsetX > this.bounds.left && e.offsetY < this.element.height - this.bounds.bottom;
   }
 
   setTilt(mode) {
@@ -365,4 +345,47 @@ function positionAndDistanceFromTouches(touches) {
   return [x, y, u, v, d];
 }
 
-export { Gesture };
+class Scroller {
+  constructor() {
+    this.dir = "y";
+    this.pointX = -1;
+    this.pointY = -1;
+    this.pointU = 0;
+    this.pointV = 0;
+    this.tick = 0;
+    this.hasTouch = false;
+    this.mouseDown = false;
+    this.panInProgress = false;
+    this.singleTapTimeout = null;
+    this.lastTapTime = Date.now();
+    this.message = "scroll";
+    this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
+    this.handlePan = (_x, _y) => {};
+    this.handlePanX = (_x) => {};
+    this.handlePanY = (_y) => {};
+    this.handleSingleTap = (_x, _y) => {};
+    this.handleDoubleTap = (_x, _y) => {};
+
+    this.onWheel = (e) => {
+      //console.log(`Scroller.onWheel ${e.deltaY}`);
+      if (this.dir == "y") {
+        this.handlePanY(e.deltaY);
+      } else if (this.dir == "x") {
+        this.handlePanX(e.deltaX);
+      } else {
+        this.handlePan(e.deltaX, e.deltaY);
+      }
+    };
+
+    this.onTouchMove = (e) => {
+      console.log("onTouchMove", e);
+    };
+
+    this.setHandler = (f) => {
+      this.handlePanY = f;
+    };
+    console.log("Scroller init");
+  }
+}
+
+export { Gesture, Scroller };
