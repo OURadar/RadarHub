@@ -48,45 +48,68 @@ function ServerDay(props) {
   );
 }
 
-function Calendar(props) {
+const Calendar = React.memo(function Calendar({ archive, day }) {
   return (
     <div id="calendarContainer">
       <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
         <DatePicker
           label="Date"
-          value={props.day}
+          value={day}
           minDate={dayjs.utc("20000101")}
           maxDate={dayjs.utc().endOf("month")}
-          onOpen={() => props.archive.getMonthTable(props.day)}
-          onChange={(newDay) => props.archive.setDayHour(newDay, hour)}
-          onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
-          onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
+          onOpen={() => archive.getMonthTable(day)}
+          onChange={(newDay) => archive.setDayHour(newDay, hour)}
+          onYearChange={(newDay) => archive.getMonthTable(newDay)}
+          onMonthChange={(newDay) => archive.getMonthTable(newDay)}
           slots={{ day: ServerDay }}
-          slotProps={{ day: { archive: props.archive } }}
+          slotProps={{ day: { archive: archive } }}
           disableHighlightToday={true}
         />
       </LocalizationProvider>
     </div>
   );
-}
+});
 
-function Hours(props) {
+const Hours = React.memo(function Hours({ archive, hours, selected }) {
   return (
     <div id="hoursContainer">
-      {props.hours.map((_, k) => (
+      {hours.map((_, k) => (
         <Button
           key={`h-${k}`}
           variant="hour"
-          disabled={props.hours[k] == 0}
-          selected={props.hours[k] > 0 && k == props.selected}
-          onClick={() => props.archive.setDayHour(day, k)}
+          disabled={hours[k] == 0}
+          selected={hours[k] > 0 && k == selected}
+          onClick={() => archive.setDayHour(day, k)}
         >
           {k.toString().padStart(2, "0")}
         </Button>
       ))}
     </div>
   );
-}
+});
+
+const Files = React.memo(function Files({ archive, items, selected, top, handleWheel }) {
+  return (
+    <div className="fill" onWheel={handleWheel}>
+      <div id="filesContainer" style={{ marginTop: top }}>
+        <div id="filesContainerHead"></div>
+        {items.map((item) => (
+          <Button
+            key={`f-${item.label.slice(0, 15)}`}
+            variant="file"
+            onClick={() => {
+              archive.loadIndex(item.index);
+            }}
+            selected={item.index == selected}
+          >
+            {item.label}
+          </Button>
+        ))}
+        <div id="filesContainerTail"></div>
+      </div>
+    </div>
+  );
+});
 
 export function Browser(props) {
   const ok = props.archive.grid !== null;
@@ -97,7 +120,7 @@ export function Browser(props) {
   const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
 
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
-  const fileList = React.useRef(null);
+
   const scroller = React.useRef(null);
 
   const stem = 5;
@@ -177,7 +200,7 @@ export function Browser(props) {
   }, [day, hour]);
 
   React.useEffect(() => {
-    if (props.archive?.grid == null || fileList.current == null || fileList.current?.children?.length == 0) {
+    if (props.archive?.grid == null) {
       return;
     }
     let start;
@@ -210,31 +233,12 @@ export function Browser(props) {
     <div>
       <div id="browserTop" className="fullWidth container fog blur">
         <Calendar archive={props.archive} day={day} />
-        <Hours archive={props.archive} selected={hour} hours={hours} />
+        <Hours archive={props.archive} hours={hours} selected={hour} />
         <Box sx={{ pt: 1, pb: 1 }}>
           <div className="fullWidth center disabled">Hours</div>
         </Box>
       </div>
-      {/* <div className="fill" onWheel={scroller.current.onWheel}> */}
-      <div className="fill" onWheel={handleWheel}>
-        <div id="filesContainer" ref={fileList} style={{ marginTop: headPadding }}>
-          <div id="filesContainerHead"></div>
-          {subsetItems.map((item) => (
-            <Button
-              key={`f-${item.label.slice(0, 15)}`}
-              variant="file"
-              onClick={() => {
-                props.archive.loadIndex(item.index);
-                props.onSelect(props.archive, item.index);
-              }}
-              selected={item.index == index}
-            >
-              {item.label}
-            </Button>
-          ))}
-          <div id="filesContainerTail"></div>
-        </div>
-      </div>
+      <Files archive={props.archive} items={subsetItems} selected={index} top={headPadding} handleWheel={handleWheel} />
     </div>
   );
 }
