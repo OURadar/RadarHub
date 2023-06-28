@@ -124,9 +124,7 @@ export function Browser(props) {
   const index = ok ? props.archive.grid?.index : -1;
   const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
 
-  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
-
-  const scroller = React.useRef(null);
+  // const scroller = React.useRef(null);
 
   const stem = 5;
   const body = 15;
@@ -167,7 +165,7 @@ export function Browser(props) {
       if (start == maxIndex) {
         console.log("reached the bottom");
       }
-    } else {
+    } else if (delta < 0) {
       while (padding > (1 - stem) * props.h && start > 1) {
         padding -= props.h;
         start -= 1;
@@ -200,15 +198,10 @@ export function Browser(props) {
     scroll(e.deltaY);
   };
 
-  useConstructor(() => {
-    scroller.current = new Scroller();
-    scroller.current.handlePanY = scroll;
-    // scroller.current.setHandler(scroll);
-  });
-
-  React.useEffect(() => {
-    forceUpdate();
-  }, [day, hour]);
+  // useConstructor(() => {
+  //   scroller.current = new Scroller();
+  //   scroller.current.handlePanY = scroll;
+  // });
 
   React.useEffect(() => {
     if (props.archive?.grid == null) {
@@ -224,7 +217,7 @@ export function Browser(props) {
       setHeadPadding(-stem * props.h);
     } else {
       start = Math.max(0, props.archive.grid.counts[0] - stem);
-      setHeadPadding(-stem * props.h);
+      setHeadPadding((start - props.archive.grid.counts[0]) * props.h);
     }
     console.debug(
       `%cReact.useEffect%c([items])` +

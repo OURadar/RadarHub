@@ -367,7 +367,7 @@ class Scroller {
     this.handleDoubleTap = (_x, _y) => {};
 
     this.onWheel = (e) => {
-      //console.log(`Scroller.onWheel ${e.deltaY}`);
+      console.log(`Scroller.onWheel ${e.deltaY}`);
       if (this.dir == "y") {
         this.handlePanY(e.deltaY);
       } else if (this.dir == "x") {
@@ -381,11 +381,13 @@ class Scroller {
       console.log("onTouchMove", e);
     };
 
-    this.setHandler = (f) => {
-      this.handlePanY = f;
-    };
     console.log("Scroller init");
   }
+
+  setHandler = (f) => {
+    this.handlePanY = f;
+    // console.log("scroll.handlePanY ->", f);
+  };
 }
 
 export { Gesture, Scroller };
