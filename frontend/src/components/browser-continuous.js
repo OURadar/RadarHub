@@ -58,7 +58,7 @@ const Calendar = React.memo(function Calendar({ archive, day }) {
           minDate={dayjs.utc("20000101")}
           maxDate={dayjs.utc().endOf("month")}
           onOpen={() => archive.getMonthTable(day)}
-          onChange={(newDay) => archive.setDayHour(newDay, hour)}
+          onChange={(newDay) => archive.setDayHour(newDay, null)}
           onYearChange={(newDay) => archive.getMonthTable(newDay)}
           onMonthChange={(newDay) => archive.getMonthTable(newDay)}
           slots={{ day: ServerDay }}
@@ -72,28 +72,33 @@ const Calendar = React.memo(function Calendar({ archive, day }) {
 
 const Hours = React.memo(function Hours({ archive, hours, selected }) {
   return (
-    <div id="hoursContainer">
-      {hours.map((_, k) => (
-        <Button
-          key={`h-${k}`}
-          variant="hour"
-          disabled={hours[k] == 0}
-          selected={hours[k] > 0 && k == selected}
-          onClick={() => archive.setDayHour(day, k)}
-        >
-          {k.toString().padStart(2, "0")}
-        </Button>
-      ))}
+    <div>
+      <div id="hoursContainer">
+        {hours.map((_, k) => (
+          <Button
+            key={`h-${k}`}
+            variant="hour"
+            disabled={hours[k] == 0}
+            selected={hours[k] > 0 && k == selected}
+            onClick={() => archive.setDayHour(null, k)}
+          >
+            {k.toString().padStart(2, "0")}
+          </Button>
+        ))}
+      </div>
+      <Box sx={{ pt: 1, pb: 1 }}>
+        <div className="fullWidth center disabled">Hours</div>
+      </Box>
     </div>
   );
 });
 
-const Files = React.memo(function Files({ archive, items, selected, top, handleWheel }) {
+const Scans = React.memo(function Scans({ archive, scans, selected, top, handleWheel }) {
   return (
     <div className="fill" onWheel={handleWheel}>
       <div id="filesContainer" style={{ marginTop: top }}>
         <div id="filesContainerHead"></div>
-        {items.map((item) => (
+        {scans.map((item) => (
           <Button
             key={`f-${item.label.slice(0, 15)}`}
             variant="file"
@@ -153,24 +158,30 @@ export function Browser(props) {
     // console.log(`Browser.scroll ${delta}`);
     let start = subsetStart;
     let padding = headPadding - delta;
+    let maxIndex = items.length - extent;
     if (delta > 0) {
-      while (padding < -stem * props.h && start < items.length - extent) {
+      while (padding < -stem * props.h && start < maxIndex) {
         padding += props.h;
         start += 1;
+      }
+      if (start == maxIndex) {
+        console.log("reached the bottom");
       }
     } else {
       while (padding > (1 - stem) * props.h && start > 1) {
         padding -= props.h;
         start -= 1;
       }
+      if (start == 0) {
+        console.log("reached the top");
+      }
     }
     let travel = Math.abs(start - index);
     if (travel > 30 && props.archive.state.liveUpdate != "offline") {
-      console.log("Scrolled far enough, disabling live update ...");
+      // console.debug("Scrolled far enough, disabling live update ...");
       props.archive.disableLiveUpdate();
     }
-    if (padding > -2 * stem * props.h && padding < stem * props.h) {
-      // console.log(padding);
+    if (padding > -2 * stem * props.h && padding < props.h) {
       setHeadPadding(padding);
     }
     if (!taskPending && start != subsetStart) {
@@ -233,12 +244,9 @@ export function Browser(props) {
     <div>
       <div id="browserTop" className="fullWidth container fog blur">
         <Calendar archive={props.archive} day={day} />
-        <Hours archive={props.archive} hours={hours} selected={hour} />
-        <Box sx={{ pt: 1, pb: 1 }}>
-          <div className="fullWidth center disabled">Hours</div>
-        </Box>
+        <Hours archive={props.archive} day={day} hours={hours} selected={hour} />
       </div>
-      <Files archive={props.archive} items={subsetItems} selected={index} top={headPadding} handleWheel={handleWheel} />
+      <Scans archive={props.archive} scans={subsetItems} selected={index} top={headPadding} handleWheel={handleWheel} />
     </div>
   );
 }

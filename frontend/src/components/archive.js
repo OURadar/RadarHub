@@ -338,7 +338,14 @@ class Archive extends Ingest {
     this.worker.postMessage({ task: "backward-scan" });
   }
 
+  // Expect something like day = dayjs.utc('2013-05-20'), hour = 19
   setDayHour(day, hour) {
+    if (day === null) {
+      day = dayjs.utc(this.grid.dateTimeString.slice(0, 8));
+    }
+    if (hour === null) {
+      hour = this.grid.hour;
+    }
     if (this.state.verbose) {
       let t = day instanceof dayjs ? "DayJS" : "Not DayJS";
       let n = day.format("YYYYMMDD");
@@ -356,6 +363,7 @@ class Archive extends Ingest {
     this.list(day, hour);
   }
 
+  // Expect something like day = dayjs.utc('2013-05-20'), hour = 19
   getMonthTable(day) {
     const key = day.format("YYYYMMDD");
     // console.log(`%carchive.getMonthTable()%c ${key}`, "color: deeppink", "", this.grid.daysActive);
