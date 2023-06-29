@@ -24,8 +24,8 @@ let pathway;
 let grid = {
   dateTimeString: dayjs.utc().format("YYYYMMDD-HHmm"),
   daysActive: {},
-  hoursActive: new Array(24).fill(0),
-  yearsActive: new Array(200).fill(0),
+  hourHasData: new Array(24).fill(false),
+  yearHasData: new Array(200).fill(false),
   pathsActive: new Array(4).fill(false),
   latestScan: "",
   latestHour: -1,
@@ -200,13 +200,13 @@ function connect(force = false) {
     payload.items.forEach((item) => {
       updateListWithItem(item);
     });
-    grid.hoursActive = payload.hoursActive;
+    grid.hourHasData = payload.hoursActive.map((x) => x > 0);
     grid.latestHour =
       23 -
-      grid.hoursActive
+      grid.hourHasData
         .slice()
         .reverse()
-        .findIndex((x) => x > 0);
+        .findIndex((x) => x == true);
     self.postMessage({
       type: "list",
       payload: grid,
@@ -387,14 +387,14 @@ function list(day, symbol, mode = "select") {
           let index = suggestGridIndex(mode, buffer);
           grid.hour = buffer.hour;
           grid.symbol = symbol;
-          grid.hoursActive = buffer.hoursActive;
+          grid.hourHasData = buffer.hoursActive.map((x) => x > 0);
           grid.dateTimeString = dateTimeString;
           grid.latestHour =
             23 -
-            grid.hoursActive
+            grid.hourHasData
               .slice()
               .reverse()
-              .findIndex((x) => x > 0);
+              .findIndex((x) => x == true);
           grid.listMode = mode;
           grid.counts = buffer.counts;
           grid.items = buffer.items;
@@ -567,7 +567,7 @@ function catchup() {
         .json()
         .then((buffer) => {
           grid.dateTimeString = buffer.dateTimeString;
-          grid.hoursActive = buffer.hoursActive;
+          grid.hourHasData = buffer.hoursActive.map((x) => x > 0);
           grid.daysActive = buffer.daysActive;
           grid.latestScan = buffer.latestScan;
           grid.latestHour = buffer.hour;
@@ -578,7 +578,7 @@ function catchup() {
           grid.moreAfter = buffer.moreAfter;
           grid.listMode = "catchup";
           reviseGridItemsGrouped();
-          grid.yearsActive.splice(100, buffer.yearsActive.length, ...buffer.yearsActive);
+          grid.yearHasData.splice(100, buffer.yearsActive.length, ...buffer.yearsActive);
           let index = suggestGridIndex("catchup", buffer);
           if (state.verbose) {
             console.info(
@@ -768,18 +768,18 @@ function count(day) {
         response.json().then((buffer) => {
           console.log(buffer);
           grid.dateTimeString = day.format("YYYYMMDD-HHmm");
-          grid.hoursActive = buffer.hoursActive;
+          grid.hourHasData = buffer.hoursActive.map((x) => x > 0);
           grid.latestHour =
             23 -
-            grid.hoursActive
+            grid.hourHasData
               .slice()
               .reverse()
-              .findIndex((x) => x > 0);
+              .findIndex((x) => x == true);
           self.postMessage({
             type: "count",
             payload: {
               dateTimeString: grid.dateTimeString,
-              hoursActive: grid.hoursActive,
+              hoursActive: grid.hourHasData.map((x) => x > 0),
             },
           });
         });

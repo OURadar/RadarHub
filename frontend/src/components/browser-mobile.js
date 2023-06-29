@@ -68,15 +68,15 @@ function Calender(props) {
 function HourList(props) {
   const ok = props.archive.grid !== null;
   const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
-  const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
+  const hourHasData = ok ? props.archive.grid.hourHasData : new Array(24).fill(false);
   return (
     <div id="hoursContainer">
-      {hours.map((_, k) => (
+      {hourHasData.map((_, k) => (
         <Button
           key={`hour-${k}`}
           variant="hour"
-          disabled={hours[k] == 0}
-          selected={hours[k] > 0 && k == props.archive.grid.hour}
+          disabled={!hourHasData[k]}
+          selected={hourHasData[k] == true && k == props.archive.grid.hour}
           onClick={() => props.archive.setDayHour(day, k)}
         >
           {k.toString().padStart(2, "0")}

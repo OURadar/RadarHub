@@ -21,8 +21,8 @@ class Archive extends Ingest {
     this.state = {
       ...this.state,
       liveUpdate: null,
-      daysActiveUpdating: false,
-      hoursActiveUpdating: false,
+      dayHasDataUpdating: false,
+      hourHasDataUpdating: false,
       itemsUpdating: true,
       productSwitching: false,
       sweepLoading: false,
@@ -93,12 +93,12 @@ class Archive extends Ingest {
       this.onList(this.grid);
       this.state.itemsUpdating = false;
     } else if (type == "count") {
-      // DEPRECATING
-      this.grid.hoursActive = payload.hoursActive;
-      this.state.hoursActiveUpdating = false;
+      // DEPRECATING: Use list straight away
+      this.grid.hourHasData = payload.hoursActive.map((x) => x > 0);
+      this.state.hourHasDataUpdating = false;
       let hour = this.grid.hour;
-      if (hour == -1 || this.grid.hoursActive[hour] == 0) {
-        let best = this.grid.hoursActive.findIndex((x) => x > 0);
+      if (hour == -1 || this.grid.hourHasData[hour] == 0) {
+        let best = this.grid.hourHasData.findIndex((x) => x > 0);
         if (best >= 0) {
           hour = best;
           if (this.state.verbose) {
@@ -117,7 +117,7 @@ class Archive extends Ingest {
       this.list(day, hour, this.grid.symbol);
     } else if (type == "month") {
       this.grid.daysActive = payload;
-      this.state.daysActiveUpdating = false;
+      this.state.dayHasDataUpdating = false;
     } else if (type == "reset") {
       this.showMessage(payload);
       this.data.sweep = null;
@@ -163,7 +163,7 @@ class Archive extends Ingest {
     if (this.state.verbose) {
       console.log(`%carchive.month()%c   day = ${day.format("YYYYMMDD")}`, "color: lightseagreen", "");
     }
-    this.state.daysActiveUpdating = true;
+    this.state.dayHasDataUpdating = true;
     this.worker.postMessage({ task: "month", date: day.unix() });
   }
 
@@ -397,7 +397,7 @@ class Archive extends Ingest {
       this.list(day, hour, symbol);
       return;
     }
-    this.state.hoursActiveUpdating = true;
+    this.state.hourHasDataUpdating = true;
     this.worker.postMessage({ task: "list", date: day.unix(), hour: hour, symbol: symbol });
   }
 }

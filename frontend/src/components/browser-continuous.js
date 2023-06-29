@@ -23,7 +23,7 @@ import Button from "@mui/material/Button";
 
 import Box from "@mui/material/Box";
 
-import { Scroller } from "./gesture";
+// import { Scroller } from "./gesture";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 
@@ -62,7 +62,7 @@ const Calendar = React.memo(function Calendar({ archive, day }) {
           onYearChange={(newDay) => archive.getMonthTable(newDay)}
           onMonthChange={(newDay) => archive.getMonthTable(newDay)}
           slots={{ day: ServerDay }}
-          slotProps={{ day: { archive: archive } }}
+          slotProps={{ day: { archive } }}
           disableHighlightToday={true}
         />
       </LocalizationProvider>
@@ -70,16 +70,16 @@ const Calendar = React.memo(function Calendar({ archive, day }) {
   );
 });
 
-const Hours = React.memo(function Hours({ archive, hours, selected }) {
+const Hours = React.memo(function Hours({ archive, hourHasData, selected }) {
   return (
     <div>
       <div id="hoursContainer">
-        {hours.map((_, k) => (
+        {hourHasData.map((hasData, k) => (
           <Button
             key={`h-${k}`}
             variant="hour"
-            disabled={hours[k] == 0}
-            selected={hours[k] > 0 && k == selected}
+            disabled={!hasData}
+            selected={hasData && k == selected}
             onClick={() => archive.setDayHour(null, k)}
           >
             {k.toString().padStart(2, "0")}
@@ -122,7 +122,7 @@ export function Browser(props) {
   const hour = ok ? props.archive.grid.hour : -1;
   const items = ok ? props.archive.grid.items : [];
   const index = ok ? props.archive.grid?.index : -1;
-  const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
+  const hourHasData = ok ? props.archive.grid.hourHasData : new Array(24).fill(false);
 
   // const scroller = React.useRef(null);
 
@@ -237,7 +237,7 @@ export function Browser(props) {
     <div>
       <div id="browserTop" className="fullWidth container fog blur">
         <Calendar archive={props.archive} day={day} />
-        <Hours archive={props.archive} day={day} hours={hours} selected={hour} />
+        <Hours archive={props.archive} day={day} hourHasData={hourHasData} selected={hour} />
       </div>
       <Scans archive={props.archive} scans={subsetItems} selected={index} top={headPadding} handleWheel={handleWheel} />
     </div>
