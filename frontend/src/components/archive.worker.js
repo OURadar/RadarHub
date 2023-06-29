@@ -443,14 +443,7 @@ function append() {
 function load(name) {
   const url = `/data/load/${pathway}/${name}/`;
   const index = grid.items.indexOf(name);
-  if (state.verbose) {
-    console.info(
-      `%carchive.worker.load() %c${url}%c   index = ${index}`,
-      `color: ${namecolor}`,
-      "color: dodgerblue",
-      ""
-    );
-  }
+  console.info(`%carchive.worker.load() %c${url}%c   index = ${index}`, `color: ${namecolor}`, "color: dodgerblue", "");
   fetch(url, { cache: "force-cache" })
     .then((response) => {
       if (response.status == 200) {

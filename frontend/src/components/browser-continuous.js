@@ -219,16 +219,16 @@ export function Browser(props) {
       start = Math.max(0, props.archive.grid.counts[0] - stem);
       setHeadPadding((start - props.archive.grid.counts[0]) * props.h);
     }
-    console.debug(
-      `%cReact.useEffect%c([items])` +
-        `   items.length = ${items.length} [${props.archive.grid.counts}]` +
-        `   start = ${start}` +
-        `   hour = ${props.archive.grid.hour}` +
-        `   hourlyStart = ${hourlyStart}` +
-        `   index = ${index}`,
-      "color: dodgerblue",
-      ""
-    );
+    // console.debug(
+    //   `%cReact.useEffect%c([items])` +
+    //     `   items.length = ${items.length} [${props.archive.grid.counts}]` +
+    //     `   start = ${start}` +
+    //     `   hour = ${props.archive.grid.hour}` +
+    //     `   hourlyStart = ${hourlyStart}` +
+    //     `   index = ${index}`,
+    //   "color: dodgerblue",
+    //   ""
+    // );
     updateSubset(start);
     setTaskPending(false);
   }, [items]);
