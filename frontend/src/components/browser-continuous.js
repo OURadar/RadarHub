@@ -23,16 +23,9 @@ import Button from "@mui/material/Button";
 
 import Box from "@mui/material/Box";
 
-// import { Scroller } from "./gesture";
+import { Scroller } from "./gesture";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
-
-const useConstructor = (callback = () => {}) => {
-  const used = React.useRef(false);
-  if (used.current) return;
-  callback();
-  used.current = true;
-};
 
 function ServerDay(props) {
   const { day, outsideCurrentMonth, ...other } = props;
@@ -93,18 +86,16 @@ const Hours = React.memo(function Hours({ archive, hourHasData, selected }) {
   );
 });
 
-const Scans = React.memo(function Scans({ archive, scans, selected, top, handleWheel }) {
+function Scans({ archive, scans, selected, top, onWheel, onTouchMove }) {
   return (
-    <div className="fill" onWheel={handleWheel}>
+    <div className="fill" onWheel={onWheel} onTouchMove={onTouchMove}>
       <div id="filesContainer" style={{ marginTop: top }}>
         <div id="filesContainerHead"></div>
         {scans.map((item) => (
           <Button
             key={`f-${item.label.slice(0, 15)}`}
             variant="file"
-            onClick={() => {
-              archive.loadIndex(item.index);
-            }}
+            onClick={() => archive.loadIndex(item.index)}
             selected={item.index == selected}
           >
             {item.label}
@@ -114,7 +105,7 @@ const Scans = React.memo(function Scans({ archive, scans, selected, top, handleW
       </div>
     </div>
   );
-});
+}
 
 export function Browser(props) {
   const ok = props.archive.grid !== null;
@@ -125,12 +116,12 @@ export function Browser(props) {
   const hourHasData = ok ? props.archive.grid.hourHasData : new Array(24).fill(false);
 
   // const scroller = React.useRef(null);
+  const listRef = React.useRef(null);
 
   const stem = 5;
   const body = 15;
   const fetch = 50;
   const extent = body + 2 * stem;
-  const fetchEnd = items.length - stem - body - fetch;
 
   const [subsetItems, setSubsetItems] = React.useState([]);
   const [subsetStart, setSubsetStart] = React.useState(0);
@@ -152,11 +143,11 @@ export function Browser(props) {
     setSubsetItems(data);
   };
 
-  const scroll = (delta) => {
-    // console.log(`Browser.scroll ${delta}`);
+  const handleScroll = (delta) => {
     let start = subsetStart;
     let padding = headPadding - delta;
     let maxIndex = items.length - extent;
+    // console.log(`Browser.scroll ${delta} ${start} ${padding} ${maxIndex}`);
     if (delta > 0) {
       while (padding < -stem * props.h && start < maxIndex) {
         padding += props.h;
@@ -173,6 +164,8 @@ export function Browser(props) {
       if (start == 0) {
         console.log("reached the top");
       }
+    } else {
+      return;
     }
     let travel = Math.abs(start - index);
     if (travel > 30 && props.archive.state.liveUpdate != "offline") {
@@ -187,21 +180,17 @@ export function Browser(props) {
       if (start < fetch && props.archive.grid.moreBefore) {
         setTaskPending(true);
         props.archive.prepend();
-      } else if (start > fetchEnd && props.archive.grid.moreAfter) {
+      } else if (start > items.length - stem - body - fetch && props.archive.grid.moreAfter) {
         setTaskPending(true);
         props.archive.append();
       }
     }
   };
 
-  const handleWheel = (e) => {
-    scroll(e.deltaY);
-  };
-
-  // useConstructor(() => {
-  //   scroller.current = new Scroller();
-  //   scroller.current.handlePanY = scroll;
-  // });
+  // React.useEffect(() => {
+  //   scroller.current = new Scroller(listRef.current);
+  //   scroller.current.setHandler(handleScroll);
+  // }, []);
 
   React.useEffect(() => {
     if (props.archive?.grid == null) {
@@ -219,16 +208,16 @@ export function Browser(props) {
       start = Math.max(0, props.archive.grid.counts[0] - stem);
       setHeadPadding((start - props.archive.grid.counts[0]) * props.h);
     }
-    // console.debug(
-    //   `%cReact.useEffect%c([items])` +
-    //     `   items.length = ${items.length} [${props.archive.grid.counts}]` +
-    //     `   start = ${start}` +
-    //     `   hour = ${props.archive.grid.hour}` +
-    //     `   hourlyStart = ${hourlyStart}` +
-    //     `   index = ${index}`,
-    //   "color: dodgerblue",
-    //   ""
-    // );
+    console.debug(
+      `%cReact.useEffect%c([items])` +
+        `   items.length = ${items.length} [${props.archive.grid.counts}]` +
+        `   start = ${start}` +
+        `   hour = ${props.archive.grid.hour}` +
+        `   hourlyStart = ${hourlyStart}` +
+        `   index = ${index}`,
+      "color: dodgerblue",
+      ""
+    );
     updateSubset(start);
     setTaskPending(false);
   }, [items]);
@@ -239,7 +228,14 @@ export function Browser(props) {
         <Calendar archive={props.archive} day={day} />
         <Hours archive={props.archive} day={day} hourHasData={hourHasData} selected={hour} />
       </div>
-      <Scans archive={props.archive} scans={subsetItems} selected={index} top={headPadding} handleWheel={handleWheel} />
+      <Scans
+        archive={props.archive}
+        scans={subsetItems}
+        selected={index}
+        top={headPadding}
+        onWheel={(x) => handleScroll(x.deltaY)}
+        onTouchMove={(x) => console.log(x)}
+      />
     </div>
   );
 }

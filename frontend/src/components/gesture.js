@@ -346,13 +346,14 @@ function positionAndDistanceFromTouches(touches) {
 }
 
 class Scroller {
-  constructor() {
-    this.dir = "y";
+  constructor(element, axis = "y") {
+    this.element = element;
+    this.axis = axis;
+    this.tick = 0;
     this.pointX = -1;
     this.pointY = -1;
     this.pointU = 0;
     this.pointV = 0;
-    this.tick = 0;
     this.hasTouch = false;
     this.mouseDown = false;
     this.panInProgress = false;
@@ -366,28 +367,30 @@ class Scroller {
     this.handleSingleTap = (_x, _y) => {};
     this.handleDoubleTap = (_x, _y) => {};
 
-    this.onWheel = (e) => {
-      console.log(`Scroller.onWheel ${e.deltaY}`);
-      if (this.dir == "y") {
+    this.setHandler = this.setHandler.bind(this);
+
+    this.element.addEventListener("wheel", (e) => {
+      // console.log(`Scroller.onWheel ${e.deltaY}`);
+      if (this.axis == "y") {
         this.handlePanY(e.deltaY);
-      } else if (this.dir == "x") {
+      } else if (this.axis == "x") {
         this.handlePanX(e.deltaX);
       } else {
         this.handlePan(e.deltaX, e.deltaY);
       }
-    };
+    });
 
-    this.onTouchMove = (e) => {
-      console.log("onTouchMove", e);
-    };
+    // this.onTouchMove = (e) => {
+    //   console.log("onTouchMove", e);
+    // };
 
     console.log("Scroller init");
   }
 
-  setHandler = (f) => {
+  setHandler(f) {
     this.handlePanY = f;
     // console.log("scroll.handlePanY ->", f);
-  };
+  }
 }
 
 export { Gesture, Scroller };
