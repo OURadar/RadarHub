@@ -14,8 +14,8 @@
     <a class="radarButton" href="/archive/px1000/">PX-1000</a>
     <a class="radarButton" href="/archive/raxpol/">RaXPol</a>
     <div class="spacer50"></div>
-    {% if user.is_authenticated and user.email == "boonleng@arrc.ou.edu" %}
-    <p><a class="link subtle" href="/dev/px1000/">Developer</a></p>
+    {% if user.is_authenticated and user.is_staff %}
+    <p><a class="link subtle" href="/dev/px1000/">Preview</a></p>
     <div class="spacer25"></div>
     {% endif %}
     {% if user.is_authenticated %}
