@@ -408,6 +408,7 @@ function list(day, symbol, mode = "select") {
           } else {
             setGridIndex(index);
           }
+          grid.tic++;
           self.postMessage({ type: "list", payload: grid });
           if (grid.hour < 0) {
             self.postMessage({ type: "message", payload: "No Data" });

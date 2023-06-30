@@ -131,16 +131,6 @@ class Browser extends Component {
       start = Math.max(0, grid.counts[0] - stem);
       padding = (start - grid.counts[0]) * this.props.h;
     }
-    console.debug(
-      `%cupdateSubset%c()` +
-        `   items.length = ${grid.items.length} [${grid.counts}]` +
-        `   start = ${start}` +
-        `   hour = ${grid.hour}` +
-        `   index = ${grid.index}`,
-      "color: dodgerblue",
-      ""
-    );
-
     let hourlyStart = start;
     if (start >= grid.counts[0]) {
       hourlyStart -= grid.counts[0];
@@ -149,7 +139,16 @@ class Browser extends Component {
     for (let k = start; k < Math.min(grid.items.length, start + extent); k++) {
       subsetItems.push({ index: k, label: grid.items[k] });
     }
-    console.log(`updateSubset() subsetItems.length = ${subsetItems.length}`);
+    console.debug(
+      `%cupdateSubset%c` +
+        `   items.length = ${grid.items.length} [${grid.counts}]` +
+        `   start = ${start}` +
+        `   hour = ${grid.hour}` +
+        `   index = ${grid.index}` +
+        `   subsetItems.length = ${subsetItems.length}`,
+      "color: dodgerblue",
+      ""
+    );
     this.setState({
       subsetStart: start,
       headPadding: padding,
@@ -160,7 +159,7 @@ class Browser extends Component {
   }
 
   handleScroll(delta) {
-    console.log(`Browser.handleScroll ${delta} ${this.state.subsetStart} ${this.state.headPadding}`);
+    // console.log(`Browser.handleScroll ${delta} ${this.state.subsetStart} ${this.state.headPadding}`);
 
     const h = this.props.h;
     const { body, stem, extent, fetch } = this.constant;
@@ -191,7 +190,7 @@ class Browser extends Component {
     }
     let travel = Math.abs(start - archive.grid.index);
     if (travel > 30 && archive.state.liveUpdate != "offline") {
-      // console.debug("Scrolled far enough, disabling live update ...");
+      console.debug("Scrolled far enough, disabling live update ...");
       archive.disableLiveUpdate();
     }
     if (padding < -2 * stem * h || padding > h) {
