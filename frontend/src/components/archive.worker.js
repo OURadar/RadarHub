@@ -271,7 +271,7 @@ function updateListWithItem(item) {
   if (grid.dateTimeString != dateTimeString) {
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
-    grid.listMode = "update";
+    grid.listMode = "catchup";
     grid.items = grid.items.slice(grid.counts[0]);
     grid.counts = [grid.counts[1], 0];
     reviseGridItemsGrouped();
@@ -283,9 +283,10 @@ function updateListWithItem(item) {
       );
     }
   }
-  grid.items.push(item);
   grid.itemsGrouped[scan].push({ item: item, index: grid.items.length });
+  grid.items.push(item);
   grid.counts[1]++;
+  grid.tic++;
   if (state.update == "always") {
     setGridIndex(grid.items.length - 1);
   } else if (grid.scan in grid.itemsGrouped) {
@@ -481,6 +482,7 @@ function load(name) {
           }
           grid.scan = scan;
           grid.index = index;
+          grid.tic++;
           if (sweep.nb == 0 || sweep.nr == 0) {
             console.log(sweep);
             self.postMessage({
@@ -489,7 +491,7 @@ function load(name) {
             });
             return;
           }
-          self.postMessage({ type: "load", index: grid.index, payload: sweep });
+          self.postMessage({ type: "load", tic: grid.tic, index: grid.index, payload: sweep });
         });
       } else {
         response.text().then((text) => {
@@ -628,15 +630,15 @@ function catchup() {
 function setGridIndex(index) {
   if (state.verbose > 1) {
     console.debug(
-      `%carchive.worker.updateGridIndex()%c ${grid.index} -> ${index}`,
+      `%carchive.worker.setGridIndex()%c ${grid.index} -> ${index}`,
       `color: ${namecolor}`,
       "color: dodgerblue"
     );
   }
-  if (index < 0 || index >= grid.items.length) {
+  if (index < 0 || index >= grid.items.length || index == grid.index) {
     if (state.verbose > 1) {
       console.debug(
-        `%carchive.worker.updateGridIndex()%c index = ${index}. Early return.`,
+        `%carchive.worker.setGridIndex()%c index = ${index}. Early return.`,
         `color: ${namecolor}`,
         "color: dodgerblue"
       );
@@ -648,7 +650,7 @@ function setGridIndex(index) {
   const scan = grid.items[index];
   if (state.verbose > 1) {
     console.debug(
-      `%carchive.worker.updateGridIndex()%c Calling load() ${scan} ...`,
+      `%carchive.worker.setGridIndex()%c Calling load() ${scan} ...`,
       `color: ${namecolor}`,
       "color: dodgerblue"
     );

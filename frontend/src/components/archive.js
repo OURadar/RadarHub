@@ -48,7 +48,7 @@ class Archive extends Ingest {
     this.init();
   }
 
-  handleMessage({ data: { type, index, payload } }) {
+  handleMessage({ data: { type, tic, index, payload } }) {
     if (type == "message") {
       this.showMessage(payload);
     } else if (type == "response") {
@@ -56,11 +56,13 @@ class Archive extends Ingest {
     } else if (type == "load") {
       this.data.sweep = payload;
       this.grid.index = index;
+      this.grid.tic = tic;
       this.updateAge();
       this.state.sweepLoading = false;
       if (this.state.verbose) {
         console.log(
           `%carchive.handleMessage()%c load` +
+            `   tic = ${this.grid.tic}` +
             `   hour = ${this.grid.hour}` +
             `   index = ${this.grid.index}` +
             `   latestHour = ${this.grid.latestHour}` +

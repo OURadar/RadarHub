@@ -94,18 +94,20 @@ class Browser extends Component {
       body: 15,
       fetch: 72,
     };
-    this.param = { ...this.param, extent: this.param.body + 2 * this.param.stem };
+    this.param = {
+      ...this.param,
+      extent: this.param.body + 2 * this.param.stem,
+    };
     this.state = {
-      items: [],
+      tic: 0,
       subsetItems: [],
       subsetStart: 0,
       hourlyStart: -1,
       taskPending: false,
       headPadding: -this.param.stem * props.h,
-      tic: 0,
     };
 
-    this.list = null;
+    this.listRef = null;
 
     this.handleScroll = this.handleScroll.bind(this);
   }
@@ -119,22 +121,22 @@ class Browser extends Component {
     const grid = this.props.archive.grid;
     const { body, stem, extent, fetch } = this.param;
 
-    const maxIndex = grid.items.length - extent;
+    const bound = grid.items.length - extent;
 
     let start = this.state.subsetStart;
     let padding = this.state.headPadding - delta;
     if (delta > 0) {
-      while (padding < -stem * h && start < maxIndex) {
+      while (padding < -stem * h && start < bound) {
         padding += h;
-        start += 1;
+        start++;
       }
-      if (start == maxIndex) {
+      if (start == bound) {
         console.log("reached the bottom");
       }
     } else if (delta < 0) {
       while (padding > (1 - stem) * h && start > 1) {
         padding -= h;
-        start -= 1;
+        start--;
       }
       if (start == 0) {
         console.log("reached the top");
@@ -153,7 +155,8 @@ class Browser extends Component {
     let taskPending = false;
     if (!this.state.taskPending && start != this.state.subsetStart) {
       let maxIndex = Math.max(0, grid.items.length - stem - body - fetch);
-      console.log(`start = ${start} / ${fetch} / ${maxIndex}`);
+      let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
+      console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
       if (start < fetch && delta < 0 && grid.moreBefore) {
         taskPending = true;
         this.props.archive.prepend();
@@ -180,10 +183,15 @@ class Browser extends Component {
   }
 
   componentDidMount() {
-    // this.list = document.getElementById("listContainer");
-    this.list = document.getElementById("filesContainer");
-    this.scroller = new Scroller(this.list);
+    this.listRef = document.getElementById("filesContainer");
+    this.scroller = new Scroller(this.listRef);
     this.scroller.setHandler(this.handleScroll);
+
+    // console.log(document.body.clientHeight, document.getElementById("browserTop").clientHeight);
+    let height = document.body.clientHeight - document.getElementById("browserTop").clientHeight;
+    this.param.body = Math.floor(height / this.props.h);
+    this.param.extent = this.param.body + 2 * this.param.stem;
+    console.log("Revised params", this.param);
   }
 
   componentDidUpdate() {
@@ -195,7 +203,6 @@ class Browser extends Component {
       return;
     }
     this.setState({ tic: archive.grid.tic });
-    console.log(`%ccomponentDidUpdate%c   archive.grid.tic = ${archive.grid.tic}`, "color: dodgerblue", "");
 
     const grid = this.props.archive.grid;
     const { body, stem, extent } = this.param;
@@ -207,7 +214,7 @@ class Browser extends Component {
     } else if (grid.listMode == "append") {
       start = this.state.hourlyStart;
     } else if (grid.listMode == "catchup") {
-      start = Math.max(0, grid.index - body - stem);
+      start = Math.max(0, grid.index - body);
       padding = -stem * this.props.h;
     } else {
       start = Math.max(0, grid.counts[0] - stem);
@@ -224,11 +231,11 @@ class Browser extends Component {
     let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
     console.log(
       `%ccomponentDidUpdate%c` +
-        `   items.length = ${grid.items.length} [${quad}]` +
-        `   start = ${start}` +
+        `   tic = ${archive.grid.tic}` +
         `   hour = ${grid.hour}` +
-        `   index = ${grid.index}` +
-        `   subsetItems.length = ${subsetItems.length}`,
+        `   length = ${subsetItems.length} / ${grid.items.length} [${quad}]` +
+        `   start = ${start}` +
+        `   index = ${grid.index}`,
       "color: dodgerblue",
       ""
     );
