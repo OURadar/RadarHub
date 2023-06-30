@@ -218,15 +218,6 @@ export function Browser(props) {
         <Calendar archive={props.archive} day={day} />
         <Hours archive={props.archive} day={day} hourHasData={hourHasData} selected={hour} />
       </div>
-      {/* <Scans
-        ref={listRef}
-        archive={props.archive}
-        scans={subsetItems}
-        selected={index}
-        top={headPadding}
-        // onWheel={(x) => handleScroll(x.deltaY)}
-        // onTouchMove={(x) => handleTouch(x)}
-      /> */}
       <div ref={listRef} className="fill">
         <div id="filesContainer" style={{ marginTop: headPadding }}>
           <div id="filesContainerHead"></div>

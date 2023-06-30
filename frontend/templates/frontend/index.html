@@ -14,10 +14,10 @@
     <a class="radarButton" href="/archive/px1000/">PX-1000</a>
     <a class="radarButton" href="/archive/raxpol/">RaXPol</a>
     <div class="spacer50"></div>
-    {% if user.is_authenticated and user.is_staff %}
+    {% comment %} {% if user.is_authenticated and user.is_staff %} {% endcomment %}
     <p><a class="link subtle" href="/dev/px1000/">Preview</a></p>
     <div class="spacer25"></div>
-    {% endif %}
+    {% comment %} {% endif %} {% endcomment %}
     {% if user.is_authenticated %}
       <p>Signed in as {{ user.email }}</p>
       <form action="/accounts/signout/?next=/" method="post">

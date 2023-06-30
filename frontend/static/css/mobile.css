@@ -118,9 +118,18 @@ Copyright Boonleng Cheong
 }
 #filesContainer {
   background-color: var(--system-background);
+  overflow-y: scroll;
   position: fixed;
+  height: 100vh;
   width: 100%;
   top: 0;
+}
+#fileList {
+  padding-top: calc(
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
+      var(--small-button-height) + 1px
+  );
+  padding-bottom: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
 }
 #filesContainerHead {
   height: calc(
@@ -130,18 +139,6 @@ Copyright Boonleng Cheong
 }
 #filesContainerTail {
   height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
-}
-#listContainer {
-  overflow-y: auto;
-  position: fixed;
-  height: 100vh;
-  width: 100%;
-  top: 0;
-  padding-top: calc(
-    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
-      var(--small-button-height) + 1px
-  );
-  padding-bottom: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
 }
 
 /* Product view */

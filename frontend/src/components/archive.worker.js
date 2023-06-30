@@ -283,9 +283,9 @@ function updateListWithItem(item) {
       );
     }
   }
-  grid.itemsGrouped[scan].push({ item: item, index: grid.items.length });
   grid.items.push(item);
   grid.counts[1]++;
+  reviseGridItemsGrouped();
   grid.tic++;
   if (state.update == "always") {
     setGridIndex(grid.items.length - 1);

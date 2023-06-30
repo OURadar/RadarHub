@@ -130,60 +130,68 @@ class Gesture {
       this.rollInProgress = false;
       this.mouseDown = false;
     });
-    this.element.addEventListener("wheel", (e) => {
-      if (
-        e.offsetX > this.bounds.left &&
-        e.offsetX < this.element.width - this.bounds.right &&
-        e.offsetY > this.bounds.top &&
-        e.offsetY < this.element.height - this.bounds.bottom
-      ) {
-        e.preventDefault();
-        if (e.altKey) {
-          this.handleMagnify(
-            delta2scale(3 * e.deltaX),
-            delta2scale(-3 * e.deltaY),
-            delta2scale(3 * e.deltaY),
-            e.offsetX - this.bounds.left,
-            e.offsetY - this.bounds.bottom
-          );
-        } else {
-          this.handleDolly(
-            delta2scale(3 * e.deltaX),
-            delta2scale(-3 * e.deltaY),
-            delta2scale(3 * e.deltaY),
-            e.offsetX - this.bounds.left,
-            e.offsetY - this.bounds.bottom
-          );
+    this.element.addEventListener(
+      "wheel",
+      (e) => {
+        if (
+          e.offsetX > this.bounds.left &&
+          e.offsetX < this.element.width - this.bounds.right &&
+          e.offsetY > this.bounds.top &&
+          e.offsetY < this.element.height - this.bounds.bottom
+        ) {
+          e.preventDefault();
+          if (e.altKey) {
+            this.handleMagnify(
+              delta2scale(3 * e.deltaX),
+              delta2scale(-3 * e.deltaY),
+              delta2scale(3 * e.deltaY),
+              e.offsetX - this.bounds.left,
+              e.offsetY - this.bounds.bottom
+            );
+          } else {
+            this.handleDolly(
+              delta2scale(3 * e.deltaX),
+              delta2scale(-3 * e.deltaY),
+              delta2scale(3 * e.deltaY),
+              e.offsetX - this.bounds.left,
+              e.offsetY - this.bounds.bottom
+            );
+          }
         }
-      }
-      this.message =
-        `wheel (${e.offsetX}, ${e.offsetY})` +
-        ` x: ${this.bounds.left} < ${e.offsetX} < ${this.element.width - this.bounds.right} y: ${this.bounds.top} < ${
-          e.offsetY
-        } < ${this.element.height - this.bounds.bottom}`;
-      this.bounds.top + ", " + this.element.height;
-    });
-    this.element.addEventListener("touchstart", (e) => {
-      let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
-      const rect = this.element.getBoundingClientRect();
-      if (x - rect.left > this.bounds.left && rect.bottom - y > this.bounds.bottom) {
-        e.preventDefault();
-        this.panInProgress = true;
-        if (e.targetTouches.length == 3) {
-          this.tiltInProgress = true;
-          console.log("touchstart -> tiltInProgress = true");
+        this.message =
+          `wheel (${e.offsetX}, ${e.offsetY})` +
+          ` x: ${this.bounds.left} < ${e.offsetX} < ${this.element.width - this.bounds.right} y: ${this.bounds.top} < ${
+            e.offsetY
+          } < ${this.element.height - this.bounds.bottom}`;
+        this.bounds.top + ", " + this.element.height;
+      },
+      { passive: false }
+    );
+    this.element.addEventListener(
+      "touchstart",
+      (e) => {
+        let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
+        const rect = this.element.getBoundingClientRect();
+        if (x - rect.left > this.bounds.left && rect.bottom - y > this.bounds.bottom) {
+          e.preventDefault();
+          this.panInProgress = true;
+          if (e.targetTouches.length == 3) {
+            this.tiltInProgress = true;
+            console.log("touchstart -> tiltInProgress = true");
+          }
         }
-      }
-      this.pointX = x;
-      this.pointY = y;
-      this.pointU = u;
-      this.pointV = v;
-      this.pointD = d;
-      this.scale = 1;
-      this.rect = rect;
-      this.hasTouch = true;
-      this.message = "touchstart";
-    });
+        this.pointX = x;
+        this.pointY = y;
+        this.pointU = u;
+        this.pointV = v;
+        this.pointD = d;
+        this.scale = 1;
+        this.rect = rect;
+        this.hasTouch = true;
+        this.message = "touchstart";
+      },
+      { passive: false }
+    );
     this.element.addEventListener("touchend", (e) => {
       if (e.targetTouches.length > 0) {
         let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
@@ -229,52 +237,56 @@ class Gesture {
       this.rollInProgress = false;
       this.message = "touchcancel";
     });
-    this.element.addEventListener("touchmove", (e) => {
-      let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
-      let s = 1.0;
-      let m = "";
-      let dx = x - this.pointX;
-      let dy = this.pointY - y;
-      if (this.tiltInProgress === true) {
-        e.preventDefault();
-        this.handleTilt(dx, dy);
-        this.pointX = x;
-        this.pointY = y;
-        this.pointU = u;
-        this.pointV = v;
-        this.pointD = d;
-      } else if (this.panInProgress === true) {
-        e.preventDefault();
-        if (e.targetTouches.length == 2) {
-          if (e.scale) {
-            s = e.scale / this.scale;
-            this.scale = e.scale;
-            m = "s";
-          } else if (d > 10) {
-            s = d / this.pointD;
-            m = "d";
-          }
-          this.handleDolly(u > 10 ? u / this.pointU : 1, v > 10 ? v / this.pointV : 1, s, x, y);
-        }
-        if (e.targetTouches.length == 2 && this.tick < 3 && dy > 1.0 && s < 1.02 && d < 150) {
-          // console.log(
-          //   `tick = ${this.tick}  touches = ${e.targetTouches.length}  dy = ${dy}   s = ${s}  d = ${d}`
-          // );
-          this.tiltInProgress = true;
+    this.element.addEventListener(
+      "touchmove",
+      (e) => {
+        let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
+        let s = 1.0;
+        let m = "";
+        let dx = x - this.pointX;
+        let dy = this.pointY - y;
+        if (this.tiltInProgress === true) {
+          e.preventDefault();
           this.handleTilt(dx, dy);
-        } else {
-          this.handlePan(dx, dy);
+          this.pointX = x;
+          this.pointY = y;
+          this.pointU = u;
+          this.pointV = v;
+          this.pointD = d;
+        } else if (this.panInProgress === true) {
+          e.preventDefault();
+          if (e.targetTouches.length == 2) {
+            if (e.scale) {
+              s = e.scale / this.scale;
+              this.scale = e.scale;
+              m = "s";
+            } else if (d > 10) {
+              s = d / this.pointD;
+              m = "d";
+            }
+            this.handleDolly(u > 10 ? u / this.pointU : 1, v > 10 ? v / this.pointV : 1, s, x, y);
+          }
+          if (e.targetTouches.length == 2 && this.tick < 3 && dy > 1.0 && s < 1.02 && d < 150) {
+            // console.log(
+            //   `tick = ${this.tick}  touches = ${e.targetTouches.length}  dy = ${dy}   s = ${s}  d = ${d}`
+            // );
+            this.tiltInProgress = true;
+            this.handleTilt(dx, dy);
+          } else {
+            this.handlePan(dx, dy);
+          }
+          this.pointX = x;
+          this.pointY = y;
+          this.pointU = u;
+          this.pointV = v;
+          this.pointD = d;
         }
-        this.pointX = x;
-        this.pointY = y;
-        this.pointU = u;
-        this.pointV = v;
-        this.pointD = d;
-      }
-      this.message = `touchmove (${x}, ${y}) / ${s.toFixed(4)}${m} `;
-      this.tick++;
-      // console.log(`tick = ${this.tick}`);
-    });
+        this.message = `touchmove (${x}, ${y}) / ${s.toFixed(4)}${m} `;
+        this.tick++;
+        // console.log(`tick = ${this.tick}`);
+      },
+      { passive: false }
+    );
     this.element.addEventListener("dblclick", (e) => {
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
@@ -354,6 +366,11 @@ class Scroller {
     this.pointY = -1;
     this.pointU = 0;
     this.pointV = 0;
+    this.velocityX = 0;
+    this.velocityY = 0;
+    this.vbx = [0, 0, 0];
+    this.vby = [0, 0, 0];
+    this.vi = 0;
     this.hasTouch = false;
     this.mouseDown = false;
     this.panInProgress = false;
@@ -388,6 +405,9 @@ class Scroller {
       "touchmove",
       (e) => {
         let delta = this.pointY - e.touches[0].clientY;
+        this.vbx[this.vi] = delta;
+        this.vi = this.vi == 2 ? 0 : this.vi + 1;
+        this.velocityY = (this.vbx[0] + this.vbx[1] + this.vbx[2]) / 3;
         this.pointY = e.touches[0].clientY;
         this.handlePanY(delta);
       },
