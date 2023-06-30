@@ -369,30 +369,38 @@ class Scroller {
 
     this.setHandler = this.setHandler.bind(this);
 
-    this.element.addEventListener("wheel", (e) => {
-      // console.log(`Scroller.onWheel ${e.deltaY}`);
-      if (this.axis == "y") {
-        this.handlePanY(e.deltaY);
-      } else if (this.axis == "x") {
-        this.handlePanX(e.deltaX);
-      } else {
-        this.handlePan(e.deltaX, e.deltaY);
-      }
-    });
+    this.element.addEventListener(
+      "wheel",
+      (e) => {
+        // console.log(`Scroller.onWheel ${e.deltaY}`);
+        if (this.axis == "y") {
+          this.handlePanY(e.deltaY);
+        } else if (this.axis == "x") {
+          this.handlePanX(e.deltaX);
+        } else {
+          this.handlePan(e.deltaX, e.deltaY);
+        }
+      },
+      { passive: false }
+    );
 
-    // this.onTouchMove = (e) => {
-    //   console.log("onTouchMove", e);
-    // };
-
-    this.element.addEventListener("touchmove", (e) => {
-      let delta = this.pointY - e.touches[0].clientY;
-      this.pointY = e.touches[0].clientY;
-      this.handlePanY(delta);
-    });
-    this.element.addEventListener("touchstart", (e) => {
-      console.log(e.touches);
-      this.pointY = e.touches[0].clientY;
-    });
+    this.element.addEventListener(
+      "touchmove",
+      (e) => {
+        let delta = this.pointY - e.touches[0].clientY;
+        this.pointY = e.touches[0].clientY;
+        this.handlePanY(delta);
+      },
+      { passive: false }
+    );
+    this.element.addEventListener(
+      "touchstart",
+      (e) => {
+        console.log(e.touches);
+        this.pointY = e.touches[0].clientY;
+      },
+      { passive: false }
+    );
     this.element.addEventListener("touchend", (e) => console.log(e.touches));
     this.element.addEventListener("touchcancel", (e) => console.log(e.touches));
     console.log("Scroller init");
@@ -400,7 +408,6 @@ class Scroller {
 
   setHandler(f) {
     this.handlePanY = f;
-    // console.log("scroll.handlePanY ->", f);
   }
 }
 

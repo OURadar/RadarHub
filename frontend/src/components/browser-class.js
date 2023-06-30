@@ -89,24 +89,24 @@ const Hours = React.memo(function Hours({ archive, hourHasData, selected }) {
 class Browser extends Component {
   constructor(props) {
     super(props);
-    this.constant = {
+    this.param = {
       stem: 5,
       body: 15,
-      fetch: 50,
+      fetch: 72,
     };
-    this.constant = { ...this.constant, extent: this.constant.body + 2 * this.constant.stem };
+    this.param = { ...this.param, extent: this.param.body + 2 * this.param.stem };
     this.state = {
       items: [],
       subsetItems: [],
       subsetStart: 0,
       hourlyStart: -1,
       taskPending: false,
-      headPadding: -this.constant.stem * props.h,
+      headPadding: -this.param.stem * props.h,
       tic: 0,
     };
+
     this.list = null;
 
-    this.updateSubset = this.updateSubset.bind(this);
     this.handleScroll = this.handleScroll.bind(this);
   }
 
@@ -114,58 +114,12 @@ class Browser extends Component {
     h: 32,
   };
 
-  updateSubset() {
-    const grid = this.props.archive.grid;
-    const { body, stem, extent } = this.constant;
-
-    let start;
-    let padding = this.state.headPadding;
-    if (grid.listMode == "prepend") {
-      start = grid.counts[0] + this.state.hourlyStart;
-    } else if (grid.listMode == "append") {
-      start = this.state.hourlyStart;
-    } else if (grid.listMode == "catchup") {
-      start = Math.max(0, grid.index - body - stem);
-      padding = -stem * this.props.h;
-    } else {
-      start = Math.max(0, grid.counts[0] - stem);
-      padding = (start - grid.counts[0]) * this.props.h;
-    }
-    let hourlyStart = start;
-    if (start >= grid.counts[0]) {
-      hourlyStart -= grid.counts[0];
-    }
-    let subsetItems = [];
-    for (let k = start; k < Math.min(grid.items.length, start + extent); k++) {
-      subsetItems.push({ index: k, label: grid.items[k] });
-    }
-    console.debug(
-      `%cupdateSubset%c` +
-        `   items.length = ${grid.items.length} [${grid.counts}]` +
-        `   start = ${start}` +
-        `   hour = ${grid.hour}` +
-        `   index = ${grid.index}` +
-        `   subsetItems.length = ${subsetItems.length}`,
-      "color: dodgerblue",
-      ""
-    );
-    this.setState({
-      subsetStart: start,
-      headPadding: padding,
-      hourlyStart: hourlyStart,
-      subsetItems: subsetItems,
-      taskPending: false,
-    });
-  }
-
   handleScroll(delta) {
-    // console.log(`Browser.handleScroll ${delta} ${this.state.subsetStart} ${this.state.headPadding}`);
-
     const h = this.props.h;
-    const { body, stem, extent, fetch } = this.constant;
+    const grid = this.props.archive.grid;
+    const { body, stem, extent, fetch } = this.param;
 
-    const archive = this.props.archive;
-    const maxIndex = archive.grid.items.length - extent;
+    const maxIndex = grid.items.length - extent;
 
     let start = this.state.subsetStart;
     let padding = this.state.headPadding - delta;
@@ -188,31 +142,33 @@ class Browser extends Component {
     } else {
       return;
     }
-    let travel = Math.abs(start - archive.grid.index);
-    if (travel > 30 && archive.state.liveUpdate != "offline") {
+    const travel = Math.abs(start - grid.index);
+    if (travel > 30 && this.props.archive.state.liveUpdate != "offline") {
       console.debug("Scrolled far enough, disabling live update ...");
-      archive.disableLiveUpdate();
+      this.props.archive.disableLiveUpdate();
     }
     if (padding < -2 * stem * h || padding > h) {
       padding = this.state.headPadding;
     }
     let taskPending = false;
     if (!this.state.taskPending && start != this.state.subsetStart) {
-      if (start < fetch && archive.grid.moreBefore) {
+      let maxIndex = Math.max(0, grid.items.length - stem - body - fetch);
+      console.log(`start = ${start} / ${fetch} / ${maxIndex}`);
+      if (start < fetch && delta < 0 && grid.moreBefore) {
         taskPending = true;
-        archive.prepend();
-      } else if (start > archive.grid.items.length - stem - body - fetch && archive.grid.moreAfter) {
+        this.props.archive.prepend();
+      } else if (start > maxIndex && delta > 0 && grid.moreAfter) {
         taskPending = true;
-        archive.append();
+        this.props.archive.append();
       }
     }
     let hourlyStart = start;
-    if (start > archive.grid.counts[0]) {
-      hourlyStart -= archive.grid.counts[0];
+    if (start > grid.counts[0]) {
+      hourlyStart -= grid.counts[0];
     }
     let subsetItems = [];
-    for (let k = start; k < Math.min(archive.grid.items.length, start + extent); k++) {
-      subsetItems.push({ index: k, label: archive.grid.items[k] });
+    for (let k = start; k < Math.min(grid.items.length, start + extent); k++) {
+      subsetItems.push({ index: k, label: grid.items[k] });
     }
     this.setState({
       subsetStart: start,
@@ -224,29 +180,65 @@ class Browser extends Component {
   }
 
   componentDidMount() {
-    this.list = document.getElementById("listContainer");
+    // this.list = document.getElementById("listContainer");
+    this.list = document.getElementById("filesContainer");
     this.scroller = new Scroller(this.list);
     this.scroller.setHandler(this.handleScroll);
   }
 
   componentDidUpdate() {
     const archive = this.props.archive;
-    if (archive.grid == null) {
-      console.log("archive.grid == null");
-      return;
-    }
-    if (archive.grid.items.length == 0) {
-      console.log("archive.grid.items.length == 0");
+    if (archive.grid == null || archive.grid.items.length == 0) {
       return;
     }
     if (archive.grid.tic == this.state.tic) {
-      // console.log(`state.tic == ${this.state.tic} unchanged`);
       return;
     }
     this.setState({ tic: archive.grid.tic });
-    console.log(`componentDidUpdate   tic = ${archive.grid.tic}`);
+    console.log(`%ccomponentDidUpdate%c   archive.grid.tic = ${archive.grid.tic}`, "color: dodgerblue", "");
 
-    this.updateSubset();
+    const grid = this.props.archive.grid;
+    const { body, stem, extent } = this.param;
+
+    let start;
+    let padding = this.state.headPadding;
+    if (grid.listMode == "prepend") {
+      start = grid.counts[0] + this.state.hourlyStart;
+    } else if (grid.listMode == "append") {
+      start = this.state.hourlyStart;
+    } else if (grid.listMode == "catchup") {
+      start = Math.max(0, grid.index - body - stem);
+      padding = -stem * this.props.h;
+    } else {
+      start = Math.max(0, grid.counts[0] - stem);
+      padding = (start - grid.counts[0]) * this.props.h;
+    }
+    let hourlyStart = start;
+    if (start >= grid.counts[0]) {
+      hourlyStart -= grid.counts[0];
+    }
+    let subsetItems = [];
+    for (let k = start; k < Math.min(grid.items.length, start + extent); k++) {
+      subsetItems.push({ index: k, label: grid.items[k] });
+    }
+    let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
+    console.log(
+      `%ccomponentDidUpdate%c` +
+        `   items.length = ${grid.items.length} [${quad}]` +
+        `   start = ${start}` +
+        `   hour = ${grid.hour}` +
+        `   index = ${grid.index}` +
+        `   subsetItems.length = ${subsetItems.length}`,
+      "color: dodgerblue",
+      ""
+    );
+    this.setState({
+      subsetStart: start,
+      headPadding: padding,
+      hourlyStart: hourlyStart,
+      subsetItems: subsetItems,
+      taskPending: false,
+    });
   }
 
   render() {
@@ -262,21 +254,19 @@ class Browser extends Component {
           <Calendar archive={archive} day={day} />
           <Hours archive={archive} day={day} hourHasData={hourHasData} selected={hour} />
         </div>
-        <div className="fill" id="listContainer">
-          <div id="filesContainer" style={{ marginTop: this.state.headPadding }}>
-            <div id="filesContainerHead"></div>
-            {this.state.subsetItems.map((item) => (
-              <Button
-                key={`f-${item.label.slice(0, 15)}`}
-                variant="file"
-                onClick={() => archive.loadIndex(item.index)}
-                selected={item.index == index}
-              >
-                {item.label}
-              </Button>
-            ))}
-            <div id="filesContainerTail"></div>
-          </div>
+        <div id="filesContainer" style={{ marginTop: this.state.headPadding }}>
+          <div id="filesContainerHead"></div>
+          {this.state.subsetItems.map((item) => (
+            <Button
+              key={`f-${item.label.slice(0, 15)}`}
+              variant="file"
+              onClick={() => archive.loadIndex(item.index)}
+              selected={item.index == index}
+            >
+              {item.label}
+            </Button>
+          ))}
+          <div id="filesContainerTail"></div>
         </div>
       </div>
     );

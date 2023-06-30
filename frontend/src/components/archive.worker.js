@@ -569,6 +569,13 @@ function catchup() {
       response
         .json()
         .then((buffer) => {
+          console.info(
+            `%carchive.worker.catchup()%c ${pathway} %c${buffer.dateTimeString}%c`,
+            `color: ${namecolor}`,
+            "color: dodgerblue",
+            "color:mediumpurple",
+            ""
+          );
           grid.dateTimeString = buffer.dateTimeString;
           grid.hourHasData = buffer.hoursActive.map((x) => x > 0);
           grid.daysActive = buffer.daysActive;
