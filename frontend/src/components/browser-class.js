@@ -187,7 +187,6 @@ class Browser extends Component {
     this.scroller = new Scroller(this.listRef);
     this.scroller.setHandler(this.handleScroll);
 
-    // console.log(document.body.clientHeight, document.getElementById("browserTop").clientHeight);
     let height = document.body.clientHeight - document.getElementById("browserTop").clientHeight;
     this.param.body = Math.floor(height / this.props.h);
     this.param.extent = this.param.body + 2 * this.param.stem;
@@ -214,7 +213,7 @@ class Browser extends Component {
     } else if (grid.listMode == "append") {
       start = this.state.hourlyStart;
     } else if (grid.listMode == "catchup") {
-      start = Math.max(0, grid.index - body);
+      start = Math.max(0, grid.items.length - 1 - body);
       padding = -stem * this.props.h;
     } else {
       start = Math.max(0, grid.counts[0] - stem);
