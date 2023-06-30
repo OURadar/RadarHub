@@ -384,6 +384,17 @@ class Scroller {
     //   console.log("onTouchMove", e);
     // };
 
+    this.element.addEventListener("touchmove", (e) => {
+      let delta = this.pointY - e.touches[0].clientY;
+      this.pointY = e.touches[0].clientY;
+      this.handlePanY(delta);
+    });
+    this.element.addEventListener("touchstart", (e) => {
+      console.log(e.touches);
+      this.pointY = e.touches[0].clientY;
+    });
+    this.element.addEventListener("touchend", (e) => console.log(e.touches));
+    this.element.addEventListener("touchcancel", (e) => console.log(e.touches));
     console.log("Scroller init");
   }
 

@@ -17,7 +17,7 @@ import { User } from "./user";
 
 import { Splash } from "./splash";
 import { TopBar } from "./topbar";
-import { Browser } from "./browser-continuous";
+import { Browser } from "./browser-class";
 
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);

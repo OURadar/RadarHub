@@ -39,6 +39,7 @@ let grid = {
   index: -1,
   symbol: "Z",
   scan: "E4.0",
+  tic: 0,
 };
 let state = {
   update: "scan",
@@ -368,6 +369,7 @@ function list(day, symbol, mode = "select") {
       grid.itemsGrouped[scanType].push({ item: item, index: index });
     });
     grid.symbol = symbol;
+    grid.tic++;
     setGridIndex(index);
     self.postMessage({
       type: "list",
@@ -600,6 +602,7 @@ function catchup() {
           }
           // Go ahead a set grid.index before setGridIndex() finishes loading the file
           grid.index = index;
+          grid.tic++;
           self.postMessage({
             type: "list",
             payload: grid,

@@ -86,27 +86,6 @@ const Hours = React.memo(function Hours({ archive, hourHasData, selected }) {
   );
 });
 
-function Scans({ archive, scans, selected, top, onWheel, onTouchMove }) {
-  return (
-    <div className="fill" onWheel={onWheel} onTouchMove={onTouchMove}>
-      <div id="filesContainer" style={{ marginTop: top }}>
-        <div id="filesContainerHead"></div>
-        {scans.map((item) => (
-          <Button
-            key={`f-${item.label.slice(0, 15)}`}
-            variant="file"
-            onClick={() => archive.loadIndex(item.index)}
-            selected={item.index == selected}
-          >
-            {item.label}
-          </Button>
-        ))}
-        <div id="filesContainerTail"></div>
-      </div>
-    </div>
-  );
-}
-
 export function Browser(props) {
   const ok = props.archive.grid !== null;
   const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
@@ -115,13 +94,14 @@ export function Browser(props) {
   const index = ok ? props.archive.grid?.index : -1;
   const hourHasData = ok ? props.archive.grid.hourHasData : new Array(24).fill(false);
 
-  // const scroller = React.useRef(null);
+  const scroller = React.useRef(null);
   const listRef = React.useRef(null);
 
   const stem = 5;
   const body = 15;
   const fetch = 50;
   const extent = body + 2 * stem;
+  const maxIndex = items.length - extent;
 
   const [subsetItems, setSubsetItems] = React.useState([]);
   const [subsetStart, setSubsetStart] = React.useState(0);
@@ -144,10 +124,9 @@ export function Browser(props) {
   };
 
   const handleScroll = (delta) => {
+    console.log(`Browser.handleScroll ${delta} ${subsetStart} ${headPadding} ${maxIndex}`);
     let start = subsetStart;
     let padding = headPadding - delta;
-    let maxIndex = items.length - extent;
-    // console.log(`Browser.scroll ${delta} ${start} ${padding} ${maxIndex}`);
     if (delta > 0) {
       while (padding < -stem * props.h && start < maxIndex) {
         padding += props.h;
@@ -173,6 +152,7 @@ export function Browser(props) {
       props.archive.disableLiveUpdate();
     }
     if (padding > -2 * stem * props.h && padding < props.h) {
+      console.debug(`headPadding -> ${padding}`);
       setHeadPadding(padding);
     }
     if (!taskPending && start != subsetStart) {
@@ -187,10 +167,20 @@ export function Browser(props) {
     }
   };
 
-  // React.useEffect(() => {
-  //   scroller.current = new Scroller(listRef.current);
-  //   scroller.current.setHandler(handleScroll);
-  // }, []);
+  // const [pointY, setPointY] = React.useState(0);
+
+  // const handleTouch = (e) => {
+  //   if (e.touches.length == 0) return;
+  //   // e.preventDefault();
+  //   let delta = pointY - e.touches[0].clientY;
+  //   setPointY(e.touches[0].clientY);
+  //   handleScroll(delta);
+  // };
+
+  React.useEffect(() => {
+    scroller.current = new Scroller(listRef.current);
+    scroller.current.setHandler(handleScroll);
+  }, []);
 
   React.useEffect(() => {
     if (props.archive?.grid == null) {
@@ -228,14 +218,31 @@ export function Browser(props) {
         <Calendar archive={props.archive} day={day} />
         <Hours archive={props.archive} day={day} hourHasData={hourHasData} selected={hour} />
       </div>
-      <Scans
+      {/* <Scans
+        ref={listRef}
         archive={props.archive}
         scans={subsetItems}
         selected={index}
         top={headPadding}
-        onWheel={(x) => handleScroll(x.deltaY)}
-        onTouchMove={(x) => console.log(x)}
-      />
+        // onWheel={(x) => handleScroll(x.deltaY)}
+        // onTouchMove={(x) => handleTouch(x)}
+      /> */}
+      <div ref={listRef} className="fill">
+        <div id="filesContainer" style={{ marginTop: headPadding }}>
+          <div id="filesContainerHead"></div>
+          {subsetItems.map((item) => (
+            <Button
+              key={`f-${item.label.slice(0, 15)}`}
+              variant="file"
+              onClick={() => props.archive.loadIndex(item.index)}
+              selected={item.index == index}
+            >
+              {item.label}
+            </Button>
+          ))}
+          <div id="filesContainerTail"></div>
+        </div>
+      </div>
     </div>
   );
 }
