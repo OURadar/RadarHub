@@ -183,7 +183,7 @@ class Browser extends Component {
   }
 
   componentDidMount() {
-    this.listRef = document.getElementById("filesContainer");
+    this.listRef = document.getElementById("filesViewport");
     this.scroller = new Scroller(this.listRef);
     this.scroller.setHandler(this.handleScroll);
 
@@ -260,8 +260,8 @@ class Browser extends Component {
           <Calendar archive={archive} day={day} />
           <Hours archive={archive} day={day} hourHasData={hourHasData} selected={hour} />
         </div>
-        <div id="filesContainer" style={{ marginTop: this.state.headPadding }}>
-          <div id="filesContainerHead"></div>
+        <div id="filesViewport" style={{ marginTop: this.state.headPadding }}>
+          <div id="filesViewportHeader"></div>
           {this.state.subsetItems.map((item) => (
             <Button
               key={`f-${item.label.slice(0, 15)}`}
@@ -272,7 +272,7 @@ class Browser extends Component {
               {item.label}
             </Button>
           ))}
-          <div id="filesContainerTail"></div>
+          <div id="filesViewportFooter"></div>
         </div>
       </div>
     );

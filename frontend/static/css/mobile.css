@@ -124,21 +124,27 @@ Copyright Boonleng Cheong
   width: 100%;
   top: 0;
 }
+#filesViewport {
+  background-color: var(--system-background);
+  position: fixed;
+  width: 100%;
+  top: 0;
+}
+#filesViewportHeader {
+  height: calc(
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
+      var(--small-button-height) + 1px
+  );
+}
+#filesViewportFooter {
+  height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
+}
 #fileList {
   padding-top: calc(
     var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
       var(--small-button-height) + 1px
   );
   padding-bottom: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
-}
-#filesContainerHead {
-  height: calc(
-    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
-      var(--small-button-height) + 1px
-  );
-}
-#filesContainerTail {
-  height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
 }
 
 /* Product view */
