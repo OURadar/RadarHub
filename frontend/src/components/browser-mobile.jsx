@@ -97,7 +97,7 @@ function FileList(props) {
       return;
     }
     if (props.archive.state.loadCount <= 1 && index != -1) {
-      fileListRef.current.children[index].scrollIntoViewIfNeeded();
+      fileListRef.current.children[index]?.scrollIntoViewIfNeeded();
     } else if (props.archive.grid.latestHour > -1) {
       props.archive.disableLiveUpdate();
     }

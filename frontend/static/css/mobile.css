@@ -132,8 +132,8 @@ Copyright Boonleng Cheong
 }
 #filesViewportHeader {
   height: calc(
-    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
-      var(--small-button-height) + 1px
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 3 *
+      var(--small-button-height) + 35px
   );
 }
 #filesViewportFooter {

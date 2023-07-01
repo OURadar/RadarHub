@@ -23,6 +23,10 @@ module.exports = [
       filename: "[name].[chunkhash:8].js",
       path: Path.resolve(__dirname, "static/frontend"),
     },
+    resolve: {
+      alias: { components: Path.resolve(__dirname, "./src/components") },
+      extensions: [".js", ".jsx", ".json"],
+    },
     module: {
       rules: [
         {

@@ -264,7 +264,7 @@ class Browser extends Component {
           <div id="filesViewportHeader"></div>
           {this.state.subsetItems.map((item) => (
             <Button
-              key={`f-${item.label.slice(0, 15)}`}
+              key={`f-${item.label.slice(0, 20)}`}
               variant="file"
               onClick={() => archive.loadIndex(item.index)}
               selected={item.index == index}
