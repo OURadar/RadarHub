@@ -368,9 +368,11 @@ class Scroller {
     this.pointV = 0;
     this.velocityX = 0;
     this.velocityY = 0;
-    this.vbx = [0, 0, 0];
-    this.vby = [0, 0, 0];
+    this.bx = [0, 0, 0];
+    this.by = [0, 0, 0];
     this.vi = 0;
+    this.nv = 0;
+    this.motionInterval = null;
     this.hasTouch = false;
     this.mouseDown = false;
     this.panInProgress = false;
@@ -405,9 +407,13 @@ class Scroller {
       "touchmove",
       (e) => {
         let delta = this.pointY - e.touches[0].clientY;
-        this.vbx[this.vi] = delta;
-        this.vi = this.vi == 2 ? 0 : this.vi + 1;
-        this.velocityY = (this.vbx[0] + this.vbx[1] + this.vbx[2]) / 3;
+        if (this.motionInterval == null) {
+          this.by[this.vi] = delta;
+          this.nv = this.nv == 3 ? 3 : this.nv + 1;
+          this.vi = this.vi == 2 ? 0 : this.vi + 1;
+          this.velocityY = (this.by[0] + this.by[1] + this.by[2]) / this.nv;
+        }
+        this.pointX = e.touches[0].clientX;
         this.pointY = e.touches[0].clientY;
         this.handlePanY(delta);
       },
@@ -416,12 +422,27 @@ class Scroller {
     this.element.addEventListener(
       "touchstart",
       (e) => {
-        console.log(e.touches);
+        if (this.motionInterval) {
+          clearInterval(this.motionInterval);
+          this.motionInterval = null;
+        }
+        this.pointX = e.touches[0].clientX;
         this.pointY = e.touches[0].clientY;
       },
       { passive: false }
     );
-    this.element.addEventListener("touchend", (e) => console.log(e.touches));
+    this.element.addEventListener("touchend", (e) => {
+      this.motionInterval = setInterval(() => {
+        this.handlePanY(this.velocityY);
+        this.velocityX *= 0.93;
+        this.velocityY *= 0.93;
+        if (this.velocityY > -0.1 && this.velocityY < 0.1) {
+          clearInterval(this.motionInterval);
+          this.motionInterval = null;
+          this.nv = 0;
+        }
+      }, 16);
+    });
     this.element.addEventListener("touchcancel", (e) => console.log(e.touches));
     console.log("Scroller init");
   }

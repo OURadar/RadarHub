@@ -14,10 +14,6 @@
     <a class="radarButton" href="/archive/px1000/">PX-1000</a>
     <a class="radarButton" href="/archive/raxpol/">RaXPol</a>
     <div class="spacer50"></div>
-    {% if user.is_authenticated and user.is_staff %}
-    <p><a class="link subtle" href="/dev/px1000/">Preview</a></p>
-    <div class="spacer25"></div>
-    {% endif %}
     {% if user.is_authenticated %}
       <p>Signed in as {{ user.email }}</p>
       <form action="/accounts/signout/?next=/" method="post">
@@ -28,6 +24,11 @@
       <p><a class="link subtle" href="/accounts/signin/">Sign In</a></p>
     {% endif %}
     <div id="versionTag">v{{version}}<div class="lite">&nbsp;</div></div>
+    {% if version == "1.0" %}
+      <div class="spacer25"></div>
+      <p><a class="link subtle" href="/dev/px1000/">Preview</a></p>
+      <div class="spacer25"></div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

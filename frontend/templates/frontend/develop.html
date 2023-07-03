@@ -1,0 +1,7 @@
+{% extends "frontend/__app__.html" %}
+
+{% load render_bundle from webpack_loader %}
+
+{% block main_js %}
+{% render_bundle 'develop' 'js' %}
+{% endblock %}
