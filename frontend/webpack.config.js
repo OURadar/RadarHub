@@ -7,16 +7,16 @@ module.exports = [
   {
     entry: {
       archive: {
-        import: "./src/archive.js",
+        import: "./src/archive.jsx",
       },
       control: {
-        import: "./src/control.js",
+        import: "./src/control.jsx",
+      },
+      develop: {
+        import: "./src/develop.jsx",
       },
       index: {
-        import: "./src/index.js",
-      },
-      dev: {
-        import: "./src/dev.js",
+        import: "./src/index.jsx",
       },
     },
     output: {

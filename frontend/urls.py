@@ -19,6 +19,6 @@ urlpatterns = [
     path('view/<str:page>/', views.view, name='page-name'),
     path('profile/', stats.profile, name='stats-profile'),
     path('robots.txt', views.robots_txt),
-    path('dev/<str:pathway>/', views.dev, name='index'),
+    path('dev/<str:pathway>/', views.develop, name='index'),
     path('', views.index, name='index'),
 ]

@@ -54,10 +54,10 @@ def index(request):
     }
     return render(request, 'frontend/index.html', context)
 
-def dev(request, pathway):
+def develop(request, pathway):
     vars = make_vars(request, pathway)
     context = {'vars': vars, 'css': settings.CSS_HASH}
-    return render(request, 'frontend/dev.html', context)
+    return render(request, 'frontend/develop.html', context)
 
 # Control
 
