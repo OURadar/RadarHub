@@ -32,7 +32,7 @@
     "@mui/x-date-pickers": "^6.0.4",
     "binary-parser": "^1.9.2",
     "date-fns": "^2.24.0",
-    "dayjs": "^1.11.8",
+    "dayjs": "^1.11.9",
     "emoji-name-map": "^1.2.9",
     "emojis": "^1.0.10",
     "gl-matrix": "^3.4.3",
