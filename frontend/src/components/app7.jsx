@@ -12,13 +12,11 @@ import React from "react";
 import { ThemeProvider } from "@mui/material/styles";
 
 import { colorDict, makeTheme } from "./theme";
+import { Archive } from "./archive";
+import { User } from "./user";
 
 import { TopBar } from "./topbar";
-
-import { Archive } from "./archive";
-
-import { Browser } from "./browser-continuous";
-import { User } from "./user";
+import { Browser } from "./browser-class";
 
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);

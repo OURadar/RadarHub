@@ -48,7 +48,7 @@ class Archive extends Ingest {
     this.init();
   }
 
-  handleMessage({ data: { type, tic, index, payload } }) {
+  handleMessage({ data: { type, tic, mode, index, payload } }) {
     if (type == "message") {
       this.showMessage(payload);
     } else if (type == "response") {
@@ -56,6 +56,7 @@ class Archive extends Ingest {
     } else if (type == "load") {
       this.data.sweep = payload;
       this.grid.index = index;
+      this.grid.mode = mode;
       this.grid.tic = tic;
       this.updateAge();
       this.state.sweepLoading = false;

@@ -124,21 +124,22 @@ class Browser extends Component {
     const bound = grid.items.length - extent;
 
     let start = this.state.subsetStart;
-    let padding = this.state.headPadding - delta;
-    if (delta > 0) {
-      while (padding < -stem * h && start < bound) {
+    let padding = this.state.headPadding + delta;
+    if (delta < 0) {
+      //while (padding < -stem * h && start < bound) {
+      while (padding < -stem * h) {
         padding += h;
         start++;
       }
-      if (start == bound) {
+      if (start >= bound) {
         console.log("reached the bottom");
       }
-    } else if (delta < 0) {
+    } else if (delta > 0) {
       while (padding > (1 - stem) * h && start > 1) {
         padding -= h;
         start--;
       }
-      if (start == 0) {
+      if (start <= 0) {
         console.log("reached the top");
       }
     } else {
@@ -208,16 +209,18 @@ class Browser extends Component {
 
     let start;
     let padding = this.state.headPadding;
-    if (grid.listMode == "prepend") {
+    if (grid.mode == "prepend") {
       start = grid.counts[0] + this.state.hourlyStart;
-    } else if (grid.listMode == "append") {
+    } else if (grid.mode == "append") {
       start = this.state.hourlyStart;
-    } else if (grid.listMode == "catchup") {
+    } else if (grid.mode == "catchup") {
       start = Math.max(0, grid.items.length - 1 - body);
       padding = -stem * this.props.h;
-    } else {
+    } else if (grid.mode == "select") {
       start = Math.max(0, grid.counts[0] - stem);
       padding = (start - grid.counts[0]) * this.props.h;
+    } else {
+      start = this.state.subsetStart;
     }
     let hourlyStart = start;
     if (start >= grid.counts[0]) {
@@ -231,6 +234,7 @@ class Browser extends Component {
     console.log(
       `%ccomponentDidUpdate%c` +
         `   tic = ${archive.grid.tic}` +
+        `   mode = ${grid.mode}` +
         `   hour = ${grid.hour}` +
         `   length = ${subsetItems.length} / ${grid.items.length} [${quad}]` +
         `   start = ${start}` +

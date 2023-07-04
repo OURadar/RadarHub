@@ -29,12 +29,12 @@ let grid = {
   pathsActive: new Array(4).fill(false),
   latestScan: "",
   latestHour: -1,
-  listMode: null,
   counts: [0, 0],
   items: [],
   itemsGrouped: {},
   moreBefore: false,
   moreAfter: false,
+  mode: null,
   hour: -1,
   index: -1,
   symbol: "Z",
@@ -133,7 +133,7 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
   if (task == "init") {
     init(name);
   } else if (task == "set") {
-    setGridIndex(name);
+    set(name);
   } else if (task == "list") {
     list(day, symbol);
   } else if (task == "count") {
@@ -169,6 +169,11 @@ function init(newPathway) {
     console.info(`%carchive.worker.init()%c ${pathway}`, `color: ${namecolor}`, "color: dodgerblue");
   }
   self.postMessage({ type: "init", payload: grid });
+}
+
+function set(index) {
+  grid.mode = "load";
+  setGridIndex(index);
 }
 
 function connect(force = false) {
@@ -270,7 +275,7 @@ function updateListWithItem(item) {
   if (grid.dateTimeString != dateTimeString) {
     grid.dateTimeString = dateTimeString;
     grid.hour = parseInt(listHour);
-    grid.listMode = "catchup";
+    grid.mode = "catchup";
     grid.items = grid.items.slice(grid.counts[0]);
     grid.counts = [grid.counts[1], 0];
     reviseGridItemsGrouped();
@@ -354,7 +359,7 @@ function list(day, symbol, mode = "select") {
   if (dateTimeString == grid.dateTimeString) {
     let index = grid.index;
     let currentItems = grid.items;
-    grid.listMode = mode;
+    grid.mode = mode;
     grid.items = [];
     grid.itemsGrouped = {};
     currentItems.forEach((item, index) => {
@@ -397,7 +402,7 @@ function list(day, symbol, mode = "select") {
               .slice()
               .reverse()
               .findIndex((x) => x == true);
-          grid.listMode = mode;
+          grid.mode = mode;
           grid.counts = buffer.counts;
           grid.items = buffer.items;
           grid.moreBefore = buffer.moreBefore;
@@ -489,7 +494,7 @@ function _load(name) {
           grid.last = name;
           grid.scan = scan;
           grid.tic++;
-          self.postMessage({ type: "load", tic: grid.tic, index: grid.index, payload: sweep });
+          self.postMessage({ type: "load", tic: grid.tic, mode: grid.mode, index: grid.index, payload: sweep });
         });
       } else {
         response.text().then((text) => {
@@ -586,7 +591,7 @@ function catchup() {
           grid.counts = buffer.counts;
           grid.moreBefore = buffer.moreBefore;
           grid.moreAfter = buffer.moreAfter;
-          grid.listMode = "catchup";
+          grid.mode = "catchup";
           reviseGridItemsGrouped();
           grid.yearHasData.splice(100, buffer.yearsActive.length, ...buffer.yearsActive);
           let index = suggestGridIndex("catchup", buffer);

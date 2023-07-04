@@ -366,12 +366,14 @@ class Scroller {
     this.pointY = -1;
     this.pointU = 0;
     this.pointV = 0;
+    this.timeStamp = 0;
     this.velocityX = 0;
     this.velocityY = 0;
     this.bx = [0, 0, 0];
     this.by = [0, 0, 0];
-    this.vi = 0;
-    this.nv = 0;
+    this.bt = [0, 0, 0];
+    this.ib = 0;
+    this.nb = 0;
     this.motionInterval = null;
     this.hasTouch = false;
     this.mouseDown = false;
@@ -393,7 +395,7 @@ class Scroller {
       (e) => {
         // console.log(`Scroller.onWheel ${e.deltaY}`);
         if (this.axis == "y") {
-          this.handlePanY(e.deltaY);
+          this.handlePanY(-e.deltaY);
         } else if (this.axis == "x") {
           this.handlePanX(e.deltaX);
         } else {
@@ -406,16 +408,20 @@ class Scroller {
     this.element.addEventListener(
       "touchmove",
       (e) => {
-        let delta = this.pointY - e.touches[0].clientY;
+        let dy = e.touches[0].clientY - this.pointY;
+        let dt = e.timeStamp - this.timeStamp;
+        // console.log(`dt = ${dt}`);
         if (this.motionInterval == null) {
-          this.by[this.vi] = delta;
-          this.nv = this.nv == 3 ? 3 : this.nv + 1;
-          this.vi = this.vi == 2 ? 0 : this.vi + 1;
-          this.velocityY = (this.by[0] + this.by[1] + this.by[2]) / this.nv;
+          this.by[this.ib] = dy;
+          this.bt[this.ib] = dt;
+          this.nb = this.nb == 3 ? 3 : this.nb + 1;
+          this.ib = this.ib == 2 ? 0 : this.ib + 1;
+          this.velocityY = (this.by[0] + this.by[1] + this.by[2]) / this.nb;
         }
         this.pointX = e.touches[0].clientX;
         this.pointY = e.touches[0].clientY;
-        this.handlePanY(delta);
+        this.timeStamp = e.timeStamp;
+        this.handlePanY(dy);
       },
       { passive: false }
     );
@@ -426,29 +432,31 @@ class Scroller {
           clearInterval(this.motionInterval);
           this.motionInterval = null;
         }
+        // console.log(e.timeStamp);
         this.pointX = e.touches[0].clientX;
         this.pointY = e.touches[0].clientY;
-        this.velocityX = 0;
-        this.velocityY = 0;
+        this.timeStamp = e.timeStamp;
         this.by = [0, 0, 0];
-        this.nv = 0;
-        this.vi = 0;
+        this.bt = [0, 0, 0];
+        this.nb = 0;
+        this.ib = 0;
       },
       { passive: false }
     );
     this.element.addEventListener("touchend", (e) => {
-      if (this.nv < 3) {
+      if (this.nb < 3) {
         return;
       }
+      let period = (this.bt[0] + this.bt[1] + this.bt[2]) / this.nb;
       this.motionInterval = setInterval(() => {
         this.handlePanY(this.velocityY);
         this.velocityX *= 0.93;
         this.velocityY *= 0.93;
-        if (this.velocityY > -0.1 && this.velocityY < 0.1) {
+        if (this.velocityY > -0.25 && this.velocityY < 0.25) {
           clearInterval(this.motionInterval);
           this.motionInterval = null;
         }
-      }, 16);
+      }, period);
     });
     this.element.addEventListener("touchcancel", (e) => console.log(e.touches));
     console.log("Scroller init");
