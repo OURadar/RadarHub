@@ -32,7 +32,7 @@ function ServerDay(props) {
   let key = day.format("YYYYMMDD");
   let num = key in props.archive.grid.daysActive ? props.archive.grid.daysActive[key] : 0;
 
-  return num ? (
+  return num && !outsideCurrentMonth ? (
     <Badge key={key} color={badgeColors[num]} overlap="circular" variant="dot">
       <PickersDay {...other} outsideCurrentMonth={outsideCurrentMonth} day={day} />
     </Badge>
