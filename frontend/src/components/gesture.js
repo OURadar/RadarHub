@@ -428,10 +428,18 @@ class Scroller {
         }
         this.pointX = e.touches[0].clientX;
         this.pointY = e.touches[0].clientY;
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.by = [0, 0, 0];
+        this.nv = 0;
+        this.vi = 0;
       },
       { passive: false }
     );
     this.element.addEventListener("touchend", (e) => {
+      if (this.nv < 3) {
+        return;
+      }
       this.motionInterval = setInterval(() => {
         this.handlePanY(this.velocityY);
         this.velocityX *= 0.93;
@@ -439,7 +447,6 @@ class Scroller {
         if (this.velocityY > -0.1 && this.velocityY < 0.1) {
           clearInterval(this.motionInterval);
           this.motionInterval = null;
-          this.nv = 0;
         }
       }, 16);
     });

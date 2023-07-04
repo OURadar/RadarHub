@@ -446,8 +446,7 @@ function append() {
 
 function load(name) {
   const url = `/data/load/${pathway}/${name}/`;
-  const index = grid.items.indexOf(name);
-  console.info(`%carchive.worker.load() %c${url}%c   index = ${index}`, `color: ${namecolor}`, "color: dodgerblue", "");
+  console.info(`%carchive.worker.load() %c${url}%c`, `color: ${namecolor}`, "color: dodgerblue", "");
   fetch(url, { cache: "force-cache" })
     .then((response) => {
       if (response.status == 200) {
@@ -475,14 +474,11 @@ function load(name) {
           let scan = components[2];
           if (state.verbose > 1) {
             console.debug(
-              `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}   grid.index ${grid.index} -> ${index} / ${grid.items.length}`,
+              `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}`,
               `color: ${namecolor}`,
               "color: dodgerblue"
             );
           }
-          grid.scan = scan;
-          grid.index = index;
-          grid.tic++;
           if (sweep.nb == 0 || sweep.nr == 0) {
             console.log(sweep);
             self.postMessage({
@@ -491,6 +487,9 @@ function load(name) {
             });
             return;
           }
+          grid.last = name;
+          grid.scan = scan;
+          grid.tic++;
           self.postMessage({ type: "load", tic: grid.tic, index: grid.index, payload: sweep });
         });
       } else {
@@ -635,7 +634,7 @@ function setGridIndex(index) {
       "color: dodgerblue"
     );
   }
-  if (index < 0 || index >= grid.items.length || index == grid.index) {
+  if (index < 0 || index >= grid.items.length) {
     if (state.verbose > 1) {
       console.debug(
         `%carchive.worker.setGridIndex()%c index = ${index}. Early return.`,
@@ -654,6 +653,14 @@ function setGridIndex(index) {
       `color: ${namecolor}`,
       "color: dodgerblue"
     );
+  }
+  console.debug(
+    `%carchive.worker.setGridIndex()%c scan = ${scan} / ${grid.scan}. Early return.`,
+    `color: ${namecolor}`,
+    "color: dodgerblue"
+  );
+  if (scan == grid.last) {
+    return;
   }
   load(scan);
   reviseGridPaths();
