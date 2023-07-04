@@ -448,7 +448,7 @@ function append() {
   list(day, grid.symbol, "append");
 }
 
-function _load(name) {
+function load(name) {
   const url = `/data/load/${pathway}/${name}/`;
   console.info(`%carchive.worker.load() %c${url}%c`, `color: ${namecolor}`, "color: dodgerblue", "");
   fetch(url, { cache: "force-cache" })
@@ -670,7 +670,7 @@ function setGridIndex(index) {
   }
   grid.index = index;
   reviseGridPaths();
-  _load(scan);
+  load(scan);
 }
 
 function navigateForward() {

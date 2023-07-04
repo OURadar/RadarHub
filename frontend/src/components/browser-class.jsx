@@ -4,6 +4,10 @@
 //
 //  This is a view
 //
+//  Implemented as a class component as Javascript closure limits the lexical
+//  environment that is accessible by the other class embeded in this view, i.e.,
+//  the Scroller class for handling the pan gesture.
+//
 //  Created by Boonleng Cheong
 //
 
@@ -157,11 +161,11 @@ class Browser extends Component {
     if (!this.state.taskPending && start != this.state.subsetStart) {
       let maxIndex = Math.max(0, grid.items.length - stem - body - fetch);
       let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
-      console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
-      if (start < fetch && delta < 0 && grid.moreBefore) {
+      // console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
+      if (start < fetch && delta > 0 && grid.moreBefore) {
         taskPending = true;
         this.props.archive.prepend();
-      } else if (start > maxIndex && delta > 0 && grid.moreAfter) {
+      } else if (start > maxIndex && delta < 0 && grid.moreAfter) {
         taskPending = true;
         this.props.archive.append();
       }
