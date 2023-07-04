@@ -39,6 +39,7 @@ let grid = {
   index: -1,
   symbol: "Z",
   scan: "E4.0",
+  last: null,
   tic: 0,
 };
 let state = {
@@ -133,8 +134,6 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
     init(name);
   } else if (task == "set") {
     setGridIndex(name);
-  } else if (task == "load") {
-    load(name);
   } else if (task == "list") {
     list(day, symbol);
   } else if (task == "count") {
@@ -444,7 +443,7 @@ function append() {
   list(day, grid.symbol, "append");
 }
 
-function load(name) {
+function _load(name) {
   const url = `/data/load/${pathway}/${name}/`;
   console.info(`%carchive.worker.load() %c${url}%c`, `color: ${namecolor}`, "color: dodgerblue", "");
   fetch(url, { cache: "force-cache" })
@@ -647,6 +646,16 @@ function setGridIndex(index) {
     return;
   }
   const scan = grid.items[index];
+  if (scan == grid.last) {
+    if (state.verbose > 1) {
+      console.debug(
+        `%carchive.worker.setGridIndex()%c scan = ${scan} / ${grid.last}. Early return.`,
+        `color: ${namecolor}`,
+        "color: dodgerblue"
+      );
+    }
+    return;
+  }
   if (state.verbose > 1) {
     console.debug(
       `%carchive.worker.setGridIndex()%c Calling load() ${scan} ...`,
@@ -654,16 +663,9 @@ function setGridIndex(index) {
       "color: dodgerblue"
     );
   }
-  console.debug(
-    `%carchive.worker.setGridIndex()%c scan = ${scan} / ${grid.scan}. Early return.`,
-    `color: ${namecolor}`,
-    "color: dodgerblue"
-  );
-  if (scan == grid.last) {
-    return;
-  }
-  load(scan);
+  grid.index = index;
   reviseGridPaths();
+  _load(scan);
 }
 
 function navigateForward() {
@@ -692,6 +694,7 @@ function updateGridIndexByScan(delta) {
     }
   });
   let index = ii[clamp(k + delta, 0, ii.length - 1)];
+  // console.log(`grid.index = ${grid.index} -> ${index}`);
   setGridIndex(index);
 }
 
