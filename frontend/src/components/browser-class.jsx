@@ -25,8 +25,6 @@ dayjs.extend(utc);
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 
-import Box from "@mui/material/Box";
-
 import { Scroller } from "./gesture";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
@@ -83,9 +81,7 @@ const Hours = React.memo(function Hours({ archive, hourHasData, selected }) {
           </Button>
         ))}
       </div>
-      <Box sx={{ pt: 1, pb: 1 }}>
-        <div className="fullWidth center disabled">Hours</div>
-      </Box>
+      <div className="sectionBar fullWidth center disabled">Hours</div>
     </div>
   );
 });

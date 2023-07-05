@@ -5,7 +5,7 @@ Copyright Boonleng Cheong
 :root {
   --button-height: 36px;
   --indicator-height: 25px;
-  --font-size: calc(var(--indicator-height) * 0.6);
+  --font-size: 16px;
   --button-border-top: solid 1px var(--border-accent);
   --button-border-right: solid 1px var(--border-accent);
   --button-border-bottom: solid 1px var(--border-accent);

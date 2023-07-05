@@ -16,6 +16,7 @@ Copyright Boonleng Cheong
   --calendar-height: 56px;
   --navbar-button-height: 56px;
   --navbar-padding-bottom: 28px;
+  --secbar-padding: 8px;
   --small-button-height: 32px;
   --button-border-radius: 4px;
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
@@ -617,6 +618,10 @@ h3 {
   padding-bottom: var(--navbar-padding-bottom);
   border-top: var(--ui-border);
   background-color: var(--overlay-background);
+}
+.sectionBar {
+  padding-top: var(--secbar-padding);
+  padding-bottom: var(--secbar-padding);
 }
 
 .statusWrapper {
