@@ -40,8 +40,9 @@ class Gesture {
     this.handleDoubleTap = (_x, _y) => {};
     this.handleMagnify = (_mx, _my, _m, _x, _y) => {};
     this.handleDolly = (_mx, _my, _m, _x, _y) => {};
+
     this.inbound = this.inbound.bind(this);
-    this.setTilt = this.setTilt(this);
+    this.setTilt = this.setTilt.bin(this);
 
     this.element.addEventListener("mousedown", (e) => {
       if (this.inbound(e)) {
@@ -375,6 +376,9 @@ class Scroller {
     this.ib = 0;
     this.nb = 0;
     this.motionInterval = null;
+    this.overdrive = 0;
+    this.coasting = false;
+    this.bouncing = false;
     this.hasTouch = false;
     this.mouseDown = false;
     this.panInProgress = false;
@@ -396,13 +400,17 @@ class Scroller {
       "wheel",
       (e) => {
         // console.log(`Scroller.onWheel ${e.deltaY}`);
-        if (Math.abs(e.deltaY) < 2) {
-          this.panInProgress = false;
-          this.stretch = 0;
+        if ((Math.abs(this.overdrive) > 300 || this.stretch > 10) && !this.bouncing) {
+          console.log(`bounce`);
+          this.bounce();
+          // this.panInProgress = false;
+          // this.stretch = 0;
         } else {
           this.panInProgress = true;
         }
-        this.pan(-e.deltaY);
+        if (!this.bouncing) {
+          this.pan(-e.deltaY);
+        }
       },
       { passive: false }
     );
@@ -447,10 +455,15 @@ class Scroller {
       { passive: false }
     );
     this.element.addEventListener("touchend", (e) => {
+      // if ((this.stretch > 10 || this.overdrive) && !this.panInProgress && !this.bouncing) {
+      //   // console.log(`return by ${this.overdrive}`);
+      //   this.bounce();
+      // }
       if (this.nb < 3) {
         return;
       }
       let period = (this.bt[0] + this.bt[1] + this.bt[2]) / this.nb;
+      this.coasting = true;
       this.motionInterval = setInterval(() => {
         this.pan(this.velocityY);
         this.velocityX *= 0.93;
@@ -459,7 +472,10 @@ class Scroller {
           clearInterval(this.motionInterval);
           this.motionInterval = null;
           this.panInProgress = false;
-          this.stretch = 0;
+          this.coasting = false;
+          if (this.stretch) {
+            this.bounce();
+          }
         }
       }, period);
     });
@@ -469,18 +485,43 @@ class Scroller {
   }
 
   pan(delta) {
-    if (this.stretch <= 1) {
-      console.log(`Scroller.pan(${delta})`);
-      this.handlePanY(delta);
-    } else if (this.stretch > 5) {
-      let dy = Math.max(0.25, 1.0 - 0.05 * this.stretch) * delta;
-      console.log(`stretch = ${this.stretch.toFixed(2)}  panY ${dy}`);
-      this.handlePanY(dy);
-    } else if (this.stretch > 20) {
-      this.handlePanY(delta > 0 ? 0.5 : -0.5);
-    } else if (this.stretch > 50) {
-      return;
+    const stress = Math.abs(this.overdrive);
+    if (this.stretch && !this.bouncing) {
+      if (this.coasting || stress < 80) {
+        this.overdrive += delta;
+      } else if (stress < 160) {
+        this.overdrive += 0.5 * delta;
+      } else if (stress < 320) {
+        this.overdrive += 0.25 * delta;
+      }
+      console.log(`overdrive = ${this.overdrive}`);
     }
+    if (this.coasting || stress < 80) {
+      this.handlePanY(delta);
+    } else if (stress < 160) {
+      this.handlePanY(0.5 * delta);
+    } else if (stress < 320) {
+      this.handlePanY(0.25 * delta);
+    }
+  }
+
+  bounce() {
+    this.panInProgress = false;
+    if (this.motionInterval && !this.bouncing) {
+      clearInterval(this.motionInterval);
+    }
+    this.motionInterval = setInterval(() => {
+      if (Math.abs(this.overdrive) < 2) {
+        clearInterval(this.motionInterval);
+        this.bouncing = false;
+        this.motionInterval = null;
+        this.overdrive = 0;
+        this.stretch = 0;
+      }
+      this.handlePanY(-0.2 * this.overdrive);
+      this.overdrive -= 0.2 * this.overdrive;
+    }, 16);
+    this.bouncing = true;
   }
 
   setHandler(f) {
@@ -488,13 +529,17 @@ class Scroller {
   }
 
   addStretch() {
-    console.log(`Scroller.addStretch`);
-    this.stretch++;
+    if (!this.bouncing) {
+      console.log(`Scroller.addStretch`);
+      this.stretch++;
+    }
   }
 
   resetStretch() {
-    console.log(`Scroller.resetStretch`);
-    this.stretch = 0;
+    if (!this.bouncing) {
+      console.log(`Scroller.resetStretch`);
+      this.stretch = 0;
+    }
   }
 }
 

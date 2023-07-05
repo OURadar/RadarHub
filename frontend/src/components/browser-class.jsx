@@ -132,7 +132,7 @@ class Browser extends Component {
         start++;
       }
       if (start >= bound) {
-        // console.log("reached the bottom");
+        console.log("reached the bottom");
         this.scroller.addStretch();
       } else if (start < bound) {
         this.scroller.resetStretch();
@@ -144,7 +144,7 @@ class Browser extends Component {
         start--;
       }
       if (start <= 0 && padding > 0) {
-        // console.log("reached the top");
+        console.log("reached the top");
         this.scroller.addStretch();
       } else if (start > 0) {
         this.scroller.resetStretch();
