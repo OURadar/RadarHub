@@ -380,6 +380,7 @@ class Scroller {
     this.panInProgress = false;
     this.singleTapTimeout = null;
     this.lastTapTime = Date.now();
+    this.stretch = 0;
     this.message = "scroll";
     this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
     this.handlePan = (_x, _y) => {};
@@ -389,18 +390,19 @@ class Scroller {
     this.handleDoubleTap = (_x, _y) => {};
 
     this.setHandler = this.setHandler.bind(this);
+    this.pan = this.pan.bind(this);
 
     this.element.addEventListener(
       "wheel",
       (e) => {
         // console.log(`Scroller.onWheel ${e.deltaY}`);
-        if (this.axis == "y") {
-          this.handlePanY(-e.deltaY);
-        } else if (this.axis == "x") {
-          this.handlePanX(e.deltaX);
+        if (Math.abs(e.deltaY) < 2) {
+          this.panInProgress = false;
+          this.stretch = 0;
         } else {
-          this.handlePan(e.deltaX, e.deltaY);
+          this.panInProgress = true;
         }
+        this.pan(-e.deltaY);
       },
       { passive: false }
     );
@@ -421,7 +423,8 @@ class Scroller {
         this.pointX = e.touches[0].clientX;
         this.pointY = e.touches[0].clientY;
         this.timeStamp = e.timeStamp;
-        this.handlePanY(dy);
+        this.panInProgress = true;
+        this.pan(dy);
       },
       { passive: false }
     );
@@ -449,21 +452,49 @@ class Scroller {
       }
       let period = (this.bt[0] + this.bt[1] + this.bt[2]) / this.nb;
       this.motionInterval = setInterval(() => {
-        this.handlePanY(this.velocityY);
+        this.pan(this.velocityY);
         this.velocityX *= 0.93;
         this.velocityY *= 0.93;
         if (this.velocityY > -0.25 && this.velocityY < 0.25) {
           clearInterval(this.motionInterval);
           this.motionInterval = null;
+          this.panInProgress = false;
+          this.stretch = 0;
         }
       }, period);
     });
     this.element.addEventListener("touchcancel", (e) => console.log(e.touches));
+
     console.log("Scroller init");
+  }
+
+  pan(delta) {
+    if (this.stretch <= 1) {
+      console.log(`Scroller.pan(${delta})`);
+      this.handlePanY(delta);
+    } else if (this.stretch > 5) {
+      let dy = Math.max(0.25, 1.0 - 0.05 * this.stretch) * delta;
+      console.log(`stretch = ${this.stretch.toFixed(2)}  panY ${dy}`);
+      this.handlePanY(dy);
+    } else if (this.stretch > 20) {
+      this.handlePanY(delta > 0 ? 0.5 : -0.5);
+    } else if (this.stretch > 50) {
+      return;
+    }
   }
 
   setHandler(f) {
     this.handlePanY = f;
+  }
+
+  addStretch() {
+    console.log(`Scroller.addStretch`);
+    this.stretch++;
+  }
+
+  resetStretch() {
+    console.log(`Scroller.resetStretch`);
+    this.stretch = 0;
   }
 }
 

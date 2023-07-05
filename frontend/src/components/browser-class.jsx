@@ -125,7 +125,7 @@ class Browser extends Component {
     const grid = this.props.archive.grid;
     const { body, stem, extent, fetch } = this.param;
 
-    const bound = grid.items.length - extent;
+    const bound = grid.items.length - body - stem + 2;
 
     let start = this.state.subsetStart;
     let padding = this.state.headPadding + delta;
@@ -136,15 +136,22 @@ class Browser extends Component {
         start++;
       }
       if (start >= bound) {
-        console.log("reached the bottom");
+        // console.log("reached the bottom");
+        this.scroller.addStretch();
+      } else if (start < bound) {
+        this.scroller.resetStretch();
       }
     } else if (delta > 0) {
-      while (padding > (1 - stem) * h && start > 1) {
+      while (padding > (1 - stem) * h && start > 0) {
+        // while (padding > (1 - stem) * h) {
         padding -= h;
         start--;
       }
-      if (start <= 0) {
-        console.log("reached the top");
+      if (start <= 0 && padding > 0) {
+        // console.log("reached the top");
+        this.scroller.addStretch();
+      } else if (start > 0) {
+        this.scroller.resetStretch();
       }
     } else {
       return;
@@ -154,14 +161,15 @@ class Browser extends Component {
       console.debug("Scrolled far enough, disabling live update ...");
       this.props.archive.disableLiveUpdate();
     }
-    if (padding < -2 * stem * h || padding > h) {
+    // if (padding < -2 * stem * h || padding > h) {
+    if (padding < -2 * stem * h) {
       padding = this.state.headPadding;
     }
     let taskPending = false;
     if (!this.state.taskPending && start != this.state.subsetStart) {
       let maxIndex = Math.max(0, grid.items.length - stem - body - fetch);
       let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
-      // console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
+      console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
       if (start < fetch && delta > 0 && grid.moreBefore) {
         taskPending = true;
         this.props.archive.prepend();
@@ -175,7 +183,7 @@ class Browser extends Component {
       hourlyStart -= grid.counts[0];
     }
     let subsetItems = [];
-    for (let k = start; k < Math.min(grid.items.length, start + extent); k++) {
+    for (let k = Math.max(0, start); k < Math.min(grid.items.length, start + extent); k++) {
       subsetItems.push({ index: k, label: grid.items[k] });
     }
     this.setState({

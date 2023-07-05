@@ -238,13 +238,18 @@ CHANNEL_LAYERS = {
 # RADARS = { '_PREFIX_': {'folder': '_RADAR_NAME_', 'summary': '_SCAN_' } }
 if 'radars' in settings:
     RADARS = settings['radars']
-    RADARS['DEMO-'] = {
-            'name': 'demo',
-            'folder': 'demo',
-            'summary': 'E4.0',
-        }
+    RADARS['DX-'] = {
+        'name': 'demo',
+        'folder': 'demo',
+        'summary': 'E2.4',
+    }
 else:
     RADARS = {
+        'DX-': {
+            'name': 'Demo',
+            'folder': 'demo',
+            'summary': 'E2.4',
+        },
         'PX-': {
             'name': 'PX-1000',
             'folder': 'PX1000',
@@ -398,14 +403,14 @@ else:
     SOCIALACCOUNT_PROVIDERS = {
         'google': {
             'SCOPE': ['profile', 'email'],
-            'AUTH_PARAMS': { 'access_type': 'online' }
+            'AUTH_PARAMS': {'access_type': 'online'}
         }
     }
 
 if 'facebook' in SOCIALACCOUNT_PROVIDERS:
     for key in ['EXCHANGE_TOKEN', 'VERIFIED_EMAIL']:
         SOCIALACCOUNT_PROVIDERS['facebook'][key] = bool(SOCIALACCOUNT_PROVIDERS['facebook'][key])
-    SOCIALACCOUNT_PROVIDERS['facebook']['INIT_PARAMS'] = {'cookie': True }
+    SOCIALACCOUNT_PROVIDERS['facebook']['INIT_PARAMS'] = {'cookie': True}
 
 if DEBUG is not True:
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
