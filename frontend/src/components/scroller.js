@@ -15,35 +15,37 @@ class Scroller {
     this.bt = [0, 0, 0];
     this.ib = 0;
     this.nb = 0;
-    this.motionInterval = null;
     this.overdrive = 0;
     this.coasting = false;
     this.bouncing = false;
-    this.hasTouch = false;
-    this.mouseDown = false;
-    this.singleTapTimeout = null;
-    this.lastTapTime = Date.now();
+    this.motionInterval = null;
     this.stretch = 0;
     this.message = "scroll";
     this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
     this.handlePan = (_x, _y) => {};
     this.handlePanX = (_x) => {};
     this.handlePanY = (_y) => {};
-    this.handleSingleTap = (_x, _y) => {};
-    this.handleDoubleTap = (_x, _y) => {};
+    this.handleQuery = () => 0;
+
+    this.pan = this.pan.bind(this);
 
     this.setHandler = this.setHandler.bind(this);
-    this.pan = this.pan.bind(this);
+    this.setReporter = this.setReporter.bind(this);
+
+    this.addStretch = this.addStretch.bind(this);
+    this.resetStretch = this.resetStretch.bind(this);
 
     this.element.addEventListener(
       "wheel",
       (e) => {
         // console.log(`Scroller.onWheel ${e.deltaY}`);
-        if ((Math.abs(this.overdrive) > 300 || this.stretch > 10) && !this.bouncing) {
-          console.log(`bounce`);
-          this.bounce();
+        if (this.bouncing) {
+          return;
         }
-        if (!this.bouncing) {
+        this.overdrive = this.handleQuery();
+        if (Math.abs(this.overdrive) > 50 && this.stretch) {
+          this.bounce();
+        } else {
           this.pan(-e.deltaY);
         }
       },
@@ -89,8 +91,9 @@ class Scroller {
       { passive: false }
     );
     this.element.addEventListener("touchend", (e) => {
-      if (this.nb < 3 || Math.abs(this.velocityY) < 5) {
-        if (this.stretch) {
+      if (this.nb < 3 || Math.abs(this.velocityY) < 3) {
+        this.overdrive = this.handleQuery();
+        if (this.overdrive != 0 && this.stretch) {
           this.bounce();
         }
         return;
@@ -99,13 +102,20 @@ class Scroller {
       this.coasting = true;
       this.motionInterval = setInterval(() => {
         this.pan(this.velocityY);
-        this.velocityX *= 0.93;
-        this.velocityY *= 0.93;
+        if (this.stretch) {
+          this.velocityX *= 0.84;
+          this.velocityY *= 0.84;
+        } else {
+          this.velocityX *= 0.93;
+          this.velocityY *= 0.93;
+        }
         if (this.velocityY > -0.25 && this.velocityY < 0.25) {
           clearInterval(this.motionInterval);
           this.motionInterval = null;
           this.coasting = false;
-          if (this.stretch) {
+          //   this.overdrive = this.handleQuery();
+          console.log(`touchend velocity ~ 0, ${this.overdrive} ${this.stretch}`);
+          if (this.overdrive != 0 && this.stretch) {
             this.bounce();
           }
         }
@@ -117,17 +127,8 @@ class Scroller {
   }
 
   pan(delta) {
+    this.overdrive = this.handleQuery();
     const stress = Math.abs(this.overdrive);
-    if (this.stretch && !this.bouncing) {
-      if (this.coasting || stress < 80) {
-        this.overdrive += delta;
-      } else if (stress < 160) {
-        this.overdrive += 0.5 * delta;
-      } else if (stress < 320) {
-        this.overdrive += 0.25 * delta;
-      }
-      console.log(`overdrive = ${this.overdrive}`);
-    }
     if (this.coasting || stress < 80) {
       this.handlePanY(delta);
     } else if (stress < 160) {
@@ -138,11 +139,11 @@ class Scroller {
   }
 
   bounce() {
-    if (this.motionInterval && !this.bouncing) {
+    if (this.motionInterval) {
       clearInterval(this.motionInterval);
     }
     this.motionInterval = setInterval(() => {
-      if (Math.abs(this.overdrive) < 2) {
+      if (Math.abs(this.overdrive) < 1) {
         clearInterval(this.motionInterval);
         this.bouncing = false;
         this.motionInterval = null;
@@ -159,6 +160,10 @@ class Scroller {
     this.handlePanY = f;
   }
 
+  setReporter(f) {
+    this.handleQuery = f;
+  }
+
   addStretch() {
     if (!this.bouncing) {
       console.log(`Scroller.addStretch`);
@@ -167,7 +172,7 @@ class Scroller {
   }
 
   resetStretch() {
-    if (!this.bouncing) {
+    if (this.stretch != 0 && !this.coasting) {
       console.log(`Scroller.resetStretch`);
       this.stretch = 0;
     }

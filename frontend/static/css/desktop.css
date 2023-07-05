@@ -152,6 +152,21 @@ Copyright Boonleng Cheong
   height: calc(var(--content-height) - 44px - 86px - 192px - 44px);
   overflow-y: scroll;
 }
+#filesViewport {
+  background-color: var(--system-background);
+  position: fixed;
+  width: 100%;
+  top: 0;
+}
+#filesViewportHeader {
+  height: calc(
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 3 *
+      var(--small-button-height) + 35px
+  );
+}
+#filesViewportFooter {
+  height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
+}
 
 /* Product */
 #ageString {

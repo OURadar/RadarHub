@@ -135,9 +135,11 @@ Copyright Boonleng Cheong
     var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 3 *
       var(--small-button-height) + 35px
   );
+  background-color: lightyellow;
 }
 #filesViewportFooter {
   height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
+  background-color: lightyellow;
 }
 #fileList {
   padding-top: calc(

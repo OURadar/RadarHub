@@ -94,10 +94,10 @@ class Browser extends Component {
       body: 15,
       fetch: 72,
     };
-    this.param = {
-      ...this.param,
-      extent: this.param.body + 2 * this.param.stem,
-    };
+    // this.param = {
+    //   ...this.param,
+    //   extent: this.param.body + 2 * this.param.stem,
+    // };
     this.state = {
       tic: 0,
       subsetItems: [],
@@ -109,12 +109,30 @@ class Browser extends Component {
 
     this.listRef = null;
 
+    this.handleQuery = this.handleQuery.bind(this);
     this.handleScroll = this.handleScroll.bind(this);
   }
 
   static defaultProps = {
     h: 32,
   };
+
+  handleQuery(delta) {
+    const { body, stem, footer } = this.param;
+    const bound = this.props.archive.grid.items.length - 1 - body;
+    if (this.state.subsetStart == 0) {
+      return this.state.headPadding;
+    } else if (this.state.subsetStart >= bound && delta < 0) {
+      // let stress = this.state.headPadding + (bound - this.state.subsetStart) * this.props.h;
+      let target = document.body.clientHeight - footer;
+      let offset = this.state.headPadding + (this.state.subsetStart + body - 1) * this.props.h;
+      let stress = target - offset;
+      console.log(`handleQuery ${target} - ${offset} = ${stress}`);
+      return stress;
+    } else {
+      return 0;
+    }
+  }
 
   handleScroll(delta) {
     const h = this.props.h;
@@ -195,8 +213,13 @@ class Browser extends Component {
     this.listRef = document.getElementById("filesViewport");
     this.scroller = new Scroller(this.listRef);
     this.scroller.setHandler(this.handleScroll);
+    this.scroller.setReporter(this.handleQuery);
 
-    let height = document.body.clientHeight - document.getElementById("browserTop").clientHeight;
+    this.param.header = document.getElementById("filesViewportHeader").clientHeight;
+    this.param.footer = document.getElementById("filesViewportFooter").clientHeight;
+
+    let height = document.body.clientHeight - this.param.header;
+
     this.param.body = Math.floor(height / this.props.h);
     this.param.extent = this.param.body + 2 * this.param.stem;
     console.log("Revised params", this.param);
@@ -213,7 +236,7 @@ class Browser extends Component {
     this.setState({ tic: archive.grid.tic });
 
     const grid = this.props.archive.grid;
-    const { body, stem, extent } = this.param;
+    const { body, stem, extent, header, footer } = this.param;
 
     let start;
     let padding = this.state.headPadding;
@@ -224,6 +247,7 @@ class Browser extends Component {
     } else if (grid.mode == "catchup") {
       start = Math.max(0, grid.items.length - 1 - body);
       padding = -stem * this.props.h;
+      // padding = document.body.clientHeight - footer - body * this.props.h;
     } else if (grid.mode == "select") {
       start = Math.max(0, grid.counts[0] - stem);
       padding = (start - grid.counts[0]) * this.props.h;

@@ -1015,21 +1015,3 @@ div.key {
   padding-bottom: 100px;
   border-radius: var(--button-border-radius);
 }
-
-@keyframes bounce {
-  0% {
-    transform: translateY(0px);
-  }
-  10% {
-    transform: translateY(100px);
-  }
-  90% {
-    transform: translateY(10px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
-}
-.bounce {
-  animation: bounce 1s;
-}
