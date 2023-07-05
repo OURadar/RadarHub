@@ -25,7 +25,7 @@ dayjs.extend(utc);
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 
-import { Scroller } from "./gesture";
+import { Scroller } from "./scroller";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 
@@ -132,7 +132,7 @@ class Browser extends Component {
         start++;
       }
       if (start >= bound) {
-        console.log("reached the bottom");
+        console.log("passed the bottom");
         this.scroller.addStretch();
       } else if (start < bound) {
         this.scroller.resetStretch();
@@ -144,7 +144,7 @@ class Browser extends Component {
         start--;
       }
       if (start <= 0 && padding > 0) {
-        console.log("reached the top");
+        console.log("passed the top");
         this.scroller.addStretch();
       } else if (start > 0) {
         this.scroller.resetStretch();
