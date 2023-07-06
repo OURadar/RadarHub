@@ -25,7 +25,6 @@ let grid = {
   dateTimeString: dayjs.utc().format("YYYYMMDD-HHmm"),
   daysActive: {},
   hourHasData: new Array(24).fill(false),
-  yearHasData: new Array(200).fill(false),
   pathsActive: new Array(4).fill(false),
   latestScan: "",
   latestHour: -1,
@@ -168,7 +167,7 @@ function init(newPathway) {
   if (state.verbose) {
     console.info(`%carchive.worker.init()%c ${pathway}`, `color: ${namecolor}`, "color: dodgerblue");
   }
-  self.postMessage({ type: "init", payload: grid });
+  self.postMessage({ type: "init", grid: grid });
 }
 
 function set(index) {
@@ -214,7 +213,7 @@ function connect(force = false) {
         .findIndex((x) => x == true);
     self.postMessage({
       type: "list",
-      payload: grid,
+      grid: grid,
     });
   });
   source.addEventListener("error", (_event) => {
@@ -382,7 +381,7 @@ function list(day, symbol, mode = "select") {
     setGridIndex(index);
     self.postMessage({
       type: "list",
-      payload: grid,
+      grid: grid,
     });
     return;
   }
@@ -418,7 +417,7 @@ function list(day, symbol, mode = "select") {
             setGridIndex(index);
           }
           grid.tic++;
-          self.postMessage({ type: "list", payload: grid });
+          self.postMessage({ type: "list", grid: grid });
           if (grid.hour < 0) {
             self.postMessage({ type: "message", payload: "No Data" });
             return;
@@ -498,7 +497,11 @@ function load(name) {
           grid.last = name;
           grid.scan = scan;
           grid.tic++;
-          self.postMessage({ type: "load", tic: grid.tic, mode: grid.mode, index: grid.index, payload: sweep });
+          self.postMessage({
+            type: "load",
+            grid: grid,
+            payload: sweep,
+          });
         });
       } else {
         response.text().then((text) => {
@@ -597,7 +600,6 @@ function catchup() {
           grid.moreAfter = buffer.moreAfter;
           grid.mode = "catchup";
           reviseGridItemsGrouped();
-          grid.yearHasData.splice(100, buffer.yearsActive.length, ...buffer.yearsActive);
           let index = suggestGridIndex("catchup", buffer);
           if (state.verbose) {
             console.info(
@@ -622,7 +624,7 @@ function catchup() {
           grid.tic++;
           self.postMessage({
             type: "list",
-            payload: grid,
+            grid: grid,
           });
           return;
         })
