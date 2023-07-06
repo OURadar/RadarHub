@@ -10,7 +10,6 @@ class Scroller {
     this.ib = 0;
     this.nb = 0;
     this.counter = 0;
-    this.noWheel = false;
     this.coasting = false;
     this.bouncing = false;
     this.interval = null;
@@ -73,37 +72,15 @@ class Scroller {
         if (this.bouncing) {
           return;
         }
-        if (this.interval == null || this.noWheel) {
+        if (this.interval == null) {
           this.bd[this.ib] = e.deltaY;
           this.nb = this.nb == 3 ? 3 : this.nb + 1;
-          this.acceleration = this.bd[this.ib] - this.bd[this.ib == 2 ? 0 : this.ib == 1 ? 2 : 1];
+          //this.acceleration = this.bd[this.ib] - this.bd[this.ib == 2 ? 0 : this.ib == 1 ? 2 : 1];
           this.velocity = (this.bd[0] + this.bd[1] + this.bd[2]) / this.nb;
           this.ib = this.ib == 2 ? 0 : this.ib + 1;
         }
-        if (this.noWheel) {
-          if (Math.abs(this.velocity) < 2) {
-            console.log(`Scroller  noWheel -> false   d = ${e.deltaY}   v = ${this.velocity}`);
-            this.noWheel = false;
-            this.bd = [0, 0, 0];
-            this.bt = [0, 0, 0];
-            this.nb = 0;
-            this.ib = 0;
-          }
-          return;
-        }
         this.distance = this.handleQuery(-e.deltaY);
-        // let va = this.velocity * this.acceleration;
-        // console.log(
-        //   `Scroller.onWheel s = ${this.stretch}   d = ${this.distance}   v = ${this.velocity}   va = ${va}`,
-        //   e
-        // );
-        // if (
-        //   Math.abs(this.distance) > 0.5 &&
-        //   ((this.stretch > 2 && Math.abs(this.velocity) < 5) ||
-        //     (this.stretch > 10 && this.acceleration * this.velocity < 0))
-        // ) {
         if (this.stretch > 2 && Math.abs(this.distance) > 0.5 && Math.abs(this.velocity) < 5) {
-          // this.noWheel = true;
           e.stopImmediatePropagation();
           e.stopPropagation();
           this.bd = [0, 0, 0];
@@ -142,9 +119,8 @@ class Scroller {
         this.position = e.touches[0].clientY;
         this.timeStamp = e.timeStamp;
         this.distance = this.handleQuery(this.velocity);
-        if (this.stretch >= 5) {
-          let a = 0.9 ** (0.1 * this.stretch);
-          // console.log(`a = ${a}`);
+        if (this.stretch) {
+          let a = 0.8 ** (0.25 * this.stretch);
           this.pan(a * dy);
         } else {
           this.pan(dy);
@@ -176,18 +152,6 @@ class Scroller {
   }
 
   pan(delta) {
-    // console.log(`pan() ${this.stretch}`);
-    // if (this.coasting || this.stretch < 3) {
-    //   this.handlePan(delta);
-    // } else if (this.stretch < 10) {
-    //   this.handlePan(0.5 * delta);
-    // } else if (this.stretch < 18) {
-    //   this.handlePan(0.2 * delta);
-    // } else if (this.stretch < 25) {
-    //   this.handlePan(0.1 * delta);
-    // } else {
-    //   this.handlePan(0.05 * delta);
-    // }
     this.handlePan(delta);
   }
 
