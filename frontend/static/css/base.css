@@ -20,6 +20,8 @@ Copyright Boonleng Cheong
   --small-button-height: 32px;
   --button-border-radius: 4px;
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
+  --header-gradient: linear-gradient(180deg, var(--background-color), var(--gray6) 60%);
+  --footer-gradient: linear-gradient(180deg, var(--gray6) 40%, var(--background-color));
   box-sizing: border-box;
 }
 
@@ -1023,6 +1025,11 @@ div.key {
   top: 0;
 }
 #filesViewportHeader {
+  height: 1000px;
+  background: var(--header-gradient);
+  background-color: var(--gray6);
+}
+#filesViewportHeaderOld {
   height: calc(
     var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 3 *
       var(--small-button-height) + 35px
@@ -1034,6 +1041,7 @@ div.key {
   background-color: var(--gray6);
 }
 .filesViewportSpacer {
-  height: 100px;
+  height: 1000px;
+  background: var(--footer-gradient);
   background-color: var(--gray5);
 }

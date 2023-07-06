@@ -162,14 +162,17 @@ class Scroller {
   }
 
   pan(delta) {
-    if (this.coasting || this.stretch < 5) {
+    // console.log(`pan() ${this.stretch}`);
+    if (this.coasting || this.stretch < 3) {
       this.handlePan(delta);
     } else if (this.stretch < 10) {
-      this.handlePan(0.8 * delta);
-    } else if (this.stretch < 25) {
-      this.handlePan(0.4 * delta);
-    } else {
+      this.handlePan(0.5 * delta);
+    } else if (this.stretch < 18) {
       this.handlePan(0.2 * delta);
+    } else if (this.stretch < 25) {
+      this.handlePan(0.1 * delta);
+    } else {
+      this.handlePan(0.05 * delta);
     }
   }
 

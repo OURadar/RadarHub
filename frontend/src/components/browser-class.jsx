@@ -100,7 +100,7 @@ class Browser extends Component {
       subsetStart: 0,
       hourlyStart: -1,
       taskPending: false,
-      headPadding: -this.param.stem * props.h,
+      headPadding: 0,
     };
 
     this.listRef = null;
@@ -114,11 +114,11 @@ class Browser extends Component {
   };
 
   handleQuery(delta) {
-    const { body, height, header, footer } = this.param;
+    const { body, height, margin, header, spacer, footer } = this.param;
     const bound = this.props.archive.grid.items.length - body - 2;
     // console.log(`handleQuery ${delta.toFixed(1)} ${this.state.subsetStart} ${bound}`);
     if (this.state.subsetStart == 0 && delta > 0) {
-      return this.state.headPadding;
+      return this.state.headPadding - spacer;
     } else if (this.state.subsetStart >= bound && delta < 0) {
       let target = height - footer;
       let offset = this.state.headPadding + header + this.state.subsetItems.length * this.props.h;
@@ -131,7 +131,7 @@ class Browser extends Component {
   handleScroll(delta) {
     const h = this.props.h;
     const grid = this.props.archive.grid;
-    const { body, stem, extent, fetch } = this.param;
+    const { body, stem, extent, fetch, header, margin } = this.param;
 
     const bound = grid.items.length - body - stem;
 
@@ -139,7 +139,7 @@ class Browser extends Component {
     let padding = this.state.headPadding + delta;
     // console.log(`handleScroll  ${padding}`);
     if (delta < 0) {
-      while (padding < -stem * h) {
+      while (padding < margin - header - stem * h) {
         padding += h;
         start++;
       }
@@ -149,11 +149,11 @@ class Browser extends Component {
         this.scroller.resetStretch();
       }
     } else if (delta > 0) {
-      while (padding > (1 - stem) * h && start > 0) {
+      while (padding > margin - header + (1 - stem) * h && start > 0) {
         padding -= h;
         start--;
       }
-      if (start <= 0 && padding > 0) {
+      if (start <= 0 && padding > margin - header) {
         this.scroller.addStretch();
       } else if (start > 0) {
         this.scroller.resetStretch();
@@ -203,14 +203,21 @@ class Browser extends Component {
     this.scroller.setReporter(this.handleQuery);
 
     this.param.height = document.body.clientHeight;
+    this.param.margin = document.getElementById("browserTop").clientHeight;
     this.param.header = document.getElementById("filesViewportHeader").clientHeight;
     this.param.footer = document.getElementById("filesViewportFooter").clientHeight;
+    this.param.spacer = this.param.margin - this.param.header;
 
-    let height = this.param.height - this.param.header;
+    let height = this.param.height - this.param.margin;
 
     this.param.body = Math.floor(height / this.props.h);
     this.param.extent = this.param.body + 2 * this.param.stem;
     console.log("Revised params", this.param);
+
+    const { stem, spacer } = this.param;
+    this.setState({
+      headPadding: spacer - stem * this.props.h,
+    });
   }
 
   componentDidUpdate() {
@@ -224,7 +231,7 @@ class Browser extends Component {
     this.setState({ tic: archive.grid.tic });
 
     const grid = this.props.archive.grid;
-    const { body, stem, extent } = this.param;
+    const { body, stem, extent, spacer } = this.param;
 
     let start;
     let padding = this.state.headPadding;
@@ -234,10 +241,11 @@ class Browser extends Component {
       start = this.state.hourlyStart;
     } else if (grid.mode == "catchup") {
       start = Math.max(0, grid.items.length - 1 - body);
-      padding = -stem * this.props.h;
+      padding = spacer - stem * this.props.h;
+      console.log(`catchup  padding = ${padding}   start = ${start}`);
     } else if (grid.mode == "select") {
       start = Math.max(0, grid.counts[0] - stem);
-      padding = (start - grid.counts[0]) * this.props.h;
+      padding = spacer + (start - grid.counts[0]) * this.props.h;
     } else {
       start = this.state.subsetStart;
     }
