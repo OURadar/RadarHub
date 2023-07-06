@@ -3,8 +3,8 @@ Mobile style sheet
 Copyright Boonleng Cheong
 */
 :root {
-  --button-height: 44px;
   --font-size: 18px;
+  --button-height: 44px;
   --button-border-top: none;
   --button-border-right: none;
   --button-border-bottom: solid 0.5px var(--border-accent);

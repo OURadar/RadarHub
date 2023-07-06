@@ -42,7 +42,7 @@ class Gesture {
     this.handleDolly = (_mx, _my, _m, _x, _y) => {};
 
     this.inbound = this.inbound.bind(this);
-    this.setTilt = this.setTilt.bin(this);
+    this.setTilt = this.setTilt.bind(this);
 
     this.element.addEventListener("mousedown", (e) => {
       if (this.inbound(e)) {

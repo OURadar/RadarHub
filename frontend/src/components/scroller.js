@@ -147,8 +147,6 @@ class Scroller {
     );
     this.element.addEventListener("touchend", this.handleTouchEndCancel);
     this.element.addEventListener("touchcancel", this.handleTouchEndCancel);
-
-    console.log("Scroller init");
   }
 
   pan(delta) {

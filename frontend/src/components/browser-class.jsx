@@ -111,6 +111,7 @@ class Browser extends Component {
 
   static defaultProps = {
     h: 32,
+    onSelect: (k) => console.log(`Browser.onSelect() k = ${k}`),
   };
 
   handleQuery(delta) {
@@ -212,7 +213,7 @@ class Browser extends Component {
 
     this.param.body = Math.floor(height / this.props.h);
     this.param.extent = this.param.body + 2 * this.param.stem;
-    console.log("Revised params", this.param);
+    // console.log("Revised params", this.param);
 
     const { stem, spacer } = this.param;
     this.setState({
@@ -242,7 +243,6 @@ class Browser extends Component {
     } else if (grid.mode == "catchup") {
       start = Math.max(0, grid.items.length - 1 - body);
       padding = spacer - stem * this.props.h;
-      console.log(`catchup  padding = ${padding}   start = ${start}`);
     } else if (grid.mode == "select") {
       start = Math.max(0, grid.counts[0] - stem);
       padding = spacer + (start - grid.counts[0]) * this.props.h;
@@ -297,7 +297,10 @@ class Browser extends Component {
             <Button
               key={`f-${item.label.slice(0, 20)}`}
               variant="file"
-              onClick={() => archive.loadIndex(item.index)}
+              onClick={() => {
+                archive.loadIndex(item.index);
+                this.props.onSelect(item.index);
+              }}
               selected={item.index == index}
             >
               {item.label}
