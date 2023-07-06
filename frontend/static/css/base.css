@@ -1015,3 +1015,25 @@ div.key {
   padding-bottom: 100px;
   border-radius: var(--button-border-radius);
 }
+
+#filesViewport {
+  background-color: var(--system-background);
+  position: fixed;
+  width: 100%;
+  top: 0;
+}
+#filesViewportHeader {
+  height: calc(
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 3 *
+      var(--small-button-height) + 35px
+  );
+  background-color: var(--gray6);
+}
+#filesViewportFooter {
+  height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
+  background-color: var(--gray6);
+}
+.filesViewportSpacer {
+  height: 100px;
+  background-color: var(--gray5);
+}

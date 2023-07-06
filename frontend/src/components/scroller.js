@@ -25,7 +25,7 @@ class Scroller {
     this.handlePan = (_x, _y) => {};
     this.handlePanX = (_x) => {};
     this.handlePanY = (_y) => {};
-    this.handleQuery = () => 0;
+    this.handleQuery = (_x) => 0;
 
     this.pan = this.pan.bind(this);
 
@@ -35,16 +35,57 @@ class Scroller {
     this.addStretch = this.addStretch.bind(this);
     this.resetStretch = this.resetStretch.bind(this);
 
+    this.handleTouchEndCancel = (e) => {
+      if (this.nb < 2 || Math.abs(this.velocityY) < 2) {
+        this.overdrive = this.handleQuery(this.velocityY);
+        if (this.overdrive != 0 && this.stretch) {
+          this.bounce();
+        }
+        return;
+      }
+      let period = (this.bt[0] + this.bt[1] + this.bt[2]) / this.nb;
+      this.coasting = true;
+      this.motionInterval = setInterval(() => {
+        this.overdrive = this.handleQuery(this.velocityY);
+        this.pan(this.velocityY);
+        if (this.velocityY > -0.25 && this.velocityY < 0.25) {
+          clearInterval(this.motionInterval);
+          this.motionInterval = null;
+          this.coasting = false;
+          // console.log(`touchend velocity ~ 0 ${this.velocityY}, ${this.overdrive} ${this.stretch}`);
+          if (this.overdrive != 0 && this.stretch) {
+            this.bounce();
+          }
+        }
+        if (this.stretch) {
+          this.velocityX *= 0.7;
+          this.velocityY *= 0.7;
+        } else {
+          this.velocityX *= 0.95;
+          this.velocityY *= 0.95;
+        }
+      }, period);
+    };
+
     this.element.addEventListener(
       "wheel",
       (e) => {
         // console.log(`Scroller.onWheel ${e.deltaY}`);
+        e.preventDefault();
         if (this.bouncing) {
           return;
         }
-        this.overdrive = this.handleQuery();
-        if (Math.abs(this.overdrive) > 50 && this.stretch) {
+        this.overdrive = this.handleQuery(-e.deltaY);
+        // console.log(`Scroller.onWheel ${e.deltaY} ${this.stretch}`);
+        if (Math.abs(this.overdrive) > 30 && this.stretch && Math.abs(e.deltaY) < 5) {
+          e.stopPropagation();
           this.bounce();
+        } else if (this.stretch > 25) {
+          this.pan(-0.5 * e.deltaY);
+        } else if (this.stretch > 10) {
+          this.pan(-0.6 * e.deltaY);
+        } else if (this.stretch > 5) {
+          this.pan(-0.7 * e.deltaY);
         } else {
           this.pan(-e.deltaY);
         }
@@ -68,6 +109,7 @@ class Scroller {
         this.pointX = e.touches[0].clientX;
         this.pointY = e.touches[0].clientY;
         this.timeStamp = e.timeStamp;
+        this.overdrive = this.handleQuery(this.velocityY);
         this.pan(dy);
       },
       { passive: false }
@@ -90,44 +132,13 @@ class Scroller {
       },
       { passive: false }
     );
-    this.element.addEventListener("touchend", (e) => {
-      if (this.nb < 3 || Math.abs(this.velocityY) < 3) {
-        this.overdrive = this.handleQuery();
-        if (this.overdrive != 0 && this.stretch) {
-          this.bounce();
-        }
-        return;
-      }
-      let period = (this.bt[0] + this.bt[1] + this.bt[2]) / this.nb;
-      this.coasting = true;
-      this.motionInterval = setInterval(() => {
-        this.pan(this.velocityY);
-        if (this.stretch) {
-          this.velocityX *= 0.84;
-          this.velocityY *= 0.84;
-        } else {
-          this.velocityX *= 0.93;
-          this.velocityY *= 0.93;
-        }
-        if (this.velocityY > -0.25 && this.velocityY < 0.25) {
-          clearInterval(this.motionInterval);
-          this.motionInterval = null;
-          this.coasting = false;
-          //   this.overdrive = this.handleQuery();
-          console.log(`touchend velocity ~ 0, ${this.overdrive} ${this.stretch}`);
-          if (this.overdrive != 0 && this.stretch) {
-            this.bounce();
-          }
-        }
-      }, period);
-    });
-    this.element.addEventListener("touchcancel", (e) => console.log(e.touches));
+    this.element.addEventListener("touchend", this.handleTouchEndCancel);
+    this.element.addEventListener("touchcancel", this.handleTouchEndCancel);
 
     console.log("Scroller init");
   }
 
   pan(delta) {
-    this.overdrive = this.handleQuery();
     const stress = Math.abs(this.overdrive);
     if (this.coasting || stress < 80) {
       this.handlePanY(delta);
@@ -139,6 +150,7 @@ class Scroller {
   }
 
   bounce() {
+    this.bouncing = true;
     if (this.motionInterval) {
       clearInterval(this.motionInterval);
     }
@@ -153,7 +165,6 @@ class Scroller {
       this.handlePanY(-0.2 * this.overdrive);
       this.overdrive -= 0.2 * this.overdrive;
     }, 16);
-    this.bouncing = true;
   }
 
   setHandler(f) {
@@ -166,14 +177,14 @@ class Scroller {
 
   addStretch() {
     if (!this.bouncing) {
-      console.log(`Scroller.addStretch`);
+      // console.log(`Scroller.addStretch`);
       this.stretch++;
     }
   }
 
   resetStretch() {
-    if (this.stretch != 0 && !this.coasting) {
-      console.log(`Scroller.resetStretch`);
+    if (this.stretch != 0 && !this.bouncing) {
+      // console.log(`Scroller.resetStretch`);
       this.stretch = 0;
     }
   }

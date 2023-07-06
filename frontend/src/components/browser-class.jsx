@@ -94,10 +94,6 @@ class Browser extends Component {
       body: 15,
       fetch: 72,
     };
-    // this.param = {
-    //   ...this.param,
-    //   extent: this.param.body + 2 * this.param.stem,
-    // };
     this.state = {
       tic: 0,
       subsetItems: [],
@@ -118,17 +114,15 @@ class Browser extends Component {
   };
 
   handleQuery(delta) {
-    const { body, stem, footer } = this.param;
+    const { body, height, header, footer } = this.param;
     const bound = this.props.archive.grid.items.length - 1 - body;
-    if (this.state.subsetStart == 0) {
+    // console.log(`handleQuery ${delta.toFixed(1)} ${this.state.subsetStart} ${bound}`);
+    if (this.state.subsetStart == 0 && delta > 0) {
       return this.state.headPadding;
     } else if (this.state.subsetStart >= bound && delta < 0) {
-      // let stress = this.state.headPadding + (bound - this.state.subsetStart) * this.props.h;
-      let target = document.body.clientHeight - footer;
-      let offset = this.state.headPadding + (this.state.subsetStart + body - 1) * this.props.h;
-      let stress = target - offset;
-      console.log(`handleQuery ${target} - ${offset} = ${stress}`);
-      return stress;
+      let target = height - footer;
+      let offset = this.state.headPadding + header + this.state.subsetItems.length * this.props.h;
+      return offset - target;
     } else {
       return 0;
     }
@@ -139,30 +133,27 @@ class Browser extends Component {
     const grid = this.props.archive.grid;
     const { body, stem, extent, fetch } = this.param;
 
-    const bound = grid.items.length - body - stem + 2;
+    // Adjust this if you don't like how much extra space before bouncing back
+    const bound = grid.items.length + 2 - body - stem;
 
     let start = this.state.subsetStart;
     let padding = this.state.headPadding + delta;
     if (delta < 0) {
-      //while (padding < -stem * h && start < bound) {
       while (padding < -stem * h) {
         padding += h;
         start++;
       }
       if (start >= bound) {
-        console.log("passed the bottom");
         this.scroller.addStretch();
       } else if (start < bound) {
         this.scroller.resetStretch();
       }
     } else if (delta > 0) {
       while (padding > (1 - stem) * h && start > 0) {
-        // while (padding > (1 - stem) * h) {
         padding -= h;
         start--;
       }
       if (start <= 0 && padding > 0) {
-        console.log("passed the top");
         this.scroller.addStretch();
       } else if (start > 0) {
         this.scroller.resetStretch();
@@ -182,8 +173,8 @@ class Browser extends Component {
     let taskPending = false;
     if (!this.state.taskPending && start != this.state.subsetStart) {
       let maxIndex = Math.max(0, grid.items.length - stem - body - fetch);
-      let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
-      console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
+      // let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
+      // console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
       if (start < fetch && delta > 0 && grid.moreBefore) {
         taskPending = true;
         this.props.archive.prepend();
@@ -215,10 +206,11 @@ class Browser extends Component {
     this.scroller.setHandler(this.handleScroll);
     this.scroller.setReporter(this.handleQuery);
 
+    this.param.height = document.body.clientHeight;
     this.param.header = document.getElementById("filesViewportHeader").clientHeight;
     this.param.footer = document.getElementById("filesViewportFooter").clientHeight;
 
-    let height = document.body.clientHeight - this.param.header;
+    let height = this.param.height - this.param.header;
 
     this.param.body = Math.floor(height / this.props.h);
     this.param.extent = this.param.body + 2 * this.param.stem;
@@ -247,7 +239,6 @@ class Browser extends Component {
     } else if (grid.mode == "catchup") {
       start = Math.max(0, grid.items.length - 1 - body);
       padding = -stem * this.props.h;
-      // padding = document.body.clientHeight - footer - body * this.props.h;
     } else if (grid.mode == "select") {
       start = Math.max(0, grid.counts[0] - stem);
       padding = (start - grid.counts[0]) * this.props.h;
@@ -309,6 +300,7 @@ class Browser extends Component {
             </Button>
           ))}
           <div id="filesViewportFooter"></div>
+          <div className="filesViewportSpacer"></div>
         </div>
       </div>
     );

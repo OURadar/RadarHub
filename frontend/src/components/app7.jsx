@@ -65,16 +65,11 @@ export function App(props) {
 
   const handleUserMessage = (message) => setMessage(message);
 
-  const setDocumentTheme = (mode) => {
-    document.documentElement.setAttribute("theme", mode);
-    setColors(colorDict(mode));
-    setTheme(makeTheme(mode));
-  };
-
   const handleThemeChange = () => {
     console.log("App7.handleThemeChange()");
-    let theme = colors.name == "light" ? "dark" : "light";
-    setDocumentTheme(theme);
+    if (user.current.mode == "auto") setColorMode("light");
+    else if (user.current.mode == "light") setColorMode("dark");
+    else setColorMode("auto");
   };
 
   const handleOverlayLoad = (x = 1) => {
