@@ -72,7 +72,7 @@ export function App(props) {
   const handleUserMessage = (message) => setMessage(message);
 
   const handleThemeChange = () => {
-    console.log("App8.handleThemeChange()");
+    console.log("AppX.handleThemeChange()");
     if (user.current.mode == "auto") setColorMode("light");
     else if (user.current.mode == "light") setColorMode("dark");
     else setColorMode("auto");
@@ -88,7 +88,7 @@ export function App(props) {
   const handleNavigationChange = (_, value) => setPanel(value);
 
   const handleBrowserSelect = (k) => {
-    console.log(`App8.handleBrowserSelect()  k = ${k}`);
+    // console.log(`AppX.handleBrowserSelect()  k = ${k}`);
     setTimeout(() => setPanel(0), 300);
   };
 
