@@ -115,7 +115,7 @@ class Browser extends Component {
 
   handleQuery(delta) {
     const { body, height, header, footer } = this.param;
-    const bound = this.props.archive.grid.items.length - 1 - body;
+    const bound = this.props.archive.grid.items.length - body - 2;
     // console.log(`handleQuery ${delta.toFixed(1)} ${this.state.subsetStart} ${bound}`);
     if (this.state.subsetStart == 0 && delta > 0) {
       return this.state.headPadding;
@@ -133,11 +133,11 @@ class Browser extends Component {
     const grid = this.props.archive.grid;
     const { body, stem, extent, fetch } = this.param;
 
-    // Adjust this if you don't like how much extra space before bouncing back
-    const bound = grid.items.length + 2 - body - stem;
+    const bound = grid.items.length - body - stem;
 
     let start = this.state.subsetStart;
     let padding = this.state.headPadding + delta;
+    // console.log(`handleScroll  ${padding}`);
     if (delta < 0) {
       while (padding < -stem * h) {
         padding += h;
@@ -165,10 +165,6 @@ class Browser extends Component {
     if (travel > 30 && this.props.archive.state.liveUpdate != "offline") {
       console.debug("Scrolled far enough, disabling live update ...");
       this.props.archive.disableLiveUpdate();
-    }
-    // if (padding < -2 * stem * h || padding > h) {
-    if (padding < -2 * stem * h) {
-      padding = this.state.headPadding;
     }
     let taskPending = false;
     if (!this.state.taskPending && start != this.state.subsetStart) {
@@ -228,7 +224,7 @@ class Browser extends Component {
     this.setState({ tic: archive.grid.tic });
 
     const grid = this.props.archive.grid;
-    const { body, stem, extent, header, footer } = this.param;
+    const { body, stem, extent } = this.param;
 
     let start;
     let padding = this.state.headPadding;

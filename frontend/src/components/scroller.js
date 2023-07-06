@@ -5,11 +5,12 @@ class Scroller {
     this.velocity = 0;
     this.timeStamp = 0;
     this.bx = [0, 0, 0];
-    this.by = [0, 0, 0];
+    this.bd = [0, 0, 0];
     this.bt = [0, 0, 0];
     this.ib = 0;
     this.nb = 0;
     this.counter = 0;
+    this.noWheel = false;
     this.coasting = false;
     this.bouncing = false;
     this.interval = null;
@@ -72,18 +73,44 @@ class Scroller {
         if (this.bouncing) {
           return;
         }
+        if (this.interval == null || this.noWheel) {
+          this.bd[this.ib] = e.deltaY;
+          this.nb = this.nb == 3 ? 3 : this.nb + 1;
+          this.acceleration = this.bd[this.ib] - this.bd[this.ib == 2 ? 0 : this.ib == 1 ? 2 : 1];
+          this.velocity = (this.bd[0] + this.bd[1] + this.bd[2]) / this.nb;
+          this.ib = this.ib == 2 ? 0 : this.ib + 1;
+        }
+        if (this.noWheel) {
+          if (Math.abs(this.velocity) < 2) {
+            console.log(`Scroller  noWheel -> false   d = ${e.deltaY}   v = ${this.velocity}`);
+            this.noWheel = false;
+            this.bd = [0, 0, 0];
+            this.bt = [0, 0, 0];
+            this.nb = 0;
+            this.ib = 0;
+          }
+          return;
+        }
         this.distance = this.handleQuery(-e.deltaY);
-        // console.log(`Scroller.onWheel ${e.deltaY} ${this.stretch}`);
-        if (Math.abs(this.distance) > 30 && this.stretch && Math.abs(e.deltaY) < 5) {
+        // let va = this.velocity * this.acceleration;
+        // console.log(
+        //   `Scroller.onWheel s = ${this.stretch}   d = ${this.distance}   v = ${this.velocity}   va = ${va}`,
+        //   e
+        // );
+        // if (
+        //   Math.abs(this.distance) > 0.5 &&
+        //   ((this.stretch > 2 && Math.abs(this.velocity) < 5) ||
+        //     (this.stretch > 10 && this.acceleration * this.velocity < 0))
+        // ) {
+        if (this.stretch > 2 && Math.abs(this.distance) > 0.5 && Math.abs(this.velocity) < 5) {
+          // this.noWheel = true;
           e.stopImmediatePropagation();
           e.stopPropagation();
+          this.bd = [0, 0, 0];
+          this.bt = [0, 0, 0];
+          this.nb = 0;
+          this.ib = 0;
           this.bounce();
-        } else if (this.stretch > 25) {
-          this.pan(-0.5 * e.deltaY);
-        } else if (this.stretch > 10) {
-          this.pan(-0.6 * e.deltaY);
-        } else if (this.stretch > 5) {
-          this.pan(-0.7 * e.deltaY);
         } else {
           this.pan(-e.deltaY);
         }
@@ -98,11 +125,11 @@ class Scroller {
         let dt = e.timeStamp - this.timeStamp;
         // console.log(`dt = ${dt}`);
         if (this.interval == null) {
-          this.by[this.ib] = dy;
+          this.bd[this.ib] = dy;
           this.bt[this.ib] = dt;
           this.nb = this.nb == 3 ? 3 : this.nb + 1;
           this.ib = this.ib == 2 ? 0 : this.ib + 1;
-          this.velocity = (this.by[0] + this.by[1] + this.by[2]) / this.nb;
+          this.velocity = (this.bd[0] + this.bd[1] + this.bd[2]) / this.nb;
         }
         this.position = e.touches[0].clientY;
         this.timeStamp = e.timeStamp;
@@ -121,7 +148,7 @@ class Scroller {
         // console.log(e.timeStamp);
         this.position = e.touches[0].clientY;
         this.timeStamp = e.timeStamp;
-        this.by = [0, 0, 0];
+        this.bd = [0, 0, 0];
         this.bt = [0, 0, 0];
         this.nb = 0;
         this.ib = 0;
@@ -135,13 +162,14 @@ class Scroller {
   }
 
   pan(delta) {
-    const stress = Math.abs(this.distance);
-    if (this.coasting || stress < 80) {
+    if (this.coasting || this.stretch < 5) {
       this.handlePan(delta);
-    } else if (stress < 160) {
-      this.handlePan(0.5 * delta);
-    } else if (stress < 320) {
-      this.handlePan(0.25 * delta);
+    } else if (this.stretch < 10) {
+      this.handlePan(0.8 * delta);
+    } else if (this.stretch < 25) {
+      this.handlePan(0.4 * delta);
+    } else {
+      this.handlePan(0.2 * delta);
     }
   }
 
@@ -158,8 +186,9 @@ class Scroller {
         this.distance = 0;
         this.stretch = 0;
       }
-      this.handlePan(-0.2 * this.distance);
-      this.distance -= 0.2 * this.distance;
+      const v = -0.2 * this.distance;
+      this.handlePan(v);
+      this.distance += v;
     }, 16);
   }
 
