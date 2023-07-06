@@ -111,8 +111,16 @@ class Scroller {
           this.nb = 0;
           this.ib = 0;
           this.bounce();
+        } else if (this.stretch < 3) {
+          this.handlePan(-e.deltaY);
+        } else if (this.stretch < 10) {
+          this.handlePan(-0.5 * e.deltaY);
+        } else if (this.stretch < 18) {
+          this.handlePan(-0.2 * e.deltaY);
+        } else if (this.stretch < 25) {
+          this.handlePan(-0.1 * e.deltaY);
         } else {
-          this.pan(-e.deltaY);
+          this.handlePan(-0.05 * e.deltaY);
         }
       },
       { passive: false }
@@ -134,7 +142,13 @@ class Scroller {
         this.position = e.touches[0].clientY;
         this.timeStamp = e.timeStamp;
         this.distance = this.handleQuery(this.velocity);
-        this.pan(dy);
+        if (this.stretch >= 5) {
+          let a = 0.9 ** (0.1 * this.stretch);
+          // console.log(`a = ${a}`);
+          this.pan(a * dy);
+        } else {
+          this.pan(dy);
+        }
       },
       { passive: false }
     );
@@ -163,17 +177,18 @@ class Scroller {
 
   pan(delta) {
     // console.log(`pan() ${this.stretch}`);
-    if (this.coasting || this.stretch < 3) {
-      this.handlePan(delta);
-    } else if (this.stretch < 10) {
-      this.handlePan(0.5 * delta);
-    } else if (this.stretch < 18) {
-      this.handlePan(0.2 * delta);
-    } else if (this.stretch < 25) {
-      this.handlePan(0.1 * delta);
-    } else {
-      this.handlePan(0.05 * delta);
-    }
+    // if (this.coasting || this.stretch < 3) {
+    //   this.handlePan(delta);
+    // } else if (this.stretch < 10) {
+    //   this.handlePan(0.5 * delta);
+    // } else if (this.stretch < 18) {
+    //   this.handlePan(0.2 * delta);
+    // } else if (this.stretch < 25) {
+    //   this.handlePan(0.1 * delta);
+    // } else {
+    //   this.handlePan(0.05 * delta);
+    // }
+    this.handlePan(delta);
   }
 
   bounce() {

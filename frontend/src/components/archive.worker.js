@@ -373,6 +373,10 @@ function list(day, symbol, mode = "select") {
       }
       grid.itemsGrouped[scanType].push({ item: item, index: index });
     });
+    if (grid.symbol == symbol) {
+      // Repeated tab, assume switching out of catchup to list mode
+      index = suggestGridIndex(mode, grid);
+    }
     grid.symbol = symbol;
     grid.tic++;
     setGridIndex(index);
