@@ -1,30 +1,23 @@
 class Scroller {
-  constructor(element, axis = "y") {
+  constructor(element) {
     this.element = element;
-    this.axis = axis;
-    this.tick = 0;
-    this.pointX = -1;
-    this.pointY = -1;
-    this.pointU = 0;
-    this.pointV = 0;
+    this.position = 0;
+    this.velocity = 0;
     this.timeStamp = 0;
-    this.velocityX = 0;
-    this.velocityY = 0;
     this.bx = [0, 0, 0];
     this.by = [0, 0, 0];
     this.bt = [0, 0, 0];
     this.ib = 0;
     this.nb = 0;
-    this.overdrive = 0;
+    this.counter = 0;
     this.coasting = false;
     this.bouncing = false;
-    this.motionInterval = null;
+    this.interval = null;
+    this.distance = 0;
     this.stretch = 0;
     this.message = "scroll";
     this.rect = { x: 0, y: 0, top: 0, left: 0, bottom: 1, right: 1 };
     this.handlePan = (_x, _y) => {};
-    this.handlePanX = (_x) => {};
-    this.handlePanY = (_y) => {};
     this.handleQuery = (_x) => 0;
 
     this.pan = this.pan.bind(this);
@@ -36,33 +29,37 @@ class Scroller {
     this.resetStretch = this.resetStretch.bind(this);
 
     this.handleTouchEndCancel = (e) => {
-      if (this.nb < 2 || Math.abs(this.velocityY) < 2) {
-        this.overdrive = this.handleQuery(this.velocityY);
-        if (this.overdrive != 0 && this.stretch) {
+      if (this.nb < 2 || Math.abs(this.velocity) < 2) {
+        this.distance = this.handleQuery(this.velocity);
+        if (this.distance != 0 && this.stretch) {
           this.bounce();
         }
         return;
       }
       let period = (this.bt[0] + this.bt[1] + this.bt[2]) / this.nb;
+      this.counter = 0;
       this.coasting = true;
-      this.motionInterval = setInterval(() => {
-        this.overdrive = this.handleQuery(this.velocityY);
-        this.pan(this.velocityY);
-        if (this.velocityY > -0.25 && this.velocityY < 0.25) {
-          clearInterval(this.motionInterval);
-          this.motionInterval = null;
+      this.interval = setInterval(() => {
+        this.distance = this.handleQuery(this.velocity);
+        this.pan(this.velocity);
+        if (this.velocity > -0.3 && this.velocity < 0.3) {
+          clearInterval(this.interval);
+          this.interval = null;
           this.coasting = false;
+          this.counter = 0;
           // console.log(`touchend velocity ~ 0 ${this.velocityY}, ${this.overdrive} ${this.stretch}`);
-          if (this.overdrive != 0 && this.stretch) {
+          if (this.distance != 0 && this.stretch) {
             this.bounce();
           }
         }
         if (this.stretch) {
-          this.velocityX *= 0.7;
-          this.velocityY *= 0.7;
+          if (this.counter++ > 6) {
+            this.velocity *= 0.1;
+          } else {
+            this.velocity *= 0.7;
+          }
         } else {
-          this.velocityX *= 0.95;
-          this.velocityY *= 0.95;
+          this.velocity *= 0.95;
         }
       }, period);
     };
@@ -75,9 +72,10 @@ class Scroller {
         if (this.bouncing) {
           return;
         }
-        this.overdrive = this.handleQuery(-e.deltaY);
+        this.distance = this.handleQuery(-e.deltaY);
         // console.log(`Scroller.onWheel ${e.deltaY} ${this.stretch}`);
-        if (Math.abs(this.overdrive) > 30 && this.stretch && Math.abs(e.deltaY) < 5) {
+        if (Math.abs(this.distance) > 30 && this.stretch && Math.abs(e.deltaY) < 5) {
+          e.stopImmediatePropagation();
           e.stopPropagation();
           this.bounce();
         } else if (this.stretch > 25) {
@@ -96,20 +94,19 @@ class Scroller {
     this.element.addEventListener(
       "touchmove",
       (e) => {
-        let dy = e.touches[0].clientY - this.pointY;
+        let dy = e.touches[0].clientY - this.position;
         let dt = e.timeStamp - this.timeStamp;
         // console.log(`dt = ${dt}`);
-        if (this.motionInterval == null) {
+        if (this.interval == null) {
           this.by[this.ib] = dy;
           this.bt[this.ib] = dt;
           this.nb = this.nb == 3 ? 3 : this.nb + 1;
           this.ib = this.ib == 2 ? 0 : this.ib + 1;
-          this.velocityY = (this.by[0] + this.by[1] + this.by[2]) / this.nb;
+          this.velocity = (this.by[0] + this.by[1] + this.by[2]) / this.nb;
         }
-        this.pointX = e.touches[0].clientX;
-        this.pointY = e.touches[0].clientY;
+        this.position = e.touches[0].clientY;
         this.timeStamp = e.timeStamp;
-        this.overdrive = this.handleQuery(this.velocityY);
+        this.distance = this.handleQuery(this.velocity);
         this.pan(dy);
       },
       { passive: false }
@@ -117,13 +114,12 @@ class Scroller {
     this.element.addEventListener(
       "touchstart",
       (e) => {
-        if (this.motionInterval) {
-          clearInterval(this.motionInterval);
-          this.motionInterval = null;
+        if (this.interval) {
+          clearInterval(this.interval);
+          this.interval = null;
         }
         // console.log(e.timeStamp);
-        this.pointX = e.touches[0].clientX;
-        this.pointY = e.touches[0].clientY;
+        this.position = e.touches[0].clientY;
         this.timeStamp = e.timeStamp;
         this.by = [0, 0, 0];
         this.bt = [0, 0, 0];
@@ -139,36 +135,36 @@ class Scroller {
   }
 
   pan(delta) {
-    const stress = Math.abs(this.overdrive);
+    const stress = Math.abs(this.distance);
     if (this.coasting || stress < 80) {
-      this.handlePanY(delta);
+      this.handlePan(delta);
     } else if (stress < 160) {
-      this.handlePanY(0.5 * delta);
+      this.handlePan(0.5 * delta);
     } else if (stress < 320) {
-      this.handlePanY(0.25 * delta);
+      this.handlePan(0.25 * delta);
     }
   }
 
   bounce() {
     this.bouncing = true;
-    if (this.motionInterval) {
-      clearInterval(this.motionInterval);
+    if (this.interval) {
+      clearInterval(this.interval);
     }
-    this.motionInterval = setInterval(() => {
-      if (Math.abs(this.overdrive) < 1) {
-        clearInterval(this.motionInterval);
+    this.interval = setInterval(() => {
+      if (Math.abs(this.distance) < 1) {
+        clearInterval(this.interval);
+        this.interval = null;
         this.bouncing = false;
-        this.motionInterval = null;
-        this.overdrive = 0;
+        this.distance = 0;
         this.stretch = 0;
       }
-      this.handlePanY(-0.2 * this.overdrive);
-      this.overdrive -= 0.2 * this.overdrive;
+      this.handlePan(-0.2 * this.distance);
+      this.distance -= 0.2 * this.distance;
     }, 16);
   }
 
   setHandler(f) {
-    this.handlePanY = f;
+    this.handlePan = f;
   }
 
   setReporter(f) {
