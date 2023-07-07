@@ -23,14 +23,6 @@ Copyright Boonleng Cheong
 [theme="dark"] {
   --colorbar-background: linear-gradient(rgba(34, 37, 42, 0.85), rgba(34, 37, 42, 0.65));
 }
-.active {
-  position: absolute;
-  z-index: 1;
-}
-.inactive {
-  position: absolute;
-  z-index: 0;
-}
 .notification {
   width: calc(100vw - 22px);
 }

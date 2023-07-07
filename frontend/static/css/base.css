@@ -1045,3 +1045,15 @@ div.key {
   background: var(--footer-gradient);
   background-color: var(--gray5);
 }
+
+.panel {
+  height: 100vh;
+  position: absolute;
+  background-color: var(--background-color);
+}
+.active {
+  z-index: 1;
+}
+.inactive {
+  z-index: 0;
+}

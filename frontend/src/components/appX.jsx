@@ -143,7 +143,7 @@ export function App(props) {
           onThemeChange={handleThemeChange}
         />
         <ThemeProvider theme={theme}>
-          <div className={panel === 0 ? "active" : "inactive"}>
+          <div className={`${panel === 0 ? "active" : "inactive"} panel`}>
             <Product
               gravity="top"
               colors={colors}
@@ -164,7 +164,7 @@ export function App(props) {
             />
             <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
           </div>
-          <div className={panel === 1 ? "active" : "inactive"}>
+          <div className={`${panel === 1 ? "active" : "inactive"} panel`}>
             <Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />
           </div>
           <Navigation value={panel} onChange={handleNavigationChange} />
