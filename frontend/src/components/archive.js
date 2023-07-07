@@ -48,15 +48,14 @@ class Archive extends Ingest {
     this.init();
   }
 
-  handleMessage({ data: { type, tic, index, payload } }) {
+  handleMessage({ data: { type, grid, payload } }) {
     if (type == "message") {
       this.showMessage(payload);
     } else if (type == "response") {
       this.showResponse(payload);
     } else if (type == "load") {
       this.data.sweep = payload;
-      this.grid.index = index;
-      this.grid.tic = tic;
+      this.grid = grid;
       this.updateAge();
       this.state.sweepLoading = false;
       if (this.state.verbose) {
@@ -80,17 +79,17 @@ class Archive extends Ingest {
       if (this.state.verbose) {
         console.log(
           `%carchive.handleMessage()%c list` +
-            `   ${payload.dateTimeString}` +
-            `   ${payload.latestScan}` +
-            `   hour = ${this.grid.hour} -> ${payload.hour}` +
-            `   index = ${this.grid.index} -> ${payload.index}` +
+            `   ${grid.dateTimeString}` +
+            `   ${grid.latestScan}` +
+            `   hour = ${this.grid.hour} -> ${grid.hour}` +
+            `   index = ${this.grid.index} -> ${grid.index}` +
             `   productSwitching = ${this.state.productSwitching}`,
           "color: lightseagreen",
           "",
-          payload
+          grid
         );
       }
-      this.grid = payload;
+      this.grid = grid;
       this.state.loadCount = 0;
       this.onList(this.grid);
       this.state.itemsUpdating = false;
@@ -145,7 +144,7 @@ class Archive extends Ingest {
       if (this.state.verbose) {
         console.log(`%carchive.handleMessage()%c init` + `   index = ${payload.index}`, "color: lightseagreen", "");
       }
-      this.grid = payload;
+      this.grid = grid;
       this.ready = true;
     }
     this.onUpdate(this.state.tic++);

@@ -3,8 +3,8 @@ Mobile style sheet
 Copyright Boonleng Cheong
 */
 :root {
-  --button-height: 44px;
   --font-size: 18px;
+  --button-height: 44px;
   --button-border-top: none;
   --button-border-right: none;
   --button-border-bottom: solid 0.5px var(--border-accent);
@@ -22,14 +22,6 @@ Copyright Boonleng Cheong
 
 [theme="dark"] {
   --colorbar-background: linear-gradient(rgba(34, 37, 42, 0.85), rgba(34, 37, 42, 0.65));
-}
-.active {
-  position: absolute;
-  z-index: 1;
-}
-.inactive {
-  position: absolute;
-  z-index: 0;
 }
 .notification {
   width: calc(100vw - 22px);
@@ -123,21 +115,6 @@ Copyright Boonleng Cheong
   height: 100vh;
   width: 100%;
   top: 0;
-}
-#filesViewport {
-  background-color: var(--system-background);
-  position: fixed;
-  width: 100%;
-  top: 0;
-}
-#filesViewportHeader {
-  height: calc(
-    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 3 *
-      var(--small-button-height) + 35px
-  );
-}
-#filesViewportFooter {
-  height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
 }
 #fileList {
   padding-top: calc(

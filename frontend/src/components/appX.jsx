@@ -1,5 +1,5 @@
 //
-//  appX.js - Single Endpoint
+//  app8.js - Replacement of app6
 //  RadarHub
 //
 //  This is a controller
@@ -12,13 +12,12 @@ import React from "react";
 import { ThemeProvider } from "@mui/material/styles";
 
 import { colorDict, makeTheme } from "./theme";
-import { detectMob } from "./common";
 import { Archive } from "./archive";
 import { User } from "./user";
 
 import { Splash } from "./splash";
 import { TopBar } from "./topbar";
-import { Browser } from "./browser-mobile";
+import { Browser } from "./browser-class";
 import { Product } from "./product";
 import { Navigation } from "./navigation";
 import { MenuUpdate } from "./menu-update";
@@ -29,6 +28,18 @@ const useConstructor = (callback = () => {}) => {
   if (used.current) return;
   callback();
   used.current = true;
+};
+
+const getItemHeight = (theme) => {
+  let h = 20;
+  theme.components.MuiButton.variants.forEach((variant) => {
+    if (variant.props.variant == "file" && variant.style.height !== undefined) {
+      h = variant.style.height;
+      return false;
+    }
+    // console.log(variant);
+  });
+  return h;
 };
 
 export function App(props) {
@@ -42,6 +53,16 @@ export function App(props) {
   const archive = React.useRef(null);
   const user = React.useRef(null);
 
+  const h = getItemHeight(theme);
+
+  const setColorMode = (mode) => {
+    user.current.setMode(mode);
+    let colors = colorDict(mode);
+    document.documentElement.setAttribute("theme", colors.name);
+    setColors(colors);
+    setTheme(makeTheme(mode));
+  };
+
   const [, handleUpdate] = React.useReducer((x) => x + 1, 0);
 
   const handleLoad = () => {
@@ -50,23 +71,11 @@ export function App(props) {
 
   const handleUserMessage = (message) => setMessage(message);
 
-  const setDocumentTheme = (mode) => {
-    document.documentElement.setAttribute("theme", mode);
-    setColors(() => colorDict(mode));
-    setTheme(() => makeTheme(mode));
-  };
-
   const handleThemeChange = () => {
     console.log("AppX.handleThemeChange()");
-    let theme = colors.name == "light" ? "dark" : "light";
-    setDocumentTheme(theme);
-  };
-
-  const handleNavigationChange = (_, value) => setPanel(value);
-
-  const handleBrowserSelect = (k) => {
-    console.log(`AppX.handleBrowserSelect()  k = ${k}`);
-    setTimeout(() => setPanel(0), 300);
+    if (user.current.mode == "auto") setColorMode("light");
+    else if (user.current.mode == "light") setColorMode("dark");
+    else setColorMode("auto");
   };
 
   const handleOverlayLoad = (x = 1) => {
@@ -76,18 +85,31 @@ export function App(props) {
     }
   };
 
-  const handleLiveModeChange = (_, value) =>
-    archive.current.toggleLiveUpdate(value);
+  const handleNavigationChange = (_, value) => setPanel(value);
+
+  const handleBrowserSelect = (k) => {
+    // console.log(`AppX.handleBrowserSelect()  k = ${k}`);
+    setTimeout(() => setPanel(0), 300);
+  };
+
+  const handleLiveModeChange = (_, value) => archive.current.toggleLiveUpdate(value);
 
   const handleDoubleLeft = () => archive.current.navigateBackwardScan();
   const handleLeft = () => archive.current.navigateBackward();
   const handleRight = () => archive.current.navigateForward();
   const handleDoubleRight = () => archive.current.navigateForwardScan();
 
+  const handleColorbarTouch = (e) => {
+    // console.log(e);
+    if (e.pageX / e.target.offsetWidth < 0.5) {
+      archive.current.prevProduct();
+    } else {
+      archive.current.nextProduct();
+    }
+  };
+
   useConstructor(() => {
-    document
-      .getElementById("device-style")
-      .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
+    // document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
 
     archive.current = new Archive(props.pathway, props.name);
     archive.current.onUpdate = handleUpdate;
@@ -95,16 +117,17 @@ export function App(props) {
 
     user.current = new User();
     user.current.onMessage = handleUserMessage;
+
+    setColorMode(user.current.mode);
   });
 
   React.useEffect(() => {
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        let mode = e.matches ? "dark" : "light";
-        setDocumentTheme(mode);
-      });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      let mode = e.matches ? "dark" : "light";
+      setDocumentTheme(mode);
+    });
     document.documentElement.setAttribute("theme", theme.palette.mode);
+    handleOverlayLoad();
   }, []);
 
   return (
@@ -120,13 +143,14 @@ export function App(props) {
           onThemeChange={handleThemeChange}
         />
         <ThemeProvider theme={theme}>
-          <div className={panel === 0 ? "active" : "inactive"}>
+          <div className={`${panel === 0 ? "active" : "inactive"} panel`}>
             <Product
               gravity="top"
               colors={colors}
               origin={props.origin}
               sweep={archive.current?.data.sweep}
               onOverlayLoad={handleOverlayLoad}
+              onColorbarTouch={handleColorbarTouch}
             />
             <MenuArrow
               doubleLeftDisabled={disabled[0]}
@@ -138,13 +162,10 @@ export function App(props) {
               onRight={handleRight}
               onDoubleRight={handleDoubleRight}
             />
-            <MenuUpdate
-              value={archive.current?.state.liveUpdate}
-              onChange={handleLiveModeChange}
-            />
+            <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
           </div>
-          <div className={panel === 1 ? "active" : "inactive"}>
-            <Browser archive={archive.current} onSelect={handleBrowserSelect} />
+          <div className={`${panel === 1 ? "active" : "inactive"} panel`}>
+            <Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />
           </div>
           <Navigation value={panel} onChange={handleNavigationChange} />
         </ThemeProvider>
@@ -152,14 +173,3 @@ export function App(props) {
     </div>
   );
 }
-
-App.defaultProps = {
-  pathway: "px1000",
-  origin: {
-    longitude: -97.422413,
-    latitude: 35.25527,
-  },
-  debug: false,
-  profileGL: false,
-  autoLoad: true,
-};

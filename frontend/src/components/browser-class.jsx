@@ -4,6 +4,10 @@
 //
 //  This is a view
 //
+//  Implemented as a class component as Javascript closure limits the lexical
+//  environment that is accessible by the other class embeded in this view, i.e.,
+//  the Scroller class for handling the pan gesture.
+//
 //  Created by Boonleng Cheong
 //
 
@@ -21,9 +25,7 @@ dayjs.extend(utc);
 import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 
-import Box from "@mui/material/Box";
-
-import { Scroller } from "./gesture";
+import { Scroller } from "./scroller";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
 
@@ -32,7 +34,7 @@ function ServerDay(props) {
   let key = day.format("YYYYMMDD");
   let num = key in props.archive.grid.daysActive ? props.archive.grid.daysActive[key] : 0;
 
-  return num ? (
+  return num && !outsideCurrentMonth ? (
     <Badge key={key} color={badgeColors[num]} overlap="circular" variant="dot">
       <PickersDay {...other} outsideCurrentMonth={outsideCurrentMonth} day={day} />
     </Badge>
@@ -79,9 +81,7 @@ const Hours = React.memo(function Hours({ archive, hourHasData, selected }) {
           </Button>
         ))}
       </div>
-      <Box sx={{ pt: 1, pb: 1 }}>
-        <div className="fullWidth center disabled">Hours</div>
-      </Box>
+      <div className="sectionBar fullWidth center disabled">Hours</div>
     </div>
   );
 });
@@ -94,52 +94,68 @@ class Browser extends Component {
       body: 15,
       fetch: 72,
     };
-    this.param = {
-      ...this.param,
-      extent: this.param.body + 2 * this.param.stem,
-    };
     this.state = {
       tic: 0,
       subsetItems: [],
       subsetStart: 0,
       hourlyStart: -1,
       taskPending: false,
-      headPadding: -this.param.stem * props.h,
+      headPadding: 0,
     };
 
     this.listRef = null;
 
+    this.handleQuery = this.handleQuery.bind(this);
     this.handleScroll = this.handleScroll.bind(this);
   }
 
   static defaultProps = {
     h: 32,
+    onSelect: (k) => console.log(`Browser.onSelect() k = ${k}`),
   };
+
+  handleQuery(delta) {
+    const { body, header, heightMinusFooter, marginMinusHeader } = this.param;
+    const bound = this.props.archive.grid.items.length - body - 2;
+    // console.log(`handleQuery ${delta.toFixed(1)} ${this.state.subsetStart} ${bound}`);
+    if (this.state.subsetStart == 0 && delta > 0) {
+      return this.state.headPadding - marginMinusHeader;
+    } else if (this.state.subsetStart >= bound && delta < 0) {
+      let target = heightMinusFooter + 2;
+      let offset = this.state.headPadding + header + this.state.subsetItems.length * this.props.h;
+      return offset - target;
+    } else {
+      return 0;
+    }
+  }
 
   handleScroll(delta) {
     const h = this.props.h;
     const grid = this.props.archive.grid;
-    const { body, stem, extent, fetch } = this.param;
-
-    const bound = grid.items.length - extent;
+    const { body, stem, bodyPlusStems, heightMinusFooter, marginMinusHeader, fetch, header } = this.param;
 
     let start = this.state.subsetStart;
-    let padding = this.state.headPadding - delta;
-    if (delta > 0) {
-      while (padding < -stem * h && start < bound) {
+    let padding = this.state.headPadding + delta;
+    // console.log(`handleScroll  ${padding}`);
+    if (delta < 0) {
+      while (padding < marginMinusHeader - stem * h) {
         padding += h;
         start++;
       }
-      if (start == bound) {
-        console.log("reached the bottom");
+      if (padding + header + this.state.subsetItems.length * this.props.h <= heightMinusFooter) {
+        this.scroller.addStretch();
+      } else {
+        this.scroller.resetStretch();
       }
-    } else if (delta < 0) {
-      while (padding > (1 - stem) * h && start > 1) {
+    } else if (delta > 0) {
+      while (padding > marginMinusHeader + (1 - stem) * h && start > 0) {
         padding -= h;
         start--;
       }
-      if (start == 0) {
-        console.log("reached the top");
+      if (start <= 0 && padding > marginMinusHeader) {
+        this.scroller.addStretch();
+      } else if (start > 0) {
+        this.scroller.resetStretch();
       }
     } else {
       return;
@@ -149,18 +165,15 @@ class Browser extends Component {
       console.debug("Scrolled far enough, disabling live update ...");
       this.props.archive.disableLiveUpdate();
     }
-    if (padding < -2 * stem * h || padding > h) {
-      padding = this.state.headPadding;
-    }
     let taskPending = false;
     if (!this.state.taskPending && start != this.state.subsetStart) {
       let maxIndex = Math.max(0, grid.items.length - stem - body - fetch);
-      let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
-      console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
-      if (start < fetch && delta < 0 && grid.moreBefore) {
+      // let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
+      // console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
+      if (start < fetch && delta > 0 && grid.moreBefore) {
         taskPending = true;
         this.props.archive.prepend();
-      } else if (start > maxIndex && delta > 0 && grid.moreAfter) {
+      } else if (start > maxIndex && delta < 0 && grid.moreAfter) {
         taskPending = true;
         this.props.archive.append();
       }
@@ -170,7 +183,7 @@ class Browser extends Component {
       hourlyStart -= grid.counts[0];
     }
     let subsetItems = [];
-    for (let k = start; k < Math.min(grid.items.length, start + extent); k++) {
+    for (let k = Math.max(0, start); k < Math.min(grid.items.length, start + bodyPlusStems); k++) {
       subsetItems.push({ index: k, label: grid.items[k] });
     }
     this.setState({
@@ -186,11 +199,25 @@ class Browser extends Component {
     this.listRef = document.getElementById("filesViewport");
     this.scroller = new Scroller(this.listRef);
     this.scroller.setHandler(this.handleScroll);
+    this.scroller.setReporter(this.handleQuery);
 
-    let height = document.body.clientHeight - document.getElementById("browserTop").clientHeight;
+    this.param.height = document.body.clientHeight;
+    this.param.margin = document.getElementById("browserTop").clientHeight;
+    this.param.header = document.getElementById("filesViewportHeader").clientHeight;
+    this.param.footer = document.getElementById("filesViewportFooter").clientHeight;
+
+    let height = this.param.height - this.param.margin;
+
     this.param.body = Math.floor(height / this.props.h);
-    this.param.extent = this.param.body + 2 * this.param.stem;
-    console.log("Revised params", this.param);
+    this.param.bodyPlusStems = this.param.body + 2 * this.param.stem;
+    this.param.marginMinusHeader = this.param.margin - this.param.header;
+    this.param.heightMinusFooter = this.param.height - this.param.footer;
+    // console.log("Revised params", this.param);
+
+    const { stem, marginMinusHeader } = this.param;
+    this.setState({
+      headPadding: marginMinusHeader - stem * this.props.h,
+    });
   }
 
   componentDidUpdate() {
@@ -204,33 +231,36 @@ class Browser extends Component {
     this.setState({ tic: archive.grid.tic });
 
     const grid = this.props.archive.grid;
-    const { body, stem, extent } = this.param;
+    const { body, stem, bodyPlusStems, marginMinusHeader } = this.param;
 
     let start;
     let padding = this.state.headPadding;
-    if (grid.listMode == "prepend") {
+    if (grid.mode == "prepend") {
       start = grid.counts[0] + this.state.hourlyStart;
-    } else if (grid.listMode == "append") {
+    } else if (grid.mode == "append") {
       start = this.state.hourlyStart;
-    } else if (grid.listMode == "catchup") {
+    } else if (grid.mode == "catchup") {
       start = Math.max(0, grid.items.length - 1 - body);
-      padding = -stem * this.props.h;
-    } else {
+      padding = marginMinusHeader - stem * this.props.h;
+    } else if (grid.mode == "select") {
       start = Math.max(0, grid.counts[0] - stem);
-      padding = (start - grid.counts[0]) * this.props.h;
+      padding = marginMinusHeader + (start - grid.counts[0]) * this.props.h;
+    } else {
+      start = this.state.subsetStart;
     }
     let hourlyStart = start;
     if (start >= grid.counts[0]) {
       hourlyStart -= grid.counts[0];
     }
     let subsetItems = [];
-    for (let k = start; k < Math.min(grid.items.length, start + extent); k++) {
+    for (let k = start; k < Math.min(grid.items.length, start + bodyPlusStems); k++) {
       subsetItems.push({ index: k, label: grid.items[k] });
     }
     let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
     console.log(
       `%ccomponentDidUpdate%c` +
         `   tic = ${archive.grid.tic}` +
+        `   mode = ${grid.mode}` +
         `   hour = ${grid.hour}` +
         `   length = ${subsetItems.length} / ${grid.items.length} [${quad}]` +
         `   start = ${start}` +
@@ -266,13 +296,17 @@ class Browser extends Component {
             <Button
               key={`f-${item.label.slice(0, 20)}`}
               variant="file"
-              onClick={() => archive.loadIndex(item.index)}
+              onClick={() => {
+                archive.loadIndex(item.index);
+                this.props.onSelect(item.index);
+              }}
               selected={item.index == index}
             >
               {item.label}
             </Button>
           ))}
           <div id="filesViewportFooter"></div>
+          <div className="filesViewportSpacer"></div>
         </div>
       </div>
     );

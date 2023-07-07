@@ -16,9 +16,12 @@ Copyright Boonleng Cheong
   --calendar-height: 56px;
   --navbar-button-height: 56px;
   --navbar-padding-bottom: 28px;
+  --secbar-padding: 8px;
   --small-button-height: 32px;
   --button-border-radius: 4px;
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
+  --header-gradient: linear-gradient(180deg, var(--background-color), var(--gray6) 60%);
+  --footer-gradient: linear-gradient(180deg, var(--gray6) 40%, var(--background-color));
   box-sizing: border-box;
 }
 
@@ -618,6 +621,10 @@ h3 {
   border-top: var(--ui-border);
   background-color: var(--overlay-background);
 }
+.sectionBar {
+  padding-top: var(--secbar-padding);
+  padding-bottom: var(--secbar-padding);
+}
 
 .statusWrapper {
   width: calc(100vw - 100px);
@@ -1011,20 +1018,42 @@ div.key {
   border-radius: var(--button-border-radius);
 }
 
-@keyframes bounce {
-  0% {
-    transform: translateY(0px);
-  }
-  10% {
-    transform: translateY(100px);
-  }
-  90% {
-    transform: translateY(10px);
-  }
-  100% {
-    transform: translateY(0px);
-  }
+#filesViewport {
+  background-color: var(--system-background);
+  position: fixed;
+  width: 100%;
+  top: 0;
 }
-.bounce {
-  animation: bounce 1s;
+#filesViewportHeader {
+  height: 1000px;
+  background: var(--header-gradient);
+  background-color: var(--gray6);
+}
+#filesViewportHeaderOld {
+  height: calc(
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 3 *
+      var(--small-button-height) + 35px
+  );
+  background-color: var(--gray6);
+}
+#filesViewportFooter {
+  height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
+  background-color: var(--gray6);
+}
+.filesViewportSpacer {
+  height: 1000px;
+  background: var(--footer-gradient);
+  background-color: var(--gray5);
+}
+
+.panel {
+  height: 100vh;
+  position: absolute;
+  background-color: var(--background-color);
+}
+.active {
+  z-index: 1;
+}
+.inactive {
+  z-index: 0;
 }

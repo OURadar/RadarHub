@@ -12,13 +12,11 @@ import React from "react";
 import { ThemeProvider } from "@mui/material/styles";
 
 import { colorDict, makeTheme } from "./theme";
+import { Archive } from "./archive";
+import { User } from "./user";
 
 import { TopBar } from "./topbar";
-
-import { Archive } from "./archive";
-
-import { Browser } from "./browser-continuous";
-import { User } from "./user";
+import { Browser } from "./browser-class";
 
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);
@@ -67,16 +65,11 @@ export function App(props) {
 
   const handleUserMessage = (message) => setMessage(message);
 
-  const setDocumentTheme = (mode) => {
-    document.documentElement.setAttribute("theme", mode);
-    setColors(colorDict(mode));
-    setTheme(makeTheme(mode));
-  };
-
   const handleThemeChange = () => {
     console.log("App7.handleThemeChange()");
-    let theme = colors.name == "light" ? "dark" : "light";
-    setDocumentTheme(theme);
+    if (user.current.mode == "auto") setColorMode("light");
+    else if (user.current.mode == "light") setColorMode("dark");
+    else setColorMode("auto");
   };
 
   const handleOverlayLoad = (x = 1) => {
