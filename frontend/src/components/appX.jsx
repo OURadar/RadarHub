@@ -125,12 +125,37 @@ export function App(props) {
     setColorMode(user.current.mode);
   });
 
+  let key = 0;
+
   React.useEffect(() => {
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
       let mode = e.matches ? "dark" : "light";
       setDocumentTheme(mode);
     });
     document.documentElement.setAttribute("theme", theme.palette.mode);
+    window.addEventListener("keydown", (e) => (key = e.key));
+    window.addEventListener("keyup", (e) => {
+      if (e.key != key) {
+        return;
+      }
+      let symbol = e.key.toUpperCase();
+      const styles = ["Z", "V", "W", "D", "P", "R"];
+      if (styles.indexOf(symbol) != -1) {
+        archive.current.switch(symbol);
+      } else if (symbol == "L") {
+        archive.current.toggleLiveUpdate();
+      } else if (e.target == document.body) {
+        if (e.key == "ArrowRight") {
+          archive.current.navigateForwardScan();
+        } else if (e.key == "ArrowLeft") {
+          archive.current.navigateBackwardScan();
+        } else if (e.key == "ArrowUp") {
+          archive.current.navigateBackward();
+        } else if (e.key == "ArrowDown") {
+          archive.current.navigateForward();
+        }
+      }
+    });
     handleOverlayLoad();
   }, []);
 
@@ -204,6 +229,17 @@ export function App(props) {
               }
               right={<Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />}
             />
+            <MenuArrow
+              doubleLeftDisabled={disabled[0]}
+              leftDisabled={disabled[1]}
+              rightDisabled={disabled[2]}
+              doubleRightDisabled={disabled[3]}
+              onDoubleLeft={handleDoubleLeft}
+              onLeft={handleLeft}
+              onRight={handleRight}
+              onDoubleRight={handleDoubleRight}
+            />
+            <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
           </ThemeProvider>
         </div>
       </div>

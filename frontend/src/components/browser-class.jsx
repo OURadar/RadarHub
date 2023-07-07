@@ -259,12 +259,10 @@ class Browser extends Component {
     let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
     console.log(
       `%ccomponentDidUpdate%c` +
+        `   ${grid.mode}` +
         `   tic = ${archive.grid.tic}` +
-        `   mode = ${grid.mode}` +
-        `   hour = ${grid.hour}` +
-        `   length = ${subsetItems.length} / ${grid.items.length} [${quad}]` +
-        `   start = ${start}` +
-        `   index = ${grid.index}`,
+        `   [${quad}]` +
+        `   @ ${start}-${grid.index}-${grid.items.length} (${subsetItems.length})`,
       "color: dodgerblue",
       ""
     );
