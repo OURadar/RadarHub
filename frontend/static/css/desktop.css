@@ -135,11 +135,9 @@ Copyright Boonleng Cheong
   display: block;
   height: 100vh;
 }
-#split-panel-right {
-  overflow-y: scroll;
-}
 
 /* Browser */
+/*
 #calendarContainer {
   padding-top: var(--padding);
   padding-bottom: calc(0.5 * var(--padding));
@@ -167,6 +165,7 @@ Copyright Boonleng Cheong
 #filesViewportFooter {
   height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
 }
+*/
 
 /* Product */
 #ageString {

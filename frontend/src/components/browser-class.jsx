@@ -286,7 +286,7 @@ class Browser extends Component {
     const index = ok ? archive.grid.index : -1;
     const hourHasData = ok ? archive.grid.hourHasData : new Array(24).fill(false);
     return (
-      <div>
+      <div className="fullHeight">
         <div id="browserTop" className="fullWidth container fog blur">
           <Calendar archive={archive} day={day} />
           <Hours archive={archive} day={day} hourHasData={hourHasData} selected={hour} />

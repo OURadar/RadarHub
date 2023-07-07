@@ -23,6 +23,9 @@ Copyright Boonleng Cheong
 [theme="dark"] {
   --colorbar-background: linear-gradient(rgba(34, 37, 42, 0.85), rgba(34, 37, 42, 0.65));
 }
+.panel {
+  background-color: var(--colorbar-background);
+}
 .active {
   position: absolute;
   z-index: 1;
@@ -98,38 +101,6 @@ Copyright Boonleng Cheong
   position: absolute;
   left: 0;
   max-width: calc(100vw - 100px);
-}
-
-/* Browser */
-
-#browserTop {
-  border-bottom: var(--ui-border);
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
-}
-#calendarContainer {
-  height: var(--calendar-height);
-  padding-top: calc(var(--topbar-height) + var(--padding));
-  padding-bottom: var(--half-padding);
-}
-#hoursContainer {
-  column-count: 8;
-  padding-left: var(--half-padding);
-  padding-right: var(--half-padding);
-}
-#filesContainer {
-  background-color: var(--system-background);
-  overflow-y: scroll;
-  position: fixed;
-  height: 100vh;
-  width: 100%;
-  top: 0;
-}
-#fileList {
-  padding-top: calc(
-    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
-      var(--small-button-height) + 1px
-  );
-  padding-bottom: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
 }
 
 /* Product view */

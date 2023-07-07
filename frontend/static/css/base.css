@@ -348,12 +348,20 @@ h3 {
 .bottom {
   bottom: var(--padding);
 }
-.fullHeight {
+.deviceHeight {
   height: 100vh;
   overflow-y: hidden;
 }
-.fullWidth {
+.deviceWidth {
   width: 100vw;
+  overflow-x: hidden;
+}
+.fullHeight {
+  height: 100%;
+  overflow-y: hidden;
+}
+.fullWidth {
+  width: 100%;
   overflow-x: hidden;
 }
 
@@ -1018,9 +1026,41 @@ div.key {
   border-radius: var(--button-border-radius);
 }
 
+/* Browser */
+
+#browserTop {
+  border-bottom: var(--ui-border);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+}
+#calendarContainer {
+  height: var(--calendar-height);
+  padding-top: calc(var(--topbar-height) + var(--padding));
+  padding-bottom: var(--half-padding);
+}
+#hoursContainer {
+  column-count: 8;
+  padding-left: var(--half-padding);
+  padding-right: var(--half-padding);
+}
+#filesContainer {
+  background-color: var(--system-background);
+  overflow-y: scroll;
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  top: 0;
+}
+#fileList {
+  padding-top: calc(
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
+      var(--small-button-height) + 1px
+  );
+  padding-bottom: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
+}
+
 #filesViewport {
   background-color: var(--system-background);
-  position: fixed;
+  position: absolute;
   width: 100%;
   top: 0;
 }

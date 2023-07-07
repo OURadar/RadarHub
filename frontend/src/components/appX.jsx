@@ -12,11 +12,13 @@ import React from "react";
 import { ThemeProvider } from "@mui/material/styles";
 
 import { colorDict, makeTheme } from "./theme";
+import { detectMob } from "./common";
 import { Archive } from "./archive";
 import { User } from "./user";
 
 import { Splash } from "./splash";
 import { TopBar } from "./topbar";
+import { Layout } from "./layout";
 import { Browser } from "./browser-class";
 import { Product } from "./product";
 import { Navigation } from "./navigation";
@@ -54,6 +56,7 @@ export function App(props) {
   const user = React.useRef(null);
 
   const h = getItemHeight(theme);
+  const isMobile = detectMob();
 
   const setColorMode = (mode) => {
     user.current.setMode(mode);
@@ -109,7 +112,8 @@ export function App(props) {
   };
 
   useConstructor(() => {
-    // document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
+    if (!isMobile)
+      document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
 
     archive.current = new Archive(props.pathway, props.name);
     archive.current.onUpdate = handleUpdate;
@@ -130,46 +134,78 @@ export function App(props) {
     handleOverlayLoad();
   }, []);
 
-  return (
-    <div>
-      <Splash progress={load} />
-      <div id="main" className="fullHeight">
-        <TopBar
-          mode={colors.name}
-          isMobile={true}
-          message={message}
-          ingest={archive.current}
-          onAccount={user.current.greet}
-          onThemeChange={handleThemeChange}
-        />
-        <ThemeProvider theme={theme}>
-          <div className={panel === 0 ? "active" : "inactive"}>
-            <Product
-              gravity="top"
-              colors={colors}
-              origin={props.origin}
-              sweep={archive.current?.data.sweep}
-              onOverlayLoad={handleOverlayLoad}
-              onColorbarTouch={handleColorbarTouch}
-            />
-            <MenuArrow
-              doubleLeftDisabled={disabled[0]}
-              leftDisabled={disabled[1]}
-              rightDisabled={disabled[2]}
-              doubleRightDisabled={disabled[3]}
-              onDoubleLeft={handleDoubleLeft}
-              onLeft={handleLeft}
-              onRight={handleRight}
-              onDoubleRight={handleDoubleRight}
-            />
-            <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
-          </div>
-          <div className={panel === 1 ? "active" : "inactive"}>
-            <Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />
-          </div>
-          <Navigation value={panel} onChange={handleNavigationChange} />
-        </ThemeProvider>
+  if (isMobile)
+    return (
+      <div>
+        <Splash progress={load} />
+        <div id="main" className="fullHeight">
+          <TopBar
+            mode={colors.name}
+            isMobile={true}
+            message={message}
+            ingest={archive.current}
+            onAccount={user.current.greet}
+            onThemeChange={handleThemeChange}
+          />
+          <ThemeProvider theme={theme}>
+            <div className={`fullHeight panel ${panel === 0 ? "active" : "inactive"}`}>
+              <Product
+                gravity="top"
+                colors={colors}
+                origin={props.origin}
+                sweep={archive.current?.data.sweep}
+                onOverlayLoad={handleOverlayLoad}
+                onColorbarTouch={handleColorbarTouch}
+              />
+              <MenuArrow
+                doubleLeftDisabled={disabled[0]}
+                leftDisabled={disabled[1]}
+                rightDisabled={disabled[2]}
+                doubleRightDisabled={disabled[3]}
+                onDoubleLeft={handleDoubleLeft}
+                onLeft={handleLeft}
+                onRight={handleRight}
+                onDoubleRight={handleDoubleRight}
+              />
+              <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
+            </div>
+            <div className={`fullHeight panel ${panel === 1 ? "active" : "inactive"}`}>
+              <Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />
+            </div>
+            <Navigation value={panel} onChange={handleNavigationChange} />
+          </ThemeProvider>
+        </div>
       </div>
-    </div>
-  );
+    );
+  else
+    return (
+      <div>
+        <Splash progress={load} />
+        <div id="main" className="fullHeight">
+          <TopBar
+            mode={colors.name}
+            isMobile={true}
+            message={message}
+            ingest={archive.current}
+            onAccount={user.current.greet}
+            onThemeChange={handleThemeChange}
+          />
+          <ThemeProvider theme={theme}>
+            <Layout
+              name="split-archive-width"
+              left={
+                <Product
+                  colors={colors}
+                  origin={props.origin}
+                  sweep={archive.current?.data.sweep}
+                  onOverlayLoad={handleOverlayLoad}
+                  onColorbarTouch={handleColorbarTouch}
+                />
+              }
+              right={<Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />}
+            />
+          </ThemeProvider>
+        </div>
+      </div>
+    );
 }
