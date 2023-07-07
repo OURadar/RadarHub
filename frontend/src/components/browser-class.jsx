@@ -13,6 +13,8 @@
 
 import React, { Component } from "react";
 
+import { clamp } from "./common";
+
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -231,20 +233,44 @@ class Browser extends Component {
     this.setState({ tic: archive.grid.tic });
 
     const grid = this.props.archive.grid;
-    const { body, stem, bodyPlusStems, marginMinusHeader } = this.param;
+    const { body, stem, bodyPlusStems, marginMinusHeader, heightMinusFooter } = this.param;
 
     let start;
     let padding = this.state.headPadding;
+
     if (grid.mode == "prepend") {
       start = grid.counts[0] + this.state.hourlyStart;
     } else if (grid.mode == "append") {
       start = this.state.hourlyStart;
     } else if (grid.mode == "catchup") {
       start = Math.max(0, grid.items.length - 1 - body);
-      padding = marginMinusHeader - stem * this.props.h;
+      // padding = heightMinusFooter - (grid.items.length - start + stem) * this.props.h + marginMinusHeader;
+      padding = heightMinusFooter - (bodyPlusStems - 1) * this.props.h + marginMinusHeader + 2;
     } else if (grid.mode == "select") {
       start = Math.max(0, grid.counts[0] - stem);
       padding = marginMinusHeader + (start - grid.counts[0]) * this.props.h;
+    } else if (grid.mode == "navigate") {
+      let delta = 0;
+      start = this.state.subsetStart;
+      if (start > grid.index - stem - 1) {
+        start = grid.index - stem - 1;
+        delta = (start - this.state.subsetStart + 1) * this.props.h;
+      } else if (start < grid.index - body - stem + 1) {
+        start = grid.index - body - stem + 1;
+        delta = (start - this.state.subsetStart + 1) * this.props.h;
+      }
+      if (grid.items.length - grid.index > 24 && this.props.archive.state.liveUpdate != "offline") {
+        console.debug("Navigated far enough, disabling live update ...");
+        this.props.archive.disableLiveUpdate();
+      }
+      let iter = 0;
+      let interval = setInterval(() => {
+        if (iter++ > 4) {
+          clearInterval(interval);
+        }
+        this.handleScroll(-0.25 * delta);
+      }, 17);
+      return;
     } else {
       start = this.state.subsetStart;
     }
@@ -259,12 +285,10 @@ class Browser extends Component {
     let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
     console.log(
       `%ccomponentDidUpdate%c` +
+        `   ${grid.mode}` +
         `   tic = ${archive.grid.tic}` +
-        `   mode = ${grid.mode}` +
-        `   hour = ${grid.hour}` +
-        `   length = ${subsetItems.length} / ${grid.items.length} [${quad}]` +
-        `   start = ${start}` +
-        `   index = ${grid.index}`,
+        `   [${quad}]` +
+        `   @ ${start}-${grid.index}-${grid.items.length} (${subsetItems.length})`,
       "color: dodgerblue",
       ""
     );
@@ -285,7 +309,7 @@ class Browser extends Component {
     const index = ok ? archive.grid.index : -1;
     const hourHasData = ok ? archive.grid.hourHasData : new Array(24).fill(false);
     return (
-      <div>
+      <div className="fullHeight">
         <div id="browserTop" className="fullWidth container fog blur">
           <Calendar archive={archive} day={day} />
           <Hours archive={archive} day={day} hourHasData={hourHasData} selected={hour} />

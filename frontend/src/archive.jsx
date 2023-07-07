@@ -3,8 +3,8 @@ import { createRoot } from "react-dom/client";
 
 import { detectMob } from "./components/common";
 
-import { App as AppDesktop } from "./components/app6";
-import { App as AppMobile } from "./components/app9";
+import { App as AppDesktop } from "./components/appX";
+import { App as AppMobile } from "./components/appX";
 
 const text = document.getElementById("params")?.textContent || "{}";
 const params = JSON.parse(text);

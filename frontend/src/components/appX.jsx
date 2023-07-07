@@ -12,11 +12,13 @@ import React from "react";
 import { ThemeProvider } from "@mui/material/styles";
 
 import { colorDict, makeTheme } from "./theme";
+import { detectMob } from "./common";
 import { Archive } from "./archive";
 import { User } from "./user";
 
 import { Splash } from "./splash";
 import { TopBar } from "./topbar";
+import { Layout } from "./layout";
 import { Browser } from "./browser-class";
 import { Product } from "./product";
 import { Navigation } from "./navigation";
@@ -54,6 +56,7 @@ export function App(props) {
   const user = React.useRef(null);
 
   const h = getItemHeight(theme);
+  const isMobile = detectMob();
 
   const setColorMode = (mode) => {
     user.current.setMode(mode);
@@ -109,7 +112,8 @@ export function App(props) {
   };
 
   useConstructor(() => {
-    // document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
+    if (!isMobile)
+      document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
 
     archive.current = new Archive(props.pathway, props.name);
     archive.current.onUpdate = handleUpdate;
@@ -121,36 +125,109 @@ export function App(props) {
     setColorMode(user.current.mode);
   });
 
+  let key = 0;
+
   React.useEffect(() => {
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
       let mode = e.matches ? "dark" : "light";
       setDocumentTheme(mode);
     });
     document.documentElement.setAttribute("theme", theme.palette.mode);
+    window.addEventListener("keydown", (e) => (key = e.key));
+    window.addEventListener("keyup", (e) => {
+      if (e.key != key) {
+        return;
+      }
+      let symbol = e.key.toUpperCase();
+      const styles = ["Z", "V", "W", "D", "P", "R"];
+      if (styles.indexOf(symbol) != -1) {
+        archive.current.switch(symbol);
+      } else if (symbol == "L") {
+        archive.current.toggleLiveUpdate();
+      } else if (e.target == document.body) {
+        if (e.key == "ArrowRight") {
+          archive.current.navigateForwardScan();
+        } else if (e.key == "ArrowLeft") {
+          archive.current.navigateBackwardScan();
+        } else if (e.key == "ArrowUp") {
+          archive.current.navigateBackward();
+        } else if (e.key == "ArrowDown") {
+          archive.current.navigateForward();
+        }
+      }
+    });
     handleOverlayLoad();
   }, []);
 
-  return (
-    <div>
-      <Splash progress={load} />
-      <div id="main" className="fullHeight">
-        <TopBar
-          mode={colors.name}
-          isMobile={true}
-          message={message}
-          ingest={archive.current}
-          onAccount={user.current.greet}
-          onThemeChange={handleThemeChange}
-        />
-        <ThemeProvider theme={theme}>
-          <div className={`${panel === 0 ? "active" : "inactive"} panel`}>
-            <Product
-              gravity="top"
-              colors={colors}
-              origin={props.origin}
-              sweep={archive.current?.data.sweep}
-              onOverlayLoad={handleOverlayLoad}
-              onColorbarTouch={handleColorbarTouch}
+  if (isMobile)
+    return (
+      <div>
+        <Splash progress={load} />
+        <div id="main" className="fullHeight">
+          <TopBar
+            mode={colors.name}
+            isMobile={true}
+            message={message}
+            ingest={archive.current}
+            onAccount={user.current.greet}
+            onThemeChange={handleThemeChange}
+          />
+          <ThemeProvider theme={theme}>
+            <div className={`fullHeight panel ${panel === 0 ? "active" : "inactive"}`}>
+              <Product
+                gravity="top"
+                colors={colors}
+                origin={props.origin}
+                sweep={archive.current?.data.sweep}
+                onOverlayLoad={handleOverlayLoad}
+                onColorbarTouch={handleColorbarTouch}
+              />
+              <MenuArrow
+                doubleLeftDisabled={disabled[0]}
+                leftDisabled={disabled[1]}
+                rightDisabled={disabled[2]}
+                doubleRightDisabled={disabled[3]}
+                onDoubleLeft={handleDoubleLeft}
+                onLeft={handleLeft}
+                onRight={handleRight}
+                onDoubleRight={handleDoubleRight}
+              />
+              <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
+            </div>
+            <div className={`fullHeight panel ${panel === 1 ? "active" : "inactive"}`}>
+              <Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />
+            </div>
+            <Navigation value={panel} onChange={handleNavigationChange} />
+          </ThemeProvider>
+        </div>
+      </div>
+    );
+  else
+    return (
+      <div>
+        <Splash progress={load} />
+        <div id="main" className="fullHeight">
+          <TopBar
+            mode={colors.name}
+            isMobile={true}
+            message={message}
+            ingest={archive.current}
+            onAccount={user.current.greet}
+            onThemeChange={handleThemeChange}
+          />
+          <ThemeProvider theme={theme}>
+            <Layout
+              name="split-archive-width"
+              left={
+                <Product
+                  colors={colors}
+                  origin={props.origin}
+                  sweep={archive.current?.data.sweep}
+                  onOverlayLoad={handleOverlayLoad}
+                  onColorbarTouch={handleColorbarTouch}
+                />
+              }
+              right={<Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />}
             />
             <MenuArrow
               doubleLeftDisabled={disabled[0]}
@@ -163,13 +240,8 @@ export function App(props) {
               onDoubleRight={handleDoubleRight}
             />
             <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
-          </div>
-          <div className={`${panel === 1 ? "active" : "inactive"} panel`}>
-            <Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />
-          </div>
-          <Navigation value={panel} onChange={handleNavigationChange} />
-        </ThemeProvider>
+          </ThemeProvider>
+        </div>
       </div>
-    </div>
-  );
+    );
 }

@@ -288,6 +288,7 @@ function updateListWithItem(item) {
   }
   grid.items.push(item);
   grid.counts[1]++;
+  grid.mode = "catchup";
   reviseGridItemsGrouped();
   grid.tic++;
   if (state.update == "always") {
@@ -686,11 +687,13 @@ function navigateForward() {
 
 function navigateBackward() {
   let index = clamp(grid.index - 1, 0, grid.items.length - 1);
+  grid.mode = "navigate";
   setGridIndex(index);
 }
 
 function navigateToEnd() {
   let index = grid.items.length - 1;
+  grid.mode = "navigate";
   setGridIndex(index);
 }
 
@@ -710,10 +713,12 @@ function updateGridIndexByScan(delta) {
 }
 
 function navigateForwardScan() {
+  grid.mode = "navigate";
   updateGridIndexByScan(1);
 }
 
 function navigateBackwardScan() {
+  grid.mode = "navigate";
   updateGridIndexByScan(-1);
 }
 

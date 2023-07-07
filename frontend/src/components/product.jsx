@@ -284,7 +284,7 @@ class Product extends GLView {
 
   render() {
     return (
-      <div>
+      <div className="fullHeight">
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
         <Colorbar
           {...this.props}
@@ -297,10 +297,7 @@ class Product extends GLView {
           debug={false}
         />
         <Caption id="ageString" string={this.props.sweep?.age || ""} />
-        <Caption
-          id="infoString"
-          string={this.props.sweep?.infoString || "Gatewidth: -\nWaveform: -"}
-        />
+        <Caption id="infoString" string={this.props.sweep?.infoString || "Gatewidth: -\nWaveform: -"} />
         <Symbol
           id="symbol"
           text={this.state.style?.name || "Unknown"}
@@ -308,9 +305,7 @@ class Product extends GLView {
           onTouch={this.props.onColorbarTouch}
           onClick={this.props.onColorbarClick}
         />
-        <Title
-          string={this.props.sweep?.titleString || "----/--/-- --:--:-- UTC"}
-        />
+        <Title string={this.props.sweep?.titleString || "----/--/-- --:--:-- UTC"} />
       </div>
     );
   }
@@ -341,11 +336,7 @@ class Product extends GLView {
       let y0 = geo.origin.latitude.toFixed(6);
       let x1 = sweep.longitude.toFixed(6);
       let y1 = sweep.latitude.toFixed(6);
-      console.log(
-        `Product: origin (%c${x0}, ${y0}%c) ← (${x1}, ${y1})`,
-        "color: mediumpurple",
-        "color: inherit"
-      );
+      console.log(`Product: origin (%c${x0}, ${y0}%c) ← (${x1}, ${y1})`, "color: mediumpurple", "color: inherit");
       // Perhaps update geo.range to max range
       // const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
       // const d = Math.sqrt(1 + geo.aspect ** 2);
@@ -408,10 +399,7 @@ class Product extends GLView {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
       this.loadDashboard();
-    } else if (
-      this.props.sweep !== null &&
-      this.assets.symbol != this.props.sweep.symbol
-    ) {
+    } else if (this.props.sweep !== null && this.assets.symbol != this.props.sweep.symbol) {
       this.loadDashboard(this.props.sweep);
     } else if (
       (this.props.sweep === null && this.assets.data !== null) ||
