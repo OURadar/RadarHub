@@ -80,7 +80,7 @@ class Scroller {
           this.ib = this.ib == 2 ? 0 : this.ib + 1;
         }
         this.distance = this.handleQuery(-e.deltaY);
-        if (this.stretch > 2 && Math.abs(this.distance) > 0.5 && Math.abs(this.velocity) < 5) {
+        if (this.stretch > 2 && Math.abs(this.distance) > 0.5 && Math.abs(this.velocity) < 3) {
           e.stopImmediatePropagation();
           e.stopPropagation();
           this.bd = [0, 0, 0];
@@ -90,14 +90,9 @@ class Scroller {
           this.bounce();
         } else if (this.stretch < 3) {
           this.handlePan(-e.deltaY);
-        } else if (this.stretch < 10) {
-          this.handlePan(-0.5 * e.deltaY);
-        } else if (this.stretch < 18) {
-          this.handlePan(-0.2 * e.deltaY);
-        } else if (this.stretch < 25) {
-          this.handlePan(-0.1 * e.deltaY);
         } else {
-          this.handlePan(-0.05 * e.deltaY);
+          let a = 0.1 + 0.7 ** (0.5 * this.stretch);
+          this.handlePan(-a * e.deltaY);
         }
       },
       { passive: false }
@@ -182,7 +177,7 @@ class Scroller {
 
   addStretch() {
     if (!this.bouncing) {
-      // console.log(`Scroller.addStretch`);
+      // console.log(`Scroller.addStretch ${this.stretch}`);
       this.stretch++;
     }
   }
