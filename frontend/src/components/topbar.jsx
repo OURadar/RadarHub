@@ -102,7 +102,7 @@ function LeftDash(props) {
         <RadarHubIcon />
       </IconButton>
       <div className="statusWrapper">
-        <div className={`statusLed ${online}`}></div>
+        <div className={`statusLed ${online}`} onClick={() => props.ingest.toggleLiveUpdate()}></div>
         <div id="radarName">{`${name}`}</div>
         <Notification id="statusBody" message={message} timeout={10000} />
       </div>

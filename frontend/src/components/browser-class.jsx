@@ -142,7 +142,7 @@ class Browser extends Component {
   handleScroll(delta) {
     const h = this.props.h;
     const grid = this.props.archive.grid;
-    const { body, stem, bodyPlusStems, heightMinusFooter, marginMinusHeader, fetch, header } = this.param;
+    const { body, stem, fetch, header, bodyPlusStems, heightMinusHeaderFooter, marginMinusHeader } = this.param;
 
     let start = this.value.subsetStart;
     let padding = this.value.headPadding + delta;
@@ -152,7 +152,7 @@ class Browser extends Component {
         padding += h;
         start++;
       }
-      if (padding + header + this.value.subsetDepth * this.props.h <= heightMinusFooter) {
+      if (padding + this.value.subsetDepth * h <= heightMinusHeaderFooter) {
         this.scroller.addStretch();
       } else {
         this.scroller.resetStretch();
@@ -171,12 +171,13 @@ class Browser extends Component {
       return;
     }
     const travel = start + this.value.subsetDepth - grid.items.length;
-    const recent = grid.items.length - grid.index;
+    // const recent = grid.items.length - grid.index;
+    const recent = this.props.archive.isLatestVolume();
     // console.log(`travel = ${travel}`);
     if (travel < -stem && this.props.archive.state.liveUpdate != "offline") {
       console.debug("Scrolled far enough, disabling live update ...");
       this.props.archive.disableLiveUpdate();
-    } else if (travel == 0 && recent < 10 && this.props.archive.state.liveUpdate == "offline") {
+    } else if (travel == 0 && recent && this.props.archive.state.liveUpdate == "offline") {
       console.debug("Scrolled close enough, enabling live update ...");
       this.props.archive.enableLiveUpdate();
     }
@@ -227,6 +228,7 @@ class Browser extends Component {
     this.param.bodyPlusStems = this.param.body + 2 * this.param.stem;
     this.param.marginMinusHeader = this.param.margin - this.param.header;
     this.param.heightMinusFooter = this.param.height - this.param.footer;
+    this.param.heightMinusHeaderFooter = this.param.height - this.param.header - this.param.footer;
     // console.log("Revised params", this.param);
 
     this.value.headPadding = this.param.marginMinusHeader - this.param.stem * this.props.h;

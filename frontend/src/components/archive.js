@@ -327,6 +327,9 @@ class Archive extends Ingest {
   }
 
   isLatestVolume() {
+    if (this.grid === null || this.grid.index < 0 || this.grid.index >= this.grid.items.length) {
+      return false;
+    }
     const scan = this.grid.items[this.grid.index].split("-")[2];
     const item = this.grid.itemsGrouped[scan].at(-1);
     return this.grid.latestHour == this.grid.hour && item.index == this.grid.index;

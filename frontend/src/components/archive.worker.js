@@ -124,7 +124,7 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
   }
   if (state.verbose) {
     console.log(
-      `%carchive.worker.onmessage()%c task = ${task}   day = ${day.format("YYYYMMDD-HHMM")}`,
+      `%carchive.worker.onmessage%c task = ${task}   day = ${day.format("YYYYMMDD-HHMM")}`,
       "color: hotpink",
       ""
     );
@@ -163,7 +163,7 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
 function init(newPathway) {
   pathway = newPathway;
   if (state.verbose) {
-    console.info(`%carchive.worker.init()%c ${pathway}`, `color: ${namecolor}`, "color: dodgerblue");
+    console.info(`%carchive.worker.init%c ${pathway}`, `color: ${namecolor}`, "color: dodgerblue");
   }
   self.postMessage({ type: "init", grid: grid });
 }
@@ -256,7 +256,7 @@ function updateListWithItem(item) {
   const d = elements[0];
   if (state.verbose) {
     console.info(
-      `%carchive.worker.updateListWithItem()%c ${d} ${t} ${scan} ${symbol} ${state.update}`,
+      `%carchive.worker.updateListWithItem%c ${d} ${t} ${scan} ${symbol} ${state.update}`,
       `color: ${namecolor}`,
       ""
     );
@@ -265,7 +265,7 @@ function updateListWithItem(item) {
     return;
   }
   if (grid.items.indexOf(item) > 0) {
-    console.warn(`Item ${item} exists.`);
+    // console.warn(`Item ${item} exists.`);
     return;
   }
   const listHour = t.slice(0, 2);
@@ -278,11 +278,7 @@ function updateListWithItem(item) {
     grid.counts = [grid.counts[1], 0];
     reviseGridItemsGrouped();
     if (state.verbose) {
-      console.info(
-        `%carchive.worker.updateListWithItem()%c   ${dateTimeString} ${grid.hour}`,
-        `color: ${namecolor}`,
-        ""
-      );
+      console.info(`%carchive.worker.updateListWithItem%c   ${dateTimeString} ${grid.hour}`, `color: ${namecolor}`, "");
     }
   }
   grid.items.push(item);
@@ -322,7 +318,7 @@ function createSweep(name = "dummy") {
 // Expect something like day = dayjs.utc('2013-05-20'), hour = 19, symbol = 'Z'
 function month(day) {
   let dayString = day.format("YYYYMM01");
-  console.info(`%carchive.worker.month()%c ${pathway} ${dayString}`, `color: ${namecolor}`, "");
+  console.info(`%carchive.worker.month%c ${pathway} ${dayString}`, `color: ${namecolor}`, "");
   const url = `/data/month/${pathway}/${dayString}/`;
   fetch(url)
     .then((response) => {
@@ -345,7 +341,7 @@ function month(day) {
 function list(day, symbol, mode = "select") {
   let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
-    `%carchive.worker.list()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
+    `%carchive.worker.list%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
     `color: ${namecolor}`,
     "",
     "color: mediumpurple",
@@ -421,11 +417,7 @@ function list(day, symbol, mode = "select") {
           }
         });
       } else {
-        console.info(
-          `%carchive.worker.list()%c response.status = ${response.status} != 200`,
-          `color: ${namecolor}`,
-          ""
-        );
+        console.info(`%carchive.worker.list%c response.status = ${response.status} != 200`, `color: ${namecolor}`, "");
         response.text().then((response) => {
           self.postMessage({ type: "message", payload: response });
         });
@@ -437,20 +429,20 @@ function list(day, symbol, mode = "select") {
 }
 
 function prepend() {
-  console.log(`%carchive.worker.prepend()%c`, `color: ${namecolor}`, "color: dodgerblue");
+  console.log(`%carchive.worker.prepend%c`, `color: ${namecolor}`, "color: dodgerblue");
   let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).subtract(1, "hour");
   list(day, grid.symbol, "prepend");
 }
 
 function append() {
-  console.log(`%carchive.worker.append()%c`, `color: ${namecolor}`, "color: dodgerblue");
+  console.log(`%carchive.worker.append%c`, `color: ${namecolor}`, "color: dodgerblue");
   let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).add(1, "hour");
   list(day, grid.symbol, "append");
 }
 
 function load(name) {
   const url = `/data/load/${pathway}/${name}/`;
-  console.info(`%carchive.worker.load() %c${url}%c`, `color: ${namecolor}`, "color: dodgerblue", "");
+  console.info(`%carchive.worker.load %c${url}%c`, `color: ${namecolor}`, "color: dodgerblue", "");
   fetch(url, { cache: "force-cache" })
     .then((response) => {
       if (response.status == 200) {
@@ -478,9 +470,11 @@ function load(name) {
           let scan = components[2];
           if (state.verbose > 1) {
             console.debug(
-              `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}`,
+              `%carchive.worker.load%c grid.scan = %c${scan}%c ← ${grid.scan}`,
               `color: ${namecolor}`,
-              "color: dodgerblue"
+              "",
+              "color: dodgerblue",
+              ""
             );
           }
           if (sweep.nb == 0 || sweep.nr == 0) {
@@ -572,14 +566,14 @@ function geometry(sweep) {
 }
 
 function catchup() {
-  console.info(`%carchive.worker.catchup()%c ${pathway}`, `color: ${namecolor}`, "color: dodgerblue");
+  console.info(`%carchive.worker.catchup%c ${pathway}`, `color: ${namecolor}`, "color: dodgerblue");
   fetch(`/data/catchup/${pathway}/`).then((response) => {
     if (response.status == 200) {
       response
         .json()
         .then((buffer) => {
           console.info(
-            `%carchive.worker.catchup()%c ${pathway} %c${buffer.dateTimeString}%c`,
+            `%carchive.worker.catchup %c${pathway} %c${buffer.dateTimeString}%c`,
             `color: ${namecolor}`,
             "color: dodgerblue",
             "color:mediumpurple",
@@ -600,7 +594,7 @@ function catchup() {
           let index = suggestGridIndex("catchup", buffer);
           if (state.verbose) {
             console.info(
-              `%carchive.worker.catchup()%c` +
+              `%carchive.worker.catchup%c` +
                 `   dateTimeString = %c${buffer.dateTimeString}%c` +
                 `   hour = %c${buffer.hour}%c`,
               `color: ${namecolor}`,
@@ -636,17 +630,19 @@ function catchup() {
 function setGridIndex(index) {
   if (state.verbose > 1) {
     console.debug(
-      `%carchive.worker.setGridIndex()%c ${grid.index} -> ${index}`,
+      `%carchive.worker.setGridIndex %c${index}%c ← ${grid.index}`,
       `color: ${namecolor}`,
-      "color: dodgerblue"
+      "color: dodgerblue",
+      ""
     );
   }
   if (index < 0 || index >= grid.items.length) {
     if (state.verbose > 1) {
       console.debug(
-        `%carchive.worker.setGridIndex()%c index = ${index}. Early return.`,
+        `%carchive.worker.setGridIndex %cindex%c == ${index}. Early return.`,
         `color: ${namecolor}`,
-        "color: dodgerblue"
+        "color: dodgerblue",
+        ""
       );
     }
     grid.index = index;
@@ -657,18 +653,22 @@ function setGridIndex(index) {
   if (scan == grid.last) {
     if (state.verbose > 1) {
       console.debug(
-        `%carchive.worker.setGridIndex()%c scan = ${scan} / ${grid.last}. Early return.`,
+        `%carchive.worker.setGridIndex%c scan = %c${scan}%c ← ${grid.last}. Early return.`,
         `color: ${namecolor}`,
-        "color: dodgerblue"
+        "",
+        "color: dodgerblue",
+        ""
       );
     }
     return;
   }
   if (state.verbose > 1) {
     console.debug(
-      `%carchive.worker.setGridIndex()%c Calling load() ${scan} ...`,
+      `%carchive.worker.setGridIndex%c Loading %c${scan}%c ...`,
       `color: ${namecolor}`,
-      "color: dodgerblue"
+      "",
+      "color: dodgerblue",
+      ""
     );
   }
   grid.index = index;
@@ -720,7 +720,7 @@ function navigateBackwardScan() {
 
 function toggle(name = "toggle") {
   if (state.verbose > 1) {
-    console.debug(`%carchive.worker.toggle()%c ${name}`, `color: ${namecolor}`, "color: dodgerblue");
+    console.debug(`%carchive.worker.toggle %c${name}`, `color: ${namecolor}`, "color: dodgerblue");
   }
   if (name == state.update) {
     self.postMessage({ type: "state", payload: { update: state.update } });
@@ -740,7 +740,7 @@ function toggle(name = "toggle") {
   }
   if (state.verbose) {
     console.log(
-      `%carchive.worker.toggle()%c update = %c${state.update}%c ← ${update}`,
+      `%carchive.worker.toggle%c update = %c${state.update}%c ← ${update}`,
       `color: ${namecolor}`,
       "",
       "color: mediumpurple",
@@ -751,7 +751,7 @@ function toggle(name = "toggle") {
     disconnect();
   } else if (source == null || source.readyState == 2) {
     if (state.verbose) {
-      console.log("%carchive.worker.toggle()%c calling catchup ...", `color: ${namecolor}`, "");
+      console.log("%carchive.worker.toggle%c calling catchup ...", `color: ${namecolor}`, "");
     }
     catchup();
   } else {
@@ -777,7 +777,7 @@ function reviseGridPaths() {
   grid.pathsActive[3] = index != last.index;
   if (state.verbose > 1) {
     console.debug(
-      `%carchive.worker.reviseGridPaths() %c${scan}%c`,
+      `%carchive.worker.reviseGridPaths %c${scan}%c`,
       `color: ${namecolor}`,
       "color: dodgerblue",
       "",
