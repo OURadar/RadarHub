@@ -450,14 +450,10 @@ class Product extends GLView {
   }
 
   taptap(x, y) {
-    // console.log(
-    //   `taptap: ${x} / ${0.8 * this.canvas.width} : ${y} / ${
-    //     0.8 * this.canvas.width
-    //   }`
-    // );
+    // console.log(`taptap ${x} / ${this.mount.clientWidth} = ${x / this.mount.clientWidth}`);
     if (x > 0.8 * this.mount.clientWidth && y < 0.5 * this.mount.clientHeight) {
       return this.toggleSpin();
-    } else {
+    } else if (x > 0.2 * this.mount.clientWidth && x < 0.7 * this.mount.clientWidth) {
       this.fitToData();
     }
   }

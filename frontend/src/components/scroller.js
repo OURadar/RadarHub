@@ -78,7 +78,6 @@ class Scroller {
         this.velocity = (this.bd[0] + this.bd[1] + this.bd[2]) / this.nb;
         this.interval = (this.bt[0] + this.bt[1] + this.bt[2]) / this.nb;
         this.distance = this.handleQuery(-e.deltaY);
-
         this.ib = this.ib == 2 ? 0 : this.ib + 1;
         if (this.last != 0) {
           if (this.last * e.deltaY > 0) {
@@ -93,7 +92,6 @@ class Scroller {
             this.last = 0;
           }
         }
-        //if (this.stretch > 2 && Math.abs(this.distance) > 0.5 && Math.abs(this.velocity) < 3) {
         if (this.stretch > 3 && Math.abs(this.distance) > 0.5) {
           e.stopImmediatePropagation();
           e.stopPropagation();

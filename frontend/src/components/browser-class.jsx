@@ -286,7 +286,7 @@ class Browser extends Component {
         `   ${grid.mode}` +
         `   tic = ${archive.grid.tic}` +
         `   [${quad}]` +
-        `   @ ${start}-${grid.index}-${grid.items.length} (${subsetItems.length})`,
+        `   @ ${start}~(${grid.index})~${grid.items.length} (${subsetItems.length})`,
       "color: dodgerblue",
       ""
     );
