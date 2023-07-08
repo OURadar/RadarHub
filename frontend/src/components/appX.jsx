@@ -98,7 +98,6 @@ export function App(props) {
   const handleDoubleRight = () => archive.current.navigateForwardScan();
 
   const handleColorbarTouch = (e) => {
-    // console.log(e);
     if (e.pageX / e.target.offsetWidth < 0.5) {
       archive.current.prevProduct();
     } else {
@@ -108,7 +107,6 @@ export function App(props) {
 
   const handleColorbarClick = (e) => {
     let dy = e.pageY - e.target.offsetTop;
-    console.log(`handleColorbarClick  dy = ${dy}`);
     if (dy / e.target.offsetHeight < 0.5) {
       archive.current.prevProduct();
     } else {

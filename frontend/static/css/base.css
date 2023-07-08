@@ -68,6 +68,7 @@ Copyright Boonleng Cheong
   --colorbar-background: rgba(249, 245, 237, 0.7);
   --background-gradient: linear-gradient(0, var(--background-color-translucent) 15%, var(--background-color) 75%);
   --background-image: linear-gradient(transparent 69%, hsl(194, 100%, 35%));
+  --subtle-text: rgba(0, 0, 0, 0.6);
 }
 
 [theme="dark"] {
@@ -112,6 +113,7 @@ Copyright Boonleng Cheong
   --colorbar-background: rgba(34, 37, 42, 0.7);
   --background-gradient: linear-gradient(0, var(--background-color-translucent) 15%, var(--background-color) 75%);
   --background-image: linear-gradient(transparent 69%, hsl(194, 100%, 20%));
+  --subtle-text: rgba(255, 255, 255, 0.7);
 }
 
 @font-face {
@@ -650,6 +652,8 @@ h3 {
   padding: 0 5px;
   position: relative;
   text-align: center;
+  font-size: 13px;
+  color: var(--subtle-text);
 }
 
 .statusWrapper {

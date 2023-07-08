@@ -241,6 +241,7 @@ function disconnect() {
   }
   if (state.verbose) console.info("Disconnecting live update ...");
   source.close();
+  source = null;
   self.postMessage({
     type: "state",
     payload: {
@@ -720,9 +721,9 @@ function navigateBackwardScan() {
 }
 
 function toggle(name = "toggle") {
-  // if (state.verbose > 1) {
-  console.debug(`%carchive.worker.toggle()%c ${name}`, `color: ${namecolor}`, "color: dodgerblue");
-  // }
+  if (state.verbose > 1) {
+    console.debug(`%carchive.worker.toggle()%c ${name}`, `color: ${namecolor}`, "color: dodgerblue");
+  }
   if (name == state.update) {
     self.postMessage({ type: "state", payload: { update: state.update } });
     return;
@@ -750,9 +751,13 @@ function toggle(name = "toggle") {
   }
   if (state.update == "offline") {
     disconnect();
-  } else {
-    console.log("calling catchup from toggle() ...");
+  } else if (source == null || source.readyState == 2) {
+    if (state.verbose) {
+      console.log("%carchive.worker.toggle()%c calling catchup ...", `color: ${namecolor}`, "");
+    }
     catchup();
+  } else {
+    self.postMessage({ type: "state", payload: { update: state.update } });
   }
 }
 
