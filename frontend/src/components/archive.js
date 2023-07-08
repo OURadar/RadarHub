@@ -35,11 +35,9 @@ class Archive extends Ingest {
     this.init = this.init.bind(this);
     this.list = this.list.bind(this);
     this.month = this.month.bind(this);
-    this.count = this.count.bind(this);
     this.catchup = this.catchup.bind(this);
     this.prepend = this.prepend.bind(this);
     this.append = this.append.bind(this);
-
     this.loadIndex = this.loadIndex.bind(this);
     this.updateAge = this.updateAge.bind(this);
 
@@ -60,7 +58,7 @@ class Archive extends Ingest {
       this.state.sweepLoading = false;
       if (this.state.verbose) {
         console.log(
-          `%carchive.handleMessage()%c load` +
+          `%carchive.handleMessage%c load` +
             `   tic = ${this.grid.tic}` +
             `   hour = ${this.grid.hour}` +
             `   index = ${this.grid.index}` +
@@ -81,7 +79,7 @@ class Archive extends Ingest {
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
-          `%carchive.handleMessage()%c list` +
+          `%carchive.handleMessage%c list` +
             `   ${grid.dateTimeString}` +
             `   ${grid.latestScan}` +
             `   hour = ${this.grid.hour} -> ${grid.hour}` +
@@ -107,7 +105,7 @@ class Archive extends Ingest {
           hour = best;
           if (this.state.verbose) {
             console.log(
-              `%carchive.handleMessage()%c count   No data.  hour = ${hour} -> ${best} ...`,
+              `%carchive.handleMessage%c count   No data.  hour = ${hour} -> ${best} ...`,
               "color: lightseagreen",
               ""
             );
@@ -117,7 +115,7 @@ class Archive extends Ingest {
         }
       }
       let day = dayjs.utc(payload.dateTimeString.replace("-", ""), "YYYYMMDD") + hour.toString().padStart(2, "0");
-      console.log(`%carchive.handleMessage()%c count   day = ${day}`, "color: lightseagreen", "");
+      console.log(`%carchive.handleMessage%c count   day = ${day}`, "color: lightseagreen", "");
       this.list(day, hour, this.grid.symbol);
     } else if (type == "month") {
       this.grid.daysActive = payload;
@@ -130,7 +128,7 @@ class Archive extends Ingest {
     } else if (type == "state") {
       if (this.state.verbose) {
         console.log(
-          `%carchive.handleMessage()%c state` +
+          `%carchive.handleMessage%c state` +
             `   state.liveUpdate = ${this.state.liveUpdate} -> ${payload.update}` +
             ` (${payload.update === null})`,
           "color: lightseagreen",
@@ -145,7 +143,7 @@ class Archive extends Ingest {
       }
     } else if (type == "init") {
       if (this.state.verbose) {
-        console.log(`%carchive.handleMessage()%c init` + `   index = ${payload.index}`, "color: lightseagreen", "");
+        console.log(`%carchive.handleMessage%c init` + `   index = ${payload.index}`, "color: lightseagreen", "");
       }
       this.grid = grid;
       this.ready = true;
@@ -157,7 +155,7 @@ class Archive extends Ingest {
 
   init() {
     if (this.state.verbose) {
-      console.log(`%carchive.init()%c   pathway = ${this.pathway}`, "color: lightseagreen", "");
+      console.log(`%carchive.init%c   pathway = ${this.pathway}`, "color: lightseagreen", "");
     }
     this.worker.postMessage({ task: "init", name: this.pathway });
   }
@@ -165,7 +163,7 @@ class Archive extends Ingest {
   // Expect something like day = dayjs.utc('2013-05-20'), hour = 19, symbol = 'Z'
   month(day) {
     if (this.state.verbose) {
-      console.log(`%carchive.month()%c   day = ${day.format("YYYYMMDD")}`, "color: lightseagreen", "");
+      console.log(`%carchive.month%c   day = ${day.format("YYYYMMDD")}`, "color: lightseagreen", "");
     }
     this.state.dayHasDataUpdating = true;
     this.worker.postMessage({ task: "month", date: day.unix() });
@@ -177,14 +175,14 @@ class Archive extends Ingest {
       return;
     }
     if (day === undefined || isNaN(day)) {
-      console.error(`%carchive.list()%c Invalid input day`, "color: lightseagreen", "");
+      console.error(`%carchive.list%c Invalid input day`, "color: lightseagreen", "");
       return;
     }
     day = day.hour(hour);
     if (this.state.verbose) {
       let dateTimeString = day.format("YYYYMMDD-HH00");
       console.log(
-        `%carchive.list()%c   day = ${dateTimeString}   hour = ${hour}   symbol = ${symbol} / ${this.grid.symbol}`,
+        `%carchive.list%c   day = ${dateTimeString}   hour = ${hour}   symbol = ${symbol} / ${this.grid.symbol}`,
         "color: lightseagreen",
         ""
       );
@@ -195,7 +193,7 @@ class Archive extends Ingest {
 
   loadIndex(index) {
     if (index < 0 || index >= this.grid.items.length) {
-      console.error(`archive.loadIndex()  ${index} != [0, ${this.grid.items.length}).`);
+      console.error(`archive.loadIndex  ${index} != [0, ${this.grid.items.length}).`);
       console.debug(this.grid.items);
       return;
     }
@@ -257,7 +255,7 @@ class Archive extends Ingest {
   prepend() {
     if (this.state.verbose) {
       console.debug(
-        `%carchive.prepend()%c   liveUpdate = ${this.state.liveUpdate}   itemsUpdating = ${this.state.itemsUpdating}`,
+        `%carchive.prepend%c   liveUpdate = ${this.state.liveUpdate}   itemsUpdating = ${this.state.itemsUpdating}`,
         "color: lightseagreen",
         ""
       );
@@ -272,7 +270,7 @@ class Archive extends Ingest {
   append() {
     if (this.state.verbose) {
       console.debug(
-        `%carchive.append()%c   liveUpdate = ${this.state.liveUpdate}   itemsUpdating = ${this.state.itemsUpdating}`,
+        `%carchive.append%c   liveUpdate = ${this.state.liveUpdate}   itemsUpdating = ${this.state.itemsUpdating}`,
         "color: lightseagreen",
         ""
       );
@@ -287,7 +285,7 @@ class Archive extends Ingest {
   toggleLiveUpdate(mode = "auto") {
     if (this.state.verbose) {
       console.log(
-        `%carchive.toggleLiveUpdate()%c   liveUpdate = ${this.state.liveUpdate}   mode = ${mode}`,
+        `%carchive.toggleLiveUpdate%c   liveUpdate = ${this.state.liveUpdate}   mode = ${mode}`,
         "color: lightseagreen",
         ""
       );
@@ -364,7 +362,7 @@ class Archive extends Ingest {
       let n = day.format("YYYYMMDD");
       let o = this.grid ? this.grid.dateTimeString.slice(0, 8) : "";
       console.log(
-        `%carchive.setDayHour()%c   day = %c${n}%c ← ${o} (${t})   hour = %c${hour}%c ← ${this.grid.hour}    ${this.grid.symbol}`,
+        `%carchive.setDayHour%c   day = %c${n}%c ← ${o} (${t})   hour = %c${hour}%c ← ${this.grid.hour}    ${this.grid.symbol}`,
         "color: deeppink",
         "",
         "color: mediumpurple",
@@ -379,39 +377,11 @@ class Archive extends Ingest {
   // Expect something like day = dayjs.utc('2013-05-20'), hour = 19
   getMonthTable(day) {
     const key = day.format("YYYYMMDD");
-    // console.log(`%carchive.getMonthTable()%c ${key}`, "color: deeppink", "", this.grid.daysActive);
+    // console.log(`%carchive.getMonthTable%c ${key}`, "color: deeppink", "", this.grid.daysActive);
     if (key in this.grid.daysActive) {
       return;
     }
     this.month(dayjs.utc(key));
-  }
-
-  // Deprecating ... count() is now part of list.
-  // Expect something like day = dayjs.utc('2013-05-20'), hour = 19, symbol = 'Z'
-  count(day, hour, symbol = this.grid.symbol) {
-    console.warn(`%carchive.count()%c DEPRECATING. You should not be using this.`, "color: lightseagreen", "");
-    if (day === undefined || isNaN(day)) {
-      console.error(`%carchive.count()%c Invalid input day`, "color: lightseagreen", "");
-      return;
-    }
-    if (this.state.verbose) {
-      let dayString = day.format("YYYYMMDD");
-      console.log(
-        `%carchive.count()%c   day = ${dayString}   hour = ${hour}   symbol = ${symbol}`,
-        "color: lightseagreen",
-        ""
-      );
-    }
-    let dateTimeString = day.format("YYYYMMDD-HH00");
-    if (dateTimeString == this.grid.dateTimeString) {
-      if (this.state.verbose) {
-        console.log(`%carchive.count()%c same day, list directly`, "color: lightseagreen", "");
-      }
-      this.list(day, hour, symbol);
-      return;
-    }
-    this.state.hourHasDataUpdating = true;
-    this.worker.postMessage({ task: "list", date: day.unix(), hour: hour, symbol: symbol });
   }
 }
 

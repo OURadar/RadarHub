@@ -285,11 +285,16 @@ function updateListWithItem(item) {
   grid.counts[1]++;
   grid.mode = "catchup";
   reviseGridItemsGrouped();
-  grid.tic++;
   if (state.update == "always") {
     setGridIndex(grid.items.length - 1);
   } else if (grid.scan in grid.itemsGrouped) {
-    setGridIndex(grid.itemsGrouped[grid.scan].slice(-1)[0].index);
+    let index = grid.itemsGrouped[grid.scan].at(-1).index;
+    if (index == grid.index) {
+      // Update the tic so that the list is refreshed at frontend since we won't load
+      grid.tic++;
+    } else {
+      setGridIndex(index);
+    }
   }
 }
 
@@ -611,8 +616,8 @@ function catchup() {
             console.debug("grid.itemsGrouped", grid.itemsGrouped);
           }
           // Go ahead a set grid.index before setGridIndex() finishes loading the file
-          grid.index = index;
-          grid.tic++;
+          // grid.index = index;
+          // grid.tic++;
           self.postMessage({
             type: "list",
             grid: grid,

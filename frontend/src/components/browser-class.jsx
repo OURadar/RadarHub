@@ -113,8 +113,6 @@ class Browser extends Component {
       tic: 0,
     };
 
-    this.listRef = null;
-
     this.handleQuery = this.handleQuery.bind(this);
     this.handleScroll = this.handleScroll.bind(this);
   }
@@ -142,7 +140,7 @@ class Browser extends Component {
   handleScroll(delta) {
     const h = this.props.h;
     const grid = this.props.archive.grid;
-    const { body, stem, fetch, header, bodyPlusStems, heightMinusHeaderFooter, marginMinusHeader } = this.param;
+    const { body, stem, fetch, bodyPlusStems, heightMinusHeaderFooter, marginMinusHeader } = this.param;
 
     let start = this.value.subsetStart;
     let padding = this.value.headPadding + delta;
@@ -171,14 +169,13 @@ class Browser extends Component {
       return;
     }
     const travel = start + this.value.subsetDepth - grid.items.length;
-    // const recent = grid.items.length - grid.index;
     const recent = this.props.archive.isLatestVolume();
     // console.log(`travel = ${travel}`);
     if (travel < -stem && this.props.archive.state.liveUpdate != "offline") {
-      console.debug("Scrolled far enough, disabling live update ...");
+      // console.debug("Scrolled far enough, disabling live update ...");
       this.props.archive.disableLiveUpdate();
     } else if (travel == 0 && recent && this.props.archive.state.liveUpdate == "offline") {
-      console.debug("Scrolled close enough, enabling live update ...");
+      // console.debug("Scrolled close enough, enabling live update ...");
       this.props.archive.enableLiveUpdate();
     }
     if (!this.value.taskPending && start != this.value.subsetStart) {
@@ -212,8 +209,7 @@ class Browser extends Component {
   }
 
   componentDidMount() {
-    this.listRef = document.getElementById("filesViewport");
-    this.scroller = new Scroller(this.listRef);
+    this.scroller = new Scroller(document.getElementById("filesViewport"));
     this.scroller.setHandler(this.handleScroll);
     this.scroller.setReporter(this.handleQuery);
 
@@ -236,10 +232,7 @@ class Browser extends Component {
 
   componentDidUpdate() {
     const archive = this.props.archive;
-    if (archive.grid == null || archive.grid.items.length == 0) {
-      return;
-    }
-    if (archive.grid.tic == this.state.tic) {
+    if (archive.grid == null || archive.grid.items.length == 0 || archive.grid.tic == this.state.tic) {
       return;
     }
     this.setState({ tic: archive.grid.tic });
@@ -300,7 +293,7 @@ class Browser extends Component {
         `   tic = ${archive.grid.tic}` +
         `   [${quad}]` +
         `   @ ${start}~(${grid.index})~${grid.items.length} (${subsetItems.length})`,
-      "color: dodgerblue",
+      "color: mediumseagreen",
       ""
     );
     this.value.subsetStart = start;

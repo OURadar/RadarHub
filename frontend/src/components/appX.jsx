@@ -75,10 +75,14 @@ export function App(props) {
   const handleUserMessage = (message) => setMessage(message);
 
   const handleThemeChange = () => {
-    console.log("AppX.handleThemeChange()");
-    if (user.current.mode == "auto") setColorMode("light");
-    else if (user.current.mode == "light") setColorMode("dark");
-    else setColorMode("auto");
+    let mode = "auto";
+    if (user.current.mode == "auto") {
+      mode = "light";
+    } else if (user.current.mode == "light") {
+      mode = "dark";
+    }
+    setColorMode(mode);
+    // console.log(`AppX.handleThemeChange  ${mode}`);
   };
 
   const handleOverlayLoad = (x = 1) => {
@@ -168,7 +172,7 @@ export function App(props) {
         <Splash progress={load} />
         <div id="main" className="fullHeight">
           <TopBar
-            mode={colors.name}
+            mode={user.current.mode}
             isMobile={true}
             message={message}
             ingest={archive.current}
@@ -211,7 +215,7 @@ export function App(props) {
         <Splash progress={load} />
         <div id="main" className="fullHeight">
           <TopBar
-            mode={colors.name}
+            mode={user.current.mode}
             isMobile={true}
             message={message}
             ingest={archive.current}

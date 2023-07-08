@@ -377,6 +377,9 @@ h3 {
 .inline {
   display: inline;
 }
+.padded {
+  padding: var(--padding);
+}
 
 /* App */
 .sectionHeader {
@@ -670,6 +673,7 @@ h3 {
   box-sizing: border-box;
   height: 10px;
   width: 10px;
+  cursor: pointer;
 }
 .floatRight {
   position: absolute;
