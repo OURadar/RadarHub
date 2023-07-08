@@ -13,8 +13,6 @@
 
 import React, { Component } from "react";
 
-import { clamp } from "./common";
-
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -96,13 +94,17 @@ class Browser extends Component {
       body: 15,
       fetch: 72,
     };
-    this.state = {
-      tic: 0,
-      subsetItems: [],
+    this.value = {
       subsetStart: 0,
-      hourlyStart: -1,
-      taskPending: false,
+      subsetDepth: 0,
+      hourlyStart: 0,
       headPadding: 0,
+      taskPending: false,
+    };
+    this.state = {
+      subsetItems: [],
+      headPadding: 0,
+      tic: 0,
     };
 
     this.listRef = null;
@@ -119,12 +121,12 @@ class Browser extends Component {
   handleQuery(delta) {
     const { body, header, heightMinusFooter, marginMinusHeader } = this.param;
     const bound = this.props.archive.grid.items.length - body - 2;
-    // console.log(`handleQuery ${delta.toFixed(1)} ${this.state.subsetStart} ${bound}`);
-    if (this.state.subsetStart == 0 && delta > 0) {
-      return this.state.headPadding - marginMinusHeader;
-    } else if (this.state.subsetStart >= bound && delta < 0) {
+    // console.log(`handleQuery ${delta.toFixed(1)} ${this.value.subsetStart} ${bound}`);
+    if (this.value.subsetStart == 0 && delta > 0) {
+      return this.value.headPadding - marginMinusHeader;
+    } else if (this.value.subsetStart >= bound && delta < 0) {
       let target = heightMinusFooter + 2;
-      let offset = this.state.headPadding + header + this.state.subsetItems.length * this.props.h;
+      let offset = this.value.headPadding + header + this.value.subsetDepth * this.props.h;
       return offset - target;
     } else {
       return 0;
@@ -136,15 +138,15 @@ class Browser extends Component {
     const grid = this.props.archive.grid;
     const { body, stem, bodyPlusStems, heightMinusFooter, marginMinusHeader, fetch, header } = this.param;
 
-    let start = this.state.subsetStart;
-    let padding = this.state.headPadding + delta;
+    let start = this.value.subsetStart;
+    let padding = this.value.headPadding + delta;
     // console.log(`handleScroll  ${padding}`);
     if (delta < 0) {
       while (padding < marginMinusHeader - stem * h) {
         padding += h;
         start++;
       }
-      if (padding + header + this.state.subsetItems.length * this.props.h <= heightMinusFooter) {
+      if (padding + header + this.value.subsetDepth * this.props.h <= heightMinusFooter) {
         this.scroller.addStretch();
       } else {
         this.scroller.resetStretch();
@@ -167,34 +169,34 @@ class Browser extends Component {
       console.debug("Scrolled far enough, disabling live update ...");
       this.props.archive.disableLiveUpdate();
     }
-    let taskPending = false;
-    if (!this.state.taskPending && start != this.state.subsetStart) {
+    if (!this.value.taskPending && start != this.value.subsetStart) {
       let maxIndex = Math.max(0, grid.items.length - stem - body - fetch);
       // let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
       // console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
       if (start < fetch && delta > 0 && grid.moreBefore) {
-        taskPending = true;
+        this.value.taskPending = true;
         this.props.archive.prepend();
       } else if (start > maxIndex && delta < 0 && grid.moreAfter) {
-        taskPending = true;
+        this.value.taskPending = true;
         this.props.archive.append();
       }
     }
-    let hourlyStart = start;
-    if (start > grid.counts[0]) {
-      hourlyStart -= grid.counts[0];
+    if (this.value.subsetStart != start) {
+      let hourlyStart = start;
+      if (start > grid.counts[0]) {
+        hourlyStart -= grid.counts[0];
+      }
+      let items = [];
+      for (let k = Math.max(0, start); k < Math.min(grid.items.length, start + bodyPlusStems); k++) {
+        items.push({ index: k, label: grid.items[k] });
+      }
+      this.value.subsetStart = start;
+      this.value.subsetDepth = items.length;
+      this.value.hourlyStart = hourlyStart;
+      this.setState({ subsetItems: items });
     }
-    let subsetItems = [];
-    for (let k = Math.max(0, start); k < Math.min(grid.items.length, start + bodyPlusStems); k++) {
-      subsetItems.push({ index: k, label: grid.items[k] });
-    }
-    this.setState({
-      subsetStart: start,
-      headPadding: padding,
-      hourlyStart: hourlyStart,
-      subsetItems: subsetItems,
-      taskPending: taskPending,
-    });
+    this.value.headPadding = padding;
+    this.setState({ headPadding: padding });
   }
 
   componentDidMount() {
@@ -216,10 +218,7 @@ class Browser extends Component {
     this.param.heightMinusFooter = this.param.height - this.param.footer;
     // console.log("Revised params", this.param);
 
-    const { stem, marginMinusHeader } = this.param;
-    this.setState({
-      headPadding: marginMinusHeader - stem * this.props.h,
-    });
+    this.value.headPadding = this.param.marginMinusHeader - this.param.stem * this.props.h;
   }
 
   componentDidUpdate() {
@@ -236,28 +235,27 @@ class Browser extends Component {
     const { body, stem, bodyPlusStems, marginMinusHeader, heightMinusFooter } = this.param;
 
     let start;
-    let padding = this.state.headPadding;
+    let padding = this.value.headPadding;
 
     if (grid.mode == "prepend") {
-      start = grid.counts[0] + this.state.hourlyStart;
+      start = grid.counts[0] + this.value.hourlyStart;
     } else if (grid.mode == "append") {
-      start = this.state.hourlyStart;
+      start = this.value.hourlyStart;
     } else if (grid.mode == "catchup") {
       start = Math.max(0, grid.items.length - 1 - body);
-      // padding = heightMinusFooter - (grid.items.length - start + stem) * this.props.h + marginMinusHeader;
       padding = heightMinusFooter - (bodyPlusStems - 1) * this.props.h + marginMinusHeader + 2;
     } else if (grid.mode == "select") {
       start = Math.max(0, grid.counts[0] - stem);
       padding = marginMinusHeader + (start - grid.counts[0]) * this.props.h;
     } else if (grid.mode == "navigate") {
       let delta = 0;
-      start = this.state.subsetStart;
+      start = this.value.subsetStart;
       if (start > grid.index - stem - 1) {
         start = grid.index - stem - 1;
-        delta = (start - this.state.subsetStart + 1) * this.props.h;
+        delta = (start - this.value.subsetStart + 1) * this.props.h;
       } else if (start < grid.index - body - stem + 1) {
         start = grid.index - body - stem + 1;
-        delta = (start - this.state.subsetStart + 1) * this.props.h;
+        delta = (start - this.value.subsetStart + 1) * this.props.h;
       }
       if (grid.items.length - grid.index > 24 && this.props.archive.state.liveUpdate != "offline") {
         console.debug("Navigated far enough, disabling live update ...");
@@ -272,7 +270,7 @@ class Browser extends Component {
       }, 17);
       return;
     } else {
-      start = this.state.subsetStart;
+      start = this.value.subsetStart;
     }
     let hourlyStart = start;
     if (start >= grid.counts[0]) {
@@ -292,13 +290,12 @@ class Browser extends Component {
       "color: dodgerblue",
       ""
     );
-    this.setState({
-      subsetStart: start,
-      headPadding: padding,
-      hourlyStart: hourlyStart,
-      subsetItems: subsetItems,
-      taskPending: false,
-    });
+    this.value.subsetStart = start;
+    this.value.subsetDepth = subsetItems.length;
+    this.value.hourlyStart = hourlyStart;
+    this.value.headPadding = padding;
+    this.value.taskPending = false;
+    this.setState({ subsetItems: subsetItems, headPadding: padding });
   }
 
   render() {
