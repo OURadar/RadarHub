@@ -91,7 +91,12 @@ export function App(props) {
   const handleNavigationChange = (_, value) => setPanel(value);
 
   const handleBrowserSelect = (k) => {
-    // console.log(`AppX.handleBrowserSelect()  k = ${k}`);
+    const latest = archive.current.isLatestVolume(k);
+    if (!latest && archive.current.state.liveUpdate != "offline") {
+      archive.current.disableLiveUpdate();
+    } else if (latest && archive.current.state.liveUpdate == "offline") {
+      archive.current.enableLiveUpdate();
+    }
     setTimeout(() => setPanel(0), 300);
   };
 

@@ -17,6 +17,7 @@ Copyright Boonleng Cheong
   --navbar-button-height: 56px;
   --navbar-padding-bottom: 28px;
   --secbar-padding: 8px;
+  --subheader-padding: 4px;
   --small-button-height: 32px;
   --button-border-radius: 4px;
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
@@ -342,6 +343,10 @@ h3 {
 .right {
   right: var(--padding);
 }
+.center {
+  left: 50%;
+  margin-left: -50%;
+}
 .top {
   top: var(--padding);
 }
@@ -363,6 +368,12 @@ h3 {
 .fullWidth {
   width: 100%;
   overflow-x: hidden;
+}
+.absolute {
+  position: absolute;
+}
+.inline {
+  display: inline;
 }
 
 /* App */
@@ -633,6 +644,13 @@ h3 {
   padding-top: var(--secbar-padding);
   padding-bottom: var(--secbar-padding);
 }
+.subtleHeader {
+  height: 28px;
+  line-height: 28px;
+  padding: 0 5px;
+  position: relative;
+  text-align: center;
+}
 
 .statusWrapper {
   width: calc(100vw - 100px);
@@ -642,12 +660,17 @@ h3 {
   position: relative;
   user-select: none;
 }
-#statusLed {
+.statusLed {
   display: inline-block;
   border-radius: 50%;
   box-sizing: border-box;
   height: 10px;
   width: 10px;
+}
+.floatRight {
+  position: absolute;
+  top: 0;
+  right: var(--padding);
 }
 .always {
   background-color: rgb(52, 255, 89);
@@ -1038,9 +1061,10 @@ div.key {
   padding-bottom: var(--half-padding);
 }
 #hoursContainer {
-  column-count: 8;
+  column-count: 6;
   padding-left: var(--half-padding);
   padding-right: var(--half-padding);
+  padding-bottom: var(--padding);
 }
 #filesContainer {
   background-color: var(--system-background);

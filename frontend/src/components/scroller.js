@@ -87,10 +87,6 @@ class Scroller {
             // console.debug(`wheel - changing dir, continuing ...`);
             this.last = 0;
           }
-          if (Math.abs(this.velocity) < 2) {
-            // console.debug(`wheel - decelerated enough`);
-            this.last = 0;
-          }
         }
         if (this.stretch > 3 && Math.abs(this.distance) > 0.5) {
           e.stopImmediatePropagation();

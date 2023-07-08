@@ -374,6 +374,13 @@ class Archive extends Ingest {
     this.month(dayjs.utc(key));
   }
 
+  isLatestVolume(index) {
+    const scan = this.grid.items[index].split("-")[2];
+    const item = this.grid.itemsGrouped[scan].at(-1);
+    console.log(`checkIndex ${scan} ${index} ?== ${item.index}`, item);
+    return item.index == index;
+  }
+
   // Deprecating ... count() is now part of list.
   // Expect something like day = dayjs.utc('2013-05-20'), hour = 19, symbol = 'Z'
   count(day, hour, symbol = this.grid.symbol) {

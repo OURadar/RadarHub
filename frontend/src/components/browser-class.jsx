@@ -66,8 +66,15 @@ const Calendar = React.memo(function Calendar({ archive, day }) {
 });
 
 const Hours = React.memo(function Hours({ archive, hourHasData, selected }) {
+  const online = archive?.state.liveUpdate || "unkonwn";
   return (
     <div>
+      <div className="subtleHeader disabled" onClick={() => archive.toggleLiveUpdate()}>
+        <div className="inline">Hours</div>
+        <div className="floatRight">
+          <div className={`statusLed ${online}`}></div>
+        </div>
+      </div>
       <div id="hoursContainer">
         {hourHasData.map((hasData, k) => (
           <Button
@@ -81,7 +88,6 @@ const Hours = React.memo(function Hours({ archive, hourHasData, selected }) {
           </Button>
         ))}
       </div>
-      <div className="sectionBar fullWidth center disabled">Hours</div>
     </div>
   );
 });
@@ -164,10 +170,15 @@ class Browser extends Component {
     } else {
       return;
     }
-    const travel = Math.abs(start - grid.index);
-    if (travel > 30 && this.props.archive.state.liveUpdate != "offline") {
+    const travel = start + this.value.subsetDepth - grid.items.length;
+    const recent = grid.items.length - grid.index;
+    // console.log(`travel = ${travel}`);
+    if (travel < -stem && this.props.archive.state.liveUpdate != "offline") {
       console.debug("Scrolled far enough, disabling live update ...");
       this.props.archive.disableLiveUpdate();
+    } else if (travel == 0 && recent < 10 && this.props.archive.state.liveUpdate == "offline") {
+      console.debug("Scrolled close enough, enabling live update ...");
+      this.props.archive.enableLiveUpdate();
     }
     if (!this.value.taskPending && start != this.value.subsetStart) {
       let maxIndex = Math.max(0, grid.items.length - stem - body - fetch);

@@ -46,9 +46,7 @@ const themeModes = {
 };
 
 function RightDash(props) {
-  const [fullscreen, setFullscreen] = React.useState(
-    () => window.innerHeight == screen.height
-  );
+  const [fullscreen, setFullscreen] = React.useState(() => window.innerHeight == screen.height);
 
   return (
     <div className="topbarComponent right">
@@ -78,9 +76,7 @@ function RightDash(props) {
         </IconButton>
       )}
       <IconButton aria-label="Change Mode" onClick={props.onThemeChange}>
-        {(props.mode in themeModes && themeModes[props.mode]) || (
-          <Brightness4 />
-        )}
+        {(props.mode in themeModes && themeModes[props.mode]) || <Brightness4 />}
       </IconButton>
       <IconButton aria-label="Account" onClick={props.onAccount}>
         <AccountCircle />
@@ -106,7 +102,7 @@ function LeftDash(props) {
         <RadarHubIcon />
       </IconButton>
       <div className="statusWrapper">
-        <div className={online} id="statusLed"></div>
+        <div className={`statusLed ${online}`}></div>
         <div id="radarName">{`${name}`}</div>
         <Notification id="statusBody" message={message} timeout={10000} />
       </div>
@@ -140,12 +136,7 @@ export function TopBar(props) {
       </div>
       {props.test > 0 && <Notification message={message} />}
       <Notification id="appMessage" message={props.message} />
-      {!props.isMobile && (
-        <Notification
-          id="ingestResponse"
-          message={props.ingest?.response || ""}
-        />
-      )}
+      {!props.isMobile && <Notification id="ingestResponse" message={props.ingest?.response || ""} />}
     </ThemeProvider>
   );
 }
