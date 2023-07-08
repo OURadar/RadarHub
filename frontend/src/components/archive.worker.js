@@ -135,8 +135,6 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
     set(name);
   } else if (task == "list") {
     list(day, symbol);
-  } else if (task == "count") {
-    count(day);
   } else if (task == "month") {
     month(day);
   } else if (task == "toggle") {
