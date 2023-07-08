@@ -89,11 +89,7 @@ export function App(props) {
   };
 
   const handleNavigationChange = (_, value) => setPanel(value);
-
-  const handleBrowserSelect = (k) => {
-    setTimeout(() => setPanel(0), 300);
-  };
-
+  const handleBrowserSelect = (_) => setTimeout(() => setPanel(0), 300);
   const handleLiveModeChange = (_, value) => archive.current.toggleLiveUpdate(value || "offline");
 
   const handleDoubleLeft = () => archive.current.navigateBackwardScan();
@@ -104,6 +100,16 @@ export function App(props) {
   const handleColorbarTouch = (e) => {
     // console.log(e);
     if (e.pageX / e.target.offsetWidth < 0.5) {
+      archive.current.prevProduct();
+    } else {
+      archive.current.nextProduct();
+    }
+  };
+
+  const handleColorbarClick = (e) => {
+    let dy = e.pageY - e.target.offsetTop;
+    console.log(`handleColorbarClick  dy = ${dy}`);
+    if (dy / e.target.offsetHeight < 0.5) {
       archive.current.prevProduct();
     } else {
       archive.current.nextProduct();
@@ -223,7 +229,7 @@ export function App(props) {
                   origin={props.origin}
                   sweep={archive.current?.data.sweep}
                   onOverlayLoad={handleOverlayLoad}
-                  onColorbarTouch={handleColorbarTouch}
+                  onColorbarClick={handleColorbarClick}
                 />
               }
               right={<Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />}

@@ -352,14 +352,11 @@ function list(day, symbol, mode = "select") {
     "color: mediumpurple",
     ""
   );
-  if (mode != "catchup") {
-    toggle("offline");
-  }
   // Same time, just a symbol change (this part should be phased out, no need to have symbol in the list)
   if (dateTimeString == grid.dateTimeString) {
     let index = grid.index;
     let currentItems = grid.items;
-    grid.mode = mode;
+    grid.mode = "switch";
     grid.items = [];
     grid.itemsGrouped = {};
     currentItems.forEach((item, index) => {
@@ -723,9 +720,9 @@ function navigateBackwardScan() {
 }
 
 function toggle(name = "toggle") {
-  if (state.verbose > 1) {
-    console.debug(`%carchive.worker.toggle()%c ${name}`, `color: ${namecolor}`, "color: dodgerblue");
-  }
+  // if (state.verbose > 1) {
+  console.debug(`%carchive.worker.toggle()%c ${name}`, `color: ${namecolor}`, "color: dodgerblue");
+  // }
   if (name == state.update) {
     self.postMessage({ type: "state", payload: { update: state.update } });
     return;
@@ -754,6 +751,7 @@ function toggle(name = "toggle") {
   if (state.update == "offline") {
     disconnect();
   } else {
+    console.log("calling catchup from toggle() ...");
     catchup();
   }
 }

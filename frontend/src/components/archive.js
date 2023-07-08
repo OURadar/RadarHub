@@ -214,7 +214,7 @@ class Archive extends Ingest {
       return;
     }
     this.state.productSwitching = true;
-    let day = dayjs.utc(this.grid.dateTimeString.replace("-", ""), "YYYYMMDD");
+    let day = dayjs.utc(this.grid.dateTimeString.slice(0, 8), "YYYYMMDD");
     this.list(day, this.grid.hour, symbol);
   }
 
