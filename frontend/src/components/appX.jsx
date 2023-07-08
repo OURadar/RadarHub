@@ -91,16 +91,10 @@ export function App(props) {
   const handleNavigationChange = (_, value) => setPanel(value);
 
   const handleBrowserSelect = (k) => {
-    const latest = archive.current.isLatestVolume(k);
-    if (!latest && archive.current.state.liveUpdate != "offline") {
-      archive.current.disableLiveUpdate();
-    } else if (latest && archive.current.state.liveUpdate == "offline") {
-      archive.current.enableLiveUpdate();
-    }
     setTimeout(() => setPanel(0), 300);
   };
 
-  const handleLiveModeChange = (_, value) => archive.current.toggleLiveUpdate(value);
+  const handleLiveModeChange = (_, value) => archive.current.toggleLiveUpdate(value || "offline");
 
   const handleDoubleLeft = () => archive.current.navigateBackwardScan();
   const handleLeft = () => archive.current.navigateBackward();

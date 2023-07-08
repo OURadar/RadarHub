@@ -70,8 +70,11 @@ class Archive extends Ingest {
           ""
         );
       }
-      if (this.grid.latestHour != this.grid.hour || this.state.loadCount > 1) {
+      const latest = this.isLatestVolume();
+      if (!latest && this.state.liveUpdate !== "offline") {
         this.disableLiveUpdate();
+      } else if (latest && this.state.liveUpdate === "offline") {
+        this.enableLiveUpdate();
       }
       this.showMessage(`${payload.name} loaded`);
       this.onLoad(this.grid);
@@ -323,6 +326,12 @@ class Archive extends Ingest {
     }
   }
 
+  isLatestVolume() {
+    const scan = this.grid.items[this.grid.index].split("-")[2];
+    const item = this.grid.itemsGrouped[scan].at(-1);
+    return this.grid.latestHour == this.grid.hour && item.index == this.grid.index;
+  }
+
   navigateForward() {
     this.worker.postMessage({ task: "forward" });
   }
@@ -372,13 +381,6 @@ class Archive extends Ingest {
       return;
     }
     this.month(dayjs.utc(key));
-  }
-
-  isLatestVolume(index) {
-    const scan = this.grid.items[index].split("-")[2];
-    const item = this.grid.itemsGrouped[scan].at(-1);
-    console.log(`checkIndex ${scan} ${index} ?== ${item.index}`, item);
-    return item.index == index;
   }
 
   // Deprecating ... count() is now part of list.
