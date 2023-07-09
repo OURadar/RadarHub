@@ -218,9 +218,9 @@ class Browser extends Component {
     this.param.header = document.getElementById("filesViewportHeader").clientHeight;
     this.param.footer = document.getElementById("filesViewportFooter").clientHeight;
 
-    let height = this.param.height - this.param.margin;
+    let capacity = this.param.height - this.param.margin - this.param.footer;
 
-    this.param.body = Math.floor(height / this.props.h);
+    this.param.body = Math.floor(capacity / this.props.h);
     this.param.bodyPlusStems = this.param.body + 2 * this.param.stem;
     this.param.marginMinusHeader = this.param.margin - this.param.header;
     this.param.heightMinusFooter = this.param.height - this.param.footer;
@@ -238,9 +238,9 @@ class Browser extends Component {
     this.setState({ tic: archive.grid.tic });
 
     const grid = this.props.archive.grid;
-    const { body, stem, bodyPlusStems, marginMinusHeader, heightMinusFooter } = this.param;
+    const { body, stem, bodyPlusStems, marginMinusHeader, heightMinusHeaderFooter } = this.param;
 
-    let start;
+    let start, delta;
     let padding = this.value.headPadding;
 
     if (grid.mode == "prepend") {
@@ -248,13 +248,13 @@ class Browser extends Component {
     } else if (grid.mode == "append") {
       start = this.value.hourlyStart;
     } else if (grid.mode == "catchup") {
-      start = Math.max(0, grid.items.length - 1 - body);
-      padding = heightMinusFooter - (bodyPlusStems - 1) * this.props.h + marginMinusHeader + 2;
+      start = Math.max(0, grid.items.length - body - stem);
+      delta = Math.min(grid.items.length, start + bodyPlusStems) - start;
+      padding = heightMinusHeaderFooter - delta * this.props.h;
     } else if (grid.mode == "select") {
       start = Math.max(0, grid.counts[0] - stem);
       padding = marginMinusHeader + (start - grid.counts[0]) * this.props.h;
     } else if (grid.mode == "navigate") {
-      let delta = 0;
       start = this.value.subsetStart;
       if (start > grid.index - stem - 1) {
         start = grid.index - stem - 1;
@@ -262,19 +262,23 @@ class Browser extends Component {
       } else if (start < grid.index - body - stem + 1) {
         start = grid.index - body - stem + 1;
         delta = (start - this.value.subsetStart + 1) * this.props.h;
+      } else {
+        delta = 0;
       }
       if (grid.items.length - grid.index > 24 && this.props.archive.state.liveUpdate != "offline") {
-        console.debug("Navigated far enough, disabling live update ...");
+        // Navigated far enough, disabling live update
         this.props.archive.disableLiveUpdate();
       }
-      let iter = 0;
-      let interval = setInterval(() => {
-        if (iter++ > 4) {
-          clearInterval(interval);
-        }
-        this.handleScroll(-0.25 * delta);
-      }, 17);
-      return;
+      if (delta != 0) {
+        let iter = 0;
+        let interval = setInterval(() => {
+          if (iter++ > 4) {
+            clearInterval(interval);
+          }
+          this.handleScroll(-0.25 * delta);
+        }, 17);
+        return;
+      }
     } else {
       start = this.value.subsetStart;
     }
