@@ -1069,7 +1069,7 @@ div.key {
   padding-bottom: var(--half-padding);
 }
 #hoursContainer {
-  column-count: 6;
+  column-count: 8;
   padding-left: var(--half-padding);
   padding-right: var(--half-padding);
   padding-bottom: var(--padding);

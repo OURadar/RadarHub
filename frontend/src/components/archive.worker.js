@@ -83,9 +83,10 @@ function reviseGridItemsGrouped() {
   });
 }
 
-// IMPORTANT: Use this before grid.counts = buffer.counts after fetch(/data/list/...)
-// During prepend/append mode, grid index needs to propagate to the next list maintain
-// continuity.
+// IMPORTANT: During prepend/append mode, use this before updating
+// grid.counts = buffer.counts after fetch(/data/list/...) because
+// grid.index needs to propagate to the next list in order to
+// to maintain continuity.
 function suggestGridIndex(mode, { counts, items }) {
   // console.log("suggestGridIndex", counts, items);
   let index = -1;
@@ -709,7 +710,6 @@ function updateGridIndexByScan(delta) {
     }
   });
   let index = ii[clamp(k + delta, 0, ii.length - 1)];
-  // console.log(`grid.index = ${grid.index} -> ${index}`);
   setGridIndex(index);
 }
 
@@ -760,7 +760,10 @@ function toggle(name = "toggle") {
     }
     catchup();
   } else {
+    // Still connected, just changing the live update mode
     self.postMessage({ type: "state", payload: { update: state.update } });
+    let index = suggestGridIndex("catchup", { counts: grid.counts, items: grid.items });
+    setGridIndex(index);
   }
 }
 

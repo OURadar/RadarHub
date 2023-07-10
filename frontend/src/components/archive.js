@@ -92,7 +92,6 @@ class Archive extends Ingest {
       }
       this.grid = grid;
       this.state.loadCount = 0;
-      this.onList(this.grid);
       this.state.itemsUpdating = false;
     } else if (type == "count") {
       // DEPRECATING: Use list straight away

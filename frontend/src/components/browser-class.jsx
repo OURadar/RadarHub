@@ -144,7 +144,6 @@ class Browser extends Component {
 
     let start = this.value.subsetStart;
     let padding = this.value.headPadding + delta;
-    // console.log(`handleScroll  ${padding}`);
     if (delta < 0) {
       while (padding < marginMinusHeader - stem * h) {
         padding += h;
@@ -172,10 +171,10 @@ class Browser extends Component {
     const recent = this.props.archive.isLatestVolume();
     // console.log(`travel = ${travel}`);
     if (travel < -stem && this.props.archive.state.liveUpdate != "offline") {
-      // console.debug("Scrolled far enough, disabling live update ...");
+      // Scrolled far enough, disabling live update
       this.props.archive.disableLiveUpdate();
     } else if (travel == 0 && recent && this.props.archive.state.liveUpdate == "offline") {
-      // console.debug("Scrolled close enough, enabling live update ...");
+      // Scrolled close enough, enabling live update
       this.props.archive.enableLiveUpdate();
     }
     if (!this.value.taskPending && start != this.value.subsetStart) {
