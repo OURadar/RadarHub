@@ -18,6 +18,7 @@ class Ingest {
     };
     this.data = {
       sweep: null,
+      sweeps: [],
     };
     this.message = "";
     this.response = "";

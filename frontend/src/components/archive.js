@@ -27,7 +27,7 @@ class Archive extends Ingest {
       productSwitching: false,
       sweepLoading: false,
       loadCount: 0,
-      verbose: 0,
+      verbose: 1,
     };
     this.ageTimer = setInterval(() => this.updateAge(), 1000);
     this.messageTimer = null;
@@ -76,14 +76,27 @@ class Archive extends Ingest {
       }
       this.showMessage(`${payload.name} loaded`);
       this.onLoad(this.grid);
+    } else if (type == "anim") {
+      this.data.sweeps = payload;
+      this.grid = grid;
+      this.state.sweepLoading = false;
+      if (this.state.verbose) {
+        console.log(
+          `%carchive.handleMessage%c anim   ${grid.dateTimeString}   ${this.data.sweeps.length}`,
+          "color: lightseagreen",
+          "",
+          grid,
+          this.data.sweeps
+        );
+      }
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
           `%carchive.handleMessage%c list` +
             `   ${grid.dateTimeString}` +
             `   ${grid.latestScan}` +
-            `   hour = ${this.grid.hour} -> ${grid.hour}` +
-            `   index = ${this.grid.index} -> ${grid.index}` +
+            `   hour = ${this.grid?.hour} -> ${grid.hour}` +
+            `   index = ${this.grid?.index} -> ${grid.index}` +
             `   productSwitching = ${this.state.productSwitching}`,
           "color: lightseagreen",
           "",
@@ -119,7 +132,7 @@ class Archive extends Ingest {
       }
     } else if (type == "init") {
       if (this.state.verbose) {
-        console.log(`%carchive.handleMessage%c init` + `   index = ${payload.index}`, "color: lightseagreen", "");
+        console.log(`%carchive.handleMessage%c init   index = ${grid.index}`, "color: lightseagreen", "");
       }
       this.grid = grid;
       this.ready = true;

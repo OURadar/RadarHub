@@ -42,9 +42,11 @@ let grid = {
   tic: 0,
 };
 let state = {
+  load: "single",
   update: "scan",
-  verbose: 0,
+  verbose: 1,
 };
+let sweeps = [];
 const namecolor = "#bf9140";
 
 const sweepParser = new Parser()
@@ -171,6 +173,15 @@ function init(newPathway) {
 
 function set(index) {
   grid.mode = "load";
+  if (index == grid.index && state.load == "single") {
+    let items = grid.itemsGrouped[grid.scan].slice(-4);
+    console.log(items);
+    sweeps = [];
+    state.load = "anim";
+    items.forEach((item) => load(item.item));
+    return;
+  }
+  state.load = "single";
   setGridIndex(index);
 }
 
@@ -491,14 +502,21 @@ function load(name) {
             });
             return;
           }
-          grid.last = name;
-          grid.scan = scan;
-          grid.tic++;
-          self.postMessage({
-            type: "load",
-            grid: grid,
-            payload: sweep,
-          });
+          if (state.load == "single") {
+            grid.last = name;
+            grid.scan = scan;
+            grid.tic++;
+            self.postMessage({
+              type: "load",
+              grid: grid,
+              payload: sweep,
+            });
+          } else if (state.load == "anim") {
+            sweeps.push(sweep);
+            if (sweeps.length == 4) {
+              self.postMessage({ type: "anim", grid: grid, payload: sweeps });
+            }
+          }
         });
       } else {
         response.text().then((text) => {
