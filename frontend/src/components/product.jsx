@@ -27,10 +27,6 @@ class Product extends GLView {
   constructor(props) {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
-    // this.colorbar = new Colorbar(props.style);
-    // this.geometry.dashport.y = 100;
-    // this.geometry.dashport.width = this.colorbar.canvas.width;
-    // this.geometry.dashport.height = this.colorbar.canvas.height;
     this.offset = (Date.now() % 86400000) / 5000;
     this.state = {
       ...this.state,
@@ -57,7 +53,7 @@ class Product extends GLView {
       needsUpdate: false,
     };
     var image = new Image();
-    image.src = "/static/images/colormap.png?v=1.11";
+    image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
       if (this.assets.colormap) {
         this.assets.colormap.destroy();
@@ -204,30 +200,6 @@ class Product extends GLView {
         count: state.count + 1,
       }));
     }
-    // this.colorbar
-    //   .load(
-    //     {
-    //       palette: this.assets.palette,
-    //       style: this.assets.style,
-    //       time: sweep ? sweep.timeString : "-",
-    //     },
-    //     this.props.colors
-    //   )
-    //   .then((buffer) => {
-    //     this.dashboardTexture?.texture.destroy();
-    //     this.dashboardTexture = {
-    //       bound: [buffer.image.width, buffer.image.height],
-    //       texture: this.regl.texture({
-    //         height: buffer.image.height,
-    //         width: buffer.image.width,
-    //         data: buffer.image.data,
-    //         min: "linear",
-    //         mag: "linear",
-    //         flipY: true,
-    //         premultiplyAlpha: true,
-    //       }),
-    //     };
-    //   });
   }
 
   toggleSpin() {
@@ -374,9 +346,11 @@ class Product extends GLView {
     }
     if (this.props.debug) {
       console.log(
-        `Product.updateData()` +
+        `%cProduct.updateData()%c` +
           `   assets.symbol = ${this.assets.symbol}` +
-          `   assets.complete = ${this.assets.complete}`
+          `   assets.complete = ${this.assets.complete}`,
+        "color: lightseagreen",
+        ""
       );
     }
     this.setState({

@@ -93,29 +93,6 @@ class Archive extends Ingest {
       this.grid = grid;
       this.state.loadCount = 0;
       this.state.itemsUpdating = false;
-    } else if (type == "count") {
-      // DEPRECATING: Use list straight away
-      this.grid.hourHasData = payload.hoursActive.map((x) => x > 0);
-      this.state.hourHasDataUpdating = false;
-      let hour = this.grid.hour;
-      if (hour == -1 || this.grid.hourHasData[hour] == 0) {
-        let best = this.grid.hourHasData.findIndex((x) => x > 0);
-        if (best >= 0) {
-          hour = best;
-          if (this.state.verbose) {
-            console.log(
-              `%carchive.handleMessage%c count   No data.  hour = ${hour} -> ${best} ...`,
-              "color: lightseagreen",
-              ""
-            );
-          }
-        } else {
-          console.log("Unexpeted results.");
-        }
-      }
-      let day = dayjs.utc(payload.dateTimeString.replace("-", ""), "YYYYMMDD") + hour.toString().padStart(2, "0");
-      console.log(`%carchive.handleMessage%c count   day = ${day}`, "color: lightseagreen", "");
-      this.list(day, hour, this.grid.symbol);
     } else if (type == "month") {
       this.grid.daysActive = payload;
       this.state.dayHasDataUpdating = false;
