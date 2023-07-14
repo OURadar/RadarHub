@@ -186,8 +186,10 @@ export function App(props) {
                 colors={colors}
                 origin={props.origin}
                 sweep={archive.current?.data.sweep}
+                sweeps={archive.current?.data.sweeps}
                 onOverlayLoad={handleOverlayLoad}
                 onColorbarTouch={handleColorbarTouch}
+                debug={true}
               />
               <MenuArrow
                 doubleLeftDisabled={disabled[0]}

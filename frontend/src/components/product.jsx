@@ -28,53 +28,48 @@ class Product extends GLView {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
     this.offset = (Date.now() % 86400000) / 5000;
+    this.palette = {
+      image: null,
+      texture: null,
+    };
     this.state = {
       ...this.state,
       spin: false,
       useEuler: true,
       ageString: "",
       titleString: "",
-      palette: null,
-      style: null,
       count: 0,
     };
     this.labelFaceColor = this.props.colors.label.face;
-    this.theme = {
-      colormap: null,
+    this.style = {
+      name: "",
+      ticks: [],
       index: 0,
     };
     this.assets = {
       age: 0,
       time: 0,
-      symbol: "Z",
-      colormap: null,
       index: 0,
       data: null,
       points: null,
       origins: null,
       elements: null,
       complete: false,
-      needsUpdate: false,
     };
     var image = new Image();
     image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
-      if (this.assets.colormap) {
-        this.assets.colormap.destroy();
-      }
-      this.assets.colormap = this.regl.texture({
-        data: image,
-        wrapS: "clamp",
-        wrapT: "clamp",
-        premultiplyAlpha: true,
-      });
-      this.setState({
-        palette: image,
-        style: this.makeStyle("Z"),
-      });
-      this.assets.index = 0.5 / this.assets.colormap.height;
-      if (this.assets.data != null) this.assets.complete = true;
-      this.loadStyle();
+      this.palette = {
+        image: image,
+        texture: this.regl.texture({
+          data: image,
+          wrapS: "clamp",
+          wrapT: "clamp",
+          premultiplyAlpha: true,
+        }),
+      };
+      this.loadStyle("Z");
+      if (this.assets.data !== null) this.assets.complete = true;
     });
     this.overlay.onLoad = props.onOverlayLoad;
   }
@@ -93,118 +88,113 @@ class Product extends GLView {
     onColorbarClick: () => {},
   };
 
-  makeStyle(symbol = "Z") {
-    let ticks = [];
-    if (symbol == "R") {
-      // # Special case, values are mapped to indices
-      // sticklabels = np.array([0.73, 0.83, 0.93, 0.96, 0.99, 1.02, 1.05])
-      // sticks = rho2ind(sticklabels)
-      const vv = [0.73, 0.83, 0.93, 0.96, 0.99, 1.02, 1.05];
-      vv.forEach((v) => {
-        let pos = rho2ind(v);
-        let text = v.toFixed(2);
-        ticks.push({ pos: pos, text: text });
-      });
-      return {
-        name: "RhoHV (unitless)",
-        ticks: ticks,
-        index: 5,
-      };
-    } else if (symbol == "P") {
-      // slim = (-180.0, +180.0)
-      // sticklabels = np.arange(-135, 151, 45)
-      // sticks = sticklabels * 128.0 / 180.0 + 128.0
-      for (let v = -135; v < 151; v += 45) {
-        let pos = (v * 128.0) / 180.0 + 128.0;
-        let text = v.toFixed(0);
-        ticks.push({ pos: pos, text: text });
-      }
-      return {
-        name: "PhiDP (degrees)",
-        ticks: ticks,
-        index: 4,
-      };
-    } else if (symbol == "D") {
-      // slim = (-10.0, +15.6)
-      // sticklabels = np.arange(-9, 15, 3)
-      // sticks = sticklabels * 10.0 + 100.0
-      for (let v = -9; v < 15; v += 3) {
-        let pos = v * 10.0 + 100.0;
-        let text = v.toFixed(0);
-        ticks.push({ pos: pos, text: text });
-      }
-      return {
-        name: "ZDR (dB)",
-        ticks: ticks,
-        index: 3,
-      };
-    } else if (symbol == "W") {
-      // # I realize there is an offset of 1 but okay
-      // slim = (0, 12.80)
-      // sticklabels = np.arange(0, 13, 2)
-      // sticks = sticklabels * 20.0
-      for (let v = 2; v < 13; v += 2) {
-        let pos = v * 20;
-        let text = v.toFixed(0);
-        ticks.push({ pos: pos, text: text });
-      }
-      return {
-        name: "Spectrum Width (m/s)",
-        ticks: ticks,
-        index: 2,
-      };
-    } else if (symbol == "V") {
-      // slim = (-64, +64.0)
-      // sticklabels = np.arange(-60, 61, 15)
-      // sticks = sticklabels * 128.0 / 64.0 + 128.0
-      for (let v = -60; v < 61; v += 15) {
-        let pos = v * 2.0 + 128.0;
-        let text = v.toFixed(0);
-        ticks.push({ pos: pos, text: text });
-      }
-      return {
-        name: "Velocity (m/s)",
-        ticks: ticks,
-        index: 1,
-      };
-    } else {
-      // slim = (-32.0, +96.0)
-      // sticklabels = np.arange(-25, 81, 15)
-      // sticks = sticklabels * 2.0 + 64.0
+  loadStyle(symbol = "Z") {
+    const symbolToStyle = (symbol) => {
       let ticks = [];
-      // for (let v = -25; v < 81; v += 15) {
-      // for (let v = -10; v < 91; v += 10) {
-      //   let pos = v * 2.0 + 64.0;
-      //   let text = v.toFixed(0);
-      //   ticks.push({ pos: pos, text: text });
-      // }
-      let vv = [-15, 0, 10, 20, 30, 40, 50, 60, 70, 80];
-      vv.forEach((v) => {
-        let pos = v * 2.0 + 64.0;
-        let text = v.toFixed(0);
-        ticks.push({ pos: pos, text: text });
-      });
-      // ticks = vv.map((v) => {pos: v * 2.0 + 64.0, text: v.toFixed(0)})
-      return {
-        name: "Reflectivity (dBZ)",
-        ticks: ticks,
-        index: 0,
-      };
+      if (symbol == "R") {
+        // # Special case, values are mapped to indices
+        // sticklabels = np.array([0.73, 0.83, 0.93, 0.96, 0.99, 1.02, 1.05])
+        // sticks = rho2ind(sticklabels)
+        const vv = [0.73, 0.83, 0.93, 0.96, 0.99, 1.02, 1.05];
+        vv.forEach((v) => {
+          let pos = rho2ind(v);
+          let text = v.toFixed(2);
+          ticks.push({ pos: pos, text: text });
+        });
+        return {
+          name: "RhoHV (unitless)",
+          ticks: ticks,
+          index: 5,
+        };
+      } else if (symbol == "P") {
+        // slim = (-180.0, +180.0)
+        // sticklabels = np.arange(-135, 151, 45)
+        // sticks = sticklabels * 128.0 / 180.0 + 128.0
+        for (let v = -135; v < 151; v += 45) {
+          let pos = (v * 128.0) / 180.0 + 128.0;
+          let text = v.toFixed(0);
+          ticks.push({ pos: pos, text: text });
+        }
+        return {
+          name: "PhiDP (degrees)",
+          ticks: ticks,
+          index: 4,
+        };
+      } else if (symbol == "D") {
+        // slim = (-10.0, +15.6)
+        // sticklabels = np.arange(-9, 15, 3)
+        // sticks = sticklabels * 10.0 + 100.0
+        for (let v = -9; v < 15; v += 3) {
+          let pos = v * 10.0 + 100.0;
+          let text = v.toFixed(0);
+          ticks.push({ pos: pos, text: text });
+        }
+        return {
+          name: "ZDR (dB)",
+          ticks: ticks,
+          index: 3,
+        };
+      } else if (symbol == "W") {
+        // # I realize there is an offset of 1 but okay
+        // slim = (0, 12.80)
+        // sticklabels = np.arange(0, 13, 2)
+        // sticks = sticklabels * 20.0
+        for (let v = 2; v < 13; v += 2) {
+          let pos = v * 20;
+          let text = v.toFixed(0);
+          ticks.push({ pos: pos, text: text });
+        }
+        return {
+          name: "Spectrum Width (m/s)",
+          ticks: ticks,
+          index: 2,
+        };
+      } else if (symbol == "V") {
+        // slim = (-64, +64.0)
+        // sticklabels = np.arange(-60, 61, 15)
+        // sticks = sticklabels * 128.0 / 64.0 + 128.0
+        for (let v = -60; v < 61; v += 15) {
+          let pos = v * 2.0 + 128.0;
+          let text = v.toFixed(0);
+          ticks.push({ pos: pos, text: text });
+        }
+        return {
+          name: "Velocity (m/s)",
+          ticks: ticks,
+          index: 1,
+        };
+      } else {
+        // slim = (-32.0, +96.0)
+        // sticklabels = np.arange(-25, 81, 15)
+        // sticks = sticklabels * 2.0 + 64.0
+        let ticks = [];
+        // for (let v = -25; v < 81; v += 15) {
+        // for (let v = -10; v < 91; v += 10) {
+        //   let pos = v * 2.0 + 64.0;
+        //   let text = v.toFixed(0);
+        //   ticks.push({ pos: pos, text: text });
+        // }
+        let vv = [-15, 0, 10, 20, 30, 40, 50, 60, 70, 80];
+        vv.forEach((v) => {
+          let pos = v * 2.0 + 64.0;
+          let text = v.toFixed(0);
+          ticks.push({ pos: pos, text: text });
+        });
+        // ticks = vv.map((v) => {pos: v * 2.0 + 64.0, text: v.toFixed(0)})
+        return {
+          name: "Reflectivity (dBZ)",
+          ticks: ticks,
+          index: 0,
+        };
+      }
+    };
+    this.style = symbolToStyle(symbol);
+    console.log(this.style);
+    if (this.palette.texture) {
+      this.assets.index = (this.style.index + 0.5) / this.palette.texture.height;
+      this.assets.symbol = symbol;
     }
-  }
-
-  loadStyle() {
-    if (this.props.sweep && this.assets.symbol != this.props.sweep.symbol) {
-      this.updateData();
-    }
-    if (this.assets.colormap) {
-      let style = this.makeStyle(this.assets.symbol);
-      this.assets.index = (style.index + 0.5) / this.assets.colormap.height;
-      this.setState((state) => ({
-        style: style,
-        count: state.count + 1,
-      }));
-    }
+    this.setState((state) => ({ count: state.count + 1 }));
   }
 
   toggleSpin() {
@@ -266,19 +256,19 @@ class Product extends GLView {
         <Colorbar
           {...this.props}
           id="colorbar"
-          count={this.state.count}
-          style={this.state.style}
-          palette={this.state.palette}
+          style={this.style}
+          palette={this.palette.image}
           onTouch={this.props.onColorbarTouch}
           onClick={this.props.onColorbarClick}
+          count={this.state.count}
           debug={false}
         />
         <Caption id="ageString" string={this.props.sweep?.age || ""} />
         <Caption id="infoString" string={this.props.sweep?.infoString || "Gatewidth: -\nWaveform: -"} />
         <Symbol
           id="symbol"
-          text={this.state.style?.name || "Unknown"}
-          symbol={this.props.sweep?.symbol || "U"}
+          text={this.style.name}
+          symbol={this.style.name}
           onTouch={this.props.onColorbarTouch}
           onClick={this.props.onColorbarClick}
         />
@@ -287,7 +277,7 @@ class Product extends GLView {
     );
   }
 
-  updateData() {
+  updateAssets() {
     if (this.props.sweep == null) {
       this.assets.complete = false;
       this.assets.data?.destroy();
@@ -346,7 +336,7 @@ class Product extends GLView {
     });
     this.assets.time = sweep.time;
     this.assets.symbol = sweep.symbol;
-    if (this.assets.colormap) {
+    if (this.palette.texture) {
       this.assets.complete = true;
     }
     if (this.props.debug) {
@@ -369,6 +359,11 @@ class Product extends GLView {
       this.updateProjection();
     }
     if (
+      (this.props.sweep === null && this.assets.data !== null) ||
+      (this.props.sweep !== null && this.assets.time != this.props.sweep.time)
+    ) {
+      this.updateAssets();
+    } else if (
       this.canvas.width != this.mount.offsetWidth * this.ratio ||
       this.canvas.height != this.mount.offsetHeight * this.ratio
     ) {
@@ -379,12 +374,7 @@ class Product extends GLView {
       this.overlay.updateColors(this.props.colors);
       this.loadStyle();
     } else if (this.props.sweep !== null && this.assets.symbol != this.props.sweep.symbol) {
-      this.loadStyle(this.props.sweep);
-    } else if (
-      (this.props.sweep === null && this.assets.data !== null) ||
-      (this.props.sweep !== null && this.assets.time != this.props.sweep.time)
-    ) {
-      this.updateData();
+      this.loadStyle(this.props.sweep.symbol);
     }
     this.regl.clear({
       color: this.props.colors.glview,
@@ -394,7 +384,7 @@ class Product extends GLView {
         projection: this.geometry.projection,
         modelview: this.geometry.modelview,
         viewport: this.geometry.viewport,
-        colormap: this.assets.colormap,
+        colormap: this.palette.texture,
         index: this.assets.index,
         data: this.assets.data,
         points: this.assets.points,
