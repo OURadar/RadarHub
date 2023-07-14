@@ -39,6 +39,10 @@ class Product extends GLView {
       count: 0,
     };
     this.labelFaceColor = this.props.colors.label.face;
+    this.theme = {
+      colormap: null,
+      index: 0,
+    };
     this.assets = {
       age: 0,
       time: 0,
@@ -70,7 +74,7 @@ class Product extends GLView {
       });
       this.assets.index = 0.5 / this.assets.colormap.height;
       if (this.assets.data != null) this.assets.complete = true;
-      this.loadDashboard();
+      this.loadStyle();
     });
     this.overlay.onLoad = props.onOverlayLoad;
   }
@@ -78,6 +82,7 @@ class Product extends GLView {
   static defaultProps = {
     ...super.defaultProps,
     sweep: null,
+    sweeps: [],
     origin: {
       longitude: -97.422413,
       latitude: 35.25527,
@@ -188,7 +193,7 @@ class Product extends GLView {
     }
   }
 
-  loadDashboard() {
+  loadStyle() {
     if (this.props.sweep && this.assets.symbol != this.props.sweep.symbol) {
       this.updateData();
     }
@@ -368,13 +373,13 @@ class Product extends GLView {
       this.canvas.height != this.mount.offsetHeight * this.ratio
     ) {
       this.updateProjection();
-      this.loadDashboard();
+      this.loadStyle();
     } else if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
-      this.loadDashboard();
+      this.loadStyle();
     } else if (this.props.sweep !== null && this.assets.symbol != this.props.sweep.symbol) {
-      this.loadDashboard(this.props.sweep);
+      this.loadStyle(this.props.sweep);
     } else if (
       (this.props.sweep === null && this.assets.data !== null) ||
       (this.props.sweep !== null && this.assets.time != this.props.sweep.time)
@@ -392,9 +397,6 @@ class Product extends GLView {
         colormap: this.assets.colormap,
         index: this.assets.index,
         data: this.assets.data,
-        // points: this.props.sweep.points,
-        // origins: this.props.sweep.origins,
-        // elements: this.props.sweep.elements,
         points: this.assets.points,
         origins: this.assets.origins,
         elements: this.assets.elements,
@@ -402,13 +404,6 @@ class Product extends GLView {
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);
-    // if (this.dashboardTexture) {
-    //   this.michelangelo({
-    //     projection: this.geometry.orthoprojection,
-    //     viewport: this.geometry.dashport,
-    //     texture: this.dashboardTexture.texture,
-    //   });
-    // }
     if (this.state.spin && !this.gesture.panInProgress) {
       this.updateViewPoint();
     }
