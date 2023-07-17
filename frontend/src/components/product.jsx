@@ -282,39 +282,25 @@ class Product extends GLView {
 
   updateAssets() {
     if (this.props.sweep == null && this.props.sweeps.length == 0) {
-      // this.assets.complete = false;
-      // this.assets.data?.destroy();
-      // this.assets.data = null;
-      // this.assets.points?.destroy();
-      // this.assets.points = null;
-      // this.assets.origins?.destroy();
-      // this.assets.origins = null;
-      // this.assets.elements?.destroy();
-      // this.assets.elements = null;
-      // this.assets.time = 0;
-      // this.assets.age = 0;
       return;
     }
 
     this.assetsComplete = false;
-
-    if (this.assets.length) {
-      this.assets.forEach((x, k) => {
-        if (x.data) {
-          console.log(`updateAssets releasing assets ${k}...`);
-        }
-        x.time = 0;
-        x.data?.destroy();
-        x.data = null;
-        x.points?.destroy();
-        x.points = null;
-        x.origins?.destroy();
-        x.origins = null;
-        x.elements?.destroy();
-        x.elements = null;
-      });
-      this.assets = [];
-    }
+    this.assets.forEach((x, k) => {
+      if (x.data) {
+        console.log(`updateAssets releasing assets ${k}...`);
+      }
+      x.time = 0;
+      x.data?.destroy();
+      x.data = null;
+      x.points?.destroy();
+      x.points = null;
+      x.origins?.destroy();
+      x.origins = null;
+      x.elements?.destroy();
+      x.elements = null;
+    });
+    this.assets = [];
 
     // Could update this.geometry.origin
     const geo = this.geometry;
@@ -369,33 +355,6 @@ class Product extends GLView {
 
     console.log("updateAssets() ...");
 
-    // this.palette.symbol = this.props.sweeps?.at(0).symbol;
-    // this.assets.data = this.regl.texture({
-    //   shape: [sweep.nr, sweep.nb],
-    //   data: sweep.values,
-    //   format: "luminance",
-    //   type: "uint8",
-    // });
-    // this.assets.points = this.regl.buffer({
-    //   usage: "static",
-    //   type: "float",
-    //   data: sweep.points,
-    // });
-    // this.assets.origins = this.regl.buffer({
-    //   usage: "static",
-    //   type: "float",
-    //   data: sweep.origins,
-    // });
-    // this.assets.elements = this.regl.elements({
-    //   usage: "static",
-    //   type: "uint16",
-    //   data: sweep.elements,
-    // });
-    // this.assets.time = sweep.time;
-    // this.palette.symbol = sweep.symbol;
-    // if (this.palette.texture) {
-    //   this.assets.complete = true;
-    // }
     // if (this.props.debug) {
     //   console.log(
     //     `%cProduct.updateData()%c` +
@@ -436,11 +395,11 @@ class Product extends GLView {
     this.regl.clear({
       color: this.props.colors.glview,
     });
-    // console.log(`draw ${this.props.sweeps.length}`);
     if (this.assetsComplete) {
       let index;
       if (this.props.sweeps.length > 0) {
-        index = Math.min(this.props.sweeps.length - 1, Math.floor(this.tic / 10) % (this.props.sweeps.length + 4));
+        index = Math.min(this.props.sweeps.length - 1, ((this.tic / 12) >> 0) % (this.props.sweeps.length + 4));
+        // console.log(`draw index = ${index}`);
       } else {
         index = 0;
       }

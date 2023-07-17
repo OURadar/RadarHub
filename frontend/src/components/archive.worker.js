@@ -172,16 +172,19 @@ function init(newPathway) {
 }
 
 function set(index) {
+  console.log(`archive.worker  set  ${index} =? ${grid.index}  frames = ${state.frames}`);
   grid.mode = "load";
   if (index == grid.index && state.frames == 1) {
     state.frames = 8;
-    let items = grid.itemsGrouped[grid.scan].slice(-state.frames);
+    let first = Math.max(0, index - state.frames + 1);
+    let items = grid.itemsGrouped[grid.scan].slice(first, index + 1);
     console.log(items);
-    sweeps = [];
     items.forEach((item) => load(item.item));
     return;
+  } else if (index == grid.index && state.frames > 1) {
+    state.frames = 1;
+    grid.last = null;
   }
-  state.frames = 1;
   setGridIndex(index);
 }
 
@@ -511,6 +514,9 @@ function load(name) {
             sweeps.push(sweep);
             if (sweeps.length == state.frames) {
               sweeps.sort((a, b) => a.time - b.time);
+              grid.last = name;
+              grid.scan = scan;
+              grid.tic++;
               self.postMessage({ type: "anim", grid: grid, payload: sweeps });
             }
           }
