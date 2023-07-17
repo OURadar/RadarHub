@@ -304,7 +304,7 @@ class Product extends GLView {
 
     // Could update this.geometry.origin
     const geo = this.geometry;
-    const sweep = this.props.sweep;
+    const sweep = this.props.sweeps[0];
     if (
       Math.abs(geo.origin.longitude - sweep.longitude) > 0.001 ||
       Math.abs(geo.origin.latitude - sweep.latitude) > 0.001

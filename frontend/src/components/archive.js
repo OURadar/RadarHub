@@ -52,8 +52,7 @@ class Archive extends Ingest {
     } else if (type == "response") {
       this.showResponse(payload);
     } else if (type == "load") {
-      this.data.sweep = payload;
-      this.data.sweeps = [payload];
+      this.data.sweeps = payload;
       this.grid = grid;
       this.updateAge();
       this.state.sweepLoading = false;
@@ -77,19 +76,19 @@ class Archive extends Ingest {
       }
       this.showMessage(`${payload.name} loaded`);
       this.onLoad(this.grid);
-    } else if (type == "anim") {
-      this.data.sweeps = payload;
-      this.grid = grid;
-      this.state.sweepLoading = false;
-      if (this.state.verbose) {
-        console.log(
-          `%carchive.handleMessage%c anim   ${grid.dateTimeString}   ${this.data.sweeps.length}`,
-          "color: lightseagreen",
-          "",
-          grid,
-          this.data.sweeps
-        );
-      }
+      // } else if (type == "anim") {
+      //   this.data.sweeps = payload;
+      //   this.grid = grid;
+      //   this.state.sweepLoading = false;
+      //   if (this.state.verbose) {
+      //     console.log(
+      //       `%carchive.handleMessage%c anim   ${grid.dateTimeString}   ${this.data.sweeps.length}`,
+      //       "color: lightseagreen",
+      //       "",
+      //       grid,
+      //       this.data.sweeps
+      //     );
+      //   }
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
@@ -284,32 +283,42 @@ class Archive extends Ingest {
   }
 
   updateAge() {
-    if (this.data.sweep === null) {
+    if (this.data.sweeps === null || this.data.sweeps.length == 0) {
       return;
     }
-    let age = Date.now() / 1000 - this.data.sweep.time;
-    let ageString;
-    if (age > 14 * 86400) {
-      ageString = "";
-    } else if (age > 7 * 86400) {
-      ageString = "> 1 week";
-    } else if (age > 86400) {
-      let d = Math.floor(age / 86400);
-      let s = d > 1 ? "s" : "";
-      ageString = `> ${d} day${s} ago`;
-    } else if (age > 1.5 * 3600) {
-      let h = Math.floor(age / 3600);
-      let s = h > 1 ? "s" : "";
-      ageString = `> ${h} hour${s} ago`;
-    } else if (age > 60) {
-      let m = Math.floor(age / 60);
-      let s = m > 1 ? "s" : "";
-      ageString = `${m} minute${s} ago`;
-    } else {
-      ageString = "< 1 minute ago";
-    }
-    if (this.data.sweep.age != ageString) {
-      this.data.sweep.age = ageString;
+    let updated = false;
+    this.data.sweeps.forEach((sweep) => {
+      let age = Date.now() / 1000 - sweep.time;
+      let ageString;
+      if (age > 14 * 86400) {
+        ageString = "";
+      } else if (age > 7 * 86400) {
+        ageString = "> 1 week";
+      } else if (age > 86400) {
+        let d = Math.floor(age / 86400);
+        let s = d > 1 ? "s" : "";
+        ageString = `> ${d} day${s} ago`;
+      } else if (age > 1.5 * 3600) {
+        let h = Math.floor(age / 3600);
+        let s = h > 1 ? "s" : "";
+        ageString = `> ${h} hour${s} ago`;
+      } else if (age > 60) {
+        let m = Math.floor(age / 60);
+        let s = m > 1 ? "s" : "";
+        ageString = `${m} minute${s} ago`;
+      } else {
+        ageString = "< 1 minute ago";
+      }
+      if (sweep.age != ageString) {
+        sweep.age = ageString;
+        updated = true;
+      }
+    });
+    // if (this.data.sweep.age != ageString) {
+    //   this.data.sweep.age = ageString;
+    //   this.onUpdate(this.state.tic++);
+    // }
+    if (updated) {
       this.onUpdate(this.state.tic++);
     }
   }

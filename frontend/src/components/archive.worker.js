@@ -172,16 +172,17 @@ function init(newPathway) {
 }
 
 function set(index) {
-  console.log(`archive.worker  set  ${index} =? ${grid.index}  frames = ${state.frames}`);
+  sweeps = [];
   grid.mode = "load";
   if (index == grid.index && state.frames == 1) {
-    state.frames = 8;
-    let first = Math.max(0, index - state.frames + 1);
+    let count = 8;
+    let first = Math.max(0, index - count + 1);
     let items = grid.itemsGrouped[grid.scan].slice(first, index + 1);
+    state.frames = items.length;
     console.log(items);
     items.forEach((item) => load(item.item));
     return;
-  } else if (index == grid.index && state.frames > 1) {
+  } else {
     state.frames = 1;
     grid.last = null;
   }
@@ -505,20 +506,13 @@ function load(name) {
             });
             return;
           }
-          if (state.frames == 1) {
+          sweeps.push(sweep);
+          if (sweeps.length == state.frames) {
+            sweeps.sort((a, b) => a.time - b.time);
             grid.last = name;
             grid.scan = scan;
             grid.tic++;
-            self.postMessage({ type: "load", grid: grid, payload: sweep });
-          } else if (state.frames > 1) {
-            sweeps.push(sweep);
-            if (sweeps.length == state.frames) {
-              sweeps.sort((a, b) => a.time - b.time);
-              grid.last = name;
-              grid.scan = scan;
-              grid.tic++;
-              self.postMessage({ type: "anim", grid: grid, payload: sweeps });
-            }
+            self.postMessage({ type: "load", grid: grid, payload: sweeps });
           }
         });
       } else {
