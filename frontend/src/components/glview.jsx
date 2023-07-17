@@ -278,17 +278,6 @@ class GLView extends Component {
     mat4.multiply(geo.modelview, geo.view, geo.model);
     mat4.multiply(geo.viewprojection, geo.projection, geo.view);
 
-    // if (this.props.style == "right") {
-    //   geo.dashport.x = w - geo.dashport.width;
-    //   geo.dashport.y = 100;
-    // } else if (this.props.style == "top") {
-    //   geo.dashport.x = 0;
-    //   geo.dashport.y = h - geo.dashport.height - this.props.sx.pt * this.ratio;
-    //   console.log(
-    //     `geometry.dashport.y = ${this.geometry.dashport.y} / ${this.canvas.height}`
-    //   );
-    // }
-
     const ww = Math.round(h / 3);
     geo.fix.viewport.width = ww;
     geo.fix.viewport.height = ww;

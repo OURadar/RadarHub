@@ -42,8 +42,8 @@ let grid = {
   tic: 0,
 };
 let state = {
-  load: "single",
   update: "scan",
+  frames: 1,
   verbose: 1,
 };
 let sweeps = [];
@@ -173,15 +173,15 @@ function init(newPathway) {
 
 function set(index) {
   grid.mode = "load";
-  if (index == grid.index && state.load == "single") {
-    let items = grid.itemsGrouped[grid.scan].slice(-4);
+  if (index == grid.index && state.frames == 1) {
+    state.frames = 8;
+    let items = grid.itemsGrouped[grid.scan].slice(-state.frames);
     console.log(items);
     sweeps = [];
-    state.load = "anim";
     items.forEach((item) => load(item.item));
     return;
   }
-  state.load = "single";
+  state.frames = 1;
   setGridIndex(index);
 }
 
@@ -502,18 +502,15 @@ function load(name) {
             });
             return;
           }
-          if (state.load == "single") {
+          if (state.frames == 1) {
             grid.last = name;
             grid.scan = scan;
             grid.tic++;
-            self.postMessage({
-              type: "load",
-              grid: grid,
-              payload: sweep,
-            });
-          } else if (state.load == "anim") {
+            self.postMessage({ type: "load", grid: grid, payload: sweep });
+          } else if (state.frames > 1) {
             sweeps.push(sweep);
-            if (sweeps.length == 4) {
+            if (sweeps.length == state.frames) {
+              sweeps.sort((a, b) => a.time - b.time);
               self.postMessage({ type: "anim", grid: grid, payload: sweeps });
             }
           }

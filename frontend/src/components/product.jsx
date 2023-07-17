@@ -31,6 +31,8 @@ class Product extends GLView {
     this.palette = {
       image: null,
       texture: null,
+      symbol: "U",
+      index: 0,
     };
     this.state = {
       ...this.state,
@@ -46,16 +48,13 @@ class Product extends GLView {
       ticks: [],
       index: 0,
     };
-    this.assets = {
-      age: 0,
+    this.assets = new Array(4).fill({
       time: 0,
-      index: 0,
       data: null,
       points: null,
       origins: null,
       elements: null,
-      complete: false,
-    };
+    });
     var image = new Image();
     image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
@@ -67,11 +66,15 @@ class Product extends GLView {
           wrapT: "clamp",
           premultiplyAlpha: true,
         }),
+        symbol: "U",
+        index: 0.5 / image.height,
       };
       this.loadStyle("Z");
-      if (this.assets.data !== null) this.assets.complete = true;
+      // if (this.assets.data !== null) this.assets.complete = true;
     });
     this.overlay.onLoad = props.onOverlayLoad;
+    this.assetsComplete = false;
+    this.tic = 0;
   }
 
   static defaultProps = {
@@ -189,10 +192,10 @@ class Product extends GLView {
       }
     };
     this.style = symbolToStyle(symbol);
-    console.log(this.style);
+    console.log("symbolToSTyle ->", this.style);
     if (this.palette.texture) {
-      this.assets.index = (this.style.index + 0.5) / this.palette.texture.height;
-      this.assets.symbol = symbol;
+      this.palette.index = (this.style.index + 0.5) / this.palette.texture.height;
+      this.palette.symbol = symbol;
     }
     this.setState((state) => ({ count: state.count + 1 }));
   }
@@ -278,20 +281,41 @@ class Product extends GLView {
   }
 
   updateAssets() {
-    if (this.props.sweep == null) {
-      this.assets.complete = false;
-      this.assets.data?.destroy();
-      this.assets.data = null;
-      this.assets.points?.destroy();
-      this.assets.points = null;
-      this.assets.origins?.destroy();
-      this.assets.origins = null;
-      this.assets.elements?.destroy();
-      this.assets.elements = null;
-      this.assets.time = 0;
-      this.assets.age = 0;
+    if (this.props.sweep == null && this.props.sweeps.length == 0) {
+      // this.assets.complete = false;
+      // this.assets.data?.destroy();
+      // this.assets.data = null;
+      // this.assets.points?.destroy();
+      // this.assets.points = null;
+      // this.assets.origins?.destroy();
+      // this.assets.origins = null;
+      // this.assets.elements?.destroy();
+      // this.assets.elements = null;
+      // this.assets.time = 0;
+      // this.assets.age = 0;
       return;
     }
+
+    this.assetsComplete = false;
+
+    if (this.assets.length) {
+      this.assets.forEach((x, k) => {
+        if (x.data) {
+          console.log(`updateAssets releasing assets ${k}...`);
+        }
+        x.time = 0;
+        x.data?.destroy();
+        x.data = null;
+        x.points?.destroy();
+        x.points = null;
+        x.origins?.destroy();
+        x.origins = null;
+        x.elements?.destroy();
+        x.elements = null;
+      });
+      this.assets = [];
+    }
+
     // Could update this.geometry.origin
     const geo = this.geometry;
     const sweep = this.props.sweep;
@@ -313,44 +337,77 @@ class Product extends GLView {
       this.overlay.load();
     }
 
-    this.assets.data = this.regl.texture({
-      shape: [sweep.nr, sweep.nb],
-      data: sweep.values,
-      format: "luminance",
-      type: "uint8",
+    let assets = [];
+    this.props.sweeps.forEach((sweep) => {
+      assets.push({
+        time: sweep.time,
+        data: this.regl.texture({
+          shape: [sweep.nr, sweep.nb],
+          data: sweep.values,
+          format: "luminance",
+          type: "uint8",
+        }),
+        points: this.regl.buffer({
+          usage: "static",
+          type: "float",
+          data: sweep.points,
+        }),
+        origins: this.regl.buffer({
+          usage: "static",
+          type: "float",
+          data: sweep.origins,
+        }),
+        elements: this.regl.elements({
+          usage: "static",
+          type: "uint16",
+          data: sweep.elements,
+        }),
+      });
     });
-    this.assets.points = this.regl.buffer({
-      usage: "static",
-      type: "float",
-      data: sweep.points,
-    });
-    this.assets.origins = this.regl.buffer({
-      usage: "static",
-      type: "float",
-      data: sweep.origins,
-    });
-    this.assets.elements = this.regl.elements({
-      usage: "static",
-      type: "uint16",
-      data: sweep.elements,
-    });
-    this.assets.time = sweep.time;
-    this.assets.symbol = sweep.symbol;
-    if (this.palette.texture) {
-      this.assets.complete = true;
-    }
-    if (this.props.debug) {
-      console.log(
-        `%cProduct.updateData()%c` +
-          `   assets.symbol = ${this.assets.symbol}` +
-          `   assets.complete = ${this.assets.complete}`,
-        "color: lightseagreen",
-        ""
-      );
-    }
-    this.setState({
-      titleString: sweep.timeString,
-    });
+    this.assets = assets;
+    this.assetsComplete = true;
+
+    console.log("updateAssets() ...");
+
+    // this.palette.symbol = this.props.sweeps?.at(0).symbol;
+    // this.assets.data = this.regl.texture({
+    //   shape: [sweep.nr, sweep.nb],
+    //   data: sweep.values,
+    //   format: "luminance",
+    //   type: "uint8",
+    // });
+    // this.assets.points = this.regl.buffer({
+    //   usage: "static",
+    //   type: "float",
+    //   data: sweep.points,
+    // });
+    // this.assets.origins = this.regl.buffer({
+    //   usage: "static",
+    //   type: "float",
+    //   data: sweep.origins,
+    // });
+    // this.assets.elements = this.regl.elements({
+    //   usage: "static",
+    //   type: "uint16",
+    //   data: sweep.elements,
+    // });
+    // this.assets.time = sweep.time;
+    // this.palette.symbol = sweep.symbol;
+    // if (this.palette.texture) {
+    //   this.assets.complete = true;
+    // }
+    // if (this.props.debug) {
+    //   console.log(
+    //     `%cProduct.updateData()%c` +
+    //       `   palette.symbol = ${this.palette.symbol}` +
+    //       `   assets.complete = ${this.assets.complete}`,
+    //     "color: lightseagreen",
+    //     ""
+    //   );
+    // }
+    // this.setState({
+    //   titleString: sweep.timeString,
+    // });
   }
 
   draw() {
@@ -359,8 +416,8 @@ class Product extends GLView {
       this.updateProjection();
     }
     if (
-      (this.props.sweep === null && this.assets.data !== null) ||
-      (this.props.sweep !== null && this.assets.time != this.props.sweep.time)
+      this.props.sweeps.length != this.assets.length ||
+      (this.props.sweeps.length > 0 && this.assets.length > 0 && this.props.sweeps[0].time != this.assets[0].time)
     ) {
       this.updateAssets();
     } else if (
@@ -373,24 +430,32 @@ class Product extends GLView {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
       this.loadStyle();
-    } else if (this.props.sweep !== null && this.assets.symbol != this.props.sweep.symbol) {
-      this.loadStyle(this.props.sweep.symbol);
+    } else if (this.props.sweeps.length > 0 && this.palette.symbol != this.props.sweeps[0].symbol) {
+      this.loadStyle(this.props.sweeps[0].symbol);
     }
     this.regl.clear({
       color: this.props.colors.glview,
     });
-    if (this.assets.complete)
+    // console.log(`draw ${this.props.sweeps.length}`);
+    if (this.assetsComplete) {
+      let index;
+      if (this.props.sweeps.length > 0) {
+        index = Math.min(this.props.sweeps.length - 1, Math.floor(this.tic / 10) % (this.props.sweeps.length + 4));
+      } else {
+        index = 0;
+      }
       this.vinci({
         projection: this.geometry.projection,
         modelview: this.geometry.modelview,
         viewport: this.geometry.viewport,
         colormap: this.palette.texture,
-        index: this.assets.index,
-        data: this.assets.data,
-        points: this.assets.points,
-        origins: this.assets.origins,
-        elements: this.assets.elements,
+        index: this.palette.index,
+        data: this.assets[index].data,
+        points: this.assets[index].points,
+        origins: this.assets[index].origins,
+        elements: this.assets[index].elements,
       });
+    }
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);
@@ -399,6 +464,7 @@ class Product extends GLView {
     }
     this.statsWidget?.update(0.01667);
     this.stats?.update();
+    this.tic++;
   }
 
   fitToData() {

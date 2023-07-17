@@ -53,6 +53,7 @@ class Archive extends Ingest {
       this.showResponse(payload);
     } else if (type == "load") {
       this.data.sweep = payload;
+      this.data.sweeps = [payload];
       this.grid = grid;
       this.updateAge();
       this.state.sweepLoading = false;
