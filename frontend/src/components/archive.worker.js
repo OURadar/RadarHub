@@ -85,6 +85,18 @@ function reviseGridItemsGrouped() {
   });
 }
 
+function findLastInGroup() {
+  let address = -1;
+  grid.itemsGrouped[grid.scan].some(({ index }, k) => {
+    if (index == grid.index) {
+      address = k;
+      return true;
+    }
+    return false;
+  });
+  return address;
+}
+
 // IMPORTANT: During prepend/append mode, use this before updating
 // grid.counts = buffer.counts after fetch(/data/list/...) because
 // grid.index needs to propagate to the next list in order to
@@ -174,9 +186,10 @@ function init(newPathway) {
 function set(index) {
   grid.mode = "load";
   if (index == grid.index && state.frames == 1) {
-    let count = 10;
-    let first = Math.max(0, index - count + 1);
-    let items = grid.itemsGrouped[grid.scan].slice(first, index + 1);
+    let body = 10;
+    let tail = findLastInGroup();
+    let head = Math.max(0, tail - body + 1);
+    let items = grid.itemsGrouped[grid.scan].slice(head, tail + 1);
     state.frames = items.length;
     sweeps = [];
     items.forEach((item) => load(item.item));

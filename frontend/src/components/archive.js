@@ -75,7 +75,7 @@ class Archive extends Ingest {
       } else if (latest && this.state.liveUpdate === "offline") {
         this.enableLiveUpdate();
       }
-      this.showMessage(`${payload.name} loaded`);
+      this.showMessage(`${this.data.sweeps[0].name} loaded`);
       this.onLoad(this.grid);
     } else if (type == "list") {
       if (this.state.verbose) {

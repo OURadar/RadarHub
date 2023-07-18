@@ -288,6 +288,12 @@ class Gesture {
       },
       { passive: false }
     );
+    this.element.addEventListener("click", (e) => {
+      this.pointX = e.offsetX;
+      this.pointY = e.offsetY;
+      this.message = "single click";
+      this.handleSingleTap(this.pointX, this.pointY);
+    });
     this.element.addEventListener("dblclick", (e) => {
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;

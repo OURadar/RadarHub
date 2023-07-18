@@ -118,6 +118,10 @@ export function App(props) {
     }
   };
 
+  const handleMiddleViewTap = () => {
+    archive.current.playPause();
+  };
+
   useConstructor(() => {
     if (!isMobile)
       document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
@@ -193,6 +197,7 @@ export function App(props) {
                 sweeps={archive.current?.data.sweeps}
                 onOverlayLoad={handleOverlayLoad}
                 onColorbarTouch={handleColorbarTouch}
+                onMiddleViewTap={handleMiddleViewTap}
                 debug={true}
               />
               <MenuArrow
@@ -239,6 +244,7 @@ export function App(props) {
                   sweeps={archive.current?.data.sweeps}
                   onOverlayLoad={handleOverlayLoad}
                   onColorbarClick={handleColorbarClick}
+                  onMiddleViewTap={handleMiddleViewTap}
                 />
               }
               right={<Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />}

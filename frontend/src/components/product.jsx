@@ -70,6 +70,7 @@ class Product extends GLView {
       };
       this.loadStyle("Z");
     });
+
     this.overlay.onLoad = props.onOverlayLoad;
     this.assetsComplete = false;
     this.tic = 0;
@@ -77,7 +78,6 @@ class Product extends GLView {
 
   static defaultProps = {
     ...super.defaultProps,
-    sweep: null,
     sweeps: [],
     origin: {
       longitude: -97.422413,
@@ -87,6 +87,7 @@ class Product extends GLView {
     onOverlayLoad: () => console.log("Product.onOverlayLoad()"),
     onColorbarTouch: () => {},
     onColorbarClick: () => {},
+    onMiddleViewTap: () => {},
   };
 
   loadStyle(symbol = "Z") {
@@ -410,6 +411,18 @@ class Product extends GLView {
     this.setState({
       spin: false,
     });
+  }
+
+  tap(x, y) {
+    console.log("Product.tap");
+    if (
+      x > 0.3 * this.mount.clientWidth &&
+      x < 0.7 * this.mount.clientWidth &&
+      y > 0.3 * this.mount.clientHeight &&
+      y < 0.7 * this.mount.clientHeight
+    ) {
+      this.props.onMiddleViewTap();
+    }
   }
 
   taptap(x, y) {
