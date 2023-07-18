@@ -183,6 +183,7 @@ function init(newPathway) {
 function set(index) {
   grid.mode = "load";
   if (index == grid.index && state.frames == 1) {
+    self.postMessage({ type: "message", payload: "Loading frames ..." });
     let body = 10;
     let tail = findLastInGroup();
     let head = Math.max(0, tail - body + 1);
