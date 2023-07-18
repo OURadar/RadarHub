@@ -54,7 +54,7 @@ class Archive extends Ingest {
     } else if (type == "load") {
       this.data.sweeps = payload;
       this.grid = grid;
-      this.updateAge();
+      this.state.loadCount++;
       this.state.sweepLoading = false;
       if (this.state.verbose) {
         console.log(
@@ -68,6 +68,7 @@ class Archive extends Ingest {
           ""
         );
       }
+      this.updateAge();
       const latest = this.isLatestVolume();
       if (!latest && this.state.liveUpdate !== "offline") {
         this.disableLiveUpdate();
@@ -76,19 +77,6 @@ class Archive extends Ingest {
       }
       this.showMessage(`${payload.name} loaded`);
       this.onLoad(this.grid);
-      // } else if (type == "anim") {
-      //   this.data.sweeps = payload;
-      //   this.grid = grid;
-      //   this.state.sweepLoading = false;
-      //   if (this.state.verbose) {
-      //     console.log(
-      //       `%carchive.handleMessage%c anim   ${grid.dateTimeString}   ${this.data.sweeps.length}`,
-      //       "color: lightseagreen",
-      //       "",
-      //       grid,
-      //       this.data.sweeps
-      //     );
-      //   }
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
@@ -346,6 +334,10 @@ class Archive extends Ingest {
 
   navigateBackwardScan() {
     this.worker.postMessage({ task: "backward-scan" });
+  }
+
+  playPause() {
+    this.loadIndex(this.grid.index);
   }
 
   // Expect something like day = dayjs.utc('2013-05-20'), hour = 19

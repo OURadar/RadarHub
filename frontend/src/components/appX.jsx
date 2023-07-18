@@ -160,6 +160,10 @@ export function App(props) {
           archive.current.navigateBackward();
         } else if (e.key == "ArrowDown") {
           archive.current.navigateForward();
+        } else if (e.key == " ") {
+          archive.current.playPause();
+          // } else {
+          //   console.log(e.key);
         }
       }
     });

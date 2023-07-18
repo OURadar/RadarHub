@@ -9,7 +9,7 @@
 
 import React from "react";
 
-function Title(props) {
+const Title = React.memo(function Title(props) {
   const svgRef = React.useRef(null);
 
   const [x, setX] = React.useState(props.x || 0);
@@ -21,10 +21,7 @@ function Title(props) {
     const style = getComputedStyle(svgRef.current);
     const align = style.getPropertyValue("text-align");
     const width = parseInt(style.getPropertyValue("width"));
-    const stroke = Math.max(
-      3,
-      parseInt(style.getPropertyValue("stroke-width"))
-    );
+    const stroke = Math.max(3, parseInt(style.getPropertyValue("stroke-width")));
     setP(stroke);
     if (align == "center") {
       setX(0.5 * width);
@@ -47,7 +44,7 @@ function Title(props) {
       </text>
     </svg>
   );
-}
+});
 
 Title.defaultProps = {
   id: "title",

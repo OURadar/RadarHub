@@ -172,18 +172,16 @@ function init(newPathway) {
 }
 
 function set(index) {
-  sweeps = [];
   grid.mode = "load";
   if (index == grid.index && state.frames == 1) {
-    let count = 8;
+    let count = 10;
     let first = Math.max(0, index - count + 1);
     let items = grid.itemsGrouped[grid.scan].slice(first, index + 1);
     state.frames = items.length;
-    console.log(items);
+    sweeps = [];
     items.forEach((item) => load(item.item));
     return;
   } else {
-    state.frames = 1;
     grid.last = null;
   }
   setGridIndex(index);
@@ -694,6 +692,8 @@ function setGridIndex(index) {
   }
   grid.index = index;
   reviseGridPaths();
+  state.frames = 1;
+  sweeps = [];
   load(scan);
 }
 

@@ -8,7 +8,8 @@ import React from "react";
 // }
 
 function measure(string) {}
-function Caption(props) {
+
+const Caption = React.memo(function Caption(props) {
   const h = props.h || 20;
   const l = props.l || 5;
   const lines = props.string.split(/\r?\n/);
@@ -23,13 +24,7 @@ function Caption(props) {
   // });
 
   return (
-    <svg
-      id={props.id}
-      ref={svgRef}
-      width="150"
-      height={lines.length * h + 10}
-      className="floatText"
-    >
+    <svg id={props.id} ref={svgRef} width="150" height={lines.length * h + 10} className="floatText">
       {lines.map((line, i) => (
         <text key={"c" + i} x={l} y={i * h + h}>
           {line}
@@ -37,7 +32,7 @@ function Caption(props) {
       ))}
     </svg>
   );
-}
+});
 
 Caption.defaultProps = {
   id: "caption",

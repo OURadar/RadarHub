@@ -28,19 +28,18 @@ class Product extends GLView {
     super(props);
     this.overlay = new Overlay(this.regl, props.colors, this.geometry);
     this.offset = (Date.now() % 86400000) / 5000;
+    this.state = {
+      ...this.state,
+      spin: false,
+      useEuler: true,
+      phase: 0,
+      count: 0,
+    };
     this.palette = {
       image: null,
       texture: null,
       symbol: "U",
       index: 0,
-    };
-    this.state = {
-      ...this.state,
-      spin: false,
-      useEuler: true,
-      ageString: "",
-      titleString: "",
-      count: 0,
     };
     this.labelFaceColor = this.props.colors.label.face;
     this.style = {
@@ -48,7 +47,7 @@ class Product extends GLView {
       ticks: [],
       index: 0,
     };
-    this.assets = new Array(4).fill({
+    this.assets = new Array(1).fill({
       time: 0,
       data: null,
       points: null,
@@ -70,7 +69,6 @@ class Product extends GLView {
         index: 0.5 / image.height,
       };
       this.loadStyle("Z");
-      // if (this.assets.data !== null) this.assets.complete = true;
     });
     this.overlay.onLoad = props.onOverlayLoad;
     this.assetsComplete = false;
@@ -253,6 +251,7 @@ class Product extends GLView {
   }
 
   render() {
+    const sweep = this.props.sweeps.length ? this.props.sweeps[this.state.phase] : null;
     return (
       <div className="fullHeight">
         <div className="fullHeight" ref={(x) => (this.mount = x)} />
@@ -266,8 +265,8 @@ class Product extends GLView {
           count={this.state.count}
           debug={false}
         />
-        <Caption id="ageString" string={this.props.sweep?.age || ""} />
-        <Caption id="infoString" string={this.props.sweep?.infoString || "Gatewidth: -\nWaveform: -"} />
+        <Caption id="ageString" phase={this.state.phase} string={sweep?.age || ""} />
+        <Caption id="infoString" phase={this.state.phase} string={sweep?.infoString || "Gatewidth: -\nWaveform: -"} />
         <Symbol
           id="symbol"
           text={this.style.name}
@@ -275,7 +274,7 @@ class Product extends GLView {
           onTouch={this.props.onColorbarTouch}
           onClick={this.props.onColorbarClick}
         />
-        <Title string={this.props.sweep?.titleString || "----/--/-- --:--:-- UTC"} />
+        <Title string={sweep?.titleString || "----/--/-- --:--:-- UTC"} />
       </div>
     );
   }
@@ -286,10 +285,7 @@ class Product extends GLView {
     }
 
     this.assetsComplete = false;
-    this.assets.forEach((x, k) => {
-      if (x.data) {
-        console.log(`updateAssets releasing assets ${k}...`);
-      }
+    this.assets.forEach((x) => {
       x.time = 0;
       x.data?.destroy();
       x.data = null;
@@ -353,42 +349,36 @@ class Product extends GLView {
     this.assets = assets;
     this.assetsComplete = true;
 
-    console.log("updateAssets() ...");
-
-    // if (this.props.debug) {
-    //   console.log(
-    //     `%cProduct.updateData()%c` +
-    //       `   palette.symbol = ${this.palette.symbol}` +
-    //       `   assets.complete = ${this.assets.complete}`,
-    //     "color: lightseagreen",
-    //     ""
-    //   );
-    // }
-    // this.setState({
-    //   titleString: sweep.timeString,
-    // });
+    if (this.props.debug) {
+      console.log(
+        `%cProduct.updateAssets()%c` +
+          `   palette.symbol = ${this.palette.symbol}` +
+          `   assetsComplete = ${this.assetsComplete}`,
+        "color: lightseagreen",
+        ""
+      );
+    }
   }
 
   draw() {
     if (this.mount === null) return;
-    if (this.geometry.needsUpdate) {
-      this.updateProjection();
-    }
     if (
       this.props.sweeps.length != this.assets.length ||
       (this.props.sweeps.length > 0 && this.assets.length > 0 && this.props.sweeps[0].time != this.assets[0].time)
     ) {
       this.updateAssets();
     } else if (
+      this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth * this.ratio ||
       this.canvas.height != this.mount.offsetHeight * this.ratio
     ) {
       this.updateProjection();
-      this.loadStyle();
     } else if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
-      this.loadStyle();
+      // if (this.assetsComplete) {
+      //   this.loadStyle(this.props.sweeps[0].symbol);
+      // }
     } else if (this.props.sweeps.length > 0 && this.palette.symbol != this.props.sweeps[0].symbol) {
       this.loadStyle(this.props.sweeps[0].symbol);
     }
@@ -396,23 +386,21 @@ class Product extends GLView {
       color: this.props.colors.glview,
     });
     if (this.assetsComplete) {
-      let index;
-      if (this.props.sweeps.length > 0) {
-        index = Math.min(this.props.sweeps.length - 1, ((this.tic / 12) >> 0) % (this.props.sweeps.length + 4));
-        // console.log(`draw index = ${index}`);
-      } else {
-        index = 0;
+      const phase = Math.min(this.props.sweeps.length - 1, ((this.tic / 8) >> 0) % (this.props.sweeps.length + 4));
+      if (this.state.phase != phase) {
+        this.setState({ phase: phase });
       }
+      const { data, points, origins, elements } = this.assets[phase];
       this.vinci({
         projection: this.geometry.projection,
         modelview: this.geometry.modelview,
         viewport: this.geometry.viewport,
         colormap: this.palette.texture,
         index: this.palette.index,
-        data: this.assets[index].data,
-        points: this.assets[index].points,
-        origins: this.assets[index].origins,
-        elements: this.assets[index].elements,
+        data: data,
+        points: points,
+        origins: origins,
+        elements: elements,
       });
     }
     const shapes = this.overlay.getDrawables();
