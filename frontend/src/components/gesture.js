@@ -44,11 +44,22 @@ class Gesture {
     this.inbound = this.inbound.bind(this);
     this.setTilt = this.setTilt.bind(this);
 
+    this.element.addEventListener("focus", (e) => {
+      console.log(`focus ${e.offsetX}`);
+    });
     this.element.addEventListener("mousedown", (e) => {
       if (this.inbound(e)) {
+        this.mouseDown = true;
         this.pointX = e.offsetX;
         this.pointY = e.offsetY;
         this.rect = this.element.getBoundingClientRect();
+      }
+    });
+    this.element.addEventListener("mousemove", (e) => {
+      e.preventDefault();
+      let deltaX = e.offsetX - this.pointX;
+      let deltaY = this.pointY - e.offsetY;
+      if (this.mouseDown && (deltaX != 0 || deltaY != 0)) {
         if (e.altKey) {
           this.tiltInProgress = true;
         } else if (e.ctrlKey) {
@@ -57,15 +68,12 @@ class Gesture {
           this.panInProgress = true;
         }
       }
-    });
-    this.element.addEventListener("mousemove", (e) => {
-      e.preventDefault();
       if (this.panInProgress === true) {
-        this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
+        this.handlePan(deltaX, deltaY);
       } else if (this.tiltInProgress === true) {
-        this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
+        this.handleTilt(deltaX, deltaY);
       } else if (this.rollInProgress === true) {
-        this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
+        this.handleRoll(deltaX, deltaY);
       } else if (this.inbound(e)) {
         if (e.shiftKey) {
           this.panInProgress = true;
@@ -90,8 +98,22 @@ class Gesture {
       // this.message = `mousemove (${this.pointX}, ${this.pointY})`;
       // console.log(this.message);
     });
-    this.element.addEventListener("focus", (e) => {
-      console.log(`focus ${e.offsetX}`);
+    this.element.addEventListener("mouseup", (e) => {
+      if (this.panInProgress === true) {
+        this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.tiltInProgress === true) {
+        this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else if (this.rollInProgress === true) {
+        this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
+      } else {
+        this.handleSingleTap(this.pointX, this.pointY);
+      }
+      this.pointX = e.offsetX;
+      this.pointY = e.offsetY;
+      this.panInProgress = false;
+      this.tiltInProgress = false;
+      this.rollInProgress = false;
+      this.mouseDown = false;
     });
     // window.addEventListener("keydown", (e) => {
     //   console.log(`keydown ${e.offsetX}, ${e.offsetY}`);
@@ -115,21 +137,6 @@ class Gesture {
         this.tiltInProgress = false;
         this.rollInProgress = false;
       }
-    });
-    this.element.addEventListener("mouseup", (e) => {
-      if (this.panInProgress === true) {
-        this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
-      } else if (this.tiltInProgress === true) {
-        this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
-      } else if (this.rollInProgress === true) {
-        this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
-      }
-      this.pointX = e.offsetX;
-      this.pointY = e.offsetY;
-      this.panInProgress = false;
-      this.tiltInProgress = false;
-      this.rollInProgress = false;
-      this.mouseDown = false;
     });
     this.element.addEventListener(
       "wheel",
@@ -288,12 +295,13 @@ class Gesture {
       },
       { passive: false }
     );
-    this.element.addEventListener("click", (e) => {
-      this.pointX = e.offsetX;
-      this.pointY = e.offsetY;
-      this.message = "single click";
-      this.handleSingleTap(this.pointX, this.pointY);
-    });
+    // this.element.addEventListener("click", (e) => {
+    //   this.pointX = e.offsetX;
+    //   this.pointY = e.offsetY;
+    //   this.message = "single click";
+    //   console.log(`Gesture  click  ${this.panInProgress}`);
+    //   this.handleSingleTap(this.pointX, this.pointY);
+    // });
     this.element.addEventListener("dblclick", (e) => {
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
