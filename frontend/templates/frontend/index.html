@@ -29,7 +29,7 @@
         ({{code}})
       </div>
     </div>
-    {% if version == "1.0" and user.is_authenticated and user.is_staff %}
+    {% if user.is_authenticated and user.is_staff %}
       <div class="spacer25"></div>
       <a class="link subtle" href="/dev/px1000/">Experiment #1</a>
       <div class="inline padded"></div>
