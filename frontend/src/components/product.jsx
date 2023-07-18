@@ -65,7 +65,7 @@ class Product extends GLView {
           wrapT: "clamp",
           premultiplyAlpha: true,
         }),
-        symbol: "U",
+        symbol: "-",
         index: 0.5 / image.height,
       };
       this.loadStyle("Z");
@@ -286,15 +286,10 @@ class Product extends GLView {
 
     this.assetsComplete = false;
     this.assets.forEach((x) => {
-      x.time = 0;
       x.data?.destroy();
-      x.data = null;
       x.points?.destroy();
-      x.points = null;
       x.origins?.destroy();
-      x.origins = null;
       x.elements?.destroy();
-      x.elements = null;
     });
     this.assets = [];
 
@@ -319,34 +314,30 @@ class Product extends GLView {
       this.overlay.load();
     }
 
-    let assets = [];
-    this.props.sweeps.forEach((sweep) => {
-      assets.push({
-        time: sweep.time,
-        data: this.regl.texture({
-          shape: [sweep.nr, sweep.nb],
-          data: sweep.values,
-          format: "luminance",
-          type: "uint8",
-        }),
-        points: this.regl.buffer({
-          usage: "static",
-          type: "float",
-          data: sweep.points,
-        }),
-        origins: this.regl.buffer({
-          usage: "static",
-          type: "float",
-          data: sweep.origins,
-        }),
-        elements: this.regl.elements({
-          usage: "static",
-          type: "uint16",
-          data: sweep.elements,
-        }),
-      });
-    });
-    this.assets = assets;
+    this.assets = this.props.sweeps.map((sweep) => ({
+      time: sweep.time,
+      data: this.regl.texture({
+        shape: [sweep.nr, sweep.nb],
+        data: sweep.values,
+        format: "luminance",
+        type: "uint8",
+      }),
+      points: this.regl.buffer({
+        usage: "static",
+        type: "float",
+        data: sweep.points,
+      }),
+      origins: this.regl.buffer({
+        usage: "static",
+        type: "float",
+        data: sweep.origins,
+      }),
+      elements: this.regl.elements({
+        usage: "static",
+        type: "uint16",
+        data: sweep.elements,
+      }),
+    }));
     this.assetsComplete = true;
 
     if (this.props.debug) {
