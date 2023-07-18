@@ -184,7 +184,7 @@ function set(index) {
   grid.mode = "load";
   if (index == grid.index && state.frames == 1) {
     self.postMessage({ type: "message", payload: "Loading frames ..." });
-    let body = 10;
+    let body = 12;
     let tail = findLastInGroup();
     let head = Math.max(0, tail - body + 1);
     let items = grid.itemsGrouped[grid.scan].slice(head, tail + 1);
