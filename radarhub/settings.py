@@ -271,6 +271,7 @@ if os.path.exists(file):
     VERSION = s['version'] if 'version' in s else '0.0.0'
 else:
     VERSION = '0.0.0'
+BRANCH = os.popen('git rev-parse --abbrev-ref HEAD').read().strip()
 
 # FIFO source to list for new files
 # FIFO = { 'tcp': '_IP_ADDRESS_:_PORT_' }

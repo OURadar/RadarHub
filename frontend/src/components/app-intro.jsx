@@ -23,12 +23,7 @@ class App extends React.Component {
     super(props);
     this.isMobile = detectMob();
     if (this.isMobile)
-      document
-        .getElementById("device-style")
-        .setAttribute(
-          "href",
-          `/static/css/mobile.css?h=${this.props.css_hash}`
-        );
+      document.getElementById("device-style").setAttribute("href", `/static/css/mobile.css?h=${this.props.css_hash}`);
     this.state = {
       colors: colorDict(),
       theme: makeTheme(),
@@ -48,17 +43,13 @@ class App extends React.Component {
 
   componentDidMount() {
     // Get notified when the desktop theme is changed
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        let mode = e.matches ? "dark" : "light";
-        this.setState({
-          colors: colorDict(mode),
-          theme: makeTheme(mode),
-        });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      let mode = e.matches ? "dark" : "light";
+      this.setState({
+        colors: colorDict(mode),
+        theme: makeTheme(mode),
       });
-    document.getElementById("versionTag").innerHTML =
-      `v${version}` + ` <div class="lite">(${this.props.code_hash})</div>`;
+    });
   }
 
   render() {

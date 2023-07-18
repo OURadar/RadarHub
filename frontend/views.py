@@ -16,7 +16,10 @@ radar_names = dict([(x['folder'].lower(), x['name']) for x in settings.RADARS.va
 default_pathway = pathways[0]
 
 if settings.DEBUG:
-    show = color_name_value('settings.CSS_HASH', settings.CSS_HASH)
+    show = color_name_value('settings.CODE_HASH', settings.CODE_HASH) + '\n' \
+         + color_name_value('settings.CSS_HASH', settings.CSS_HASH) + '\n' \
+         + color_name_value('settings.VERSION', settings.VERSION) + '\n' \
+         + color_name_value('settings.BRANCH', settings.BRANCH)
     print(show)
 
 #
@@ -38,6 +41,7 @@ def make_vars(request, pathway=default_pathway):
         'css_hash': settings.CSS_HASH,
         'code_hash': settings.CODE_HASH,
         'version': settings.VERSION,
+        'branch': settings.BRANCH,
         'origin': origin,
         'pathway': pathway,
         'name': radar_names[pathway]
@@ -50,13 +54,21 @@ def index(request):
     context = {
         'vars': vars,
         'css': settings.CSS_HASH,
+        'code': settings.CODE_HASH,
+        'branch': settings.BRANCH,
         'version': settings.VERSION
     }
     return render(request, 'frontend/index.html', context)
 
 def develop(request, pathway):
     vars = make_vars(request, pathway)
-    context = {'vars': vars, 'css': settings.CSS_HASH}
+    context = {
+        'vars': vars,
+        'css': settings.CSS_HASH,
+        'code': settings.CODE_HASH,
+        'branch': settings.BRANCH,
+        'version': settings.VERSION
+    }
     return render(request, 'frontend/develop.html', context)
 
 # Control

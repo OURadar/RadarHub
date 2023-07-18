@@ -171,6 +171,30 @@ export function App(props) {
         }
       }
     });
+
+    let timeout;
+    let updateMode;
+    window.addEventListener("blur", (_e) => {
+      updateMode = archive.current.state.liveUpdate;
+      if (updateMode != "offline") {
+        // console.log("Setting timeout ...");
+        timeout = setTimeout(() => {
+          console.log("Timeout. Disabling live update ...");
+          archive.current.disableLiveUpdate();
+          timeout = null;
+        }, 30000);
+      }
+    });
+    window.addEventListener("focus", (_e) => {
+      if (timeout) {
+        // console.log("Clearing timeout ...");
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      if (updateMode != "offline" && archive.current.state.liveUpdate == "offline") {
+        archive.current.enableLiveUpdate();
+      }
+    });
     handleOverlayLoad();
   }, []);
 
