@@ -179,28 +179,20 @@ class Gesture {
       "touchstart",
       (e) => {
         let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
-        const rect = this.element.getBoundingClientRect();
-        if (x - rect.left > this.bounds.left && rect.bottom - y > this.bounds.bottom) {
-          e.preventDefault();
-          this.panInProgress = true;
-          if (e.targetTouches.length == 3) {
-            this.tiltInProgress = true;
-            console.log("touchstart -> tiltInProgress = true");
-          }
-        }
+        this.rect = this.element.getBoundingClientRect();
         this.pointX = x;
         this.pointY = y;
         this.pointU = u;
         this.pointV = v;
         this.pointD = d;
         this.scale = 1;
-        this.rect = rect;
         this.hasTouch = true;
         this.message = "touchstart";
       },
       { passive: false }
     );
     this.element.addEventListener("touchend", (e) => {
+      // const panTiltZoom = this.panInProgress || this.tiltInProgress;
       if (e.targetTouches.length > 0) {
         let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
         this.pointX = x;
@@ -231,13 +223,18 @@ class Gesture {
       } else {
         // single tap
         this.message = "touchend: pending single / double";
+        // console.log(`Gesture.touchend  panTiltZoom = ${panTiltZoom}`);
         this.singleTapTimeout = setTimeout(() => {
           clearTimeout(this.singleTapTimeout);
           this.singleTapTimeout = null;
           this.message = `touchend: single tap (${delta} ms)`;
-          this.handleSingleTap(this.pointX, this.pointY);
+          // if (!panTiltZoom) {
+          //   console.log(`Gesture.touchend  handleSingleTap`);
+          //   this.handleSingleTap(this.pointX, this.pointY);
+          // }
         }, 300);
       }
+      this.hasTouch = false;
       this.lastTapTime = now;
     });
     this.element.addEventListener("touchcancel", (_e) => {
@@ -254,6 +251,17 @@ class Gesture {
         let m = "";
         let dx = x - this.pointX;
         let dy = this.pointY - y;
+        // const rect = this.element.getBoundingClientRect();
+        if (x - this.rect.left > this.bounds.left && this.rect.bottom - y > this.bounds.bottom) {
+          e.preventDefault();
+          if (dx != 0 || dy != 0) {
+            this.panInProgress = true;
+            if (e.targetTouches.length == 3) {
+              this.tiltInProgress = true;
+              console.log("touchstart -> tiltInProgress = true");
+            }
+          }
+        }
         if (this.tiltInProgress === true) {
           e.preventDefault();
           this.handleTilt(dx, dy);

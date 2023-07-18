@@ -41,7 +41,6 @@ class GLView extends Component {
       this.stats = new Stats();
       this.stats.domElement.className = "canvasStats";
     }
-    // this.captionBox =
     this.constants = {
       rings: common.tickChoices(1, 150),
       bounds: {

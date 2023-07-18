@@ -271,7 +271,7 @@ class Product extends GLView {
         <Symbol
           id="symbol"
           text={this.style.name}
-          symbol={this.style.name}
+          symbol={this.palette.symbol}
           onTouch={this.props.onColorbarTouch}
           onClick={this.props.onColorbarClick}
         />
