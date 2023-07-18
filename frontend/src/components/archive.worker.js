@@ -44,7 +44,7 @@ let grid = {
 let state = {
   update: "scan",
   frames: 1,
-  verbose: 1,
+  verbose: 0,
 };
 let sweeps = [];
 const namecolor = "#bf9140";
@@ -138,11 +138,8 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
     day = dayjs.utc(date * 1000);
   }
   if (state.verbose) {
-    console.log(
-      `%carchive.worker.onmessage%c task = ${task}   day = ${day.format("YYYYMMDD-HHMM")}`,
-      "color: hotpink",
-      ""
-    );
+    let more = day > 0 ? `   day = ${day.format("YYYYMMDD-HHMM")}` : "";
+    console.log(`%carchive.worker.onmessage%c ${task}${more}`, "color: hotpink", "");
   }
   if (task == "init") {
     init(name);
@@ -404,10 +401,7 @@ function list(day, symbol, mode = "select") {
     grid.symbol = symbol;
     grid.tic++;
     setGridIndex(index);
-    self.postMessage({
-      type: "list",
-      grid: grid,
-    });
+    self.postMessage({ type: "list", grid: grid });
     return;
   }
   // Different time, fetch from the server
@@ -419,7 +413,7 @@ function list(day, symbol, mode = "select") {
           if (state.verbose > 1) {
             console.debug("list buffer", buffer);
           }
-          let index = suggestGridIndex(mode, buffer);
+          grid.tic++;
           grid.hour = buffer.hour;
           grid.symbol = symbol;
           grid.hourHasData = buffer.hoursActive.map((x) => x > 0);
@@ -436,13 +430,15 @@ function list(day, symbol, mode = "select") {
           grid.moreBefore = buffer.moreBefore;
           grid.moreAfter = buffer.moreAfter;
           reviseGridItemsGrouped();
+          let index = suggestGridIndex(mode, buffer);
           if (mode == "prepend" || mode == "append") {
             grid.index = index;
+            self.postMessage({ type: "list", grid: grid });
           } else {
             setGridIndex(index);
           }
-          grid.tic++;
-          self.postMessage({ type: "list", grid: grid });
+          if (mode !== "select") {
+          }
           if (grid.hour < 0) {
             self.postMessage({ type: "message", payload: "No Data" });
             return;
@@ -642,9 +638,6 @@ function catchup() {
             console.debug("grid.items", grid.items);
             console.debug("grid.itemsGrouped", grid.itemsGrouped);
           }
-          // Go ahead a set grid.index before setGridIndex() finishes loading the file
-          // grid.index = index;
-          // grid.tic++;
           self.postMessage({
             type: "list",
             grid: grid,

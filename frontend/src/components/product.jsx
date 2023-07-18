@@ -368,11 +368,9 @@ class Product extends GLView {
     } else if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
-      // if (this.assetsComplete) {
-      //   this.loadStyle(this.props.sweeps[0].symbol);
-      // }
     } else if (this.props.sweeps.length > 0 && this.palette.symbol != this.props.sweeps[0].symbol) {
       this.loadStyle(this.props.sweeps[0].symbol);
+      this.updateAssets();
     }
     this.regl.clear({
       color: this.props.colors.glview,
@@ -414,7 +412,6 @@ class Product extends GLView {
   }
 
   tap(x, y) {
-    console.log("Product.tap");
     if (
       x > 0.3 * this.mount.clientWidth &&
       x < 0.7 * this.mount.clientWidth &&

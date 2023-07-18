@@ -235,6 +235,7 @@ class Gesture {
           clearTimeout(this.singleTapTimeout);
           this.singleTapTimeout = null;
           this.message = `touchend: single tap (${delta} ms)`;
+          this.handleSingleTap(this.pointX, this.pointY);
         }, 300);
       }
       this.lastTapTime = now;

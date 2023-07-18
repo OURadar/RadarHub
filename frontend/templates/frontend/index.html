@@ -24,11 +24,11 @@
       <p><a class="link subtle" href="/accounts/signin/">Sign In</a></p>
     {% endif %}
     <div id="versionTag">v{{version}}<div class="lite">&nbsp;</div></div>
-    {% if version == "1.0" %}
+    {% if version == "1.0" and user.is_authenticated and user.is_staff %}
       <div class="spacer25"></div>
-      <a class="link subtle" href="/dev/px1000/">Preview PX-1000</a>
+      <a class="link subtle" href="/dev/px1000/">Experiment #1</a>
       <div class="inline padded"></div>
-      <a class="link subtle" href="/dev/demo/">Preview Demo</a>
+      <a class="link subtle" href="/dev/demo/">Experiment #2</a>
       <div class="spacer25"></div>
     {% endif %}
   </div>

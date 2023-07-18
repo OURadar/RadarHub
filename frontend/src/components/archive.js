@@ -27,7 +27,7 @@ class Archive extends Ingest {
       productSwitching: false,
       sweepLoading: false,
       loadCount: 0,
-      verbose: 1,
+      verbose: 0,
     };
     this.ageTimer = setInterval(() => this.updateAge(), 1000);
     this.messageTimer = null;
@@ -55,6 +55,7 @@ class Archive extends Ingest {
       this.data.sweeps = payload;
       this.grid = grid;
       this.state.loadCount++;
+      this.state.itemsUpdating = false;
       this.state.sweepLoading = false;
       if (this.state.verbose) {
         console.log(
