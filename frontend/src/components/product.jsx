@@ -47,13 +47,7 @@ class Product extends GLView {
       ticks: [],
       index: 0,
     };
-    this.assets = new Array(1).fill({
-      time: 0,
-      data: null,
-      points: null,
-      origins: null,
-      elements: null,
-    });
+    this.assets = [];
     var image = new Image();
     image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
@@ -281,7 +275,7 @@ class Product extends GLView {
   }
 
   updateAssets() {
-    if (this.props.sweep == null && this.props.sweeps.length == 0) {
+    if (this.props.sweeps.length == 0) {
       return;
     }
 

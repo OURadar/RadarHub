@@ -193,7 +193,6 @@ export function App(props) {
                 gravity="top"
                 colors={colors}
                 origin={props.origin}
-                sweep={archive.current?.data.sweep}
                 sweeps={archive.current?.data.sweeps}
                 onOverlayLoad={handleOverlayLoad}
                 onColorbarTouch={handleColorbarTouch}
@@ -240,7 +239,6 @@ export function App(props) {
                 <Product
                   colors={colors}
                   origin={props.origin}
-                  sweep={archive.current?.data.sweep}
                   sweeps={archive.current?.data.sweeps}
                   onOverlayLoad={handleOverlayLoad}
                   onColorbarClick={handleColorbarClick}
