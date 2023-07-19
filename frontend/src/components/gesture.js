@@ -160,6 +160,7 @@ class Gesture {
           this.singleTapTimeout = setTimeout(() => {
             clearTimeout(this.singleTapTimeout);
             this.singleTapTimeout = null;
+            this.handleSingleTap(this.pointX, this.pointY);
             // this.message = `touchend: single tap (${delta} ms)`;
           }, 300);
         }
