@@ -44,68 +44,106 @@ class Gesture {
     this.inbound = this.inbound.bind(this);
     this.setTilt = this.setTilt.bind(this);
 
-    this.element.addEventListener("focus", (e) => {
-      console.log(`focus ${e.offsetX}`);
-    });
-    this.element.addEventListener("mousedown", (e) => {
-      if (this.inbound(e)) {
-        this.mouseDown = true;
-        this.pointX = e.offsetX;
-        this.pointY = e.offsetY;
-        this.rect = this.element.getBoundingClientRect();
-      }
-    });
-    this.element.addEventListener("mousemove", (e) => {
-      e.preventDefault();
-      let deltaX = e.offsetX - this.pointX;
-      let deltaY = this.pointY - e.offsetY;
-      if (this.mouseDown && (deltaX != 0 || deltaY != 0)) {
-        if (e.altKey) {
-          this.tiltInProgress = true;
-        } else if (e.ctrlKey) {
-          this.rollInProgress = true;
+    const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+
+    if (isTouchDevice) {
+      this.element.addEventListener(
+        "touchstart",
+        (e) => {
+          let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
+          this.rect = this.element.getBoundingClientRect();
+          this.pointX = x;
+          this.pointY = y;
+          this.pointU = u;
+          this.pointV = v;
+          this.pointD = d;
+          this.scale = 1;
+          this.hasTouch = true;
+          this.message = "touchstart";
+        },
+        { passive: false }
+      );
+      this.element.addEventListener(
+        "touchmove",
+        (e) => {
+          let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
+          let s = 1.0;
+          let m = "";
+          let dx = x - this.pointX;
+          let dy = this.pointY - y;
+          // const rect = this.element.getBoundingClientRect();
+          if (x - this.rect.left > this.bounds.left && this.rect.bottom - y > this.bounds.bottom) {
+            e.preventDefault();
+            if (dx != 0 || dy != 0) {
+              this.panInProgress = true;
+              if (e.targetTouches.length == 3) {
+                this.tiltInProgress = true;
+                console.log("touchstart -> tiltInProgress = true");
+              }
+            }
+          }
+          if (this.tiltInProgress === true) {
+            e.preventDefault();
+            this.handleTilt(dx, dy);
+            this.pointX = x;
+            this.pointY = y;
+            this.pointU = u;
+            this.pointV = v;
+            this.pointD = d;
+          } else if (this.panInProgress === true) {
+            e.preventDefault();
+            if (e.targetTouches.length == 2) {
+              if (e.scale) {
+                s = e.scale / this.scale;
+                this.scale = e.scale;
+                m = "s";
+              } else if (d > 10) {
+                s = d / this.pointD;
+                m = "d";
+              }
+              this.handleDolly(u > 10 ? u / this.pointU : 1, v > 10 ? v / this.pointV : 1, s, x, y);
+            }
+            if (e.targetTouches.length == 2 && this.tick < 3 && dy > 1.0 && s < 1.02 && d < 150) {
+              // console.log(
+              //   `tick = ${this.tick}  touches = ${e.targetTouches.length}  dy = ${dy}   s = ${s}  d = ${d}`
+              // );
+              this.tiltInProgress = true;
+              this.handleTilt(dx, dy);
+            } else {
+              this.handlePan(dx, dy);
+            }
+            this.pointX = x;
+            this.pointY = y;
+            this.pointU = u;
+            this.pointV = v;
+            this.pointD = d;
+          }
+          this.message = `touchmove (${x}, ${y}) / ${s.toFixed(4)}${m} `;
+          this.tick++;
+          // console.log(`tick = ${this.tick}`);
+        },
+        { passive: false }
+      );
+      this.element.addEventListener("touchend", (e) => {
+        // const panTiltZoom = this.panInProgress || this.tiltInProgress;
+        if (e.targetTouches.length > 0) {
+          let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
+          this.pointX = x;
+          this.pointY = y;
+          this.pointU = u;
+          this.pointV = v;
+          this.pointD = d;
+          if (e.targetTouches.length < 2) {
+            this.tiltInProgress = false;
+            this.rollInProgress = false;
+          }
+          return;
         } else {
-          this.panInProgress = true;
-        }
-      }
-      if (this.panInProgress === true) {
-        this.handlePan(deltaX, deltaY);
-      } else if (this.tiltInProgress === true) {
-        this.handleTilt(deltaX, deltaY);
-      } else if (this.rollInProgress === true) {
-        this.handleRoll(deltaX, deltaY);
-      } else if (this.inbound(e)) {
-        if (e.shiftKey) {
-          this.panInProgress = true;
-          // console.log("pan mode");
-        } else if (e.altKey) {
-          this.tiltInProgress = true;
-          // console.log("tilt mode");
-        } else if (e.ctrlKey) {
-          this.rollInProgress = true;
-        } else {
+          this.tick = 0;
           this.panInProgress = false;
           this.tiltInProgress = false;
           this.rollInProgress = false;
         }
-      } else {
-        this.panInProgress = false;
-        this.tiltInProgress = false;
-        this.rollInProgress = false;
-      }
-      this.pointX = e.offsetX;
-      this.pointY = e.offsetY;
-      // this.message = `mousemove (${this.pointX}, ${this.pointY})`;
-      // console.log(this.message);
-    });
-    this.element.addEventListener("mouseup", (e) => {
-      if (this.panInProgress === true) {
-        this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
-      } else if (this.tiltInProgress === true) {
-        this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
-      } else if (this.rollInProgress === true) {
-        this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
-      } else {
         const now = Date.now();
         const delta = now - this.lastTapTime;
         if (this.singleTapTimeout !== null) {
@@ -113,24 +151,114 @@ class Gesture {
           this.singleTapTimeout = null;
         }
         if (delta > 90 && delta < 300 && now - this.lastMagnifyTime > 300) {
+          // this.message = `touchend: double tap (${delta} ms)`;
           this.handleDoubleTap(this.pointX, this.pointY);
         } else {
           // single tap
+          // this.message = "touchend: pending single / double";
+          // console.log(`Gesture.touchend  panTiltZoom = ${panTiltZoom}`);
           this.singleTapTimeout = setTimeout(() => {
             clearTimeout(this.singleTapTimeout);
             this.singleTapTimeout = null;
-            this.handleSingleTap(this.pointX, this.pointY);
+            // this.message = `touchend: single tap (${delta} ms)`;
           }, 300);
         }
+        this.hasTouch = false;
         this.lastTapTime = now;
-      }
-      this.pointX = e.offsetX;
-      this.pointY = e.offsetY;
-      this.panInProgress = false;
-      this.tiltInProgress = false;
-      this.rollInProgress = false;
-      this.mouseDown = false;
-    });
+      });
+      this.element.addEventListener("touchcancel", (_e) => {
+        this.panInProgress = false;
+        this.tiltInProgress = false;
+        this.rollInProgress = false;
+        this.message = "touchcancel";
+      });
+    } else {
+      this.element.addEventListener("mousedown", (e) => {
+        if (this.inbound(e)) {
+          this.mouseDown = true;
+          this.pointX = e.offsetX;
+          this.pointY = e.offsetY;
+          this.rect = this.element.getBoundingClientRect();
+        }
+      });
+      this.element.addEventListener("mousemove", (e) => {
+        e.preventDefault();
+        let deltaX = e.offsetX - this.pointX;
+        let deltaY = this.pointY - e.offsetY;
+        if (this.mouseDown && (deltaX != 0 || deltaY != 0)) {
+          if (e.altKey) {
+            this.tiltInProgress = true;
+          } else if (e.ctrlKey) {
+            this.rollInProgress = true;
+          } else {
+            this.panInProgress = true;
+          }
+        }
+        if (this.panInProgress === true) {
+          this.handlePan(deltaX, deltaY);
+        } else if (this.tiltInProgress === true) {
+          this.handleTilt(deltaX, deltaY);
+        } else if (this.rollInProgress === true) {
+          this.handleRoll(deltaX, deltaY);
+        } else if (this.inbound(e)) {
+          if (e.shiftKey) {
+            this.panInProgress = true;
+            // console.log("pan mode");
+          } else if (e.altKey) {
+            this.tiltInProgress = true;
+            // console.log("tilt mode");
+          } else if (e.ctrlKey) {
+            this.rollInProgress = true;
+          } else {
+            this.panInProgress = false;
+            this.tiltInProgress = false;
+            this.rollInProgress = false;
+          }
+        } else {
+          this.panInProgress = false;
+          this.tiltInProgress = false;
+          this.rollInProgress = false;
+        }
+        this.pointX = e.offsetX;
+        this.pointY = e.offsetY;
+        // this.message = `mousemove (${this.pointX}, ${this.pointY})`;
+        // console.log(this.message);
+      });
+      this.element.addEventListener("mouseup", (e) => {
+        if (this.panInProgress === true) {
+          this.handlePan(e.offsetX - this.pointX, this.pointY - e.offsetY);
+        } else if (this.tiltInProgress === true) {
+          this.handleTilt(e.offsetX - this.pointX, this.pointY - e.offsetY);
+        } else if (this.rollInProgress === true) {
+          this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
+        } else {
+          const now = Date.now();
+          const delta = now - this.lastTapTime;
+          if (this.singleTapTimeout !== null) {
+            clearTimeout(this.singleTapTimeout);
+            this.singleTapTimeout = null;
+          }
+          if (delta > 90 && delta < 300 && now - this.lastMagnifyTime > 300) {
+            this.handleDoubleTap(this.pointX, this.pointY);
+          } else {
+            // single tap
+            this.singleTapTimeout = setTimeout(() => {
+              clearTimeout(this.singleTapTimeout);
+              this.singleTapTimeout = null;
+              this.handleSingleTap(this.pointX, this.pointY);
+            }, 300);
+          }
+          this.lastTapTime = now;
+        }
+        this.pointX = e.offsetX;
+        this.pointY = e.offsetY;
+        this.panInProgress = false;
+        this.tiltInProgress = false;
+        this.rollInProgress = false;
+        this.mouseDown = false;
+      });
+    }
+
     // window.addEventListener("keydown", (e) => {
     //   console.log(`keydown ${e.offsetX}, ${e.offsetY}`);
     //   if (this.inbound(e)) {
@@ -188,131 +316,6 @@ class Gesture {
             e.offsetY
           } < ${this.element.height - this.bounds.bottom}`;
         this.bounds.top + ", " + this.element.height;
-      },
-      { passive: false }
-    );
-    this.element.addEventListener(
-      "touchstart",
-      (e) => {
-        let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
-        this.rect = this.element.getBoundingClientRect();
-        this.pointX = x;
-        this.pointY = y;
-        this.pointU = u;
-        this.pointV = v;
-        this.pointD = d;
-        this.scale = 1;
-        this.hasTouch = true;
-        this.message = "touchstart";
-      },
-      { passive: false }
-    );
-    this.element.addEventListener("touchend", (e) => {
-      // const panTiltZoom = this.panInProgress || this.tiltInProgress;
-      if (e.targetTouches.length > 0) {
-        let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
-        this.pointX = x;
-        this.pointY = y;
-        this.pointU = u;
-        this.pointV = v;
-        this.pointD = d;
-        if (e.targetTouches.length < 2) {
-          this.tiltInProgress = false;
-          this.rollInProgress = false;
-        }
-        return;
-      } else {
-        this.tick = 0;
-        this.panInProgress = false;
-        this.tiltInProgress = false;
-        this.rollInProgress = false;
-      }
-      const now = Date.now();
-      const delta = now - this.lastTapTime;
-      if (this.singleTapTimeout !== null) {
-        clearTimeout(this.singleTapTimeout);
-        this.singleTapTimeout = null;
-      }
-      if (delta > 90 && delta < 300 && now - this.lastMagnifyTime > 300) {
-        // this.message = `touchend: double tap (${delta} ms)`;
-        this.handleDoubleTap(this.pointX, this.pointY);
-      } else {
-        // single tap
-        // this.message = "touchend: pending single / double";
-        // console.log(`Gesture.touchend  panTiltZoom = ${panTiltZoom}`);
-        this.singleTapTimeout = setTimeout(() => {
-          clearTimeout(this.singleTapTimeout);
-          this.singleTapTimeout = null;
-          // this.message = `touchend: single tap (${delta} ms)`;
-        }, 300);
-      }
-      this.hasTouch = false;
-      this.lastTapTime = now;
-    });
-    this.element.addEventListener("touchcancel", (_e) => {
-      this.panInProgress = false;
-      this.tiltInProgress = false;
-      this.rollInProgress = false;
-      this.message = "touchcancel";
-    });
-    this.element.addEventListener(
-      "touchmove",
-      (e) => {
-        let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
-        let s = 1.0;
-        let m = "";
-        let dx = x - this.pointX;
-        let dy = this.pointY - y;
-        // const rect = this.element.getBoundingClientRect();
-        if (x - this.rect.left > this.bounds.left && this.rect.bottom - y > this.bounds.bottom) {
-          e.preventDefault();
-          if (dx != 0 || dy != 0) {
-            this.panInProgress = true;
-            if (e.targetTouches.length == 3) {
-              this.tiltInProgress = true;
-              console.log("touchstart -> tiltInProgress = true");
-            }
-          }
-        }
-        if (this.tiltInProgress === true) {
-          e.preventDefault();
-          this.handleTilt(dx, dy);
-          this.pointX = x;
-          this.pointY = y;
-          this.pointU = u;
-          this.pointV = v;
-          this.pointD = d;
-        } else if (this.panInProgress === true) {
-          e.preventDefault();
-          if (e.targetTouches.length == 2) {
-            if (e.scale) {
-              s = e.scale / this.scale;
-              this.scale = e.scale;
-              m = "s";
-            } else if (d > 10) {
-              s = d / this.pointD;
-              m = "d";
-            }
-            this.handleDolly(u > 10 ? u / this.pointU : 1, v > 10 ? v / this.pointV : 1, s, x, y);
-          }
-          if (e.targetTouches.length == 2 && this.tick < 3 && dy > 1.0 && s < 1.02 && d < 150) {
-            // console.log(
-            //   `tick = ${this.tick}  touches = ${e.targetTouches.length}  dy = ${dy}   s = ${s}  d = ${d}`
-            // );
-            this.tiltInProgress = true;
-            this.handleTilt(dx, dy);
-          } else {
-            this.handlePan(dx, dy);
-          }
-          this.pointX = x;
-          this.pointY = y;
-          this.pointU = u;
-          this.pointV = v;
-          this.pointD = d;
-        }
-        this.message = `touchmove (${x}, ${y}) / ${s.toFixed(4)}${m} `;
-        this.tick++;
-        // console.log(`tick = ${this.tick}`);
       },
       { passive: false }
     );
