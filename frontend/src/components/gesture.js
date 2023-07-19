@@ -125,7 +125,29 @@ class Gesture {
         { passive: false }
       );
       this.element.addEventListener("touchend", (e) => {
-        // const panTiltZoom = this.panInProgress || this.tiltInProgress;
+        const panTiltZoom = this.panInProgress || this.tiltInProgress;
+        if (!panTiltZoom) {
+          const now = Date.now();
+          const delta = now - this.lastTapTime;
+          if (this.singleTapTimeout !== null) {
+            clearTimeout(this.singleTapTimeout);
+            this.singleTapTimeout = null;
+          }
+          if (delta > 90 && delta < 300 && now - this.lastMagnifyTime > 300) {
+            // this.message = `touchend: double tap (${delta} ms)`;
+            this.handleDoubleTap(this.pointX, this.pointY);
+          } else {
+            // single tap
+            // this.message = "touchend: pending single / double";
+            // console.log(`Gesture.touchend  panTiltZoom = ${panTiltZoom}`);
+            this.singleTapTimeout = setTimeout(() => {
+              clearTimeout(this.singleTapTimeout);
+              this.singleTapTimeout = null;
+              this.handleSingleTap(this.pointX, this.pointY);
+              // this.message = `touchend: single tap (${delta} ms)`;
+            }, 300);
+          }
+        }
         if (e.targetTouches.length > 0) {
           let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
           this.pointX = x;
@@ -143,26 +165,6 @@ class Gesture {
           this.panInProgress = false;
           this.tiltInProgress = false;
           this.rollInProgress = false;
-        }
-        const now = Date.now();
-        const delta = now - this.lastTapTime;
-        if (this.singleTapTimeout !== null) {
-          clearTimeout(this.singleTapTimeout);
-          this.singleTapTimeout = null;
-        }
-        if (delta > 90 && delta < 300 && now - this.lastMagnifyTime > 300) {
-          // this.message = `touchend: double tap (${delta} ms)`;
-          this.handleDoubleTap(this.pointX, this.pointY);
-        } else {
-          // single tap
-          // this.message = "touchend: pending single / double";
-          // console.log(`Gesture.touchend  panTiltZoom = ${panTiltZoom}`);
-          this.singleTapTimeout = setTimeout(() => {
-            clearTimeout(this.singleTapTimeout);
-            this.singleTapTimeout = null;
-            this.handleSingleTap(this.pointX, this.pointY);
-            // this.message = `touchend: single tap (${delta} ms)`;
-          }, 300);
         }
         this.hasTouch = false;
         this.lastTapTime = now;
