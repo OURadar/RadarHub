@@ -469,6 +469,7 @@ function append() {
 }
 
 async function load(names) {
+  let count = 0;
   await Promise.all(
     names.map(async (name, index) => {
       const url = `/data/load/${pathway}/${name}/`;
@@ -486,7 +487,13 @@ async function load(names) {
                 ...createSweep(name),
                 ...sweepParser.parse(new Uint8Array(buffer)),
               });
+              if (sweep.nb == 0 || sweep.nr == 0) {
+                console.log(sweep);
+                self.postMessage({ type: "message", payload: `Empty sweep ${name}` });
+                return null;
+              }
               let components = sweep.name.split("-");
+              let scan = sweep.isRHI ? `Az ${sweep.scanAzimuth.toFixed(1)}` : `El ${sweep.scanElevation.toFixed(1)}`;
               sweep.timeString =
                 `${components[0].slice(0, 4)}/` +
                 `${components[0].slice(4, 6)}/` +
@@ -494,23 +501,15 @@ async function load(names) {
                 `${components[1].slice(0, 2)}:` +
                 `${components[1].slice(2, 4)}:` +
                 `${components[1].slice(4, 6)} UTC`;
+              sweep.titleString = `${sweep.timeString}   ${scan}°`;
               sweep.symbol = components[3].split(".")[0];
-              sweep.titleString =
-                sweep.timeString +
-                "   " +
-                (sweep.isRHI ? `Az ${sweep.scanAzimuth.toFixed(1)}` : `El ${sweep.scanElevation.toFixed(1)}`) +
-                "°";
               sweep.info = JSON.parse(sweep.info);
-              sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\n` + `Waveform: ${sweep.info.waveform}`;
-              if (sweep.nb == 0 || sweep.nr == 0) {
-                console.log(sweep);
-                self.postMessage({ type: "message", payload: `Failed to load ${name}` });
-                return;
-              }
+              sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\nWaveform: ${sweep.info.waveform}`;
+              count++;
               if (names.length > 1) {
-                let message = `Loaded frame ... ${index} / ${names.length}`;
+                let message = `Loaded frame ... ${count} / ${names.length}`;
                 self.postMessage({ type: "message", payload: message });
-                self.postMessage({ type: "progress", payload: Math.floor((index / names.length) * 100) });
+                self.postMessage({ type: "progress", payload: Math.floor((count / names.length) * 100) });
               }
               return sweep;
             });
@@ -529,7 +528,7 @@ async function load(names) {
   ).then((sweeps) => {
     if (sweeps.length > 1) {
       self.postMessage({ type: "progress", payload: 100 });
-      sweeps.sort((a, b) => a.time - b.time);
+      // sweeps.sort((a, b) => a.time - b.time);
     }
     grid.last = sweeps.at(-1).name;
     let scan = grid.last.split("-").at(2);
