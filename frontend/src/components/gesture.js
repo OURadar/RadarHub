@@ -106,7 +106,23 @@ class Gesture {
       } else if (this.rollInProgress === true) {
         this.handleRoll(e.offsetX - this.pointX, this.pointY - e.offsetY);
       } else {
-        this.handleSingleTap(this.pointX, this.pointY);
+        const now = Date.now();
+        const delta = now - this.lastTapTime;
+        if (this.singleTapTimeout !== null) {
+          clearTimeout(this.singleTapTimeout);
+          this.singleTapTimeout = null;
+        }
+        if (delta > 90 && delta < 300 && now - this.lastMagnifyTime > 300) {
+          this.handleDoubleTap(this.pointX, this.pointY);
+        } else {
+          // single tap
+          this.singleTapTimeout = setTimeout(() => {
+            clearTimeout(this.singleTapTimeout);
+            this.singleTapTimeout = null;
+            this.handleSingleTap(this.pointX, this.pointY);
+          }, 300);
+        }
+        this.lastTapTime = now;
       }
       this.pointX = e.offsetX;
       this.pointY = e.offsetY;
@@ -218,20 +234,16 @@ class Gesture {
         this.singleTapTimeout = null;
       }
       if (delta > 90 && delta < 300 && now - this.lastMagnifyTime > 300) {
-        this.message = `touchend: double tap (${delta} ms)`;
+        // this.message = `touchend: double tap (${delta} ms)`;
         this.handleDoubleTap(this.pointX, this.pointY);
       } else {
         // single tap
-        this.message = "touchend: pending single / double";
+        // this.message = "touchend: pending single / double";
         // console.log(`Gesture.touchend  panTiltZoom = ${panTiltZoom}`);
         this.singleTapTimeout = setTimeout(() => {
           clearTimeout(this.singleTapTimeout);
           this.singleTapTimeout = null;
-          this.message = `touchend: single tap (${delta} ms)`;
-          // if (!panTiltZoom) {
-          //   console.log(`Gesture.touchend  handleSingleTap`);
-          //   this.handleSingleTap(this.pointX, this.pointY);
-          // }
+          // this.message = `touchend: single tap (${delta} ms)`;
         }, 300);
       }
       this.hasTouch = false;
