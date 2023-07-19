@@ -46,7 +46,6 @@ let state = {
   frames: 1,
   verbose: 0,
 };
-let sweeps = [];
 const namecolor = "#bf9140";
 
 const sweepParser = new Parser()
@@ -470,9 +469,8 @@ function append() {
 }
 
 async function load(names) {
-  sweeps = [];
   await Promise.all(
-    names.map(async (name) => {
+    names.map(async (name, index) => {
       const url = `/data/load/${pathway}/${name}/`;
       console.info(`%carchive.worker.load %c${url}%c`, `color: ${namecolor}`, "color: dodgerblue", "");
       if (names.length > 1) {
@@ -481,9 +479,9 @@ async function load(names) {
         self.postMessage({ type: "progress", payload: 100 });
       }
       return fetch(url, { cache: "force-cache" })
-        .then((response) => {
+        .then(async (response) => {
           if (response.status == 200) {
-            response.arrayBuffer().then((buffer) => {
+            return response.arrayBuffer().then((buffer) => {
               let sweep = geometry({
                 ...createSweep(name),
                 ...sweepParser.parse(new Uint8Array(buffer)),
@@ -504,45 +502,23 @@ async function load(names) {
                 "°";
               sweep.info = JSON.parse(sweep.info);
               sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\n` + `Waveform: ${sweep.info.waveform}`;
-              let scan = components[2];
-              if (state.verbose > 1) {
-                console.debug(
-                  `%carchive.worker.load%c grid.scan = %c${scan}%c ← ${grid.scan}`,
-                  `color: ${namecolor}`,
-                  "",
-                  "color: dodgerblue",
-                  ""
-                );
-              }
               if (sweep.nb == 0 || sweep.nr == 0) {
                 console.log(sweep);
-                self.postMessage({
-                  type: "message",
-                  payload: `Failed to load ${name}`,
-                });
+                self.postMessage({ type: "message", payload: `Failed to load ${name}` });
                 return;
               }
-              sweeps.push(sweep);
               if (names.length > 1) {
-                let message = `Loaded frame ... ${sweeps.length} / ${names.length}`;
+                let message = `Loaded frame ... ${index} / ${names.length}`;
                 self.postMessage({ type: "message", payload: message });
-                self.postMessage({ type: "progress", payload: Math.floor((sweeps.length / names.length) * 100) });
+                self.postMessage({ type: "progress", payload: Math.floor((index / names.length) * 100) });
               }
-              if (sweeps.length == names.length) {
-                if (sweeps.length > 1) {
-                  self.postMessage({ type: "progress", payload: 100 });
-                  sweeps.sort((a, b) => a.time - b.time);
-                }
-                grid.last = sweeps.at(-1).name;
-                grid.scan = scan;
-                grid.tic++;
-                self.postMessage({ type: "load", grid: grid, payload: sweeps });
-              }
+              return sweep;
             });
           } else {
-            response.text().then((text) => {
+            return response.text().then((text) => {
               console.info(text);
               self.postMessage({ type: "reset", payload: text });
+              return false;
             });
           }
         })
@@ -550,7 +526,26 @@ async function load(names) {
           console.error(`Unexpected error ${error}`);
         });
     })
-  );
+  ).then((sweeps) => {
+    if (sweeps.length > 1) {
+      self.postMessage({ type: "progress", payload: 100 });
+      sweeps.sort((a, b) => a.time - b.time);
+    }
+    grid.last = sweeps.at(-1).name;
+    let scan = grid.last.split("-").at(2);
+    if (state.verbose > 1) {
+      console.debug(
+        `%carchive.worker.load%c grid.scan = %c${scan}%c ← ${grid.scan}`,
+        `color: ${namecolor}`,
+        "",
+        "color: dodgerblue",
+        ""
+      );
+    }
+    grid.scan = scan;
+    grid.tic++;
+    self.postMessage({ type: "load", grid: grid, payload: sweeps });
+  });
 }
 
 function dummy() {
