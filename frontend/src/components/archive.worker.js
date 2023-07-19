@@ -472,6 +472,11 @@ function append() {
 function load(name) {
   const url = `/data/load/${pathway}/${name}/`;
   console.info(`%carchive.worker.load %c${url}%c`, `color: ${namecolor}`, "color: dodgerblue", "");
+  if (state.frames > 1) {
+    self.postMessage({ type: "progress", payload: 1 });
+  } else {
+    self.postMessage({ type: "progress", payload: 100 });
+  }
   fetch(url, { cache: "force-cache" })
     .then((response) => {
       if (response.status == 200) {
@@ -515,8 +520,16 @@ function load(name) {
             return;
           }
           sweeps.push(sweep);
+          if (state.frames > 1) {
+            let message = `Loaded frame ... ${sweeps.length} / ${state.frames}`;
+            self.postMessage({ type: "message", payload: message });
+            self.postMessage({ type: "progress", payload: Math.floor((sweeps.length / state.frames) * 100) });
+          }
           if (sweeps.length == state.frames) {
-            sweeps.sort((a, b) => a.time - b.time);
+            if (sweeps.length > 1) {
+              self.postMessage({ type: "progress", payload: 100 });
+              sweeps.sort((a, b) => a.time - b.time);
+            }
             grid.last = name;
             grid.scan = scan;
             grid.tic++;

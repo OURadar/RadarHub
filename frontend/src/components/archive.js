@@ -51,6 +51,8 @@ class Archive extends Ingest {
       this.showMessage(payload);
     } else if (type == "response") {
       this.showResponse(payload);
+    } else if (type == "progress") {
+      this.progress = payload;
     } else if (type == "load") {
       this.data.sweeps = payload;
       this.grid = grid;

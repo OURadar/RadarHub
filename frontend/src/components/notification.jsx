@@ -1,5 +1,5 @@
 //
-//  notification.js - Notification
+//  notification.jsx - Notification
 //  RadarHub
 //
 //  This is a view
@@ -15,9 +15,7 @@ export function Notification(props) {
 
   function fadeOutText() {
     setTransition("fadeOut");
-    return setTimeout(() => {
-      setDisplay("&nbsp;");
-    }, 500);
+    return setTimeout(() => setDisplay("&nbsp;"), 500);
   }
 
   function fadeInText(text) {
@@ -27,9 +25,7 @@ export function Notification(props) {
   }
 
   useEffect(() => {
-    const timer = props.message.length
-      ? fadeInText(props.message)
-      : fadeOutText();
+    const timer = props.message.length ? fadeInText(props.message) : fadeOutText();
     return () => clearTimeout(timer);
   }, [props.message]);
 
