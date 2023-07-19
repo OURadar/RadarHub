@@ -184,13 +184,13 @@ function set(index) {
   grid.mode = "load";
   if (index == grid.index && state.frames == 1) {
     self.postMessage({ type: "message", payload: "Loading frames ..." });
-    let body = 12;
+    let body = 15;
     let tail = findLastInGroup();
     let head = Math.max(0, tail - body + 1);
     let items = grid.itemsGrouped[grid.scan].slice(head, tail + 1);
-    state.frames = items.length;
-    sweeps = [];
-    items.forEach((item) => load(item.item));
+    const names = items.map((item) => item.item);
+    state.frames = names.length;
+    load(names);
     return;
   } else {
     grid.last = null;
@@ -469,83 +469,88 @@ function append() {
   list(day, grid.symbol, "append");
 }
 
-function load(name) {
-  const url = `/data/load/${pathway}/${name}/`;
-  console.info(`%carchive.worker.load %c${url}%c`, `color: ${namecolor}`, "color: dodgerblue", "");
-  if (state.frames > 1) {
-    self.postMessage({ type: "progress", payload: 1 });
-  } else {
-    self.postMessage({ type: "progress", payload: 100 });
-  }
-  fetch(url, { cache: "force-cache" })
-    .then((response) => {
-      if (response.status == 200) {
-        response.arrayBuffer().then((buffer) => {
-          let sweep = geometry({
-            ...createSweep(name),
-            ...sweepParser.parse(new Uint8Array(buffer)),
-          });
-          let components = sweep.name.split("-");
-          sweep.timeString =
-            `${components[0].slice(0, 4)}/` +
-            `${components[0].slice(4, 6)}/` +
-            `${components[0].slice(6, 8)} ` +
-            `${components[1].slice(0, 2)}:` +
-            `${components[1].slice(2, 4)}:` +
-            `${components[1].slice(4, 6)} UTC`;
-          sweep.symbol = components[3].split(".")[0];
-          sweep.titleString =
-            sweep.timeString +
-            "   " +
-            (sweep.isRHI ? `Az ${sweep.scanAzimuth.toFixed(1)}` : `El ${sweep.scanElevation.toFixed(1)}`) +
-            "°";
-          sweep.info = JSON.parse(sweep.info);
-          sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\n` + `Waveform: ${sweep.info.waveform}`;
-          let scan = components[2];
-          if (state.verbose > 1) {
-            console.debug(
-              `%carchive.worker.load%c grid.scan = %c${scan}%c ← ${grid.scan}`,
-              `color: ${namecolor}`,
-              "",
-              "color: dodgerblue",
-              ""
-            );
-          }
-          if (sweep.nb == 0 || sweep.nr == 0) {
-            console.log(sweep);
-            self.postMessage({
-              type: "message",
-              payload: `Failed to load ${name}`,
-            });
-            return;
-          }
-          sweeps.push(sweep);
-          if (state.frames > 1) {
-            let message = `Loaded frame ... ${sweeps.length} / ${state.frames}`;
-            self.postMessage({ type: "message", payload: message });
-            self.postMessage({ type: "progress", payload: Math.floor((sweeps.length / state.frames) * 100) });
-          }
-          if (sweeps.length == state.frames) {
-            if (sweeps.length > 1) {
-              self.postMessage({ type: "progress", payload: 100 });
-              sweeps.sort((a, b) => a.time - b.time);
-            }
-            grid.last = name;
-            grid.scan = scan;
-            grid.tic++;
-            self.postMessage({ type: "load", grid: grid, payload: sweeps });
-          }
-        });
+async function load(names) {
+  sweeps = [];
+  await Promise.all(
+    names.map(async (name) => {
+      const url = `/data/load/${pathway}/${name}/`;
+      console.info(`%carchive.worker.load %c${url}%c`, `color: ${namecolor}`, "color: dodgerblue", "");
+      if (names.length > 1) {
+        self.postMessage({ type: "progress", payload: 1 });
       } else {
-        response.text().then((text) => {
-          console.info(text);
-          self.postMessage({ type: "reset", payload: text });
-        });
+        self.postMessage({ type: "progress", payload: 100 });
       }
+      return fetch(url, { cache: "force-cache" })
+        .then((response) => {
+          if (response.status == 200) {
+            response.arrayBuffer().then((buffer) => {
+              let sweep = geometry({
+                ...createSweep(name),
+                ...sweepParser.parse(new Uint8Array(buffer)),
+              });
+              let components = sweep.name.split("-");
+              sweep.timeString =
+                `${components[0].slice(0, 4)}/` +
+                `${components[0].slice(4, 6)}/` +
+                `${components[0].slice(6, 8)} ` +
+                `${components[1].slice(0, 2)}:` +
+                `${components[1].slice(2, 4)}:` +
+                `${components[1].slice(4, 6)} UTC`;
+              sweep.symbol = components[3].split(".")[0];
+              sweep.titleString =
+                sweep.timeString +
+                "   " +
+                (sweep.isRHI ? `Az ${sweep.scanAzimuth.toFixed(1)}` : `El ${sweep.scanElevation.toFixed(1)}`) +
+                "°";
+              sweep.info = JSON.parse(sweep.info);
+              sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\n` + `Waveform: ${sweep.info.waveform}`;
+              let scan = components[2];
+              if (state.verbose > 1) {
+                console.debug(
+                  `%carchive.worker.load%c grid.scan = %c${scan}%c ← ${grid.scan}`,
+                  `color: ${namecolor}`,
+                  "",
+                  "color: dodgerblue",
+                  ""
+                );
+              }
+              if (sweep.nb == 0 || sweep.nr == 0) {
+                console.log(sweep);
+                self.postMessage({
+                  type: "message",
+                  payload: `Failed to load ${name}`,
+                });
+                return;
+              }
+              sweeps.push(sweep);
+              if (names.length > 1) {
+                let message = `Loaded frame ... ${sweeps.length} / ${names.length}`;
+                self.postMessage({ type: "message", payload: message });
+                self.postMessage({ type: "progress", payload: Math.floor((sweeps.length / names.length) * 100) });
+              }
+              if (sweeps.length == names.length) {
+                if (sweeps.length > 1) {
+                  self.postMessage({ type: "progress", payload: 100 });
+                  sweeps.sort((a, b) => a.time - b.time);
+                }
+                grid.last = sweeps.at(-1).name;
+                grid.scan = scan;
+                grid.tic++;
+                self.postMessage({ type: "load", grid: grid, payload: sweeps });
+              }
+            });
+          } else {
+            response.text().then((text) => {
+              console.info(text);
+              self.postMessage({ type: "reset", payload: text });
+            });
+          }
+        })
+        .catch((error) => {
+          console.error(`Unexpected error ${error}`);
+        });
     })
-    .catch((error) => {
-      console.error(`Unexpected error ${error}`);
-    });
+  );
 }
 
 function dummy() {
@@ -713,8 +718,7 @@ function setGridIndex(index) {
   grid.index = index;
   reviseGridPaths();
   state.frames = 1;
-  sweeps = [];
-  load(scan);
+  load([scan]);
 }
 
 function navigateForward() {

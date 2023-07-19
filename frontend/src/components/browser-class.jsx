@@ -98,7 +98,7 @@ class Browser extends Component {
     this.param = {
       stem: 5,
       body: 15,
-      fetch: 72,
+      fetch: 96,
     };
     this.value = {
       subsetStart: 0,
