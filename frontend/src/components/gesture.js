@@ -125,9 +125,9 @@ class Gesture {
         { passive: false }
       );
       this.element.addEventListener("touchend", (e) => {
+        const now = Date.now();
         const panTiltZoom = this.panInProgress || this.tiltInProgress;
         if (!panTiltZoom) {
-          const now = Date.now();
           const delta = now - this.lastTapTime;
           if (this.singleTapTimeout !== null) {
             clearTimeout(this.singleTapTimeout);
