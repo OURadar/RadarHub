@@ -253,6 +253,9 @@ canvas {
 .hide {
   opacity: 0;
 }
+.show {
+  opacity: 1;
+}
 .center {
   text-align: center;
 }
@@ -273,7 +276,7 @@ canvas {
 .fadeOut {
   opacity: 0;
   z-index: 0;
-  transition: opacity linear 0.3s, z-index linear 0.01s 0.3s;
+  transition: opacity linear 0.3s 0.4s, z-index linear 0.01s 0.7s;
 }
 
 .extraLarge {
