@@ -74,45 +74,6 @@ export function App(props) {
 
   const handleUserMessage = (message) => setMessage(message);
 
-  const handleThemeChange = () => {
-    let mode = "auto";
-    if (user.current.preference.mode == "auto") {
-      mode = "light";
-    } else if (user.current.preference.mode == "light") {
-      mode = "dark";
-    }
-    setColorMode(mode);
-    // console.log(`AppX.handleThemeChange  ${mode}`);
-  };
-
-  const handleOverlayLoad = (x = 1) => {
-    setLoad(x);
-    if (x == 1 && archive.current.state.liveUpdate === null) {
-      archive.current.catchup();
-    }
-  };
-
-  const handleColorbarClick = (e) => {
-    if (isMobile) {
-      if (e.pageX / e.target.offsetWidth < 0.5) {
-        archive.current.prevProduct();
-      } else {
-        archive.current.nextProduct();
-      }
-    } else {
-      let dy = e.pageY - e.target.offsetTop;
-      if (dy / e.target.offsetHeight < 0.5) {
-        archive.current.prevProduct();
-      } else {
-        archive.current.nextProduct();
-      }
-    }
-  };
-
-  const handleMiddleViewTap = () => {
-    archive.current.playPause();
-  };
-
   useConstructor(() => {
     if (!isMobile)
       document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
@@ -195,9 +156,29 @@ export function App(props) {
         colors={colors}
         origin={props.origin}
         sweeps={archive.current?.data.sweeps}
-        onOverlayLoad={handleOverlayLoad}
-        onColorbarClick={handleColorbarClick}
-        onMiddleViewTap={handleMiddleViewTap}
+        onOverlayLoad={(x = 1) => {
+          setLoad(x);
+          if (x == 1 && archive.current.state.liveUpdate === null) {
+            archive.current.catchup();
+          }
+        }}
+        onColorbarClick={(e) => {
+          if (isMobile) {
+            if (e.pageX / e.target.offsetWidth < 0.5) {
+              archive.current.prevProduct();
+            } else {
+              archive.current.nextProduct();
+            }
+          } else {
+            let dy = e.pageY - e.target.offsetTop;
+            if (dy / e.target.offsetHeight < 0.5) {
+              archive.current.prevProduct();
+            } else {
+              archive.current.nextProduct();
+            }
+          }
+        }}
+        onMiddleViewTap={() => archive.current.playPause()}
         debug={false}
       />
       <MenuArrow
@@ -231,7 +212,20 @@ export function App(props) {
           message={message}
           ingest={archive.current}
           onAccount={() => user.current.greet()}
-          onThemeChange={handleThemeChange}
+          onThemeChange={() => {
+            if (user.current.preference.mode == "auto") {
+              // if (document.documentElement.getAttribute("theme") === "light") {
+              //   setColorMode("dark");
+              // } else {
+              //   setColorMode("auto");
+              // }
+              setColorMode("light");
+            } else if (user.current.preference.mode == "light") {
+              setColorMode("dark");
+            } else {
+              setColorMode("auto");
+            }
+          }}
         />
         <ThemeProvider theme={theme}>
           {(isMobile && (
