@@ -314,6 +314,10 @@ function updateListWithItem(item) {
     if (index == grid.index) {
       // Update the tic so that the list is refreshed at frontend since we won't load
       grid.tic++;
+    } else if (state.frames > 1) {
+      state.frames = 1;
+      grid.index = index;
+      set(index);
     } else {
       setGridIndex(index);
     }
