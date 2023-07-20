@@ -92,30 +92,20 @@ export function App(props) {
     }
   };
 
-  const handleNavigationChange = (_, value) => setPanel(value);
-  const handleBrowserSelect = (_) => setTimeout(() => setPanel(0), 300);
-  const handleLiveModeChange = (_, value) => archive.current.toggleLiveUpdate(value || "offline");
-
-  const handleDoubleLeft = () => archive.current.navigateBackwardScan();
-  const handleLeft = () => archive.current.navigateBackward();
-  const handlePlay = () => archive.current.playPause();
-  const handleRight = () => archive.current.navigateForward();
-  const handleDoubleRight = () => archive.current.navigateForwardScan();
-
-  const handleColorbarTouch = (e) => {
-    if (e.pageX / e.target.offsetWidth < 0.5) {
-      archive.current.prevProduct();
-    } else {
-      archive.current.nextProduct();
-    }
-  };
-
   const handleColorbarClick = (e) => {
-    let dy = e.pageY - e.target.offsetTop;
-    if (dy / e.target.offsetHeight < 0.5) {
-      archive.current.prevProduct();
+    if (isMobile) {
+      if (e.pageX / e.target.offsetWidth < 0.5) {
+        archive.current.prevProduct();
+      } else {
+        archive.current.nextProduct();
+      }
     } else {
-      archive.current.nextProduct();
+      let dy = e.pageY - e.target.offsetTop;
+      if (dy / e.target.offsetHeight < 0.5) {
+        archive.current.prevProduct();
+      } else {
+        archive.current.nextProduct();
+      }
     }
   };
 
@@ -198,87 +188,65 @@ export function App(props) {
     });
   }, []);
 
-  const topbar = (
-    <TopBar
-      mode={user.current.preference.mode}
-      isMobile={isMobile}
-      message={message}
-      ingest={archive.current}
-      onAccount={user.current.greet}
-      onThemeChange={handleThemeChange}
-    />
-  );
-  const menu = (
-    <div>
+  const product = (
+    <div className={`fullHeight`}>
+      <Product
+        gravity={(isMobile && "top") || "right"}
+        colors={colors}
+        origin={props.origin}
+        sweeps={archive.current?.data.sweeps}
+        onOverlayLoad={handleOverlayLoad}
+        onColorbarClick={handleColorbarClick}
+        onMiddleViewTap={handleMiddleViewTap}
+        debug={false}
+      />
       <MenuArrow
-        tic={archive.current?.grid.tic || 0}
+        tic={archive.current?.grid?.tic}
         doubleLeftDisabled={disabled[0]}
         leftDisabled={disabled[1]}
         rightDisabled={disabled[2]}
         doubleRightDisabled={disabled[3]}
         play={archive.current?.data.sweeps.length > 1 || false}
-        onDoubleLeft={handleDoubleLeft}
-        onLeft={handleLeft}
-        onPlay={handlePlay}
-        onRight={handleRight}
-        onDoubleRight={handleDoubleRight}
+        onDoubleLeft={() => archive.current.navigateBackwardScan()}
+        onLeft={() => archive.current.navigateBackward()}
+        onPlay={() => archive.current.playPause()}
+        onRight={() => archive.current.navigateForward()}
+        onDoubleRight={() => archive.current.navigateForwardScan()}
       />
-      <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
+      <MenuUpdate
+        value={archive.current?.state.liveUpdate}
+        onChange={(_, value) => archive.current.toggleLiveUpdate(value || "offline")}
+      />
     </div>
   );
+  const browser = <Browser archive={archive.current} h={h} onSelect={() => setTimeout(() => setPanel(0), 300)} />;
 
-  if (isMobile)
-    return (
-      <div>
-        <Splash progress={load} />
-        <div id="main" className="fullHeight">
-          {topbar}
-          <ThemeProvider theme={theme}>
-            <div className={`fullHeight panel ${panel === 0 ? "active" : "inactive"}`}>
-              <Product
-                gravity="top"
-                colors={colors}
-                origin={props.origin}
-                sweeps={archive.current?.data.sweeps}
-                onOverlayLoad={handleOverlayLoad}
-                onColorbarTouch={handleColorbarTouch}
-                onMiddleViewTap={handleMiddleViewTap}
-                debug={false}
-              />
-              {menu}
+  return (
+    <div>
+      <Splash progress={load} />
+      <div id="main" className="fullHeight">
+        <TopBar
+          mode={user.current.preference.mode}
+          isMobile={isMobile}
+          message={message}
+          ingest={archive.current}
+          onAccount={() => user.current.greet()}
+          onThemeChange={handleThemeChange}
+        />
+        <ThemeProvider theme={theme}>
+          {(isMobile && (
+            <div>
+              <div className={`fullHeight panel ${panel === 0 ? "active" : "inactive"}`}>{product}</div>
+              <div className={`fullHeight panel ${panel === 1 ? "active" : "inactive"}`}>{browser}</div>
+              <Navigation value={panel} onChange={(_, value) => setPanel(value)} />
             </div>
-            <div className={`fullHeight panel ${panel === 1 ? "active" : "inactive"}`}>
-              <Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />
+          )) || (
+            <div>
+              <Layout name="split-archive-width" left={product} right={browser} />
             </div>
-            <Navigation value={panel} onChange={handleNavigationChange} />
-          </ThemeProvider>
-        </div>
+          )}
+        </ThemeProvider>
       </div>
-    );
-  else
-    return (
-      <div>
-        <Splash progress={load} />
-        <div id="main" className="fullHeight">
-          {topbar}
-          <ThemeProvider theme={theme}>
-            <Layout
-              name="split-archive-width"
-              left={
-                <Product
-                  colors={colors}
-                  origin={props.origin}
-                  sweeps={archive.current?.data.sweeps}
-                  onOverlayLoad={handleOverlayLoad}
-                  onColorbarClick={handleColorbarClick}
-                  onMiddleViewTap={handleMiddleViewTap}
-                />
-              }
-              right={<Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />}
-            />
-            {menu}
-          </ThemeProvider>
-        </div>
-      </div>
-    );
+    </div>
+  );
 }
