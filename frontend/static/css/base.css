@@ -751,15 +751,18 @@ h3 {
   fill: var(--green);
   font-size: 20px;
   font-weight: 500;
+  z-index: 2;
 }
 #infoString {
   fill: var(--brown);
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
+  z-index: 2;
 }
 #symbol {
   fill: var(--system-foreground);
+  z-index: 2;
 }
 #symbol text#symbol {
   font-size: 50px;
@@ -774,6 +777,7 @@ h3 {
   position: absolute;
   font-family: LabelFont;
   paint-order: stroke fill;
+  z-index: 2;
 }
 #title text {
   fill: var(--system-foreground);

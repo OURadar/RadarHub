@@ -248,8 +248,7 @@ class Product extends GLView {
   render() {
     const sweep = this.props.sweeps.length ? this.props.sweeps[this.state.phase] : null;
     return (
-      <div className="fullHeight">
-        <div className="fullHeight" ref={(x) => (this.mount = x)} />
+      <div className="fullHeight" ref={(x) => (this.mount = x)}>
         <Colorbar
           {...this.props}
           id="colorbar"
