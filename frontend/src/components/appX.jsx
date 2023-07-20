@@ -50,7 +50,7 @@ export function App(props) {
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
   const [message, setMessage] = React.useState("");
-  const [disabled, setDisabled] = React.useState([false, false, false, false]);
+  const [disabled, setDisabled] = React.useState([true, true, true, true]);
 
   const archive = React.useRef(null);
   const user = React.useRef(null);
@@ -69,7 +69,7 @@ export function App(props) {
   const [, handleUpdate] = React.useReducer((x) => x + 1, 0);
 
   const handleLoad = () => {
-    setDisabled(archive.current?.grid.pathsActive.map((x) => !x));
+    setDisabled(archive.current?.grid.pathsActive.map((x) => !x) || [true, true, true, true]);
   };
 
   const handleUserMessage = (message) => setMessage(message);
@@ -98,6 +98,7 @@ export function App(props) {
 
   const handleDoubleLeft = () => archive.current.navigateBackwardScan();
   const handleLeft = () => archive.current.navigateBackward();
+  const handlePlay = () => archive.current.playPause();
   const handleRight = () => archive.current.navigateForward();
   const handleDoubleRight = () => archive.current.navigateForwardScan();
 
@@ -197,19 +198,41 @@ export function App(props) {
     });
   }, []);
 
+  const topbar = (
+    <TopBar
+      mode={user.current.preference.mode}
+      isMobile={isMobile}
+      message={message}
+      ingest={archive.current}
+      onAccount={user.current.greet}
+      onThemeChange={handleThemeChange}
+    />
+  );
+  const menu = (
+    <div>
+      <MenuArrow
+        tic={archive.current?.grid.tic || 0}
+        doubleLeftDisabled={disabled[0]}
+        leftDisabled={disabled[1]}
+        rightDisabled={disabled[2]}
+        doubleRightDisabled={disabled[3]}
+        play={archive.current?.data.sweeps.length > 1 || false}
+        onDoubleLeft={handleDoubleLeft}
+        onLeft={handleLeft}
+        onPlay={handlePlay}
+        onRight={handleRight}
+        onDoubleRight={handleDoubleRight}
+      />
+      <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
+    </div>
+  );
+
   if (isMobile)
     return (
       <div>
         <Splash progress={load} />
         <div id="main" className="fullHeight">
-          <TopBar
-            mode={user.current.preference.mode}
-            isMobile={true}
-            message={message}
-            ingest={archive.current}
-            onAccount={user.current.greet}
-            onThemeChange={handleThemeChange}
-          />
+          {topbar}
           <ThemeProvider theme={theme}>
             <div className={`fullHeight panel ${panel === 0 ? "active" : "inactive"}`}>
               <Product
@@ -220,19 +243,9 @@ export function App(props) {
                 onOverlayLoad={handleOverlayLoad}
                 onColorbarTouch={handleColorbarTouch}
                 onMiddleViewTap={handleMiddleViewTap}
-                debug={true}
+                debug={false}
               />
-              <MenuArrow
-                doubleLeftDisabled={disabled[0]}
-                leftDisabled={disabled[1]}
-                rightDisabled={disabled[2]}
-                doubleRightDisabled={disabled[3]}
-                onDoubleLeft={handleDoubleLeft}
-                onLeft={handleLeft}
-                onRight={handleRight}
-                onDoubleRight={handleDoubleRight}
-              />
-              <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
+              {menu}
             </div>
             <div className={`fullHeight panel ${panel === 1 ? "active" : "inactive"}`}>
               <Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />
@@ -247,14 +260,7 @@ export function App(props) {
       <div>
         <Splash progress={load} />
         <div id="main" className="fullHeight">
-          <TopBar
-            mode={user.current.preference.mode}
-            isMobile={true}
-            message={message}
-            ingest={archive.current}
-            onAccount={user.current.greet}
-            onThemeChange={handleThemeChange}
-          />
+          {topbar}
           <ThemeProvider theme={theme}>
             <Layout
               name="split-archive-width"
@@ -270,17 +276,7 @@ export function App(props) {
               }
               right={<Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />}
             />
-            <MenuArrow
-              doubleLeftDisabled={disabled[0]}
-              leftDisabled={disabled[1]}
-              rightDisabled={disabled[2]}
-              doubleRightDisabled={disabled[3]}
-              onDoubleLeft={handleDoubleLeft}
-              onLeft={handleLeft}
-              onRight={handleRight}
-              onDoubleRight={handleDoubleRight}
-            />
-            <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
+            {menu}
           </ThemeProvider>
         </div>
       </div>
