@@ -179,7 +179,7 @@ class Archive extends Ingest {
     }
     const scan = this.grid.items[index];
     this.message = `Loading ${scan} ...`;
-    this.worker.postMessage({ task: "set", name: index });
+    this.worker.postMessage({ task: "select", name: index });
   }
 
   switch(symbol = "Z") {
