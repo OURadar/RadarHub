@@ -76,9 +76,9 @@ export function App(props) {
 
   const handleThemeChange = () => {
     let mode = "auto";
-    if (user.current.mode == "auto") {
+    if (user.current.preference.mode == "auto") {
       mode = "light";
-    } else if (user.current.mode == "light") {
+    } else if (user.current.preference.mode == "light") {
       mode = "dark";
     }
     setColorMode(mode);
@@ -171,7 +171,6 @@ export function App(props) {
         }
       }
     });
-    handleOverlayLoad();
 
     let timeout;
     let updateMode;
@@ -205,7 +204,7 @@ export function App(props) {
         <Splash progress={load} />
         <div id="main" className="fullHeight">
           <TopBar
-            mode={user.current.mode}
+            mode={user.current.preference.mode}
             isMobile={true}
             message={message}
             ingest={archive.current}
@@ -250,7 +249,7 @@ export function App(props) {
         <Splash progress={load} />
         <div id="main" className="fullHeight">
           <TopBar
-            mode={user.current.mode}
+            mode={user.current.preference.mode}
             isMobile={true}
             message={message}
             ingest={archive.current}
