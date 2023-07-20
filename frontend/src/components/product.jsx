@@ -30,11 +30,11 @@ class Product extends GLView {
     this.offset = (Date.now() % 86400000) / 5000;
     this.state = {
       ...this.state,
-      spin: false,
-      useEuler: true,
       phase: 0,
       count: 0,
-      title: "----/--/-- --:--:-- UTC -",
+      spin: false,
+      useEuler: true,
+      title: "----/--/-- --:--:-- UTC -- -.-°",
       info: "Gatewidth: -\nWaveform: -",
       age: "-",
     };
@@ -309,6 +309,7 @@ class Product extends GLView {
       this.overlay.purge();
       this.overlay.load();
     }
+    this.setState({ title: sweep.titleString, info: sweep.infoString, age: sweep.age });
 
     this.assets = this.props.sweeps.map((sweep) => ({
       time: sweep.time,

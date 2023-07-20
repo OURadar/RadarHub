@@ -128,9 +128,8 @@ export function App(props) {
     window.addEventListener("blur", (_e) => {
       user.current.setUpdate(archive.current.state.liveUpdate);
       if (archive.current.state.liveUpdate != "offline") {
-        console.log("Setting timeout ...");
+        console.log("Setting timeout for disconnect ...");
         timeout = setTimeout(() => {
-          console.log("Timeout. Disabling live update ...");
           archive.current.disableLiveUpdate();
           timeout = null;
         }, 5000);
@@ -143,7 +142,6 @@ export function App(props) {
         timeout = null;
       }
       if (user.current.preference.update != "offline" && archive.current.state.liveUpdate == "offline") {
-        console.log("Enabling live update ...");
         archive.current.enableLiveUpdate();
       }
     });

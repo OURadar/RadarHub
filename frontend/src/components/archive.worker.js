@@ -218,7 +218,7 @@ function connect(force = false) {
       return;
     }
   }
-  console.info(`EventSource connecting %c${pathway}%c ...`, "color: dodgerblue", "");
+  console.info(`%carchive.worker.connect%c ${pathway}%c ...`, `color: ${namecolor}`, "color: dodgerblue", "");
   source = new EventSource("/events/");
   // Only pick up event that matches the pathway
   source.addEventListener(pathway, (event) => {
@@ -261,14 +261,12 @@ function disconnect() {
   if (source === null || source.readyState == 2) {
     return;
   }
-  if (state.verbose) console.info("Disconnecting live update ...");
+  console.info(`%carchive.worker.disconnect%c ${pathway}%c ...`, `color: ${namecolor}`, "color: dodgerblue", "");
   source.close();
   source = null;
   self.postMessage({
     type: "state",
-    payload: {
-      update: state.update,
-    },
+    payload: { update: state.update },
   });
 }
 
