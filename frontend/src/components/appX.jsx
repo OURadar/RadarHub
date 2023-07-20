@@ -133,7 +133,7 @@ export function App(props) {
     user.current = new User();
     user.current.onMessage = handleUserMessage;
 
-    setColorMode(user.current.mode);
+    setColorMode(user.current.preference.mode);
   });
 
   let key = 0;
@@ -173,10 +173,9 @@ export function App(props) {
     });
 
     let timeout;
-    let updateMode;
     window.addEventListener("blur", (_e) => {
-      updateMode = archive.current.state.liveUpdate;
-      if (updateMode != "offline") {
+      user.current.setUpdate(archive.current.state.liveUpdate);
+      if (archive.current.state.liveUpdate != "offline") {
         console.log("Setting timeout ...");
         timeout = setTimeout(() => {
           console.log("Timeout. Disabling live update ...");
@@ -186,12 +185,12 @@ export function App(props) {
       }
     });
     window.addEventListener("focus", (_e) => {
-      console.log(`Back in focus   last updateMode = ${updateMode}`);
+      console.log(`Back in focus   user updateMode = ${user.current.preference.update}`);
       if (timeout) {
         clearTimeout(timeout);
         timeout = null;
       }
-      if (updateMode != "offline" && archive.current.state.liveUpdate == "offline") {
+      if (user.current.preference.update != "offline" && archive.current.state.liveUpdate == "offline") {
         console.log("Enabling live update ...");
         archive.current.enableLiveUpdate();
       }

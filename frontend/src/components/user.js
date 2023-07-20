@@ -22,7 +22,7 @@ class User {
     } catch (e) {
       this.save();
     }
-    console.log("Loaded preference", this.preference);
+    // console.log("Loaded preference", this.preference);
 
     this.onMessage = (message) => {
       console.log(`Account.onMessage() ${message}`);
@@ -69,8 +69,12 @@ class User {
   }
 
   setMode(mode = "auto") {
-    console.log(`User.setMode mode -> ${mode}`);
-    this.preference.mode = (mode !== undefined && mode) || "auto";
+    this.preference.mode = (["auto", "dark", "light"].includes(mode) && mode) || "auto";
+    this.save();
+  }
+
+  setUpdate(mode = "scan") {
+    this.preference.update = (["scan", "always"].includes(mode) && mode) || "scan";
     this.save();
   }
 }
