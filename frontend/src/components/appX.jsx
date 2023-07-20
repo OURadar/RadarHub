@@ -171,7 +171,6 @@ export function App(props) {
         }
       }
     });
-    handleOverlayLoad();
   }, []);
 
   if (isMobile)
