@@ -34,6 +34,9 @@ class Product extends GLView {
       useEuler: true,
       phase: 0,
       count: 0,
+      title: "----/--/-- --:--:-- UTC -",
+      info: "Gatewidth: -\nWaveform: -",
+      age: "-",
     };
     this.palette = {
       image: null,
@@ -246,7 +249,6 @@ class Product extends GLView {
   }
 
   render() {
-    const sweep = this.props.sweeps.length ? this.props.sweeps[this.state.phase] : null;
     return (
       <div className="fullHeight" ref={(x) => (this.mount = x)}>
         <Colorbar
@@ -259,8 +261,8 @@ class Product extends GLView {
           count={this.state.count}
           debug={false}
         />
-        <Caption id="ageString" phase={this.state.phase} string={sweep?.age || ""} />
-        <Caption id="infoString" phase={this.state.phase} string={sweep?.infoString || "Gatewidth: -\nWaveform: -"} />
+        <Caption id="ageString" string={this.state.age} />
+        <Caption id="infoString" string={this.state.info} />
         <Symbol
           id="symbol"
           text={this.style.name}
@@ -268,7 +270,7 @@ class Product extends GLView {
           onTouch={this.props.onColorbarTouch}
           onClick={this.props.onColorbarClick}
         />
-        <Title string={sweep?.titleString || "----/--/-- --:--:-- UTC"} />
+        <Title string={this.state.title} />
       </div>
     );
   }
@@ -371,7 +373,8 @@ class Product extends GLView {
     if (this.assetsComplete) {
       const phase = Math.min(this.props.sweeps.length - 1, ((this.tic / 8) >> 0) % (this.props.sweeps.length + 4));
       if (this.state.phase != phase) {
-        this.setState({ phase: phase });
+        const sweep = this.props.sweeps[phase];
+        this.setState({ phase: phase, title: sweep.titleString, info: sweep.infoString, age: sweep.age });
       }
       const { data, points, origins, elements } = this.assets[phase];
       this.vinci({
