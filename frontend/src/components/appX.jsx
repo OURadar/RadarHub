@@ -59,11 +59,11 @@ export function App(props) {
   const isMobile = detectMob();
 
   const setColorMode = (mode) => {
+    const newColors = colorDict(mode);
     user.current.setMode(mode);
-    let colors = colorDict(mode);
-    document.documentElement.setAttribute("theme", colors.name);
-    setColors(colors);
     setTheme(makeTheme(mode));
+    setColors(newColors);
+    document.documentElement.setAttribute("theme", newColors.name);
   };
 
   const [, handleUpdate] = React.useReducer((x) => x + 1, 0);
@@ -93,7 +93,7 @@ export function App(props) {
   React.useEffect(() => {
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
       let mode = e.matches ? "dark" : "light";
-      setDocumentTheme(mode);
+      setColorMode(mode);
     });
     document.documentElement.setAttribute("theme", theme.palette.mode);
     window.addEventListener("keydown", (e) => (key = e.key));
