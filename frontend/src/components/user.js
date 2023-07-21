@@ -74,7 +74,7 @@ class User {
   }
 
   setUpdate(mode = "scan") {
-    this.preference.update = (["scan", "always"].includes(mode) && mode) || "scan";
+    this.preference.update = (["scan", "always", "offline"].includes(mode) && mode) || "scan";
     this.save();
   }
 }

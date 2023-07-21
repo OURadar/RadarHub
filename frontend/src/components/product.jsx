@@ -373,9 +373,11 @@ class Product extends GLView {
     });
     if (this.assetsComplete) {
       const phase = Math.min(this.props.sweeps.length - 1, ((this.tic / 8) >> 0) % (this.props.sweeps.length + 4));
+      const sweep = this.props.sweeps[phase];
       if (this.state.phase != phase) {
-        const sweep = this.props.sweeps[phase];
         this.setState({ phase: phase, title: sweep.titleString, info: sweep.infoString, age: sweep.age });
+      } else if (this.state.age != sweep.age) {
+        this.setState({ age: sweep.age });
       }
       const { data, points, origins, elements } = this.assets[phase];
       this.vinci({

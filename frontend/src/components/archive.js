@@ -277,38 +277,36 @@ class Archive extends Ingest {
     if (this.data.sweeps === null || this.data.sweeps.length == 0) {
       return;
     }
+    let now = Date.now() / 1000;
     let updated = false;
-    this.data.sweeps.forEach((sweep) => {
-      let age = Date.now() / 1000 - sweep.time;
-      let ageString;
+    const ageString = (age) => {
       if (age > 14 * 86400) {
-        ageString = "";
+        return "";
       } else if (age > 7 * 86400) {
-        ageString = "> 1 week";
+        return "> 1 week";
       } else if (age > 86400) {
         let d = Math.floor(age / 86400);
         let s = d > 1 ? "s" : "";
-        ageString = `> ${d} day${s} ago`;
+        return `> ${d} day${s} ago`;
       } else if (age > 1.5 * 3600) {
         let h = Math.floor(age / 3600);
         let s = h > 1 ? "s" : "";
-        ageString = `> ${h} hour${s} ago`;
+        return `> ${h} hour${s} ago`;
       } else if (age > 60) {
         let m = Math.floor(age / 60);
         let s = m > 1 ? "s" : "";
-        ageString = `${m} minute${s} ago`;
+        return `${m} minute${s} ago`;
       } else {
-        ageString = "< 1 minute ago";
+        return "< 1 minute ago";
       }
-      if (sweep.age != ageString) {
-        sweep.age = ageString;
+    };
+    this.data.sweeps.forEach((sweep) => {
+      const age = ageString(now - sweep.time);
+      if (sweep.age != age) {
+        sweep.age = age;
         updated = true;
       }
     });
-    // if (this.data.sweep.age != ageString) {
-    //   this.data.sweep.age = ageString;
-    //   this.onUpdate(this.state.tic++);
-    // }
     if (updated) {
       this.onUpdate(this.state.tic++);
     }

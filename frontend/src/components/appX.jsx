@@ -126,6 +126,7 @@ export function App(props) {
 
     let timeout;
     window.addEventListener("blur", (_e) => {
+      console.log(`Off focus   user updateMode = ${archive.current.state.liveUpdate}`);
       user.current.setUpdate(archive.current.state.liveUpdate);
       if (archive.current.state.liveUpdate != "offline") {
         console.log("Setting timeout for disconnect ...");
@@ -136,7 +137,7 @@ export function App(props) {
       }
     });
     window.addEventListener("focus", (_e) => {
-      console.log(`Back in focus   user updateMode = ${user.current.preference.update}`);
+      console.log(`On focus   user updateMode = ${user.current.preference.update}`);
       if (timeout) {
         clearTimeout(timeout);
         timeout = null;
