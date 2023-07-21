@@ -256,7 +256,6 @@ class Product extends GLView {
           id="colorbar"
           style={this.style}
           palette={this.palette.image}
-          onTouch={this.props.onColorbarTouch}
           onClick={this.props.onColorbarClick}
           count={this.state.count}
           debug={false}
@@ -267,7 +266,7 @@ class Product extends GLView {
           id="symbol"
           text={this.style.name}
           symbol={this.palette.symbol}
-          onTouch={this.props.onColorbarTouch}
+          anchor={this.props.gravity == "top" ? "start" : "end"}
           onClick={this.props.onColorbarClick}
         />
         <Title string={this.state.title} />

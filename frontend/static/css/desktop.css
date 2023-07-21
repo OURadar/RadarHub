@@ -176,6 +176,10 @@ Copyright Boonleng Cheong
   bottom: 90px;
   left: 30px;
 }
+#symbol {
+  top: calc(var(--topbar-height) + 2 * var(--padding));
+  right: calc(2 * var(--padding));
+}
 #title {
   font-size: 32px;
   font-weight: 500;
