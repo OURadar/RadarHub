@@ -65,7 +65,7 @@ class Product extends GLView {
         symbol: "-",
         index: 0.5 / image.height,
       };
-      this.loadStyle("Z");
+      this.updateColorbar("Z");
     });
 
     this.overlay.onLoad = props.onOverlayLoad;
@@ -87,7 +87,7 @@ class Product extends GLView {
     onMiddleViewTap: () => {},
   };
 
-  loadStyle(symbol = "Z") {
+  updateColorbar(symbol = "Z") {
     const symbolToStyle = (symbol) => {
       let ticks = [];
       if (symbol == "R") {
@@ -364,8 +364,9 @@ class Product extends GLView {
     } else if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
+      this.updateColorbar(this.props.sweeps[0].symbol);
     } else if (this.props.sweeps.length > 0 && this.palette.symbol != this.props.sweeps[0].symbol) {
-      this.loadStyle(this.props.sweeps[0].symbol);
+      this.updateColorbar(this.props.sweeps[0].symbol);
       this.updateAssets();
     }
     this.regl.clear({
