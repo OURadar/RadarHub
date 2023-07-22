@@ -310,6 +310,9 @@ class Product extends GLView {
     }
     this.setState({ title: sweep.titleString, info: sweep.infoString, age: sweep.age });
 
+    if (this.props.sweeps.includes(null)) {
+      return;
+    }
     this.assets = this.props.sweeps.map((sweep) => ({
       time: sweep.time,
       data: this.regl.texture({

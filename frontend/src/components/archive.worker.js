@@ -302,7 +302,18 @@ function updateListWithItem(item) {
   }
 }
 
-function createSweep(name = "dummy") {
+function createSweep(name = "20130520-190001-E2.6-Z") {
+  const components = name.split("-");
+  const timeString =
+    `${components[0].slice(0, 4)}/` +
+    `${components[0].slice(4, 6)}/` +
+    `${components[0].slice(6, 8)} ` +
+    `${components[1].slice(0, 2)}:` +
+    `${components[1].slice(2, 4)}:` +
+    `${components[1].slice(4, 6)} UTC`;
+  const isRHI = components[2][0] == "A";
+  const symbol = components[3];
+  const scan = (isRHI ? "Az" : "El") + "  " + components[2].slice(1);
   // Pad an extra azimuth and elevation
   return {
     name,
@@ -310,14 +321,14 @@ function createSweep(name = "dummy") {
     nr: 3,
     nx: 0,
     time: 42,
-    timeString: "1970/01/01 00:00:42 UTC",
-    titleString: "----/--/-- --:--:-- --- -- -.-°",
-    symbol: "U",
+    timeString,
+    titleString: `${timeString}  ${scan}°`,
+    symbol,
     isRHI: false,
     scanElevation: 4.0,
     scanAzimuth: 0.0,
-    rangeStart: 1.0,
-    rangeSpacing: 10.0,
+    rangeStart: 0.0,
+    rangeSpacing: 0.2,
     elevations: [4.0, 4.0, 4.0, 4.0, 4.0],
     azimuths: [0.0, 15.0, 30.0, 45.0, 60.0],
     values: [32, 77, 30, 10, 20, 15, 50, 60, 50, 80, 90, 100],
@@ -343,24 +354,11 @@ async function load(names) {
                 ...createSweep(name),
                 ...sweepParser.parse(new Uint8Array(buffer)),
               });
-              if (sweep.nb == 0 || sweep.nr == 0) {
-                console.log(sweep);
-                self.postMessage({ type: "message", payload: `Empty sweep ${name}` });
-                return null;
-              }
-              let components = sweep.name.split("-");
-              let scan = sweep.isRHI ? `Az ${sweep.scanAzimuth.toFixed(1)}` : `El ${sweep.scanElevation.toFixed(1)}`;
-              sweep.timeString =
-                `${components[0].slice(0, 4)}/` +
-                `${components[0].slice(4, 6)}/` +
-                `${components[0].slice(6, 8)} ` +
-                `${components[1].slice(0, 2)}:` +
-                `${components[1].slice(2, 4)}:` +
-                `${components[1].slice(4, 6)} UTC`;
-              sweep.titleString = `${sweep.timeString}   ${scan}°`;
-              sweep.symbol = components[3].split(".")[0];
               sweep.info = JSON.parse(sweep.info);
               sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\nWaveform: ${sweep.info.waveform}`;
+              if (sweep.nb == 0 || sweep.nr == 0) {
+                sweep = geometry(createSweep(name));
+              }
               count++;
               if (names.length > 1) {
                 let message = `Loaded frame ... ${count} / ${names.length}`;
@@ -385,6 +383,10 @@ async function load(names) {
     if (sweeps.length > 1) {
       self.postMessage({ type: "progress", payload: 100 });
       // sweeps.sort((a, b) => a.time - b.time);
+    }
+    if (sweeps.includes(null)) {
+      console.log("There are invalid sweeps");
+      console.log(sweeps);
     }
     grid.last = sweeps.at(-1).name;
     let scan = grid.last.split("-").at(2);
