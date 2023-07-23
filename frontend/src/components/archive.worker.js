@@ -318,15 +318,15 @@ function createSweep(name = "20130520-190001-E2.6-Z") {
   // Pad an extra azimuth and elevation
   return {
     name,
+    symbol,
+    timeString,
+    isRHI,
     nb: 4,
     nr: 3,
     nx: 0,
     time: dayjs.utc(timeString).unix(),
-    timeString,
     titleString: `${timeString}  ${scan}°`,
     infoString: "No data",
-    symbol,
-    isRHI,
     scanElevation: isRHI ? 0.0 : angle,
     scanAzimuth: isRHI ? angle : 0.0,
     rangeStart: 0.0,
