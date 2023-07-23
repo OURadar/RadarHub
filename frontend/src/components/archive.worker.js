@@ -313,20 +313,22 @@ function createSweep(name = "20130520-190001-E2.6-Z") {
     `${components[1].slice(4, 6)} UTC`;
   const isRHI = components[2][0] == "A";
   const symbol = components[3];
-  const scan = (isRHI ? "Az" : "El") + "  " + components[2].slice(1);
+  const angle = parseFloat(components[2].slice(1));
+  const scan = (isRHI ? "Az" : "El") + "  " + angle.toFixed(1);
   // Pad an extra azimuth and elevation
   return {
     name,
     nb: 4,
     nr: 3,
     nx: 0,
-    time: 42,
+    time: dayjs.utc(timeString).unix(),
     timeString,
     titleString: `${timeString}  ${scan}°`,
+    infoString: "No data",
     symbol,
-    isRHI: false,
-    scanElevation: 4.0,
-    scanAzimuth: 0.0,
+    isRHI,
+    scanElevation: isRHI ? 0.0 : angle,
+    scanAzimuth: isRHI ? angle : 0.0,
     rangeStart: 0.0,
     rangeSpacing: 0.2,
     elevations: [4.0, 4.0, 4.0, 4.0, 4.0],
