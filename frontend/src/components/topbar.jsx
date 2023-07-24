@@ -11,7 +11,7 @@ import React from "react";
 
 import { getRandomMessageInHTML } from "./random-list";
 
-import { IconButton, LinearProgress } from "@mui/material";
+import { IconButton } from "@mui/material";
 import {
   Info,
   Refresh,
@@ -34,16 +34,6 @@ const topbarTheme = createTheme({
       styleOverrides: {
         root: {
           color: "white",
-        },
-      },
-    },
-    MuiLinearProgress: {
-      styleOverrides: {
-        root: {
-          backgroundColor: "transparent",
-        },
-        bar: {
-          backgroundColor: "orange",
         },
       },
     },

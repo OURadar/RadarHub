@@ -18,22 +18,25 @@ import {
 } from "@mui/icons-material";
 
 export function MenuArrow(props) {
+  const ok = props.ingest?.grid !== null || false;
+  const disabled = ok ? props.ingest.grid.pathsActive.map((x) => !x) : new Array(4).fill(true);
+  const playing = props.ingest?.data?.sweeps.length > 1 || false;
   return (
     <div id="arrow" className="floatMenu roundCorder blur">
       <ToggleButtonGroup color="secondary" size="small" value={-1} orientation="vertical">
-        <ToggleButton value={0} onClick={props.onDoubleLeft} disabled={props.doubleLeftDisabled}>
+        <ToggleButton value={0} onClick={props.onDoubleLeft} disabled={disabled[0]}>
           <KeyboardDoubleArrowLeft />
         </ToggleButton>
-        <ToggleButton value={1} onClick={props.onLeft} disabled={props.leftDisabled}>
+        <ToggleButton value={1} onClick={props.onLeft} disabled={disabled[1]}>
           <KeyboardArrowLeft />
         </ToggleButton>
         <ToggleButton value={2} onClick={props.onPlay}>
-          {(props.play && <Pause />) || <PlayArrow />}
+          {(playing && <Pause />) || <PlayArrow />}
         </ToggleButton>
-        <ToggleButton value={3} onClick={props.onRight} disabled={props.rightDisabled}>
+        <ToggleButton value={3} onClick={props.onRight} disabled={disabled[2]}>
           <KeyboardArrowRight />
         </ToggleButton>
-        <ToggleButton value={4} onClick={props.onDoubleRight} disabled={props.doubleRightDisabled}>
+        <ToggleButton value={4} onClick={props.onDoubleRight} disabled={disabled[3]}>
           <KeyboardDoubleArrowRight />
         </ToggleButton>
       </ToggleButtonGroup>
@@ -42,11 +45,7 @@ export function MenuArrow(props) {
 }
 
 MenuArrow.defaultProps = {
-  doubleLeftDisabled: false,
-  leftDisabled: false,
-  play: false,
-  rightDisabled: false,
-  doubleRightDisabled: false,
+  ingest: null,
   onDoubleLeft: () => console.log("MenuArrow.onDoubleLeft"),
   onLeft: () => console.log("MenuArrow.onLeft"),
   onPlay: () => console.log("MenuArrow.onPlay"),

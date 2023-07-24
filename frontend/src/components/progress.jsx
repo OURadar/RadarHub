@@ -19,7 +19,7 @@ export function Progress(props) {
       setTransition("fadeIn");
     } else {
       setTransition("fadeOut");
-      const timer = setTimeout(() => setValue(0), 800);
+      const timer = setTimeout(() => setValue(0), 1000);
       return () => clearTimeout(timer);
     }
   }, [props.value]);

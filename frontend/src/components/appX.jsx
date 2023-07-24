@@ -50,7 +50,6 @@ export function App(props) {
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
   const [message, setMessage] = React.useState("");
-  const [disabled, setDisabled] = React.useState([true, true, true, true]);
 
   const archive = React.useRef(null);
   const user = React.useRef(null);
@@ -66,11 +65,16 @@ export function App(props) {
     document.documentElement.setAttribute("theme", newColors.name);
   };
 
-  const [, handleUpdate] = React.useReducer((x) => x + 1, 0);
+  const [, handleUpdate] = React.useReducer((x) => {
+    // console.log("appX.handleUpdate");
+    return x + 1;
+  }, 0);
 
-  const handleLoad = () => {
-    setDisabled(archive.current?.grid.pathsActive.map((x) => !x) || [true, true, true, true]);
-  };
+  // const [state, dispatch] = React.useReducer(reducer, { pathsActive: [true, true, true, true] });
+
+  // const handleLoad = () => {
+  //   setDisabled(archive.current?.grid.pathsActive.map((x) => !x) || [true, true, true, true]);
+  // };
 
   const handleUserMessage = (message) => setMessage(message);
 
@@ -80,7 +84,6 @@ export function App(props) {
 
     archive.current = new Archive(props.pathway, props.name);
     archive.current.onUpdate = handleUpdate;
-    archive.current.onLoad = handleLoad;
 
     user.current = new User();
     user.current.onMessage = handleUserMessage;
@@ -181,12 +184,8 @@ export function App(props) {
         debug={false}
       />
       <MenuArrow
+        ingest={archive.current}
         tic={archive.current?.grid?.tic}
-        doubleLeftDisabled={disabled[0]}
-        leftDisabled={disabled[1]}
-        rightDisabled={disabled[2]}
-        doubleRightDisabled={disabled[3]}
-        play={archive.current?.data.sweeps.length > 1 || false}
         onDoubleLeft={() => archive.current.navigateBackwardScan()}
         onLeft={() => archive.current.navigateBackward()}
         onPlay={() => archive.current.playPause()}

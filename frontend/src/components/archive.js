@@ -79,7 +79,6 @@ class Archive extends Ingest {
         this.enableLiveUpdate();
       }
       this.showMessage(`${this.data.sweeps[0].name} loaded`);
-      this.onLoad(this.grid);
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(

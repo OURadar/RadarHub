@@ -24,8 +24,6 @@ class Ingest {
     this.response = "";
     this.progress = 0;
     this.onUpdate = (_data) => {};
-    this.onList = () => {};
-    this.onLoad = () => {};
 
     this.showMessage = this.showMessage.bind(this);
     this.handleMessage = this.handleMessage.bind(this);

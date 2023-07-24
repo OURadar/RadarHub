@@ -205,7 +205,40 @@ function connect(force = false) {
   source.addEventListener(pathway, (event) => {
     const payload = JSON.parse(event.data);
     payload.items.forEach((item) => {
-      updateListWithItem(item);
+      // updateListWithItem(item);
+      const elements = item.split("-");
+      const symbol = elements[3];
+      const scan = elements[2];
+      const t = elements[1];
+      const d = elements[0];
+      if (state.verbose) {
+        console.info(
+          `%carchive.worker.connect%c ${d} ${t} ${scan} ${symbol} ${state.update}`,
+          `color: ${namecolor}`,
+          ""
+        );
+      }
+      if (symbol != grid.symbol) {
+        return;
+      }
+      if (grid.items.indexOf(item) > 0) {
+        // console.warn(`Item ${item} exists.`);
+        return;
+      }
+      const listHour = t.slice(0, 2);
+      const dateTimeString = `${d}-${listHour}00`;
+      if (grid.dateTimeString != dateTimeString) {
+        grid.dateTimeString = dateTimeString;
+        grid.hour = parseInt(listHour);
+        grid.items = grid.items.slice(grid.counts[0]);
+        grid.counts = [grid.counts[1], 0];
+        reviseGridItemsGrouped();
+        if (state.verbose) {
+          console.info(`%carchive.worker.connect%c   ${dateTimeString} ${grid.hour}`, `color: ${namecolor}`, "");
+        }
+      }
+      grid.items.push(item);
+      grid.counts[1]++;
     });
     grid.hourHasData = payload.hoursActive.map((x) => x > 0);
     grid.latestHour =
@@ -214,7 +247,27 @@ function connect(force = false) {
         .slice()
         .reverse()
         .findIndex((x) => x == true);
-    self.postMessage({ type: "list", grid: grid });
+    grid.mode = "catchup";
+    reviseGridItemsGrouped();
+    if (state.update == "always") {
+      setGridIndex(grid.items.length - 1);
+    } else if (grid.scan in grid.itemsGrouped) {
+      let index = grid.itemsGrouped[grid.scan].at(-1).index;
+      if (index == grid.index) {
+        // Update the tic so that the list is refreshed at frontend since we won't load
+        grid.tic++;
+        reviseGridPaths();
+        self.postMessage({ type: "list", grid: grid });
+      } else if (state.frames > 1) {
+        // Use select() to select the latest index to update the animation list
+        state.frames = 1;
+        grid.index = index;
+        select(index);
+      } else {
+        // Load the latest index that matches the scan
+        setGridIndex(index);
+      }
+    }
   });
   source.addEventListener("error", (_event) => {
     console.error(`EventSource error`, source.readyState, EventSource.CONNECTING);
@@ -248,59 +301,8 @@ function disconnect() {
   });
 }
 
-function updateListWithItem(item) {
-  const elements = item.split("-");
-  const symbol = elements[3];
-  const scan = elements[2];
-  const t = elements[1];
-  const d = elements[0];
-  if (state.verbose) {
-    console.info(
-      `%carchive.worker.updateListWithItem%c ${d} ${t} ${scan} ${symbol} ${state.update}`,
-      `color: ${namecolor}`,
-      ""
-    );
-  }
-  if (symbol != grid.symbol) {
-    return;
-  }
-  if (grid.items.indexOf(item) > 0) {
-    // console.warn(`Item ${item} exists.`);
-    return;
-  }
-  const listHour = t.slice(0, 2);
-  const dateTimeString = `${d}-${listHour}00`;
-  if (grid.dateTimeString != dateTimeString) {
-    grid.dateTimeString = dateTimeString;
-    grid.hour = parseInt(listHour);
-    grid.mode = "catchup";
-    grid.items = grid.items.slice(grid.counts[0]);
-    grid.counts = [grid.counts[1], 0];
-    reviseGridItemsGrouped();
-    if (state.verbose) {
-      console.info(`%carchive.worker.updateListWithItem%c   ${dateTimeString} ${grid.hour}`, `color: ${namecolor}`, "");
-    }
-  }
-  grid.items.push(item);
-  grid.counts[1]++;
-  grid.mode = "catchup";
-  reviseGridItemsGrouped();
-  if (state.update == "always") {
-    setGridIndex(grid.items.length - 1);
-  } else if (grid.scan in grid.itemsGrouped) {
-    let index = grid.itemsGrouped[grid.scan].at(-1).index;
-    if (index == grid.index) {
-      // Update the tic so that the list is refreshed at frontend since we won't load
-      grid.tic++;
-    } else if (state.frames > 1) {
-      state.frames = 1;
-      grid.index = index;
-      select(index);
-    } else {
-      setGridIndex(index);
-    }
-  }
-}
+// function updateListWithItem(item) {
+// }
 
 function createSweep(name = "20130520-190001-E2.6-Z") {
   const components = name.split("-");

@@ -14,7 +14,7 @@ class User {
   constructor() {
     this.user = undefined;
     this.email = undefined;
-    this.preference = { mode: "auto", update: "scan" };
+    this.preference = { mode: "auto", update: "scan", agree: false };
     let m = localStorage.getItem(key);
     try {
       m = JSON.parse(m);
@@ -22,7 +22,7 @@ class User {
     } catch (e) {
       this.save();
     }
-    // console.log("Loaded preference", this.preference);
+    console.log("Loaded preference", this.preference);
 
     this.onMessage = (message) => {
       console.log(`Account.onMessage() ${message}`);

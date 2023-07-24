@@ -1152,3 +1152,68 @@ div.key {
 .inactive {
   z-index: 0;
 }
+
+.dialWrapper {
+  position: fixed;
+  top: 50px;
+  left: 50px;
+}
+.dial {
+  position: relative;
+  width: 80vmin;
+  height: 80vmin;
+  margin: 0 auto;
+  transform: scale(0.5) translateZ(0);
+  transition: transform 0.5s, opacity 0.5s;
+}
+.dial a {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 47.5%;
+  height: 47.5%;
+  overflow: hidden;
+  transform: scale(0.5) translateZ(0);
+  background-color: var(--yellow);
+}
+.dial a div {
+  height: 100%;
+  opacity: 0.5;
+  transition: opacity 0.5s;
+  border-radius: inherit;
+}
+.dial a:nth-child(1) {
+  border-radius: 40vmin 0 0 -40vmin;
+  transform-origin: 110% 110%;
+  transition: transform 0.4s 0.15s;
+  background-color: var(--red);
+}
+.dial a:nth-child(2) {
+  border-radius: 0 40vmin 0 0;
+  left: 52.5%;
+  transform-origin: -10% 110%;
+  transition: transform 0.4s 0.2s;
+  background-color: var(--green);
+}
+.dial a:nth-child(3) {
+  border-radius: 0 0 0 40vmin;
+  transform-origin: 110% -10%;
+  transition: transform 0.4s 0.25s;
+  background-color: var(--blue);
+}
+.dial a:nth-child(4) {
+  border-radius: 0 0 40vmin 0;
+  top: 52.5%;
+  left: 52.5%;
+  transform-origin: -10% -10%;
+  transition: transform 0.4s 0.3s;
+  background-color: var(--yellow);
+}
+.dial a:nth-child(5) {
+  width: 55%;
+  height: 55%;
+  left: 22.5%;
+  top: 22.5%;
+  transform: scale(1);
+  background-color: rgba(0, 0, 0, 0.25);
+}
