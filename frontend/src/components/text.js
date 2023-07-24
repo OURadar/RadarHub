@@ -24,16 +24,14 @@ class Text {
     this.canvas = document.createElement("canvas");
     this.canvas.width = 4096;
     this.canvas.height = 4096;
-    this.context = this.canvas.getContext("2d");
+    this.context = this.canvas.getContext("2d", { willReadFrequently: true });
     this.context.translate(0, this.canvas.height);
     this.context.scale(1, -1);
     this.stroke = 3.5 * this.scale * this.ratio;
     this.busy = false;
     this.context.font = "14px LabelFont";
     let meas = this.context.measureText("bitcoin");
-    this.hasDetails =
-      undefined !== meas.actualBoundingBoxAscent &&
-      undefined !== meas.actualBoundingBoxDescent;
+    this.hasDetails = undefined !== meas.actualBoundingBoxAscent && undefined !== meas.actualBoundingBoxDescent;
     this.tic = 0;
 
     // Binding methods
@@ -79,9 +77,7 @@ class Text {
                   "color: normal"
                 );
                 console.log(label);
-                var item = Object.entries(allLabels).find(
-                  (x) => x[1].text == label.text
-                )[1];
+                var item = Object.entries(allLabels).find((x) => x[1].text == label.text)[1];
                 console.log(item);
               }
               return;
@@ -139,11 +135,7 @@ class Text {
       context.font = `${size}px LabelFont`;
       const measure = context.measureText(label.text);
       const w = Math.ceil(measure.width);
-      const h = Math.ceil(
-        useDetails
-          ? measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent
-          : size
-      );
+      const h = Math.ceil(useDetails ? measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent : size);
       const ww = w + 2 * p;
       const hh = h + 2 * q;
       f = Math.max(f, h);
@@ -224,11 +216,7 @@ class Text {
 
       scratch.height += piece.height;
 
-      image = new ImageData(
-        new Uint8ClampedArray(scratch.data),
-        width,
-        scratch.height
-      );
+      image = new ImageData(new Uint8ClampedArray(scratch.data), width, scratch.height);
     } else {
       image = context.getImageData(0, 0, width, pageHeight);
     }
@@ -272,9 +260,7 @@ class Text {
 async function makeLabels({ name, model, keys }, colors) {
   const ext = name.split(".").pop();
   if (name.includes("@")) {
-    return builtInLabels(name, model, colors).catch((error) =>
-      console.error(error.stack)
-    );
+    return builtInLabels(name, model, colors).catch((error) => console.error(error.stack));
   } else if (name.includes(".shp.json")) {
     return handleShapefileJSON(name)
       .then((array) => parseArray(array, keys, colors))
@@ -403,9 +389,7 @@ function parseArray(array, keys, colors) {
   array.forEach((label) => {
     const [lon, lat] = label[geometryKey][coordinatesKey].flat();
     const properties = label[propertiesKey];
-    const weight = weightKey
-      ? properties[weightKey]
-      : pop2weight(properties[populationKey]);
+    const weight = weightKey ? properties[weightKey] : pop2weight(properties[populationKey]);
     if (weight > maximumWeight) return;
     if (origin) {
       const p = deg.coord2point(lon, lat, 1.0);
