@@ -373,6 +373,8 @@ async function load(names) {
               }
               return sweep;
             });
+          } else if (response.status == 503) {
+            console.log("Refresh to main index for maintenance page.");
           } else {
             return response.text().then((text) => {
               console.info(text);

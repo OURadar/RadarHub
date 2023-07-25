@@ -108,13 +108,13 @@ export function App(props) {
         archive.current.toggleLiveUpdate();
       } else if (e.target == document.body) {
         if (e.key == "ArrowRight") {
-          archive.current.navigateForwardScan();
+          archive.current.navigateRight();
         } else if (e.key == "ArrowLeft") {
-          archive.current.navigateBackwardScan();
+          archive.current.navigateLeft();
         } else if (e.key == "ArrowUp") {
-          archive.current.navigateBackward();
+          archive.current.navigateUp();
         } else if (e.key == "ArrowDown") {
-          archive.current.navigateForward();
+          archive.current.navigateDown();
         } else if (e.key == " ") {
           archive.current.playPause();
           // } else {
