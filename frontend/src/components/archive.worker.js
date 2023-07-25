@@ -205,7 +205,6 @@ function connect(force = false) {
   source.addEventListener(pathway, (event) => {
     const payload = JSON.parse(event.data);
     payload.items.forEach((item) => {
-      // updateListWithItem(item);
       const elements = item.split("-");
       const symbol = elements[3];
       const scan = elements[2];
@@ -232,7 +231,6 @@ function connect(force = false) {
         grid.hour = parseInt(listHour);
         grid.items = grid.items.slice(grid.counts[0]);
         grid.counts = [grid.counts[1], 0];
-        reviseGridItemsGrouped();
         if (state.verbose) {
           console.info(`%carchive.worker.connect%c   ${dateTimeString} ${grid.hour}`, `color: ${namecolor}`, "");
         }
@@ -240,6 +238,7 @@ function connect(force = false) {
       grid.items.push(item);
       grid.counts[1]++;
     });
+    reviseGridItemsGrouped();
     grid.hourHasData = payload.hoursActive.map((x) => x > 0);
     grid.latestHour =
       23 -
@@ -248,13 +247,12 @@ function connect(force = false) {
         .reverse()
         .findIndex((x) => x == true);
     grid.mode = "catchup";
-    reviseGridItemsGrouped();
     if (state.update == "always") {
       setGridIndex(grid.items.length - 1);
     } else if (grid.scan in grid.itemsGrouped) {
       let index = grid.itemsGrouped[grid.scan].at(-1).index;
       if (index == grid.index) {
-        // Update the tic so that the list is refreshed at frontend since we won't load
+        // Post a list update since we won't load anything
         grid.tic++;
         reviseGridPaths();
         self.postMessage({ type: "list", grid: grid });
@@ -365,8 +363,11 @@ async function load(names) {
               }
               count++;
               if (names.length > 1) {
-                let message = `Loaded frame ... ${count} / ${names.length}`;
-                self.postMessage({ type: "message", payload: message });
+                if (grid.mode == "catchup") {
+                  self.postMessage({ type: "message", payload: `Updated with new frame ${names.at(-1)}` });
+                } else {
+                  self.postMessage({ type: "message", payload: `Loaded ... ${count} / ${names.length} frames` });
+                }
                 self.postMessage({ type: "progress", payload: Math.floor((count / names.length) * 100) });
               }
               return sweep;

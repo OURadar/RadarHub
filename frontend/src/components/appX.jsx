@@ -66,15 +66,11 @@ export function App(props) {
   };
 
   const [, handleUpdate] = React.useReducer((x) => {
-    // console.log("appX.handleUpdate");
+    console.log(`AppX.handleUpdate x = ${x}`);
     return x + 1;
   }, 0);
 
   // const [state, dispatch] = React.useReducer(reducer, { pathsActive: [true, true, true, true] });
-
-  // const handleLoad = () => {
-  //   setDisabled(archive.current?.grid.pathsActive.map((x) => !x) || [true, true, true, true]);
-  // };
 
   const handleUserMessage = (message) => setMessage(message);
 
@@ -183,15 +179,7 @@ export function App(props) {
         onMiddleViewTap={() => archive.current.playPause()}
         debug={false}
       />
-      <MenuArrow
-        ingest={archive.current}
-        tic={archive.current?.grid?.tic}
-        onDoubleLeft={() => archive.current.navigateBackwardScan()}
-        onLeft={() => archive.current.navigateBackward()}
-        onPlay={() => archive.current.playPause()}
-        onRight={() => archive.current.navigateForward()}
-        onDoubleRight={() => archive.current.navigateForwardScan()}
-      />
+      <MenuArrow ingest={archive.current} />
       <MenuUpdate
         value={archive.current?.state.liveUpdate}
         onChange={(_, value) => archive.current.toggleLiveUpdate(value || "offline")}

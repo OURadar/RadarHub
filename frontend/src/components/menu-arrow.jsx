@@ -24,19 +24,19 @@ export function MenuArrow(props) {
   return (
     <div id="arrow" className="floatMenu roundCorder blur">
       <ToggleButtonGroup color="secondary" size="small" value={-1} orientation="vertical">
-        <ToggleButton value={0} onClick={props.onDoubleLeft} disabled={disabled[0]}>
+        <ToggleButton value={0} onClick={() => props.ingest.navigateBackwardScan()} disabled={disabled[0]}>
           <KeyboardDoubleArrowLeft />
         </ToggleButton>
-        <ToggleButton value={1} onClick={props.onLeft} disabled={disabled[1]}>
+        <ToggleButton value={1} onClick={() => props.ingest.navigateBackward()} disabled={disabled[1]}>
           <KeyboardArrowLeft />
         </ToggleButton>
-        <ToggleButton value={2} onClick={props.onPlay}>
+        <ToggleButton value={2} onClick={() => props.ingest.playPause()}>
           {(playing && <Pause />) || <PlayArrow />}
         </ToggleButton>
-        <ToggleButton value={3} onClick={props.onRight} disabled={disabled[2]}>
+        <ToggleButton value={3} onClick={() => props.ingest.navigateForward()} disabled={disabled[2]}>
           <KeyboardArrowRight />
         </ToggleButton>
-        <ToggleButton value={4} onClick={props.onDoubleRight} disabled={disabled[3]}>
+        <ToggleButton value={4} onClick={() => props.ingest.navigateForwardScan()} disabled={disabled[3]}>
           <KeyboardDoubleArrowRight />
         </ToggleButton>
       </ToggleButtonGroup>
@@ -45,10 +45,12 @@ export function MenuArrow(props) {
 }
 
 MenuArrow.defaultProps = {
-  ingest: null,
-  onDoubleLeft: () => console.log("MenuArrow.onDoubleLeft"),
-  onLeft: () => console.log("MenuArrow.onLeft"),
-  onPlay: () => console.log("MenuArrow.onPlay"),
-  onRight: () => console.log("MenuArrow.onRight"),
-  onDoubleRight: () => console.log("MenuArrow.onDoubleRight"),
+  ingest: {
+    grid: { pathsActive: new Array(4).fill(false) },
+    navigateBackwardScan: () => console.log("MenuArrow.ingest.navigateBackwardScan"),
+    navigateBackward: () => console.log("MenuArrow.ingest.navigateBackward"),
+    playPause: () => console.log("MenuArrow.ingest.playPause"),
+    navigateForward: () => console.log("MenuArrow.ingest.navigateLeft"),
+    navigateForwardScan: () => console.log("MenuArrow.ingest.navigateForwardScan"),
+  },
 };

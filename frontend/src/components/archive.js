@@ -78,7 +78,9 @@ class Archive extends Ingest {
       } else if (latest && this.state.liveUpdate === "offline") {
         this.enableLiveUpdate();
       }
-      this.showMessage(`${this.data.sweeps[0].name} loaded`);
+      if (this.data.sweeps.length == 1) {
+        this.showMessage(`${this.data.sweeps[0].name} loaded`);
+      }
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
@@ -318,6 +320,22 @@ class Archive extends Ingest {
     const scan = this.grid.items[this.grid.index].split("-")[2];
     const item = this.grid.itemsGrouped[scan].at(-1);
     return this.grid.latestHour == this.grid.hour && item.index == this.grid.index;
+  }
+
+  navigateUp() {
+    this.worker.postMessage({ task: "backward" });
+  }
+
+  navigateDown() {
+    this.worker.postMessage({ task: "forward" });
+  }
+
+  navigateLeft() {
+    this.worker.postMessage({ task: "backward-scan" });
+  }
+
+  navigateRight() {
+    this.worker.postMessage({ task: "forward-scan" });
   }
 
   navigateForward() {
