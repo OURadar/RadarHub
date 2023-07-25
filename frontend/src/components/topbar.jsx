@@ -56,12 +56,7 @@ function RightDash(props) {
           <Info />
         </IconButton>
       )}
-      <IconButton
-        aria-label="Refresh"
-        onClick={() => {
-          window.location.reload();
-        }}
-      >
+      <IconButton aria-label="Refresh" onClick={() => window.location.reload()}>
         <Refresh />
       </IconButton>
       {!props.isMobile && (
