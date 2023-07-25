@@ -170,9 +170,9 @@ export function App(props) {
           } else {
             let dy = e.pageY - e.target.offsetTop;
             if (dy / e.target.offsetHeight < 0.5) {
-              archive.current.prevProduct();
-            } else {
               archive.current.nextProduct();
+            } else {
+              archive.current.prevProduct();
             }
           }
         }}
