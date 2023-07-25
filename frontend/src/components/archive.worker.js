@@ -320,6 +320,7 @@ function createSweep(name = "20130520-190001-E2.6-Z") {
     symbol,
     timeString,
     isRHI,
+    age: 0,
     nb: 4,
     nr: 3,
     nx: 0,
