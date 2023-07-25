@@ -66,7 +66,7 @@ export function App(props) {
   };
 
   const [, handleUpdate] = React.useReducer((x) => {
-    console.log(`AppX.handleUpdate x = ${x}`);
+    // console.debug(`AppX.handleUpdate x = ${x}`);
     return x + 1;
   }, 0);
 

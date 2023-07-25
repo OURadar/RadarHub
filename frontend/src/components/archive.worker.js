@@ -132,7 +132,6 @@ function reviseGridPaths() {
   const length = grid.itemsGrouped[scan].length;
   const first = grid.itemsGrouped[scan][0];
   const last = grid.itemsGrouped[scan][length - 1];
-  grid.scan = scan;
   grid.pathsActive[0] = index != first.index;
   grid.pathsActive[1] = index != 0;
   grid.pathsActive[2] = index != grid.items.length - 1;
@@ -260,7 +259,7 @@ function connect(force = false) {
         // Use select() to select the latest index to update the animation list
         state.frames = 1;
         grid.index = index;
-        select(index);
+        select(index, "catchup");
       } else {
         // Load the latest index that matches the scan
         setGridIndex(index);
@@ -339,15 +338,13 @@ function createSweep(name = "20130520-190001-E2.6-Z") {
 
 async function load(names) {
   let count = 0;
+  if (names.length > 1) {
+    self.postMessage({ type: "progress", payload: { progress: 1, message: "Loading scans ..." } });
+  }
   await Promise.all(
-    names.map(async (name, index) => {
+    names.map(async (name) => {
       const url = `/data/load/${pathway}/${name}/`;
       console.info(`%carchive.worker.load %c${url}%c`, `color: ${namecolor}`, "color: dodgerblue", "");
-      if (names.length > 1) {
-        self.postMessage({ type: "progress", payload: 1 });
-      } else {
-        self.postMessage({ type: "progress", payload: 100 });
-      }
       return fetch(url, { cache: "force-cache" })
         .then(async (response) => {
           if (response.status == 200) {
@@ -361,14 +358,18 @@ async function load(names) {
               if (sweep.nb == 0 || sweep.nr == 0) {
                 sweep = geometry(createSweep(name));
               }
-              count++;
               if (names.length > 1) {
-                if (grid.mode == "catchup") {
-                  self.postMessage({ type: "message", payload: `Updated with new frame ${names.at(-1)}` });
-                } else {
-                  self.postMessage({ type: "message", payload: `Loaded ... ${count} / ${names.length} frames` });
-                }
-                self.postMessage({ type: "progress", payload: Math.floor((count / names.length) * 100) });
+                count++;
+                self.postMessage({
+                  type: "progress",
+                  payload: {
+                    progress: Math.floor((count / names.length) * 100),
+                    message:
+                      grid.mode == "catchup"
+                        ? `New scan ${names.at(-1)}`
+                        : `Loading scans ... ${count} / ${names.length}`,
+                  },
+                });
               }
               return sweep;
             });
@@ -385,19 +386,15 @@ async function load(names) {
         });
     })
   ).then((sweeps) => {
-    if (sweeps.length > 1) {
-      self.postMessage({ type: "progress", payload: 100 });
-      // sweeps.sort((a, b) => a.time - b.time);
-    }
     if (sweeps.includes(null)) {
       console.log("There are invalid sweeps");
       console.log(sweeps);
     }
     grid.last = sweeps.at(-1).name;
     let scan = grid.last.split("-").at(2);
-    if (state.verbose > 1) {
+    if (state.verbose) {
       console.debug(
-        `%carchive.worker.load%c grid.scan = %c${scan}%c ← ${grid.scan}`,
+        `%carchive.worker.load%c grid.scan = %c${scan}%c ← ${grid.scan}   grid.mode = ${grid.mode}`,
         `color: ${namecolor}`,
         "",
         "color: dodgerblue",
@@ -790,10 +787,9 @@ function append() {
   list(day, grid.symbol, "append");
 }
 
-function select(index) {
-  grid.mode = "load";
+function select(index, hint = "load") {
+  grid.mode = hint;
   if (index == grid.index && state.frames == 1) {
-    self.postMessage({ type: "message", payload: "Loading frames ..." });
     let body = 15;
     let tail = findLastInGroup();
     let head = Math.max(0, tail - body + 1);
