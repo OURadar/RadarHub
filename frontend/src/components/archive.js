@@ -309,7 +309,7 @@ class Archive extends Ingest {
     };
     this.data.sweeps.forEach((sweep) => {
       const age = ageString(now - sweep.time);
-      if (sweep.age != age) {
+      if (sweep.age === undefined || sweep.age != age) {
         sweep.age = age;
         updated = true;
       }
