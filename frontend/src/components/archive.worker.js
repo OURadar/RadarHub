@@ -43,10 +43,12 @@ let grid = {
 };
 let state = {
   update: "scan",
-  frames: 1,
+  length: 1,
+  sweeps: [],
   verbose: 0,
 };
 const namecolor = "#bf9140";
+const frameCount = 15;
 
 const sweepParser = new Parser()
   .endianess("little")
@@ -255,9 +257,9 @@ function connect(force = false) {
         grid.tic++;
         reviseGridPaths();
         self.postMessage({ type: "list", grid: grid });
-      } else if (state.frames > 1) {
+      } else if (state.length > 1) {
         // Use select() to select the latest index to update the animation list
-        state.frames = 1;
+        state.length = 1;
         grid.index = index;
         select(index, "catchup");
       } else {
@@ -298,9 +300,6 @@ function disconnect() {
   });
 }
 
-// function updateListWithItem(item) {
-// }
-
 function createSweep(name = "20130520-190001-E2.6-Z") {
   const components = name.split("-");
   const timeString =
@@ -339,8 +338,19 @@ function createSweep(name = "20130520-190001-E2.6-Z") {
 
 async function load(names) {
   let count = 0;
+  let append = false;
   if (names.length > 1) {
-    self.postMessage({ type: "progress", payload: { progress: 1, message: "Loading scans ..." } });
+    if (state.sweeps.length > 2) {
+      let newNames = state.sweeps.slice(-(frameCount - 1)).map((x) => x.name);
+      newNames.push(names.at(-1));
+      if (JSON.stringify(names) === JSON.stringify(newNames)) {
+        names = names.slice(-1);
+        append = true;
+      }
+    }
+    if (!append) {
+      self.postMessage({ type: "progress", payload: { progress: 1, message: "Loading scans ..." } });
+    }
   }
   await Promise.all(
     names.map(async (name) => {
@@ -395,7 +405,14 @@ async function load(names) {
       console.log("There are invalid sweeps");
       console.log(sweeps);
     }
-    grid.last = sweeps.at(-1).name;
+    if (append) {
+      let newSweeps = state.sweeps.slice(-14);
+      newSweeps.push(sweeps[0]);
+      state.sweeps = newSweeps;
+    } else {
+      state.sweeps = sweeps;
+    }
+    grid.last = state.sweeps.at(-1).name;
     let scan = grid.last.split("-").at(2);
     if (state.verbose) {
       console.debug(
@@ -408,7 +425,7 @@ async function load(names) {
     }
     grid.scan = scan;
     grid.tic++;
-    self.postMessage({ type: "load", grid: grid, payload: sweeps });
+    self.postMessage({ type: "load", grid: grid, payload: state.sweeps });
   });
 }
 
@@ -511,7 +528,7 @@ function setGridIndex(index) {
   }
   grid.index = index;
   reviseGridPaths();
-  state.frames = 1;
+  state.length = 1;
   load([scan]);
 }
 
@@ -794,13 +811,12 @@ function append() {
 
 function select(index, hint = "load") {
   grid.mode = hint;
-  if (index == grid.index && state.frames == 1) {
-    let body = 15;
+  if (index == grid.index && state.length == 1) {
     let tail = findLastInGroup();
-    let head = Math.max(0, tail - body + 1);
+    let head = Math.max(0, tail - frameCount + 1);
     let items = grid.itemsGrouped[grid.scan].slice(head, tail + 1);
     const names = items.map((item) => item.item);
-    state.frames = names.length;
+    state.length = names.length;
     load(names);
     return;
   } else {
