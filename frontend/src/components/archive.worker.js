@@ -376,6 +376,7 @@ async function load(names) {
           } else if (response.status == 503) {
             console.log("Refresh to main index for maintenance page.");
             // document.location.reload();
+            return false;
           } else {
             return response.text().then((text) => {
               console.info(text);
