@@ -162,18 +162,22 @@ export function App(props) {
           }
         }}
         onColorbarClick={(e) => {
-          if (isMobile) {
-            if (e.pageX / e.target.offsetWidth < 0.5) {
-              archive.current.prevProduct();
+          if (e.target.id == "symbol" || e.target.id == "text") {
+            archive.current.nextProduct();
+          } else if (e.target.id == "colorbar") {
+            if (isMobile) {
+              if (e.pageX / e.target.offsetWidth < 0.5) {
+                archive.current.prevProduct();
+              } else {
+                archive.current.nextProduct();
+              }
             } else {
-              archive.current.nextProduct();
-            }
-          } else {
-            let dy = e.pageY - e.target.offsetTop;
-            if (dy / e.target.offsetHeight < 0.5) {
-              archive.current.nextProduct();
-            } else {
-              archive.current.prevProduct();
+              let dy = e.pageY - e.target.offsetTop;
+              if (dy / e.target.offsetHeight < 0.5) {
+                archive.current.nextProduct();
+              } else {
+                archive.current.prevProduct();
+              }
             }
           }
         }}

@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import { App } from "./components/appX";
+import { App } from "./components/app7";
 
 const text = document.getElementById("params")?.textContent || "{}";
 const params = JSON.parse(text);

@@ -87,7 +87,7 @@ class Product extends GLView {
   };
 
   updateColorbar(symbol = "Z") {
-    const symbolToStyle = (symbol) => {
+    this.style = ((symbol) => {
       let ticks = [];
       if (symbol == "R") {
         // # Special case, values are mapped to indices
@@ -185,9 +185,7 @@ class Product extends GLView {
           index: 0,
         };
       }
-    };
-    this.style = symbolToStyle(symbol);
-    console.log("symbolToSTyle ->", this.style);
+    })(symbol);
     if (this.palette.texture) {
       this.palette.index = (this.style.index + 0.5) / this.palette.texture.height;
       this.palette.symbol = symbol;
