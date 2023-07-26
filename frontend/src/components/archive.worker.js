@@ -273,7 +273,7 @@ function connect(force = false) {
     fetch("/state/cache/").then((response) => {
       if (response.status == 503) {
         // Server went into maintenance mode
-        window.location.assign("/");
+        self.postMessage({ type: "503" });
       }
     });
     if (source.readyState == EventSource.CONNECTING) {

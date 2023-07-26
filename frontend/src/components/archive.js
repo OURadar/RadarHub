@@ -134,6 +134,8 @@ class Archive extends Ingest {
       }
       this.grid = grid;
       this.ready = true;
+    } else if (type == "503") {
+      document.location.assign("/");
     }
     this.onUpdate(this.state.tic++);
   }
