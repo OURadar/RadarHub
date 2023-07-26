@@ -270,6 +270,12 @@ function connect(force = false) {
   });
   source.addEventListener("error", (_event) => {
     console.error(`EventSource error`, source.readyState, EventSource.CONNECTING);
+    fetch("/state/cache/").then((response) => {
+      if (response.status == 503) {
+        // Server went into maintenance mode
+        window.location.assign("/");
+      }
+    });
     if (source.readyState == EventSource.CONNECTING) {
       console.info(`EventSource connecting %c${pathway}%c ...`, "color: dodgerblue", "");
       return;
@@ -791,6 +797,8 @@ function catchup() {
         })
         .then(() => connect())
         .catch((error) => console.error(`Unexpected error ${error}`));
+    } else if (response.status == 503) {
+      console.log("Server went into maintenance mode");
     } else {
       console.error("Unable to catch up.");
     }
