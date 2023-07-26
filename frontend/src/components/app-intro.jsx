@@ -63,7 +63,7 @@ class App extends React.Component {
           onInfoRequest={this.handleInfoOpen}
           onAccount={this.user.greet}
         />
-        <HelpPage open={this.state.open} handleClose={this.handleInfoClose} />
+        <HelpPage open={this.state.open} onClose={this.handleInfoClose} />
       </ThemeProvider>
     );
   }

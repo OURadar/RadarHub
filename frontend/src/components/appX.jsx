@@ -24,6 +24,7 @@ import { Product } from "./product";
 import { Navigation } from "./navigation";
 import { MenuUpdate } from "./menu-update";
 import { MenuArrow } from "./menu-arrow";
+import { HelpPage } from "./help";
 
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);
@@ -50,6 +51,7 @@ export function App(props) {
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
   const [message, setMessage] = React.useState("");
+  const [showHelp, setShowHelp] = React.useState(false);
 
   const archive = React.useRef(null);
   const user = React.useRef(null);
@@ -203,6 +205,7 @@ export function App(props) {
           message={message}
           ingest={archive.current}
           onAccount={() => user.current.greet()}
+          onInfoRequest={() => setShowHelp(true)}
           onThemeChange={() => {
             if (user.current.preference.mode == "auto") {
               // if (document.documentElement.getAttribute("theme") === "light") {
@@ -228,6 +231,7 @@ export function App(props) {
           )) || (
             <div>
               <Layout name="split-archive-width" left={product} right={browser} />
+              <HelpPage open={showHelp} onClose={() => setShowHelp(false)} />
             </div>
           )}
         </ThemeProvider>
