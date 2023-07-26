@@ -13,19 +13,28 @@ export function Notification(props) {
   const [display, setDisplay] = React.useState("");
   const [transition, setTransition] = React.useState("invisible");
 
+  const fadeOut = () => {
+    setTransition("fadeOut");
+    const timer = setTimeout(() => setDisplay(""), 800);
+    return () => clearTimeout(timer);
+  };
+
   React.useEffect(() => {
     if (props.message.length) {
       setDisplay(props.message);
       setTransition("fadeIn");
-    } else {
-      setTransition("fadeOut");
-      const timer = setTimeout(() => setDisplay(""), 800);
-      return () => clearTimeout(timer);
+    } else if (display.length || transition == "fadeIn") {
+      return fadeOut();
     }
   }, [props.message]);
 
   return (
-    <div id={props.id} className={`notification blur ${transition}`} dangerouslySetInnerHTML={{ __html: display }} />
+    <div
+      id={props.id}
+      className={`notification blur ${transition}`}
+      dangerouslySetInnerHTML={{ __html: display }}
+      onClick={() => fadeOut()}
+    />
   );
 }
 

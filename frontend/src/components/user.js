@@ -56,6 +56,7 @@ class User {
                     "'>Sign In Here</a><div class='emotion'>⛅️</div>"
                 : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
             );
+            setTimeout(() => this.onMessage(""), 4000);
           });
         } else {
           console.log("response", response);
