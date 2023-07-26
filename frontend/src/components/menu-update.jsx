@@ -34,6 +34,7 @@ export function MenuUpdate(props) {
 
 MenuUpdate.defaultProps = {
   ingest: null,
+  value: "offline",
   onChange: (_e, value) => {
     console.log(`Preference.onChange()  value = ${value}`);
   },

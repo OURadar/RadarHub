@@ -75,8 +75,9 @@ export function App(props) {
   const handleUserMessage = (message) => setMessage(message);
 
   useConstructor(() => {
-    if (!isMobile)
+    if (!isMobile) {
       document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
+    }
 
     archive.current = new Archive(props.pathway, props.name);
     archive.current.onUpdate = handleUpdate;

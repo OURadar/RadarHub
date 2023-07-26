@@ -329,12 +329,12 @@ class Gesture {
     //   console.log(`Gesture  click  ${this.panInProgress}`);
     //   this.handleSingleTap(this.pointX, this.pointY);
     // });
-    this.element.addEventListener("dblclick", (e) => {
-      this.pointX = e.offsetX;
-      this.pointY = e.offsetY;
-      this.message = "double click";
-      this.handleDoubleTap(this.pointX, this.pointY);
-    });
+    // this.element.addEventListener("dblclick", (e) => {
+    //   this.pointX = e.offsetX;
+    //   this.pointY = e.offsetY;
+    //   this.message = "double click";
+    //   this.handleDoubleTap(this.pointX, this.pointY);
+    // });
     this.element.addEventListener("gesturestart", (e) => {
       if (this.hasTouch) return;
       this.message += `gesturestart (${e.scale.toFixed(4)})`;

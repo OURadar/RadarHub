@@ -82,7 +82,6 @@ class Product extends GLView {
     },
     gravity: "right",
     onOverlayLoad: () => console.log("Product.onOverlayLoad()"),
-    onColorbarTouch: () => {},
     onColorbarClick: () => {},
     onMiddleViewTap: () => {},
   };
