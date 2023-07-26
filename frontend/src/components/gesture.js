@@ -16,6 +16,8 @@ class Gesture {
           bottom: 0,
           left: 0,
         };
+    this.startX = -1;
+    this.startY = -1;
     this.pointX = -1;
     this.pointY = -1;
     this.pointU = 0;
@@ -52,6 +54,8 @@ class Gesture {
         (e) => {
           let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
           this.rect = this.element.getBoundingClientRect();
+          this.startX = x;
+          this.startY = y;
           this.pointX = x;
           this.pointY = y;
           this.pointU = u;
@@ -127,7 +131,7 @@ class Gesture {
       this.element.addEventListener("touchend", (e) => {
         const now = Date.now();
         const panTiltZoom = this.panInProgress || this.tiltInProgress;
-        if (!panTiltZoom) {
+        if (!panTiltZoom && e.pageX == this.startX && e.pageY == this.startY) {
           const delta = now - this.lastTapTime;
           if (this.singleTapTimeout !== null) {
             clearTimeout(this.singleTapTimeout);
@@ -147,6 +151,7 @@ class Gesture {
               // this.message = `touchend: single tap (${delta} ms)`;
             }, 300);
           }
+          this.lastTapTime = now;
         }
         if (e.targetTouches.length > 0) {
           let [x, y, u, v, d] = positionAndDistanceFromTouches(e.targetTouches);
@@ -167,7 +172,6 @@ class Gesture {
           this.rollInProgress = false;
         }
         this.hasTouch = false;
-        this.lastTapTime = now;
       });
       this.element.addEventListener("touchcancel", (_e) => {
         this.panInProgress = false;
