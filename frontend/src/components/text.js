@@ -5,7 +5,6 @@
 //  Created by Boonleng Cheong on 9/1/2021.
 //
 
-import { common } from "@mui/material/colors";
 import { deg, earthRadius } from "./common";
 
 //
@@ -15,6 +14,8 @@ import { deg, earthRadius } from "./common";
 //  Update as:
 //  buffer = obj.load(files, model, colors)
 //
+
+const nameStyle = "background-color: #444; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
 
 class Text {
   constructor(debug = false) {
@@ -244,9 +245,9 @@ class Text {
     const mString = (buffer.count * 11 * wordsize).toLocaleString();
     const wString = `${width.toLocaleString()} x ${image.height.toLocaleString()}`;
     const vString = (width * image.height * 4).toLocaleString();
-    console.log(
-      `Text: %c${cString} patches %c(${xString} floats = ${mString} bytes)` +
-        `%c / texture %c(${wString} RGBA = ${vString} bytes)`,
+    console.info(
+      `%cText%c ${cString} patches %c(${xString} floats = ${mString} bytes)%c / %c(${wString} RGBA = ${vString} bytes)`,
+      nameStyle,
       "font-weight: initial",
       "color: lightseagreen",
       "color: inherit",

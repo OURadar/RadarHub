@@ -46,6 +46,8 @@ const getItemHeight = (theme) => {
 };
 
 export function App(props) {
+  const nameStyle = "background-color: #667788; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+
   const [load, setLoad] = React.useState(0);
   const [panel, setPanel] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
@@ -128,10 +130,10 @@ export function App(props) {
 
     let timeout;
     window.addEventListener("blur", (_e) => {
-      console.log(`Off focus   user updateMode = ${archive.current.state.liveUpdate}`);
+      console.info(`%cApp.event.blur%c updateMode = ${user.current.preference.update}`, nameStyle, "");
       user.current.setUpdate(archive.current.state.liveUpdate);
       if (archive.current.state.liveUpdate != "offline") {
-        console.log("Setting timeout for disconnect ...");
+        console.info("%cApp.event.blur%c Setting timeout for disconnect ...", nameStyle, "");
         timeout = setTimeout(() => {
           archive.current.disableLiveUpdate();
           timeout = null;
@@ -139,7 +141,7 @@ export function App(props) {
       }
     });
     window.addEventListener("focus", (_e) => {
-      console.log(`On focus   user updateMode = ${user.current.preference.update}`);
+      console.info(`%cApp.event.focus%c updateMode = ${user.current.preference.update}`, nameStyle, "");
       if (timeout) {
         clearTimeout(timeout);
         timeout = null;
@@ -208,11 +210,6 @@ export function App(props) {
           onInfoRequest={() => setShowHelp(true)}
           onThemeChange={() => {
             if (user.current.preference.mode == "auto") {
-              // if (document.documentElement.getAttribute("theme") === "light") {
-              //   setColorMode("dark");
-              // } else {
-              //   setColorMode("auto");
-              // }
               setColorMode("light");
             } else if (user.current.preference.mode == "light") {
               setColorMode("dark");
