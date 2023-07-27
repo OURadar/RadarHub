@@ -30,8 +30,8 @@ class App extends React.Component {
     this.user.onMessage = (message) => this.setState({ message: message });
 
     this.state = {
-      colors: colorDict(),
-      theme: makeTheme(),
+      colors: colorDict(this.user.preference.mode),
+      theme: makeTheme(this.user.preference.mode),
       message: "",
       time: new Date("2013-05-20T19:00"),
       showInfo: false,
