@@ -1230,12 +1230,13 @@ div.key {
   background-color: var(--system-background);
   border: 1px solid var(--border-accent);
   position: absolute;
-  bottom: 20%;
+  bottom: 10%;
   left: 50%;
   min-width: 80%;
-  padding: 50px;
+  padding: 50px 20px;
   overflow-y: auto;
   transform: translate(-50%, 0);
   text-align: center;
+  line-height: 1.5em;
   z-index: 69;
 }

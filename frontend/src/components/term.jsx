@@ -3,7 +3,7 @@ import React from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 
-const link = "/static/docs/RadarHub One-Click User License 6-5-2023.docx";
+const link = "/static/docs/RadarHub One-Click User License 6-5-2023.pdf";
 
 export function TermPage(props) {
   return (

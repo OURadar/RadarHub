@@ -139,3 +139,11 @@ Copyright Boonleng Cheong
   bottom: calc(var(--navbar-padding-bottom) + var(--button-height) + 250px);
   right: 20px;
 }
+#agreement {
+  width: 90%;
+  padding: 70px 50px;
+  bottom: 15%;
+}
+#agreement h1 {
+  font-size: 26px;
+}
