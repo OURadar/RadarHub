@@ -18,6 +18,7 @@ import { HelpPage } from "./help";
 import { TermPage } from "./term";
 
 const version = require("/package.json").version;
+const nextMode = { auto: "light", light: "dark", dark: "auto" };
 
 class App extends React.Component {
   constructor(props) {
@@ -56,13 +57,14 @@ class App extends React.Component {
         theme: makeTheme(mode),
       });
     });
+    document.documentElement.setAttribute("theme", this.state.colors.name);
   }
 
   render() {
     return (
       <ThemeProvider theme={this.state.theme}>
         <TopBar
-          mode={this.state.colors.name}
+          mode={this.user.preference.mode}
           isMobile={this.isMobile}
           message={this.state.message}
           onThemeChange={this.handleThemeChange}
@@ -76,12 +78,14 @@ class App extends React.Component {
   }
 
   handleThemeChange() {
-    let mode = this.state.colors.name == "light" ? "dark" : "light";
-    document.documentElement.setAttribute("theme", mode);
+    const mode = nextMode[this.user.preference.mode];
+    const newColors = colorDict(mode);
+    this.user.setMode(mode);
     this.setState({
       colors: colorDict(mode),
       theme: makeTheme(mode),
     });
+    document.documentElement.setAttribute("theme", newColors.name);
   }
 
   handleInfoOpen() {
