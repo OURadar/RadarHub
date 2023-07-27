@@ -78,6 +78,11 @@ class User {
     this.preference.update = (["scan", "always", "offline"].includes(mode) && mode) || "scan";
     this.save();
   }
+
+  setAgree(mode = true) {
+    this.preference.agree = ([true, false].includes(mode) && mode) || false;
+    this.save();
+  }
 }
 
 export { User };

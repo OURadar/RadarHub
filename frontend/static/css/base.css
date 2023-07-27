@@ -10,6 +10,7 @@ Copyright Boonleng Cheong
   --base-size: 14;
   --background-color: hsl(194, 100%, 29%);
   --background-color-translucent: hsla(194, 100%, 29%, 0.9);
+  --background-color-translucent-more: hsla(194, 100%, 29%, 0.7);
   --background-color-secondary: hsla(194, 100%, 5%, 0.85);
   --topbar-height: 56px;
   --tabbar-height: 48px;
@@ -56,6 +57,7 @@ Copyright Boonleng Cheong
   --gray7-translucent: rgba(252, 252, 255, 0.9);
   --system-foreground: #000000;
   --system-background: #ffffff;
+  --system-foreground-primary: rgb(0, 199, 190);
   --secondary-system-background: #f2f2f7ff;
   --tertiary-system-background: #ffffffff;
   --overlay-background: #ffffffd8;
@@ -101,6 +103,7 @@ Copyright Boonleng Cheong
   --gray7-translucent: rgba(16, 16, 18, 0.85);
   --system-foreground: #ffffff;
   --system-background: #222328;
+  --system-foreground-primary: rgb(102, 212, 207);
   --secondary-system-background: #1c1c1eff;
   --tertiary-system-background: #2c2c2eff;
   --overlay-background: #1e1e1ee8;
@@ -822,6 +825,12 @@ h3 {
   width: 80%;
 }
 
+a.inline {
+  display: inline-block;
+  color: var(--system-foreground-primary);
+  text-decoration: none;
+}
+
 a.radarButton {
   border-radius: var(--button-border-radius);
   color: white;
@@ -1216,4 +1225,17 @@ div.key {
   top: 22.5%;
   transform: scale(1);
   background-color: rgba(0, 0, 0, 0.25);
+}
+#agreement {
+  background-color: var(--system-background);
+  border: 1px solid var(--border-accent);
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  min-width: 80%;
+  padding: 50px;
+  overflow-y: auto;
+  transform: translate(-50%, 0);
+  text-align: center;
+  z-index: 69;
 }

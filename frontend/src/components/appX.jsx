@@ -1,5 +1,5 @@
 //
-//  app8.js - Replacement of app6
+//  appX.js - Replacement of app6 & app9
 //  RadarHub
 //
 //  This is a controller
@@ -25,6 +25,7 @@ import { Navigation } from "./navigation";
 import { MenuUpdate } from "./menu-update";
 import { MenuArrow } from "./menu-arrow";
 import { HelpPage } from "./help";
+import { TermPage } from "./term";
 
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);
@@ -54,6 +55,7 @@ export function App(props) {
   const [colors, setColors] = React.useState(colorDict());
   const [message, setMessage] = React.useState("");
   const [showHelp, setShowHelp] = React.useState(false);
+  const [showTerm, setShowTerm] = React.useState(false);
 
   const archive = React.useRef(null);
   const user = React.useRef(null);
@@ -79,7 +81,10 @@ export function App(props) {
 
   // const [state, dispatch] = React.useReducer(reducer, { myState: 0 });
 
-  const handleUserMessage = (message) => setMessage(message);
+  const handleUserAgree = () => {
+    user.current.setAgree();
+    setShowTerm(false);
+  };
 
   const handleBlur = (_e) => {
     console.info(`%cApp.event.blur%c updateMode = ${user.current.preference.update}`, nameStyle, "");
@@ -112,9 +117,10 @@ export function App(props) {
     archive.current.onUpdate = handleUpdate;
 
     user.current = new User();
-    user.current.onMessage = handleUserMessage;
+    user.current.onMessage = setMessage;
 
     setColorMode(user.current.preference.mode);
+    setShowTerm(!user.current.preference.agree);
   });
 
   React.useEffect(() => {
@@ -128,10 +134,15 @@ export function App(props) {
       }
     });
     window.addEventListener("keyup", (e) => {
-      if (e.key == "Meta" && key == "i") {
-        console.log(`%cApp.event.keyup%c Removing blur/focus listeners ...`, nameStyle, "");
-        window.removeEventListener("blur", handleBlur);
-        window.removeEventListener("focus", handleFocus);
+      if (e.key == "Meta") {
+        if (key == "i") {
+          console.log(`%cApp.event.keyup%c Removing blur/focus listeners ...`, nameStyle, "");
+          window.removeEventListener("blur", handleBlur);
+          window.removeEventListener("focus", handleFocus);
+        } else if (key == "u") {
+          console.log(`%cApp.event.keyup%c Reset agreement ...`, nameStyle, "");
+          user.current.setAgree(false);
+        }
         return;
       }
       if (e.key != key) {
@@ -233,6 +244,7 @@ export function App(props) {
               <HelpPage open={showHelp} onClose={() => setShowHelp(false)} />
             </div>
           )}
+          {showTerm && <TermPage onClose={handleUserAgree} />}
         </ThemeProvider>
       </div>
     </div>
