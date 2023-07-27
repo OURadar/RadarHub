@@ -15,6 +15,7 @@ import { User } from "./user";
 
 import { TopBar } from "./topbar";
 import { HelpPage } from "./help";
+import { TermPage } from "./term";
 
 const version = require("/package.json").version;
 
@@ -23,23 +24,23 @@ class App extends React.Component {
     super(props);
     this.isMobile = detectMob();
     if (this.isMobile)
-      document
-        .getElementById("device-style")
-        .setAttribute(
-          "href",
-          `/static/css/mobile.css?h=${this.props.css_hash}`
-        );
+      document.getElementById("device-style").setAttribute("href", `/static/css/mobile.css?h=${this.props.css_hash}`);
+    this.user = new User();
+    this.user.onMessage = (message) => this.setState({ message: message });
+
     this.state = {
       colors: colorDict(),
       theme: makeTheme(),
       message: "",
       time: new Date("2013-05-20T19:00"),
-      open: false,
+      showInfo: false,
+      showTerm: this.user.preference.agree === false,
     };
-    this.user = new User();
-    this.user.onMessage = (message) => this.setState({ message: message });
+
     this.handleInfoOpen = this.handleInfoOpen.bind(this);
     this.handleInfoClose = this.handleInfoClose.bind(this);
+    this.handleTermOpen = this.handleTermOpen.bind(this);
+    this.handleTermClose = this.handleTermClose.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
   }
   static defaultProps = {
@@ -48,17 +49,13 @@ class App extends React.Component {
 
   componentDidMount() {
     // Get notified when the desktop theme is changed
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        let mode = e.matches ? "dark" : "light";
-        this.setState({
-          colors: colorDict(mode),
-          theme: makeTheme(mode),
-        });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      let mode = e.matches ? "dark" : "light";
+      this.setState({
+        colors: colorDict(mode),
+        theme: makeTheme(mode),
       });
-    document.getElementById("versionTag").innerHTML =
-      `v${version}` + ` <div class="lite">(${this.props.code_hash})</div>`;
+    });
   }
 
   render() {
@@ -72,7 +69,8 @@ class App extends React.Component {
           onInfoRequest={this.handleInfoOpen}
           onAccount={this.user.greet}
         />
-        <HelpPage open={this.state.open} handleClose={this.handleInfoClose} />
+        <HelpPage open={this.state.showInfo} onClose={this.handleInfoClose} />
+        {this.state.showTerm && <TermPage onClose={this.handleTermClose} />}
       </ThemeProvider>
     );
   }
@@ -87,11 +85,20 @@ class App extends React.Component {
   }
 
   handleInfoOpen() {
-    this.setState({ open: true });
+    this.setState({ showInfo: true });
   }
 
   handleInfoClose() {
-    this.setState({ open: false });
+    this.setState({ showInfo: false });
+  }
+
+  handleTermOpen() {
+    this.setState({ showTerm: true });
+  }
+
+  handleTermClose() {
+    this.user.setAgree();
+    this.setState({ showTerm: false });
   }
 }
 

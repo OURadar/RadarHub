@@ -51,6 +51,14 @@ class Archive extends Ingest {
       this.showMessage(payload);
     } else if (type == "response") {
       this.showResponse(payload);
+    } else if (type == "progress") {
+      this.progress = payload.progress;
+      if (this.progress < 100) {
+        // No fade out when progress < 100
+        this.message = payload.message;
+      } else {
+        this.showMessage(payload.message);
+      }
     } else if (type == "load") {
       this.data.sweeps = payload;
       this.grid = grid;
@@ -76,8 +84,9 @@ class Archive extends Ingest {
       } else if (latest && this.state.liveUpdate === "offline") {
         this.enableLiveUpdate();
       }
-      this.showMessage(`${this.data.sweeps[0].name} loaded`);
-      this.onLoad(this.grid);
+      if (this.data.sweeps.length == 1) {
+        this.showMessage(`${this.data.sweeps[0].name} loaded`);
+      }
     } else if (type == "list") {
       if (this.state.verbose) {
         console.log(
@@ -125,6 +134,8 @@ class Archive extends Ingest {
       }
       this.grid = grid;
       this.ready = true;
+    } else if (type == "503") {
+      document.location.assign("/");
     }
     this.onUpdate(this.state.tic++);
   }
@@ -177,7 +188,7 @@ class Archive extends Ingest {
     }
     const scan = this.grid.items[index];
     this.message = `Loading ${scan} ...`;
-    this.worker.postMessage({ task: "set", name: index });
+    this.worker.postMessage({ task: "select", name: index });
   }
 
   switch(symbol = "Z") {
@@ -275,38 +286,36 @@ class Archive extends Ingest {
     if (this.data.sweeps === null || this.data.sweeps.length == 0) {
       return;
     }
+    let now = Date.now() / 1000;
     let updated = false;
-    this.data.sweeps.forEach((sweep) => {
-      let age = Date.now() / 1000 - sweep.time;
-      let ageString;
+    const ageString = (age) => {
       if (age > 14 * 86400) {
-        ageString = "";
+        return "";
       } else if (age > 7 * 86400) {
-        ageString = "> 1 week";
+        return "> 1 week";
       } else if (age > 86400) {
         let d = Math.floor(age / 86400);
         let s = d > 1 ? "s" : "";
-        ageString = `> ${d} day${s} ago`;
+        return `> ${d} day${s} ago`;
       } else if (age > 1.5 * 3600) {
         let h = Math.floor(age / 3600);
         let s = h > 1 ? "s" : "";
-        ageString = `> ${h} hour${s} ago`;
+        return `> ${h} hour${s} ago`;
       } else if (age > 60) {
         let m = Math.floor(age / 60);
         let s = m > 1 ? "s" : "";
-        ageString = `${m} minute${s} ago`;
+        return `${m} minute${s} ago`;
       } else {
-        ageString = "< 1 minute ago";
+        return "< 1 minute ago";
       }
-      if (sweep.age != ageString) {
-        sweep.age = ageString;
+    };
+    this.data.sweeps.forEach((sweep) => {
+      const age = ageString(now - sweep.time);
+      if (sweep.age === undefined || sweep.age != age) {
+        sweep.age = age;
         updated = true;
       }
     });
-    // if (this.data.sweep.age != ageString) {
-    //   this.data.sweep.age = ageString;
-    //   this.onUpdate(this.state.tic++);
-    // }
     if (updated) {
       this.onUpdate(this.state.tic++);
     }
@@ -319,6 +328,22 @@ class Archive extends Ingest {
     const scan = this.grid.items[this.grid.index].split("-")[2];
     const item = this.grid.itemsGrouped[scan].at(-1);
     return this.grid.latestHour == this.grid.hour && item.index == this.grid.index;
+  }
+
+  navigateUp() {
+    this.worker.postMessage({ task: "backward" });
+  }
+
+  navigateDown() {
+    this.worker.postMessage({ task: "forward" });
+  }
+
+  navigateLeft() {
+    this.worker.postMessage({ task: "backward-scan" });
+  }
+
+  navigateRight() {
+    this.worker.postMessage({ task: "forward-scan" });
   }
 
   navigateForward() {

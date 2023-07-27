@@ -10,6 +10,8 @@
 import { vec3 } from "gl-matrix";
 import { deg, rad } from "./common";
 
+const nameStyle = "background-color: mediumpurple; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+
 self.onmessage = ({ data: { type, payload } }) => {
   if (type == "poly") {
     const name = payload.name;
@@ -168,10 +170,7 @@ async function handleShapefile(name) {
               lines.push(polygon);
             });
           });
-        } else if (
-          shape.geometry.type.includes("Polygon") ||
-          shape.geometry.type.includes("MultiLineString")
-        ) {
+        } else if (shape.geometry.type.includes("Polygon") || shape.geometry.type.includes("MultiLineString")) {
           shape.geometry.coordinates.forEach((polygon) => {
             lines.push(polygon);
           });
@@ -225,8 +224,9 @@ function makeBuffer(name, x) {
   const xString = x.length.toLocaleString();
   const mString = bytes.toLocaleString();
 
-  console.log(
-    `Polygon: %c${name} %c${cString} lines %c(${xString} floats = ${mString} bytes)`,
+  console.info(
+    `%cPolygon%c ${name} %c${cString} lines %c(${xString} floats = ${mString} bytes)`,
+    nameStyle,
     "font-weight: bold",
     "font-weight: initial",
     "color: darkorange"

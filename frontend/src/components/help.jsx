@@ -21,7 +21,7 @@ export function HelpPage(props) {
   return (
     <Modal
       open={props.open}
-      onClose={props.handleClose}
+      onClose={props.onClose}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
     >
@@ -88,6 +88,12 @@ export function HelpPage(props) {
               </tr>
               <tr>
                 <td>
+                  <div className="key">space</div>
+                </td>
+                <td>Toggle in play / pause modes</td>
+              </tr>
+              <tr>
+                <td>
                   <div className="key">l</div>
                 </td>
                 <td>Toggle in between live / offline modes</td>
@@ -127,12 +133,10 @@ export function HelpPage(props) {
         <div className="sheetContent">
           <div className="title">Data Request</div>
           <p>
-            The raw archives of the datasets that are viewable through the
-            RadarHub can be requested offline. However, there are datasets that
-            were collected without access by the RadarHub, which we cannot
-            guarantee availability. If you are interested in obtaining the
-            original archives, please send us an email and indicate the date of
-            interest to:
+            The raw archives of the datasets that are viewable through the RadarHub can be requested offline. However,
+            there are datasets that were collected without access by the RadarHub, which we cannot guarantee
+            availability. If you are interested in obtaining the original archives, please send us an email and indicate
+            the date of interest to:
             <a href="mailto:data@arrc.ou.edu">data@arrc.ou.edu</a>.
           </p>
         </div>

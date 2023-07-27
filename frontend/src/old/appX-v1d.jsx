@@ -164,7 +164,7 @@ export class App extends React.Component {
               onRight={this.handleRight}
               onDoubleRight={this.handleDoubleRight}
             />
-            <HelpPage open={this.state.showHelp} handleClose={this.handleInfoClose} />
+            <HelpPage open={this.state.showHelp} onClose={this.handleInfoClose} />
           </ThemeProvider>
         </div>
       </div>

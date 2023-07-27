@@ -10,6 +10,7 @@ Copyright Boonleng Cheong
   --base-size: 14;
   --background-color: hsl(194, 100%, 29%);
   --background-color-translucent: hsla(194, 100%, 29%, 0.9);
+  --background-color-translucent-more: hsla(194, 100%, 29%, 0.7);
   --background-color-secondary: hsla(194, 100%, 5%, 0.85);
   --topbar-height: 56px;
   --tabbar-height: 48px;
@@ -56,6 +57,7 @@ Copyright Boonleng Cheong
   --gray7-translucent: rgba(252, 252, 255, 0.9);
   --system-foreground: #000000;
   --system-background: #ffffff;
+  --system-foreground-primary: rgb(0, 199, 190);
   --secondary-system-background: #f2f2f7ff;
   --tertiary-system-background: #ffffffff;
   --overlay-background: #ffffffd8;
@@ -101,6 +103,7 @@ Copyright Boonleng Cheong
   --gray7-translucent: rgba(16, 16, 18, 0.85);
   --system-foreground: #ffffff;
   --system-background: #222328;
+  --system-foreground-primary: rgb(102, 212, 207);
   --secondary-system-background: #1c1c1eff;
   --tertiary-system-background: #2c2c2eff;
   --overlay-background: #1e1e1ee8;
@@ -253,6 +256,9 @@ canvas {
 .hide {
   opacity: 0;
 }
+.show {
+  opacity: 1;
+}
 .center {
   text-align: center;
 }
@@ -273,7 +279,7 @@ canvas {
 .fadeOut {
   opacity: 0;
   z-index: 0;
-  transition: opacity linear 0.3s, z-index linear 0.01s 0.3s;
+  transition: opacity linear 0.3s 0.4s, z-index linear 0.01s 0.7s;
 }
 
 .extraLarge {
@@ -622,7 +628,23 @@ h3 {
   position: absolute;
   height: var(--topbar-height);
 }
-
+#topbarProgress {
+  position: absolute;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.progress {
+  width: 100%;
+  height: 4px;
+}
+.bar {
+  background-color: var(--orange);
+  transition: transform linear 0.4s;
+  transform-origin: left;
+  top: 0;
+  left: 0;
+  position: absolute;
+}
 #splash,
 #topbar,
 #versionTag {
@@ -732,15 +754,18 @@ h3 {
   fill: var(--green);
   font-size: 20px;
   font-weight: 500;
+  z-index: 2;
 }
 #infoString {
   fill: var(--brown);
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
+  z-index: 2;
 }
 #symbol {
   fill: var(--system-foreground);
+  z-index: 2;
 }
 #symbol text#symbol {
   font-size: 50px;
@@ -755,6 +780,7 @@ h3 {
   position: absolute;
   font-family: LabelFont;
   paint-order: stroke fill;
+  z-index: 2;
 }
 #title text {
   fill: var(--system-foreground);
@@ -797,6 +823,12 @@ h3 {
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 80%;
+}
+
+a.inline {
+  display: inline-block;
+  color: var(--system-foreground-primary);
+  text-decoration: none;
 }
 
 a.radarButton {
@@ -1128,4 +1160,82 @@ div.key {
 }
 .inactive {
   z-index: 0;
+}
+
+.dialWrapper {
+  position: fixed;
+  top: 50px;
+  left: 50px;
+}
+.dial {
+  position: relative;
+  width: 80vmin;
+  height: 80vmin;
+  margin: 0 auto;
+  transform: scale(0.5) translateZ(0);
+  transition: transform 0.5s, opacity 0.5s;
+}
+.dial a {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 47.5%;
+  height: 47.5%;
+  overflow: hidden;
+  transform: scale(0.5) translateZ(0);
+  background-color: var(--yellow);
+}
+.dial a div {
+  height: 100%;
+  opacity: 0.5;
+  transition: opacity 0.5s;
+  border-radius: inherit;
+}
+.dial a:nth-child(1) {
+  border-radius: 40vmin 0 0 -40vmin;
+  transform-origin: 110% 110%;
+  transition: transform 0.4s 0.15s;
+  background-color: var(--red);
+}
+.dial a:nth-child(2) {
+  border-radius: 0 40vmin 0 0;
+  left: 52.5%;
+  transform-origin: -10% 110%;
+  transition: transform 0.4s 0.2s;
+  background-color: var(--green);
+}
+.dial a:nth-child(3) {
+  border-radius: 0 0 0 40vmin;
+  transform-origin: 110% -10%;
+  transition: transform 0.4s 0.25s;
+  background-color: var(--blue);
+}
+.dial a:nth-child(4) {
+  border-radius: 0 0 40vmin 0;
+  top: 52.5%;
+  left: 52.5%;
+  transform-origin: -10% -10%;
+  transition: transform 0.4s 0.3s;
+  background-color: var(--yellow);
+}
+.dial a:nth-child(5) {
+  width: 55%;
+  height: 55%;
+  left: 22.5%;
+  top: 22.5%;
+  transform: scale(1);
+  background-color: rgba(0, 0, 0, 0.25);
+}
+#agreement {
+  background-color: var(--system-background);
+  border: 1px solid var(--border-accent);
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  min-width: 80%;
+  padding: 50px;
+  overflow-y: auto;
+  transform: translate(-50%, 0);
+  text-align: center;
+  z-index: 69;
 }

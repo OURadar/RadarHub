@@ -296,7 +296,7 @@ if __name__ == '__main__':
     parser.add_argument('-a', dest='access', action='store_true', help='checks nginx access log')
     parser.add_argument('-c', dest='count', action='store_true', help='counts number of unique visitors')
     parser.add_argument('-f', dest='format', choices={'all', 'url', 'loc', 'agent'}, default='loc', help='sets output format (default = loc)')
-    parser.add_argument('-p', dest='parser', choices={'radarhub', 'nginx'}, help='sets the log parser (default = nginx)')
+    parser.add_argument('-p', dest='parser', choices={'radarhub', 'nginx'}, default='nginx', help='sets the log parser (default = nginx)')
     parser.add_argument('-q', dest='quiet', action='store_true', help='operates in quiet mode and shows summary only')
     parser.add_argument('-s', dest='summary', action='store_true', help='shows summary')
     parser.add_argument('-v', dest='verbose', default=1, action='count', help='increases verbosity (default = 1)')
@@ -314,11 +314,7 @@ if __name__ == '__main__':
     if args.all:
         args.format = 'all'
 
-    if len(args.source) and args.parser is None:
-        parser = 'radarhub' if 'radarhub' in args.source[0] else 'nginx'
-    else:
-        parser = args.parser
-    hope = LogParser(parser=parser, format=args.format, width=args.width)
+    hope = LogParser(parser=args.parser, format=args.format, width=args.width)
     hope.show_line = args.verbose > 0
     hope.hide_bot = args.hide_bot
 
@@ -336,7 +332,7 @@ if __name__ == '__main__':
             hope.summary()
     elif len(args.source):
         if args.source[0][0] == '-':
-            source = '/var/log/nginx/access.log'
+            source = f'/var/log/{args.parser}/access.log'
             n = int(args.source[0][1:])
             for _ in range(n):
                 source = find_previous_log(source)
@@ -351,7 +347,7 @@ if __name__ == '__main__':
                 sys.exit()
         process_source(source, verbose=args.verbose, hide_bot=args.hide_bot)
     else:
-        source = '/var/log/nginx/access.log'
+        source = f'/var/log/{args.parser}/access.log'
         if not os.path.exists(source):
             print(f'ERROR. File {source} does not exist')
             sys.exit()

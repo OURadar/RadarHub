@@ -30,10 +30,13 @@ class Product extends GLView {
     this.offset = (Date.now() % 86400000) / 5000;
     this.state = {
       ...this.state,
-      spin: false,
-      useEuler: true,
       phase: 0,
       count: 0,
+      spin: false,
+      useEuler: true,
+      title: "----/--/-- --:--:-- UTC -- -.-°",
+      info: "Gatewidth: -\nWaveform: -",
+      age: "-",
     };
     this.palette = {
       image: null,
@@ -62,7 +65,7 @@ class Product extends GLView {
         symbol: "-",
         index: 0.5 / image.height,
       };
-      this.loadStyle("Z");
+      this.updateColorbar("Z");
     });
 
     this.overlay.onLoad = props.onOverlayLoad;
@@ -79,13 +82,12 @@ class Product extends GLView {
     },
     gravity: "right",
     onOverlayLoad: () => console.log("Product.onOverlayLoad()"),
-    onColorbarTouch: () => {},
     onColorbarClick: () => {},
     onMiddleViewTap: () => {},
   };
 
-  loadStyle(symbol = "Z") {
-    const symbolToStyle = (symbol) => {
+  updateColorbar(symbol = "Z") {
+    this.style = ((symbol) => {
       let ticks = [];
       if (symbol == "R") {
         // # Special case, values are mapped to indices
@@ -183,9 +185,7 @@ class Product extends GLView {
           index: 0,
         };
       }
-    };
-    this.style = symbolToStyle(symbol);
-    console.log("symbolToSTyle ->", this.style);
+    })(symbol);
     if (this.palette.texture) {
       this.palette.index = (this.style.index + 0.5) / this.palette.texture.height;
       this.palette.symbol = symbol;
@@ -246,30 +246,27 @@ class Product extends GLView {
   }
 
   render() {
-    const sweep = this.props.sweeps.length ? this.props.sweeps[this.state.phase] : null;
     return (
-      <div className="fullHeight">
-        <div className="fullHeight" ref={(x) => (this.mount = x)} />
+      <div className="fullHeight" ref={(x) => (this.mount = x)}>
         <Colorbar
           {...this.props}
           id="colorbar"
           style={this.style}
           palette={this.palette.image}
-          onTouch={this.props.onColorbarTouch}
           onClick={this.props.onColorbarClick}
           count={this.state.count}
           debug={false}
         />
-        <Caption id="ageString" phase={this.state.phase} string={sweep?.age || ""} />
-        <Caption id="infoString" phase={this.state.phase} string={sweep?.infoString || "Gatewidth: -\nWaveform: -"} />
+        <Caption id="ageString" string={this.state.age} />
+        <Caption id="infoString" string={this.state.info} />
         <Symbol
           id="symbol"
           text={this.style.name}
           symbol={this.palette.symbol}
-          onTouch={this.props.onColorbarTouch}
+          anchor={this.props.gravity == "top" ? "start" : "end"}
           onClick={this.props.onColorbarClick}
         />
-        <Title string={sweep?.titleString || "----/--/-- --:--:-- UTC"} />
+        <Title string={this.state.title} />
       </div>
     );
   }
@@ -308,7 +305,11 @@ class Product extends GLView {
       this.overlay.purge();
       this.overlay.load();
     }
+    this.setState({ title: sweep.titleString, info: sweep.infoString, age: sweep.age });
 
+    if (this.props.sweeps.includes(null)) {
+      return;
+    }
     this.assets = this.props.sweeps.map((sweep) => ({
       time: sweep.time,
       data: this.regl.texture({
@@ -362,8 +363,9 @@ class Product extends GLView {
     } else if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
+      this.updateColorbar(this.props.sweeps[0].symbol);
     } else if (this.props.sweeps.length > 0 && this.palette.symbol != this.props.sweeps[0].symbol) {
-      this.loadStyle(this.props.sweeps[0].symbol);
+      this.updateColorbar(this.props.sweeps[0].symbol);
       this.updateAssets();
     }
     this.regl.clear({
@@ -371,8 +373,11 @@ class Product extends GLView {
     });
     if (this.assetsComplete) {
       const phase = Math.min(this.props.sweeps.length - 1, ((this.tic / 8) >> 0) % (this.props.sweeps.length + 4));
+      const sweep = this.props.sweeps[phase];
       if (this.state.phase != phase) {
-        this.setState({ phase: phase });
+        this.setState({ phase: phase, title: sweep.titleString, info: sweep.infoString, age: sweep.age });
+      } else if (this.state.age != sweep.age) {
+        this.setState({ age: sweep.age });
       }
       const { data, points, origins, elements } = this.assets[phase];
       this.vinci({

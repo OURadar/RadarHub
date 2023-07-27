@@ -1,3 +1,10 @@
+//
+//  Scroller.js
+//  RadarHub
+//
+//  Created by Boonleng Cheong
+//
+
 class Scroller {
   constructor(element) {
     this.element = element;
@@ -60,7 +67,7 @@ class Scroller {
             this.velocity *= 0.7;
           }
         } else {
-          this.velocity *= 0.95;
+          this.velocity *= 0.97;
         }
       }, period);
     };

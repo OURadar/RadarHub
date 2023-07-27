@@ -1,5 +1,5 @@
 //
-//  notification.js - Notification
+//  notification.jsx - Notification
 //  RadarHub
 //
 //  This is a view
@@ -7,41 +7,33 @@
 //  Created by Boonleng Cheong
 //
 
-import React, { useEffect } from "react";
+import React from "react";
 
 export function Notification(props) {
-  const [display, setDisplay] = React.useState(props.message);
+  const [display, setDisplay] = React.useState("");
   const [transition, setTransition] = React.useState("invisible");
 
-  function fadeOutText() {
+  const fadeOut = () => {
     setTransition("fadeOut");
-    return setTimeout(() => {
-      setDisplay("&nbsp;");
-    }, 500);
-  }
-
-  function fadeInText(text) {
-    setDisplay(text);
-    setTransition("fadeIn");
-    return setTimeout(fadeOutText, props.timeout);
-  }
-
-  useEffect(() => {
-    const timer = props.message.length
-      ? fadeInText(props.message)
-      : fadeOutText();
+    const timer = setTimeout(() => setDisplay(""), 800);
     return () => clearTimeout(timer);
-  }, [props.message]);
+  };
 
-  const classes = "notification blur " + transition;
+  React.useEffect(() => {
+    if (props.message.length) {
+      setDisplay(props.message);
+      setTransition("fadeIn");
+    } else if (display.length || transition == "fadeIn") {
+      return fadeOut();
+    }
+  }, [props.message]);
 
   return (
     <div
       id={props.id}
-      className={classes}
-      dangerouslySetInnerHTML={{
-        __html: display,
-      }}
+      className={`notification blur ${transition}`}
+      dangerouslySetInnerHTML={{ __html: display }}
+      onClick={() => fadeOut()}
     />
   );
 }
@@ -49,5 +41,5 @@ export function Notification(props) {
 Notification.defaultProps = {
   id: "nora",
   message: "",
-  timeout: 5000,
+  timeout: 3000,
 };

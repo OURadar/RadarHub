@@ -61,18 +61,20 @@
   - [x] 0.9.11 Introduced new color tables (1/3/2023)
   - [x] 0.9.12 Reworked backhaul for dropped connections (2/26/2023)
   - [x] 0.9.13 Fixed time-zone issues (6/15/2023)
-  - [ ] 0.9.x Improved handling of corrupted archive
-  - [ ] 0.9.x 3D view manipulation through touch gestures
-  - [ ] 0.9.x Fixed scroll view track
-- [ ] 1.0 Single end point, landing page, radar selection, etc.
+- [x] 1.0 Single app for desktop-mobile (7/31/2023)
+  - Improved handling of corrupted archive
+  - 3D view manipulation through touch gestures
+  - New abstraction layer for colorbar, title, and symbol.
+  - Local buffer for animations
+  - Infinite scrolling in data browser
 
 ## Post Version 1.0
 
 - [ ] GLView Upgrades
-  - [ ] New abstraction layer for colorbar, title, and other static overlays.
+  - [x] New abstraction layer for colorbar, title, and other static overlays.
   - [ ] Streaming buffers for radial-by-radial updates
   - [x] New camera transformation that is radar centric
-  - [ ] Local buffer for animations
+  - [x] Local buffer for animations
 - - [ ] Auto adjustments for best view of PPI/RHI data
         [ ] Overlay Upgrades
   - [ ] An array of arrays of text assets to reduce texture updates
@@ -80,7 +82,7 @@
 - [x] Caching
   - [x] Frontend caching: archive.js
   - [x] Backend caching: frontend.models.py
-- [ ] Infinite scrolling in data browser
+- [x] Infinite scrolling in data browser
 - [ ] Display frequency spectrum alongside scope view
 - [ ] Show online users
 - [x] High-DPI support

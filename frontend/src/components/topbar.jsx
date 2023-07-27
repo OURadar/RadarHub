@@ -11,7 +11,7 @@ import React from "react";
 
 import { getRandomMessageInHTML } from "./random-list";
 
-import IconButton from "@mui/material/IconButton";
+import { IconButton } from "@mui/material";
 import {
   Info,
   Refresh,
@@ -26,6 +26,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 import { RadarHubIcon } from "./radarhub-icon";
 import { Notification } from "./notification";
+import { Progress } from "./progress";
 
 const topbarTheme = createTheme({
   components: {
@@ -55,12 +56,7 @@ function RightDash(props) {
           <Info />
         </IconButton>
       )}
-      <IconButton
-        aria-label="Refresh"
-        onClick={() => {
-          window.location.reload();
-        }}
-      >
+      <IconButton aria-label="Refresh" onClick={() => window.location.reload()}>
         <Refresh />
       </IconButton>
       {!props.isMobile && (
@@ -113,7 +109,7 @@ function LeftDash(props) {
 // Supply props with
 // - ingest - real-time data ingest
 // - xxx - archived data ingest
-
+//  <Progress id="topbarProgress" value={props.ingest?.progress || 100} style="transform: translateX({})" />
 export function TopBar(props) {
   const [message, setMessage] = React.useState(props.message);
   React.useEffect(() => {
@@ -133,6 +129,7 @@ export function TopBar(props) {
       <div id="topbar" role="banner" className="blur">
         <LeftDash {...props} />
         <RightDash {...props} />
+        <Progress id="topbarProgress" value={props.ingest?.progress || 100} />
       </div>
       {props.test > 0 && <Notification message={message} />}
       <Notification id="appMessage" message={props.message} />

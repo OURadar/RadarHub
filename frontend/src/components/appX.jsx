@@ -1,5 +1,5 @@
 //
-//  app8.js - Replacement of app6
+//  appX.js - Replacement of app6 & app9
 //  RadarHub
 //
 //  This is a controller
@@ -24,6 +24,8 @@ import { Product } from "./product";
 import { Navigation } from "./navigation";
 import { MenuUpdate } from "./menu-update";
 import { MenuArrow } from "./menu-arrow";
+import { HelpPage } from "./help";
+import { TermPage } from "./term";
 
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);
@@ -39,18 +41,21 @@ const getItemHeight = (theme) => {
       h = variant.style.height;
       return false;
     }
-    // console.log(variant);
   });
   return h;
 };
 
 export function App(props) {
+  const nameStyle = "background-color: #667788; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+  const nextMode = { auto: "light", light: "dark", dark: "auto" };
+
   const [load, setLoad] = React.useState(0);
   const [panel, setPanel] = React.useState(0);
   const [theme, setTheme] = React.useState(makeTheme());
   const [colors, setColors] = React.useState(colorDict());
   const [message, setMessage] = React.useState("");
-  const [disabled, setDisabled] = React.useState([false, false, false, false]);
+  const [showHelp, setShowHelp] = React.useState(false);
+  const [showTerm, setShowTerm] = React.useState(false);
 
   const archive = React.useRef(null);
   const user = React.useRef(null);
@@ -58,207 +63,190 @@ export function App(props) {
   const h = getItemHeight(theme);
   const isMobile = detectMob();
 
+  let key = 0;
+  let timeout = null;
+
   const setColorMode = (mode) => {
+    const newColors = colorDict(mode);
     user.current.setMode(mode);
-    let colors = colorDict(mode);
-    document.documentElement.setAttribute("theme", colors.name);
-    setColors(colors);
     setTheme(makeTheme(mode));
+    setColors(newColors);
+    document.documentElement.setAttribute("theme", newColors.name);
   };
 
-  const [, handleUpdate] = React.useReducer((x) => x + 1, 0);
+  const [, handleUpdate] = React.useReducer((x) => {
+    // console.debug(`AppX.handleUpdate x = ${x}`);
+    return x + 1;
+  }, 0);
 
-  const handleLoad = () => {
-    setDisabled(archive.current?.grid.pathsActive.map((x) => !x));
+  // const [state, dispatch] = React.useReducer(reducer, { myState: 0 });
+
+  const handleUserAgree = () => {
+    user.current.setAgree();
+    setShowTerm(false);
   };
 
-  const handleUserMessage = (message) => setMessage(message);
-
-  const handleThemeChange = () => {
-    let mode = "auto";
-    if (user.current.mode == "auto") {
-      mode = "light";
-    } else if (user.current.mode == "light") {
-      mode = "dark";
-    }
-    setColorMode(mode);
-    // console.log(`AppX.handleThemeChange  ${mode}`);
-  };
-
-  const handleOverlayLoad = (x = 1) => {
-    setLoad(x);
-    if (x == 1 && archive.current.state.liveUpdate === null) {
-      archive.current.catchup();
-    }
-  };
-
-  const handleNavigationChange = (_, value) => setPanel(value);
-  const handleBrowserSelect = (_) => setTimeout(() => setPanel(0), 300);
-  const handleLiveModeChange = (_, value) => archive.current.toggleLiveUpdate(value || "offline");
-
-  const handleDoubleLeft = () => archive.current.navigateBackwardScan();
-  const handleLeft = () => archive.current.navigateBackward();
-  const handleRight = () => archive.current.navigateForward();
-  const handleDoubleRight = () => archive.current.navigateForwardScan();
-
-  const handleColorbarTouch = (e) => {
-    if (e.pageX / e.target.offsetWidth < 0.5) {
-      archive.current.prevProduct();
-    } else {
-      archive.current.nextProduct();
+  const handleBlur = (_e) => {
+    console.info(`%cApp.event.blur%c updateMode = ${user.current.preference.update}`, nameStyle, "");
+    user.current.setUpdate(archive.current.state.liveUpdate);
+    if (archive.current.state.liveUpdate != "offline") {
+      console.info("%cApp.event.blur%c Setting timeout for disconnect ...", nameStyle, "");
+      timeout = setTimeout(() => {
+        archive.current.disableLiveUpdate();
+        timeout = null;
+      }, 5000);
     }
   };
-
-  const handleColorbarClick = (e) => {
-    let dy = e.pageY - e.target.offsetTop;
-    if (dy / e.target.offsetHeight < 0.5) {
-      archive.current.prevProduct();
-    } else {
-      archive.current.nextProduct();
+  const handleFocus = (_e) => {
+    console.info(`%cApp.event.focus%c updateMode = ${user.current.preference.update}`, nameStyle, "");
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
     }
-  };
-
-  const handleMiddleViewTap = () => {
-    archive.current.playPause();
+    if (user.current.preference.update != "offline" && archive.current.state.liveUpdate == "offline") {
+      archive.current.enableLiveUpdate();
+    }
   };
 
   useConstructor(() => {
-    if (!isMobile)
+    if (!isMobile) {
       document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${props.css_hash}`);
+    }
 
     archive.current = new Archive(props.pathway, props.name);
     archive.current.onUpdate = handleUpdate;
-    archive.current.onLoad = handleLoad;
 
     user.current = new User();
-    user.current.onMessage = handleUserMessage;
+    user.current.onMessage = setMessage;
 
-    setColorMode(user.current.mode);
+    setColorMode(user.current.preference.mode);
+    setShowTerm(!user.current.preference.agree);
   });
 
-  let key = 0;
-
   React.useEffect(() => {
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-      let mode = e.matches ? "dark" : "light";
-      setDocumentTheme(mode);
-    });
     document.documentElement.setAttribute("theme", theme.palette.mode);
-    window.addEventListener("keydown", (e) => (key = e.key));
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      setColorMode(e.matches ? "dark" : "light");
+    });
+    window.addEventListener("keydown", (e) => {
+      if (!["Alt", "Control", "Meta", "Shift"].includes(e.key)) {
+        key = e.key;
+      }
+    });
     window.addEventListener("keyup", (e) => {
+      if (e.key == "Meta") {
+        if (key == "i") {
+          console.log(`%cApp.event.keyup%c Removing blur/focus listeners ...`, nameStyle, "");
+          window.removeEventListener("blur", handleBlur);
+          window.removeEventListener("focus", handleFocus);
+        } else if (key == "u") {
+          console.log(`%cApp.event.keyup%c Reset agreement ...`, nameStyle, "");
+          user.current.setAgree(false);
+        }
+        return;
+      }
       if (e.key != key) {
         return;
       }
       let symbol = e.key.toUpperCase();
       const styles = ["Z", "V", "W", "D", "P", "R"];
-      if (styles.indexOf(symbol) != -1) {
+      if (styles.includes(symbol)) {
         archive.current.switch(symbol);
       } else if (symbol == "L") {
         archive.current.toggleLiveUpdate();
+      } else if (e.key == " ") {
+        archive.current.playPause();
       } else if (e.target == document.body) {
         if (e.key == "ArrowRight") {
-          archive.current.navigateForwardScan();
+          archive.current.navigateRight();
         } else if (e.key == "ArrowLeft") {
-          archive.current.navigateBackwardScan();
+          archive.current.navigateLeft();
         } else if (e.key == "ArrowUp") {
-          archive.current.navigateBackward();
+          archive.current.navigateUp();
         } else if (e.key == "ArrowDown") {
-          archive.current.navigateForward();
-        } else if (e.key == " ") {
-          archive.current.playPause();
-          // } else {
-          //   console.log(e.key);
+          archive.current.navigateDown();
         }
       }
     });
+
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
   }, []);
 
-  if (isMobile)
-    return (
-      <div>
-        <Splash progress={load} />
-        <div id="main" className="fullHeight">
-          <TopBar
-            mode={user.current.mode}
-            isMobile={true}
-            message={message}
-            ingest={archive.current}
-            onAccount={user.current.greet}
-            onThemeChange={handleThemeChange}
-          />
-          <ThemeProvider theme={theme}>
-            <div className={`fullHeight panel ${panel === 0 ? "active" : "inactive"}`}>
-              <Product
-                gravity="top"
-                colors={colors}
-                origin={props.origin}
-                sweeps={archive.current?.data.sweeps}
-                onOverlayLoad={handleOverlayLoad}
-                onColorbarTouch={handleColorbarTouch}
-                onMiddleViewTap={handleMiddleViewTap}
-                debug={true}
-              />
-              <MenuArrow
-                doubleLeftDisabled={disabled[0]}
-                leftDisabled={disabled[1]}
-                rightDisabled={disabled[2]}
-                doubleRightDisabled={disabled[3]}
-                onDoubleLeft={handleDoubleLeft}
-                onLeft={handleLeft}
-                onRight={handleRight}
-                onDoubleRight={handleDoubleRight}
-              />
-              <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
-            </div>
-            <div className={`fullHeight panel ${panel === 1 ? "active" : "inactive"}`}>
-              <Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />
-            </div>
-            <Navigation value={panel} onChange={handleNavigationChange} />
-          </ThemeProvider>
-        </div>
-      </div>
-    );
-  else
-    return (
-      <div>
-        <Splash progress={load} />
-        <div id="main" className="fullHeight">
-          <TopBar
-            mode={user.current.mode}
-            isMobile={true}
-            message={message}
-            ingest={archive.current}
-            onAccount={user.current.greet}
-            onThemeChange={handleThemeChange}
-          />
-          <ThemeProvider theme={theme}>
-            <Layout
-              name="split-archive-width"
-              left={
-                <Product
-                  colors={colors}
-                  origin={props.origin}
-                  sweeps={archive.current?.data.sweeps}
-                  onOverlayLoad={handleOverlayLoad}
-                  onColorbarClick={handleColorbarClick}
-                  onMiddleViewTap={handleMiddleViewTap}
-                />
+  const product = (
+    <div className={`fullHeight`}>
+      <Product
+        gravity={(isMobile && "top") || "right"}
+        colors={colors}
+        origin={props.origin}
+        sweeps={archive.current?.data.sweeps}
+        onOverlayLoad={(x = 1) => {
+          setLoad(x);
+          if (x == 1 && archive.current.state.liveUpdate === null) {
+            archive.current.catchup();
+          }
+        }}
+        onColorbarClick={(e) => {
+          if (e.target.id == "symbol" || e.target.id == "text") {
+            archive.current.nextProduct();
+          } else if (e.target.id == "colorbar") {
+            if (isMobile) {
+              if (e.pageX / e.target.offsetWidth < 0.5) {
+                archive.current.prevProduct();
+              } else {
+                archive.current.nextProduct();
               }
-              right={<Browser archive={archive.current} h={h} onSelect={handleBrowserSelect} />}
-            />
-            <MenuArrow
-              doubleLeftDisabled={disabled[0]}
-              leftDisabled={disabled[1]}
-              rightDisabled={disabled[2]}
-              doubleRightDisabled={disabled[3]}
-              onDoubleLeft={handleDoubleLeft}
-              onLeft={handleLeft}
-              onRight={handleRight}
-              onDoubleRight={handleDoubleRight}
-            />
-            <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
-          </ThemeProvider>
-        </div>
+            } else {
+              let dy = e.pageY - e.target.offsetTop;
+              if (dy / e.target.offsetHeight < 0.5) {
+                archive.current.nextProduct();
+              } else {
+                archive.current.prevProduct();
+              }
+            }
+          }
+        }}
+        onMiddleViewTap={() => archive.current.playPause()}
+        debug={false}
+      />
+      <MenuArrow ingest={archive.current} />
+      <MenuUpdate
+        value={archive.current?.state.liveUpdate}
+        onChange={(_, value) => archive.current.toggleLiveUpdate(value || "offline")}
+      />
+    </div>
+  );
+  const browser = <Browser archive={archive.current} h={h} onSelect={() => setTimeout(() => setPanel(0), 300)} />;
+
+  return (
+    <div>
+      <Splash progress={load} />
+      <div id="main" className="fullHeight">
+        <TopBar
+          mode={user.current.preference.mode}
+          isMobile={isMobile}
+          message={message}
+          ingest={archive.current}
+          onAccount={() => user.current.greet()}
+          onInfoRequest={() => setShowHelp(true)}
+          onThemeChange={() => setColorMode(nextMode[user.current.preference.mode])}
+        />
+        <ThemeProvider theme={theme}>
+          {(isMobile && (
+            <div>
+              <div className={`fullHeight panel ${panel === 0 ? "active" : "inactive"}`}>{product}</div>
+              <div className={`fullHeight panel ${panel === 1 ? "active" : "inactive"}`}>{browser}</div>
+              <Navigation value={panel} onChange={(_, value) => setPanel(value)} />
+            </div>
+          )) || (
+            <div>
+              <Layout name="split-archive-width" left={product} right={browser} />
+              <HelpPage open={showHelp} onClose={() => setShowHelp(false)} />
+            </div>
+          )}
+          {showTerm && <TermPage onClose={handleUserAgree} />}
+        </ThemeProvider>
       </div>
-    );
+    </div>
+  );
 }

@@ -23,8 +23,13 @@
     {% else %}
       <p><a class="link subtle" href="/accounts/signin/">Sign In</a></p>
     {% endif %}
-    <div id="versionTag">v{{version}}<div class="lite">&nbsp;</div></div>
-    {% if version == "1.0" and user.is_authenticated and user.is_staff %}
+    <div id="versionTag">
+      Version {{version}}{% if branch == "beta" %}b{% endif %}
+      <div class="lite">
+        ({{code}})
+      </div>
+    </div>
+    {% if user.is_authenticated and user.is_staff %}
       <div class="spacer25"></div>
       <a class="link subtle" href="/dev/px1000/">Experiment #1</a>
       <div class="inline padded"></div>

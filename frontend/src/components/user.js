@@ -8,29 +8,37 @@
 //
 
 const emojis = require("emoji-name-map");
-const key = "radarhub-user-mode";
+const key = "radarhub-user-preference";
 
 class User {
   constructor() {
     this.user = undefined;
     this.email = undefined;
-    var m = localStorage.getItem(key);
-    if (m) {
-      this.mode = m;
-      console.log(`Using previously saved mode = ${m}`);
-    } else {
-      this.mode = "auto";
+    this.preference = { mode: "auto", update: "scan", agree: false };
+    let m = localStorage.getItem(key);
+    try {
+      m = JSON.parse(m);
+      this.preference = { ...this.preference, ...m };
+    } catch (e) {
+      this.save();
     }
+    console.log("Loaded preference", this.preference);
+
     this.onMessage = (message) => {
       console.log(`Account.onMessage() ${message}`);
     };
+
+    this.save = this.save.bind(this);
     this.greet = this.greet.bind(this);
     this.retrieve = this.retrieve.bind(this);
   }
 
+  save() {
+    localStorage.setItem(key, JSON.stringify(this.preference));
+  }
+
   greet() {
     this.onMessage("Fetching User Information ...");
-    // setTimeout(this.retrieve, 10
     this.retrieve();
   }
 
@@ -48,26 +56,32 @@ class User {
                     "'>Sign In Here</a><div class='emotion'>⛅️</div>"
                 : `<h3>${title}</h3>${ip}<div class='emotion'>${symbol}</div>`
             );
+            setTimeout(() => this.onMessage(""), 4000);
           });
         } else {
           console.log("response", response);
-          this.onMessage(
-            `<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`
-          );
+          this.onMessage(`<h3>Error</h3>Received ${response.status}<div class='emotion'>🤷🏻‍♀️</div>`);
         }
       })
       .catch((error) => {
-        this.onMessage(
-          `<h3>Error</h3>Something went wrong<div class='emotion'>🤷🏻‍♀️</div>`
-        );
+        this.onMessage(`<h3>Error</h3>Something went wrong<div class='emotion'>🤷🏻‍♀️</div>`);
         console.error(error);
       });
   }
 
   setMode(mode = "auto") {
-    this.mode = (mode !== undefined && mode) || "auto";
-    // Save it somewhere
-    localStorage.setItem(key, this.mode);
+    this.preference.mode = (["auto", "dark", "light"].includes(mode) && mode) || "auto";
+    this.save();
+  }
+
+  setUpdate(mode = "scan") {
+    this.preference.update = (["scan", "always", "offline"].includes(mode) && mode) || "scan";
+    this.save();
+  }
+
+  setAgree(mode = true) {
+    this.preference.agree = ([true, false].includes(mode) && mode) || false;
+    this.save();
   }
 }
 

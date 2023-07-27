@@ -28,6 +28,8 @@ import Button from "@mui/material/Button";
 import { Scroller } from "./scroller";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
+const nameStyle =
+  "background-color: mediumseagreen; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
 
 function ServerDay(props) {
   const { day, outsideCurrentMonth, ...other } = props;
@@ -98,7 +100,7 @@ class Browser extends Component {
     this.param = {
       stem: 5,
       body: 15,
-      fetch: 72,
+      fetch: 96,
     };
     this.value = {
       subsetStart: 0,
@@ -178,13 +180,11 @@ class Browser extends Component {
       this.props.archive.enableLiveUpdate();
     }
     if (!this.value.taskPending && start != this.value.subsetStart) {
-      let maxIndex = Math.max(0, grid.items.length - stem - body - fetch);
-      // let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
-      // console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
-      if (start < fetch && delta > 0 && grid.moreBefore) {
+      let maxIndex = Math.max(0, grid.items.length - stem - body - grid.counts[1] / 2);
+      if (delta > 0 && start < grid.counts[0] / 2 && grid.moreBefore) {
         this.value.taskPending = true;
         this.props.archive.prepend();
-      } else if (start > maxIndex && delta < 0 && grid.moreAfter) {
+      } else if (delta < 0 && start > maxIndex && grid.moreAfter) {
         this.value.taskPending = true;
         this.props.archive.append();
       }
@@ -291,12 +291,12 @@ class Browser extends Component {
     }
     let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
     console.log(
-      `%ccomponentDidUpdate%c` +
+      `%cBrowser.componentDidUpdate%c` +
         `   ${grid.mode}` +
-        `   tic = ${archive.grid.tic}` +
+        `   tic ${archive.grid.tic}` +
         `   [${quad}]` +
         `   @ ${start}~(${grid.index})~${grid.items.length} (${subsetItems.length})`,
-      "color: mediumseagreen",
+      nameStyle,
       ""
     );
     this.value.subsetStart = start;

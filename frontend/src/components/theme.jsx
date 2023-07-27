@@ -138,6 +138,22 @@ export function makeTheme(inputMode) {
         },
         variants: [
           {
+            props: { variant: "big" },
+            style: {
+              color: "white",
+              backgroundColor: "var(--background-color)",
+              "&:hover": {
+                backgroundColor: "var(--background-color-translucent-more)",
+              },
+              borderRadius: "30px",
+              height: "60px",
+              fontSize: "20px",
+              fontWeight: 400,
+              padding: "20px 40px",
+              textAlign: "center",
+            },
+          },
+          {
             props: { variant: "hour" },
             style: {
               color: theme.palette.text.secondary,
