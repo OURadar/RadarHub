@@ -40,13 +40,13 @@ const getItemHeight = (theme) => {
       h = variant.style.height;
       return false;
     }
-    // console.log(variant);
   });
   return h;
 };
 
 export function App(props) {
   const nameStyle = "background-color: #667788; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+  const nextMode = { auto: "light", light: "dark", dark: "auto" };
 
   const [load, setLoad] = React.useState(0);
   const [panel, setPanel] = React.useState(0);
@@ -61,6 +61,9 @@ export function App(props) {
   const h = getItemHeight(theme);
   const isMobile = detectMob();
 
+  let key = 0;
+  let timeout = null;
+
   const setColorMode = (mode) => {
     const newColors = colorDict(mode);
     user.current.setMode(mode);
@@ -74,9 +77,31 @@ export function App(props) {
     return x + 1;
   }, 0);
 
-  // const [state, dispatch] = React.useReducer(reducer, { pathsActive: [true, true, true, true] });
+  // const [state, dispatch] = React.useReducer(reducer, { myState: 0 });
 
   const handleUserMessage = (message) => setMessage(message);
+
+  const handleBlur = (_e) => {
+    console.info(`%cApp.event.blur%c updateMode = ${user.current.preference.update}`, nameStyle, "");
+    user.current.setUpdate(archive.current.state.liveUpdate);
+    if (archive.current.state.liveUpdate != "offline") {
+      console.info("%cApp.event.blur%c Setting timeout for disconnect ...", nameStyle, "");
+      timeout = setTimeout(() => {
+        archive.current.disableLiveUpdate();
+        timeout = null;
+      }, 5000);
+    }
+  };
+  const handleFocus = (_e) => {
+    console.info(`%cApp.event.focus%c updateMode = ${user.current.preference.update}`, nameStyle, "");
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+    if (user.current.preference.update != "offline" && archive.current.state.liveUpdate == "offline") {
+      archive.current.enableLiveUpdate();
+    }
+  };
 
   useConstructor(() => {
     if (!isMobile) {
@@ -92,25 +117,34 @@ export function App(props) {
     setColorMode(user.current.preference.mode);
   });
 
-  let key = 0;
-
   React.useEffect(() => {
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-      let mode = e.matches ? "dark" : "light";
-      setColorMode(mode);
-    });
     document.documentElement.setAttribute("theme", theme.palette.mode);
-    window.addEventListener("keydown", (e) => (key = e.key));
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      setColorMode(e.matches ? "dark" : "light");
+    });
+    window.addEventListener("keydown", (e) => {
+      if (!["Alt", "Control", "Meta", "Shift"].includes(e.key)) {
+        key = e.key;
+      }
+    });
     window.addEventListener("keyup", (e) => {
+      if (e.key == "Meta" && key == "i") {
+        console.log(`%cApp.event.keyup%c Removing blur/focus listeners ...`, nameStyle, "");
+        window.removeEventListener("blur", handleBlur);
+        window.removeEventListener("focus", handleFocus);
+        return;
+      }
       if (e.key != key) {
         return;
       }
       let symbol = e.key.toUpperCase();
       const styles = ["Z", "V", "W", "D", "P", "R"];
-      if (styles.indexOf(symbol) != -1) {
+      if (styles.includes(symbol)) {
         archive.current.switch(symbol);
       } else if (symbol == "L") {
         archive.current.toggleLiveUpdate();
+      } else if (e.key == " ") {
+        archive.current.playPause();
       } else if (e.target == document.body) {
         if (e.key == "ArrowRight") {
           archive.current.navigateRight();
@@ -120,36 +154,12 @@ export function App(props) {
           archive.current.navigateUp();
         } else if (e.key == "ArrowDown") {
           archive.current.navigateDown();
-        } else if (e.key == " ") {
-          archive.current.playPause();
-          // } else {
-          //   console.log(e.key);
         }
       }
     });
 
-    let timeout;
-    window.addEventListener("blur", (_e) => {
-      console.info(`%cApp.event.blur%c updateMode = ${user.current.preference.update}`, nameStyle, "");
-      user.current.setUpdate(archive.current.state.liveUpdate);
-      if (archive.current.state.liveUpdate != "offline") {
-        console.info("%cApp.event.blur%c Setting timeout for disconnect ...", nameStyle, "");
-        timeout = setTimeout(() => {
-          archive.current.disableLiveUpdate();
-          timeout = null;
-        }, 5000);
-      }
-    });
-    window.addEventListener("focus", (_e) => {
-      console.info(`%cApp.event.focus%c updateMode = ${user.current.preference.update}`, nameStyle, "");
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-      }
-      if (user.current.preference.update != "offline" && archive.current.state.liveUpdate == "offline") {
-        archive.current.enableLiveUpdate();
-      }
-    });
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
   }, []);
 
   const product = (
@@ -208,15 +218,7 @@ export function App(props) {
           ingest={archive.current}
           onAccount={() => user.current.greet()}
           onInfoRequest={() => setShowHelp(true)}
-          onThemeChange={() => {
-            if (user.current.preference.mode == "auto") {
-              setColorMode("light");
-            } else if (user.current.preference.mode == "light") {
-              setColorMode("dark");
-            } else {
-              setColorMode("auto");
-            }
-          }}
+          onThemeChange={() => setColorMode(nextMode[user.current.preference.mode])}
         />
         <ThemeProvider theme={theme}>
           {(isMobile && (
