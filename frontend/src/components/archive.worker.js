@@ -337,7 +337,7 @@ function createSweep(name = "20130520-190001-E2.6-Z") {
     rangeStart: 0.0,
     rangeSpacing: 0.2,
     elevations: [4.0, 4.0, 4.0, 4.0, 4.0],
-    azimuths: [0.0, 15.0, 30.0, 45.0, 60.0],
+    azimuths: [-30.0, -15.0, 0.0, 15.0, 30.0],
     values: [32, 77, 30, 10, 20, 15, 50, 60, 50, 80, 90, 100],
   };
 }

@@ -178,13 +178,11 @@ class Browser extends Component {
       this.props.archive.enableLiveUpdate();
     }
     if (!this.value.taskPending && start != this.value.subsetStart) {
-      let maxIndex = Math.max(0, grid.items.length - stem - body - fetch);
-      // let quad = `${grid.moreBefore ? "Y" : "N"},${grid.counts},${grid.moreAfter ? "Y" : "N"}`;
-      // console.log(`start = ${start} / ${grid.items.length} [${quad}] [${fetch},${maxIndex}]`);
-      if (start < fetch && delta > 0 && grid.moreBefore) {
+      let maxIndex = Math.max(0, grid.items.length - stem - body - grid.counts[1] / 2);
+      if (delta > 0 && start < grid.counts[0] / 2 && grid.moreBefore) {
         this.value.taskPending = true;
         this.props.archive.prepend();
-      } else if (start > maxIndex && delta < 0 && grid.moreAfter) {
+      } else if (delta < 0 && start > maxIndex && grid.moreAfter) {
         this.value.taskPending = true;
         this.props.archive.append();
       }
