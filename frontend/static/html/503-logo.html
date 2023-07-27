@@ -12,7 +12,8 @@
           fetch("/stats/cache/").then((response) => {
             if (response.status == 200) {
               // Server is back up
-              window.location.assign("/");
+              // window.location.assign("/");
+              window.location.reload();
             }
           });
         }, 3000);
