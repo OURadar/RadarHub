@@ -1260,3 +1260,15 @@ div.key {
 #agreement p {
   padding: 10px;
 }
+.footerLinks {
+  margin: 0;
+  padding: 0;
+}
+.footerLinks li {
+  border-right: solid 1px var(--system-foreground);
+  list-style: none;
+  padding: 0 10px;
+}
+.footerLinks li:last-child {
+  border: none;
+}

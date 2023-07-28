@@ -38,7 +38,6 @@ export function HelpPage(props) {
 
         <div className="sheetContent">
           <div className="title">Navigation Shortcuts</div>
-
           <table className="keyTask">
             <tbody>
               <tr>
@@ -138,6 +137,17 @@ export function HelpPage(props) {
             .
           </p>
         </div>
+
+        <div className="spacer25"></div>
+
+        <ol className="footerLinks">
+          <li className="inline">
+            <a href="mailto:radarhub@arrc.ou.edu">Contact</a>
+          </li>
+          <li className="inline">
+            <a href="/static/html/license.html">Terms</a>
+          </li>
+        </ol>
 
         <div className="spacer25"></div>
       </Box>
