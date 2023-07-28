@@ -24,8 +24,8 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.isMobile = detectMob();
-    if (this.isMobile)
-      document.getElementById("device-style").setAttribute("href", `/static/css/mobile.css?h=${this.props.css_hash}`);
+    if (!this.isMobile)
+      document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${this.props.css_hash}`);
     this.user = new User();
     this.user.onMessage = (message) => this.setState({ message: message });
 

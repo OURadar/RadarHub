@@ -202,3 +202,8 @@ Copyright Boonleng Cheong
   top: calc(var(--topbar-height) + 2 * var(--padding));
   left: 30px;
 }
+#agreement {
+  border: 1px solid var(--border-accent);
+  bottom: 180px;
+  padding: 50px 0;
+}

@@ -1228,15 +1228,15 @@ div.key {
 }
 #agreement {
   background-color: var(--system-background);
-  border: 1px solid var(--border-accent);
   position: absolute;
-  bottom: 10%;
   left: 50%;
-  min-width: 80%;
-  padding: 50px 20px;
-  overflow-y: auto;
+  width: 100%;
   transform: translate(-50%, 0);
+  overflow-y: auto;
   text-align: center;
   line-height: 1.5em;
   z-index: 69;
+}
+#agreement p {
+  padding: 10px;
 }
