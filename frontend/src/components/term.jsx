@@ -3,7 +3,7 @@ import React from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 
-const link = "/static/docs/RadarHub One-Click User License.pdf";
+const link = "/static/html/license.html";
 
 export function TermPage(props) {
   React.useEffect(() => {
