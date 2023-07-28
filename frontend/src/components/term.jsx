@@ -6,8 +6,12 @@ import Button from "@mui/material/Button";
 const link = "/static/docs/RadarHub One-Click User License.pdf";
 
 export function TermPage(props) {
+  React.useEffect(() => {
+    document.getElementById("termCover").style.opacity = 1;
+  }, []);
+
   return (
-    <div className="cover">
+    <div id="termCover" className="cover">
       <Box id="agreement">
         <h1>Terms and Conditions</h1>
         <div className="spacer10"></div>
