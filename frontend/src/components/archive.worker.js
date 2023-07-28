@@ -784,7 +784,7 @@ function catchup() {
         .catch((error) => console.error(`Unexpected error ${error}`));
     } else if (response.status == 503) {
       console.log("Server went into maintenance mode");
-      self.postMessage({ type: "503" });
+      self.postMessage({ type: "reload" });
     } else {
       console.error("Unable to catch up.");
     }
