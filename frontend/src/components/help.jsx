@@ -19,12 +19,7 @@ export function HelpPage(props) {
   const theme = document.documentElement.getAttribute("theme") || "light";
 
   return (
-    <Modal
-      open={props.open}
-      onClose={props.onClose}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
-    >
+    <Modal open={props.open} onClose={props.onClose}>
       <Box sx={style}>
         <div className="sheetContent">
           <div className="title">Overview</div>
@@ -136,8 +131,11 @@ export function HelpPage(props) {
             The raw archives of the datasets that are viewable through the RadarHub can be requested offline. However,
             there are datasets that were collected without access by the RadarHub, which we cannot guarantee
             availability. If you are interested in obtaining the original archives, please send us an email and indicate
-            the date of interest to:
-            <a href="mailto:data@arrc.ou.edu">data@arrc.ou.edu</a>.
+            the date of interest to:<span> </span>
+            <a className="inline" href="mailto:data@arrc.ou.edu">
+              data@arrc.ou.edu
+            </a>
+            .
           </p>
         </div>
 

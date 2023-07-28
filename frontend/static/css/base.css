@@ -155,6 +155,11 @@ canvas {
   position: relative;
 }
 
+select:active,
+select:hover {
+  outline: none;
+}
+
 .fill {
   height: 100%;
   position: relative;
@@ -172,6 +177,16 @@ canvas {
 .blur {
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
+}
+.cover {
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 42;
 }
 .content {
   color: white;
@@ -316,6 +331,9 @@ h2 {
 }
 h3 {
   font-weight: 600;
+}
+p {
+  line-height: 1.5em;
 }
 .header {
   background-color: var(--gray5);
@@ -825,8 +843,7 @@ h3 {
   width: 80%;
 }
 
-a.inline {
-  display: inline-block;
+a {
   color: var(--system-foreground-primary);
   text-decoration: none;
 }
@@ -1231,6 +1248,7 @@ div.key {
   position: absolute;
   left: 50%;
   width: 100%;
+  outline: none;
   transform: translate(-50%, 0);
   overflow-y: auto;
   text-align: center;
