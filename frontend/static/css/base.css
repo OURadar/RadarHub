@@ -181,6 +181,7 @@ select:hover {
 }
 .cover {
   backdrop-filter: grayscale(70%);
+  -webkit-backdrop-filter: grayscale(70px);
   position: fixed;
   top: var(--topbar-height);
   right: 0;
