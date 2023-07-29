@@ -9,7 +9,6 @@ import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
-import { colorDict, makeTheme } from "./theme";
 import { detectMob } from "./common";
 import { User } from "./user";
 
@@ -18,7 +17,6 @@ import { HelpPage } from "./help";
 import { TermPopup, TermSheet } from "./term";
 
 const version = require("/package.json").version;
-const nextMode = { auto: "light", light: "dark", dark: "auto" };
 const nameStyle = "background-color: #667788; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
 
 class App extends React.Component {
@@ -29,12 +27,10 @@ class App extends React.Component {
       document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${this.props.css_hash}`);
     this.user = new User();
     this.user.onMessage = (message) => this.setState({ message: message });
+    this.user.onUpdate = () => this.forceUpdate();
 
     this.state = {
-      colors: colorDict(this.user.preference.mode),
-      theme: makeTheme(this.user.preference.mode),
       message: "",
-      time: new Date("2013-05-20T19:00"),
       showTermSheet: false,
       showTermPopup: !this.user.preference.agree,
       showInfo: false,
@@ -51,21 +47,9 @@ class App extends React.Component {
     debug: false,
   };
 
-  componentDidMount() {
-    // Get notified when the desktop theme is changed
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-      let mode = e.matches ? "dark" : "light";
-      this.setState({
-        colors: colorDict(mode),
-        theme: makeTheme(mode),
-      });
-    });
-    document.documentElement.setAttribute("theme", this.state.colors.name);
-  }
-
   render() {
     return (
-      <ThemeProvider theme={this.state.theme}>
+      <ThemeProvider theme={this.user.preference.theme}>
         <TopBar
           mode={this.user.preference.mode}
           isMobile={this.isMobile}
@@ -93,14 +77,7 @@ class App extends React.Component {
   }
 
   handleThemeChange() {
-    const mode = nextMode[this.user.preference.mode];
-    const newColors = colorDict(mode);
-    this.user.setMode(mode);
-    this.setState({
-      colors: colorDict(mode),
-      theme: makeTheme(mode),
-    });
-    document.documentElement.setAttribute("theme", newColors.name);
+    this.user.nextMode();
   }
 
   handleInfoOpen() {

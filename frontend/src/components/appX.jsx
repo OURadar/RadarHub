@@ -11,7 +11,6 @@ import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
-import { colorDict, makeTheme } from "./theme";
 import { detectMob } from "./common";
 import { Archive } from "./archive";
 import { User } from "./user";
@@ -34,25 +33,12 @@ const useConstructor = (callback = () => {}) => {
   used.current = true;
 };
 
-const getItemHeight = (theme) => {
-  let h = 20;
-  theme.components.MuiButton.variants.forEach((variant) => {
-    if (variant.props.variant == "file" && variant.style.height !== undefined) {
-      h = variant.style.height;
-      return false;
-    }
-  });
-  return h;
-};
-
 export function App(props) {
   const nameStyle = "background-color: #667788; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
-  const nextMode = { auto: "light", light: "dark", dark: "auto" };
 
+  const [h, setH] = React.useState(16);
   const [load, setLoad] = React.useState(0);
   const [panel, setPanel] = React.useState(0);
-  const [theme, setTheme] = React.useState(makeTheme());
-  const [colors, setColors] = React.useState(colorDict());
   const [message, setMessage] = React.useState("");
   const [showHelp, setShowHelp] = React.useState(false);
   const [showTermPopup, setShowTermPopup] = React.useState(false);
@@ -60,19 +46,10 @@ export function App(props) {
   const archive = React.useRef(null);
   const user = React.useRef(null);
 
-  const h = getItemHeight(theme);
   const isMobile = detectMob();
 
   let key = 0;
   let timeout = null;
-
-  const setColorMode = (mode) => {
-    const newColors = colorDict(mode);
-    user.current.setMode(mode);
-    setTheme(makeTheme(mode));
-    setColors(newColors);
-    document.documentElement.setAttribute("theme", newColors.name);
-  };
 
   const [, handleUpdate] = React.useReducer((x) => {
     // console.debug(`AppX.handleUpdate x = ${x}`);
@@ -118,16 +95,13 @@ export function App(props) {
 
     user.current = new User();
     user.current.onMessage = setMessage;
+    user.current.onUpdate = handleUpdate;
 
-    setColorMode(user.current.preference.mode);
+    setH(user.current.getThemeItemHeight());
     setShowTermPopup(!user.current.preference.agree);
   });
 
   React.useEffect(() => {
-    document.documentElement.setAttribute("theme", theme.palette.mode);
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-      setColorMode(e.matches ? "dark" : "light");
-    });
     window.addEventListener("keydown", (e) => {
       if (!["Alt", "Control", "Meta", "Shift"].includes(e.key)) {
         key = e.key;
@@ -177,9 +151,9 @@ export function App(props) {
     <div className={`fullHeight`}>
       <Product
         gravity={(isMobile && "top") || "right"}
-        colors={colors}
-        origin={props.origin}
+        colors={user.current.preference.colors}
         sweeps={archive.current?.data.sweeps}
+        origin={props.origin}
         onOverlayLoad={(x = 1) => {
           setLoad(x);
           if (x == 1 && archive.current.state.liveUpdate === null) {
@@ -227,7 +201,7 @@ export function App(props) {
           isMobile={isMobile}
           message={message}
           ingest={archive.current}
-          onThemeChange={() => setColorMode(nextMode[user.current.preference.mode])}
+          onThemeChange={() => user.current.nextMode()}
           onInfoRequest={() => setShowHelp(true)}
           onAccount={() => user.current.greet()}
           onDismiss={(e) => {
@@ -240,7 +214,7 @@ export function App(props) {
             }
           }}
         />
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={user.current.preference.theme}>
           {(isMobile && (
             <div>
               <div className={`fullHeight panel ${panel === 0 ? "active" : "inactive"}`}>{product}</div>
