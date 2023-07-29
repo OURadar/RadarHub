@@ -155,11 +155,10 @@ export function App(props) {
         sweeps={archive.current?.data.sweeps}
         origin={props.origin}
         onOverlayLoad={(x = 1) => {
-          x = Math.min(x + 0.5, 1.0);
-          setProgress(x);
           if (x == 1 && archive.current.state.liveUpdate === null) {
             archive.current.catchup();
           }
+          setProgress(Math.min(x + 0.5, 1.0));
         }}
         onColorbarClick={(e) => {
           if (e.target.id == "symbol" || e.target.id == "text") {
