@@ -10,7 +10,7 @@ import Split from "split.js";
 
 import { ThemeProvider } from "@mui/material/styles";
 
-import { detectMob, clamp } from "./common";
+import { clamp } from "./common";
 import { User } from "./user";
 
 import { SectionHeader } from "./section-header";

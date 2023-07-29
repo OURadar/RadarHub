@@ -2,6 +2,8 @@
 //  app1.js - Scope
 //  RadarHub
 //
+//  This is a controller
+//
 //  Created by Boonleng Cheong
 //
 
@@ -37,19 +39,17 @@ class App extends Component {
 
   componentDidMount() {
     // Get notified when the desktop theme is changed
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        if (e.matches) {
-          this.setState({
-            colors: colorDict("dark"),
-          });
-        } else {
-          this.setState({
-            colors: colorDict("light"),
-          });
-        }
-      });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      if (e.matches) {
+        this.setState({
+          colors: colorDict("dark"),
+        });
+      } else {
+        this.setState({
+          colors: colorDict("light"),
+        });
+      }
+    });
     this.ingest.connect();
   }
 

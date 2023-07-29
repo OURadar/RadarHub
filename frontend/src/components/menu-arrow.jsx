@@ -2,6 +2,8 @@
 //  menu-arrow.js
 //  RadarHub
 //
+//  This is a view
+//
 //  Created by Boonleng Cheong
 //
 

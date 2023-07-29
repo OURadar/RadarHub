@@ -8,10 +8,11 @@
 //
 
 import { colorDict, makeTheme } from "./theme";
+import { Emoji } from "./emoji";
 
 const key = "radarhub-user-preference";
-const emojis = require("emoji-name-map");
 const nameStyle = "background-color: #7a3; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+const emojiMap = new Emoji();
 
 class User {
   constructor() {
@@ -59,7 +60,8 @@ class User {
         if (response.status == 200) {
           response.json().then(({ user, ip, emoji }) => {
             let title = user == "None" ? "Anonymous User" : `Hello ${user}`;
-            let symbol = emojis.get(emoji) || "";
+            let symbol = emojiMap.get(emoji) || "";
+            console.log(`symbol = ${symbol} (${emoji})`);
             this.onMessage(
               user == "None"
                 ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +

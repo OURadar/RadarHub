@@ -2,6 +2,8 @@
 //  app-intro.js - Topbar Only
 //  RadarHub
 //
+//  This is a controller
+//
 //  Created by Boonleng Cheong
 //
 

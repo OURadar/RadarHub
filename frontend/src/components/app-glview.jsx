@@ -2,6 +2,8 @@
 //  app-glview.js - GLView Development
 //  RadarHub
 //
+//  This is a controller
+//
 //  Created by Boonleng Cheong
 //
 
@@ -37,19 +39,17 @@ class App extends Component {
 
   componentDidMount() {
     // Get notified when the desktop theme is changed
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        if (e.matches) {
-          this.setState({
-            colors: colorDict("dark"),
-          });
-        } else {
-          this.setState({
-            colors: colorDict("light"),
-          });
-        }
-      });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      if (e.matches) {
+        this.setState({
+          colors: colorDict("dark"),
+        });
+      } else {
+        this.setState({
+          colors: colorDict("light"),
+        });
+      }
+    });
   }
 
   render() {
@@ -58,12 +58,7 @@ class App extends Component {
       <ThemeProvider theme={theme}>
         <TopBar isMobile={this.isMobile} />
         <SectionHeader name="product" />
-        <GLView
-          sweep={this.archive.data.sweep}
-          colors={this.state.colors}
-          debug={true}
-          showStats={true}
-        />
+        <GLView sweep={this.archive.data.sweep} colors={this.state.colors} debug={true} showStats={true} />
       </ThemeProvider>
       // </StyledEngineProvider>
     );
