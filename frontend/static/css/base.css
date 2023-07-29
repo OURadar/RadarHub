@@ -634,11 +634,14 @@ p {
   left: 0;
   transition: opacity 0.4s;
 }
-#versionTag {
+.footer {
   bottom: 5vh;
   position: fixed;
-  text-align: center;
   width: 100%;
+}
+#versionTag {
+  display: block;
+  text-align: center;
 }
 #topbar {
   background: var(--background-gradient);
@@ -1268,12 +1271,13 @@ div.key {
   padding: 10px;
 }
 .footerLinks {
+  display: inline-flex;
   margin: 10px 0 0 0;
   padding: 0;
 }
 .footerLinks li {
   display: inline;
-  border-right: solid 1px var(--system-foreground);
+  border-right: solid 1px;
   list-style: none;
   padding: 0 10px;
 }
