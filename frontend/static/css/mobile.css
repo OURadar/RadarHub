@@ -145,4 +145,5 @@ Copyright Boonleng Cheong
 }
 #agreement h1 {
   font-size: 26px;
+  border: 1px solid var(--border-accent);
 }

@@ -161,8 +161,8 @@ select:hover {
 }
 
 .fill {
-  height: 100%;
   position: relative;
+  height: 100%;
   width: 100%;
 }
 .fog {
@@ -179,8 +179,7 @@ select:hover {
   -webkit-backdrop-filter: blur(5px);
 }
 .cover {
-  backdrop-filter: blur(1px);
-  -webkit-backdrop-filter: blur(1px);
+  backdrop-filter: grayscale(70%);
   position: fixed;
   top: var(--topbar-height);
   right: 0;
@@ -605,12 +604,14 @@ p {
 }
 #splash {
   background-color: var(--background-color);
-  height: 100vh;
-  position: absolute;
+  display: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   text-align: center;
   padding-top: 30vh;
   transition: opacity 0.4s;
-  width: 100vw;
   z-index: 100;
 }
 #splashLogo {
@@ -624,7 +625,11 @@ p {
 #backdrop {
   background-image: var(--background-image);
   background-color: var(--background-color);
-  height: 100vh;
+  display: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   transition: opacity 0.4s;
 }
 #versionTag {
