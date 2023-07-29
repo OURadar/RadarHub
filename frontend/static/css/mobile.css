@@ -12,6 +12,7 @@ Copyright Boonleng Cheong
   --button-margin-bottom: 0;
   --colorbar-height: 80px;
   --content-height: calc(100vh - var(--topbar-height) - var(--tabbar-height));
+  --extra-large-height: 60px;
   padding: 0;
 }
 
@@ -141,7 +142,6 @@ Copyright Boonleng Cheong
 }
 #agreement {
   padding: 65px 0;
-  bottom: 120px;
   border: 1px solid var(--border-accent);
 }
 #agreement h1 {

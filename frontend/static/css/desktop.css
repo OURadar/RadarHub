@@ -12,6 +12,7 @@ Copyright Boonleng Cheong
   --button-border-left: solid 1px var(--border-accent);
   --button-margin-bottom: 5px;
   --content-height: calc(100vh - var(--topbar-height));
+  --extra-large-height: 100px;
 }
 
 .notification {
@@ -204,6 +205,5 @@ Copyright Boonleng Cheong
 }
 #agreement {
   border: 1px solid var(--border-accent);
-  bottom: 180px;
   padding: 50px 0;
 }

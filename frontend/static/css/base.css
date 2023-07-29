@@ -299,21 +299,17 @@ select:hover {
   z-index: 0;
   transition: opacity linear 0.3s 0.4s, z-index linear 0.01s 0.7s;
 }
-
 .extraLarge {
-  font-size: 60px;
+  font-size: var(--extra-large-height);
   margin-bottom: 25px;
   margin-top: 25px;
 }
-@media screen and (min-width: 640px) {
-  .extraLarge {
-    font-size: 100px;
-  }
+/* @media screen and (min-width: 640px) {
   .message {
     font-size: 24pt;
     line-height: 34pt;
   }
-}
+} */
 h1,
 h2,
 h3 {
@@ -1258,6 +1254,7 @@ div.key {
 #agreement {
   background-color: var(--system-background);
   position: absolute;
+  top: calc(25vh + var(--extra-large-height) + 20px);
   left: 50%;
   width: 100%;
   outline: none;
