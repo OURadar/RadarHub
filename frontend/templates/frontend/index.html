@@ -13,7 +13,15 @@
     <div class="extraLarge">RadarHub</div>
     <a class="radarButton" href="/archive/px1000/">PX-1000</a>
     <a class="radarButton" href="/archive/raxpol/">RaXPol</a>
-    <div class="spacer50"></div>
+    {% if user.is_authenticated and user.is_staff %}
+      <div class="spacer25"></div>
+      <a class="link subtle" href="/dev/px1000/">Experiment #1</a>
+      <div class="inline padded"></div>
+      <a class="link subtle" href="/dev/demo/">Experiment #2</a>
+      <div class="spacer25"></div>
+    {% else %}
+      <div class="spacer50"></div>
+    {% endif %}
     {% if user.is_authenticated %}
       <p>Signed in as {{ user.email }}</p>
       <form action="/accounts/signout/?next=/" method="post">
@@ -29,13 +37,6 @@
         ({{code}})
       </div>
     </div>
-    {% if user.is_authenticated and user.is_staff %}
-      <div class="spacer25"></div>
-      <a class="link subtle" href="/dev/px1000/">Experiment #1</a>
-      <div class="inline padded"></div>
-      <a class="link subtle" href="/dev/demo/">Experiment #2</a>
-      <div class="spacer25"></div>
-    {% endif %}
   </div>
 </div>
 {% endblock %}
