@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 
 const link = "/static/html/license.html";
 
-export function TermPage(props) {
+export function TermPopup(props) {
   React.useEffect(() => {
     document.getElementById("termCover").style.opacity = 1;
   }, []);
@@ -28,5 +28,25 @@ export function TermPage(props) {
         </Button>
       </Box>
     </div>
+  );
+}
+
+TermPopup.defaultProps = {
+  onTermSheet: () => {
+    window.location.assign(link);
+  },
+};
+
+export function TermSheet(props) {
+  return (
+    <Box>
+      <iframe
+        id="termSheet"
+        title="Inline Frame Example"
+        width="300"
+        height="200"
+        src="/static/html/license.html"
+      ></iframe>
+    </Box>
   );
 }

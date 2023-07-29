@@ -15,7 +15,7 @@ import { User } from "./user";
 
 import { TopBar } from "./topbar";
 import { HelpPage } from "./help";
-import { TermPage } from "./term";
+import { TermPopup, TermSheet } from "./term";
 
 const version = require("/package.json").version;
 const nextMode = { auto: "light", light: "dark", dark: "auto" };
@@ -35,14 +35,16 @@ class App extends React.Component {
       theme: makeTheme(this.user.preference.mode),
       message: "",
       time: new Date("2013-05-20T19:00"),
+      showTermSheet: false,
+      showTermPopup: !this.user.preference.agree,
       showInfo: false,
-      showTerm: this.user.preference.agree === false,
     };
 
     this.handleInfoOpen = this.handleInfoOpen.bind(this);
     this.handleInfoClose = this.handleInfoClose.bind(this);
-    this.handleTermOpen = this.handleTermOpen.bind(this);
-    this.handleTermClose = this.handleTermClose.bind(this);
+    this.handleTermSheetClose = this.handleTermSheetClose.bind(this);
+    this.handleTermPopupClose = this.handleTermPopupClose.bind(this);
+    this.handleTermSheetOpen = this.handleTermSheetOpen.bind(this);
     this.handleThemeChange = this.handleThemeChange.bind(this);
   }
   static defaultProps = {
@@ -72,14 +74,20 @@ class App extends React.Component {
           onInfoRequest={this.handleInfoOpen}
           onAccount={this.user.greet}
           onDismiss={(e) => {
-            if (e.clientX < 0.15 * e.target.offsetWidth && e.clientY > 0.5 * e.target.offsetHeight) {
+            if (
+              e.clientX - e.target.offsetLeft < 0.1 * e.target.offsetWidth &&
+              e.clientY - e.target.offsetTop > 0.5 * e.target.offsetHeight
+            ) {
               console.log(`%cApp.TopBar.onDismiss%c Reset agreement ...`, nameStyle, "");
               this.user.setAgree(false);
             }
           }}
         />
         <HelpPage open={this.state.showInfo} onClose={this.handleInfoClose} />
-        {this.state.showTerm && <TermPage onClose={this.handleTermClose} />}
+        {this.state.showTermPopup && (
+          <TermPopup onClose={this.handleTermPopupClose} onTermSheet={this.handleTermSheetOpen} />
+        )}
+        {this.state.showTermSheet && <TermSheet onClose={this.handleTermSheetClose} />}
       </ThemeProvider>
     );
   }
@@ -103,13 +111,18 @@ class App extends React.Component {
     this.setState({ showInfo: false });
   }
 
-  handleTermOpen() {
-    this.setState({ showTerm: true });
+  handleTermPopupClose() {
+    this.user.setAgree();
+    this.setState({ showTermPopup: false });
   }
 
-  handleTermClose() {
-    this.user.setAgree();
-    this.setState({ showTerm: false });
+  handleTermSheetOpen() {
+    console.log(`handleTermSheetOpen()`);
+    this.setState({ showTermSheet: true });
+  }
+
+  handleTermSheetClose() {
+    this.setState({ showTermSheet: false });
   }
 }
 

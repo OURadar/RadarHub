@@ -25,7 +25,7 @@ import { Navigation } from "./navigation";
 import { MenuUpdate } from "./menu-update";
 import { MenuArrow } from "./menu-arrow";
 import { HelpPage } from "./help";
-import { TermPage } from "./term";
+import { TermPopup, TermSheet } from "./term";
 
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);
@@ -55,7 +55,7 @@ export function App(props) {
   const [colors, setColors] = React.useState(colorDict());
   const [message, setMessage] = React.useState("");
   const [showHelp, setShowHelp] = React.useState(false);
-  const [showTerm, setShowTerm] = React.useState(false);
+  const [showTermPopup, setShowTermPopup] = React.useState(false);
 
   const archive = React.useRef(null);
   const user = React.useRef(null);
@@ -83,7 +83,7 @@ export function App(props) {
 
   const handleUserAgree = () => {
     user.current.setAgree();
-    setShowTerm(false);
+    setShowTermPopup(false);
   };
 
   const handleBlur = (_e) => {
@@ -120,7 +120,7 @@ export function App(props) {
     user.current.onMessage = setMessage;
 
     setColorMode(user.current.preference.mode);
-    setShowTerm(!user.current.preference.agree);
+    setShowTermPopup(!user.current.preference.agree);
   });
 
   React.useEffect(() => {
@@ -231,7 +231,10 @@ export function App(props) {
           onInfoRequest={() => setShowHelp(true)}
           onAccount={() => user.current.greet()}
           onDismiss={(e) => {
-            if (e.clientX < 0.15 * e.target.offsetWidth && e.clientY > 0.5 * e.target.offsetHeight) {
+            if (
+              e.clientX - e.target.offsetLeft < 0.1 * e.target.offsetWidth &&
+              e.clientY - e.target.offsetTop > 0.5 * e.target.offsetHeight
+            ) {
               console.log(`%cApp.TopBar.onDismiss%c Reset agreement ...`, nameStyle, "");
               user.current.setAgree(false);
             }
@@ -250,7 +253,7 @@ export function App(props) {
               <HelpPage open={showHelp} onClose={() => setShowHelp(false)} />
             </div>
           )}
-          {showTerm && <TermPage onClose={handleUserAgree} />}
+          {showTermPopup && <TermPopup onClose={handleUserAgree} />}
         </ThemeProvider>
       </div>
     </div>

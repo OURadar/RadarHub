@@ -22,7 +22,7 @@ class User {
     } catch (e) {
       this.save();
     }
-    console.log("Loaded preference", this.preference);
+    console.log("preference", this.preference);
 
     this.onMessage = (message) => {
       console.log(`Account.onMessage() ${message}`);
