@@ -72,7 +72,7 @@ class Overlay {
       },
       {
         // file: "@rings/1/30/60/84.5/92/120",
-        file: "@rings/1/30/60/120",
+        file: "@rings/1/25/50/75",
         color: this.colors.ring,
         limits: [0.8, 2.0 * scale],
         weight: 0.4,
@@ -206,7 +206,7 @@ class Overlay {
             },
           },
           {
-            name: "@rings/30/60/120",
+            name: "@rings/25/50/75",
             model: this.geometry.model,
           },
         ],

@@ -61,7 +61,6 @@ class User {
           response.json().then(({ user, ip, emoji }) => {
             let title = user == "None" ? "Anonymous User" : `Hello ${user}`;
             let symbol = emojiMap.get(emoji) || "";
-            console.log(`symbol = ${symbol} (${emoji})`);
             this.onMessage(
               user == "None"
                 ? "<h3>Guest</h3><a class='link darken' href='/accounts/signin/?next=" +
