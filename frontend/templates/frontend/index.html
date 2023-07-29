@@ -32,12 +32,13 @@
       <p><a class="link subtle" href="/accounts/signin/">Sign In</a></p>
     {% endif %}
     <div id="versionTag">
-      Version {{version}}{% if branch == "beta" %}b{% endif %}
-      <div class="lite">
-        ({{code}})
+      Version {{version}}{% if branch == "beta" %}b{% endif %} <div class="lite">({{code}})</div>
+      <ol class="footerLinks">
+        <li><a href="mailto:radarhub@arrc.ou.edu">Contact</a></li>
+        <li><a href="/static/html/license.html">Terms</a></li>
+      </ol>
       </div>
-    </div>
-  </div>
+</div>
 </div>
 {% endblock %}
 

@@ -888,7 +888,7 @@ a.radarButton:hover {
 }
 
 .lite {
-  margin-top: 0.5em;
+  display: inline-block;
   opacity: 0.5;
 }
 .subtle {
@@ -1268,10 +1268,11 @@ div.key {
   padding: 10px;
 }
 .footerLinks {
-  margin: 0;
+  margin: 10px 0 0 0;
   padding: 0;
 }
 .footerLinks li {
+  display: inline;
   border-right: solid 1px var(--system-foreground);
   list-style: none;
   padding: 0 10px;

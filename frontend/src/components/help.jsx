@@ -141,10 +141,10 @@ export function HelpPage(props) {
         <div className="spacer25"></div>
 
         <ol className="footerLinks">
-          <li className="inline">
+          <li>
             <a href="mailto:radarhub@arrc.ou.edu">Contact</a>
           </li>
-          <li className="inline">
+          <li>
             <a href="/static/html/license.html">Terms</a>
           </li>
         </ol>
