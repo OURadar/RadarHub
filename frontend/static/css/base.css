@@ -137,11 +137,12 @@ html {
 }
 
 html {
-  background-color: var(--background-color);
   font-family: -apple-system, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
 body {
+  background-image: var(--background-image);
+  background-color: var(--background-color);
   color: var(--system-foreground);
   display: flex;
   flex-direction: column;
@@ -604,7 +605,7 @@ p {
 }
 #splash {
   background-color: var(--background-color);
-  display: fixed;
+  position: fixed;
   top: 0;
   right: 0;
   bottom: 0;

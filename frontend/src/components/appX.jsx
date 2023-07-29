@@ -37,10 +37,10 @@ export function App(props) {
   const nameStyle = "background-color: #667788; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
 
   const [h, setH] = React.useState(16);
-  const [load, setLoad] = React.useState(0);
   const [panel, setPanel] = React.useState(0);
   const [message, setMessage] = React.useState("");
-  const [showHelp, setShowHelp] = React.useState(false);
+  const [progress, setProgress] = React.useState(0.1);
+  const [showHelpSheet, setShowHelpSheet] = React.useState(false);
   const [showTermPopup, setShowTermPopup] = React.useState(false);
 
   const archive = React.useRef(null);
@@ -155,7 +155,8 @@ export function App(props) {
         sweeps={archive.current?.data.sweeps}
         origin={props.origin}
         onOverlayLoad={(x = 1) => {
-          setLoad(x);
+          x = Math.min(x + 0.5, 1.0);
+          setProgress(x);
           if (x == 1 && archive.current.state.liveUpdate === null) {
             archive.current.catchup();
           }
@@ -194,7 +195,7 @@ export function App(props) {
 
   return (
     <div>
-      <Splash progress={load} />
+      <Splash progress={progress} />
       <div id="main" className="fullHeight">
         <TopBar
           mode={user.current.preference.mode}
@@ -202,7 +203,7 @@ export function App(props) {
           message={message}
           ingest={archive.current}
           onThemeChange={() => user.current.nextMode()}
-          onInfoRequest={() => setShowHelp(true)}
+          onInfoRequest={() => setShowHelpSheet(true)}
           onAccount={() => user.current.greet()}
           onDismiss={(e) => {
             if (
@@ -224,7 +225,7 @@ export function App(props) {
           )) || (
             <div>
               <Layout name="split-archive-width" left={product} right={browser} />
-              <HelpPage open={showHelp} onClose={() => setShowHelp(false)} />
+              <HelpPage open={showHelpSheet} onClose={() => setShowHelpSheet(false)} />
             </div>
           )}
           {showTermPopup && <TermPopup onClose={handleUserAgree} />}
