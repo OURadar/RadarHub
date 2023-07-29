@@ -33,7 +33,10 @@ export function Notification(props) {
       id={props.id}
       className={`notification blur ${transition}`}
       dangerouslySetInnerHTML={{ __html: display }}
-      onClick={() => fadeOut()}
+      onClick={(e) => {
+        fadeOut();
+        props.onClick(e);
+      }}
     />
   );
 }
@@ -42,4 +45,5 @@ Notification.defaultProps = {
   id: "nora",
   message: "",
   timeout: 3000,
+  onClick: () => {},
 };

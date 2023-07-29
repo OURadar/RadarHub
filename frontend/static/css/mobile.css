@@ -142,8 +142,8 @@ Copyright Boonleng Cheong
 #agreement {
   padding: 80px 0;
   bottom: 125px;
+  border: 1px solid var(--border-accent);
 }
 #agreement h1 {
   font-size: 26px;
-  border: 1px solid var(--border-accent);
 }

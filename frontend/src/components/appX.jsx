@@ -227,9 +227,15 @@ export function App(props) {
           isMobile={isMobile}
           message={message}
           ingest={archive.current}
-          onAccount={() => user.current.greet()}
-          onInfoRequest={() => setShowHelp(true)}
           onThemeChange={() => setColorMode(nextMode[user.current.preference.mode])}
+          onInfoRequest={() => setShowHelp(true)}
+          onAccount={() => user.current.greet()}
+          onDismiss={(e) => {
+            if (e.clientX < 0.15 * e.target.offsetWidth && e.clientY > 0.5 * e.target.offsetHeight) {
+              console.log(`%cApp.TopBar.onDismiss%c Reset agreement ...`, nameStyle, "");
+              user.current.setAgree(false);
+            }
+          }}
         />
         <ThemeProvider theme={theme}>
           {(isMobile && (

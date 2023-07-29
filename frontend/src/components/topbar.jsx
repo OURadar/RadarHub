@@ -48,7 +48,6 @@ const themeModes = {
 
 function RightDash(props) {
   const [fullscreen, setFullscreen] = React.useState(() => window.innerHeight == screen.height);
-
   return (
     <div className="topbarComponent right">
       {!props.isMobile && (
@@ -86,7 +85,6 @@ function LeftDash(props) {
   const name = ok ? props.ingest.label : "";
   const online = (ok && props.ingest.state.liveUpdate) || "unknown";
   const message = ok ? props.ingest.message : "";
-  // const message = "PX-20200202-123456-E1.0-Z loaded and ready";
   return (
     <div className="topbarComponent left">
       <IconButton
@@ -132,7 +130,7 @@ export function TopBar(props) {
         <Progress id="topbarProgress" value={props.ingest?.progress || 100} />
       </div>
       {props.test > 0 && <Notification message={message} />}
-      <Notification id="appMessage" message={props.message} />
+      <Notification id="appMessage" message={props.message} onClick={(e) => props.onDismiss(e)} />
       {!props.isMobile && <Notification id="ingestResponse" message={props.ingest?.response || ""} />}
     </ThemeProvider>
   );
@@ -144,13 +142,8 @@ TopBar.defaultProps = {
   message: "",
   isMobile: false,
   test: 0,
-  onThemeChange: () => {
-    console.log("Topbar.onThemeChange()");
-  },
-  onInfoRequest: () => {
-    console.log("Topbar.onInfoRequest()");
-  },
-  onAccount: () => {
-    console.log("Topbar.onAccount()");
-  },
+  onThemeChange: () => console.log("Topbar.onThemeChange()"),
+  onInfoRequest: () => console.log("Topbar.onInfoRequest()"),
+  onAccount: () => console.log("Topbar.onAccount()"),
+  onDismiss: () => console.log("Topbar.onDismiss()"),
 };

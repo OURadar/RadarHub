@@ -19,6 +19,7 @@ import { TermPage } from "./term";
 
 const version = require("/package.json").version;
 const nextMode = { auto: "light", light: "dark", dark: "auto" };
+const nameStyle = "background-color: #667788; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
 
 class App extends React.Component {
   constructor(props) {
@@ -70,6 +71,12 @@ class App extends React.Component {
           onThemeChange={this.handleThemeChange}
           onInfoRequest={this.handleInfoOpen}
           onAccount={this.user.greet}
+          onDismiss={(e) => {
+            if (e.clientX < 0.15 * e.target.offsetWidth && e.clientY > 0.5 * e.target.offsetHeight) {
+              console.log(`%cApp.TopBar.onDismiss%c Reset agreement ...`, nameStyle, "");
+              this.user.setAgree(false);
+            }
+          }}
         />
         <HelpPage open={this.state.showInfo} onClose={this.handleInfoClose} />
         {this.state.showTerm && <TermPage onClose={this.handleTermClose} />}
