@@ -148,7 +148,7 @@ export function App(props) {
   }, []);
 
   const product = (
-    <div className={`fullHeight`}>
+    <div className="fullHeight">
       <Product
         gravity={(isMobile && "top") || "right"}
         colors={user.current.preference.colors}

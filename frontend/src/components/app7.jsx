@@ -11,7 +11,6 @@ import React from "react";
 
 import { ThemeProvider } from "@mui/material/styles";
 
-import { colorDict, makeTheme } from "./theme";
 import { Archive } from "./archive";
 import { User } from "./user";
 
@@ -25,43 +24,17 @@ const useConstructor = (callback = () => {}) => {
   used.current = true;
 };
 
-const getItemHeight = (theme) => {
-  let h = 20;
-  theme.components.MuiButton.variants.forEach((variant) => {
-    if (variant.props.variant == "file" && variant.style.height !== undefined) {
-      h = variant.style.height;
-      return false;
-    }
-    // console.log(variant);
-  });
-  return h;
-};
-
 export function App(props) {
-  const [load, setLoad] = React.useState(0);
-  const [theme, setTheme] = React.useState(makeTheme());
-  const [colors, setColors] = React.useState(colorDict());
+  const nameStyle = "background-color: #667788; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+
+  const [h, setH] = React.useState(16);
   const [message, setMessage] = React.useState("");
-  const [disabled, setDisabled] = React.useState([false, false, false, false]);
+  const [progress, setProgress] = React.useState(0.1);
 
   const archive = React.useRef(null);
   const user = React.useRef(null);
 
-  const h = getItemHeight(theme);
-
-  const setColorMode = (mode) => {
-    user.current.setMode(mode);
-    let colors = colorDict(mode);
-    document.documentElement.setAttribute("theme", colors.name);
-    setColors(colors);
-    setTheme(makeTheme(mode));
-  };
-
   const [, handleUpdate] = React.useReducer((x) => x + 1, 0);
-
-  const handleLoad = () => {
-    setDisabled(archive.current?.grid.pathsActive.map((x) => !x));
-  };
 
   const handleUserMessage = (message) => setMessage(message);
 
@@ -73,7 +46,7 @@ export function App(props) {
   };
 
   const handleOverlayLoad = (x = 1) => {
-    setLoad(x);
+    setProgress(x);
     if (x == 1 && archive.current.state.liveUpdate === null) {
       archive.current.catchup();
     }
@@ -84,20 +57,15 @@ export function App(props) {
 
     archive.current = new Archive(props.pathway, props.name);
     archive.current.onUpdate = handleUpdate;
-    archive.current.onLoad = handleLoad;
 
     user.current = new User();
     user.current.onMessage = handleUserMessage;
+    user.current.onUpdate = handleUpdate;
 
-    setColorMode(user.current.mode);
+    setH(user.current.getThemeItemHeight());
   });
 
   React.useEffect(() => {
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-      let mode = e.matches ? "dark" : "light";
-      setDocumentTheme(mode);
-    });
-    document.documentElement.setAttribute("theme", theme.palette.mode);
     handleOverlayLoad();
   }, []);
 
@@ -105,14 +73,14 @@ export function App(props) {
     <div>
       <div id="main" className="fullHeight">
         <TopBar
-          mode={colors.name}
+          mode={user.current.preference.mode}
           isMobile={true}
           message={message}
           ingest={archive.current}
           onAccount={user.current.greet}
-          onThemeChange={handleThemeChange}
+          onThemeChange={() => user.current.nextMode()}
         />
-        <ThemeProvider theme={theme}>
+        <ThemeProvider theme={user.current.preference.theme}>
           <Browser archive={archive.current} h={h} />
         </ThemeProvider>
       </div>

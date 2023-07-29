@@ -119,6 +119,7 @@ class Scope2 extends Scope {
   }
 
   draw() {
+    if (this.mount === undefined) return;
     if (
       this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth ||
