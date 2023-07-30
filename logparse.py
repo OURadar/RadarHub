@@ -27,7 +27,9 @@ import datetime
 import argparse
 import textwrap
 
-import fcntl, termios, struct
+import fcntl
+import termios
+import struct
 
 from signal import signal, SIGPIPE, SIG_DFL
 
@@ -54,6 +56,7 @@ re_logfile = re.compile(r'(\w+\.log)(?:\.(\d{1,2}))?(?:\.(gz))?', flags=re.IGNOR
 
 #
 
+
 def get_terminal_width():
     try:
         _, w = struct.unpack('HH', fcntl.ioctl(0, termios.TIOCGWINSZ, b'\0' * 4))
@@ -66,6 +69,7 @@ def get_terminal_width():
         return t.columns
     except:
         return 80
+
 
 class LogParser:
     def __init__(self, line=None, **kwargs):
@@ -168,7 +172,7 @@ class LogParser:
 
     def _str_status_url(self):
         w = (self.width - 3) // 2
-        u = self.url[:w] + '...' + self.url[-w:] if len(self.url) > self.width else self.url
+        u = self.url[:w] + '...' + self.url[-w:] if self.url and len(self.url) > self.width else self.url if self.url else '-'
         s = str(self.status) if self.status > 0 else ' - '
         return self._color_code_status() + s + ' ' + u + '\033[m'
 
@@ -227,6 +231,7 @@ class LogParser:
         print(f'Payload: {payload:13,d} B')
         print(f'Network: {network:13,d} B')
 
+
 def readlines(source):
     if not os.path.exists(source):
         print(f'ERROR. File {source} does not exist')
@@ -234,6 +239,7 @@ def readlines(source):
     with gzip.open(source, 'rt') if '.gz' == source[-3:] else open(source, 'rt') as fid:
         lines = fid.readlines()
     return lines
+
 
 def find_previous_log(file):
     folder, basename = os.path.split(file)
@@ -248,6 +254,7 @@ def find_previous_log(file):
         return previous
     return None
 
+
 def process_source(source, **kwargs):
     # print(kwargs)
     hope.show_line = kwargs['verbose'] > 0 if 'verbose' in kwargs else False
@@ -256,6 +263,7 @@ def process_source(source, **kwargs):
     for line in readlines(source):
         hope.process(line)
     hope.summary()
+
 
 def xfunc(parser, **kwargs):
     ips = {}
@@ -278,10 +286,11 @@ def xfunc(parser, **kwargs):
 
 #
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=__prog__,
-        formatter_class=argparse.RawTextHelpFormatter,
-        description=textwrap.dedent(f'''\
+                                     formatter_class=argparse.RawTextHelpFormatter,
+                                     description=textwrap.dedent(f'''\
         Access Log Parse Tool
 
         Examples:
@@ -291,7 +300,7 @@ if __name__ == '__main__':
             {__prog__} -a -f loc
             {__prog__} -af all
         '''),
-        epilog='Copyright (c) 2022 Boonleng Cheong')
+                                     epilog='Copyright (c) 2022 Boonleng Cheong')
     parser.add_argument('source', type=str, nargs='*', help='source(s) to process')
     parser.add_argument('-a', dest='access', action='store_true', help='checks nginx access log')
     parser.add_argument('-c', dest='count', action='store_true', help='counts number of unique visitors')
