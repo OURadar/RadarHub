@@ -184,9 +184,9 @@ select:hover {
   -webkit-backdrop-filter: grayscale(70%);
   position: fixed;
   top: var(--topbar-height);
+  left: 0;
   right: 0;
   bottom: 0;
-  left: 0;
   z-index: 42;
   opacity: 0;
   transition: opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
@@ -597,6 +597,7 @@ p {
   width: 100vw;
   top: 0;
   left: 0;
+  right: 0;
   transition: opacity 0.4s;
   z-index: 0;
 }
@@ -604,9 +605,9 @@ p {
   background-color: var(--background-color);
   position: fixed;
   top: 0;
+  left: 0;
   right: 0;
   bottom: 0;
-  left: 0;
   text-align: center;
   padding-top: 30vh;
   transition: opacity 0.4s;
@@ -625,10 +626,11 @@ p {
   background-color: var(--background-color);
   position: fixed;
   top: 0;
+  left: 0;
   right: 0;
   bottom: 0;
-  left: 0;
   transition: opacity 0.4s;
+  z-index: 0;
 }
 .footer {
   bottom: 5vh;
@@ -646,6 +648,8 @@ p {
   width: 100%;
   position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 42;
 }
 .topbarComponent {
@@ -681,6 +685,8 @@ p {
 #navbar {
   position: fixed;
   width: 100%;
+  left: 0;
+  right: 0;
   z-index: 42;
 }
 #tabbar {
