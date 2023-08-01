@@ -1,0 +1,89 @@
+## Milestones
+
+- [x] 0.1 Can run
+- [x] 0.2 Scope + Health working (7/21/2021)
+- [x] 0.3 Some button actions to backhaul (7/29/2021)
+- [x] 0.4 Migrate data module to an external websocket client (8/9/2021)
+- [x] 0.5 3D view for radar products with map overlay (9/13/2021)
+- [x] 0.6 SQLite / product catalog / products to 3D view (11/12/2021)
+  - [x] 0.6.1 Removed most hard-wired parameters (1/7/2022)
+  - [x] 0.6.2 Auto-select latest day, hour and file (1/15/2022)
+  - [x] 0.6.3 Added support for multiple radars (1/30/2022)
+  - [x] 0.6.4 Migrated to PostgreSQL (2/5/2022)
+  - [x] 0.6.5 Refactored for a fresh run (2/10/2022)
+  - [x] 0.6.6 Updated database tooling (3/5/2022)
+  - [x] 0.6.7 Server side event for real-time archive (3/16/2022)
+  - [x] 0.6.8 Graphical optimizations (3/23/2022)
+  - [x] 0.6.9 Minor bug fixes (3/24/2022)
+  - [x] 0.6.10 Added live mode resumption (4/12/2022)
+- [x] 0.7 RadarKit-RadarHub communication and 3D flyover view (4/24/2022)
+  - [x] 0.7.1 Improved efficiency of data retrieval (4/27/2022)
+  - [x] 0.7.2 Updated behaviors of calendar badge and product switching (4/29/2022)
+  - [x] 0.7.3 Introduced backend caching and external radar configuration (5/15/2022)
+  - [x] 0.7.4 Introduced pipe ingest and txz support (5/24/2022)
+  - [x] 0.7.5 Introduced RHI update to the latest (6/3/2022)
+  - [x] 0.7.6 Introduced navigation with arrow keys (6/4/2022)
+  - [x] 0.7.7 Adopted logrotate and improved URL sanity check (6/6/2022)
+  - [x] 0.7.8 Added simple detection of illicit requests (6/7/2022)
+  - [x] 0.7.9 Improved navigation by arrow keys (6/8/2022)
+  - [x] 0.7.10 Added visitor screening and logging (6/12/2022)
+  - [x] 0.7.11 Improved network usage (6/15/2022)
+  - [x] 0.7.12 Added auxiliary info to Caption (6/18/2022)
+  - [x] 0.7.13 Updated BGOR scoring and improved performance slightly (6/23/2022)
+  - [x] 0.7.14 Made compatible with Python 3.8 (6/24/2022)
+  - [x] 0.7.15 Minor bug fixes (6/24/2022)
+  - [x] 0.7.16 Improved inspection of Visitor table (6/26/2022)
+  - [x] 0.7.17 Fixed a bug in caching too aggressively (6/26/2022)
+  - [x] 0.7.18 Show PPI / RHI using ray elevations / azimuths (6/28/2022)
+  - [x] 0.7.19 Added a stats endpoint (7/1/2022)
+- [x] 0.8 Authentication through social accounts (7/7/2022)
+  - [x] 0.8.1 Improved loading speed for UX (7/10/2022))
+  - [x] 0.8.2 SplitChunks, map conversion for UX (7/11/2022)
+  - [x] 0.8.3 Introduced scale-transform maps for efficiency (7/13/2022)
+  - [x] 0.8.4 Introduced scale-transform-transform maps for efficiency (7/13/2022)
+  - [x] 0.8.5 Deferred data compression to nginx (7/15/2022)
+  - [x] 0.8.6 Added custom pages 403, 404, and 503 (7/17/2022)
+  - [x] 0.8.7 Added a pop-up help page (7/19/2022)
+  - [x] 0.8.8 Automated visitor access log update (7/20/2022)
+  - [x] 0.8.9 Updated log parsing tool for viewing recent logs (7/31/2022)
+  - [x] 0.8.10 Updated page templates (8/3/2022)
+- [x] 0.9 Page template, UI materials, mobile version (8/24/2022)
+  - [x] 0.9.1 Separated user model for account info (8/25/2022)
+  - [x] 0.9.2 Improved month table retrieval (UTC+ timezones) (9/6/2022)
+  - [x] 0.9.3 Added arrow-navigation buttons desktop UI (9/8/2022)
+  - [x] 0.9.4 Added scroll behavior to split-panel-right (9/17/2022)
+  - [x] 0.9.5 Fixed issues with switching live/offline modes (9/22/2022)
+  - [x] 0.9.6 Fixed product switching bugs (9/24/2022)
+  - [x] 0.9.7 New tilt state initialization (9/27/2022)
+  - [x] 0.9.8 Fixed colorbar title issues (10/7/2022)
+  - [x] 0.9.9 Reworked data ingest for live and archive modes (12/13/2022)
+  - [x] 0.9.10 Fixed an issue on item list not loading (12/14/2022)
+  - [x] 0.9.11 Introduced new color tables (1/3/2023)
+  - [x] 0.9.12 Reworked backhaul for dropped connections (2/26/2023)
+  - [x] 0.9.13 Fixed time-zone issues (6/15/2023)
+  - [ ] 0.9.x Improved handling of corrupted archive
+  - [ ] 0.9.x 3D view manipulation through touch gestures
+  - [ ] 0.9.x Fixed scroll view track
+- [ ] 1.0 Single end point, landing page, radar selection, etc.
+
+## Post Version 1.0
+
+- [ ] GLView Upgrades
+  - [ ] New abstraction layer for colorbar, title, and other static overlays.
+  - [ ] Streaming buffers for radial-by-radial updates
+  - [x] New camera transformation that is radar centric
+  - [ ] Local buffer for animations
+- - [ ] Auto adjustments for best view of PPI/RHI data
+        [ ] Overlay Upgrades
+  - [ ] An array of arrays of text assets to reduce texture updates
+  - [ ] A new version of overlay.worker
+- [x] Caching
+  - [x] Frontend caching: archive.js
+  - [x] Backend caching: frontend.models.py
+- [ ] Infinite scrolling in data browser
+- [ ] Display frequency spectrum alongside scope view
+- [ ] Show online users
+- [x] High-DPI support
+- [x] Cache sweeps using the LRU algorithm
+- [ ] Let users download files
+- [ ] Local/remote state

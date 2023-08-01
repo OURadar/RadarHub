@@ -105,17 +105,15 @@ export class App extends React.Component {
 
   componentDidMount() {
     // Get notified when the desktop theme is changed
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        if (this.user.mode !== "auto") return;
-        let mode = e.matches ? "dark" : "light";
-        document.documentElement.setAttribute("theme", mode);
-        this.setState({
-          colors: colorDict(mode),
-          theme: makeTheme(mode),
-        });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      if (this.user.mode !== "auto") return;
+      let mode = e.matches ? "dark" : "light";
+      document.documentElement.setAttribute("theme", mode);
+      this.setState({
+        colors: colorDict(mode),
+        theme: makeTheme(mode),
       });
+    });
   }
 
   render() {
@@ -123,10 +121,7 @@ export class App extends React.Component {
       return (
         <ThemeProvider theme={this.state.theme}>
           <TopBar isMobile={true} />
-          <Product
-            colors={this.state.colors}
-            onOverlayLoad={this.handleOverlayLoad}
-          />
+          <Product colors={this.state.colors} onOverlayLoad={this.handleOverlayLoad} />
         </ThemeProvider>
       );
     return (
@@ -156,18 +151,9 @@ export class App extends React.Component {
                   onColorbarClick={this.handleColorbarClick}
                 />
               }
-              right={
-                <Browser
-                  archive={this.archive}
-                  pathway={this.props.pathway}
-                  debug={this.props.debug}
-                />
-              }
+              right={<Browser archive={this.archive} pathway={this.props.pathway} debug={this.props.debug} />}
             />
-            <MenuUpdate
-              value={this.archive.state.liveUpdate}
-              onChange={this.handleLiveModeChange}
-            />
+            <MenuUpdate value={this.archive.state.liveUpdate} onChange={this.handleLiveModeChange} />
             <MenuArrow
               doubleLeftDisabled={this.state.disabled[0]}
               leftDisabled={this.state.disabled[1]}
@@ -178,10 +164,7 @@ export class App extends React.Component {
               onRight={this.handleRight}
               onDoubleRight={this.handleDoubleRight}
             />
-            <HelpPage
-              open={this.state.showHelp}
-              handleClose={this.handleInfoClose}
-            />
+            <HelpPage open={this.state.showHelp} handleClose={this.handleInfoClose} />
           </ThemeProvider>
         </div>
       </div>
