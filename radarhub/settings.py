@@ -238,13 +238,18 @@ CHANNEL_LAYERS = {
 # RADARS = { '_PREFIX_': {'folder': '_RADAR_NAME_', 'summary': '_SCAN_' } }
 if 'radars' in settings:
     RADARS = settings['radars']
-    RADARS['DEMO-'] = {
-            'name': 'demo',
-            'folder': 'demo',
-            'summary': 'E4.0',
-        }
+    RADARS['DX-'] = {
+        'name': 'demo',
+        'folder': 'demo',
+        'summary': 'E2.4',
+    }
 else:
     RADARS = {
+        'DX-': {
+            'name': 'Demo',
+            'folder': 'demo',
+            'summary': 'E2.4',
+        },
         'PX-': {
             'name': 'PX-1000',
             'folder': 'PX1000',
@@ -266,6 +271,7 @@ if os.path.exists(file):
     VERSION = s['version'] if 'version' in s else '0.0.0'
 else:
     VERSION = '0.0.0'
+BRANCH = os.popen('git rev-parse --abbrev-ref HEAD').read().strip()
 
 # FIFO source to list for new files
 # FIFO = { 'tcp': '_IP_ADDRESS_:_PORT_' }
@@ -279,62 +285,6 @@ else:
 
 # Prevent HttpResponse 301 for permanent forwards
 # APPEND_SLASH = False
-
-# # LDAP stuff
-# import ldap
-# from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
-
-# AUTH_LDAP_SERVER_URI = 'ldap://dcv01.arrc.ou.edu'
-
-# # AUTH_LDAP_BIND_DN = "cn=django-agent,dc=arrc,dc=ou,dc=edu"
-# # AUTH_LDAP_BIND_PASSWORD = "phlebotinum"
-# # AUTH_LDAP_USER_SEARCH = LDAPSearch(
-# #     "ou=people,dc=arrc,dc=ou,dc=edu", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-# # )
-# # Or:
-# AUTH_LDAP_USER_DN_TEMPLATE = 'uid=%(user)s,ou=peole,dc=arrc,dc=ou,dc=edu'
-
-# # Set up the basic group parameters.
-# AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
-#     "ou=django,ou=groups,dc=ou,dc=arrc,dc=edu",
-#     ldap.SCOPE_SUBTREE,
-#     "(objectClass=groupOfNames)",
-# )
-# AUTH_LDAP_GROUP_TYPE = GroupOfNamesType(name_attr="cn")
-
-# # Simple group restrictions
-# AUTH_LDAP_REQUIRE_GROUP = "cn=enabled,ou=django,ou=groups,dc=arrc,dc=ou,dc=edu"
-# AUTH_LDAP_DENY_GROUP = "cn=disabled,ou=django,ou=groups,dc=arrc,dc=ou,dc=edu"
-
-# # Populate the Django user from the LDAP directory.
-# AUTH_LDAP_USER_ATTR_MAP = {
-#     "first_name": "givenName",
-#     "last_name": "sn",
-#     "email": "mail",
-# }
-
-# AUTH_LDAP_USER_FLAGS_BY_GROUP = {
-#     "is_active": "cn=active,ou=django,ou=groups,dc=arrc,dc=ou,dc=edu",
-#     "is_staff": "cn=staff,ou=django,ou=groups,dc=arrc,dc=ou,dc=edu",
-#     "is_superuser": "cn=superuser,ou=django,ou=groups,dc=arrc,dc=ou,dc=edu",
-# }
-
-# # This is the default, but I like to be explicit.
-# AUTH_LDAP_ALWAYS_UPDATE_USER = True
-
-# # Use LDAP group membership to calculate group permissions.
-# AUTH_LDAP_FIND_GROUP_PERMS = True
-
-# # Cache distinguished names and group memberships for an hour to minimize
-# # LDAP traffic.
-# AUTH_LDAP_CACHE_TIMEOUT = 3600
-
-# # Keep ModelBackend around for per-user permissions and maybe a local
-# # superuser.
-# AUTHENTICATION_BACKENDS = (
-#     'django_auth_ldap.backend.LDAPBackend',
-#     'django.contrib.auth.backends.ModelBackend',
-# )
 
 LOGGING = {
     'version': 1,
@@ -398,14 +348,14 @@ else:
     SOCIALACCOUNT_PROVIDERS = {
         'google': {
             'SCOPE': ['profile', 'email'],
-            'AUTH_PARAMS': { 'access_type': 'online' }
+            'AUTH_PARAMS': {'access_type': 'online'}
         }
     }
 
 if 'facebook' in SOCIALACCOUNT_PROVIDERS:
     for key in ['EXCHANGE_TOKEN', 'VERIFIED_EMAIL']:
         SOCIALACCOUNT_PROVIDERS['facebook'][key] = bool(SOCIALACCOUNT_PROVIDERS['facebook'][key])
-    SOCIALACCOUNT_PROVIDERS['facebook']['INIT_PARAMS'] = {'cookie': True }
+    SOCIALACCOUNT_PROVIDERS['facebook']['INIT_PARAMS'] = {'cookie': True}
 
 if DEBUG is not True:
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'

@@ -56,13 +56,12 @@ function Browser(props) {
   const ok = archive.grid !== null;
   const day = ok ? dayjs.utc(archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hour = ok ? archive.grid.hour : -1;
-  const count = ok ? archive.grid.hoursActive : new Array(24).fill(0);
   const items = ok ? archive.grid.items : [];
-  const index = ok ? archive.grid.index : -1;
+  const index = ok ? archive.grid?.index : -1;
+  const hourHasData = ok ? archive.grid.hourHasData : new Array(24).fill(false);
 
   const [hourButtons, setHourButtons] = React.useState([]);
   const [fileBrowser, setFileBrowser] = React.useState([]);
-  const [value, setValue] = React.useState(day);
 
   // console.log(`day = ${day}   hour = ${hour}`);
   const setElements = (elements) => {
@@ -96,8 +95,8 @@ function Browser(props) {
     const newButtons = Array(24);
     for (let k = 0; k < 24; k++) {
       const hourString = k.toString().padStart(2, "0") + ":00";
-      const selected = count[k] > 0 && k == hour;
-      const disabled = count[k] == 0;
+      const selected = hourHasData[k] == true && k == hour;
+      const disabled = hourHasData[k] == false;
       newButtons[k] = (
         <Button
           key={k}
@@ -111,8 +110,7 @@ function Browser(props) {
       );
     }
     setHourButtons(newButtons);
-    setValue(day);
-  }, [day, hour, count]);
+  }, [day, hour, hourHasData]);
 
   return (
     <div className="fill paper">
@@ -121,16 +119,14 @@ function Browser(props) {
       <div id="calendarContainer">
         <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
           <DatePicker
-            defaultValue={value}
+            label="Date"
+            defaultValue={day}
             minDate={dayjs.utc("20000101")}
             maxDate={dayjs.utc().endOf("month")}
             onOpen={() => archive.getMonthTable(day)}
             onYearChange={(newDay) => archive.getMonthTable(newDay)}
             onMonthChange={(newDay) => archive.getMonthTable(newDay)}
-            onChange={(newValue) => {
-              setValue(newValue);
-              archive.setDayHour(newValue, hour);
-            }}
+            onChange={(newDay) => archive.setDayHour(newDay, hour)}
             slots={{ day: ServerDay }}
             slotProps={{ day: { archive: archive } }}
             disableHighlightToday={true}

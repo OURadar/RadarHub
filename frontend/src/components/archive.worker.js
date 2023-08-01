@@ -22,25 +22,33 @@ dayjs.extend(utc);
 let source = null;
 let pathway;
 let grid = {
-  dateTimeString: "20130520-1900",
+  dateTimeString: dayjs.utc().format("YYYYMMDD-HHmm"),
   daysActive: {},
-  hoursActive: new Array(24).fill(0),
-  yearsActive: new Array(200).fill(0),
+  hourHasData: new Array(24).fill(false),
   pathsActive: new Array(4).fill(false),
   latestScan: "",
   latestHour: -1,
+  counts: [0, 0],
   items: [],
   itemsGrouped: {},
+  moreBefore: false,
+  moreAfter: false,
+  mode: null,
   hour: -1,
   index: -1,
   symbol: "Z",
   scan: "E4.0",
+  last: null,
+  tic: 0,
 };
 let state = {
   update: "scan",
+  length: 1,
+  sweeps: [],
   verbose: 0,
 };
-const namecolor = "#bf9140";
+const nameStyle = "background-color: #bf9140; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+const frameCount = 15;
 
 const sweepParser = new Parser()
   .endianess("little")
@@ -66,55 +74,108 @@ const sweepParser = new Parser()
     },
   });
 
-self.onmessage = ({ data: { task, name, date, symbol } }) => {
-  let day = dayjs.utc(0);
-  if (date !== undefined) {
-    day = dayjs.utc(date * 1000);
+// IMPORTANT: During prepend/append mode, use this before updating
+// grid.counts = buffer.counts after fetch(/data/list/...) because
+// grid.index needs to propagate to the next list in order to
+// to maintain continuity.
+function suggestGridIndex(mode, { counts, items }) {
+  // console.log("suggestGridIndex", counts, items);
+  let index = -1;
+  if (mode == "prepend" && grid.index >= 0 && grid.index < grid.counts[0]) {
+    index = grid.index + counts[0];
+  } else if (mode == "append" && grid.index >= grid.counts[0]) {
+    index = grid.index - grid.counts[0];
+  } else if (mode == "catchup") {
+    if (grid.scan in grid.itemsGrouped && state.update == "scan") {
+      index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
+    } else {
+      index = grid.items.length - 1;
+    }
+  } else if (mode == "select") {
+    if (grid.scan in grid.itemsGrouped) {
+      let k = counts[0];
+      while (k < items.length) {
+        const scan = items[k].split("-")[2];
+        if (scan == grid.scan) {
+          break;
+        }
+        k++;
+      }
+      index = k;
+    } else {
+      index = 0;
+    }
   }
-  if (state.verbose) {
-    console.log(
-      `%carchive.worker.onmessage()%c task = ${task}   day = ${day.format("YYYYMMDD-HHMM")}`,
-      "color: hotpink",
-      ""
-    );
-  }
-  if (task == "init") {
-    init(name);
-  } else if (task == "set") {
-    setGridIndex(name);
-  } else if (task == "load") {
-    load(name);
-  } else if (task == "list") {
-    list(day, symbol);
-  } else if (task == "count") {
-    count(day);
-  } else if (task == "month") {
-    month(day);
-  } else if (task == "toggle") {
-    toggle(name);
-  } else if (task == "catchup") {
-    catchup();
-  } else if (task == "forward") {
-    navigateForward();
-  } else if (task == "backward") {
-    navigateBackward();
-  } else if (task == "forward-scan") {
-    navigateForwardScan();
-  } else if (task == "backward-scan") {
-    navigateBackwardScan();
-  } else if (task == "dummy") {
-    dummy();
-  } else {
+  return index;
+}
+
+function updateGridIndexByScan(delta) {
+  if (grid.itemsGrouped.length == 0) return;
+  let k = -1;
+  let ii = [];
+  grid.itemsGrouped[grid.scan].forEach(({ file, index }) => {
+    ii.push(index);
+    if (index == grid.index) {
+      k = ii.length - 1;
+    }
+  });
+  let index = ii[clamp(k + delta, 0, ii.length - 1)];
+  setGridIndex(index);
+}
+
+function reviseGridPaths() {
+  if (grid.items.length == 0 || grid.index < 0 || grid.index >= grid.items.length) {
+    grid.pathsActive.fill(false);
     return;
   }
-};
-
-function init(newPathway) {
-  pathway = newPathway;
-  if (state.verbose) {
-    console.info(`%carchive.worker.init()%c ${pathway}`, `color: ${namecolor}`, "color: dodgerblue");
+  const item = grid.items[grid.index];
+  const scan = item.split("-")[2];
+  const index = grid.index;
+  const length = grid.itemsGrouped[scan].length;
+  const first = grid.itemsGrouped[scan][0];
+  const last = grid.itemsGrouped[scan][length - 1];
+  grid.pathsActive[0] = index != first.index;
+  grid.pathsActive[1] = index != 0;
+  grid.pathsActive[2] = index != grid.items.length - 1;
+  grid.pathsActive[3] = index != last.index;
+  if (state.verbose > 1) {
+    console.debug(
+      `%carchive.worker.reviseGridPaths %c${scan}%c`,
+      nameStyle,
+      "color: dodgerblue",
+      "",
+      "first",
+      first,
+      "last",
+      last,
+      "pathsActive",
+      grid.pathsActive
+    );
   }
-  self.postMessage({ type: "init", payload: grid });
+}
+
+function reviseGridItemsGrouped() {
+  grid.itemsGrouped = {};
+  grid.items.forEach((item, index) => {
+    let elements = item.split("-");
+    let scanType = elements[2];
+    if (!(scanType in grid.itemsGrouped)) {
+      grid.itemsGrouped[scanType] = [];
+    }
+    grid.itemsGrouped[scanType].push({ item: item, index: index });
+  });
+}
+
+function findLastInGroup() {
+  let address = -1;
+  grid.itemsGrouped[grid.scan].some(({ index }, k) => {
+    if (index == grid.index) {
+      address = k;
+      return true;
+    }
+    return false;
+  });
+  return address;
 }
 
 function connect(force = false) {
@@ -133,33 +194,84 @@ function connect(force = false) {
         },
       });
       if (state.update == "always") {
-        navigateToEnd();
+        grid.mode = "navigate";
+        setGridIndex(grid.items.length - 1);
       }
       return;
     }
   }
-  console.info(`EventSource connecting %c${pathway}%c ...`, "color: dodgerblue", "");
+  console.info(`%carchive.worker.connect%c ${pathway}%c ...`, nameStyle, "color: dodgerblue", "");
   source = new EventSource("/events/");
   // Only pick up event that matches the pathway
   source.addEventListener(pathway, (event) => {
     const payload = JSON.parse(event.data);
     payload.items.forEach((item) => {
-      updateListWithItem(item);
+      const elements = item.split("-");
+      const symbol = elements[3];
+      const scan = elements[2];
+      const t = elements[1];
+      const d = elements[0];
+      if (state.verbose) {
+        console.info(`%carchive.worker.connect%c ${d} ${t} ${scan} ${symbol} ${state.update}`, nameStyle, "");
+      }
+      if (symbol != grid.symbol) {
+        return;
+      }
+      if (grid.items.indexOf(item) > 0) {
+        // console.warn(`Item ${item} exists.`);
+        return;
+      }
+      const listHour = t.slice(0, 2);
+      const dateTimeString = `${d}-${listHour}00`;
+      if (grid.dateTimeString != dateTimeString) {
+        grid.dateTimeString = dateTimeString;
+        grid.hour = parseInt(listHour);
+        grid.items = grid.items.slice(grid.counts[0]);
+        grid.counts = [grid.counts[1], 0];
+        if (state.verbose) {
+          console.info(`%carchive.worker.connect%c   ${dateTimeString} ${grid.hour}`, nameStyle, "");
+        }
+      }
+      grid.items.push(item);
+      grid.counts[1]++;
     });
-    grid.hoursActive = payload.hoursActive;
+    reviseGridItemsGrouped();
+    grid.hourHasData = payload.hoursActive.map((x) => x > 0);
     grid.latestHour =
       23 -
-      grid.hoursActive
+      grid.hourHasData
         .slice()
         .reverse()
-        .findIndex((x) => x > 0);
-    self.postMessage({
-      type: "list",
-      payload: grid,
-    });
+        .findIndex((x) => x == true);
+    grid.mode = "catchup";
+    if (state.update == "always") {
+      setGridIndex(grid.items.length - 1);
+    } else if (grid.scan in grid.itemsGrouped) {
+      let index = grid.itemsGrouped[grid.scan].at(-1).index;
+      if (index == grid.index) {
+        // Post a list update since we won't load anything
+        grid.tic++;
+        reviseGridPaths();
+        self.postMessage({ type: "list", grid: grid });
+      } else if (state.length > 1) {
+        // Use select() to select the latest index to update the animation list
+        state.length = 1;
+        grid.index = index;
+        select(index, "catchup");
+      } else {
+        // Load the latest index that matches the scan
+        setGridIndex(index);
+      }
+    }
   });
   source.addEventListener("error", (_event) => {
     console.error(`EventSource error`, source.readyState, EventSource.CONNECTING);
+    fetch("/state/cache/").then((response) => {
+      if (response.status == 503) {
+        // Server went into maintenance mode
+        self.postMessage({ type: "503" });
+      }
+    });
     if (source.readyState == EventSource.CONNECTING) {
       console.info(`EventSource connecting %c${pathway}%c ...`, "color: dodgerblue", "");
       return;
@@ -181,270 +293,142 @@ function disconnect() {
   if (source === null || source.readyState == 2) {
     return;
   }
-  if (state.verbose) console.info("Disconnecting live update ...");
+  console.info(`%carchive.worker.disconnect%c ${pathway}%c ...`, nameStyle, "color: dodgerblue", "");
   source.close();
+  source = null;
   self.postMessage({
     type: "state",
-    payload: {
-      update: state.update,
-    },
+    payload: { update: state.update },
   });
 }
 
-function updateListWithItem(item) {
-  const elements = item.split("-");
-  const symbol = elements[3];
-  const scan = elements[2];
-  const t = elements[1];
-  const d = elements[0];
-  if (state.verbose) {
-    console.info(`%carchive.worker.updateListWithItem()%c ${d} ${t} ${scan} ${symbol}`, `color: ${namecolor}`, "");
-  }
-  if (symbol != grid.symbol) {
-    return;
-  }
-  const listHour = t.slice(0, 2);
-  const dateTimeString = `${d}-${listHour}00`;
-  if (grid.dateTimeString != dateTimeString) {
-    grid.dateTimeString = dateTimeString;
-    grid.itemsGrouped = {};
-    grid.items = [];
-    grid.hour = parseInt(listHour);
-    if (state.verbose) {
-      console.info(
-        `%carchive.worker.updateListWithItem()%c   ${dateTimeString} ${grid.hour}`,
-        `color: ${namecolor}`,
-        ""
-      );
-    }
-  }
-  if (!(scan in grid.itemsGrouped)) {
-    grid.itemsGrouped[scan] = [];
-  }
-  if (grid.items.indexOf(item) > 0) {
-    console.warn(`Item ${item} exists.`);
-    return;
-  }
-  let index = grid.items.length;
-  grid.items.push(item);
-  grid.itemsGrouped[scan].push({ item: item, index: index });
-  if (state.update == "always") {
-    index = grid.items.length - 1;
-    setGridIndex(index);
-  } else if (grid.scan in grid.itemsGrouped) {
-    index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-    setGridIndex(index);
-  } else {
-    index = -1;
-  }
-}
-
-function createSweep(name = "dummy") {
+function createSweep(name = "20130520-190001-E2.6-Z") {
+  const components = name.split("-");
+  const timeString =
+    `${components[0].slice(0, 4)}/` +
+    `${components[0].slice(4, 6)}/` +
+    `${components[0].slice(6, 8)} ` +
+    `${components[1].slice(0, 2)}:` +
+    `${components[1].slice(2, 4)}:` +
+    `${components[1].slice(4, 6)} UTC`;
+  const isRHI = components[2][0] == "A";
+  const symbol = components[3];
+  const angle = parseFloat(components[2].slice(1));
+  const scan = (isRHI ? "Az" : "El") + "  " + angle.toFixed(1);
   // Pad an extra azimuth and elevation
   return {
     name,
+    symbol,
+    timeString,
+    isRHI,
     nb: 4,
     nr: 3,
     nx: 0,
-    time: 42,
-    timeString: "1970/01/01 00:00:42 UTC",
-    titleString: "----/--/-- --:--:-- --- -- -.-°",
-    symbol: "U",
-    isRHI: false,
-    scanElevation: 4.0,
-    scanAzimuth: 0.0,
-    rangeStart: 1.0,
-    rangeSpacing: 10.0,
+    age: "long time ago",
+    time: dayjs.utc(timeString).unix(),
+    titleString: `${timeString}  ${scan}°`,
+    infoString: "No data",
+    scanElevation: isRHI ? 0.0 : angle,
+    scanAzimuth: isRHI ? angle : 0.0,
+    rangeStart: 0.0,
+    rangeSpacing: 0.2,
     elevations: [4.0, 4.0, 4.0, 4.0, 4.0],
-    azimuths: [0.0, 15.0, 30.0, 45.0, 60.0],
+    azimuths: [-30.0, -15.0, 0.0, 15.0, 30.0],
     values: [32, 77, 30, 10, 20, 15, 50, 60, 50, 80, 90, 100],
   };
 }
 
-// Expect something like day = dayjs.utc('2013-05-20'), hour = 19, symbol = 'Z'
-function month(day) {
-  let dayString = day.format("YYYYMM01");
-  console.info(`%carchive.worker.month()%c ${pathway} ${dayString}`, `color: ${namecolor}`, "");
-  const url = `/data/month/${pathway}/${dayString}/`;
-  fetch(url)
-    .then((response) => {
-      if (response.status == 200)
-        response.json().then((buffer) => {
-          grid.daysActive = { ...buffer, ...grid.daysActive };
-          self.postMessage({ type: "month", payload: grid.daysActive });
-        });
-      else
-        response.text().then((error) => {
-          self.postMessage({ type: "message", payload: error });
-        });
-    })
-    .catch((error) => {
-      console.error(`Unexpected error ${error}`);
-    });
-}
-
-// Expect something like day = dayjs.utc('2013-05-20'), symbol = 'Z'
-function list(day, symbol) {
-  let dateTimeString = day.format("YYYYMMDD-HH00");
-  console.info(
-    `%carchive.worker.list()%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
-    `color: ${namecolor}`,
-    "",
-    "color: mediumpurple",
-    ""
-  );
-  // Same time, just a symbol change
-  if (dateTimeString == grid.dateTimeString) {
-    let index = grid.index;
-    let currentItems = grid.items;
-    grid.items = [];
-    grid.itemsGrouped = {};
-    currentItems.forEach((item, index) => {
-      let elements = item.split("-");
-      elements[3] = symbol;
-      item = elements.join("-");
-      grid.items.push(item);
-      let scanType = elements[2];
-      if (!(scanType in grid.itemsGrouped)) {
-        grid.itemsGrouped[scanType] = [];
+async function load(names) {
+  let count = 0;
+  let append = false;
+  if (names.length > 1) {
+    if (state.sweeps.length > 2) {
+      let newNames = state.sweeps.slice(-(frameCount - 1)).map((x) => x.name);
+      newNames.push(names.at(-1));
+      if (JSON.stringify(names) === JSON.stringify(newNames)) {
+        names = names.slice(-1);
+        append = true;
       }
-      grid.itemsGrouped[scanType].push({ item: item, index: index });
-    });
-    grid.symbol = symbol;
-    grid.index = -1;
-    setGridIndex(index);
-    self.postMessage({
-      type: "list",
-      payload: grid,
-    });
-    return;
+    }
+    if (!append) {
+      self.postMessage({ type: "progress", payload: { progress: 1, message: "Loading scans ..." } });
+    }
   }
-  // Different time, fetch from the server
-  const url = `/data/list/${pathway}/${dateTimeString}-${symbol}/`;
-  fetch(url)
-    .then((response) => {
-      if (response.status == 200) {
-        response.json().then((buffer) => {
-          if (state.verbose > 1) {
-            console.debug("list buffer", buffer);
-          }
-          grid.hour = buffer.hour;
-          grid.index = -1;
-          grid.symbol = symbol;
-          grid.hoursActive = buffer.hoursActive;
-          grid.dateTimeString = dateTimeString;
-          grid.latestHour =
-            23 -
-            grid.hoursActive
-              .slice()
-              .reverse()
-              .findIndex((x) => x > 0);
-          grid.items = buffer.items;
-          grid.itemsGrouped = {};
-          grid.items.forEach((item, index) => {
-            let elements = item.split("-");
-            let scanType = elements[2];
-            if (!(scanType in grid.itemsGrouped)) {
-              grid.itemsGrouped[scanType] = [];
-            }
-            grid.itemsGrouped[scanType].push({ item: item, index: index });
-          });
-          let index = grid.items.length ? grid.items.length - 1 : -1;
-          if (grid.scan in grid.itemsGrouped) {
-            index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-          }
-          self.postMessage({ type: "list", payload: grid });
-          if (grid.hour < 0) {
-            self.postMessage({ type: "message", payload: "No Data" });
-            return;
-          }
-          setGridIndex(index);
-        });
-      } else {
-        console.info(
-          `%carchive.worker.list()%c response.status = ${response.status} != 200`,
-          `color: ${namecolor}`,
-          ""
-        );
-        response.text().then((response) => {
-          self.postMessage({ type: "message", payload: response });
-        });
-      }
-    })
-    .catch((error) => {
-      console.error(`Unexpected error ${error}`);
-    });
-}
-
-function load(name) {
-  const url = `/data/load/${pathway}/${name}/`;
-  if (state.verbose) {
-    console.info(`%carchive.worker.load() %c${url}`, `color: ${namecolor}`, "color: dodgerblue");
-  }
-  if (name.indexOf(".nc") > -1) {
-    console.log(`name = ${name}`);
-    console.log(grid);
-  }
-  const newIndex = grid.items.indexOf(name);
-  fetch(url, { cache: "force-cache" })
-    .then((response) => {
-      if (response.status == 200) {
-        response.arrayBuffer().then((buffer) => {
-          let sweep = geometry({
-            ...createSweep(name),
-            ...sweepParser.parse(new Uint8Array(buffer)),
-          });
-          let components = sweep.name.split("-");
-          sweep.timeString =
-            `${components[0].slice(0, 4)}/` +
-            `${components[0].slice(4, 6)}/` +
-            `${components[0].slice(6, 8)} ` +
-            `${components[1].slice(0, 2)}:` +
-            `${components[1].slice(2, 4)}:` +
-            `${components[1].slice(4, 6)} UTC`;
-          sweep.symbol = components[3].split(".")[0];
-          sweep.titleString =
-            sweep.timeString +
-            "   " +
-            (sweep.isRHI ? `Az ${sweep.scanAzimuth.toFixed(1)}` : `El ${sweep.scanElevation.toFixed(1)}`) +
-            "°";
-          sweep.info = JSON.parse(sweep.info);
-          sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\n` + `Waveform: ${sweep.info.waveform}`;
-          let scan = components[2];
-          if (state.verbose > 1) {
-            console.debug(
-              `%carchive.worker.load() %cgrid.scan ${grid.scan} -> ${scan}   grid.index ${grid.index} -> ${newIndex}`,
-              `color: ${namecolor}`,
-              "color: dodgerblue"
-            );
-          }
-          grid.scan = scan;
-          if (sweep.nb == 0 || sweep.nr == 0) {
-            console.log(sweep);
-            self.postMessage({
-              type: "message",
-              payload: `Failed to load ${name}`,
+  await Promise.all(
+    names.map(async (name) => {
+      const url = `/data/load/${pathway}/${name}/`;
+      console.info(`%carchive.worker.load%c ${url}%c`, nameStyle, "color: dodgerblue", "");
+      return fetch(url, { cache: "force-cache" })
+        .then(async (response) => {
+          if (response.status == 200) {
+            return response.arrayBuffer().then((buffer) => {
+              let sweep = geometry({
+                ...createSweep(name),
+                ...sweepParser.parse(new Uint8Array(buffer)),
+              });
+              sweep.info = JSON.parse(sweep.info);
+              sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\nWaveform: ${sweep.info.waveform}`;
+              if (sweep.nb == 0 || sweep.nr == 0) {
+                sweep = geometry(createSweep(name));
+              }
+              if (names.length > 1) {
+                count++;
+                self.postMessage({
+                  type: "progress",
+                  payload: {
+                    progress: Math.floor((count / names.length) * 100),
+                    message:
+                      grid.mode == "catchup"
+                        ? `New scan ${names.at(-1)}`
+                        : `Loading scans ... ${count} / ${names.length}`,
+                  },
+                });
+              }
+              return sweep;
             });
-            return;
+          } else if (response.status == 503) {
+            console.log("Refresh to main index for maintenance page.");
+            // document.location.reload();
+            return false;
+          } else {
+            return response.text().then((text) => {
+              console.info(text);
+              self.postMessage({ type: "reset", payload: text });
+              return false;
+            });
           }
-          self.postMessage({ type: "load", payload: sweep });
+        })
+        .catch((error) => {
+          console.error(`Unexpected error ${error}`);
         });
-      } else {
-        response.text().then((text) => {
-          console.info(text);
-          self.postMessage({ type: "reset", payload: text });
-        });
-      }
     })
-    .catch((error) => {
-      console.error(`Unexpected error ${error}`);
-    });
-}
-
-function dummy() {
-  let sweep = createSweep();
-  sweep = geometry(sweep);
-  self.postMessage({ type: "load", payload: sweep });
+  ).then((sweeps) => {
+    if (sweeps.includes(null)) {
+      console.log("There are invalid sweeps");
+      console.log(sweeps);
+    }
+    if (append) {
+      let newSweeps = state.sweeps.slice(-14);
+      newSweeps.push(sweeps[0]);
+      state.sweeps = newSweeps;
+    } else {
+      state.sweeps = sweeps;
+    }
+    grid.last = state.sweeps.at(-1).name;
+    let scan = grid.last.split("-").at(2);
+    if (state.verbose) {
+      console.debug(
+        `%carchive.worker.load%c grid.scan = %c${scan}%c ← ${grid.scan}   grid.mode = ${grid.mode}`,
+        nameStyle,
+        "",
+        "color: dodgerblue",
+        ""
+      );
+    }
+    grid.scan = scan;
+    grid.tic++;
+    self.postMessage({ type: "load", grid: grid, payload: state.sweeps });
+  });
 }
 
 function geometry(sweep) {
@@ -500,147 +484,210 @@ function geometry(sweep) {
   return sweep;
 }
 
-function catchup() {
-  console.info(`%carchive.worker.catchup()%c ${pathway}`, `color: ${namecolor}`, "color: dodgerblue");
-  fetch(`/data/catchup/${pathway}/`).then((response) => {
-    if (response.status == 200) {
-      response
-        .json()
-        .then((buffer) => {
-          // let day = new Date(buffer.dayISOString);
-          let day = dayjs.utc(buffer.dayISOString);
-          if (state.verbose) {
-            console.info(
-              `%carchive.worker.catchup()%c` +
-                `   dateTimeString = %c${buffer.dateTimeString}%c` +
-                `   hour = %c${buffer.hour}%c`,
-              `color: ${namecolor}`,
-              "",
-              "color: dodgerblue",
-              "",
-              "color: dodgerblue",
-              ""
-            );
-          }
-          grid.dateTimeString = buffer.dateTimeString;
-          grid.hoursActive = buffer.hoursActive;
-          grid.daysActive = buffer.daysActive;
-          grid.latestScan = buffer.latestScan;
-          grid.latestHour = buffer.hour;
-          grid.hour = buffer.hour;
-          grid.items = buffer.items;
-          grid.itemsGrouped = {};
-          grid.items.forEach((item, index) => {
-            let elements = item.split("-");
-            let scanType = elements[2];
-            if (!(scanType in grid.itemsGrouped)) {
-              grid.itemsGrouped[scanType] = [];
-            }
-            grid.itemsGrouped[scanType].push({ item: item, index: index });
-          });
-          grid.yearsActive.splice(100, buffer.yearsActive.length, ...buffer.yearsActive);
-          let index = grid.items.length ? grid.items.length - 1 : -1;
-          if (state.update == "always") {
-            index = grid.items.length - 1;
-          } else if (grid.scan in grid.itemsGrouped) {
-            index = grid.itemsGrouped[grid.scan].slice(-1)[0].index;
-          } else {
-            index = grid.items.length ? grid.items.length - 1 : -1;
-          }
-          setGridIndex(index);
-          if (state.verbose > 1) {
-            console.debug("grid.items", grid.items);
-            console.debug("grid.itemsGrouped", grid.itemsGrouped);
-          }
-          self.postMessage({
-            type: "list",
-            payload: grid,
-          });
-          return;
-        })
-        .then(() => connect())
-        .catch((error) => console.error(`Unexpected error ${error}`));
-    } else {
-      console.error("Unable to catch up.");
-    }
-  });
-}
-
 function setGridIndex(index) {
   if (state.verbose > 1) {
-    console.debug(
-      `%carchive.worker.updateGridIndex()%c ${grid.index} -> ${index}`,
-      `color: ${namecolor}`,
-      "color: dodgerblue"
-    );
+    console.debug(`%carchive.worker.setGridIndex %c${index}%c ← ${grid.index}`, nameStyle, "color: dodgerblue", "");
   }
   if (index < 0 || index >= grid.items.length) {
-    console.error(`%carchive.worker.updateGridIndex()%c ${index} invalid`, `color: ${namecolor}`, "color: dodgerblue");
+    if (state.verbose > 1) {
+      console.debug(
+        `%carchive.worker.setGridIndex %cindex%c == ${index}. Early return.`,
+        nameStyle,
+        "color: dodgerblue",
+        ""
+      );
+    }
+    grid.index = index;
+    reviseGridPaths();
     return;
   }
-  if (index == grid.index) {
+  const scan = grid.items[index];
+  if (scan == grid.last) {
     if (state.verbose > 1) {
-      console.debug(`index = ${index} == grid.index = ${grid.index}. Do nothing.`);
+      console.debug(
+        `%carchive.worker.setGridIndex%c scan = %c${scan}%c ← ${grid.last}. Early return.`,
+        nameStyle,
+        "",
+        "color: dodgerblue",
+        ""
+      );
     }
     return;
+  }
+  if (state.verbose > 1) {
+    console.debug(`%carchive.worker.setGridIndex%c Loading %c${scan}%c ...`, nameStyle, "", "color: dodgerblue", "");
   }
   grid.index = index;
-  const scan = grid.items[index];
-  if (state.verbose > 1) {
-    console.debug(
-      `%carchive.worker.updateGridIndex()%c Calling load() ${scan} ...`,
-      `color: ${namecolor}`,
-      "color: dodgerblue"
-    );
-  }
-  load(scan);
   reviseGridPaths();
-  self.postMessage({
-    type: "index",
-    payload: { index: index, pathsActive: grid.pathsActive },
-  });
+  state.length = 1;
+  load([scan]);
 }
 
-function navigateForward() {
-  let index = clamp(grid.index + 1, 0, grid.items.length - 1);
-  setGridIndex(index);
+//
+
+self.onmessage = ({ data: { task, name, date, symbol } }) => {
+  let day = dayjs.utc(0);
+  if (date !== undefined) {
+    day = dayjs.utc(date * 1000);
+  }
+  if (state.verbose) {
+    let more = day > 0 ? `   day = ${day.format("YYYYMMDD-HHMM")}` : "";
+    console.log(`%carchive.worker.onmessage%c ${task}${more}`, "color: hotpink", "");
+  }
+  if (task == "init") {
+    init(name);
+  } else if (task == "list") {
+    list(day, symbol);
+  } else if (task == "month") {
+    month(day);
+  } else if (task == "toggle") {
+    toggle(name);
+  } else if (task == "catchup") {
+    catchup();
+  } else if (task == "prepend") {
+    prepend();
+  } else if (task == "append") {
+    append();
+  } else if (task == "select") {
+    select(name);
+  } else if (task == "forward") {
+    navigateForward();
+  } else if (task == "backward") {
+    navigateBackward();
+  } else if (task == "forward-scan") {
+    navigateForwardScan();
+  } else if (task == "backward-scan") {
+    navigateBackwardScan();
+  } else if (task == "dummy") {
+    dummy();
+  } else {
+    return;
+  }
+};
+
+function init(newPathway) {
+  pathway = newPathway;
+  if (state.verbose) {
+    console.info(`%carchive.worker.init%c ${pathway}`, nameStyle, "color: dodgerblue");
+  }
+  self.postMessage({ type: "init", grid: grid });
 }
 
-function navigateBackward() {
-  let index = clamp(grid.index - 1, 0, grid.items.length - 1);
-  setGridIndex(index);
-}
-
-function navigateToEnd() {
-  let index = grid.items.length - 1;
-  setGridIndex(index);
-}
-
-function updateGridIndexByScan(delta) {
-  if (grid.itemsGrouped.length == 0) return;
-  let k = -1;
-  let ii = [];
-  grid.itemsGrouped[grid.scan].forEach(({ file, index }) => {
-    ii.push(index);
-    if (index == grid.index) {
-      k = ii.length - 1;
+// Expect something like day = dayjs.utc('2013-05-20'), symbol = 'Z', mode = prepend, append, select, catchup
+function list(day, symbol, mode = "select") {
+  let dateTimeString = day.format("YYYYMMDD-HH00");
+  console.info(
+    `%carchive.worker.list%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
+    nameStyle,
+    "",
+    "color: mediumpurple",
+    ""
+  );
+  // Same time, just a symbol change (this part should be phased out, no need to have symbol in the list)
+  if (dateTimeString == grid.dateTimeString) {
+    let index = grid.index;
+    let currentItems = grid.items;
+    grid.mode = "switch";
+    grid.items = [];
+    grid.itemsGrouped = {};
+    currentItems.forEach((item, index) => {
+      let elements = item.split("-");
+      elements[3] = symbol;
+      item = elements.join("-");
+      grid.items.push(item);
+      let scanType = elements[2];
+      if (!(scanType in grid.itemsGrouped)) {
+        grid.itemsGrouped[scanType] = [];
+      }
+      grid.itemsGrouped[scanType].push({ item: item, index: index });
+    });
+    if (grid.symbol == symbol) {
+      // Repeated tab, assume switching out of catchup to list mode
+      index = suggestGridIndex(mode, grid);
     }
-  });
-  let index = ii[clamp(k + delta, 0, ii.length - 1)];
-  setGridIndex(index);
+    grid.symbol = symbol;
+    grid.tic++;
+    setGridIndex(index);
+    self.postMessage({ type: "list", grid: grid });
+    return;
+  }
+  // Different time, fetch from the server
+  const url = `/data/list/${pathway}/${dateTimeString}-${symbol}/`;
+  fetch(url)
+    .then((response) => {
+      if (response.status == 200) {
+        response.json().then((buffer) => {
+          if (state.verbose > 1) {
+            console.debug("list buffer", buffer);
+          }
+          grid.tic++;
+          grid.hour = buffer.hour;
+          grid.symbol = symbol;
+          grid.hourHasData = buffer.hoursActive.map((x) => x > 0);
+          grid.dateTimeString = dateTimeString;
+          grid.latestHour =
+            23 -
+            grid.hourHasData
+              .slice()
+              .reverse()
+              .findIndex((x) => x == true);
+          grid.mode = mode;
+          grid.counts = buffer.counts;
+          grid.items = buffer.items;
+          grid.moreBefore = buffer.moreBefore;
+          grid.moreAfter = buffer.moreAfter;
+          reviseGridItemsGrouped();
+          let index = suggestGridIndex(mode, buffer);
+          if (mode == "prepend" || mode == "append") {
+            grid.index = index;
+            self.postMessage({ type: "list", grid: grid });
+          } else {
+            setGridIndex(index);
+          }
+          if (mode !== "select") {
+          }
+          if (grid.hour < 0) {
+            self.postMessage({ type: "message", payload: "No Data" });
+            return;
+          }
+        });
+      } else {
+        console.info(`%carchive.worker.list%c response.status = ${response.status} != 200`, nameStyle, "");
+        response.text().then((response) => {
+          self.postMessage({ type: "message", payload: response });
+        });
+      }
+    })
+    .catch((error) => {
+      console.error(`Unexpected error ${error}`);
+    });
 }
 
-function navigateForwardScan() {
-  updateGridIndexByScan(1);
-}
-
-function navigateBackwardScan() {
-  updateGridIndexByScan(-1);
+// Expect something like day = dayjs.utc('2013-05-20'), hour = 19, symbol = 'Z'
+function month(day) {
+  let dayString = day.format("YYYYMM01");
+  console.info(`%carchive.worker.month%c ${pathway} ${dayString}`, nameStyle, "");
+  const url = `/data/month/${pathway}/${dayString}/`;
+  fetch(url)
+    .then((response) => {
+      if (response.status == 200)
+        response.json().then((buffer) => {
+          grid.daysActive = { ...buffer, ...grid.daysActive };
+          self.postMessage({ type: "month", payload: grid.daysActive });
+        });
+      else
+        response.text().then((error) => {
+          self.postMessage({ type: "message", payload: error });
+        });
+    })
+    .catch((error) => {
+      console.error(`Unexpected error ${error}`);
+    });
 }
 
 function toggle(name = "toggle") {
   if (state.verbose > 1) {
-    console.debug(`%carchive.worker.toggle()%c ${name}`, `color: ${namecolor}`, "color: dodgerblue");
+    console.debug(`%carchive.worker.toggle %c${name}`, nameStyle, "color: dodgerblue");
   }
   if (name == state.update) {
     self.postMessage({ type: "state", payload: { update: state.update } });
@@ -660,8 +707,8 @@ function toggle(name = "toggle") {
   }
   if (state.verbose) {
     console.log(
-      `%carchive.worker.toggle()%c update = %c${state.update}%c ← ${update}`,
-      `color: ${namecolor}`,
+      `%carchive.worker.toggle%c update = %c${state.update}%c ← ${update}`,
+      nameStyle,
       "",
       "color: mediumpurple",
       ""
@@ -669,85 +716,132 @@ function toggle(name = "toggle") {
   }
   if (state.update == "offline") {
     disconnect();
-  } else {
+  } else if (source == null || source.readyState == 2) {
+    if (state.verbose) {
+      console.log("%carchive.worker.toggle%c calling catchup ...", nameStyle, "");
+    }
     catchup();
+  } else {
+    // Still connected, just changing the live update mode
+    self.postMessage({ type: "state", payload: { update: state.update } });
+    let index = suggestGridIndex("catchup", { counts: grid.counts, items: grid.items });
+    setGridIndex(index);
   }
 }
 
-function reviseGridPaths() {
-  if (grid.items.length == 0) {
-    grid.pathsActive.fill(false);
-    return;
-  }
-  if (grid.index < 0 || grid.index >= grid.items.length) {
-    console.log(`grid.index = ${grid.index} should not happen here   length = ${grid.items.length}`);
-    return;
-  }
-  const item = grid.items[grid.index];
-  const scan = item.split("-")[2];
-  const index = grid.index;
-  const length = grid.itemsGrouped[scan].length;
-  const first = grid.itemsGrouped[scan][0];
-  const last = grid.itemsGrouped[scan][length - 1];
-  grid.scan = scan;
-  grid.pathsActive[0] = index != first.index;
-  grid.pathsActive[1] = index != 0;
-  grid.pathsActive[2] = index != grid.items.length - 1;
-  grid.pathsActive[3] = index != last.index;
-  if (state.verbose > 1) {
-    console.debug(
-      `%carchive.worker.reviseGridPaths() %c${scan}%c`,
-      `color: ${namecolor}`,
-      "color: dodgerblue",
-      "",
-      "first",
-      first,
-      "last",
-      last,
-      "pathsActive",
-      grid.pathsActive
-    );
-  }
-}
-
-// Deprecating ... count() is now part of list.
-function count(day) {
-  let dayString = day.format("YYYYMMDD");
-  console.warn(`%carchive.worker.count()%c DEPRECATING. You should not be using this.`, `color: ${namecolor}`, "");
-  console.log(`%carchive.worker.count()%c ${pathway} ${dayString}`, `color: ${namecolor}`, "");
-  let y = parseInt(dayString.slice(0, 4));
-  if (y < 2012) {
-    console.info("No data prior to 2013");
-    return;
-  }
-  const url = `/data/count/${pathway}/${dayString}/`;
-  fetch(url)
-    .then((response) => {
-      if (response.status == 200)
-        response.json().then((buffer) => {
-          console.log(buffer);
-          grid.dateTimeString = day.format("YYYYMMDD-HHmm");
-          grid.hoursActive = buffer.hoursActive;
-          grid.latestHour =
-            23 -
-            grid.hoursActive
-              .slice()
-              .reverse()
-              .findIndex((x) => x > 0);
+function catchup() {
+  console.info(`%carchive.worker.catchup%c ${pathway}`, nameStyle, "color: dodgerblue");
+  fetch(`/data/catchup/${pathway}/`).then((response) => {
+    if (response.status == 200) {
+      response
+        .json()
+        .then((buffer) => {
+          console.info(
+            `%carchive.worker.catchup%c ${pathway} %c${buffer.dateTimeString}%c`,
+            nameStyle,
+            "color: dodgerblue",
+            "color:mediumpurple",
+            ""
+          );
+          grid.dateTimeString = buffer.dateTimeString;
+          grid.hourHasData = buffer.hoursActive.map((x) => x > 0);
+          grid.daysActive = buffer.daysActive;
+          grid.latestScan = buffer.latestScan;
+          grid.latestHour = buffer.hour;
+          grid.hour = buffer.hour;
+          grid.items = buffer.items;
+          grid.counts = buffer.counts;
+          grid.moreBefore = buffer.moreBefore;
+          grid.moreAfter = buffer.moreAfter;
+          grid.mode = "catchup";
+          reviseGridItemsGrouped();
+          let index = suggestGridIndex("catchup", buffer);
+          if (state.verbose) {
+            console.info(
+              `%carchive.worker.catchup%c` +
+                `   dateTimeString = %c${buffer.dateTimeString}%c` +
+                `   hour = %c${buffer.hour}%c`,
+              nameStyle,
+              "",
+              "color: dodgerblue",
+              "",
+              "color: dodgerblue",
+              ""
+            );
+          }
+          setGridIndex(index);
+          if (state.verbose > 1) {
+            console.debug("grid.items", grid.items);
+            console.debug("grid.itemsGrouped", grid.itemsGrouped);
+          }
           self.postMessage({
-            type: "count",
-            payload: {
-              dateTimeString: grid.dateTimeString,
-              hoursActive: grid.hoursActive,
-            },
+            type: "list",
+            grid: grid,
           });
-        });
-      else
-        response.text().then((error) => {
-          self.postMessage({ type: "message", payload: error });
-        });
-    })
-    .catch((error) => {
-      console.error(`Unexpected error ${error}`);
-    });
+          return;
+        })
+        .then(() => connect())
+        .catch((error) => console.error(`Unexpected error ${error}`));
+    } else if (response.status == 503) {
+      console.log("Server went into maintenance mode");
+      self.postMessage({ type: "reload" });
+    } else {
+      console.error("Unable to catch up.");
+    }
+  });
+}
+
+function prepend() {
+  console.log(`%carchive.worker.prepend%c`, nameStyle, "color: dodgerblue");
+  let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).subtract(1, "hour");
+  list(day, grid.symbol, "prepend");
+}
+
+function append() {
+  console.log(`%carchive.worker.append%c`, nameStyle, "color: dodgerblue");
+  let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).add(1, "hour");
+  list(day, grid.symbol, "append");
+}
+
+function select(index, hint = "load") {
+  grid.mode = hint;
+  if (index == grid.index && state.length == 1) {
+    let tail = findLastInGroup();
+    let head = Math.max(0, tail - frameCount + 1);
+    let items = grid.itemsGrouped[grid.scan].slice(head, tail + 1);
+    const names = items.map((item) => item.item);
+    state.length = names.length;
+    load(names);
+    return;
+  } else {
+    grid.last = null;
+  }
+  setGridIndex(index);
+}
+
+function navigateForward() {
+  let index = clamp(grid.index + 1, 0, grid.items.length - 1);
+  setGridIndex(index);
+}
+
+function navigateBackward() {
+  let index = clamp(grid.index - 1, 0, grid.items.length - 1);
+  grid.mode = "navigate";
+  setGridIndex(index);
+}
+
+function navigateForwardScan() {
+  grid.mode = "navigate";
+  updateGridIndexByScan(1);
+}
+
+function navigateBackwardScan() {
+  grid.mode = "navigate";
+  updateGridIndexByScan(-1);
+}
+
+function dummy() {
+  let sweep = createSweep();
+  sweep = geometry(sweep);
+  self.postMessage({ type: "load", payload: sweep });
 }

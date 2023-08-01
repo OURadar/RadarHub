@@ -14,13 +14,12 @@ export function removeSplash() {
 
 export function Splash(props) {
   const [value, setValue] = React.useState(0);
-  const progress = props.progress;
 
   React.useEffect(() => {
     if (value <= 1) {
-      setValue(progress);
+      setValue(props.progress);
     }
-  }, [progress]);
+  }, [props.progress]);
 
   React.useEffect(() => {
     if (value === 1) {
@@ -35,13 +34,7 @@ export function Splash(props) {
   }
   return (
     <div id="splash" className={value === 2 ? "hide" : undefined}>
-      <svg
-        id="splashLogo"
-        version="1.1"
-        viewBox="0 0 96 96"
-        stroke="white"
-        fill="none"
-      >
+      <svg id="splashLogo" version="1.1" viewBox="0 0 96 96" stroke="white" fill="none">
         <g strokeWidth="6" fill="none">
           <circle cx="48" cy="48" r="25" />
           <circle cx="48" cy="84" r="9" />

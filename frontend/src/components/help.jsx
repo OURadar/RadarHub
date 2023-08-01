@@ -19,12 +19,7 @@ export function HelpPage(props) {
   const theme = document.documentElement.getAttribute("theme") || "light";
 
   return (
-    <Modal
-      open={props.open}
-      onClose={props.handleClose}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
-    >
+    <Modal open={props.open} onClose={props.onClose}>
       <Box sx={style}>
         <div className="sheetContent">
           <div className="title">Overview</div>
@@ -43,7 +38,6 @@ export function HelpPage(props) {
 
         <div className="sheetContent">
           <div className="title">Navigation Shortcuts</div>
-
           <table className="keyTask">
             <tbody>
               <tr>
@@ -88,6 +82,12 @@ export function HelpPage(props) {
               </tr>
               <tr>
                 <td>
+                  <div className="key">space</div>
+                </td>
+                <td>Toggle in play / pause modes</td>
+              </tr>
+              <tr>
+                <td>
                   <div className="key">l</div>
                 </td>
                 <td>Toggle in between live / offline modes</td>
@@ -127,15 +127,27 @@ export function HelpPage(props) {
         <div className="sheetContent">
           <div className="title">Data Request</div>
           <p>
-            The raw archives of the datasets that are viewable through the
-            RadarHub can be requested offline. However, there are datasets that
-            were collected without access by the RadarHub, which we cannot
-            guarantee availability. If you are interested in obtaining the
-            original archives, please send us an email and indicate the date of
-            interest to:
-            <a href="mailto:data@arrc.ou.edu">data@arrc.ou.edu</a>.
+            The raw archives of the datasets that are viewable through the RadarHub can be requested offline. However,
+            there are datasets that were collected without access by the RadarHub, which we cannot guarantee
+            availability. If you are interested in obtaining the original archives, please send us an email and indicate
+            the date of interest to:<span> </span>
+            <a className="inline" href="mailto:data@arrc.ou.edu">
+              data@arrc.ou.edu
+            </a>
+            .
           </p>
         </div>
+
+        <div className="spacer25"></div>
+
+        <ol className="footerLinks">
+          <li>
+            <a href="mailto:radarhub@arrc.ou.edu">Contact</a>
+          </li>
+          <li>
+            <a href="/static/html/license.html">Terms</a>
+          </li>
+        </ol>
 
         <div className="spacer25"></div>
       </Box>

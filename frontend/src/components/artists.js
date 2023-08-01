@@ -2,6 +2,8 @@
 //  artists.js
 //  RadarHub
 //
+//  This is a model
+//
 //  Created by Boonleng Cheong
 //
 
@@ -534,10 +536,7 @@ export function instancedLines(regl, resolution) {
       model: regl.prop("model"),
       view: regl.prop("view"),
       projection: regl.prop("projection"),
-      resolution: ({ viewportWidth, viewportHeight }) => [
-        viewportWidth,
-        viewportHeight,
-      ],
+      resolution: ({ viewportWidth, viewportHeight }) => [viewportWidth, viewportHeight],
     },
 
     depth: {
@@ -633,10 +632,7 @@ export function simplifiedInstancedLines(regl) {
       quad: regl.prop("quad"),
       view: regl.prop("view"),
       projection: regl.prop("projection"),
-      resolution: ({ viewportWidth, viewportHeight }) => [
-        viewportWidth,
-        viewportHeight,
-      ],
+      resolution: ({ viewportWidth, viewportHeight }) => [viewportWidth, viewportHeight],
     },
 
     depth: {
@@ -727,10 +723,7 @@ export function instancedPatches(regl) {
 
     uniforms: {
       projection: regl.prop("projection"),
-      resolution: ({ viewportWidth, viewportHeight }) => [
-        viewportWidth,
-        viewportHeight,
-      ],
+      resolution: ({ viewportWidth, viewportHeight }) => [viewportWidth, viewportHeight],
       texture: regl.prop("texture"),
       bound: regl.prop("bound"),
       scale: regl.prop("scale"),

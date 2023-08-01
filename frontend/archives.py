@@ -170,6 +170,23 @@ def count(_, pathway, day):
     return HttpResponse(payload, content_type='application/json')
 
 
+def _hour_offset_has_data(prefix, day_hour, hour_offset):
+    c = day_hour.split('-')
+    if len(c) == 1:
+        c.append('0000')
+    elif len(c[1]) == 2:
+        c[1] = f'{c[1]}00'
+    t = '-'.join(c[:2])
+    t = time.strptime(t, r'%Y%m%d-%H%M')
+    s = time.localtime(time.mktime(t) + hour_offset * 3600)
+    date = time.strftime(r'%Y-%m-%d', s)
+    days = Day.objects.filter(date=date, name=prefix)
+    if days:
+        hour = s.tm_hour
+        return days.first().hourly_count.split(',')[hour] != '0'
+    return False
+
+
 '''
     List of files - returns an array of strings
 
@@ -183,7 +200,7 @@ def count(_, pathway, day):
 '''
 
 
-def _list(prefix, day_hour_symbol):
+def _list(prefix, day_hour_symbol, offset=[0, 3599], pretty=True):
     c = day_hour_symbol.split('-')
     if len(c) == 1:
         c.append('0000')
@@ -191,16 +208,29 @@ def _list(prefix, day_hour_symbol):
         c[1] = f'{c[1]}00'
     symbol = c[2] if len(c) == 3 else 'Z'
     t = '-'.join(c[:2])
-    s = time.strptime(t, r'%Y%m%d-%H%M')
-    e = time.localtime(time.mktime(s) + 3599)
+    t = time.strptime(t, r'%Y%m%d-%H%M')
+    s = time.localtime(time.mktime(t) + offset[0])
+    e = time.localtime(time.mktime(t) + offset[1])
     ss = time.strftime(r'%Y-%m-%d %H:%M:%SZ', s)
     ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
     date_range = [ss, ee]
     matches = File.objects.filter(
         date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
     head = prefix + '-'
-    return [o.name.lstrip(head).rstrip('.nc') for o in matches]
+    return [o.name.lstrip(head).rstrip('.nc') for o in matches] if pretty else matches
 
+
+def _list_block(prefix, day_hour_symbol):
+    previous = _list(prefix, day_hour_symbol, [-3600, -1])
+    current = _list(prefix, day_hour_symbol, [0, 3599])
+    moreBefore = _hour_offset_has_data(prefix, day_hour_symbol, -2)
+    moreAfter = _hour_offset_has_data(prefix, day_hour_symbol, 1)
+    return {
+        'counts': [len(previous), len(current)],
+        'items': [*previous, *current],
+        'moreBefore': moreBefore,
+        'moreAfter': moreAfter
+    }
 
 def list(request, pathway, day_hour_symbol):
     show = colorize('archive.list()', 'green')
@@ -241,31 +271,31 @@ def list(request, pathway, day_hour_symbol):
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
                 show += '   ' + colorize('override', 'red')
-                show += '   ' + \
-                    color_name_value('day_hour_symbol', day_hour_symbol)
+                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
                 logger.debug(show)
         else:
             if settings.VERBOSE > 1:
                 show = colorize('archive.list()', 'green')
                 show += '   ' + color_name_value('pathway', pathway)
-                show += '   ' + \
-                    color_name_value('day_hour_symbol', day_hour_symbol)
+                show += '   ' + color_name_value('day_hour_symbol', day_hour_symbol)
                 show += '   ' + color_name_value('hourly_count', '0\'s')
                 logger.debug(show)
             message = 'empty'
             hour = -1
     else:
         message = 'okay'
+    # add = _list_block(prefix, day_hour_symbol) if hour >= 0 else {'counts': [0, 0], 'items': []}
+    add = _list_block(prefix, day_hour_symbol)
     data = {
         'hoursActive': _count(prefix, day),
         'hour': hour,
-        'items': _list(prefix, day_hour_symbol) if hour >= 0 else [],
         'symbol': symbol,
         'message': message
     }
+    data = {**data, **add}
+    # pp.pprint(add)
     payload = json.dumps(data, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
-
 
 '''
     Load a sweep - returns a dictionary
@@ -468,11 +498,13 @@ def catchup(request, pathway, scan='E4.0', symbol='Z'):
             'yearsActive': [],
             'hoursActive': [0] * 24,
             'hour': -1,
+            'counts': [0, 0],
             'items': [],
             'latestScan': '',
         }
     else:
         date_time_string = f'{ymd}-{hour:02d}00'
+        add = _list_block(prefix, f'{date_time_string}-{symbol}')
         data = {
             'dateTimeString': date_time_string,
             'dayISOString': f'{ymd[0:4]}/{ymd[4:6]}/{ymd[6:8]}Z',
@@ -480,8 +512,8 @@ def catchup(request, pathway, scan='E4.0', symbol='Z'):
             'yearsActive': _years(prefix),
             'hoursActive': _count(prefix, ymd),
             'hour': hour,
-            'items': _list(prefix, f'{date_time_string}-{symbol}'),
             'latestScan': _latest_scan(prefix, scan, symbol),
         }
+        data = {**data, **add}
     payload = json.dumps(data, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')

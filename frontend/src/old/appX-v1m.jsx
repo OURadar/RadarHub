@@ -1,5 +1,5 @@
 //
-//  appX.js - Single Endpoint
+//  app9.js - Archive Browser Mobile UI
 //  RadarHub
 //
 //  This is a controller
@@ -12,7 +12,6 @@ import React from "react";
 import { ThemeProvider } from "@mui/material/styles";
 
 import { colorDict, makeTheme } from "./theme";
-import { detectMob } from "./common";
 import { Archive } from "./archive";
 import { User } from "./user";
 
@@ -34,8 +33,8 @@ const useConstructor = (callback = () => {}) => {
 export function App(props) {
   const [load, setLoad] = React.useState(0);
   const [panel, setPanel] = React.useState(0);
-  const [theme, setTheme] = React.useState(makeTheme());
-  const [colors, setColors] = React.useState(colorDict());
+  const [theme, setTheme] = React.useState({});
+  const [colors, setColors] = React.useState({});
   const [message, setMessage] = React.useState("");
   const [disabled, setDisabled] = React.useState([false, false, false, false]);
 
@@ -50,17 +49,33 @@ export function App(props) {
 
   const handleUserMessage = (message) => setMessage(message);
 
-  const setDocumentTheme = (mode) => {
-    document.documentElement.setAttribute("theme", mode);
-    setColors(() => colorDict(mode));
-    setTheme(() => makeTheme(mode));
+  const setColorMode = (mode) => {
+    user.current.setMode(mode);
+    let colors = colorDict(mode);
+    document.documentElement.setAttribute("theme", colors.name);
+    setColors(colors);
+    setTheme(makeTheme(mode));
   };
 
   const handleThemeChange = () => {
-    console.log("AppX.handleThemeChange()");
-    let theme = colors.name == "light" ? "dark" : "light";
-    setDocumentTheme(theme);
+    // auto, light, dark
+    if (user.current.mode == "auto") setColorMode("light");
+    else if (user.current.mode == "light") setColorMode("dark");
+    else setColorMode("auto");
   };
+
+  useConstructor(() => {
+    document.getElementById("device-style").setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
+
+    archive.current = new Archive(props.pathway, props.name);
+    archive.current.onUpdate = handleUpdate;
+    archive.current.onLoad = handleLoad;
+
+    user.current = new User();
+    user.current.onMessage = handleUserMessage;
+
+    setColorMode(user.current.mode);
+  });
 
   const handleNavigationChange = (_, value) => setPanel(value);
 
@@ -76,34 +91,27 @@ export function App(props) {
     }
   };
 
-  const handleLiveModeChange = (_, value) =>
-    archive.current.toggleLiveUpdate(value);
+  const handleLiveModeChange = (_, value) => archive.current.toggleLiveUpdate(value);
 
   const handleDoubleLeft = () => archive.current.navigateBackwardScan();
   const handleLeft = () => archive.current.navigateBackward();
   const handleRight = () => archive.current.navigateForward();
   const handleDoubleRight = () => archive.current.navigateForwardScan();
 
-  useConstructor(() => {
-    document
-      .getElementById("device-style")
-      .setAttribute("href", `/static/css/mobile.css?h=${props.css_hash}`);
-
-    archive.current = new Archive(props.pathway, props.name);
-    archive.current.onUpdate = handleUpdate;
-    archive.current.onLoad = handleLoad;
-
-    user.current = new User();
-    user.current.onMessage = handleUserMessage;
-  });
+  const handleColorbarTouch = (e) => {
+    // console.log(e);
+    if (e.pageX / e.target.offsetWidth < 0.5) {
+      archive.current.prevProduct();
+    } else {
+      archive.current.nextProduct();
+    }
+  };
 
   React.useEffect(() => {
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (e) => {
-        let mode = e.matches ? "dark" : "light";
-        setDocumentTheme(mode);
-      });
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      let mode = e.matches ? "dark" : "light";
+      setColorMode(mode);
+    });
     document.documentElement.setAttribute("theme", theme.palette.mode);
   }, []);
 
@@ -112,7 +120,7 @@ export function App(props) {
       <Splash progress={load} />
       <div id="main" className="fullHeight">
         <TopBar
-          mode={colors.name}
+          mode={user.current?.mode || "auto"}
           isMobile={true}
           message={message}
           ingest={archive.current}
@@ -120,13 +128,14 @@ export function App(props) {
           onThemeChange={handleThemeChange}
         />
         <ThemeProvider theme={theme}>
-          <div className={panel === 0 ? "active" : "inactive"}>
+          <div className={`${panel === 0 ? "active" : "inactive"} panel`}>
             <Product
               gravity="top"
               colors={colors}
               origin={props.origin}
               sweep={archive.current?.data.sweep}
               onOverlayLoad={handleOverlayLoad}
+              onColorbarTouch={handleColorbarTouch}
             />
             <MenuArrow
               doubleLeftDisabled={disabled[0]}
@@ -138,12 +147,9 @@ export function App(props) {
               onRight={handleRight}
               onDoubleRight={handleDoubleRight}
             />
-            <MenuUpdate
-              value={archive.current?.state.liveUpdate}
-              onChange={handleLiveModeChange}
-            />
+            <MenuUpdate value={archive.current?.state.liveUpdate} onChange={handleLiveModeChange} />
           </div>
-          <div className={panel === 1 ? "active" : "inactive"}>
+          <div className={`${panel === 1 ? "active" : "inactive"} panel`}>
             <Browser archive={archive.current} onSelect={handleBrowserSelect} />
           </div>
           <Navigation value={panel} onChange={handleNavigationChange} />

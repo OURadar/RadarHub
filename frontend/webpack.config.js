@@ -7,21 +7,25 @@ module.exports = [
   {
     entry: {
       archive: {
-        import: "./src/archive.js",
+        import: "./src/archive.jsx",
       },
       control: {
-        import: "./src/control.js",
+        import: "./src/control.jsx",
+      },
+      develop: {
+        import: "./src/develop.jsx",
       },
       index: {
-        import: "./src/index.js",
-      },
-      dev: {
-        import: "./src/dev.js",
+        import: "./src/index.jsx",
       },
     },
     output: {
       filename: "[name].[chunkhash:8].js",
       path: Path.resolve(__dirname, "static/frontend"),
+    },
+    resolve: {
+      alias: { components: Path.resolve(__dirname, "./src/components") },
+      extensions: [".js", ".jsx", ".json"],
     },
     module: {
       rules: [

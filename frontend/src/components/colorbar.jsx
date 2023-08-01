@@ -55,17 +55,7 @@ function draw(context, params) {
     } else {
       context.clearRect(0, 0, height, width);
       context.imageSmoothingEnabled = false;
-      context.drawImage(
-        params.palette,
-        1,
-        params.style.index,
-        params.palette.width - 1,
-        1,
-        0,
-        0,
-        height,
-        width
-      );
+      context.drawImage(params.palette, 1, params.style.index, params.palette.width - 1, 1, 0, 0, height, width);
     }
 
     // Title of the colorbar
@@ -84,20 +74,10 @@ function draw(context, params) {
     context.strokeStyle = params.face;
     if (params.blank) {
       context.lineWidth = lineWidth;
-      context.strokeRect(
-        -2 * scale,
-        -2 * scale - height,
-        width + 4 * scale,
-        height + 4 * scale
-      );
+      context.strokeRect(-2 * scale, -2 * scale - height, width + 4 * scale, height + 4 * scale);
     } else {
       context.lineWidth = scale;
-      context.strokeRect(
-        -1.5 * scale,
-        -1.5 * scale - height,
-        width + 3 * scale,
-        height + 3 * scale
-      );
+      context.strokeRect(-1.5 * scale, -1.5 * scale - height, width + 3 * scale, height + 3 * scale);
     }
   } else {
     // Colorbar dimension: (0.85 * w) x (0.2 * h)
@@ -119,17 +99,7 @@ function draw(context, params) {
     } else {
       context.imageSmoothingEnabled = false;
       context.clearRect(0, 0, width, height);
-      context.drawImage(
-        params.palette,
-        1,
-        params.index,
-        params.palette.width - 1,
-        1,
-        0,
-        0,
-        width,
-        height
-      );
+      context.drawImage(params.palette, 1, params.index, params.palette.width - 1, 1, 0, 0, width, height);
     }
 
     // Outline of the colorbar
@@ -144,12 +114,7 @@ function draw(context, params) {
       );
     } else {
       context.lineWidth = scale;
-      context.strokeRect(
-        -1.5 * scale,
-        -1.5 * scale,
-        width + 3 * scale,
-        height + 3 * scale
-      );
+      context.strokeRect(-1.5 * scale, -1.5 * scale, width + 3 * scale, height + 3 * scale);
     }
 
     // Ticks
@@ -274,15 +239,10 @@ export function Colorbar(props) {
       debug: props.debug,
     });
 
-    const onTouch = (e) => props.onTouch(e);
     const onClick = (e) => props.onClick(e);
-    canvas.addEventListener("touchend", onTouch);
     canvas.addEventListener("mouseup", onClick);
 
-    return () => {
-      canvas.removeEventListener("touchend", onTouch);
-      canvas.removeEventListener("mouseup", onClick);
-    };
+    return () => canvas.removeEventListener("mouseup", onClick);
   }, [props.count]);
 
   var params = {
@@ -296,6 +256,5 @@ export function Colorbar(props) {
 Colorbar.defaultProps = {
   gravity: "top",
   count: 0,
-  onTouch: () => console.log("Colorbar.onTouch"),
   onClick: () => console.log("Colorbar.onClick"),
 };

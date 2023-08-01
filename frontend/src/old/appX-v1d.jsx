@@ -56,7 +56,6 @@ export class App extends React.Component {
     this.state = {
       colors: colors,
       theme: makeTheme(colors.name),
-      time: new Date("2013-05-20T19:00"),
       load: 0,
       showHelp: false,
       message: "",
@@ -114,6 +113,7 @@ export class App extends React.Component {
         theme: makeTheme(mode),
       });
     });
+    document.getElementById("device-style").setAttribute("href", `/static/css/desktop.css?h=${this.props.css_hash}`);
   }
 
   render() {
@@ -164,7 +164,7 @@ export class App extends React.Component {
               onRight={this.handleRight}
               onDoubleRight={this.handleDoubleRight}
             />
-            <HelpPage open={this.state.showHelp} handleClose={this.handleInfoClose} />
+            <HelpPage open={this.state.showHelp} onClose={this.handleInfoClose} />
           </ThemeProvider>
         </div>
       </div>

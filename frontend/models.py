@@ -190,8 +190,8 @@ class File(models.Model):
                 else:
                     u8 = values
                 # Map to closest integer, 0 is transparent, 1+ is finite.
-                # np.nan will be converted to 0 during np.float32 -> np.uint8
-                u8 = np.array(np.clip(np.round(u8), 1.0, 255.0), dtype=np.uint8)
+                # np.nan will be converted to 0 during np.nan_to_num(...)
+                u8 = np.nan_to_num(np.clip(np.round(u8), 1.0, 255.0), copy=False).astype(np.uint8)
                 return {
                     'symbol': symbol,
                     'longitude': longitude,

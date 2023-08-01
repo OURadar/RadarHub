@@ -44,31 +44,20 @@ function Calender(props) {
   const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
   const hour = ok ? props.archive.grid.hour : -1;
 
-  const [value, setValue] = React.useState(day);
-
-  React.useEffect(() => setValue(value), [value]);
-
   return (
     <div id="calendarContainer">
       <LocalizationProvider dateAdapter={AdapterDayjs} dateLibInstance={dayjs.utc}>
         <DatePicker
           label="Date"
-          defaultValue={value}
+          defaultValue={day}
           minDate={dayjs.utc("20000101")}
           maxDate={dayjs.utc().endOf("month")}
-          onOpen={() => props.archive.getMonthTable(value)}
+          onOpen={() => props.archive.getMonthTable(day)}
+          onChange={(newDay) => props.archive.setDayHour(newDay, hour)}
           onYearChange={(newDay) => props.archive.getMonthTable(newDay)}
           onMonthChange={(newDay) => props.archive.getMonthTable(newDay)}
-          onChange={(newDay) => {
-            setValue(newDay);
-            props.archive.setDayHour(newDay, hour);
-          }}
-          slots={{
-            day: ServerDay,
-          }}
-          slotProps={{
-            day: { archive: props.archive },
-          }}
+          slots={{ day: ServerDay }}
+          slotProps={{ day: { archive: props.archive } }}
           disableHighlightToday={true}
         />
       </LocalizationProvider>
@@ -79,15 +68,15 @@ function Calender(props) {
 function HourList(props) {
   const ok = props.archive.grid !== null;
   const day = ok ? dayjs.utc(props.archive.grid.dateTimeString.slice(0, 8)) : dayjs.utc();
-  const hours = ok ? props.archive.grid.hoursActive : new Array(24).fill(0);
+  const hourHasData = ok ? props.archive.grid.hourHasData : new Array(24).fill(false);
   return (
     <div id="hoursContainer">
-      {hours.map((_, k) => (
+      {hourHasData.map((_, k) => (
         <Button
           key={`hour-${k}`}
           variant="hour"
-          disabled={hours[k] == 0}
-          selected={hours[k] > 0 && k == props.archive.grid.hour}
+          disabled={!hourHasData[k]}
+          selected={hourHasData[k] == true && k == props.archive.grid.hour}
           onClick={() => props.archive.setDayHour(day, k)}
         >
           {k.toString().padStart(2, "0")}
@@ -108,7 +97,7 @@ function FileList(props) {
       return;
     }
     if (props.archive.state.loadCount <= 1 && index != -1) {
-      fileListRef.current.children[index].scrollIntoViewIfNeeded();
+      fileListRef.current.children[index]?.scrollIntoViewIfNeeded();
     } else if (props.archive.grid.latestHour > -1) {
       props.archive.disableLiveUpdate();
     }
@@ -157,7 +146,7 @@ export function Browser(props) {
 }
 
 Browser.defaultProps = {
-  onSelect: () => {
-    console.log("Browser.onSelect()");
+  onSelect: (k) => {
+    console.log(`Browser.onSelect() k = ${k}`);
   },
 };

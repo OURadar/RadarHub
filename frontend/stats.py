@@ -18,7 +18,7 @@ def profile(request):
     data = {
         'ip': get_client_ip(request),
         'user': email or "None",
-        'emoji': ':sunny:' if email else ':sun_behind_small_cloud:',
+        'emoji': ':sun:' if email else ':sun_behind_small_cloud:',
         'message': 'There is no message at this moment'
     }
     payload = json.dumps(data)

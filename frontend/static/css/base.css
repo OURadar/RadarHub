@@ -10,15 +10,21 @@ Copyright Boonleng Cheong
   --base-size: 14;
   --background-color: hsl(194, 100%, 29%);
   --background-color-translucent: hsla(194, 100%, 29%, 0.9);
+  --background-color-translucent-more: hsla(194, 100%, 29%, 0.7);
   --background-color-secondary: hsla(194, 100%, 5%, 0.85);
   --topbar-height: 56px;
   --tabbar-height: 48px;
   --calendar-height: 56px;
+  --extra-large-height: 13vmin;
   --navbar-button-height: 56px;
   --navbar-padding-bottom: 28px;
+  --secbar-padding: 8px;
+  --subheader-padding: 4px;
   --small-button-height: 32px;
   --button-border-radius: 4px;
   --dev-background-gradient: linear-gradient(180deg, #047267 67%, #162a28);
+  --header-gradient: linear-gradient(180deg, var(--background-color), var(--gray6) 60%);
+  --footer-gradient: linear-gradient(180deg, var(--gray6) 40%, var(--background-color));
   box-sizing: border-box;
 }
 
@@ -52,6 +58,7 @@ Copyright Boonleng Cheong
   --gray7-translucent: rgba(252, 252, 255, 0.9);
   --system-foreground: #000000;
   --system-background: #ffffff;
+  --system-foreground-primary: rgb(0, 199, 190);
   --secondary-system-background: #f2f2f7ff;
   --tertiary-system-background: #ffffffff;
   --overlay-background: #ffffffd8;
@@ -62,12 +69,9 @@ Copyright Boonleng Cheong
   --map-background: #f9f5ed;
   --menu-background: rgba(249, 245, 237, 0.8);
   --colorbar-background: rgba(249, 245, 237, 0.7);
-  --background-gradient: linear-gradient(
-    0,
-    var(--background-color-translucent) 15%,
-    var(--background-color) 75%
-  );
+  --background-gradient: linear-gradient(0, var(--background-color-translucent) 15%, var(--background-color) 75%);
   --background-image: linear-gradient(transparent 69%, hsl(194, 100%, 35%));
+  --subtle-text: rgba(0, 0, 0, 0.6);
 }
 
 [theme="dark"] {
@@ -100,6 +104,7 @@ Copyright Boonleng Cheong
   --gray7-translucent: rgba(16, 16, 18, 0.85);
   --system-foreground: #ffffff;
   --system-background: #222328;
+  --system-foreground-primary: rgb(102, 212, 207);
   --secondary-system-background: #1c1c1eff;
   --tertiary-system-background: #2c2c2eff;
   --overlay-background: #1e1e1ee8;
@@ -110,12 +115,9 @@ Copyright Boonleng Cheong
   --map-background: #22252a;
   --menu-background: rgba(34, 37, 42, 0.8);
   --colorbar-background: rgba(34, 37, 42, 0.7);
-  --background-gradient: linear-gradient(
-    0,
-    var(--background-color-translucent) 15%,
-    var(--background-color) 75%
-  );
+  --background-gradient: linear-gradient(0, var(--background-color-translucent) 15%, var(--background-color) 75%);
   --background-image: linear-gradient(transparent 69%, hsl(194, 100%, 20%));
+  --subtle-text: rgba(255, 255, 255, 0.7);
 }
 
 @font-face {
@@ -136,12 +138,12 @@ html {
 }
 
 html {
-  background-color: var(--background-color);
-  font-family: -apple-system, Helvetica, Arial, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: -apple-system, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
 body {
+  background-image: var(--background-image);
+  background-color: var(--background-color);
   color: var(--system-foreground);
   display: flex;
   flex-direction: column;
@@ -155,9 +157,14 @@ canvas {
   position: relative;
 }
 
+select:active,
+select:hover {
+  outline: none;
+}
+
 .fill {
-  height: 100%;
   position: relative;
+  height: 100%;
   width: 100%;
 }
 .fog {
@@ -172,6 +179,18 @@ canvas {
 .blur {
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
+}
+.cover {
+  backdrop-filter: grayscale(70%);
+  -webkit-backdrop-filter: grayscale(70%);
+  position: fixed;
+  top: var(--topbar-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 42;
+  opacity: 0;
+  transition: opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
 }
 .content {
   color: white;
@@ -256,6 +275,9 @@ canvas {
 .hide {
   opacity: 0;
 }
+.show {
+  opacity: 1;
+}
 .center {
   text-align: center;
 }
@@ -276,23 +298,19 @@ canvas {
 .fadeOut {
   opacity: 0;
   z-index: 0;
-  transition: opacity linear 0.3s, z-index linear 0.01s 0.3s;
+  transition: opacity linear 0.3s 0.4s, z-index linear 0.01s 0.7s;
 }
-
 .extraLarge {
-  font-size: 60px;
+  font-size: var(--extra-large-height);
   margin-bottom: 25px;
   margin-top: 25px;
 }
-@media screen and (min-width: 640px) {
-  .extraLarge {
-    font-size: 100px;
-  }
+/* @media screen and (min-width: 640px) {
   .message {
     font-size: 24pt;
     line-height: 34pt;
   }
-}
+} */
 h1,
 h2,
 h3 {
@@ -313,6 +331,9 @@ h2 {
 }
 h3 {
   font-weight: 600;
+}
+p {
+  line-height: 1.5em;
 }
 .header {
   background-color: var(--gray5);
@@ -348,19 +369,40 @@ h3 {
 .right {
   right: var(--padding);
 }
+.center {
+  left: 50%;
+  margin-left: -50%;
+}
 .top {
   top: var(--padding);
 }
 .bottom {
   bottom: var(--padding);
 }
-.fullHeight {
+.deviceHeight {
   height: 100vh;
   overflow-y: hidden;
 }
-.fullWidth {
+.deviceWidth {
   width: 100vw;
   overflow-x: hidden;
+}
+.fullHeight {
+  height: 100%;
+  overflow-y: hidden;
+}
+.fullWidth {
+  width: 100%;
+  overflow-x: hidden;
+}
+.absolute {
+  position: absolute;
+}
+.inline {
+  display: inline;
+}
+.padded {
+  padding: var(--padding);
 }
 
 /* App */
@@ -497,10 +539,7 @@ h3 {
   background: linear-gradient(rgba(0, 0, 0, 0.85), black 50%);
 }
 .lightBackground {
-  background: linear-gradient(
-    rgba(255, 255, 255, 0.6),
-    rgba(255, 255, 255, 0.8) 50%
-  );
+  background: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.8) 50%);
 }
 
 .notification {
@@ -559,17 +598,20 @@ h3 {
   width: 100vw;
   top: 0;
   left: 0;
+  right: 0;
   transition: opacity 0.4s;
   z-index: 0;
 }
 #splash {
   background-color: var(--background-color);
-  height: 100vh;
-  position: absolute;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   text-align: center;
   padding-top: 30vh;
   transition: opacity 0.4s;
-  width: 100vw;
   z-index: 100;
 }
 #splashLogo {
@@ -583,14 +625,22 @@ h3 {
 #backdrop {
   background-image: var(--background-image);
   background-color: var(--background-color);
-  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   transition: opacity 0.4s;
+  z-index: 0;
 }
-#versionTag {
+.footer {
   bottom: 5vh;
   position: fixed;
-  text-align: center;
   width: 100%;
+}
+#versionTag {
+  display: block;
+  text-align: center;
 }
 #topbar {
   background: var(--background-gradient);
@@ -599,6 +649,8 @@ h3 {
   width: 100%;
   position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 42;
 }
 .topbarComponent {
@@ -607,7 +659,23 @@ h3 {
   position: absolute;
   height: var(--topbar-height);
 }
-
+#topbarProgress {
+  position: absolute;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.progress {
+  width: 100%;
+  height: 4px;
+}
+.bar {
+  background-color: var(--orange);
+  transition: transform linear 0.4s;
+  transform-origin: left;
+  top: 0;
+  left: 0;
+  position: absolute;
+}
 #splash,
 #topbar,
 #versionTag {
@@ -618,6 +686,8 @@ h3 {
 #navbar {
   position: fixed;
   width: 100%;
+  left: 0;
+  right: 0;
   z-index: 42;
 }
 #tabbar {
@@ -630,6 +700,19 @@ h3 {
   border-top: var(--ui-border);
   background-color: var(--overlay-background);
 }
+.sectionBar {
+  padding-top: var(--secbar-padding);
+  padding-bottom: var(--secbar-padding);
+}
+.subtleHeader {
+  height: 28px;
+  line-height: 28px;
+  padding: 0 5px;
+  position: relative;
+  text-align: center;
+  font-size: 13px;
+  color: var(--subtle-text);
+}
 
 .statusWrapper {
   width: calc(100vw - 100px);
@@ -639,12 +722,18 @@ h3 {
   position: relative;
   user-select: none;
 }
-#statusLed {
+.statusLed {
   display: inline-block;
   border-radius: 50%;
   box-sizing: border-box;
   height: 10px;
   width: 10px;
+  cursor: pointer;
+}
+.floatRight {
+  position: absolute;
+  top: 0;
+  right: var(--padding);
 }
 .always {
   background-color: rgb(52, 255, 89);
@@ -698,15 +787,18 @@ h3 {
   fill: var(--green);
   font-size: 20px;
   font-weight: 500;
+  z-index: 2;
 }
 #infoString {
   fill: var(--brown);
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
+  z-index: 2;
 }
 #symbol {
   fill: var(--system-foreground);
+  z-index: 2;
 }
 #symbol text#symbol {
   font-size: 50px;
@@ -721,6 +813,7 @@ h3 {
   position: absolute;
   font-family: LabelFont;
   paint-order: stroke fill;
+  z-index: 2;
 }
 #title text {
   fill: var(--system-foreground);
@@ -765,6 +858,11 @@ h3 {
   width: 80%;
 }
 
+a {
+  color: var(--system-foreground-primary);
+  text-decoration: none;
+}
+
 a.radarButton {
   border-radius: var(--button-border-radius);
   color: white;
@@ -796,7 +894,7 @@ a.radarButton:hover {
 }
 
 .lite {
-  margin-top: 0.5em;
+  display: inline-block;
   opacity: 0.5;
 }
 .subtle {
@@ -1021,4 +1119,172 @@ div.key {
   padding-top: 100px;
   padding-bottom: 100px;
   border-radius: var(--button-border-radius);
+}
+
+/* Browser */
+
+#browserTop {
+  border-bottom: var(--ui-border);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.05);
+}
+#calendarContainer {
+  height: var(--calendar-height);
+  padding-top: calc(var(--topbar-height) + var(--padding));
+  padding-bottom: var(--half-padding);
+}
+#hoursContainer {
+  column-count: 8;
+  padding-left: var(--half-padding);
+  padding-right: var(--half-padding);
+  padding-bottom: var(--padding);
+}
+#filesContainer {
+  background-color: var(--system-background);
+  overflow-y: scroll;
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  top: 0;
+}
+#fileList {
+  padding-top: calc(
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 4 *
+      var(--small-button-height) + 1px
+  );
+  padding-bottom: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
+}
+
+#filesViewport {
+  background-color: var(--system-background);
+  position: absolute;
+  width: 100%;
+  top: 0;
+}
+#filesViewportHeader {
+  height: 1000px;
+  background: var(--header-gradient);
+  background-color: var(--gray6);
+}
+#filesViewportHeaderOld {
+  height: calc(
+    var(--topbar-height) + var(--padding) + var(--calendar-height) + var(--half-padding) + 3 *
+      var(--small-button-height) + 35px
+  );
+  background-color: var(--gray6);
+}
+#filesViewportFooter {
+  height: calc(var(--navbar-button-height) + var(--navbar-padding-bottom) + 1px);
+  background-color: var(--gray6);
+}
+.filesViewportSpacer {
+  height: 1000px;
+  background: var(--footer-gradient);
+  background-color: var(--gray5);
+}
+
+.panel {
+  height: 100vh;
+  position: absolute;
+  background-color: var(--background-color);
+}
+.active {
+  z-index: 1;
+}
+.inactive {
+  z-index: 0;
+}
+
+.dialWrapper {
+  position: fixed;
+  top: 50px;
+  left: 50px;
+}
+.dial {
+  position: relative;
+  width: 80vmin;
+  height: 80vmin;
+  margin: 0 auto;
+  transform: scale(0.5) translateZ(0);
+  transition: transform 0.5s, opacity 0.5s;
+}
+.dial a {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 47.5%;
+  height: 47.5%;
+  overflow: hidden;
+  transform: scale(0.5) translateZ(0);
+  background-color: var(--yellow);
+}
+.dial a div {
+  height: 100%;
+  opacity: 0.5;
+  transition: opacity 0.5s;
+  border-radius: inherit;
+}
+.dial a:nth-child(1) {
+  border-radius: 40vmin 0 0 -40vmin;
+  transform-origin: 110% 110%;
+  transition: transform 0.4s 0.15s;
+  background-color: var(--red);
+}
+.dial a:nth-child(2) {
+  border-radius: 0 40vmin 0 0;
+  left: 52.5%;
+  transform-origin: -10% 110%;
+  transition: transform 0.4s 0.2s;
+  background-color: var(--green);
+}
+.dial a:nth-child(3) {
+  border-radius: 0 0 0 40vmin;
+  transform-origin: 110% -10%;
+  transition: transform 0.4s 0.25s;
+  background-color: var(--blue);
+}
+.dial a:nth-child(4) {
+  border-radius: 0 0 40vmin 0;
+  top: 52.5%;
+  left: 52.5%;
+  transform-origin: -10% -10%;
+  transition: transform 0.4s 0.3s;
+  background-color: var(--yellow);
+}
+.dial a:nth-child(5) {
+  width: 55%;
+  height: 55%;
+  left: 22.5%;
+  top: 22.5%;
+  transform: scale(1);
+  background-color: rgba(0, 0, 0, 0.25);
+}
+#agreement {
+  background-color: var(--system-background);
+  position: absolute;
+  top: calc(25vh + var(--extra-large-height) + 20px);
+  left: 50%;
+  width: 100%;
+  outline: none;
+  transform: translate(-50%, 0);
+  overflow-y: auto;
+  text-align: center;
+  line-height: 1.5em;
+  z-index: 69;
+}
+#agreement p {
+  padding: 10px;
+}
+.footerLinks {
+  display: inline-flex;
+  margin: 10px 0 0 0;
+  padding: 0;
+}
+.footerLinks li {
+  display: inline;
+  border-right: solid 1px;
+  list-style: none;
+  padding: 0 10px;
+}
+.footerLinks li:last-child {
+  border: none;
 }

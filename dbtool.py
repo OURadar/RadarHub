@@ -175,7 +175,7 @@ def params_from_source(source, dig=False):
             day_string = os.path.basename(folder)
         if file:
             logger.debug(f'params_from_source() file[0] = {file}')
-            c = file.split('-')
+            c = os.path.splitext(file)[0].split('-')
             prefix = c[0] + '-'
             time_string = c[1] + c[2]
             if day_string != c[1]:

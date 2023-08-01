@@ -20,11 +20,7 @@ class Overlay {
     this.colors = colors;
     this.geometry = geometry;
     this.viewprojection = mat4.create();
-    this.viewParameters = [
-      1.0,
-      geometry.origin.longitude,
-      geometry.origin.latitude,
-    ];
+    this.viewParameters = [1.0, geometry.origin.longitude, geometry.origin.latitude];
     this.targetOpacity = [];
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
 
@@ -76,7 +72,7 @@ class Overlay {
       },
       {
         // file: "@rings/1/30/60/84.5/92/120",
-        file: "@rings/1/30/60/120",
+        file: "@rings/1/25/50/75",
         color: this.colors.ring,
         limits: [0.8, 2.0 * scale],
         weight: 0.4,
@@ -131,11 +127,7 @@ class Overlay {
     for (let k = 0; k < overlays.length; k++) {
       const overlay = overlays[k];
       if (this.layers[k] === undefined || overlay.origin) {
-        const buffer = await this.polyEngine.load(
-          overlay.file,
-          overlay.origin,
-          this.geometry
-        );
+        const buffer = await this.polyEngine.load(overlay.file, overlay.origin, this.geometry);
         if (buffer === null) {
           console.log("Poly.load() returns null.");
           continue;
@@ -214,7 +206,7 @@ class Overlay {
             },
           },
           {
-            name: "@rings/30/60/120",
+            name: "@rings/25/50/75",
             model: this.geometry.model,
           },
         ],
@@ -390,9 +382,7 @@ class Overlay {
 
     if (this.cities) {
       for (let k = 0, l = this.cities.opacity.length; k < l; k++) {
-        let o =
-          this.cities.opacity[k] +
-          (this.cities.targetOpacity[k] ? 0.05 : -0.05);
+        let o = this.cities.opacity[k] + (this.cities.targetOpacity[k] ? 0.05 : -0.05);
         if (o > 1.0) o = 1.0;
         this.cities.opacity[k] = o < 0.0 ? 0.0 : o;
       }
@@ -426,16 +416,8 @@ class Overlay {
         rectangles.push([]);
       } else {
         visibility.push(1);
-        const p = [
-          x * this.geometry.viewport.width,
-          y * this.geometry.viewport.height,
-        ];
-        const r = [
-          p[0] - spread[0] * s,
-          p[1] - spread[1] * s,
-          p[0] + spread[0] * s,
-          p[1] + spread[1] * s,
-        ];
+        const p = [x * this.geometry.viewport.width, y * this.geometry.viewport.height];
+        const r = [p[0] - spread[0] * s, p[1] - spread[1] * s, p[0] + spread[0] * s, p[1] + spread[1] * s];
         rectangles.push(r);
       }
     }
@@ -495,13 +477,7 @@ class Overlay {
  * @returns {boolean} out
  */
 function doOverlap(rect1, rect2) {
-  if (
-    rect1[2] <= rect2[0] ||
-    rect1[0] >= rect2[2] ||
-    rect1[3] <= rect2[1] ||
-    rect1[1] >= rect2[3]
-  )
-    return false;
+  if (rect1[2] <= rect2[0] || rect1[0] >= rect2[2] || rect1[3] <= rect2[1] || rect1[1] >= rect2[3]) return false;
   return true;
 }
 

@@ -11,7 +11,7 @@ import React from "react";
 
 import { getRandomMessageInHTML } from "./random-list";
 
-import IconButton from "@mui/material/IconButton";
+import { IconButton } from "@mui/material";
 import {
   Info,
   Refresh,
@@ -26,6 +26,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 import { RadarHubIcon } from "./radarhub-icon";
 import { Notification } from "./notification";
+import { Progress } from "./progress";
 
 const topbarTheme = createTheme({
   components: {
@@ -46,10 +47,7 @@ const themeModes = {
 };
 
 function RightDash(props) {
-  const [fullscreen, setFullscreen] = React.useState(
-    () => window.innerHeight == screen.height
-  );
-
+  const [fullscreen, setFullscreen] = React.useState(() => window.innerHeight == screen.height);
   return (
     <div className="topbarComponent right">
       {!props.isMobile && (
@@ -57,12 +55,7 @@ function RightDash(props) {
           <Info />
         </IconButton>
       )}
-      <IconButton
-        aria-label="Refresh"
-        onClick={() => {
-          window.location.reload();
-        }}
-      >
+      <IconButton aria-label="Refresh" onClick={() => window.location.reload()}>
         <Refresh />
       </IconButton>
       {!props.isMobile && (
@@ -78,9 +71,7 @@ function RightDash(props) {
         </IconButton>
       )}
       <IconButton aria-label="Change Mode" onClick={props.onThemeChange}>
-        {(props.mode in themeModes && themeModes[props.mode]) || (
-          <Brightness4 />
-        )}
+        {(props.mode in themeModes && themeModes[props.mode]) || <Brightness4 />}
       </IconButton>
       <IconButton aria-label="Account" onClick={props.onAccount}>
         <AccountCircle />
@@ -94,7 +85,6 @@ function LeftDash(props) {
   const name = ok ? props.ingest.label : "";
   const online = (ok && props.ingest.state.liveUpdate) || "unknown";
   const message = ok ? props.ingest.message : "";
-  // const message = "PX-20200202-123456-E1.0-Z loaded and ready";
   return (
     <div className="topbarComponent left">
       <IconButton
@@ -106,7 +96,7 @@ function LeftDash(props) {
         <RadarHubIcon />
       </IconButton>
       <div className="statusWrapper">
-        <div className={online} id="statusLed"></div>
+        <div className={`statusLed ${online}`} onClick={() => props.ingest?.toggleLiveUpdate()}></div>
         <div id="radarName">{`${name}`}</div>
         <Notification id="statusBody" message={message} timeout={10000} />
       </div>
@@ -117,7 +107,7 @@ function LeftDash(props) {
 // Supply props with
 // - ingest - real-time data ingest
 // - xxx - archived data ingest
-
+//  <Progress id="topbarProgress" value={props.ingest?.progress || 100} style="transform: translateX({})" />
 export function TopBar(props) {
   const [message, setMessage] = React.useState(props.message);
   React.useEffect(() => {
@@ -137,15 +127,11 @@ export function TopBar(props) {
       <div id="topbar" role="banner" className="blur">
         <LeftDash {...props} />
         <RightDash {...props} />
+        <Progress id="topbarProgress" value={props.ingest?.progress || 100} />
       </div>
       {props.test > 0 && <Notification message={message} />}
-      <Notification id="appMessage" message={props.message} />
-      {!props.isMobile && (
-        <Notification
-          id="ingestResponse"
-          message={props.ingest?.response || ""}
-        />
-      )}
+      <Notification id="appMessage" message={props.message} onClick={(e) => props.onDismiss(e)} />
+      {!props.isMobile && <Notification id="ingestResponse" message={props.ingest?.response || ""} />}
     </ThemeProvider>
   );
 }
@@ -156,13 +142,8 @@ TopBar.defaultProps = {
   message: "",
   isMobile: false,
   test: 0,
-  onThemeChange: () => {
-    console.log("Topbar.onThemeChange()");
-  },
-  onInfoRequest: () => {
-    console.log("Topbar.onInfoRequest()");
-  },
-  onAccount: () => {
-    console.log("Topbar.onAccount()");
-  },
+  onThemeChange: () => console.log("Topbar.onThemeChange()"),
+  onInfoRequest: () => console.log("Topbar.onInfoRequest()"),
+  onAccount: () => console.log("Topbar.onAccount()"),
+  onDismiss: () => console.log("Topbar.onDismiss()"),
 };

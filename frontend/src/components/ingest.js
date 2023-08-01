@@ -18,13 +18,12 @@ class Ingest {
     };
     this.data = {
       sweep: null,
+      sweeps: [],
     };
     this.message = "";
     this.response = "";
+    this.progress = 0;
     this.onUpdate = (_data) => {};
-    this.onIndex = () => {};
-    this.onList = () => {};
-    this.onLoad = () => {};
 
     this.showMessage = this.showMessage.bind(this);
     this.handleMessage = this.handleMessage.bind(this);
