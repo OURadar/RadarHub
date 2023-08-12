@@ -34,10 +34,10 @@ unsupported_request = HttpResponse(
 forbidden_request = HttpResponseForbidden(
     'Forbidden. Mistaken? Tell my father.\n')
 
-radar_prefix = {}
+radar_prefixes = {}
 for prefix, item in settings.RADARS.items():
     pathway = item['folder'].lower()
-    radar_prefix[pathway] = prefix
+    radar_prefixes[pathway] = prefix
 
 # Learning modules
 
@@ -126,9 +126,9 @@ def month(_, pathway, day):
         show += '   ' + color_name_value('pathway', pathway)
         show += '   ' + color_name_value('day', day)
         logger.debug(show)
-    if pathway == 'undefined' or pathway not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
+    if pathway == 'undefined' or pathway not in radar_prefixes or day == 'undefined' or pattern_yyyymm.match(day) is None:
         return invalid_query
-    prefix = radar_prefix[pathway]
+    prefix = radar_prefixes[pathway]
     array = _month(prefix, day)
     payload = json.dumps(array, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
@@ -160,9 +160,9 @@ def count(_, pathway, day):
         show += '   ' + color_name_value('pathway', pathway)
         show += '   ' + color_name_value('day', day)
         logger.debug(show)
-    if pathway == 'undefined' or pathway not in radar_prefix or day == 'undefined' or not is_valid_time(day):
+    if pathway == 'undefined' or pathway not in radar_prefixes or day == 'undefined' or not is_valid_time(day):
         return invalid_query
-    prefix = radar_prefix[pathway]
+    prefix = radar_prefixes[pathway]
     data = {
         'count': _count(prefix, day)
     }
@@ -215,9 +215,9 @@ def _list(prefix, day_hour_symbol, offset=[0, 3599], pretty=True):
     ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
     date_range = [ss, ee]
     matches = File.objects.filter(
-        date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
+        date__range=date_range, name__startswith=prefix, name__endswith=f'-Z.nc')
     head = prefix + '-'
-    return [o.name.lstrip(head).rstrip('.nc') for o in matches] if pretty else matches
+    return [o.name.lstrip(head).rstrip('Z.nc') + symbol for o in matches] if pretty else matches
 
 
 def _list_block(prefix, day_hour_symbol):
@@ -239,13 +239,13 @@ def list(request, pathway, day_hour_symbol):
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if pathway == 'undefined' or pathway not in radar_prefix or day_hour_symbol == 'undefined':
+    if pathway == 'undefined' or pathway not in radar_prefixes or day_hour_symbol == 'undefined':
         return invalid_query
     if len(day_hour_symbol) not in [8, 13, 15]:
         return invalid_query
     if not is_valid_time(day_hour_symbol[:13]):
         return invalid_query
-    prefix = radar_prefix[pathway]
+    prefix = radar_prefixes[pathway]
     c = day_hour_symbol.split('-')
     day = c[0]
     if len(day) > 8:
@@ -319,7 +319,19 @@ def _load(name):
         if not is_valid_time(s):
             return None
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
-        match = File.objects.filter(date=date).filter(name=name)
+        symbol = name.split('-')[-1]
+        if symbol in ['Z', 'V', 'W', 'D', 'P', 'R']:
+            source = name + '.nc'
+            logger.debug(f'Loading base product {name} ...')
+        elif symbol == 'U':
+            elements = name.split('-')
+            prefix = elements[0]
+            symbol = elements[-1]
+            elements[-1] = 'V'
+            source = '-'.join(elements) + '.nc'
+            logger.debug(f'Deriving algorithm product {pathway} {prefix} {source} ...')
+
+        match = File.objects.filter(date=date).filter(name=source)
         if match.exists():
             match = match.first()
             sweep = match.read()
@@ -354,10 +366,10 @@ def load(request, pathway, name):
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if pathway == 'undefined' or pathway not in radar_prefix:
+    if pathway == 'undefined' or pathway not in radar_prefixes:
         return invalid_query
-    prefix = radar_prefix[pathway]
-    payload = _load(prefix + name + '.nc')
+    prefix = radar_prefixes[pathway]
+    payload = _load(prefix + name)
     if payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
     response = HttpResponse(payload, content_type='application/octet-stream')
@@ -413,8 +425,8 @@ def location(pathway):
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('pathway', pathway)
         logger.debug(show)
-    if pathway in radar_prefix:
-        prefix = radar_prefix[pathway]
+    if pathway in radar_prefixes:
+        prefix = radar_prefixes[pathway]
     else:
         prefix = None
     ymd, hour = latest(prefix)
@@ -486,9 +498,9 @@ def catchup(request, pathway, scan='E4.0', symbol='Z'):
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if pathway == 'undefined' or pathway not in radar_prefix:
+    if pathway == 'undefined' or pathway not in radar_prefixes:
         return invalid_query
-    prefix = radar_prefix[pathway]
+    prefix = radar_prefixes[pathway]
     ymd, hour = latest(prefix)
     if ymd is None:
         data = {
