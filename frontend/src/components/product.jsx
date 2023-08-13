@@ -147,7 +147,7 @@ class Product extends GLView {
           ticks: ticks,
           index: 2,
         };
-      } else if (symbol == "V") {
+      } else if (symbol == "V" || symbol == "U") {
         // slim = (-64, +64.0)
         // sticklabels = np.arange(-60, 61, 15)
         // sticks = sticklabels * 128.0 / 64.0 + 128.0

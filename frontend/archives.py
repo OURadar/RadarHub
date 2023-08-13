@@ -23,8 +23,6 @@ origins = {}
 
 pp = pprint.PrettyPrinter(indent=1, depth=3, width=80, sort_dicts=False)
 
-pattern_x_yyyymmdd_hhmmss = re.compile(
-    r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
@@ -310,33 +308,7 @@ def _load(name):
         logger.info(f'Dummy sweep {name}')
         sweep = File.dummy_sweep(name)
     else:
-        # Database is indexed by date so we extract the time first for a quicker search
-        s = pattern_x_yyyymmdd_hhmmss.search(name)
-        if s is None:
-            logger.warning(f'Bad filename {name}')
-            return None
-        s = s.group(0)
-        if not is_valid_time(s):
-            return None
-        date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
-        symbol = name.split('-')[-1]
-        if symbol in ['Z', 'V', 'W', 'D', 'P', 'R']:
-            source = name + '.nc'
-            logger.debug(f'Loading base product {name} ...')
-        elif symbol == 'U':
-            elements = name.split('-')
-            prefix = elements[0]
-            symbol = elements[-1]
-            elements[-1] = 'V'
-            source = '-'.join(elements) + '.nc'
-            logger.debug(f'Deriving algorithm product {pathway} {prefix} {source} ...')
-
-        match = File.objects.filter(date=date).filter(name=source)
-        if match.exists():
-            match = match.first()
-            sweep = match.read()
-        else:
-            return None
+        sweep = File.load(name)
     # Down-sample the sweep if the gate spacing is too fine
     gatewidth = 1.0e-3 * sweep['gatewidth']
     if gatewidth < 0.05:
@@ -346,7 +318,7 @@ def _load(name):
         'gatewidth': sweep['gatewidth'],
         'waveform': sweep['waveform']
     }, separators=(',', ':'))
-
+    # Final assembly of the payload
     head = struct.pack('hhhhddddffff', *sweep['u8'].shape, len(info), 0,
                        sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
                        sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)

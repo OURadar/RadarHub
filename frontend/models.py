@@ -7,18 +7,20 @@
 #
 
 import os
+import re
 import json
 import logging
 import tarfile
 import datetime
-
 import numpy as np
 
-from common import colorize, get_user_agent_string
+from common import colorize, get_user_agent_string, is_valid_time
 from django.conf import settings
 from django.core.validators import int_list_validator
 from django.db import models
 from netCDF4 import Dataset
+
+from . import algos
 
 logger = logging.getLogger('frontend')
 
@@ -34,6 +36,15 @@ np.set_printoptions(precision=2, threshold=5, linewidth=120)
 vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585', '\U00002586', '\U00002587']
 
 super_numbers = [' ', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁺', '⁻', '⁼', '⁽', '⁾']
+
+pattern_parts = re.compile(
+    r'(?P<prefix>.+)-' +
+    r'(?P<datetime>20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9])-' +
+    r'(?P<scan>[EAN][0-9\.]+)-' +
+    r'(?P<symbol>[A-Za-z0-9]+)(?=.)'
+    )
+pattern_x_yyyymmdd_hhmmss = re.compile(
+    r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 
 empty_sweep = {
     'symbol': 'U',
@@ -68,15 +79,33 @@ dummy_sweep = {
 # Some helper functions
 
 '''
-    value - Raw RhoHV values
+    value - Raw values
 '''
-def rho2ind(values):
-    m3 = values > 0.93
-    m2 = np.logical_and(values > 0.7, ~m3)
-    index = values * 52.8751
-    index[m2] = values[m2] * 300.0 - 173.0
-    index[m3] = values[m3] * 1000.0 - 824.0
-    return index
+def val2ind(values, symbol='Z'):
+    def rho2ind(values):
+        m3 = values > 0.93
+        m2 = np.logical_and(values > 0.7, ~m3)
+        index = values * 52.8751
+        index[m2] = values[m2] * 300.0 - 173.0
+        index[m3] = values[m3] * 1000.0 - 824.0
+        return index
+    if symbol == 'Z':
+        u8 = values * 2.0 + 64.0
+    elif symbol == 'V':
+        u8 = values * 2.0 + 128.0
+    elif symbol == 'W':
+        u8 = values * 20.0
+    elif symbol == 'D':
+        u8 = values * 10.0 + 100.0
+    elif symbol == 'P':
+        u8 = values * 128.0 / np.pi + 128.0
+    elif symbol == 'R':
+        u8 = rho2ind(values)
+    else:
+        u8 = values
+    # Map to closest integer, 0 is transparent, 1+ is finite.
+    # np.nan will be converted to 0 during np.nan_to_num(...)
+    return np.nan_to_num(np.clip(np.round(u8), 1.0, 255.0), copy=False).astype(np.uint8)
 
 # Create your models here.
 
@@ -114,6 +143,27 @@ class File(models.Model):
     def show(self):
         print(self.__repr__())
 
+    def load(self, name):
+        # Database is indexed by date so we extract the time first for a quicker search
+        parts = pattern_parts.search(name)
+        if match is None:
+            logger.error(f'Invalid name {self.name}')
+            return empty_sweep
+        s = pattern_x_yyyymmdd_hhmmss.search(name)
+        if s is None:
+            logger.warning(f'Bad filename {name}')
+            return empty_sweep
+        s = s.group(0)
+        if not is_valid_time(s):
+            return empty_sweep
+        date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+        match = self.objects.filter(date=date).filter(name__startswith=name)
+        if match.exists():
+            match = match.first()
+            return match.read()
+        else:
+            return empty_sweep
+
     def get_path(self, search=True):
         path = os.path.join(self.path, self.name)
         if os.path.exists(path):
@@ -135,24 +185,41 @@ class File(models.Model):
     def read(self, finite=False):
         if any([ext in self.path for ext in ['tgz', 'txz', 'tar.xz']]):
             if settings.VERBOSE > 1:
-                print(f'models.File.read() {self.path}')
+                print(f'models.File.read() {self.path} {self.name}')
+            match = pattern_parts.search(self.name)
+            if match is None:
+                logger.error(f'Invalid name {self.name}')
+                return empty_sweep
+            parts = match.groupdict()
+            print(parts)
+            if parts['symbol'] in ['Z', 'V', 'W', 'D', 'P', 'R']:
+                source = self.name
+                process = algos.passthrough
+                valuemap = parts['symbol']
+            elif parts['symbol'] == 'U':
+                source = '-'.join([parts['prefix'], parts['datetime'], parts['scan'], 'V'])
+                process = algos.unfold
+                valuemap = 'V'
+            else:
+                return empty_sweep
+            print(f'models.File.read() sourcing from {source} ...')
             try:
                 with tarfile.open(self.path) as aid:
-                    info = tarfile.TarInfo(self.name)
+                    info = tarfile.TarInfo(source)
                     info.size = self.size
                     info.offset = self.offset
                     info.offset_data = self.offset_data
                     with aid.extractfile(info) as fid:
-                        return self._read(fid, finite=finite)
+                        sweep = self._read(fid, finite=finite)
+                sweep['values'] = process(sweep['values'])
+                sweep['u8'] = val2ind(sweep['values'], symbol=valuemap)
+                return sweep
             except:
                 logger.error(f'Error opening archive {self.path}')
                 return empty_sweep
         else:
-            source = self.get_path()
-            if source is None:
-                return empty_sweep
-            with open(source, 'rb') as fid:
-                return self._read(fid, finite=finite)
+            logger.error(f'Error. No longer support paths without tgz, txz, or tar.xz')
+            return empty_sweep
 
     def _read(self, fid, finite=False):
         try:
@@ -175,23 +242,6 @@ class File(models.Model):
                     values = np.nan_to_num(values)
                 else:
                     values[values < -90] = np.nan
-                if symbol == 'Z':
-                    u8 = values * 2.0 + 64.0
-                elif symbol == 'V':
-                    u8 = values * 2.0 + 128.0
-                elif symbol == 'W':
-                    u8 = values * 20.0
-                elif symbol == 'D':
-                    u8 = values * 10.0 + 100.0
-                elif symbol == 'P':
-                    u8 = values * 128.0 / np.pi + 128.0
-                elif symbol == 'R':
-                    u8 = rho2ind(values)
-                else:
-                    u8 = values
-                # Map to closest integer, 0 is transparent, 1+ is finite.
-                # np.nan will be converted to 0 during np.nan_to_num(...)
-                u8 = np.nan_to_num(np.clip(np.round(u8), 1.0, 255.0), copy=False).astype(np.uint8)
                 return {
                     'symbol': symbol,
                     'longitude': longitude,
@@ -204,8 +254,7 @@ class File(models.Model):
                     'createdBy': createdBy,
                     'elevations': elevations,
                     'azimuths': azimuths,
-                    'values': values,
-                    'u8': u8
+                    'values': values
                 }
         except:
             logger.error(f'Error reading {self.name}')
