@@ -157,7 +157,7 @@ class Product extends GLView {
           ticks.push({ pos: pos, text: text });
         }
         return {
-          name: "Velocity (m/s)",
+          name: (symbol == "U" ? "Unfolded " : "") + "Velocity (m/s)",
           ticks: ticks,
           index: 1,
         };
