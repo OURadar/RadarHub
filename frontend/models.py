@@ -249,7 +249,7 @@ class File(models.Model):
             valuemap = parts['symbol']
         elif parts['symbol'] == 'U':
             source = '-'.join([parts['prefix'], parts['datetime'], parts['scan'], 'V'])
-            process = algos.unfold
+            process = algos.vunfold
             valuemap = 'V'
         else:
             return empty_sweep
