@@ -5,6 +5,7 @@ from tensorflow import keras
 #
 
 def passthrough(x):
+    x[:, 1024:] = np.nan
     return x
 
 def unfold(v, va=11.6):
@@ -12,6 +13,9 @@ def unfold(v, va=11.6):
     u = np.unwrap(np.nan_to_num(v), period=2*va, axis=-1)
     u[~mask] = np.nan
     return u
+
+def zshift(z, offset=5):
+    return z + offset
 
 #
 # VUnfold

@@ -243,14 +243,24 @@ class File(models.Model):
             return empty_sweep
         date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
 
-        if parts['symbol'] in ['Z', 'V', 'W', 'D', 'P', 'R']:
+        # product = {
+        #     'Z': {'source': name, 'process': algos.passthrough, 'valuemap': 'Z'},
+        #     'V': {'source': name, 'process': algos.passthrough, 'valuemap': 'V'},
+        # }
+
+        symbol = parts['symbol']
+        if symbol in ['Z', 'V', 'W', 'D', 'P', 'R']:
             source = name
             process = algos.passthrough
             valuemap = parts['symbol']
-        elif parts['symbol'] == 'U':
+        elif symbol == 'U':
             source = '-'.join([parts['prefix'], parts['datetime'], parts['scan'], 'V'])
             process = algos.vunfold
             valuemap = 'V'
+        elif symbol == 'Y':
+            source = '-'.join([parts['prefix'], parts['datetime'], parts['scan'], 'Z'])
+            process = algos.zshift
+            valuemap = 'Z'
         else:
             return empty_sweep
 

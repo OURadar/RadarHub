@@ -123,7 +123,7 @@ export function App(props) {
         return;
       }
       let symbol = e.key.toUpperCase();
-      const styles = ["Z", "V", "W", "D", "P", "R", "U"];
+      const styles = ["Z", "V", "W", "D", "P", "R", "U", "Y"];
       if (styles.includes(symbol)) {
         archive.current.switch(symbol);
       } else if (symbol == "L") {
