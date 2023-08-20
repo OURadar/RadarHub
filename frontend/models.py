@@ -37,7 +37,12 @@ vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585
 
 super_numbers = [' ', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁺', '⁻', '⁼', '⁽', '⁾']
 
-pattern_parts = re.compile(
+pattern_3parts = re.compile(
+    r'(?P<prefix>.+)-' +
+    r'(?P<datetime>20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9])-' +
+    r'(?P<scan>[EAN][0-9\.]+)'
+    )
+pattern_4parts = re.compile(
     r'(?P<prefix>.+)-' +
     r'(?P<datetime>20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9])-' +
     r'(?P<scan>[EAN][0-9\.]+)-' +
@@ -232,7 +237,7 @@ class File(models.Model):
     @staticmethod
     def load(name):
         # Database is indexed by date so we extract the time first for a quicker search
-        match = pattern_parts.search(name)
+        match = pattern_4parts.search(name)
         if match is None:
             logger.error(f'Invalid name {name}')
             return empty_sweep
@@ -449,3 +454,36 @@ class Visitor(models.Model):
             'user_agent': self.user_agent,
             'last_visited': self.last_visited
         }
+
+'''
+Sweep
+
+- An encapsulation of multiple File objects
+- Not a subclass of models.Model
+
+'''
+class Sweep:
+    name = ''
+    parts = {}
+    z = None
+    v = None
+    w = None
+    d = None
+    p = None
+    r = None
+
+    def __init__(self, name):
+        self.name = name
+        match = pattern_3parts.search(self.name)
+        if match:
+            self.parts = match.groupdict()
+
+    def load(self):
+        file = File.objects.filter(name=self.name+'-Z.nc')
+        if file:
+            self.z = file.first().read()
+            self.v = File.objects.filter(name=self.name+'-V.nc').first().read()
+            self.w = File.objects.filter(name=self.name+'-W.nc').first().read()
+            self.d = File.objects.filter(name=self.name+'-D.nc').first().read()
+            self.p = File.objects.filter(name=self.name+'-P.nc').first().read()
+            self.r = File.objects.filter(name=self.name+'-R.nc').first().read()
