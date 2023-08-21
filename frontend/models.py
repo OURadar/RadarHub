@@ -106,6 +106,8 @@ def val2ind(values, symbol='Z'):
         u8 = values * 128.0 / np.pi + 128.0
     elif symbol == 'R':
         u8 = rho2ind(values)
+    elif symbol == 'I':
+        u8 = (values - 0.5) * 42 + 46
     else:
         u8 = values
     # Map to closest integer, 0 is transparent, 1+ is finite.
@@ -258,6 +260,10 @@ class File(models.Model):
             source = name
             process = algos.passthrough
             valuemap = parts['symbol']
+        elif symbol == "I":
+            source = '-'.join([parts['prefix'], parts['datetime'], parts['scan'], 'V'])
+            process = algos.vlabel
+            valuemap = 'I'
         elif symbol == 'U':
             source = '-'.join([parts['prefix'], parts['datetime'], parts['scan'], 'V'])
             process = algos.vunfold

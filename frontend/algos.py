@@ -65,10 +65,10 @@ def custom_objects():
     }
 
 # U-Net for input size 256 x 128
-# model = keras.models.load_model('models/i5w4.h5', custom_objects=custom_objects())
+model = keras.models.load_model('models/i5w4.h5', custom_objects=custom_objects())
 
 # U-Net for input size 256 x 256
-model = keras.models.load_model('models/i7.h5', custom_objects=custom_objects())
+# model = keras.models.load_model('models/i7.h5', custom_objects=custom_objects())
 
 def to_label(y):
     '''
@@ -86,12 +86,11 @@ def to_label(y):
     i = np.array([0, 4, 2, 1, 3, 5])
     return np.argmax(y[..., i], axis=-1)
 
-def vunfold(values, va=11.57875):
+def vlabel(values, va=11.57875):
     v = np.nan_to_num(values) / va
+    x = np.zeros((16, 256, 128, 1))
     # [0 2 4 ... 358] 180 radials map to the middle of 256
     # [284 286 288 ... 358 0 2 4 ... 358 0 2 4 ... 36] to make up 256 radials
-
-    x = np.zeros((16, 256, 128, 1))
     for k in range(16):
         g = k // 2
         if k % 2 == 0:
@@ -117,7 +116,12 @@ def vunfold(values, va=11.57875):
         else:
             # Odd rays
             m[1:360:2, g:1024:8] = z[k, :, :]
+    m[:, 1024:] = 0;
+    m[np.isnan(values)] = 0;
+    return m
 
+def vunfold(values, va=11.57875):
+    m = vlabel(values, va=va)
     u = (m - 3) * 2.0 * va + values
     u[:, 1024:] = np.nan
     return u

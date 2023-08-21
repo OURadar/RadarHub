@@ -296,6 +296,27 @@ def i2map():
     ])
     return rgb
 
+def i5map():
+    rgba = np.array([
+        [0.10, 0.10, 0.10, 0.00],
+        [1.00, 0.70, 0.00, 1.00],
+        [1.00, 0.00, 0.00, 1.00],
+        [0.70, 0.70, 0.70, 1.00],
+        [0.00, 1.00, 0.00, 1.00],
+        [0.00, 0.70, 1.00, 1.00],
+    ])
+    s = 256 // rgba.shape[0]
+    h = int((256 - (rgba.shape[0] - 1) * s))
+    rgba = np.concatenate((
+        np.repeat(np.expand_dims(rgba[0], axis=0), h, axis=0),
+        np.repeat(np.expand_dims(rgba[1], axis=0), s, axis=0),
+        np.repeat(np.expand_dims(rgba[2], axis=0), s, axis=0),
+        np.repeat(np.expand_dims(rgba[3], axis=0), s, axis=0),
+        np.repeat(np.expand_dims(rgba[4], axis=0), s, axis=0),
+        np.repeat(np.expand_dims(rgba[5], axis=0), s, axis=0)
+    ))
+    return rgba
+
 # From reference:
 # Hooker, S. B. et al, Detecting Dipole Ring Separatrices with Zebra
 # Palettes, IEEE Transactions on Geosciences and Remote Sensing, vol. 33,

@@ -161,6 +161,19 @@ class Product extends GLView {
           ticks: ticks,
           index: 1,
         };
+      } else if (symbol == "I") {
+        // slim = [0, 1, 2, 3, 4, 5]
+        // sticklabels = [void, -2, -1, 0, +1, +2]
+        for (let v = -3; v < 3; v++) {
+          let pos = (v + 2.5) * 42 + 46;
+          let text = v == -3 ? "None" : (v > 0 ? "+" : "") + v.toFixed(0);
+          ticks.push({ pos: pos, text: text });
+        }
+        return {
+          name: "Labels",
+          ticks: ticks,
+          index: 6,
+        };
       } else {
         // slim = (-32.0, +96.0)
         // sticklabels = np.arange(-25, 81, 15)
