@@ -65,7 +65,10 @@ def custom_objects():
     }
 
 # U-Net for input size 256 x 128
-model = keras.models.load_model('models/i5w4.h5', custom_objects=custom_objects())
+# model = keras.models.load_model('models/i5w4.h5', custom_objects=custom_objects())
+
+# U-Net for input size 256 x 256
+model = keras.models.load_model('models/i7.h5', custom_objects=custom_objects())
 
 def to_label(y):
     '''
@@ -114,6 +117,38 @@ def vunfold(values, va=11.57875):
         else:
             # Odd rays
             m[1:360:2, g:1024:8] = z[k, :, :]
+
+    u = (m - 3) * 2.0 * va + values
+    u[:, 1024:] = np.nan
+    return u
+
+def vunfold2(values, va=11.57875):
+    v = np.nan_to_num(values) / va
+    x = np.zeros((8, 256, 256, 1))
+    for k in range(8):
+        if k % 2 == 0:
+            # Even rays
+            x[k, 0:38, :, 0] = v[284:360:2, g:1024:4]
+            x[k, 38:218, :, 0] = v[0:360:2, g:1024:4]
+            x[k, 218:256, :, 0] = v[0:76:2, g:1024:4]
+        else:
+            # Odd rays
+            x[k, 0:38, :, 0] = v[285:360:2, g:1024:4]
+            x[k, 38:218, :, 0] = v[1:360:2, g:1024:4]
+            x[k, 218:256, :, 0] = v[1:76:2, g:1024:4]
+
+    y = model.predict(x)
+    z = to_label(y[:, 38:218, :, :])
+
+    m = np.zeros(v.shape, dtype=np.float32)
+    for k in range(8):
+        g = k // 2
+        if k % 2 == 0:
+            # Even rays
+            m[0:360:2, g:1024:4] = z[k, :, :]
+        else:
+            # Odd rays
+            m[1:360:2, g:1024:4] = z[k, :, :]
 
     u = (m - 3) * 2.0 * va + values
     u[:, 1024:] = np.nan
