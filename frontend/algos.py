@@ -47,6 +47,33 @@ def custom_objects():
         e = keras.backend.equal(t, p)
         return keras.backend.mean(e[t > 1])
 
+    def f0(y_true, y_pred):
+        '''
+            Categorical accuracy without counting classes 1 and 2
+        '''
+        t = keras.backend.argmax(y_true, axis=-1)
+        p = keras.backend.argmax(y_pred, axis=-1)
+        e = keras.backend.equal(t, p)
+        return keras.backend.mean(e[t == 1])
+
+    def f1(y_true, y_pred):
+        '''
+            Categorical accuracy without counting classes 0 and 2
+        '''
+        t = keras.backend.argmax(y_true, axis=-1)
+        p = keras.backend.argmax(y_pred, axis=-1)
+        e = keras.backend.equal(t, p)
+        newe = keras.backend.concatenate((e[t==2],e[t==3]),axis=-1)
+        return keras.backend.mean(newe)
+
+    def f2(y_true, y_pred):
+        '''
+            Categorical accuracy without counting classes 0 and 1
+        '''
+        t = keras.backend.argmax(y_true, axis=-1)
+        p = keras.backend.argmax(y_pred, axis=-1)
+        e = keras.backend.equal(t, p)
+        return keras.backend.mean(e[t > 3])
 
     def acc(y_true, y_pred):
         '''
@@ -56,7 +83,11 @@ def custom_objects():
         p = keras.backend.argmax(y_pred, axis=-1)
         e = keras.backend.equal(t, p)
         return keras.backend.mean(e[t > 0])
+
     return {
+        'f0': f0,
+        'f1': f1,
+        'f2': f2,
         'acc': acc,
         'macc': acc,
         'facc': facc,
@@ -65,10 +96,10 @@ def custom_objects():
     }
 
 # U-Net for input size 256 x 128
-model = keras.models.load_model('models/i5w4.h5', custom_objects=custom_objects())
+# model = keras.models.load_model('models/i5w4.h5', custom_objects=custom_objects())
 
 # U-Net for input size 256 x 256
-# model = keras.models.load_model('models/i7.h5', custom_objects=custom_objects())
+model = keras.models.load_model('models/i7.h5', custom_objects=custom_objects())
 
 def to_label(y):
     '''
@@ -86,7 +117,7 @@ def to_label(y):
     i = np.array([0, 4, 2, 1, 3, 5])
     return np.argmax(y[..., i], axis=-1)
 
-def vlabel(values, va=11.57875):
+def vlabel0(values, va=11.57875):
     v = np.nan_to_num(values) / va
     x = np.zeros((16, 256, 128, 1))
     # [0 2 4 ... 358] 180 radials map to the middle of 256
@@ -116,20 +147,17 @@ def vlabel(values, va=11.57875):
         else:
             # Odd rays
             m[1:360:2, g:1024:8] = z[k, :, :]
-    m[:, 1024:] = 0;
     m[np.isnan(values)] = 0;
+    m[:, 1024:] = 0;
     return m
 
-def vunfold(values, va=11.57875):
-    m = vlabel(values, va=va)
-    u = (m - 3) * 2.0 * va + values
-    u[:, 1024:] = np.nan
-    return u
-
-def vunfold2(values, va=11.57875):
+def vlabel(values, va=11.57875):
     v = np.nan_to_num(values) / va
-    x = np.zeros((8, 256, 256, 1))
+    x = np.zeros((16, 256, 256, 1))
+    # [0 2 4 ... 358] 180 radials map to the middle of 256
+    # [284 286 288 ... 358 0 2 4 ... 358 0 2 4 ... 36] to make up 256 radials
     for k in range(8):
+        g = k // 2
         if k % 2 == 0:
             # Even rays
             x[k, 0:38, :, 0] = v[284:360:2, g:1024:4]
@@ -153,7 +181,12 @@ def vunfold2(values, va=11.57875):
         else:
             # Odd rays
             m[1:360:2, g:1024:4] = z[k, :, :]
+    m[np.isnan(values)] = 0;
+    m[:, 1024:] = 0;
+    return m
 
+def vunfold(values, va=11.57875):
+    m = vlabel(values, va=va)
     u = (m - 3) * 2.0 * va + values
     u[:, 1024:] = np.nan
     return u

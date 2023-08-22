@@ -52,7 +52,7 @@ class Product extends GLView {
     };
     this.assets = [];
     var image = new Image();
-    image.src = "/static/images/colormap.png";
+    image.src = "/static/images/colormap.png?v=2.2";
     image.addEventListener("load", () => {
       this.palette = {
         image: image,
