@@ -358,7 +358,7 @@ async function load(names) {
     names.map(async (name) => {
       const url = `/data/load/${pathway}/${name}/`;
       console.info(`%carchive.worker.load%c ${url}%c`, nameStyle, "color: dodgerblue", "");
-      // return fetch(url, { cache: "no-cache" })
+      // fetch(url, { cache: "no-cache" })
       return fetch(url, { cache: "force-cache" })
         .then(async (response) => {
           if (response.status == 200) {
