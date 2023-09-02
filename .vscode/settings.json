@@ -74,5 +74,9 @@
       "path": "bash",
       "args": ["-l"]
     }
+  },
+  "workbench.colorCustomizations": {
+    "statusBarItem.remoteBackground": "#047267",
+    "statusBarItem.remoteForeground": "#fff"
   }
 }
