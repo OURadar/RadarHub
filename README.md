@@ -28,7 +28,7 @@ When a radar joins the RadarHub, it reports its name. Backhaul launches a runloo
 
 ## Frontend Block Diagram
 
-![Figure](blob/app6.svg)
+![Figure](blob/appX.svg)
 
 ## Backend Block Diagram
 
