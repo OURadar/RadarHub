@@ -60,5 +60,19 @@
   },
   "python.formatting.provider": "autopep8",
   "python.formatting.autopep8Args": ["--ignore", "E402"],
-  "prettier.printWidth": 120
+  "prettier.printWidth": 120,
+  "terminal.integrated.defaultProfile.osx": "bash",
+  "terminal.integrated.profiles.osx": {
+    "bash": {
+      "path": "bash",
+      "args": ["-l"]
+    }
+  },
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "bash",
+      "args": ["-l"]
+    }
+  }
 }

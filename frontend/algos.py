@@ -190,3 +190,9 @@ def vunfold(values, va=11.57875):
     u = (m - 3) * 2.0 * va + values
     u[:, 1024:] = np.nan
     return u
+
+def kdp(p):
+    dr = p[:, 1:] - p[:, :-1]
+    dr = np.concatenate((0, dr), axis=-1)
+    dr[dr < 0] = 0
+    return dr
