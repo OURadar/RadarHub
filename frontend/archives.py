@@ -23,8 +23,6 @@ origins = {}
 
 pp = pprint.PrettyPrinter(indent=1, depth=3, width=80, sort_dicts=False)
 
-pattern_x_yyyymmdd_hhmmss = re.compile(
-    r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
 pattern_yyyymm = re.compile(r'20[0-9][0-9](0[0-9]|1[012])')
 pattern_bad_agents = re.compile(r'[Ww]get|[Cc]url|ureq')
 
@@ -34,10 +32,10 @@ unsupported_request = HttpResponse(
 forbidden_request = HttpResponseForbidden(
     'Forbidden. Mistaken? Tell my father.\n')
 
-radar_prefix = {}
+radar_prefixes = {}
 for prefix, item in settings.RADARS.items():
     pathway = item['folder'].lower()
-    radar_prefix[pathway] = prefix
+    radar_prefixes[pathway] = prefix
 
 # Learning modules
 
@@ -126,9 +124,9 @@ def month(_, pathway, day):
         show += '   ' + color_name_value('pathway', pathway)
         show += '   ' + color_name_value('day', day)
         logger.debug(show)
-    if pathway == 'undefined' or pathway not in radar_prefix or day == 'undefined' or pattern_yyyymm.match(day) is None:
+    if pathway == 'undefined' or pathway not in radar_prefixes or day == 'undefined' or pattern_yyyymm.match(day) is None:
         return invalid_query
-    prefix = radar_prefix[pathway]
+    prefix = radar_prefixes[pathway]
     array = _month(prefix, day)
     payload = json.dumps(array, separators=(',', ':'))
     return HttpResponse(payload, content_type='application/json')
@@ -160,9 +158,9 @@ def count(_, pathway, day):
         show += '   ' + color_name_value('pathway', pathway)
         show += '   ' + color_name_value('day', day)
         logger.debug(show)
-    if pathway == 'undefined' or pathway not in radar_prefix or day == 'undefined' or not is_valid_time(day):
+    if pathway == 'undefined' or pathway not in radar_prefixes or day == 'undefined' or not is_valid_time(day):
         return invalid_query
-    prefix = radar_prefix[pathway]
+    prefix = radar_prefixes[pathway]
     data = {
         'count': _count(prefix, day)
     }
@@ -215,9 +213,9 @@ def _list(prefix, day_hour_symbol, offset=[0, 3599], pretty=True):
     ee = time.strftime(r'%Y-%m-%d %H:%M:%SZ', e)
     date_range = [ss, ee]
     matches = File.objects.filter(
-        date__range=date_range, name__startswith=prefix, name__endswith=f'-{symbol}.nc')
+        date__range=date_range, name__startswith=prefix, name__endswith=f'-Z.nc')
     head = prefix + '-'
-    return [o.name.lstrip(head).rstrip('.nc') for o in matches] if pretty else matches
+    return [o.name.lstrip(head).rstrip('Z.nc') + symbol for o in matches] if pretty else matches
 
 
 def _list_block(prefix, day_hour_symbol):
@@ -239,13 +237,13 @@ def list(request, pathway, day_hour_symbol):
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if pathway == 'undefined' or pathway not in radar_prefix or day_hour_symbol == 'undefined':
+    if pathway == 'undefined' or pathway not in radar_prefixes or day_hour_symbol == 'undefined':
         return invalid_query
     if len(day_hour_symbol) not in [8, 13, 15]:
         return invalid_query
     if not is_valid_time(day_hour_symbol[:13]):
         return invalid_query
-    prefix = radar_prefix[pathway]
+    prefix = radar_prefixes[pathway]
     c = day_hour_symbol.split('-')
     day = c[0]
     if len(day) > 8:
@@ -310,21 +308,7 @@ def _load(name):
         logger.info(f'Dummy sweep {name}')
         sweep = File.dummy_sweep(name)
     else:
-        # Database is indexed by date so we extract the time first for a quicker search
-        s = pattern_x_yyyymmdd_hhmmss.search(name)
-        if s is None:
-            logger.warning(f'Bad filename {name}')
-            return None
-        s = s.group(0)
-        if not is_valid_time(s):
-            return None
-        date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
-        match = File.objects.filter(date=date).filter(name=name)
-        if match.exists():
-            match = match.first()
-            sweep = match.read()
-        else:
-            return None
+        sweep = File.load(name)
     # Down-sample the sweep if the gate spacing is too fine
     gatewidth = 1.0e-3 * sweep['gatewidth']
     if gatewidth < 0.05:
@@ -334,7 +318,7 @@ def _load(name):
         'gatewidth': sweep['gatewidth'],
         'waveform': sweep['waveform']
     }, separators=(',', ':'))
-
+    # Final assembly of the payload
     head = struct.pack('hhhhddddffff', *sweep['u8'].shape, len(info), 0,
                        sweep['sweepTime'], sweep['longitude'], sweep['latitude'], 0.0,
                        sweep['sweepElevation'], sweep['sweepAzimuth'], 0.0, gatewidth)
@@ -354,10 +338,10 @@ def load(request, pathway, name):
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if pathway == 'undefined' or pathway not in radar_prefix:
+    if pathway == 'undefined' or pathway not in radar_prefixes:
         return invalid_query
-    prefix = radar_prefix[pathway]
-    payload = _load(prefix + name + '.nc')
+    prefix = radar_prefixes[pathway]
+    payload = _load(prefix + name)
     if payload is None:
         return HttpResponse(f'Data {name} not found', status=204)
     response = HttpResponse(payload, content_type='application/octet-stream')
@@ -413,8 +397,8 @@ def location(pathway):
         show = colorize('archive.location()', 'green')
         show += '   ' + color_name_value('pathway', pathway)
         logger.debug(show)
-    if pathway in radar_prefix:
-        prefix = radar_prefix[pathway]
+    if pathway in radar_prefixes:
+        prefix = radar_prefixes[pathway]
     else:
         prefix = None
     ymd, hour = latest(prefix)
@@ -486,9 +470,9 @@ def catchup(request, pathway, scan='E4.0', symbol='Z'):
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if pathway == 'undefined' or pathway not in radar_prefix:
+    if pathway == 'undefined' or pathway not in radar_prefixes:
         return invalid_query
-    prefix = radar_prefix[pathway]
+    prefix = radar_prefixes[pathway]
     ymd, hour = latest(prefix)
     if ymd is None:
         data = {

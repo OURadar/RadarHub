@@ -123,7 +123,7 @@ export function App(props) {
         return;
       }
       let symbol = e.key.toUpperCase();
-      const styles = ["Z", "V", "W", "D", "P", "R"];
+      const styles = ["Z", "V", "W", "D", "P", "R", "U", "Y", "I"];
       if (styles.includes(symbol)) {
         archive.current.switch(symbol);
       } else if (symbol == "L") {
@@ -209,7 +209,6 @@ export function App(props) {
               e.clientX - e.target.offsetLeft < 0.1 * e.target.offsetWidth &&
               e.clientY - e.target.offsetTop > 0.5 * e.target.offsetHeight
             ) {
-              console.log(`%cApp.TopBar.onDismiss%c Reset agreement ...`, nameStyle, "");
               user.current.setAgree(false);
             }
           }}
