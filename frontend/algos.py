@@ -1,7 +1,5 @@
 import numpy as np
 
-from tensorflow import keras
-
 #
 
 def passthrough(x):
@@ -21,85 +19,7 @@ def zshift(z, offset=5):
 # VUnfold
 #
 
-tiny = keras.backend.epsilon()
-crossentropy_weights = keras.backend.variable([0, 0.2, 1.0, 1.0, 5.0, 5.0])
-
-def custom_objects():
-    '''
-        List of custom objects in this module
-    '''
-    def weighted_crossentropy(y_true, y_pred):
-        '''
-            Modified from https://gist.github.com/wassname/ce364fddfc8a025bfab4348cf5de852d
-        '''
-        y_pred /= keras.backend.sum(y_pred, axis=-1, keepdims=True)
-        y_pred = keras.backend.clip(y_pred, tiny, 1.0 - tiny)
-        loss = y_true * keras.backend.log(y_pred) * crossentropy_weights
-        return -keras.backend.sum(loss, axis=-1)
-
-
-    def facc(y_true, y_pred):
-        '''
-            Categorical accuracy without counting class 0 or class 1
-        '''
-        t = keras.backend.argmax(y_true, axis=-1)
-        p = keras.backend.argmax(y_pred, axis=-1)
-        e = keras.backend.equal(t, p)
-        return keras.backend.mean(e[t > 1])
-
-    def f0(y_true, y_pred):
-        '''
-            Categorical accuracy without counting classes 1 and 2
-        '''
-        t = keras.backend.argmax(y_true, axis=-1)
-        p = keras.backend.argmax(y_pred, axis=-1)
-        e = keras.backend.equal(t, p)
-        return keras.backend.mean(e[t == 1])
-
-    def f1(y_true, y_pred):
-        '''
-            Categorical accuracy without counting classes 0 and 2
-        '''
-        t = keras.backend.argmax(y_true, axis=-1)
-        p = keras.backend.argmax(y_pred, axis=-1)
-        e = keras.backend.equal(t, p)
-        newe = keras.backend.concatenate((e[t==2],e[t==3]),axis=-1)
-        return keras.backend.mean(newe)
-
-    def f2(y_true, y_pred):
-        '''
-            Categorical accuracy without counting classes 0 and 1
-        '''
-        t = keras.backend.argmax(y_true, axis=-1)
-        p = keras.backend.argmax(y_pred, axis=-1)
-        e = keras.backend.equal(t, p)
-        return keras.backend.mean(e[t > 3])
-
-    def acc(y_true, y_pred):
-        '''
-            Categorical accuracy without counting class 0
-        '''
-        t = keras.backend.argmax(y_true, axis=-1)
-        p = keras.backend.argmax(y_pred, axis=-1)
-        e = keras.backend.equal(t, p)
-        return keras.backend.mean(e[t > 0])
-
-    return {
-        'f0': f0,
-        'f1': f1,
-        'f2': f2,
-        'acc': acc,
-        'macc': acc,
-        'facc': facc,
-        'fold_acc': facc,
-        'weighted_crossentropy': weighted_crossentropy
-    }
-
-# U-Net for input size 256 x 128
-# model = keras.models.load_model('models/i5w4.h5', custom_objects=custom_objects())
-
-# U-Net for input size 256 x 256
-model = keras.models.load_model('models/i7.h5', custom_objects=custom_objects())
+model = None
 
 def to_label(y):
     '''
@@ -168,6 +88,88 @@ def vlabel(values, va=11.57875):
             x[k, 0:38, :, 0] = v[285:360:2, g:1024:4]
             x[k, 38:218, :, 0] = v[1:360:2, g:1024:4]
             x[k, 218:256, :, 0] = v[1:76:2, g:1024:4]
+
+    if model is None:
+        from tensorflow import keras
+
+        tiny = keras.backend.epsilon()
+        crossentropy_weights = keras.backend.variable([0, 0.2, 1.0, 1.0, 5.0, 5.0])
+
+        def custom_objects():
+            '''
+                List of custom objects in this module
+            '''
+            def weighted_crossentropy(y_true, y_pred):
+                '''
+                    Modified from https://gist.github.com/wassname/ce364fddfc8a025bfab4348cf5de852d
+                '''
+                y_pred /= keras.backend.sum(y_pred, axis=-1, keepdims=True)
+                y_pred = keras.backend.clip(y_pred, tiny, 1.0 - tiny)
+                loss = y_true * keras.backend.log(y_pred) * crossentropy_weights
+                return -keras.backend.sum(loss, axis=-1)
+
+
+            def facc(y_true, y_pred):
+                '''
+                    Categorical accuracy without counting class 0 or class 1
+                '''
+                t = keras.backend.argmax(y_true, axis=-1)
+                p = keras.backend.argmax(y_pred, axis=-1)
+                e = keras.backend.equal(t, p)
+                return keras.backend.mean(e[t > 1])
+
+            def f0(y_true, y_pred):
+                '''
+                    Categorical accuracy without counting classes 1 and 2
+                '''
+                t = keras.backend.argmax(y_true, axis=-1)
+                p = keras.backend.argmax(y_pred, axis=-1)
+                e = keras.backend.equal(t, p)
+                return keras.backend.mean(e[t == 1])
+
+            def f1(y_true, y_pred):
+                '''
+                    Categorical accuracy without counting classes 0 and 2
+                '''
+                t = keras.backend.argmax(y_true, axis=-1)
+                p = keras.backend.argmax(y_pred, axis=-1)
+                e = keras.backend.equal(t, p)
+                newe = keras.backend.concatenate((e[t==2],e[t==3]),axis=-1)
+                return keras.backend.mean(newe)
+
+            def f2(y_true, y_pred):
+                '''
+                    Categorical accuracy without counting classes 0 and 1
+                '''
+                t = keras.backend.argmax(y_true, axis=-1)
+                p = keras.backend.argmax(y_pred, axis=-1)
+                e = keras.backend.equal(t, p)
+                return keras.backend.mean(e[t > 3])
+
+            def acc(y_true, y_pred):
+                '''
+                    Categorical accuracy without counting class 0
+                '''
+                t = keras.backend.argmax(y_true, axis=-1)
+                p = keras.backend.argmax(y_pred, axis=-1)
+                e = keras.backend.equal(t, p)
+                return keras.backend.mean(e[t > 0])
+
+            return {
+                'f0': f0,
+                'f1': f1,
+                'f2': f2,
+                'acc': acc,
+                'macc': acc,
+                'facc': facc,
+                'fold_acc': facc,
+                'weighted_crossentropy': weighted_crossentropy
+            }
+        # U-Net for input size 256 x 128
+        # model = keras.models.load_model('models/i5w4.h5', custom_objects=custom_objects())
+
+        # U-Net for input size 256 x 256
+        model = keras.models.load_model('models/i7.h5', custom_objects=custom_objects())
 
     y = model.predict(x)
     z = to_label(y[:, 38:218, :, :])

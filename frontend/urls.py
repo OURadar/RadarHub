@@ -10,6 +10,7 @@ urlpatterns = [
     # path('data/binary/<str:name>/', archives.binary, name='data-binary'),
     path('control/<str:pathway>/', views.control, name='control'),
     path('archive/<str:pathway>/', views.archive, name='archive'),
+    path('archive/<str:pathway>/index.html', views.archive, name='archive'),
     path('data/catchup/<str:pathway>/', archives.catchup, name='data-catchup-json'),
     path('data/month/<str:pathway>/<str:day>/', archives.month, name='data-month-json'),
     path('data/count/<str:pathway>/<str:day>/', archives.count, name='data-count-json'),
