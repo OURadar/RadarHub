@@ -1126,11 +1126,14 @@ div.key {
   text-align: center;
 }
 #hoursContainer {
-  overflow: hidden;
-  column-count: 8;
   padding-left: var(--half-padding);
   padding-right: var(--half-padding);
   padding-bottom: var(--padding);
+}
+#hoursList {
+  overflow: hidden;
+  column-count: 8;
+  column-gap: 0;
 }
 #filesContainer {
   background-color: var(--system-background);

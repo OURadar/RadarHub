@@ -70,14 +70,14 @@ const Calendar = React.memo(function Calendar({ archive, day }) {
 const Hours = React.memo(function Hours({ archive, hourHasData, selected }) {
   const online = archive?.state.liveUpdate || "unkonwn";
   return (
-    <div>
+    <div id="hoursContainer">
       <div className="subtleHeader disabled" onClick={() => archive.toggleLiveUpdate()}>
         <div className="inline">Hours</div>
         <div className="floatRight">
           <div className={`statusLed ${online}`}></div>
         </div>
       </div>
-      <div id="hoursContainer">
+      <div id="hoursList">
         {hourHasData.map((hasData, k) => (
           <Button
             key={`h-${k}`}

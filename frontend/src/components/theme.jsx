@@ -159,10 +159,9 @@ export function makeTheme(inputMode) {
               color: theme.palette.text.secondary,
               height: "var(--small-button-height)",
               fontSize: "15px",
-              padding: "0 2px",
+              padding: "0",
               textAlign: "center",
-              width: "100%",
-              minWidth: 32,
+              minWidth: "32px",
             },
           },
           {
