@@ -762,14 +762,6 @@ p {
   top: 20px;
   right: var(--padding);
 }
-#calendarContainer {
-  text-align: center;
-}
-
-#hoursContainer {
-  display: block;
-  overflow-y: scroll;
-}
 
 #test {
   background-color: #aba24248;
@@ -1131,8 +1123,10 @@ div.key {
   height: var(--calendar-height);
   padding-top: calc(var(--topbar-height) + var(--padding));
   padding-bottom: var(--half-padding);
+  text-align: center;
 }
 #hoursContainer {
+  overflow: hidden;
   column-count: 8;
   padding-left: var(--half-padding);
   padding-right: var(--half-padding);
