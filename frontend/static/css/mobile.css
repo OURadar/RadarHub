@@ -25,6 +25,7 @@ Copyright Boonleng Cheong
 }
 .panel {
   background-color: var(--colorbar-background);
+  width: 100%;
 }
 .active {
   position: absolute;
