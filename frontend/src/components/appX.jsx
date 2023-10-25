@@ -130,16 +130,14 @@ export function App(props) {
         archive.current.toggleLiveUpdate();
       } else if (e.key == " ") {
         archive.current.playPause();
-      } else if (e.target == document.body) {
-        if (e.key == "ArrowRight") {
-          archive.current.navigateRight();
-        } else if (e.key == "ArrowLeft") {
-          archive.current.navigateLeft();
-        } else if (e.key == "ArrowUp") {
-          archive.current.navigateUp();
-        } else if (e.key == "ArrowDown") {
-          archive.current.navigateDown();
-        }
+      } else if (e.key == "ArrowRight") {
+        archive.current.navigateRight();
+      } else if (e.key == "ArrowLeft") {
+        archive.current.navigateLeft();
+      } else if (e.key == "ArrowUp") {
+        archive.current.navigateUp();
+      } else if (e.key == "ArrowDown") {
+        archive.current.navigateDown();
       }
     });
 
@@ -180,7 +178,6 @@ export function App(props) {
             }
           }
         }}
-        onMiddleViewTap={() => archive.current.playPause()}
         debug={false}
       />
       <MenuArrow ingest={archive.current} />
