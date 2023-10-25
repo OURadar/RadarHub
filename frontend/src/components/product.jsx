@@ -193,7 +193,7 @@ class Product extends GLView {
         });
         // ticks = vv.map((v) => {pos: v * 2.0 + 64.0, text: v.toFixed(0)})
         return {
-          name: "Reflectivity Tmin (dBZ)",
+          name: "Reflectivity (dBZ)",
           ticks: ticks,
           index: 0,
         };
