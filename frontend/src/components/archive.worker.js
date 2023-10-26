@@ -806,18 +806,17 @@ function append() {
 
 function select(index, hint = "load") {
   grid.mode = hint;
-  // if (index == grid.index && state.length == 1) {
-  //   let tail = findLastInGroup();
-  //   let head = Math.max(0, tail - frameCount + 1);
-  //   let items = grid.itemsGrouped[grid.scan].slice(head, tail + 1);
-  //   const names = items.map((item) => item.item);
-  //   state.length = names.length;
-  //   load(names);
-  //   return;
-  // } else {
-  //   grid.last = null;
-  // }
-  grid.last = null;
+  if (index == grid.index && state.length == 1) {
+    let tail = findLastInGroup();
+    let head = Math.max(0, tail - frameCount + 1);
+    let items = grid.itemsGrouped[grid.scan].slice(head, tail + 1);
+    const names = items.map((item) => item.item);
+    state.length = names.length;
+    load(names);
+    return;
+  } else {
+    grid.last = null;
+  }
   setGridIndex(index);
 }
 
