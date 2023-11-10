@@ -19,7 +19,7 @@ from pathlib import Path
 from common import color_name_value
 
 # My additional parameters
-VERBOSE = 2
+VERBOSE = 1
 SIMULATE = False
 
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
@@ -111,6 +111,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware'
 ]
+
+# 'allauth.account.middleware.AccountMiddleware'
 
 ROOT_URLCONF = 'radarhub.urls'
 

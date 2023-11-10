@@ -244,7 +244,7 @@ class File(models.Model):
             logger.error(f'Invalid name {name}')
             return empty_sweep
         parts = match.groupdict()
-        print(parts)
+        # print(parts)
         s = parts['datetime']
         if not is_valid_time(s):
             return empty_sweep

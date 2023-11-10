@@ -84,7 +84,8 @@ async def _reset():
     )
 
 def reset():
-    print('Backhaul.consumers.reset()')
+    show = colorize('Backhaul.consumers.reset()', 'green')
+    logger.info(show)
     asyncio.get_event_loop().run_until_complete(_reset())
 
 async def _runloop(pathway):

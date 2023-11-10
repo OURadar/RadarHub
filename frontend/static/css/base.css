@@ -1131,9 +1131,13 @@ div.key {
   padding-bottom: var(--padding);
 }
 #hoursList {
-  overflow: hidden;
-  column-count: 8;
+  display: grid;
   column-gap: 0;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  grid-auto-flow: column;
+  justify-items: center;
+  overflow: hidden;
 }
 #filesContainer {
   background-color: var(--system-background);
