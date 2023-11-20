@@ -2,8 +2,9 @@ import numpy as np
 
 #
 
-def passthrough(x):
-    x[:, 1024:] = np.nan
+def passthrough(x, maxgates=4096):
+    if x.shape[1] > maxgates:
+        x[:, maxgates:] = np.nan
     return x
 
 def unfold(v, va=11.6):
