@@ -60,6 +60,7 @@ empty_sweep = {
     'sweepAzimuth': 42.0,
     'gatewidth': 15.0,
     'waveform': 's0',
+    'prf': 1000.0,
     'elevations': np.empty((0, 0), dtype=np.float32),
     'azimuths': np.empty((0, 0), dtype=np.float32),
     'values': np.empty((0, 0), dtype=np.float32),
@@ -75,6 +76,7 @@ dummy_sweep = {
     'sweepAzimuth': 42.0,
     'gatewidth': 150.0,
     'waveform': 's01',
+    'prf': 1000.0,
     'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=np.float32),
     'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=np.float32),
     'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]], dtype=np.float32),
@@ -198,6 +200,7 @@ class File(models.Model):
                 sweepElevation = nc.getncattr('Elevation')
                 sweepAzimuth = nc.getncattr('Azimuth')
                 attrs = nc.ncattrs()
+                prf = float(round(nc.getncattr('PRF-value') * 0.1) * 10.0)
                 waveform = nc.getncattr('Waveform') if 'Waveform' in attrs else ''
                 gatewidth = float(nc.variables['GateWidth'][:][0])
                 elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
@@ -215,8 +218,9 @@ class File(models.Model):
                     'sweepTime': sweepTime,
                     'sweepElevation': sweepElevation,
                     'sweepAzimuth': sweepAzimuth,
-                    'gatewidth': gatewidth,
+                    'prf': prf,
                     'waveform': waveform,
+                    'gatewidth': gatewidth,
                     'createdBy': createdBy,
                     'elevations': elevations,
                     'azimuths': azimuths,

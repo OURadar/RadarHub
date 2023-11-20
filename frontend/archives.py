@@ -316,7 +316,8 @@ def _load(name):
         sweep['u8'] = sweep['u8'][:, ::2]
     info = json.dumps({
         'gatewidth': sweep['gatewidth'],
-        'waveform': sweep['waveform']
+        'waveform': sweep['waveform'],
+        'prf': sweep['prf']
     }, separators=(',', ':'))
     # Final assembly of the payload
     head = struct.pack('hhhhddddffff', *sweep['u8'].shape, len(info), 0,

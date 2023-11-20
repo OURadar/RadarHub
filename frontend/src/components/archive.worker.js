@@ -368,7 +368,7 @@ async function load(names) {
                 ...sweepParser.parse(new Uint8Array(buffer)),
               });
               sweep.info = JSON.parse(sweep.info);
-              sweep.infoString = `Gatewidth: ${sweep.info.gatewidth} m\nWaveform: ${sweep.info.waveform}`;
+              sweep.infoString = `PRF: ${sweep.info.prf} Hz\nGatewidth: ${sweep.info.gatewidth} m\nWaveform: ${sweep.info.waveform}`;
               if (sweep.nb == 0 || sweep.nr == 0) {
                 sweep = geometry(createSweep(name));
               }
