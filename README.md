@@ -1,3 +1,5 @@
+[![Latest Release](https://git.arrc.ou.edu/radar/radarhub/-/badges/release.svg)](https://git.arrc.ou.edu/radar/radarhub/-/releases) [![pipeline status](https://git.arrc.ou.edu/radar/radarhub/badges/master/pipeline.svg)](https://git.arrc.ou.edu/radar/radarhub/-/commits/master)
+
 # RadarHub
 
 This is a [Django]-[Channels] web interface for ARRC radar operations.

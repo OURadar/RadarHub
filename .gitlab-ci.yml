@@ -1,0 +1,18 @@
+stages:
+  - build
+
+basic:
+  tags:
+    - linux
+  stage: build
+  image: python:3.8.11
+  before_script:
+    - apt-get update -y
+    - apt-get install -y libsasl2-dev libldap2-dev libssl-dev
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+  script:
+    - python --version
+    - ./dbtool.py --version
+    - cd reporter
+    - make
