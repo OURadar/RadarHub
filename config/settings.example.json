@@ -9,21 +9,9 @@
   },
   "host": "radarhub.arrc.ou.edu",
   "radars": {
-    "PX-": {
-      "name": "PX-1000",
-      "folder": "PX1000",
-      "summary": "E4.0"
-    },
-    "RAXPOL-": {
-      "name": "RaXPol",
-      "folder": "RaXPol",
-      "summary": "E4.0"
-    },
-    "PX10K-": {
-      "name": "PX-10k",
-      "folder": "PX10k",
-      "summary": "E4.0"
-    }
+    "PX": { "name": "PX-1000", "folder": "PX1000", "summary": "E4.0" },
+    "RAXPOL": { "name": "RaXPol", "folder": "RaXPol", "summary": "E4.0" },
+    "PX10K": { "name": "PX-10k", "folder": "PX10k", "summary": "E4.0" }
   },
   "secret": "django-insecure-5zk9_rg=98@@h+e6*iw63l9h*v_bo9+_xum)"
 }

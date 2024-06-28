@@ -9,7 +9,12 @@ import React from "react";
 
 function measure(string) {}
 
-const Caption = React.memo(function Caption(props) {
+const Caption = React.memo(function Caption(
+  props = {
+    id: "caption",
+    string: "caption-string",
+  }
+) {
   const h = props.h || 20;
   const l = props.l || 5;
   const lines = props.string.split(/\r?\n/);
@@ -33,10 +38,5 @@ const Caption = React.memo(function Caption(props) {
     </svg>
   );
 });
-
-Caption.defaultProps = {
-  id: "caption",
-  string: "caption-string",
-};
 
 export { Caption };

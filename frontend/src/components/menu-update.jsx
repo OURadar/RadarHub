@@ -10,14 +10,19 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import { DensityLarge, DensitySmall } from "@mui/icons-material";
 
-export function MenuUpdate(props) {
+export function MenuUpdate({
+  value = "offline",
+  onChange = (_e, value) => {
+    console.log(`Preference.onChange()  value = ${value}`);
+  },
+}) {
   return (
     <div id="update" className="floatMenu roundCorder blur">
       <ToggleButtonGroup
         color="primary"
         size="small"
-        value={props.value}
-        onChange={props.onChange}
+        value={value}
+        onChange={onChange}
         orientation="vertical"
         exclusive
       >
@@ -31,11 +36,3 @@ export function MenuUpdate(props) {
     </div>
   );
 }
-
-MenuUpdate.defaultProps = {
-  ingest: null,
-  value: "offline",
-  onChange: (_e, value) => {
-    console.log(`Preference.onChange()  value = ${value}`);
-  },
-};

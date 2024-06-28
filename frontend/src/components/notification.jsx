@@ -9,41 +9,34 @@
 
 import React from "react";
 
-export function Notification(props) {
+export function Notification({ id = "nora", message = "", timeout = 800, onClick = (_e) => {} }) {
   const [display, setDisplay] = React.useState("");
   const [transition, setTransition] = React.useState("invisible");
 
   const fadeOut = () => {
     setTransition("fadeOut");
-    const timer = setTimeout(() => setDisplay(""), 800);
+    const timer = setTimeout(() => setDisplay(""), timeout);
     return () => clearTimeout(timer);
   };
 
   React.useEffect(() => {
-    if (props.message.length) {
-      setDisplay(props.message);
+    if (message.length) {
+      setDisplay(message);
       setTransition("fadeIn");
     } else if (display.length || transition == "fadeIn") {
       return fadeOut();
     }
-  }, [props.message]);
+  }, [message]);
 
   return (
     <div
-      id={props.id}
+      id={id}
       className={`notification blur ${transition}`}
       dangerouslySetInnerHTML={{ __html: display }}
       onClick={(e) => {
         fadeOut();
-        props.onClick(e);
+        onClick(e);
       }}
     />
   );
 }
-
-Notification.defaultProps = {
-  id: "nora",
-  message: "",
-  timeout: 3000,
-  onClick: () => {},
-};

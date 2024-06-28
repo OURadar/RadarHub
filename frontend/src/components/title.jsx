@@ -9,12 +9,12 @@
 
 import React from "react";
 
-const Title = React.memo(function Title(props) {
+const Title = React.memo(function Title({ id = "title", string = "title-string" }) {
   const svgRef = React.useRef(null);
 
-  const [x, setX] = React.useState(props.x || 0);
-  const [p, setP] = React.useState(props.p || 6);
-  const [h, setH] = React.useState(props.h || 32);
+  const [x, setX] = React.useState(0);
+  const [p, setP] = React.useState(6);
+  const [h, setH] = React.useState(32);
 
   React.useEffect(() => {
     if (svgRef === null) return;
@@ -38,17 +38,12 @@ const Title = React.memo(function Title(props) {
   });
 
   return (
-    <svg id={props.id} ref={svgRef} height={h + 2 * p}>
+    <svg id={id} ref={svgRef} height={h + 2 * p}>
       <text x={x} y={h + p}>
-        {props.string}
+        {string}
       </text>
     </svg>
   );
 });
-
-Title.defaultProps = {
-  id: "title",
-  string: "title-string",
-};
 
 export { Title };

@@ -8,22 +8,11 @@ import EventNoteIcon from "@mui/icons-material/EventNote";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import GamepadIcon from "@mui/icons-material/Gamepad";
 
-export function Navigation(props) {
+export function Navigation({ value = 0, onChange = () => console.log("Navigation.onChange") }) {
   return (
-    <BottomNavigation
-      id="navbar"
-      className="blur"
-      value={props.value}
-      onChange={props.onChange}
-      showLabels
-    >
+    <BottomNavigation id="navbar" className="blur" value={value} onChange={onChange} showLabels>
       <BottomNavigationAction label="View" icon={<RadarIcon />} />
       <BottomNavigationAction label="Archive" icon={<EventNoteIcon />} />
     </BottomNavigation>
   );
 }
-
-Navigation.defaultProps = {
-  value: 0,
-  onChange: () => console.log("Navigation.onChange"),
-};

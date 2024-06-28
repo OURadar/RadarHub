@@ -16,3 +16,4 @@ netCDF4
 maxminddb
 django-allauth
 django-webpack-loader
+radar-data
