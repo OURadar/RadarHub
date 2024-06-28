@@ -214,8 +214,8 @@ To login remotely, use:
 
 ```shell
 psql -h localhost -U radarhub -W
-psql -h dwv05 -U radarhub -W
-psql -h dwv05 -U radarhub -d radarhub -W
+psql -h dcv01 -U radarhub -W
+psql -h dcv01 -U radarhub -d radarhub -W
 ```
 
 Once in the `psql` terminal, some of these could be useful:
@@ -224,7 +224,7 @@ Once in the `psql` terminal, some of these could be useful:
 \d
 \du
 \dt
-SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_file';
+SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_sweep';
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
 ```
 
