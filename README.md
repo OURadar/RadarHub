@@ -194,9 +194,16 @@ drwxrwxr-x 2 boonleng users 4.0K Jan  6 19:53 tools/
 Now, you are ready to create the RadarHub default database
 
 ```shell
-python manage.py makemigrations frontend
+python manage.py makemigrations frontend --database=data
 python manage.py makemigrations
 python manage.py migrate
+```
+
+You may check the staged migrations as
+
+```shell
+manage.py showmigrations frontend --database=data
+manage.py showmigrations
 ```
 
 That's it, the project should be ready to go for more development or deployment.

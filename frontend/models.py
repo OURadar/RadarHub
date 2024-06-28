@@ -8,118 +8,101 @@
 
 import os
 import re
+import sys
 import json
-import logging
+import radar
+import pprint
 import tarfile
 import datetime
 import numpy as np
 
-from common import colorize, get_user_agent_string, is_valid_time
+from common import colorize, get_user_agent_string, is_valid_time, dailylog
 from django.conf import settings
 from django.core.validators import int_list_validator
+from django.utils.translation import gettext_lazy
 from django.db import models
-from netCDF4 import Dataset
 
 from . import algos
 
-logger = logging.getLogger('frontend')
+__prog__ = os.path.basename(sys.argv[0])
 
-dot_colors = ['black', 'gray', 'blue', 'green', 'orange']
+logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, dailyfile=settings.DEBUG)
+pp = pprint.PrettyPrinter(indent=1, depth=2, width=120, sort_dicts=False)
+tzinfo = datetime.timezone.utc
+dot_colors = ["black", "gray", "blue", "green", "orange"]
+super_numbers = [" ", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹", "⁺", "⁻", "⁼", "⁽", "⁾"]
+vbar = [" ", "\U00002581", "\U00002582", "\U00002583", "\U00002584", "\U00002585", "\U00002586", "\U00002587"]
 
 user_agent_strings = {}
 if os.path.exists(settings.USER_AGENT_TABLE):
-    with open(settings.USER_AGENT_TABLE, 'r') as fid:
+    with open(settings.USER_AGENT_TABLE, "r") as fid:
         user_agent_strings = json.load(fid)
 
 np.set_printoptions(precision=2, threshold=5, linewidth=120)
 
-vbar = [' ', '\U00002581', '\U00002582', '\U00002583', '\U00002584', '\U00002585', '\U00002586', '\U00002587']
-
-super_numbers = [' ', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹', '⁺', '⁻', '⁼', '⁽', '⁾']
-
-pattern_3parts = re.compile(
-    r'(?P<prefix>.+)-' +
-    r'(?P<datetime>20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9])-' +
-    r'(?P<scan>[EAN][0-9\.]+)'
-    )
-pattern_4parts = re.compile(
-    r'(?P<prefix>.+)-' +
-    r'(?P<datetime>20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9])-' +
-    r'(?P<scan>[EAN][0-9\.]+)-' +
-    r'(?P<symbol>[A-Za-z0-9]+)'
-    )
-pattern_x_yyyymmdd_hhmmss = re.compile(
-    r'(?<=-)20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])-([01][0-9]|2[0-3])[0-5][0-9][0-5][0-9]')
-
-empty_sweep = {
-    'symbol': 'U',
-    'longitude': -97.422413,
-    'latitude': 35.25527,
-    'sweepTime': 1369071296.0,
-    'sweepElevation': 0.5,
-    'sweepAzimuth': 42.0,
-    'gatewidth': 15.0,
-    'waveform': 's0',
-    'prf': 1000.0,
-    'elevations': np.empty((0, 0), dtype=np.float32),
-    'azimuths': np.empty((0, 0), dtype=np.float32),
-    'values': np.empty((0, 0), dtype=np.float32),
-    'u8': np.empty((0, 0), dtype=np.uint8)
-}
-
 dummy_sweep = {
-    'symbol': "Z",
-    'longitude': -97.422413,
-    'latitude': 35.25527,
-    'sweepTime': 1369071296.0,
-    'sweepElevation': 4.0,
-    'sweepAzimuth': 42.0,
-    'gatewidth': 150.0,
-    'waveform': 's01',
-    'prf': 1000.0,
-    'elevations': np.array([4.0, 4.0, 4.0, 4.0], dtype=np.float32),
-    'azimuths': np.array([0.0, 15.0, 30.0, 45.0], dtype=np.float32),
-    'values': np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]], dtype=np.float32),
-    'u8': np.array([[64, 108, 62], [42, 52, 46], [82, 92, 82], [112, 122, 132]], dtype=np.uint8)
+    "kind": "U",
+    "txrx": "M",
+    "symbol": "Z",
+    "time": 1369071296.0,
+    "latitude": 35.25527,
+    "longitude": -97.422413,
+    "sweepElevation": 4.0,
+    "sweepAzimuth": 42.0,
+    "gatewidth": 150.0,
+    "waveform": "s01",
+    "prf": 1000.0,
+    "elevations": np.array([15, 14.0, 14.2, 16.0], dtype=np.float32),
+    "azimuths": np.array([15.0, 30.0, 45.0, 60.0], dtype=np.float32),
+    "values": {"Z": np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]], dtype=np.float32)},
+    "u8": {"Z": np.array([[64, 108, 62], [42, 52, 46], [0, 0, 82], [112, 122, 132]], dtype=np.uint8)},
 }
 
 # Some helper functions
 
-'''
+"""
     value - Raw values
-'''
-def val2ind(values, symbol='Z'):
-    def rho2ind(values):
-        m3 = values > 0.93
-        m2 = np.logical_and(values > 0.7, ~m3)
-        index = values * 52.8751
-        index[m2] = values[m2] * 300.0 - 173.0
-        index[m3] = values[m3] * 1000.0 - 824.0
+"""
+
+
+def val2ind(v, symbol="Z"):
+    def rho2ind(x):
+        m3 = x > 0.93
+        m2 = np.logical_and(x > 0.7, ~m3)
+        index = x * 52.8751
+        index[m2] = x[m2] * 300.0 - 173.0
+        index[m3] = x[m3] * 1000.0 - 824.0
         return index
-    if symbol == 'Z':
-        u8 = values * 2.0 + 64.0
-    elif symbol == 'V':
-        u8 = values * 2.0 + 128.0
-    elif symbol == 'W':
-        u8 = values * 20.0
-    elif symbol == 'D':
-        u8 = values * 10.0 + 100.0
-    elif symbol == 'P':
-        u8 = values * 128.0 / np.pi + 128.0
-    elif symbol == 'R':
-        u8 = rho2ind(values)
-    elif symbol == 'I':
-        u8 = (values - 0.5) * 42 + 46
+
+    if symbol == "Z":
+        u8 = v * 2.0 + 64.0
+    elif symbol == "V":
+        u8 = v * 2.0 + 128.0
+    elif symbol == "W":
+        u8 = v * 20.0
+    elif symbol == "D":
+        u8 = v * 10.0 + 100.0
+    elif symbol == "P":
+        u8 = v * 128.0 / np.pi + 128.0
+    elif symbol == "R":
+        u8 = rho2ind(v)
+    elif symbol == "I":
+        u8 = (v - 0.5) * 42 + 46
     else:
-        u8 = values
+        u8 = v
     # Map to closest integer, 0 is transparent, 1+ is finite.
     # np.nan will be converted to 0 during np.nan_to_num(...)
     return np.nan_to_num(np.clip(np.round(u8), 1.0, 255.0), copy=False).astype(np.uint8)
 
+
+def starts_with_cf(string):
+    return bool(re.match(r"^cf", string, re.IGNORECASE))
+
+
 # Create your models here.
 
-'''
-File
+"""
+File (deprecating)
 
  - name = filename of the sweep, e.g., PX-20130520-191000-E2.6-Z.nc
  - path = absolute path of the data, e.g., /mnt/data/PX1000/2013/20130520/_original/PX-20130520-191000-E2.6.tar.xz
@@ -133,7 +116,9 @@ File
  - get_age() - returns the current age of the file
  - read() - reads from a plain path or a .tgz / .txz / .tar.xz archive using _read() and returns a sweep
  - _read() - reads from a file object, returns a dictionary with the data
-'''
+"""
+
+
 class File(models.Model):
     name = models.CharField(max_length=48)
     path = models.CharField(max_length=256)
@@ -143,11 +128,13 @@ class File(models.Model):
     offset_data = models.PositiveIntegerField(default=0)
 
     class Meta:
-        indexes = [models.Index(fields=['date', ]),
-                   models.Index(fields=['name', ])]
+        indexes = [
+            models.Index(fields=["date"]),
+            models.Index(fields=["name"]),
+        ]
 
     def __repr__(self):
-        return f'{self.name} @ {self.path}'
+        return f"{self.name} @ {self.path}"
 
     def show(self):
         print(self.__repr__())
@@ -158,138 +145,81 @@ class File(models.Model):
             return path
         if not search:
             return None
-        path = os.path.join(self.path.replace('/mnt/data', '/Volumes/Data'), self.name)
+        path = os.path.join(self.path.replace("/mnt/data", "/Volumes/Data"), self.name)
         if os.path.exists(path):
             return path
-        path = os.path.join(os.path.expanduser('~/Downloads'), self.name)
+        path = os.path.join(os.path.expanduser("~/Downloads"), self.name)
         if os.path.exists(path):
             return path
         return None
 
     def get_age(self):
-        now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
+        now = datetime.datetime.now(datetime.UTC)
         return now - self.date
 
     def read(self, finite=False):
-        if any([ext in self.path for ext in ['tgz', 'txz', 'tar.xz']]):
-            if settings.VERBOSE > 1:
-                print(f'models.File.read() {self.path} {self.name}')
-            try:
-                with tarfile.open(self.path) as aid:
-                    info = tarfile.TarInfo(self.name)
-                    info.size = self.size
-                    info.offset = self.offset
-                    info.offset_data = self.offset_data
-                    with aid.extractfile(info) as fid:
-                        return self._read(fid, finite=finite)
-            except:
-                logger.error(f'Error opening archive {self.path}')
-                return empty_sweep
-        else:
-            with open(self.path) as fid:
-                return self._read(fid, finite=finite)
-
-    def _read(self, fid, finite=False):
-        try:
-            with Dataset('memory', mode='r', memory=fid.read()) as nc:
-                symbol = self.name.split('.')[-2].split('-')[-1]
-                name = nc.getncattr('TypeName')
-                longitude = nc.getncattr('Longitude')
-                latitude = nc.getncattr('Latitude')
-                sweepTime = nc.getncattr('Time')
-                sweepElevation = nc.getncattr('Elevation')
-                sweepAzimuth = nc.getncattr('Azimuth')
-                attrs = nc.ncattrs()
-                prf = float(round(nc.getncattr('PRF-value') * 0.1) * 10.0)
-                waveform = nc.getncattr('Waveform') if 'Waveform' in attrs else ''
-                gatewidth = float(nc.variables['GateWidth'][:][0])
-                elevations = np.array(nc.variables['Elevation'][:], dtype=np.float32)
-                azimuths = np.array(nc.variables['Azimuth'][:], dtype=np.float32)
-                values = np.array(nc.variables[name][:], dtype=np.float32)
-                createdBy = nc.getncattr('CreatedBy')
-                if finite:
-                    values = np.nan_to_num(values)
-                else:
-                    values[values < -90] = np.nan
-                return {
-                    'symbol': symbol,
-                    'longitude': longitude,
-                    'latitude': latitude,
-                    'sweepTime': sweepTime,
-                    'sweepElevation': sweepElevation,
-                    'sweepAzimuth': sweepAzimuth,
-                    'prf': prf,
-                    'waveform': waveform,
-                    'gatewidth': gatewidth,
-                    'createdBy': createdBy,
-                    'elevations': elevations,
-                    'azimuths': azimuths,
-                    'values': values
-                }
-        except:
-            logger.error(f'Error reading {self.name}')
-            return empty_sweep
+        return radar.read(self.path, finite=finite)
 
     @staticmethod
-    def dummy_sweep(name='PX-20130520-123456-Z.nc'):
-        parts = name.split('-')
+    def dummy_sweep(name="PX-20130520-123456-Z.nc"):
+        parts = name.split("-")
         sweep = dummy_sweep.copy()
-        sweep['symbol'] = parts[4] if len(parts) > 4 else "Z"
-        sweep['sweepTime'] = datetime.datetime.strptime(parts[1] + parts[2], r'%Y%m%d%H%M%S').timestamp()
-        sweep['sweepElevation'] = float(parts[3][1:]) if "E" in parts[3] else 0.0
-        sweep['sweepAzimuth'] = float(parts[3][1:]) if "A" in parts[3] else 42.0
+        sweep["time"] = datetime.datetime.strptime(parts[1] + parts[2], r"%Y%m%d%H%M%S").timestamp()
+        sweep["sweepElevation"] = float(parts[3][1:]) if "E" in parts[3] else 0.0
+        sweep["sweepAzimuth"] = float(parts[3][1:]) if "A" in parts[3] else 42.0
+        sweep["symbol"] = parts[4] if len(parts) > 4 else "Z"
         return sweep
 
     @staticmethod
     def load(name):
         # Database is indexed by date so we extract the time first for a quicker search
-        match = pattern_4parts.search(name)
+        match = radar.re_4parts.search(name)
         if match is None:
-            logger.error(f'Invalid name {name}')
-            return empty_sweep
+            logger.error(f"Invalid name {name}")
+            return radar.empty_sweep
         parts = match.groupdict()
-        # print(parts)
-        s = parts['datetime']
+        s = parts["datetime"]
         if not is_valid_time(s):
-            return empty_sweep
-        date = f'{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z'
+            return radar.empty_sweep
+        date = f"{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z"
 
         # product = {
         #     'Z': {'source': name, 'process': algos.passthrough, 'valuemap': 'Z'},
         #     'V': {'source': name, 'process': algos.passthrough, 'valuemap': 'V'},
         # }
 
-        symbol = parts['symbol']
-        if symbol in ['Z', 'V', 'W', 'D', 'P', 'R']:
+        symbol = parts["symbol"]
+        if symbol in ["Z", "V", "W", "D", "P", "R"]:
             source = name
             process = algos.passthrough
-            valuemap = parts['symbol']
+            valuemap = parts["symbol"]
         elif symbol == "I":
-            source = '-'.join([parts['prefix'], parts['datetime'], parts['scan'], 'V'])
+            source = "-".join([parts["prefix"], parts["datetime"], parts["scan"], "V"])
             process = algos.vlabel
-            valuemap = 'I'
-        elif symbol == 'U':
-            source = '-'.join([parts['prefix'], parts['datetime'], parts['scan'], 'V'])
+            valuemap = "I"
+        elif symbol == "U":
+            source = "-".join([parts["prefix"], parts["datetime"], parts["scan"], "V"])
             process = algos.vunfold
-            valuemap = 'V'
-        elif symbol == 'Y':
-            source = '-'.join([parts['prefix'], parts['datetime'], parts['scan'], 'Z'])
+            valuemap = "V"
+        elif symbol == "Y":
+            source = "-".join([parts["prefix"], parts["datetime"], parts["scan"], "Z"])
             process = algos.zshift
-            valuemap = 'Z'
+            valuemap = "Z"
         else:
-            return empty_sweep
+            return radar.empty_sweep
 
         match = File.objects.filter(date=date).filter(name__startswith=source)
         if match.exists():
             match = match.first()
             sweep = match.read()
-            sweep['values'] = process(sweep['values'])
-            sweep['u8'] = val2ind(sweep['values'], symbol=valuemap)
+            sweep["values"] = process(sweep["values"])
+            sweep["u8"] = val2ind(sweep["values"], symbol=valuemap)
             return sweep
         else:
-            return empty_sweep
+            return radar.empty_sweep
 
-'''
+
+"""
 Day
 
  - date = date in database native format (UTC)
@@ -310,50 +240,54 @@ Day
  - last_hour_range() - returns the last hour as a range, e.g., ['2022-01-21 03:00:00Z', '2022-01-21 03:59:59.9Z]
  - day_range() - returns the day as a range, e.g., ['2022-01-21 00:00:00Z', '2022-01-21 23:59:59.9Z]
  - weather_condition() - returns one of these: 1-HAS_DATA, 2-HAS_CLEAR_AIR, 3-HAS_RAIN, 4-HAS_INTENSE_RAIN
-'''
+"""
+
+
 class Day(models.Model):
     date = models.DateField()
-    name = models.CharField(max_length=8, default='PX-')
+    name = models.CharField(max_length=8, default="PX-")
     count = models.PositiveIntegerField(default=0)
     duration = models.PositiveIntegerField(default=0)
     blue = models.PositiveIntegerField(default=0)
     green = models.PositiveIntegerField(default=0)
     orange = models.PositiveIntegerField(default=0)
     red = models.PositiveIntegerField(default=0)
-    hourly_count = models.CharField(default='0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0',
-        max_length=120, validators=[int_list_validator])
+    hourly_count = models.CharField(
+        default="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", max_length=120, validators=[int_list_validator]
+    )
 
     class Meta:
-        indexes = [models.Index(fields=['date', ]),
-                   models.Index(fields=['name', ])]
+        indexes = [models.Index(fields=["date"]), models.Index(fields=["name"])]
 
-    def __repr__(self, format='pretty'):
+    def __repr__(self, format="pretty"):
         self.fix_date()
-        date = self.date.strftime(r'%Y%m%d') if self.date else '00000000'
-        dot = colorize('●', dot_colors[self.weather_condition()])
-        if format == 'short':
-            return self.name + date
-        elif format == 'raw':
-            return f'{self.name}{date} {dot} {self.blue},{self.green},{self.orange},{self.red} {self.count} {self.hourly_count} ({len(self.hourly_count)})'
+        date = self.date.strftime(r"%Y%m%d") if self.date else "00000000"
+        dot = colorize("●", dot_colors[self.weather_condition()])
+        if format == "short":
+            return f"{self.name}-{date}"
+        elif format == "raw":
+            return f"{self.name}-{date} {dot} {self.blue},{self.green},{self.orange},{self.red} {self.count} {self.hourly_count} ({len(self.hourly_count)})"
         else:
+
             def _int2str(num):
                 q = num // 1000
                 r = num % 1000
                 s = super_numbers[q] + str(r)
-                return f'{s:>4}'
-            counts = ''.join([_int2str(int(n)) for n in self.hourly_count.split(',')])
-            show = f'{date} {dot} {self.__vbar__()} {counts}'
+                return f"{s:>4}"
+
+            counts = "".join([_int2str(int(n)) for n in self.hourly_count.split(",")])
+            show = f"{date} {dot} {self.__vbar__()} {counts}"
         return show
 
     def __vbar__(self):
-        b = '\033[48;5;238m'
-        for s, c in [(self.blue, 'blue'), (self.green, 'green'), (self.orange, 'orange'), (self.red, 'red')]:
+        b = "\033[48;5;238m"
+        for s, c in [(self.blue, "blue"), (self.green, "green"), (self.orange, "orange"), (self.red, "red")]:
             i = min(7, int(s / 100))
-            b += colorize(vbar[i], c, end='')
-        b += '\033[m'
+            b += colorize(vbar[i], c, end="")
+        b += "\033[m"
         return b
 
-    def show(self, format=''):
+    def show(self, format=""):
         print(self.__repr__(format=format))
 
     def fix_date(self):
@@ -363,30 +297,30 @@ class Day(models.Model):
             try:
                 self.date = datetime.date.fromisoformat(self.date)
             except:
-                logger.warning(f'fix_date() Unable to fix {self.date}')
+                logger.warning(f"fix_date() Unable to fix {self.date}")
                 self.date = None
 
     def first_hour(self):
-        hours = [k for k, e in enumerate(self.hourly_count.split(',')) if e != '0']
+        hours = [k for k, e in enumerate(self.hourly_count.split(",")) if e != "0"]
         return min(hours) if len(hours) else None
 
     def last_hour(self):
-        hours = [k for k, e in enumerate(self.hourly_count.split(',')) if e != '0']
+        hours = [k for k, e in enumerate(self.hourly_count.split(",")) if e != "0"]
         return max(hours) if len(hours) else None
 
     def day_string(self):
         if self.date is None:
             return None
         self.fix_date()
-        return self.date.strftime(f'%Y-%m-%d')
+        return self.date.strftime(f"%Y-%m-%d")
 
     def last_hour_range(self):
         if self.date is None:
             return None
         day = self.day_string()
         hour = self.last_hour()
-        day_hour = f'{day} {hour:02d}'
-        return [f'{day_hour}:00:00Z', f'{day_hour}:59:59.9Z']
+        day_hour = f"{day} {hour:02d}"
+        return [f"{day_hour}:00:00Z", f"{day_hour}:59:59.9Z"]
 
     def day_range(self):
         if self.date is None:
@@ -394,7 +328,7 @@ class Day(models.Model):
         day = self.day_string()
         first = self.first_hour()
         last = self.last_hour()
-        return [f'{day} {first:02d}:00Z', f'{day} {last:02d}:59:59.9Z']
+        return [f"{day} {first:02d}:00Z", f"{day} {last:02d}:59:59.9Z"]
 
     def weather_condition(self):
         cond = 0
@@ -412,11 +346,75 @@ class Day(models.Model):
         elif self.blue == 0 and self.green == 1000 and self.red == 0:
             cond = 1
         if cond == 0:
-            logger.info(f'Day.weather_condition() {self.name}{self.date} b:{self.blue} g:{self.green} o:{self.orange} r:{self.red} -> {cond} -> 1')
+            logger.info(
+                f"Day.weather_condition() {self.name}{self.date} b:{self.blue} g:{self.green} o:{self.orange} r:{self.red} -> {cond} -> 1"
+            )
             cond = 1
         return cond
 
-'''
+    def summarize(self):
+        fn_name = colorize("Day.compute()", "green")
+        logger.debug(f"{fn_name}")
+
+        day_datetime = datetime.datetime(self.date.year, self.date.month, self.date.day, tzinfo=datetime.timezone.utc)
+        hourly_count = [int(h) for h in self.hourly_count.split(",")]
+        stride = datetime.timedelta(minutes=20)
+        hour = datetime.timedelta(hours=1)
+
+        day_set = Sweep.objects.filter(time__range=self.day_range(), name=self.name)
+        if day_set.count() == 0:
+            return
+
+        b = 0
+        g = 0
+        o = 0
+        r = 0
+        total = 0
+        for k, count in enumerate(hourly_count):
+            if count == 0:
+                continue
+            logger.debug(f"hour = {k}   count = {count}")
+            s = day_datetime + k * hour
+            e = s + hour
+            date_range = [s, e]
+            hour_set = day_set.filter(time__range=date_range, name=self.name)
+            scans = list(np.unique([sweep.scan for sweep in hour_set]))
+            if len(scans) > 1 and "E0.0" in scans:
+                scans.remove("E0.0")
+            for j, scan in enumerate(scans):
+                sweeps = hour_set.filter(time__range=date_range, name=self.name, scan=scan)
+                if sweeps.exists():
+                    select = j * len(sweeps) // len(scans)
+                    sweep = sweeps[select] if select < len(sweeps) else sweeps.first()
+                    logger.debug(f"DEBUG: {sweep}")
+                    sweep.load(finite=True, symbols=["Z"])
+                    z = sweep.z
+                    # Zero out the first few kilometers
+                    if sweep.kind == Sweep.Kind.WDS:
+                        ng = int(5000.0 / sweep.data["gatewidth"])
+                    else:
+                        ng = 24
+                    sweep.z[:, :ng] = -100.0
+                    b += np.sum(z >= 5.0)
+                    g += np.sum(z >= 20.0)
+                    o += np.sum(z >= 35.0)
+                    r += np.sum(z >= 50.0)
+                    total += z.size
+                s += stride
+        # print(f'total = {total}  b = {b}  g = {g}  o = {o}  r = {r}')
+        r = 1000 * r / o if r else 0
+        o = 1000 * o / g if o else 0
+        g = 1000 * g / b if g else 0
+        b = 10000 * b / total if b else 0
+        # print(f'total = {total}  b = {b}  g = {g}  o = {o}  r = {r}')
+        self.blue = int(b)
+        self.green = int(g)
+        self.orange = int(o)
+        self.red = int(r)
+        self.save()
+
+
+"""
 Visitor
 
  - ip = IP address of the visitor
@@ -429,52 +427,82 @@ Visitor
  - machine() - returns the OS
  - browser() - returns the browser
  - dict() - returns self as a dictionary
-'''
+"""
+
 
 class Visitor(models.Model):
     ip = models.GenericIPAddressField()
     count = models.PositiveIntegerField(default=0)
     payload = models.PositiveIntegerField(default=0)
     bandwidth = models.PositiveIntegerField(default=0)
-    user_agent = models.CharField(max_length=256, default='')
+    user_agent = models.CharField(max_length=256, default="")
     last_visited = models.DateTimeField()
 
     class Meta:
-        indexes = [models.Index(fields=['ip', ])]
+        indexes = [models.Index(fields=["ip"])]
 
     def __repr__(self):
         time_string = self.last_visited_time_string()
-        return f'{self.ip} : {self.count} : {self.bandwidth} : {time_string}'
+        return f"{self.ip} : {self.count} : {self.bandwidth} : {time_string}"
 
     def last_visited_date_string(self):
-        return self.last_visited.strftime(r'%Y/%m/%d')
+        return self.last_visited.strftime(r"%Y/%m/%d")
 
     def last_visited_time_string(self):
-        return self.last_visited.strftime(r'%Y/%m/%d %H:%M')
+        return self.last_visited.strftime(r"%Y/%m/%d %H:%M")
 
     def user_agent_string(self):
         return get_user_agent_string(self.user_agent)
 
     def dict(self, num2str=True):
         return {
-            'ip': self.ip,
-            'count': f'{self.count:,d}' if num2str else self.count,
-            'payload': f'{self.payload:,d}' if num2str else self.payload,
-            'bandwidth': f'{self.bandwidth:,d}' if num2str else self.bandwidth,
-            'user_agent': self.user_agent,
-            'last_visited': self.last_visited
+            "ip": self.ip,
+            "count": f"{self.count:,d}" if num2str else self.count,
+            "payload": f"{self.payload:,d}" if num2str else self.payload,
+            "bandwidth": f"{self.bandwidth:,d}" if num2str else self.bandwidth,
+            "user_agent": self.user_agent,
+            "last_visited": self.last_visited,
         }
 
-'''
+
+"""
 Sweep
 
-- An encapsulation of multiple File objects
-- Not a subclass of models.Model
+- New model that will replace the "File" model
+- An encapsulation of a sweep that contains multiple products
+- Product symbol is no longer required in name
+- Variables in database:
+    - time : time in database native format (UTC)
+    - kind : type of the scan storage architecture, e.g., CF-Radial, WDSS-II
+    - scan : elevation, azimuth, or just number, e.g., E2.4, A42.0, N64
+    - name : prefix of the data, e.g., "PX" for PX-20130520-191000-E2.6
+    - path : absolute path of the data, e.g., /mnt/data/PX1000/2013/20130520/_original/PX-20130520-191000-E2.6.tar.xz
+    - tarinfo: {"Z": (name, size, offset, offset_data),
+                "V": (name, size, offset, offset_data),
+                "W": (name, size, offset, offset_data), ...}
+"""
 
-'''
-class Sweep:
-    name = ''
-    parts = {}
+
+class Sweep(models.Model):
+    # name = "PX-20130520-191000-E2.6-Z.nc" for split; "BS1-20130520-191000-E2.6.nc" for single
+    class Kind(models.TextChoices):
+        UNK = "U", gettext_lazy("Unknown")
+        CF1 = "1", gettext_lazy("CF-Radial-1")
+        CF2 = "2", gettext_lazy("CF-Radial-2")
+        WDS = "W", gettext_lazy("WDSS-II")
+
+    class TxRx(models.TextChoices):
+        M = "M", gettext_lazy("Monostatic")
+        B = "B", gettext_lazy("Bistatic")
+
+    time = models.DateTimeField()
+    kind = models.CharField(max_length=8, default=Kind.UNK)
+    scan = models.CharField(max_length=8, default="N0")
+    name = models.CharField(max_length=16)
+    path = models.CharField(max_length=256)
+    symbols = models.CharField(max_length=256, blank=True)
+    tarinfo = models.JSONField(blank=True, default=dict)
+    data = None
     z = None
     v = None
     w = None
@@ -482,18 +510,143 @@ class Sweep:
     p = None
     r = None
 
-    def __init__(self, name):
-        self.name = name
-        match = pattern_3parts.search(self.name)
-        if match:
-            self.parts = match.groupdict()
+    class Meta:
+        indexes = [models.Index(fields=["time"]), models.Index(fields=["name"])]
 
-    def load(self):
-        file = File.objects.filter(name=self.name+'-Z.nc')
-        if file:
-            self.z = file.first().read()
-            self.v = File.objects.filter(name=self.name+'-V.nc').first().read()
-            self.w = File.objects.filter(name=self.name+'-W.nc').first().read()
-            self.d = File.objects.filter(name=self.name+'-D.nc').first().read()
-            self.p = File.objects.filter(name=self.name+'-P.nc').first().read()
-            self.r = File.objects.filter(name=self.name+'-R.nc').first().read()
+    def __repr__(self, format=None):
+        datetimeString = self.time.strftime(r"%Y%m%d-%H%M%S")
+        if format == "full":
+            return f"Sweep('{self.name}', '{datetimeString}', '{self.scan}', [{self.symbols}]) @ {self.path}"
+        return f"Sweep('{self.name}', '{datetimeString}', '{self.scan}', {self.symbols})"
+
+    def __str__(self):
+        return self.__repr__()
+
+    def load(self, symbols=["Z", "V", "W", "D", "P", "R"], finite=False, verbose=0):
+        self.data = radar.read(self.path, symbols=symbols, tarinfo=self.tarinfo, verbose=verbose)
+        if verbose > 1:
+            func = colorize("Sweep.load()", "green")
+            print(f"{func} {self.__str__()}")
+            print("tarinfo =")
+            pp.pprint(self.tarinfo)
+            print("data =")
+            pp.pprint(self.data)
+        products = self.data["products"]
+        if finite:
+            for key, value in products.items():
+                products[key] = np.nan_to_num(value)
+        if "Z" in products:
+            self.z = products["Z"]
+        if "V" in products:
+            self.v = products["V"]
+        if "W" in products:
+            self.w = products["W"]
+        if "D" in products:
+            self.d = products["D"]
+        if "P" in products:
+            self.p = products["P"]
+        if "R" in products:
+            self.r = products["R"]
+        return self.data
+
+    def summary(self, markdown=False):
+        if self.data is None:
+            self.load()
+        shape = self.z.shape
+        # Data size for the frontend
+        size = 56 + 2 * shape[0] * 4 + shape[0] * shape[1]
+        np.set_printoptions(formatter={"float": "{:.1f}".format})
+        if markdown:
+            timestr = self.time.strftime(r"%Y%m%d-%H%M%S")
+            message = f"Sweep Summary of `{self.name}-{timestr}`\n\n"
+            message += "| Key | Values |\n"
+            message += "|---|---|\n"
+            for k, v in self.data.items():
+                if k == "products":
+                    continue
+                message += f"| `{k}` | {v} |\n"
+            message += f"| shape | {shape} |\n"
+            message += f"| size | {size:,d} B |\n"
+            print(message)
+        else:
+            print("Sweep.data =")
+            pp.pprint(self.data)
+            print(f"Data shape = {shape}\nRaw size = {size:,d} B")
+
+    @staticmethod
+    def _read_tarinfo(source, verbose=0):
+        with tarfile.open(source) as aid:
+            members = aid.getmembers()
+            if verbose > 1:
+                logger.debug(f"members: {members}")
+            tarinfo = {}
+            for member in members:
+                parts = radar.re_4parts.search(member.name)
+                if parts:
+                    parts = parts.groupdict()
+                    symbol = parts["symbol"]
+                else:
+                    symbol = "*"
+                tarinfo[symbol] = (member.name, member.size, member.offset, member.offset_data)
+            if symbol == "*" and len(members) > 1:
+                logger.error("_read_tarinfo(): Too many members")
+            return tarinfo
+
+    @staticmethod
+    def read(source, finite=False, u8=False, verbose=0):
+        fn_name = colorize("Sweep.read()", "green")
+        parts = radar.re_4parts.search(source)
+        if parts is None:
+            logger.error(f"Unidentified source = {source}")
+            return radar.empty_sweep
+        if verbose > 1:
+            print(f"{fn_name} {source}  {parts['time']}  {parts['symbol']}")
+        time = datetime.datetime.strptime(parts["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=tzinfo)
+        query = Sweep.objects.filter(time=time, name=parts["name"])
+        if query is None:
+            logger.error(f"{fn_name} {source} not found")
+            return radar.empty_sweep
+        sweep = query.first()
+        data = sweep.load(symbols=[parts["symbol"]], finite=finite, verbose=verbose)
+        if u8:
+            data["u8"] = {}
+            for key, value in data["products"].items():
+                if np.ma.isMaskedArray(value):
+                    value = value.filled(np.nan)
+                data["u8"][key] = val2ind(value, symbol=key)
+        return data
+
+    @staticmethod
+    def location(source):
+        fn_name = colorize("Sweep.location()", "green")
+        parts = radar.re_2parts.search(source)
+        if parts is None:
+            day = Day.objects.filter(name=source)
+        else:
+            parts = parts.groupdict()
+            day = Day.objects.filter(name=parts["name"])
+        if not day.exists():
+            logger.warn(f"Sweep.location() {source} not found")
+            return {"longitude": -97.43730160, "latitude": 35.1812820, "last": "00000000"}
+        day = day.latest("date")
+        ymd = day.date.strftime(r"%Y%m%d")
+        hour = day.last_hour()
+        if hour is None:
+            message = colorize(f" {source} has no data for the day ", "warning")
+            logger.warn(f"{fn_name}   {message}")
+            return {"longitude": -97.43730160, "latitude": 35.1812820, "last": ymd}
+        ss = datetime.datetime.strptime(f"{ymd}{hour:02d}0000Z", r"%Y%m%d%H%M%SZ").replace(tzinfo=tzinfo)
+        ee = datetime.datetime.strptime(f"{ymd}{hour:02d}5959.9Z", r"%Y%m%d%H%M%S.%fZ").replace(tzinfo=tzinfo)
+        name = day.name
+        sweep = Sweep.objects.filter(time__range=[ss, ee], name=name).last()
+        if sweep is None:
+            message = colorize(f"{name} not found", "red")
+            logger.warn(f"{fn_name} {message}")
+            return {"longitude": -97.43730160, "latitude": 35.1812820, "last": ymd}
+        data = sweep.load()
+        if hasattr(data["latitude"], "mask") and (data["latitude"].mask or data["longitude"].mask):
+            date = datetime.datetime.fromtimestamp(data["time"]).strftime(r"%Y%m%d-%H%M%S")
+            message = colorize(f" {name}-{date} has invalid location ", "warning")
+            logger.warn(f"{fn_name} {message}")
+            return {"longitude": -97.43730160, "latitude": 35.1812820, "last": ymd}
+        return {"longitude": data["longitude"], "latitude": data["latitude"], "last": ymd}

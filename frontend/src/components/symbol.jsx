@@ -1,9 +1,19 @@
 import React from "react";
 
-export function Symbol(props) {
+export function Symbol({
+  id = "id",
+  text = "text",
+  symbol = "SYM",
+  anchor = "end",
+  count = 0,
+  pad = 6,
+  // onTouch: () => console.log("Symbol.onTouch"),
+  onClick = () => console.log("Symbol.onClick"),
+}) {
+  const w = 280;
+  const x = anchor == "start" ? 5 : anchor == "middle" ? 0.5 * w : w - 5;
   const svgRef = React.useRef(null);
-
-  const [p, setP] = React.useState(props.pad);
+  const [p, setP] = React.useState(pad);
 
   React.useEffect(() => {
     if (svgRef === null) return;
@@ -13,39 +23,24 @@ export function Symbol(props) {
   }, []);
 
   React.useEffect(() => {
-    // const onTouch = (e) => props.onTouch(e);
-    const onClick = (e) => props.onClick(e);
+    const fn = (e) => onClick(e);
     // svgRef.current.addEventListener("touchend", onTouch);
-    svgRef.current.addEventListener("mouseup", onClick);
+    svgRef.current.addEventListener("mouseup", fn);
 
     return () => {
       // svgRef.current.removeEventListener("touchend", onTouch);
-      svgRef.current.removeEventListener("mouseup", onClick);
+      svgRef.current.removeEventListener("mouseup", fn);
     };
-  }, [props.count]);
-
-  const w = 280;
-  const x = props.anchor == "start" ? 5 : props.anchor == "middle" ? 0.5 * w : w - 5;
+  }, [count]);
 
   return (
-    <svg id={props.id} ref={svgRef} width={w} height="80" className="floatText">
-      <text id="symbol" x={x} y={66 + p} textAnchor={props.anchor}>
-        {props.symbol}
+    <svg id={id} ref={svgRef} width={w} height="80" className="floatText">
+      <text id="symbol" x={x} y={66 + p} textAnchor={anchor}>
+        {symbol}
       </text>
-      <text id="text" x={x} y={16 + p} textAnchor={props.anchor}>
-        {props.text}
+      <text id="text" x={x} y={16 + p} textAnchor={anchor}>
+        {text}
       </text>
     </svg>
   );
 }
-
-Symbol.defaultProps = {
-  id: "id",
-  text: "text",
-  symbol: "SYM",
-  anchor: "end",
-  count: 0,
-  pad: 6,
-  // onTouch: () => console.log("Symbol.onTouch"),
-  onClick: () => console.log("Symbol.onClick"),
-};

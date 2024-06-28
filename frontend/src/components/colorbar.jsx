@@ -189,7 +189,13 @@ function setCanvasStyle(canvas, gravity) {
   }
 }
 
-export function Colorbar(props) {
+export function Colorbar(
+  props = {
+    gravity: "top",
+    count: 0,
+    onClick: () => console.log("Colorbar.onClick"),
+  }
+) {
   const canvasRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -252,9 +258,3 @@ export function Colorbar(props) {
   if (props.gravity == "top") params.className = "blur";
   return <canvas {...params} />;
 }
-
-Colorbar.defaultProps = {
-  gravity: "top",
-  count: 0,
-  onClick: () => console.log("Colorbar.onClick"),
-};

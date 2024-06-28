@@ -12,6 +12,7 @@
 //
 
 import { Parser } from "binary-parser";
+import { vec3 } from "gl-matrix";
 import { deg2rad, clamp } from "./common";
 // import { logger } from "./logger";
 
@@ -26,6 +27,7 @@ let grid = {
   daysActive: {},
   hourHasData: new Array(24).fill(false),
   pathsActive: new Array(4).fill(false),
+  availableSymbols: ["Z"],
   latestScan: "",
   latestHour: -1,
   counts: [0, 0],
@@ -55,18 +57,22 @@ const sweepParser = new Parser()
   .uint16("nb")
   .uint16("nr")
   .uint16("nx")
-  .uint16("reserved")
+  .uint16("attr")
   .doublele("time")
-  .doublele("longitude")
   .doublele("latitude")
-  .doublele("doubleReserved")
+  .doublele("longitude")
+  .doublele("altitude")
+  .floatle("offsetX")
+  .floatle("offsetY")
+  .floatle("offsetZ")
+  .floatle("_notused4")
   .floatle("scanElevation")
   .floatle("scanAzimuth")
   .floatle("rangeStart")
   .floatle("rangeSpacing")
   .string("info", { length: "nx" })
-  .array("elevations", { type: "floatle", length: "nb" })
-  .array("azimuths", { type: "floatle", length: "nb" })
+  .array("ei16", { type: "int16le", length: "nb" })
+  .array("au16", { type: "uint16le", length: "nb" })
   .array("values", {
     type: "uint8",
     length: function () {
@@ -75,8 +81,8 @@ const sweepParser = new Parser()
   });
 
 // IMPORTANT: During prepend/append mode, use this before updating
-// grid.counts = buffer.counts after fetch(/data/list/...) because
-// grid.index needs to propagate to the next list in order to
+// grid.counts = buffer.counts after fetch(/data/table/...) because
+// grid.index needs to propagate to the next table in order to
 // to maintain continuity.
 function suggestGridIndex(mode, { counts, items }) {
   // console.log("suggestGridIndex", counts, items);
@@ -221,11 +227,11 @@ function connect(force = false) {
         // console.warn(`Item ${item} exists.`);
         return;
       }
-      const listHour = t.slice(0, 2);
-      const dateTimeString = `${d}-${listHour}00`;
+      const tableHour = t.slice(0, 2);
+      const dateTimeString = `${d}-${tableHour}00`;
       if (grid.dateTimeString != dateTimeString) {
         grid.dateTimeString = dateTimeString;
-        grid.hour = parseInt(listHour);
+        grid.hour = parseInt(tableHour);
         grid.items = grid.items.slice(grid.counts[0]);
         grid.counts = [grid.counts[1], 0];
         if (state.verbose) {
@@ -249,12 +255,12 @@ function connect(force = false) {
     } else if (grid.scan in grid.itemsGrouped) {
       let index = grid.itemsGrouped[grid.scan].at(-1).index;
       if (index == grid.index) {
-        // Post a list update since we won't load anything
+        // Post a table update since we won't load anything
         grid.tic++;
         reviseGridPaths();
-        self.postMessage({ type: "list", grid: grid });
+        self.postMessage({ type: "table", grid: grid });
       } else if (state.length > 1) {
-        // Use select() to select the latest index to update the animation list
+        // Use select() to select the latest index to update the animation table
         state.length = 1;
         grid.index = index;
         select(index, "catchup");
@@ -311,16 +317,16 @@ function createSweep(name = "20130520-190001-E2.6-Z") {
     `${components[1].slice(0, 2)}:` +
     `${components[1].slice(2, 4)}:` +
     `${components[1].slice(4, 6)} UTC`;
-  const isRHI = components[2][0] == "A";
+  const mode = components[2][0];
   const symbol = components[3];
   const angle = parseFloat(components[2].slice(1));
-  const scan = (isRHI ? "Az" : "El") + "  " + angle.toFixed(1);
+  const scan = mode == "A" ? "Az " + angle.toFixed(1) : mode == "E" ? "El " + angle.toFixed(1) : components[2];
   // Pad an extra azimuth and elevation
   return {
     name,
     symbol,
     timeString,
-    isRHI,
+    mode,
     nb: 4,
     nr: 3,
     nx: 0,
@@ -328,25 +334,25 @@ function createSweep(name = "20130520-190001-E2.6-Z") {
     time: dayjs.utc(timeString).unix(),
     titleString: `${timeString}  ${scan}°`,
     infoString: "No data",
-    scanElevation: isRHI ? 0.0 : angle,
-    scanAzimuth: isRHI ? angle : 0.0,
+    scanElevation: mode == "E" ? angle : 0.0,
+    scanAzimuth: mode == "A" ? angle : 0.0,
     rangeStart: 0.0,
     rangeSpacing: 0.2,
-    elevations: [4.0, 4.0, 4.0, 4.0, 4.0],
-    azimuths: [-30.0, -15.0, 0.0, 15.0, 30.0],
+    ei16: [728, 728, 728, 728, 728],
+    au16: [60075, 62805, 0, 2730, 5461],
     values: [32, 77, 30, 10, 20, 15, 50, 60, 50, 80, 90, 100],
   };
 }
 
-async function load(names) {
+async function load(items) {
   let count = 0;
   let append = false;
-  if (names.length > 1) {
+  if (items.length > 1) {
     if (state.sweeps.length > 2) {
       let newNames = state.sweeps.slice(-(frameCount - 1)).map((x) => x.name);
-      newNames.push(names.at(-1));
-      if (JSON.stringify(names) === JSON.stringify(newNames)) {
-        names = names.slice(-1);
+      newNames.push(items.at(-1));
+      if (JSON.stringify(items) === JSON.stringify(newNames)) {
+        items = items.slice(-1);
         append = true;
       }
     }
@@ -355,33 +361,38 @@ async function load(names) {
     }
   }
   await Promise.all(
-    names.map(async (name) => {
-      const url = `/data/load/${pathway}/${name}/`;
+    items.map(async (item) => {
+      const key = `${item}-${grid.symbol}`;
+      const url = `/data/load/${pathway}/${key}/`;
       console.info(`%carchive.worker.load%c ${url}%c`, nameStyle, "color: dodgerblue", "");
       // "force-cache" or "no-cache"
       return fetch(url, { cache: "no-cache" })
         .then(async (response) => {
           if (response.status == 200) {
             return response.arrayBuffer().then((buffer) => {
-              let sweep = geometry({
-                ...createSweep(name),
+              let sweep = {
+                ...createSweep(key),
                 ...sweepParser.parse(new Uint8Array(buffer)),
-              });
+              };
+              // console.log(sweep.info);
+              const gwMeters = Math.round(1.0e3 * sweep.rangeSpacing);
               sweep.info = JSON.parse(sweep.info);
-              sweep.infoString = `PRF: ${sweep.info.prf} Hz\nGatewidth: ${sweep.info.gatewidth} m\nWaveform: ${sweep.info.waveform}`;
+              sweep.infoString = `PRF: ${sweep.info.prf} Hz\nGatewidth: ${gwMeters} m\nWaveform: ${sweep.info.wf}`;
+              sweep = geometry(sweep);
+              // console.log(`%carchive.worker.load%c`, nameStyle, "", sweep);
               if (sweep.nb == 0 || sweep.nr == 0) {
-                sweep = geometry(createSweep(name));
+                sweep = geometry(createSweep(item));
               }
-              if (names.length > 1) {
+              if (items.length > 1) {
                 count++;
                 self.postMessage({
                   type: "progress",
                   payload: {
-                    progress: Math.floor((count / names.length) * 100),
+                    progress: Math.floor((count / items.length) * 100),
                     message:
                       grid.mode == "catchup"
-                        ? `New scan ${names.at(-1)}`
-                        : `Loading scans ... ${count} / ${names.length}`,
+                        ? `New scan ${items.at(-1)}`
+                        : `Loading scans ... ${count} / ${items.length}`,
                   },
                 });
               }
@@ -432,37 +443,38 @@ async function load(names) {
   });
 }
 
-function geometry(sweep) {
-  let scan = sweep["name"].split("-")[2];
+function geometryMonostatic(sweep) {
+  const scan = sweep["name"].split("-")[2];
   const rs = sweep.rangeStart;
   const re = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
+  const midx = clamp(sweep.nb / 2, 0, sweep.nb - 1);
+  const mod_az = (a) => (a < -Math.PI ? a + 2.0 * Math.PI : a > Math.PI ? a - 2.0 * Math.PI : a);
+  const elevations = sweep.elevations.map((x) => deg2rad(x));
+  const azimuths = sweep.azimuths.map((x) => deg2rad(x));
   let el_pad = 0.0;
   let az_pad = 0.0;
-  const ii = clamp(sweep.nb / 2, 0, sweep.nb - 1);
   if (scan[0] == "E") {
-    sweep.isRHI = false;
-    const da = sweep.azimuths[ii] - sweep.azimuths[ii - 1];
-    el_pad = sweep.elevations[sweep.nb - 1];
-    az_pad = sweep.azimuths[sweep.nb - 1] + da;
+    const da = mod_az(azimuths[midx] - azimuths[midx - 1]);
+    el_pad = elevations[sweep.nb - 1];
+    az_pad = azimuths[sweep.nb - 1] + da;
   } else if (scan[0] == "A") {
-    sweep.isRHI = true;
-    const de = sweep.elevations[ii] - sweep.elevations[ii - 1];
-    el_pad = sweep.elevations[sweep.nb - 1] + de;
-    az_pad = sweep.azimuths[sweep.nb - 1];
+    const de = elevations[midx] - elevations[midx - 1];
+    el_pad = elevations[sweep.nb - 1] + de;
+    az_pad = azimuths[sweep.nb - 1];
   } else {
-    const da = sweep.azimuths[ii] - sweep.azimuths[ii - 1];
-    const de = sweep.elevations[ii] - sweep.elevations[ii - 1];
-    el_pad = sweep.elevations[sweep.nb - 1] + de;
-    az_pad = sweep.azimuths[sweep.nb - 1] + da;
+    const da = mod_az(azimuths[midx] - azimuths[midx - 1]);
+    const de = elevations[midx] - elevations[midx - 1];
+    el_pad = elevations[sweep.nb - 1] + de;
+    az_pad = azimuths[sweep.nb - 1] + da;
   }
-  sweep.elevations.push(el_pad);
-  sweep.azimuths.push(az_pad);
+  elevations.push(el_pad);
+  azimuths.push(az_pad);
   let points = [];
   let origins = [];
   let elements = [];
   for (let k = 0; k < sweep.nb + 1; k++) {
-    const e = deg2rad(sweep.elevations[k]);
-    const a = deg2rad(sweep.azimuths[k]);
+    const e = elevations[k];
+    const a = azimuths[k];
     const ce = Math.cos(e);
     const se = Math.sin(e);
     const ca = Math.cos(a);
@@ -485,6 +497,123 @@ function geometry(sweep) {
   return sweep;
 }
 
+function geometryBistatic(sweep) {
+  const scan = sweep["name"].split("-")[2];
+  const nbp1 = sweep.nb + 1;
+  const nrp1 = sweep.nr + 1;
+  const midx = clamp(sweep.nb / 2, 0, sweep.nb - 1);
+  const mod_az = (a) => (a < -Math.PI ? a + 2.0 * Math.PI : a > Math.PI ? a - 2.0 * Math.PI : a);
+  const elevations = sweep.elevations.map((x) => deg2rad(x));
+  const azimuths = sweep.azimuths.map((x) => deg2rad(x));
+  let el_pad = 0.0;
+  let az_pad = 0.0;
+  if (scan[0] == "E") {
+    const da = mod_az(azimuths[midx] - azimuths[midx - 1]);
+    el_pad = elevations[sweep.nb - 1];
+    az_pad = azimuths[sweep.nb - 1] + da;
+  } else if (scan[0] == "A") {
+    const de = elevations[midx] - elevations[midx - 1];
+    el_pad = elevations[sweep.nb - 1] + de;
+    az_pad = azimuths[sweep.nb - 1];
+  } else {
+    const da = mod_az(azimuths[midx] - azimuths[midx - 1]);
+    const de = elevations[midx] - elevations[midx - 1];
+    el_pad = elevations[sweep.nb - 1] + de;
+    az_pad = azimuths[sweep.nb - 1] + da;
+  }
+  elevations.push(el_pad);
+  azimuths.push(az_pad);
+  const o = [0, 0, 0];
+  const d = vec3.length([sweep.offsetX, sweep.offsetY, sweep.offsetZ]);
+  const va = Math.atan2(sweep.offsetX, sweep.offsetY);
+  const ve = Math.asin(sweep.offsetZ / d);
+  const rr = Array.from({ length: nrp1 }, (_, i) => i * sweep.rangeSpacing + sweep.rangeStart + d);
+  const pu = elevations.map((e, i) => {
+    const a = azimuths[i];
+    const h = Math.cos(e);
+    const x = h * Math.sin(a);
+    const y = h * Math.cos(a);
+    const z = Math.sin(e);
+    return [x, y, z];
+  });
+  const pc = pu.map((x) => vec3.rotateX([], vec3.rotateZ([], x, o, va), o, -ve));
+  const bt = pc.map((x) => Math.acos(x[1]));
+  const dc = bt.map((b) => d * Math.cos(b));
+  const ranges = [];
+  dc.forEach((x) => rr.forEach((r) => ranges.push((r ** 2 - d ** 2) / (2 * (r - x)))));
+  // REGL.Elements buffer is limited to 16-bit (OpenGL stuff), so we limit ourselves to 65535 indices
+  let points = [];
+  let origins = [];
+  let elements = [];
+  const dr = 10;
+  for (let k = 0; k < nbp1; k++) {
+    const e = elevations[k];
+    const a = azimuths[k];
+    const v = k / sweep.nb;
+    const ce = Math.cos(e);
+    const se = Math.sin(e);
+    const ca = Math.cos(a);
+    const sa = Math.sin(a);
+    const rr = ranges.slice(k * nrp1, (k + 1) * nrp1);
+    const xp = ce * sa;
+    const yp = ce * ca;
+    const calculateAndPush = (j) => {
+      const r = rr[j];
+      const x = r * xp;
+      const y = r * yp;
+      const z = r * se;
+      const u = j / sweep.nr;
+      points.push(x, y, z);
+      origins.push(u, v);
+    };
+    // First 10 elements in steps of 1, then steps of 10, and the final element
+    for (let j = 0; j < 10; j++) {
+      calculateAndPush(j);
+    }
+    for (let j = 10; j < nrp1 - dr - 1; j += dr) {
+      calculateAndPush(j);
+    }
+    calculateAndPush(nrp1 - 1);
+  }
+  let nrx = 0;
+  for (let j = 0; j < 10; j++) {
+    nrx++;
+  }
+  for (let j = 10; j < nrp1 - dr - 1; j += dr) {
+    nrx++;
+  }
+  nrx++;
+  if (nrx * nbp1 > 65535) {
+    const style = "background-color: #ff0000; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+    console.error(
+      `%cWARNING%c Too many points. nrx = ${nrx} -> ${nrx * nbp1} elements. Limit is 65535.`,
+      style,
+      "color: red"
+    );
+  }
+  for (let k = 0; k < sweep.nb; k++) {
+    for (let o = k * nrx, l = o + nrx - 1; o < l; o++) {
+      let m = o + nrx;
+      let n = o + 1;
+      elements.push(o, m, n);
+      elements.push(m, n, m + 1);
+    }
+  }
+  sweep.points = points;
+  sweep.origins = origins;
+  sweep.elements = elements;
+  return sweep;
+}
+
+function geometry(sweep) {
+  sweep.elevations = sweep.ei16.map((x) => (x * 180.0) / 32768.0);
+  sweep.azimuths = sweep.au16.map((x) => (x * 360.0) / 65536.0);
+  if (sweep.attr == 1) {
+    return geometryBistatic(sweep);
+  }
+  return geometryMonostatic(sweep);
+}
+
 function setGridIndex(index) {
   if (state.verbose > 1) {
     console.debug(`%carchive.worker.setGridIndex %c${index}%c ← ${grid.index}`, nameStyle, "color: dodgerblue", "");
@@ -503,7 +632,7 @@ function setGridIndex(index) {
     return;
   }
   const scan = grid.items[index];
-  if (scan == grid.last) {
+  if (scan == grid.last && grid.mode != "switch") {
     if (state.verbose > 1) {
       console.debug(
         `%carchive.worker.setGridIndex%c scan = %c${scan}%c ← ${grid.last}. Early return.`,
@@ -537,8 +666,8 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
   }
   if (task == "init") {
     init(name);
-  } else if (task == "list") {
-    list(day, symbol);
+  } else if (task == "table") {
+    table(day);
   } else if (task == "month") {
     month(day);
   } else if (task == "toggle") {
@@ -549,6 +678,8 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
     prepend();
   } else if (task == "append") {
     append();
+  } else if (task == "change") {
+    change(symbol);
   } else if (task == "select") {
     select(name);
   } else if (task == "forward") {
@@ -574,56 +705,32 @@ function init(newPathway) {
   self.postMessage({ type: "init", grid: grid });
 }
 
-// Expect something like day = dayjs.utc('2013-05-20'), symbol = 'Z', mode = prepend, append, select, catchup
-function list(day, symbol, mode = "select") {
+// Expect something like day = dayjs.utc('2013-05-20'), mode = prepend, append, select, catchup
+function table(day, mode = "select") {
   let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
-    `%carchive.worker.list%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${symbol} ${grid.index}`,
+    `%carchive.worker.table%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${grid.index}`,
     nameStyle,
     "",
     "color: mediumpurple",
     ""
   );
-  // Same time, just a symbol change (this part should be phased out, no need to have symbol in the list)
+  // Same time, just a symbol change (this part should be phased out, no need to have symbol in the table)
+  // Could highlight where selected product is available
   if (dateTimeString == grid.dateTimeString) {
-    let index = grid.index;
-    let currentItems = grid.items;
-    grid.mode = "switch";
-    grid.items = [];
-    grid.itemsGrouped = {};
-    currentItems.forEach((item, index) => {
-      let elements = item.split("-");
-      elements[3] = symbol;
-      item = elements.join("-");
-      grid.items.push(item);
-      let scanType = elements[2];
-      if (!(scanType in grid.itemsGrouped)) {
-        grid.itemsGrouped[scanType] = [];
-      }
-      grid.itemsGrouped[scanType].push({ item: item, index: index });
-    });
-    if (grid.symbol == symbol) {
-      // Repeated tab, assume switching out of catchup to list mode
-      index = suggestGridIndex(mode, grid);
-    }
-    grid.symbol = symbol;
-    grid.tic++;
-    setGridIndex(index);
-    self.postMessage({ type: "list", grid: grid });
     return;
   }
   // Different time, fetch from the server
-  const url = `/data/list/${pathway}/${dateTimeString}-${symbol}/`;
+  const url = `/data/table/${pathway}/${dateTimeString}/`;
   fetch(url)
     .then((response) => {
       if (response.status == 200) {
         response.json().then((buffer) => {
           if (state.verbose > 1) {
-            console.debug("list buffer", buffer);
+            console.debug("table buffer", buffer);
           }
           grid.tic++;
           grid.hour = buffer.hour;
-          grid.symbol = symbol;
           grid.hourHasData = buffer.hoursActive.map((x) => x > 0);
           grid.dateTimeString = dateTimeString;
           grid.latestHour =
@@ -641,11 +748,9 @@ function list(day, symbol, mode = "select") {
           let index = suggestGridIndex(mode, buffer);
           if (mode == "prepend" || mode == "append") {
             grid.index = index;
-            self.postMessage({ type: "list", grid: grid });
+            self.postMessage({ type: "table", grid: grid });
           } else {
             setGridIndex(index);
-          }
-          if (mode !== "select") {
           }
           if (grid.hour < 0) {
             self.postMessage({ type: "message", payload: "No Data" });
@@ -653,7 +758,7 @@ function list(day, symbol, mode = "select") {
           }
         });
       } else {
-        console.info(`%carchive.worker.list%c response.status = ${response.status} != 200`, nameStyle, "");
+        console.info(`%carchive.worker.table%c response.status = ${response.status} != 200`, nameStyle, "");
         response.text().then((response) => {
           self.postMessage({ type: "message", payload: response });
         });
@@ -775,10 +880,7 @@ function catchup() {
             console.debug("grid.items", grid.items);
             console.debug("grid.itemsGrouped", grid.itemsGrouped);
           }
-          self.postMessage({
-            type: "list",
-            grid: grid,
-          });
+          self.postMessage({ type: "table", grid: grid });
           return;
         })
         .then(() => connect())
@@ -795,13 +897,25 @@ function catchup() {
 function prepend() {
   console.log(`%carchive.worker.prepend%c`, nameStyle, "color: dodgerblue");
   let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).subtract(1, "hour");
-  list(day, grid.symbol, "prepend");
+  table(day, "prepend");
 }
 
 function append() {
   console.log(`%carchive.worker.append%c`, nameStyle, "color: dodgerblue");
   let day = dayjs.utc(grid.dateTimeString.slice(0, 8)).hour(grid.hour).add(1, "hour");
-  list(day, grid.symbol, "append");
+  table(day, "append");
+}
+
+function change(symbol = "Z") {
+  if (grid.symbol == symbol) {
+    if (state.verbose) {
+      console.info(`%carchive.worker.change%c Same symbol ${symbol}, do nothing`, nameStyle, "");
+    }
+    return;
+  }
+  grid.symbol = symbol;
+  grid.mode = "switch";
+  setGridIndex(grid.index);
 }
 
 function select(index, hint = "load") {

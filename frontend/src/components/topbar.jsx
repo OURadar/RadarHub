@@ -108,42 +108,46 @@ function LeftDash(props) {
 // - ingest - real-time data ingest
 // - xxx - archived data ingest
 //  <Progress id="topbarProgress" value={props.ingest?.progress || 100} style="transform: translateX({})" />
-export function TopBar(props) {
-  const [message, setMessage] = React.useState(props.message);
+export function TopBar({
+  ingest = null,
+  mode = "auto",
+  message = "",
+  isMobile = false,
+  test = 0,
+  onThemeChange = () => console.log("Topbar.onThemeChange()"),
+  onInfoRequest = () => console.log("Topbar.onInfoRequest()"),
+  onAccount = () => console.log("Topbar.onAccount()"),
+  onDismiss = () => console.log("Topbar.onDismiss()"),
+}) {
+  const [displayMessage, setDisplayMessage] = React.useState(message);
   React.useEffect(() => {
-    if (props.test == 1) {
+    if (test == 1) {
       let k = 0;
       setInterval(() => {
-        if (k % 2 == 0) setMessage("");
-        else setMessage(getRandomMessageInHTML());
+        if (k % 2 == 0) setDisplayMessage("");
+        else setDisplayMessage(getRandomMessageInHTML());
         k += 1;
       }, 2000);
-    } else if (props.test == 2) {
-      setInterval(() => setMessage(getRandomMessageInHTML()), 3000);
+    } else if (test == 2) {
+      setInterval(() => setDisplayMessage(getRandomMessageInHTML()), 3000);
     }
   }, []);
   return (
     <ThemeProvider theme={topbarTheme}>
       <div id="topbar" role="banner" className="blur">
-        <LeftDash {...props} />
-        <RightDash {...props} />
-        <Progress id="topbarProgress" value={props.ingest?.progress || 100} />
+        <LeftDash ingest={ingest} />
+        <RightDash
+          isMobile={isMobile}
+          mode={mode}
+          onThemeChange={onThemeChange}
+          onInfoRequest={onInfoRequest}
+          onAccount={onAccount}
+        />
+        <Progress id="topbarProgress" value={ingest?.progress || 100} />
       </div>
-      {props.test > 0 && <Notification message={message} />}
-      <Notification id="appMessage" message={props.message} onClick={(e) => props.onDismiss(e)} />
-      {!props.isMobile && <Notification id="ingestResponse" message={props.ingest?.response || ""} />}
+      {test > 0 && <Notification message={displayMessage} />}
+      <Notification id="appMessage" message={displayMessage} onClick={(e) => onDismiss(e)} />
+      {!isMobile && <Notification id="ingestResponse" message={ingest?.response || ""} />}
     </ThemeProvider>
   );
 }
-
-TopBar.defaultProps = {
-  ingest: null,
-  mode: "auto",
-  message: "",
-  isMobile: false,
-  test: 0,
-  onThemeChange: () => console.log("Topbar.onThemeChange()"),
-  onInfoRequest: () => console.log("Topbar.onInfoRequest()"),
-  onAccount: () => console.log("Topbar.onAccount()"),
-  onDismiss: () => console.log("Topbar.onDismiss()"),
-};

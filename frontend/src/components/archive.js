@@ -33,7 +33,7 @@ class Archive extends Ingest {
     this.messageTimer = null;
 
     this.init = this.init.bind(this);
-    this.list = this.list.bind(this);
+    this.table = this.table.bind(this);
     this.month = this.month.bind(this);
     this.catchup = this.catchup.bind(this);
     this.prepend = this.prepend.bind(this);
@@ -87,10 +87,10 @@ class Archive extends Ingest {
       if (this.data.sweeps.length == 1) {
         this.showMessage(`${this.data.sweeps[0].name} loaded`);
       }
-    } else if (type == "list") {
+    } else if (type == "table") {
       if (this.state.verbose) {
         console.log(
-          `%carchive.handleMessage%c list` +
+          `%carchive.handleMessage%c table` +
             `   ${grid.dateTimeString}` +
             `   ${grid.latestScan}` +
             `   hour = ${this.grid?.hour} -> ${grid.hour}` +
@@ -159,25 +159,25 @@ class Archive extends Ingest {
   }
 
   // Expect something like day = dayjs.utc('2013-05-20'), hour = 19, symbol = 'Z'
-  list(day, hour, symbol = this.grid.symbol) {
+  table(day, hour, symbol = this.grid.symbol) {
     if (this.state.itemsUpdating) {
       return;
     }
     if (day === undefined || isNaN(day)) {
-      console.error(`%carchive.list%c Invalid input day`, "color: lightseagreen", "");
+      console.error(`%carchive.table%c Invalid input day`, "color: lightseagreen", "");
       return;
     }
     day = day.hour(hour);
     if (this.state.verbose) {
       let dateTimeString = day.format("YYYYMMDD-HH00");
       console.log(
-        `%carchive.list%c   day = ${dateTimeString}   hour = ${hour}   symbol = ${symbol} / ${this.grid.symbol}`,
+        `%carchive.table%c   day = ${dateTimeString}   hour = ${hour}   symbol = ${symbol} / ${this.grid.symbol}`,
         "color: lightseagreen",
         ""
       );
     }
     this.state.itemsUpdating = true;
-    this.worker.postMessage({ task: "list", date: day.unix(), hour: hour, symbol: symbol });
+    this.worker.postMessage({ task: "table", date: day.unix(), hour: hour, symbol: symbol });
   }
 
   loadIndex(index) {
@@ -193,7 +193,7 @@ class Archive extends Ingest {
 
   switch(symbol = "Z") {
     if (this.grid.index == -1 || this.grid.items.length == 0) {
-      console.log("No file list just yet");
+      console.log("No file table just yet");
       return;
     }
     if (symbol == this.data.symbol) {
@@ -201,8 +201,9 @@ class Archive extends Ingest {
       return;
     }
     this.state.productSwitching = true;
-    let day = dayjs.utc(this.grid.dateTimeString.slice(0, 8), "YYYYMMDD");
-    this.list(day, this.grid.hour, symbol);
+    // let day = dayjs.utc(this.grid.dateTimeString.slice(0, 8), "YYYYMMDD");
+    //this.table(day, this.grid.hour, symbol);
+    this.worker.postMessage({ task: "change", symbol: symbol });
   }
 
   nextProduct() {
@@ -388,7 +389,7 @@ class Archive extends Ingest {
         ""
       );
     }
-    this.list(day, hour);
+    this.table(day, hour);
   }
 
   // Expect something like day = dayjs.utc('2013-05-20'), hour = 19

@@ -5,7 +5,12 @@ import Button from "@mui/material/Button";
 
 const link = "/static/html/license.html";
 
-export function TermPopup(props) {
+export function TermPopup({
+  onTermSheet = () => {
+    window.location.assign(link);
+  },
+  onClose = () => {},
+}) {
   React.useEffect(() => {
     document.getElementById("termCover").style.opacity = 1;
   }, []);
@@ -23,7 +28,7 @@ export function TermPopup(props) {
           .
         </p>
         <div className="spacer10"></div>
-        <Button variant="big" onClick={props.onClose}>
+        <Button variant="big" onClick={onClose}>
           Continue
         </Button>
       </Box>
@@ -31,13 +36,13 @@ export function TermPopup(props) {
   );
 }
 
-TermPopup.defaultProps = {
-  onTermSheet: () => {
-    window.location.assign(link);
-  },
-};
+// TermPopup.defaultProps = {
+//   onTermSheet: () => {
+//     window.location.assign(link);
+//   },
+// };
 
-export function TermSheet(props) {
+export function TermSheet() {
   return (
     <Box>
       <iframe
