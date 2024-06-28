@@ -226,6 +226,8 @@ Once in the `psql` terminal, some of these could be useful:
 \dt
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_sweep';
 SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'frontend_day';
+SELECT grantee, table_name, privilege_type FROM information_schema.table_privileges WHERE table_schema = 'public';
+
 ```
 
 ## Migrate PostgreSQL to Another Machine:

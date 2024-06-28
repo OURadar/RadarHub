@@ -118,7 +118,7 @@ class FrontendConfig(AppConfig):
 
 def launchMonitor(sender, **kwargs):
     for radar_prefix in radar_prefix_pairs:
-        if radar_prefix == ("demo", "DEMO-"):
+        if radar_prefix == ("demo", "DEMO"):
             continue
         elif settings.SIMULATE:
             thread = threading.Thread(target=simulate, args=radar_prefix)
@@ -128,7 +128,7 @@ def launchMonitor(sender, **kwargs):
         thread.start()
 
 
-def monitor(radar="px1000", prefix="PX-"):
+def monitor(radar="px1000", prefix="PX"):
     show = colorize("apps.monitor()", "green")
     show += "   " + color_name_value("radar", radar)
     show += "   " + color_name_value("prefix", prefix)

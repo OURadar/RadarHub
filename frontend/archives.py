@@ -345,7 +345,7 @@ def _load(pathway, source):
         gatewidth,
     )
     payload = bytes(head) + bytes(info, "utf-8") + bytes(ei16) + bytes(au16) + bytes(values)
-    logger.info(f"Payload size = {len(payload):,d} B")
+    # logger.debug(f"Payload size = {len(payload):,d} B")
     return payload
 
 
