@@ -15,20 +15,6 @@ const paletteLight = {
     light: "rgba(162, 132, 94, 0.15)",
     dark: "rgba(162, 132, 94, 0.25)",
   },
-  gray: {
-    main: "rgb(180, 180, 180)",
-  },
-  clear: {
-    main: "rgb(123, 195, 237)",
-  },
-  rain: {
-    main: "rgb(30, 230, 56)",
-  },
-  heavy: {
-    main: "rgb(255, 175, 25)",
-  },
-  divider: "rgba(0, 0, 0, 0.04)",
-  bound: "rgba(0, 0, 0, 0.15)",
 };
 
 const paletteDark = {
@@ -42,20 +28,6 @@ const paletteDark = {
     light: "rgba(172, 142, 104, 0.2)",
     dark: "rgba(172, 142, 104, 0.3)",
   },
-  gray: {
-    main: "rgb(180, 180, 180)",
-  },
-  clear: {
-    main: "rgb(123, 195, 237)",
-  },
-  rain: {
-    main: "rgb(30, 230, 56)",
-  },
-  heavy: {
-    main: "rgb(255, 175, 25)",
-  },
-  divider: "rgba(255, 255, 255, 0.04)",
-  bound: "rgba(255, 255, 255, 0.15)",
 };
 
 //
@@ -119,6 +91,46 @@ export function makeTheme(inputMode) {
     shape: {
       borderRadius: "var(--button-border-radius)",
       color: "var(--system-foreground)",
+    },
+  });
+  theme = createTheme(theme, {
+    palette: {
+      gray: theme.palette.augmentColor({
+        color: {
+          main: "rgb(180, 180, 180)",
+        },
+        name: "gray",
+      }),
+      clear: theme.palette.augmentColor({
+        color: {
+          main: "rgb(123, 195, 237)",
+        },
+        name: "clear",
+      }),
+      rain: theme.palette.augmentColor({
+        color: {
+          main: "rgb(30, 230, 56)",
+        },
+        name: "rain",
+      }),
+      heavy: theme.palette.augmentColor({
+        color: {
+          main: "rgb(255, 175, 25)",
+        },
+        name: "heavy",
+      }),
+      divider: theme.palette.augmentColor({
+        color: {
+          main: "rgba(255, 255, 255, 0.04)",
+        },
+        name: "divider",
+      }),
+      bound: theme.palette.augmentColor({
+        color: {
+          main: "rgba(255, 255, 255, 0.15)",
+        },
+        name: "bound",
+      }),
     },
   });
   theme = createTheme(theme, {

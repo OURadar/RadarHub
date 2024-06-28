@@ -9,6 +9,8 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
 ]
 
+print(urlpatterns)
+
 if settings.DEBUG:
     urlpatterns += [path("admin/", admin.site.urls)]
 

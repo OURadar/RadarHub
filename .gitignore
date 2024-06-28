@@ -5,12 +5,15 @@ node_modules
 *.xcodeproj
 objects
 stash
+blob/*.docx
 
 cnn-models
 database
 frontend/migrations
 frontend/migrations/[0-9]*.py
+frontend/static/data
 frontend/static/frontend
+frontend/static/images
 frontend/static/maps
 frontend/static/media
 screenshot

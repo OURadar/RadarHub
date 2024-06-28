@@ -778,7 +778,7 @@ function month(day) {
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
-          grid.daysActive = { ...buffer, ...grid.daysActive };
+          grid.daysActive = { ...grid.daysActive, ...buffer };
           self.postMessage({ type: "month", payload: grid.daysActive });
         });
       else
