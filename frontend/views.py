@@ -11,8 +11,8 @@ from .archives import location
 
 logger = logging.getLogger("frontend")
 
-pathways = [x["folder"].lower() for x in settings.RADARS.values()]
-radar_names = dict([(x["folder"].lower(), x["name"]) for x in settings.RADARS.values()])
+pathways = [x["pathway"].lower() for x in settings.RADARS.values()]
+radar_names = dict([(x["pathway"].lower(), x["name"]) for x in settings.RADARS.values()])
 default_pathway = pathways[0]
 
 if settings.DEBUG:
@@ -33,15 +33,14 @@ if settings.DEBUG:
 def make_vars(request, pathway=default_pathway):
     if pathway not in radar_names:
         logger.warning(f"Pathway {pathway} not in radar_names. Not registered.")
-        # raise Http404
-        radar_names[pathway] = pathway
+        raise Http404
     user = get_user(request)
     try:
         email = user.email
     except:
         email = None
     origin = location(pathway)
-    return {
+    output = {
         "ip": get_client_ip(request),
         "user": email,
         "css_hash": settings.CSS_HASH,
@@ -52,6 +51,11 @@ def make_vars(request, pathway=default_pathway):
         "pathway": pathway,
         "name": radar_names[pathway],
     }
+    if request.path == "/" or request.path == "/index.html":
+        pathways_to_exclude = ["px10k"]
+        radars_to_show = {p: n for p, n in radar_names.items() if p not in pathways_to_exclude}
+        output["radars"] = radars_to_show
+    return output
 
 
 #

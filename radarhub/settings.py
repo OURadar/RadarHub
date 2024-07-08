@@ -241,15 +241,14 @@ BRANCH = os.popen("git rev-parse --abbrev-ref HEAD").read().strip()
 
 # Radar Collection
 #
-# RADARS = { '_PREFIX_': {'name': _NAME_, 'folder': '_FOLDER_', 'summary': '_SCAN_' } }
+# RADARS = { '_PREFIX_': {'name': _NAME_, 'pathway': '_PATHWAY_', 'summary': '_SCAN_FOR_SUMMARY_' } }
 #
-RADARS = {
-    "DX": {"name": "Demo", "folder": "demo", "summary": "E2.4"},
-    "RK": {"name": "RadarKit", "folder": "radarkit", "summary": "E4.0"},
-}
 if "radars" in settings:
-    RADARS = {**RADARS, **settings["radars"]}
-
+    RADARS = settings["radars"]
+else:
+    RADARS = {
+        "DX": {"name": "Demo", "pathway": "demo", "summary": "E2.4"},
+    }
 
 # FIFO source to list for new files for fifo2db.py
 #

@@ -34,18 +34,22 @@ from django.conf import settings
 from common import colorize, color_name_value, dailylog
 from frontend.models import Sweep, File, Day, Visitor
 
-__prog__ = os.path.basename(sys.argv[0])
+__prog__ = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
-logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, dailyfile=settings.DEBUG)
+tzinfo = datetime.timezone.utc
+logger = dailylog.Logger(__prog__, home=settings.LOG_DIR, dailyfile=settings.DEBUG)
+
+radar.setLogger(logger)
+
 pp = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
 pattern_yyyy = re.compile(r"20[0-9][0-9]")
 pattern_yyyymmdd = re.compile(r"20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])")
 pattern_x_yyyymmdd = re.compile(r"(?<=[-/])20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])")
 
-radar_prefix = {}
-for prefix, item in settings.RADARS.items():
-    folder = item["folder"]
-    radar_prefix[folder] = prefix
+radar_name_by_pathway = {}
+for name, item in settings.RADARS.items():
+    pathway = item["pathway"]
+    radar_name_by_pathway[pathway] = name
 
 
 """
@@ -63,7 +67,6 @@ def params_from_source(source, dig=False):
     fn_name = colorize("params_from_source()", "green")
     file = None
     name = None
-    prefix = None
     day_string = None
     date_range = None
     source_date = None
@@ -71,7 +74,6 @@ def params_from_source(source, dig=False):
     if "*" == source[-1]:
         if "-" in source:
             name, query = source.split("-")
-            prefix = name + "-"
         else:
             query = source
         v1 = color_name_value("name", name)
@@ -79,19 +81,19 @@ def params_from_source(source, dig=False):
         logger.debug(f"{fn_name}   {v1}   {v2}")
         if len(query) == 5:
             y = int(query[0:4])
-            start = datetime.datetime(y, 1, 1, tzinfo=datetime.timezone.utc)
-            end = datetime.datetime(y, 12, 31, tzinfo=datetime.timezone.utc)
+            start = datetime.datetime(y, 1, 1, tzinfo=tzinfo)
+            end = datetime.datetime(y, 12, 31, tzinfo=tzinfo)
             date_range = [start, end]
         elif len(query) == 7:
             y = int(query[0:4])
             m = int(query[4:6])
-            start = datetime.datetime(y, m, 1, tzinfo=datetime.timezone.utc)
+            start = datetime.datetime(y, m, 1, tzinfo=tzinfo)
             if m == 12:
                 y += 1
                 m = 1
             else:
                 m += 1
-            end = datetime.datetime(y, m, 1, tzinfo=datetime.timezone.utc)
+            end = datetime.datetime(y, m, 1, tzinfo=tzinfo)
             end -= datetime.timedelta(days=1)
             date_range = [start, end]
     elif os.path.exists(source):
@@ -113,18 +115,11 @@ def params_from_source(source, dig=False):
             logger.debug(f"{fn_name} file[0] = {file}")
             c = os.path.splitext(file)[0].split("-")
             name = c[0]
-            prefix = name + "-"
             time_string = c[1] + c[2]
             if day_string != c[1]:
                 logger.warning(f"Warning. Inconsistent day_string = {day_string} != c[1] = {c[1]} (*)")
                 day_string = c[1]
-            source_datetime = datetime.datetime.strptime(time_string, r"%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
-        else:
-            logger.debug(f"{fn_name} parent folder = {folder}")
-            elements = folder.split("/")
-            name, year = elements[-2], elements[-1]
-            if pattern_yyyy.match(year) and name in radar_prefix:
-                prefix = radar_prefix[name]
+            source_datetime = datetime.datetime.strptime(time_string, r"%Y%m%d%H%M%S").replace(tzinfo=tzinfo)
     elif "/" in source:
         logger.error(f"Error. Folder {source} does not exist")
         day_string = pattern_x_yyyymmdd.search(source)
@@ -132,7 +127,6 @@ def params_from_source(source, dig=False):
             day_string = day_string.group(0)
     elif "-" in source:
         name, day_string = source.split("-")
-        prefix = name + "-"
     else:
         day_string = pattern_yyyymmdd.search(source)
         if day_string:
@@ -140,17 +134,15 @@ def params_from_source(source, dig=False):
         else:
             day_string = None
             name = source
-            prefix = name + "-"
     if day_string:
         source_date = datetime.datetime.strptime(day_string, r"%Y%m%d").date()
-        start = datetime.datetime(source_date.year, source_date.month, source_date.day, tzinfo=datetime.timezone.utc)
+        start = datetime.datetime(source_date.year, source_date.month, source_date.day, tzinfo=tzinfo)
         date_range = [start, start + datetime.timedelta(days=1)]
         if name is None:
             logger.debug(f"{fn_name} Only day string from {source}")
     return {
         "file": file,
         "name": name,
-        "prefix": prefix,
         "date": source_date,
         "datetime": source_datetime,
         "date_range": date_range,
@@ -196,7 +188,7 @@ def xz_folder(folder, hour=0, check_db=True, args=None):
     show += "   " + color_name_value("skip", skip)
     logger.info(show)
 
-    use_mp = "linux" in sys.platform
+    use_mp = "linux" in sys.platform and not args.single
     basename = os.path.basename(folder)
     s = pattern_yyyymmdd.search(basename)
     if s:
@@ -284,8 +276,8 @@ def xz_folder(folder, hour=0, check_db=True, args=None):
                 if parts:
                     elem = parts.groupdict()
                     scan = elem["scan"]
-                    time = datetime.datetime.strptime(elem["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=datetime.timezone.utc)
-                    tarinfo = Sweep._read_tarinfo(archive)
+                    time = datetime.datetime.strptime(elem["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=tzinfo)
+                    tarinfo = radar.read_tarinfo(archive)
                     out.put({"file": basename, "info": (time, scan, archive, tarinfo)})
                 else:
                     logger.error(f"Error. Unable to parse {archive}")
@@ -355,8 +347,8 @@ def xz_folder(folder, hour=0, check_db=True, args=None):
             if parts:
                 elem = parts.groupdict()
                 scan = elem["scan"]
-                time = datetime.datetime.strptime(elem["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=datetime.timezone.utc)
-                tarinfo = Sweep._read_tarinfo(path)
+                time = datetime.datetime.strptime(elem["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=tzinfo)
+                tarinfo = radar.read_tarinfo(path)
                 keys.append(basename)
                 output[basename] = (time, scan, path, tarinfo)
             else:
@@ -509,7 +501,7 @@ def xz_folder_v1(folder, hour=0, check_db=True, bulk_update=True, args=None):
             return
 
     day_string = f"{s[0:4]}-{s[4:6]}-{s[6:8]}"
-    date_range = [f"{day_string} {hour:02d}:00Z", f"{day_string} 23:59:59.99Z"]
+    date_range = [f"{day_string} {hour:02d}:00Z", f"{day_string} 23:59:59.9Z"]
     show = colorize("date_range", "orange") + colorize(" = ", "red")
     show += "[" + colorize(date_range[0], "yellow") + ", " + colorize(date_range[1], "yellow") + "]"
     logger.debug(show)
@@ -651,7 +643,7 @@ def xz_folder_v1(folder, hour=0, check_db=True, bulk_update=True, args=None):
                         date = f"{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z"
                     else:
                         c = name.split("-")
-                        date = datetime.datetime.strptime(c[1] + c[2], r"%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
+                        date = datetime.datetime.strptime(c[1] + c[2], r"%Y%m%d%H%M%S").replace(tzinfo=tzinfo)
                     x = File.objects.create(name=name, path=archive, date=date, size=size, offset=offset, offset_data=offset_data)
                     count_create += 1
                 logger.debug(f"{mode} : {name} {offset} {offset_data} {size} {archive}")
@@ -705,7 +697,7 @@ def xz_folder_v1(folder, hour=0, check_db=True, bulk_update=True, args=None):
             for yy in xx:
                 (name, offset, offset_data, size, archive) = yy
                 c = name.split("-")
-                date = datetime.datetime.strptime(c[1] + c[2], r"%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
+                date = datetime.datetime.strptime(c[1] + c[2], r"%Y%m%d%H%M%S").replace(tzinfo=tzinfo)
                 x = File(name=name, path=archive, date=date, size=size, offset=offset, offset_data=offset_data)
                 files.append(x)
             return files
@@ -815,90 +807,6 @@ def build_day(source, bgor=False, verbose=0):
     return day, mode
 
 
-def build_day_v1(source, bgor=False, verbose=0):
-    if verbose:
-        show = colorize("build_day()", "green")
-        show += "   " + color_name_value("source", source)
-        logger.debug(show)
-
-    params = params_from_source(source, dig=True)
-    prefix = params["prefix"]
-    date = params["date"]
-
-    if prefix is None:
-        logger.error(f"Error. Unble to determine prefix from {source}")
-        return None
-
-    if date is None:
-        logger.error(f"Error. build_day() needs an exact date.")
-        return None
-
-    date_range = params["date_range"]
-    if date_range:
-        files = File.objects.filter(name__startswith=prefix, date__range=date_range)
-        if files.count() == 0:
-            logger.error(f"Error. No File entries for {date}")
-            return None
-
-    day_string = date.strftime(r"%Y-%m-%d")
-
-    tic = tm.time()
-
-    mode = "N"
-    day = Day.objects.filter(date=date, name=prefix)
-    if day:
-        mode = "U"
-        day = day.first()
-    else:
-        day = Day(date=date, name=prefix)
-        print(f"New Day entry: {day.__repr__(format='short')}")
-
-    # Use the very first entry of the day to determine the kind
-    matches = File.objects.filter(name__startswith=prefix, date__range=date_range)
-    if matches.count() == 0:
-        logger.error(f"Error. No File entries for {date}")
-        return None
-    file = matches.first()
-    if file.kind == File.Kind.WDS:
-        tail = "-Z.nc"
-    else:
-        tail = ".nc"
-
-    total = 0
-    counts = [0] * 24
-    for k in range(24):
-        date_range = [f"{day_string} {k:02d}:00:00Z", f"{day_string} {k:02d}:59:59.9Z"]
-        matches = File.objects.filter(name__startswith=prefix, name__endswith=tail, date__range=date_range)
-        counts[k] = matches.count()
-        total += counts[k]
-
-    if total > 0:
-        day.count = total
-        day.duration = day.count * 20
-        day.hourly_count = ",".join([str(c) for c in counts])
-        day.save()
-    elif mode == "U" and total == 0:
-        mode = "D"
-        day.delete()
-        day = None
-    else:
-        mode = "I"
-
-    if mode == "N":
-        day = Day.objects.filter(date=day_string, name=prefix).first()
-
-    if bgor:
-        day.summarize()
-        logger.info(f"{mode} {day.__repr__()}")
-
-    tic = tm.time() - tic
-
-    if verbose:
-        logger.debug(f"Elapsed time: {tic:.2f}s")
-
-    return day, mode
-
-
 """
     Check a Day entry from the database
 
@@ -948,29 +856,29 @@ def check_day(source, format=""):
 """
 
 
-def check_file(source, progress=True, remove=False):
+def check_source(source, progress=True, remove=False):
     show = colorize("check_file()", "green")
     show += "   " + color_name_value("source", source)
     show += "   " + color_name_value("remove", remove)
     logger.info(show)
     params = params_from_source(source, dig=True)
-    if params["prefix"] is None:
-        prefixes = list(settings.RADARS.keys())
-    elif isinstance(params["prefix"], str):
-        prefixes = [params["prefix"]]
+    if params["name"] is None:
+        names = list(settings.RADARS.keys())
+    elif isinstance(params["name"], str):
+        names = [params["name"]]
     else:
         logger.error("Unable to continue")
         pp.pprint(params)
-    for prefix in prefixes:
-        files = File.objects.filter(name__startswith=prefix, date__range=params["date_range"])
-        count = files.count()
-        show = color_name_value("prefix", prefix)
+    for name in names:
+        scans = Sweep.objects.filter(time__range=params["date_range"], name=name)
+        count = scans.count()
+        show = color_name_value("name", name)
         show += "  " + color_name_value("count", count)
         logger.info(show)
         if count == 0:
             continue
         count = 0
-        for file in tqdm.tqdm(files) if progress else files:
+        for file in tqdm.tqdm(names) if progress else names:
             if not os.path.exists(file.path):
                 file.show()
                 count += 1
@@ -1053,7 +961,7 @@ def check_latest(source=[], markdown=False):
         show = colorize("last", "orange") + colorize(" = ", "red")
         show += "[" + colorize(last[0], "yellow") + ", " + colorize(last[1], "yellow") + "]"
         show += "   " + color_name_value("name", file.name)
-        folder = settings.RADARS[name]["folder"]
+        folder = settings.RADARS[name]["pathway"]
         filename = re.sub("-([a-zA-Z]+).nc", "", file.name)
         age = file.get_age()
         ages = ""
@@ -1093,7 +1001,7 @@ def show_sweep_summary(source, markdown=False):
     c = source.split("-")
     name = c[0]
     if len(c) >= 2:
-        date = datetime.datetime.strptime(c[1] + c[2], r"%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
+        date = datetime.datetime.strptime(c[1] + c[2], r"%Y%m%d%H%M%S").replace(tzinfo=tzinfo)
         o = Sweep.objects.filter(date=date, name=name).last()
     else:
         logger.info(f"Retrieving last entry with name = {name} ...")
@@ -1139,7 +1047,7 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
 
     visitors = Visitor.objects.order_by("-last_visited")
     if recent:
-        day = datetime.datetime.today().replace(tzinfo=datetime.timezone.utc) - datetime.timedelta(days=recent)
+        day = datetime.datetime.today().replace(tzinfo=tzinfo) - datetime.timedelta(days=recent)
         visitors = visitors.filter(last_visited__gte=day)
     for visitor in visitors.exclude(ip__startswith="10."):
         show_visitor(visitor, markdown=markdown)
@@ -1344,9 +1252,9 @@ def dbtool_main():
     parser.add_argument("--all", action="store_true", help="sets to use all for --visitor")
     parser.add_argument("-b", dest="hour", default=0, type=int, help="sets beginning hour of the day to catalog")
     parser.add_argument("-c", "--check-day", action="store_true", help="checks entries from the Day table")
-    parser.add_argument("-C", "--check-file", action="store_true", help="checks entries from the File table")
+    parser.add_argument("-C", "--check-sweep", action="store_true", help="checks entries from the Sweep table")
     parser.add_argument("-d", dest="build_day", action="store_true", help="builds a Day entry")
-    parser.add_argument("-f", dest="find_duplicates", action="store_true", help="finds duplicate File entries in the database")
+    parser.add_argument("-f", dest="find_duplicates", action="store_true", help="finds duplicate Sweep entries in the database")
     parser.add_argument("--format", default="pretty", choices=["raw", "short", "pretty"], help="sets output format")
     parser.add_argument("-i", dest="insert", action="store_true", help="inserts a folder")
     parser.add_argument("-j", dest="old_insert", action="store_true", help="inserts a folder")
@@ -1363,6 +1271,7 @@ def dbtool_main():
     parser.add_argument("-s", dest="sweep", action="store_true", help="shows a sweep summary")
     parser.add_argument("--show-city", action="store_true", help="shows city of IP location")
     parser.add_argument("--no-skip", dest="skip", default=True, action="store_false", help="do no skip folders")
+    parser.add_argument("--single", action="store_true", default=False, help="uses single-threading")
     parser.add_argument("--skip", action="store_true", default=True, help="skips folders with Day.county == count")
     parser.add_argument("-u", "--update", action="store_true", help="updates visitor table from access log")
     parser.add_argument("-v", dest="verbose", default=1, action="count", help="increases verbosity (default = 1)")
@@ -1405,7 +1314,7 @@ def dbtool_main():
             if args.build_day:
                 build_day(day, bgor=args.bgor)
             check_day(day, format=args.format)
-    elif args.check_file:
+    elif args.check_sweep:
         if len(args.source) == 0:
             print(
                 textwrap.dedent(
@@ -1418,7 +1327,7 @@ def dbtool_main():
             )
             return
         for source in args.source:
-            check_file(source, remove=args.remove)
+            check_source(source, remove=args.remove)
     elif args.build_day:
         if len(args.source) == 0:
             print(

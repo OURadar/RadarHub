@@ -66,7 +66,7 @@ def proper(file, root="/mnt/data", verbose=0):
     if name not in radars:
         logger.info(f"Radar {name} not recognized.")
         return None
-    sub = radars[name]["folder"]
+    sub = radars[name]["pathway"]
     day = parts["time"][0:8]
     year = parts["time"][0:4]
     dayTree = f"{year}/{day}"
@@ -91,7 +91,7 @@ def catchupV1(file, root="/mnt/data"):
     day = Day.objects.filter(name=prefix).latest("date")
     hour = day.last_hour()
     if prefix in radars:
-        sub = radars[prefix]["folder"]
+        sub = radars[prefix]["pathway"]
         folder = f"{root}/{sub}"
     else:
         logger.warning(f"Radar {prefix} not recognized.")
@@ -103,7 +103,7 @@ def catchupV1(file, root="/mnt/data"):
     while date <= filedate:
         dayTree = date.strftime(r"%Y/%Y%m%d")
         dayFolder = f"{folder}/{dayTree}"
-        logger.info(color_name_value("folder", dayFolder) + "   " + color_name_value("hour", hour))
+        logger.info(color_name_value("pathway", dayFolder) + "   " + color_name_value("hour", hour))
         dbtool.xz_folder(dayFolder, hour)
         date += stride
         hour = 0
@@ -113,7 +113,7 @@ def catchup(root="/mnt/data"):
     global radars
     logger.info(colorize("catchup()", "green"))
     for prefix, radar in radars.items():
-        folder = radar["folder"]
+        folder = radar["pathway"]
         folder = f"{root}/{folder}"
         show = color_name_value("prefix", prefix)
         show += "  " + color_name_value("folder", folder)

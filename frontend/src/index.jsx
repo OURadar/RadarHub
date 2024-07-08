@@ -1,11 +1,15 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import App from "./components/app-intro";
+import { App, Pathway } from "./components/app-intro";
 
 let text = document.getElementById("params")?.textContent || "{}";
 let params = JSON.parse(text);
 
-const container = document.getElementById("app");
-const root = createRoot(container);
-root.render(<App {...params} />);
+const app = document.getElementById("app");
+const appRoot = createRoot(app);
+appRoot.render(<App {...params} />);
+
+const pathway = document.getElementById("pathway");
+const pathwayRoot = createRoot(pathway);
+pathwayRoot.render(<Pathway {...params} />);

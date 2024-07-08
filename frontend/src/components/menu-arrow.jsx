@@ -33,7 +33,7 @@ export function MenuArrow({
   const disabled = ok ? ingest.grid.pathsActive.map((x) => !x) : new Array(4).fill(true);
   const playing = ingest?.data?.sweeps.length > 1 || false;
   return (
-    <div id="arrow" className="floatMenu roundCorder blur">
+    <div id="arrow" className="floatMenu roundCorner blur">
       <ToggleButtonGroup color="secondary" size="small" value={-1} orientation="vertical">
         <ToggleButton value={0} onClick={() => ingest.navigateBackwardScan()} disabled={disabled[0]}>
           <KeyboardDoubleArrowLeft />
