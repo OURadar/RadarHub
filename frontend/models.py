@@ -12,7 +12,6 @@ import sys
 import json
 import radar
 import pprint
-import tarfile
 import datetime
 import numpy as np
 
@@ -40,7 +39,7 @@ if os.path.exists(settings.USER_AGENT_TABLE):
 
 np.set_printoptions(precision=2, threshold=5, linewidth=120)
 
-dummy_sweep = {
+dummy_data = {
     "kind": "U",
     "txrx": "M",
     "symbol": "Z",
@@ -54,8 +53,10 @@ dummy_sweep = {
     "prf": 1000.0,
     "elevations": np.array([15, 14.0, 14.2, 16.0], dtype=np.float32),
     "azimuths": np.array([15.0, 30.0, 45.0, 60.0], dtype=np.float32),
-    "values": {"Z": np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]], dtype=np.float32)},
-    "u8": {"Z": np.array([[64, 108, 62], [42, 52, 46], [0, 0, 82], [112, 122, 132]], dtype=np.uint8)},
+    "products": {
+        "Z": np.array([[0, 22, -1], [-11, -6, -9], [9, 14, 9], [24, 29, 34]], dtype=np.float32),
+        "V": np.array([[1, -3, 4], [-12, -10, -9], [11, 9, 3], [-3, -10, -9]], dtype=np.float32),
+    },
 }
 
 # Some helper functions
@@ -163,7 +164,7 @@ class File(models.Model):
     @staticmethod
     def dummy_sweep(name="PX-20130520-123456-Z.nc"):
         parts = name.split("-")
-        sweep = dummy_sweep.copy()
+        sweep = dummy_data.copy()
         sweep["time"] = datetime.datetime.strptime(parts[1] + parts[2], r"%Y%m%d%H%M%S").timestamp()
         sweep["sweepElevation"] = float(parts[3][1:]) if "E" in parts[3] else 0.0
         sweep["sweepAzimuth"] = float(parts[3][1:]) if "A" in parts[3] else 42.0
@@ -574,31 +575,13 @@ class Sweep(models.Model):
             print(f"Data shape = {shape}\nRaw size = {size:,d} B")
 
     @staticmethod
-    def _read_tarinfo(source, verbose=0):
-        with tarfile.open(source) as aid:
-            members = aid.getmembers()
-            if verbose > 1:
-                logger.debug(f"members: {members}")
-            tarinfo = {}
-            for member in members:
-                parts = radar.re_4parts.search(member.name)
-                if parts:
-                    parts = parts.groupdict()
-                    symbol = parts["symbol"]
-                else:
-                    symbol = "*"
-                tarinfo[symbol] = (member.name, member.size, member.offset, member.offset_data)
-            if symbol == "*" and len(members) > 1:
-                logger.error("_read_tarinfo(): Too many members")
-            return tarinfo
-
-    @staticmethod
     def read(source, finite=False, u8=False, verbose=0):
         fn_name = colorize("Sweep.read()", "green")
         parts = radar.re_4parts.search(source)
         if parts is None:
             logger.error(f"Unidentified source = {source}")
             return radar.empty_sweep
+        parts = parts.groupdict()
         if verbose > 1:
             print(f"{fn_name} {source}  {parts['time']}  {parts['symbol']}")
         time = datetime.datetime.strptime(parts["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=tzinfo)
@@ -650,3 +633,21 @@ class Sweep(models.Model):
             logger.warn(f"{fn_name} {message}")
             return {"longitude": -97.43730160, "latitude": 35.1812820, "last": ymd}
         return {"longitude": data["longitude"], "latitude": data["latitude"], "last": ymd}
+
+    @staticmethod
+    def dummy_data(name="PX-20130520-123456-E2.6-Z", u8=False):
+        parts = radar.re_4parts.search(name).groupdict()
+        if parts is None:
+            return radar.empty_sweep
+        data = dummy_data.copy()
+        data["time"] = datetime.datetime.strptime(parts["time"], r"%Y%m%d-%H%M%S").timestamp()
+        data["sweepElevation"] = float(parts["scan"][1:]) if "E" in parts["scan"] else 0.0
+        data["sweepAzimuth"] = float(parts["scan"][1:]) if "A" in parts["scan"] else 42.0
+        data["symbol"] = parts["symbol"]
+        if u8:
+            data["u8"] = {}
+            for key, value in data["products"].items():
+                if np.ma.isMaskedArray(value):
+                    value = value.filled(np.nan)
+                data["u8"][key] = val2ind(value, symbol=key)
+        return data

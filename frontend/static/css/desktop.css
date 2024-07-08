@@ -3,7 +3,7 @@ Desktop style sheet
 Copyright Boonleng Cheong
 */
 :root {
-  --font-size: 16px;
+  --font-size: 14px;
   --button-height: 36px;
   --indicator-height: 25px;
   --button-border-top: solid 1px var(--border-accent);

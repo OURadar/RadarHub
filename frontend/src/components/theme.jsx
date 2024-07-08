@@ -251,38 +251,13 @@ export function makeTheme(inputMode) {
         styleOverrides: {
           root: {
             textTransform: "none",
-            borderColor: theme.palette.bound,
+            border: "solid 1px var(--border-accent)",
             "&.Mui-disabled": {
-              borderColor: theme.palette.bound,
+              border: "solid 1px var(--border-accent)",
             },
           },
         },
       },
-      // MuiToggleButton: {
-      //   styleOverrides: {
-      //     root: {
-      //       textTransform: "none",
-      //       "&.Mui-selected": {
-      //         color: theme.palette.primary.main,
-      //         backgroundColor: theme.palette.primary.light,
-      //       },
-      //       "&.Mui-selected:hover": {
-      //         backgroundColor: theme.palette.primary.dark,
-      //       },
-      //     },
-      //   },
-      // },
-      // MuiListItemText: {
-      //   styleOverrides: {
-      //     root: {
-      //       display: "inline-block",
-      //       color: theme.palette.text.secondary,
-      //       overflow: "hidden",
-      //       textOverflow: "ellipsis",
-      //       whiteSpace: "nowrap",
-      //     },
-      //   },
-      // },
       MuiListItemText: {
         variants: [
           {

@@ -32,7 +32,7 @@ class MultiLineFormatter(logging.Formatter):
 
 class Logger(logging.Logger):
     def __init__(self, name, home=os.path.expanduser("~/logs"), dailyfile=True):
-        super(Logger, self).__init__(name)
+        super().__init__(name)
         self.home = home
         self.dailyfile = dailyfile
         self.time = time.localtime(time.time())

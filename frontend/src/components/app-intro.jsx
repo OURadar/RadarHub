@@ -21,6 +21,18 @@ import { TermPopup, TermSheet } from "./term";
 const version = require("/package.json").version;
 const nameStyle = "background-color: #667788; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
 
+function Pathway({ radars }) {
+  return (
+    <div>
+      {Object.entries(radars).map(([pathway, name]) => (
+        <a className="radarButton" key={pathway} href={`/archive/${pathway}/`}>
+          {name}
+        </a>
+      ))}
+    </div>
+  );
+}
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -105,4 +117,4 @@ class App extends React.Component {
   }
 }
 
-export default App;
+export { App, Pathway };

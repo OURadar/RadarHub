@@ -1,17 +1,24 @@
 {
   "configurations": [
     {
-      "name": "Mac",
-      "includePath": ["${workspaceFolder}/**"],
+      "name": "macos-clang-arm64",
+      "includePath": [
+        "${workspaceFolder}/**",
+        ".",
+        "/usr/local/include",
+        "/usr/local/opt/openssl@1.1/include"
+      ],
       "defines": [],
-      "compilerPath": "/usr/local/bin/gcc-11",
-      "intelliSenseMode": "clang-x64",
-      "cStandard": "c11",
-      "cppStandard": "c++17"
+      "compilerPath": "/usr/bin/clang",
+      "intelliSenseMode": "macos-clang-arm64",
+      "cStandard": "${default}",
+      "cppStandard": "${default}"
     },
     {
       "name": "Linux",
-      "includePath": ["${workspaceFolder}/**"],
+      "includePath": [
+        "${workspaceFolder}/**"
+      ],
       "defines": [],
       "compilerPath": "/usr/bin/clang-9",
       "cStandard": "c11",

@@ -17,7 +17,7 @@ export function MenuUpdate({
   },
 }) {
   return (
-    <div id="update" className="floatMenu roundCorder blur">
+    <div id="update" className="floatMenu roundCorner blur">
       <ToggleButtonGroup
         color="primary"
         size="small"

@@ -6,6 +6,7 @@ node_modules
 objects
 stash
 blob/*.docx
+screenshot
 
 cnn-models
 database

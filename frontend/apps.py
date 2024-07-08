@@ -24,8 +24,8 @@ worker_started = False
 
 radar_prefix_pairs = []
 for prefix, item in settings.RADARS.items():
-    radar = item["folder"].lower()
-    radar_prefix_pairs.append((radar, prefix))
+    pathway = item["pathway"].lower()
+    radar_prefix_pairs.append((pathway, prefix))
 
 
 class FrontendConfig(AppConfig):

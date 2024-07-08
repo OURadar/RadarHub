@@ -66,8 +66,8 @@ const sweepParser = new Parser()
   .floatle("offsetY")
   .floatle("offsetZ")
   .floatle("_notused4")
-  .floatle("scanElevation")
-  .floatle("scanAzimuth")
+  .floatle("sweepElevation")
+  .floatle("sweepAzimuth")
   .floatle("rangeStart")
   .floatle("rangeSpacing")
   .string("info", { length: "nx" })
@@ -334,8 +334,8 @@ function createSweep(name = "20130520-190001-E2.6-Z") {
     time: dayjs.utc(timeString).unix(),
     titleString: `${timeString}  ${scan}°`,
     infoString: "No data",
-    scanElevation: mode == "E" ? angle : 0.0,
-    scanAzimuth: mode == "A" ? angle : 0.0,
+    sweepElevation: mode == "E" ? angle : 0.0,
+    sweepAzimuth: mode == "A" ? angle : 0.0,
     rangeStart: 0.0,
     rangeSpacing: 0.2,
     ei16: [728, 728, 728, 728, 728],

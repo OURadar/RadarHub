@@ -34,7 +34,7 @@ forbidden_request = HttpResponseForbidden("Forbidden. Mistaken? Tell my father.\
 
 radar_prefixes = {}
 for prefix, item in settings.RADARS.items():
-    pathway = item["folder"].lower()
+    pathway = item["pathway"].lower()
     radar_prefixes[pathway] = prefix
 
 # region Helper Functions
@@ -303,7 +303,7 @@ def _load(pathway, source):
     prefix = radar_prefixes[pathway]
     if settings.SIMULATE:
         logger.info(f"Dummy sweep {source} {prefix}")
-        sweep = File.dummy_sweep(prefix)
+        sweep = Sweep.dummy_sweep(prefix)
     else:
         sweep = Sweep.read(f"{prefix}-{source}", u8=True)
     symbol = list(sweep["u8"].keys())[0]
@@ -418,7 +418,7 @@ def location(pathway):
     global origins
     if settings.VERBOSE > 1:
         fn_name = colorize("archive.location()", "green")
-        show = fn_name + "   " + color_name_value("pathway", pathway)
+        show = fn_name + " " + color_name_value("pathway", pathway)
         logger.debug(show)
     if pathway in radar_prefixes:
         prefix = radar_prefixes[pathway]
@@ -429,7 +429,7 @@ def location(pathway):
     else:
         origins[pathway] = Sweep.location(prefix)
     if settings.VERBOSE > 1:
-        logger.debug(f"{fn_name}  origins = {origins}")
+        logger.debug(f"{fn_name} origins = {origins}")
     return origins[pathway]
 
 
