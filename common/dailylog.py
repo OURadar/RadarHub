@@ -60,6 +60,8 @@ class Logger(logging.Logger):
                 self.removeHandler(h)
         postfix = time.strftime(r"-%Y%m%d", self.time) if self.dailyfile else ""
         logfile = f"{self.home}/{self.name}{postfix}.log"
+        if not os.path.exists(self.home):
+            os.makedirs(self.home)
         fileHandler = logging.FileHandler(logfile, "a")
         fileHandler.setLevel(logging.DEBUG)
         fileHandler.setFormatter(self.formatter)

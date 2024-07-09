@@ -48,7 +48,7 @@ pattern_x_yyyymmdd = re.compile(r"(?<=[-/])20[0-9][0-9](0[0-9]|1[012])([0-2][0-9
 
 radar_name_by_pathway = {}
 for name, item in settings.RADARS.items():
-    pathway = item["pathway"]
+    pathway = item["pathway"].lower()
     radar_name_by_pathway[pathway] = name
 
 
@@ -101,7 +101,11 @@ def params_from_source(source, dig=False):
             if source[-1] == "/":
                 source = source[:-1]
             folder, day_string = os.path.split(source)
-            if dig:
+            if "/" in folder:
+                pathway = os.path.basename(os.path.dirname(folder)).lower()
+                if pathway in radar_name_by_pathway:
+                    name = radar_name_by_pathway[pathway]
+            elif dig:
                 files = list_files(source)
                 file = os.path.basename(files[0]) if len(files) else None
         else:
@@ -168,27 +172,21 @@ def list_files(folder):
     return files
 
 
-def xz_folder(folder, hour=0, check_db=True, args=None):
-    try:
-        progress = args.progress
-    except:
-        progress = None
-    try:
-        skip = args.skip
-    except:
-        skip = True
-    try:
-        verbose = args.verbose
-    except:
-        verbose = 0
+def xz_folder(folder, **kwargs):
+    hour = kwargs.get("hour", 0)
+    skip = kwargs.get("skip", None)
+    single = kwargs.get("single", False)
+    progress = kwargs.get("progress", None)
+    quick_insert = kwargs.get("quick_insert", True)
+    verbose = kwargs.get("verbose", 0)
+
     show = colorize("xz_folder()", "green")
     show += "   " + color_name_value("folder", folder)
-    show += "   " + color_name_value("check_db", check_db)
     show += "   " + color_name_value("verbose", verbose)
-    show += "   " + color_name_value("skip", skip)
+    show += "   " + color_name_value("quick_insert", quick_insert)
     logger.info(show)
 
-    use_mp = "linux" in sys.platform and not args.single
+    use_mp = "linux" in sys.platform and not single
     basename = os.path.basename(folder)
     s = pattern_yyyymmdd.search(basename)
     if s:
@@ -206,9 +204,9 @@ def xz_folder(folder, hour=0, check_db=True, args=None):
     if d:
         d = d[0]
 
-    if not check_db and d:
+    if quick_insert and d:
         show = colorize(" WARNING ", "warning")
-        logger.warning(f"{show} There are {d.count:,d} existing entries.")
+        logger.warning(f"{show} There {'are' if d.count > 1 else 'is'} {d.count:,d} existing entr{'ies' if d.count > 1 else 'y'}.")
         logger.warning(f"{show} Quick insert will result in duplicates. Try normal insert instead.")
         ans = input("Do you still want to continue (y/[n])? ")
         if not ans == "y":
@@ -216,7 +214,7 @@ def xz_folder(folder, hour=0, check_db=True, args=None):
             return
 
     if d.count == len(raw_archives):
-        logger.warning(f"Number of files == Day({basename}).count = {d.count:,}")
+        logger.warning(f"Files in {folder} == Day({basename}).count = {d.count:,}")
         if skip is None:
             ans = input("Do you still want to continue (y/[n])? ")
             if not ans == "y":
@@ -246,14 +244,15 @@ def xz_folder(folder, hour=0, check_db=True, args=None):
     basename = os.path.basename(archives[0])
     parts = radar.re_3parts.search(basename)
     if parts:
-        name = parts.groupdict()["name"]
+        parts = parts.groupdict()
+        name = parts["name"]
     else:
         logger.error(f"Error. Unable to determine name from basename {basename}")
         return
     first = radar.read(archives[0], verbose=verbose)
     kind = first["kind"]
     if kind == Sweep.Kind.UNK:
-        logger.info(f"Kind {kind}. Unable to continue.")
+        logger.error(f"Kind {kind}. Unable to continue.")
         return
     else:
         kindString = colorize(Sweep.Kind(kind).name, "yellow")
@@ -361,27 +360,41 @@ def xz_folder(folder, hour=0, check_db=True, args=None):
     keys = sorted(keys)
     entries = Sweep.objects.filter(time__range=time_range, name=name)
     if len(entries) == 0:
-        logger.debug(f"No Swwep entries for {name} {time_range}. Overriding check_db = False ...")
-        check_db = False
+        logger.debug(f"No Swwep entries for {name} {time_range}. Overriding quick_insert = True ...")
+        quick_insert = True
 
-    if check_db:
-        entries = Sweep.objects.filter(time__range=time_range, name=name)
+    if quick_insert:
 
         t = tm.time()
-        count_ignore = 0
+        desc = "Pass 2 / 2 - Creating entries"
+        if not progress:
+            logger.info(f"{desc} ...")
+        creates = []
+        for key in tqdm.tqdm(keys, desc=f"{indent}{desc}") if progress else keys:
+            time, scan, path, tarinfo = output[key]
+            x = Sweep(time=time, name=name, kind=kind, scan=scan, path=path, symbols=symbols, tarinfo=tarinfo)
+            creates.append(x)
+        Sweep.objects.bulk_create(creates)
+        t = tm.time() - t
+        a = len(creates) / t
+        logger.info(f"Created {t:.2f} sec ({a:,.0f} files / sec)")
 
+    else:
+
+        t = tm.time()
+        entries = Sweep.objects.filter(time__range=time_range, name=name)
         desc = "Pass 2 / 2 - Gathering entries"
         if not progress:
             show = color_name_value("name", name)
             logger.info(f"{desc} ... {show}")
         creates = []
         updates = []
+        count_ignore = 0
         for key in tqdm.tqdm(keys, desc=f"{indent}{desc}") if progress else keys:
             time, scan, path, tarinfo = output[key]
             n = entries.filter(time=time)
             if n:
                 x = n.first()
-                # if x.name == "BS1" or x.scan != scan or x.path != path or x.symbols != symbols or x.tarinfo != tarinfo:
                 if x.scan != scan or x.path != path or x.symbols != symbols or x.tarinfo != tarinfo:
                     mode = "U"
                     x.kind = kind
@@ -406,24 +419,9 @@ def xz_folder(folder, hour=0, check_db=True, args=None):
         a = len(keys) / t
         logger.info(f"Updated {t:.2f} sec ({a:,.0f} files / sec)   c: {len(creates)}  u: {len(updates)}  i: {count_ignore}")
 
-    else:
-
-        t = tm.time()
-        desc = "Pass 2 / 2 - Creating entries"
-        if not progress:
-            logger.info(f"{desc} ...")
-        creates = []
-        for key in tqdm.tqdm(keys, desc=f"{indent}{desc}") if progress else keys:
-            time, scan, path, tarinfo = output[key]
-            x = Sweep(time=time, name=name, kind=kind, scan=scan, path=path, symbols=symbols, tarinfo=tarinfo)
-            creates.append(x)
-        Sweep.objects.bulk_create(creates)
-        t = tm.time() - t
-        a = len(creates) / t
-        logger.info(f"Created {t:.2f} sec ({a:,.0f} files / sec)")
-
     # Make a Day entry
-    build_day(folder, bgor=True)
+    day_str = parts["time"][:8]
+    build_day(f"{name}-{day_str}", bgor=True)
 
     e = tm.time() - e
     a = len(archives) / e
@@ -826,9 +824,9 @@ def check_day(source, format=""):
     else:
         logger.error("Unable to continue")
         pp.pprint(params)
+    ddd = []
     date = params["date"]
     date_range = params["date_range"]
-    ddd = []
     for name in names:
         if date:
             dd = Day.objects.filter(name=name, date=date).order_by("date")
@@ -836,21 +834,19 @@ def check_day(source, format=""):
             dd = Day.objects.filter(name=name, date__range=date_range).order_by("date")
         else:
             dd = Day.objects.filter(name=name).order_by("date")
-        if len(dd):
-            if len(names) > 1:
-                show = color_name_value("name", name)
-                logger.info(show)
-            for d in dd:
-                ddd.append(d)
-                show = d.__repr__(format=format)
-                logger.info(f"R {show}")
+        if len(dd) == 0:
+            continue
+        for d in dd:
+            ddd.append(d)
+            show = d.__repr__(format=format)
+            logger.info(f"R {show}")
     if len(ddd) == 0:
         logger.info(f"Day entry of {source} does not exist")
     return ddd
 
 
 """
-    Check File entries and verify existence
+    Check Sweep entries and verify existence of Sweep.path
 
     source - common source pattern (see params_from_source())
 """
@@ -878,12 +874,14 @@ def check_source(source, progress=True, remove=False):
         if count == 0:
             continue
         count = 0
-        for file in tqdm.tqdm(names) if progress else names:
-            if not os.path.exists(file.path):
-                file.show()
+        paths = []
+        for scan in tqdm.tqdm(scans) if progress else scans:
+            if not os.path.exists(scan.path):
+                paths.append(scan.path)
                 count += 1
                 if remove:
-                    file.delete()
+                    scan.delete()
+        pp.pprint(paths)
         s = "s" if count > 1 else ""
         logger.info(f"{source} has {count} missing file{s}")
 
@@ -902,40 +900,42 @@ def find_duplicates(source, remove=False):
     show += "   " + color_name_value("remove", remove)
     logger.info(show)
     params = params_from_source(source)
-    prefix = params["prefix"]
     date_range = params["date_range"]
+    name = params["name"]
 
     show = colorize("date_range", "orange") + colorize(" = ", "red")
     show += "[" + colorize(date_range[0], "yellow") + ", " + colorize(date_range[1], "yellow") + "]"
     logger.info(show)
 
-    if prefix:
-        entries = File.objects.filter(date__range=date_range, name__startswith=prefix)
+    if name:
+        entries = Sweep.objects.filter(time__range=date_range, name=name)
     else:
-        entries = File.objects.filter(date__range=date_range)
-
-    names = [file.name for file in entries]
-
-    if len(names) == 0:
+        entries = Sweep.objects.filter(time__range=date_range)
+    files = [entry.path for entry in entries]
+    if len(files) == 0:
         logger.info("No match")
         return
 
+    indent = " " * logger.indent()
+
     count = 0
-    for name in tqdm.tqdm(names):
-        if names.count(name) == 1:
+    removed = 0
+    for file in tqdm.tqdm(files, desc=f"{indent}Checking duplicates"):
+        if files.count(file) == 1:
             continue
-        x = entries.filter(name=name)
-        logger.info(f"{name} has {len(x)} entries")
+        count += 1
+        x = entries.filter(path=file)
+        logger.debug(f"{file} has {len(x)} entries")
         for o in x[1:]:
             logger.debug(o.__repr__())
             if remove:
-                count += 1
+                removed += 1
                 o.delete()
 
     if count:
-        logger.info(f"Removed {count} files")
-    else:
-        logger.info("No duplicates found.")
+        logger.info(f"Found {count} duplicates")
+    if removed:
+        logger.info(f"Removed {removed} files")
 
 
 """
@@ -1254,7 +1254,7 @@ def dbtool_main():
     parser.add_argument("-c", "--check-day", action="store_true", help="checks entries from the Day table")
     parser.add_argument("-C", "--check-sweep", action="store_true", help="checks entries from the Sweep table")
     parser.add_argument("-d", dest="build_day", action="store_true", help="builds a Day entry")
-    parser.add_argument("-f", dest="find_duplicates", action="store_true", help="finds duplicate Sweep entries in the database")
+    parser.add_argument("-f", "--find-duplicates", action="store_true", help="finds duplicate Sweep entries in the database")
     parser.add_argument("--format", default="pretty", choices=["raw", "short", "pretty"], help="sets output format")
     parser.add_argument("-i", dest="insert", action="store_true", help="inserts a folder")
     parser.add_argument("-j", dest="old_insert", action="store_true", help="inserts a folder")
@@ -1265,14 +1265,15 @@ def dbtool_main():
     parser.add_argument("--no-bgor", dest="bgor", default=True, action="store_false", help="skips computing bgor")
     parser.add_argument("-p", "--check-path", action="store_true", help="checks the storage path")
     parser.add_argument("--progress", action="store_true", help="shows progress bar")
+    parser.add_argument("--prune", action="store_true", help="prunes the database")
     parser.add_argument("-q", dest="quiet", action="store_true", help="runs the tool in silent mode (verbose = 0)")
     parser.add_argument("--recent", default=7, type=int, help="shows recent N days of entries")
     parser.add_argument("--remove", action="store_true", help="removes entries when combined with --find-duplicates")
     parser.add_argument("-s", dest="sweep", action="store_true", help="shows a sweep summary")
     parser.add_argument("--show-city", action="store_true", help="shows city of IP location")
-    parser.add_argument("--no-skip", dest="skip", default=True, action="store_false", help="do no skip folders")
     parser.add_argument("--single", action="store_true", default=False, help="uses single-threading")
-    parser.add_argument("--skip", action="store_true", default=True, help="skips folders with Day.county == count")
+    parser.add_argument("--skip", dest="skip", action="store_true", default=None, help="skips folders with Day.county == count")
+    parser.add_argument("--no-skip", dest="skip", action="store_false", default=None, help="do no skip folders")
     parser.add_argument("-u", "--update", action="store_true", help="updates visitor table from access log")
     parser.add_argument("-v", dest="verbose", default=1, action="count", help="increases verbosity (default = 1)")
     parser.add_argument("--version", action="version", version="%(prog)s " + settings.VERSION)
@@ -1377,7 +1378,7 @@ def dbtool_main():
             folder = folder[:-1] if folder[-1] == "/" else folder
             if len(args.source) > 1:
                 logger.info("...")
-            xz_folder(folder, hour=args.hour, check_db=True, args=args)
+            xz_folder(folder, **vars(args))
     elif args.old_insert:
         if len(args.source) == 0:
             print(
@@ -1413,7 +1414,7 @@ def dbtool_main():
             if len(args.source) > 1:
                 logger.info("...")
             folder = folder[:-1] if folder[-1] == "/" else folder
-            xz_folder(folder, hour=args.hour, check_db=False, args=args)
+            xz_folder(folder, **vars(args))
     elif args.last:
         logger.info("Retrieving the absolute last entry ...")
         o = Sweep.objects.last()
@@ -1422,6 +1423,19 @@ def dbtool_main():
         if args.markdown:
             logger.hideLogOnScreen()
         check_latest(args.source, markdown=args.markdown)
+    elif args.prune:
+        if len(args.source) == 0:
+            print(
+                textwrap.dedent(
+                    f"""
+                --prune needs a source, e.g.,
+
+                { __prog__} --prune RAXPOL-20211006
+            """
+                )
+            )
+            return
+        check_source(args.source, remove=True)
     elif args.sweep:
         if args.markdown:
             logger.hideLogOnScreen()

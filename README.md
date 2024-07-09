@@ -2,9 +2,7 @@
 
 # RadarHub
 
-This is a [Django]-[Channels] web interface for ARRC radar operations.
-
-**IMPORTANT**: This is a work in progress. I just wanted to start the source control early.
+This is mainly a [Django] web app for ARRC radar archive. There is also a [Django]-[Channels] interface for live radar operations.
 
 Three main parts:
 
@@ -566,6 +564,12 @@ The migrations of [django_eventstream] is stored in where the package is install
 folder=$(python -c "import django_eventstream; print(django_eventstream.__path__[0])")
 rm ${folder}/migrations/0*.py
 rm ${folder}/migrations/__pycache__/*.pyc
+```
+
+Useful command to test of the eventstream is working properly when setting `SIMULATE = True` in `radarhub.settings.py`:
+
+```shell
+curl -N http://localhost:8000
 ```
 
 ## Logrotate

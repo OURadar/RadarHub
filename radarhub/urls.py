@@ -1,10 +1,12 @@
 from django.contrib import admin
 from django.urls import include, path
-
 from django.conf import settings
+
+import django_eventstream
 
 urlpatterns = [
     path("", include("frontend.urls")),
+    path("events/", include(django_eventstream.urls), {"channels": ["sse"]}),
     path("accounts/", include("reception.urls")),
     path("accounts/", include("allauth.urls")),
 ]
