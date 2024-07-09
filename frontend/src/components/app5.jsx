@@ -17,7 +17,7 @@ import { SectionHeader } from "./section-header";
 import { Scope2 } from "./scope2";
 import { Health } from "./health";
 import { Control } from "./control";
-import { Product } from "./product";
+import { Sweep } from "./sweep";
 import { TopBar } from "./topbar";
 import { Live } from "./live";
 
@@ -33,6 +33,7 @@ export class App extends React.Component {
 
     this.handleOverlayLoad = this.handleOverlayLoad.bind(this);
 
+    console.log("App5");
     console.log(props);
   }
 
@@ -88,7 +89,7 @@ export class App extends React.Component {
           <div id="split-panel-left" className="container">
             <div className="fullHeight">
               <SectionHeader name="product" isMobile={false} />
-              <Product
+              <Sweep
                 colors={this.user.preference.colors}
                 gravity="right"
                 debug={this.props.debug}

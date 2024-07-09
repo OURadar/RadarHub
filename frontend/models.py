@@ -8,14 +8,14 @@
 
 import os
 import re
-import sys
 import json
 import radar
 import pprint
+import logging
 import datetime
 import numpy as np
 
-from common import colorize, get_user_agent_string, is_valid_time, dailylog
+from common import colorize, get_user_agent_string, is_valid_time
 from django.conf import settings
 from django.core.validators import int_list_validator
 from django.utils.translation import gettext_lazy
@@ -23,9 +23,10 @@ from django.db import models
 
 from . import algos
 
-__prog__ = os.path.basename(sys.argv[0])
+# __prog__ = os.path.basename(sys.argv[0])
+# logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, dailyfile=settings.DEBUG)
 
-logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, dailyfile=settings.DEBUG)
+logger = logging.getLogger("frontend")
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=120, sort_dicts=False)
 tzinfo = datetime.timezone.utc
 dot_colors = ["black", "gray", "blue", "green", "orange"]
@@ -103,7 +104,7 @@ def starts_with_cf(string):
 # Create your models here.
 
 """
-File (deprecating)
+File (deprecated)
 
  - name = filename of the sweep, e.g., PX-20130520-191000-E2.6-Z.nc
  - path = absolute path of the data, e.g., /mnt/data/PX1000/2013/20130520/_original/PX-20130520-191000-E2.6.tar.xz
@@ -277,7 +278,7 @@ class Day(models.Model):
                 return f"{s:>4}"
 
             counts = "".join([_int2str(int(n)) for n in self.hourly_count.split(",")])
-            show = f"{date} {dot} {self.__vbar__()} {counts}"
+            show = f"{self.name}-{date} {dot} {self.__vbar__()} {counts}"
         return show
 
     def __vbar__(self):
@@ -469,7 +470,7 @@ class Visitor(models.Model):
 """
 Sweep
 
-- New model that will replace the "File" model
+- New model that replaces the File model
 - An encapsulation of a sweep that contains multiple products
 - Product symbol is no longer required in name
 - Variables in database:
@@ -522,6 +523,10 @@ class Sweep(models.Model):
 
     def __str__(self):
         return self.__repr__()
+
+    @property
+    def locator(self):
+        return f"{self.time.strftime(r'%Y%m%d-%H%M%S')}-{self.scan}"
 
     def load(self, symbols=["Z", "V", "W", "D", "P", "R"], finite=False, verbose=0):
         self.data = radar.read(self.path, symbols=symbols, tarinfo=self.tarinfo, verbose=verbose)
@@ -636,9 +641,11 @@ class Sweep(models.Model):
 
     @staticmethod
     def dummy_data(name="PX-20130520-123456-E2.6-Z", u8=False):
-        parts = radar.re_4parts.search(name).groupdict()
+        logger.info(f"Sweep.dummy_data({name})")
+        parts = radar.re_4parts.search(name)
         if parts is None:
             return radar.empty_sweep
+        parts = parts.groupdict()
         data = dummy_data.copy()
         data["time"] = datetime.datetime.strptime(parts["time"], r"%Y%m%d-%H%M%S").timestamp()
         data["sweepElevation"] = float(parts["scan"][1:]) if "E" in parts["scan"] else 0.0

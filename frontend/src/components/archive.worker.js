@@ -213,15 +213,11 @@ function connect(force = false) {
     const payload = JSON.parse(event.data);
     payload.items.forEach((item) => {
       const elements = item.split("-");
-      const symbol = elements[3];
       const scan = elements[2];
       const t = elements[1];
       const d = elements[0];
       if (state.verbose) {
-        console.info(`%carchive.worker.connect%c ${d} ${t} ${scan} ${symbol} ${state.update}`, nameStyle, "");
-      }
-      if (symbol != grid.symbol) {
-        return;
+        console.info(`%carchive.worker.connect%c ${d} ${t} ${scan} ${state.update}`, nameStyle, "");
       }
       if (grid.items.indexOf(item) > 0) {
         // console.warn(`Item ${item} exists.`);
@@ -235,7 +231,7 @@ function connect(force = false) {
         grid.items = grid.items.slice(grid.counts[0]);
         grid.counts = [grid.counts[1], 0];
         if (state.verbose) {
-          console.info(`%carchive.worker.connect%c   ${dateTimeString} ${grid.hour}`, nameStyle, "");
+          console.info(`%carchive.worker.connect%c ${dateTimeString} ${grid.hour}`, nameStyle, "");
         }
       }
       grid.items.push(item);

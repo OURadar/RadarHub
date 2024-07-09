@@ -29,6 +29,7 @@ class Live extends Ingest {
       health: { time: 0 },
       control: { time: 0 },
     };
+    this.live = {};
 
     this.connect = this.connect.bind(this);
     this.execute = this.execute.bind(this);
@@ -44,6 +45,10 @@ class Live extends Ingest {
       this.showMessage(payload);
     } else if (type == "response") {
       this.showResponse(payload, 2500);
+    } else if (type == "health") {
+      this.data.health = payload;
+    } else if (type == "control") {
+      this.data.control = payload;
     } else if (type == "scope") {
       //if (this.state.tic < 5) console.log(payload);
       this.data.ch1 = payload.ch1;
@@ -51,10 +56,8 @@ class Live extends Ingest {
       if (this.data.t === null || this.data.t.length != payload.count) {
         this.data.t = new Float32Array(Array(payload.count).keys());
       }
-    } else if (type == "health") {
-      this.data.health = payload;
-    } else if (type == "control") {
-      this.data.control = payload;
+    } else if (type == "ray") {
+      //console.log(payload);
     }
     this.onUpdate(this.state.tic++);
   }
@@ -63,11 +66,7 @@ class Live extends Ingest {
 
   init() {
     if (this.state.verbose) {
-      console.log(
-        `%live.init()%c   pathway = ${this.pathway}`,
-        "color: lightseagreen",
-        ""
-      );
+      console.log(`%live.init()%c   pathway = ${this.pathway}`, "color: lightseagreen", "");
     }
     this.worker.postMessage({ task: "init", name: this.pathway });
     // this.worker.postMessage({ task: "init" });
@@ -78,7 +77,7 @@ class Live extends Ingest {
     this.onUpdate(this.state.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
     const url = `${p}://${window.location.host}/ws/${this.pathway}/`;
-    console.log(`live.js Connecting ${this.pathway}`)
+    console.log(`live.js Connecting ${this.pathway}`);
     this.worker.postMessage({
       task: "connect",
       payload: {

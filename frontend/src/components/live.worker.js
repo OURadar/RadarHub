@@ -57,6 +57,22 @@ const sweepHeaderParser = new Parser()
   .floatle("rangeSpacing")
   .string("info", { length: "nx" });
 
+const rayParser = new Parser()
+  .endianess("little")
+  .uint8("type")
+  .uint8("tick")
+  .int16("ei16s")
+  .int16("ei16e")
+  .uint16("au16s")
+  .uint16("au16e")
+  .uint16("count")
+  .array("values", {
+    type: "uint8",
+    length: function () {
+      return this.count;
+    },
+  });
+
 self.onmessage = ({ data: { task, payload } }) => {
   if (task == "connect") {
     pathway = payload.pathway || "unspecified";
@@ -107,6 +123,7 @@ function connect(target, url) {
       const text = new TextDecoder().decode(e.data.slice(1));
       const update = JSON.parse(text);
       enums = { ...enums, ...update };
+      // console.log("Definition:");
       // console.log(enums);
     } else if (type == enums.Control) {
       // Control data in JSON
@@ -128,6 +145,22 @@ function connect(target, url) {
         type: "health",
         payload: health,
       });
+    } else if (type == enums.Response) {
+      // Response of a command
+      const text = new TextDecoder().decode(e.data.slice(1));
+      const letter = text[0];
+      let response = null;
+      if (letter == "N") {
+        response = ` 👎🏼 ${text.slice(1)} <div class='emotion'>😿</div>`;
+      } else if (letter == "A") {
+        response = ` 👍🏼 ${text.slice(1)} <div class='emotion'>👻</div>`;
+      }
+      if (response) {
+        self.postMessage({
+          type: "response",
+          payload: response,
+        });
+      }
     } else if (type == enums.Scope) {
       // AScope data - convert arraybuffer to int16 typed array
       const samples = new Int16Array(e.data.slice(1));
@@ -161,24 +194,18 @@ function connect(target, url) {
         type: "scope",
         payload: scope,
       });
-    } else if (type == enums.Response) {
-      // Response of a command
-      const text = new TextDecoder().decode(e.data.slice(1));
-      const letter = text[0];
-      let response = null;
-      if (letter == "N") {
-        response = ` 👎🏼 ${text.slice(1)} <div class='emotion'>😿</div>`;
-      } else if (letter == "A") {
-        response = ` 👍🏼 ${text.slice(1)} <div class='emotion'>👻</div>`;
-      }
-      if (response) {
-        self.postMessage({
-          type: "response",
-          payload: response,
-        });
-      }
     } else if (type == enums.RadialZ) {
       // Display of a radial of Z
+      const payload = rayParser.parse(new Uint8Array(e.data));
+      payload.startElevation = (payload.ei16s * 180.0) / 32768.0;
+      payload.endElevation = (payload.ei16e * 180.0) / 32768.0;
+      payload.startAzimuth = (payload.au16s * 180.0) / 32768.0;
+      payload.endAzimuth = (payload.au16e * 180.0) / 32768.0;
+      // console.log(payload);
+      self.postMessage({
+        type: "ray",
+        payload: payload,
+      });
     }
   };
 

@@ -2,7 +2,7 @@
 
 #
 #  fifo2db.py
-#  File entries from fifoshare to the Database
+#  Create Sweep entries from fifoshare to the database
 #
 #  RadarHub
 #
@@ -104,7 +104,7 @@ def catchupV1(file, root="/mnt/data"):
         dayTree = date.strftime(r"%Y/%Y%m%d")
         dayFolder = f"{folder}/{dayTree}"
         logger.info(color_name_value("pathway", dayFolder) + "   " + color_name_value("hour", hour))
-        dbtool.xz_folder(dayFolder, hour)
+        dbtool.xz_folder(dayFolder, hour=hour)
         date += stride
         hour = 0
 
@@ -149,7 +149,7 @@ def catchup(root="/mnt/data"):
             dayTree = date.strftime(r"%Y/%Y%m%d")
             dayFolder = f"{folder}/{dayTree}"
             logger.info(color_name_value("folder", dayFolder) + "   " + color_name_value("hour", hour))
-            dbtool.xz_folder(dayFolder, hour)
+            dbtool.xz_folder(dayFolder, hour=hour)
             date += stride
             hour = 0
         radars[prefix]["count"] += 1

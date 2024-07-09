@@ -1,18 +1,13 @@
 import os
 import re
 import sys
-import time
 import logging
-import datetime
-import threading
 
 from django.apps import AppConfig
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from django.db.models.signals import post_migrate
-
-from django_eventstream import send_event
+# from django.db.models.signals import post_migrate
 
 from common import color_name_value
 from common.cosmetics import colorize
@@ -109,146 +104,8 @@ class FrontendConfig(AppConfig):
                 aid.extractall("frontend/static/")
             os.remove(file_dst)
 
-        # Importing model classes locally to avoid issues with app registry
-        from .models import Day, File, Sweep, Visitor
-
         # Connect the signal
-        post_migrate.connect(launchMonitor)
+        from . import monitor
 
-
-def launchMonitor(sender, **kwargs):
-    for radar_prefix in radar_prefix_pairs:
-        if radar_prefix == ("demo", "DEMO"):
-            continue
-        elif settings.SIMULATE:
-            thread = threading.Thread(target=simulate, args=radar_prefix)
-        else:
-            thread = threading.Thread(target=monitor, args=radar_prefix)
-        thread.daemon = True
-        thread.start()
-
-
-def monitor(radar="px1000", prefix="PX"):
-    show = colorize("apps.monitor()", "green")
-    show += "   " + color_name_value("radar", radar)
-    show += "   " + color_name_value("prefix", prefix)
-    logger.info(show)
-
-    from .models import Day, File
-
-    files = []
-
-    day = Day.objects.filter(name=prefix)
-    if day.exists():
-        day = day.latest("date")
-        hourly_count = day.hourly_count
-        files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
-    else:
-        hourly_count = ",".join("0" * 24)
-        logger.info(f"No Day objects yet for {radar} / {prefix}")
-
-    no_day_warning = 0
-    while True:
-        time.sleep(3.0)
-        day = Day.objects.filter(name=prefix)
-        if not day.exists():
-            no_day_warning += 1
-            if no_day_warning < 3 or no_day_warning % 100 == 0:
-                logger.info(f"No Day objects yet for {radar} / {prefix}")
-            continue
-        day = day.latest("date")
-        if hourly_count == day.hourly_count:
-            continue
-        if settings.VERBOSE > 1:
-            day.show()
-        hourly_count = day.hourly_count
-        latest_files = File.objects.filter(name__startswith=prefix, date__range=day.last_hour_range())
-        delta = [file for file in latest_files if file not in files]
-        if len(delta) == 0:
-            continue
-        payload = {
-            "items": [file.name.lstrip(prefix).rstrip(".nc") for file in delta],
-            "hoursActive": [int(c) for c in hourly_count.split(",")],
-            "time": datetime.datetime.utcnow().isoformat(),
-        }
-        if any([".nc" in item for item in payload["items"]]):
-            print("This should not happen:")
-            print(payload["items"])
-            print(delta)
-        send_event("sse", radar, payload)
-        files = latest_files
-
-
-def simulate(radar="px1000", prefix="PX-"):
-    show = colorize("apps.simulate()", "green")
-    logger.info(f"{show} started")
-
-    hourly_count = [0] * 24
-    sweep_time = datetime.datetime(2022, 3, 10, 23, 50, 12)
-    sweep_day = sweep_time.day
-
-    tic = 0
-    block = 1
-    scans = ["E2.0", "E4.0", "E6.0", "E8.0", "E10.0"]
-    while True:
-        sweep_time += datetime.timedelta(seconds=300)
-        time_string = sweep_time.strftime(r"%Y%m%d-%H%M%S")
-        if sweep_day != sweep_time.day:
-            sweep_day = sweep_time.day
-            hourly_count = [0] * 24
-        files = []
-        if tic % block == 0:
-            scan = scans[int(tic / block) % len(scans)]
-            for symbol in ["Z", "V", "W", "D", "P", "R"]:
-                filename = f"{prefix}{time_string}-{scan}-{symbol}.nc"
-                files.append(filename)
-                hourly_count[sweep_time.hour] += 1
-            payload = {"items": [file.rstrip(".nc") for file in files], "hoursActive": hourly_count, "time": sweep_time.isoformat()}
-            logger.info(f"{time_string}-{scan}  {hourly_count}")
-            send_event("sse", "message", payload)
-        time.sleep(2.5)
-        tic += 1
-
-
-def tablesExist(sender, **kwargs):
-    # from django.db import DatabaseError
-    # from django_eventstream.models import Event
-    # try:
-    #     # Make sure the table exists, even if it's empty
-    #     Event.objects.count()
-    #     return True
-    # except DatabaseError:
-    #     logger.error('DatabaseError. Need to make a new table Event.')
-    #     logger.error('Run manage.py makemigrations && manage.py migrate --database=event')
-    #     return False
-
-    from django.db import connection
-
-    tables = connection.introspection.table_names()
-    if "django_eventstream_event" not in tables:
-        logger.error("DatabaseError. Need to make a new table Event.")
-        logger.error("Run manage.py makemigrations && manage.py migrate --database=event")
-        return False
-    if "frontend_day" not in tables:
-        name = colorize("Day", "green")
-        logger.error(f"DatabaseError. Need to make a new table {name}.")
-        logger.error("Run manage.py makemigrations frontend && manage.py migrate")
-        return False
-    if "frontend_file" not in tables:
-        name = colorize("File", "green")
-        logger.error(f"DatabaseError. Need to make a new table {name}.")
-        logger.error("Run manage.py makemigrations frontend && manage.py migrate")
-        return False
-    if "frontend_visitor" not in tables:
-        name = colorize("Visitor", "green")
-        logger.error(f"DatabaseError. Need to make a new table {name}.")
-        logger.error("Run manage.py makemigrations frontend && manage.py migrate")
-        return False
-    return True
-
-
-def announce(sender, **kwargs):
-    file = kwargs["instance"]
-    show = colorize("announce()", "green")
-    logger.info(f"{show} {file.name}")
-    send_event("sse", "file", file.name)
+        monitor.launch(sender=self)
+        # post_migrate.connect(monitor.launch, sender=self)

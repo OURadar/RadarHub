@@ -35,6 +35,7 @@ typedef struct _reporter {
     RKWebSocketSSLFlag flag;
     char               name[64];
     char               host[128];
+    char               pathway[64];
     char               address[128];
     char               welcome[256];
     char               control[2048];
@@ -149,7 +150,7 @@ void *run(void *in) {
     }
 
     if (R->verbose) {
-        printf("\033[38;5;197mBusy run loop\033[m\n");
+        printf("\033[38;5;200mBusy run loop\033[m\n");
     }
 
     int ht;
@@ -265,7 +266,7 @@ void sendControl(RKWebSocket *w) {
                 "{\"Label\":\"6-tilt VCP @ 18 deg/s\", \"Command\":\"p vol p 2 300 18/p 4 300 18/p 6 300 18/p 8 300 18/p 10 300 18/p 12 300 18\"}"
             "]"
         "}",
-        RadarHubTypeControl, R->name, R->fps, R->value);
+        RadarHubTypeControl, R->pathway, R->fps, R->value);
     if (r < 0) {
         fprintf(stderr, "Error. Unable to construct control JSON.\n");
     }
@@ -280,9 +281,10 @@ void handleOpen(RKWebSocket *w) {
     r = sprintf(R->welcome,
         "%c{"
             "\"command\":\"radarConnect\", "
-            "\"pathway\":\"%s\""
+            "\"pathway\":\"%s\", "
+            "\"radar\":\"%s\""
         "}",
-        RadarHubTypeHandshake, R->name);
+        RadarHubTypeHandshake, R->pathway, R->name);
     RKWebSocketSend(R->ws, R->welcome, r);
     sendControl(w);
 }
@@ -391,6 +393,7 @@ int main(int argc, const char *argv[]) {
     // Reporter struct
     R = (RKReporter *)malloc(sizeof(RKReporter));
     memset(R, 0, sizeof(RKReporter));
+    sprintf(R->pathway, "demo");
     sprintf(R->name, "Demo");
     R->wantActive = true;
     R->value = 1000;
@@ -418,6 +421,9 @@ int main(int argc, const char *argv[]) {
                 exit(EXIT_SUCCESS);
             case 'n':
                 strcpy(R->name, optarg);
+                break;
+            case 'p':
+                strcpy(R->pathway, optarg);
                 break;
             case 's':
                 R->flag = RKWebSocketFlagSSLOn;

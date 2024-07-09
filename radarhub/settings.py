@@ -18,9 +18,8 @@ from pathlib import Path
 
 from common import color_name_value
 
-# My additional parameters
-VERBOSE = 2
-SIMULATE = False
+VERBOSE = 1
+SIMULATE = True
 
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
 # SECURITY WARNING
@@ -29,6 +28,10 @@ SIMULATE = False
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
 
 DEBUG = bool(os.getenv("DJANGO_DEBUG"))
+
+# Production should not have SIMULATE
+if not DEBUG:
+    SIMULATE = False
 
 # Disable Python random has seed
 os.environ["PYTHONHASHSEED"] = "0"
@@ -79,6 +82,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     "channels",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -86,10 +90,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "django_eventstream",
     "frontend",
     "backhaul",
-    "django.contrib.sites",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -129,6 +133,8 @@ TEMPLATES = [
         },
     },
 ]
+
+# GRIP_URL = "http://localhost:5561"
 
 WSGI_APPLICATION = "radarhub.wsgi.application"
 
