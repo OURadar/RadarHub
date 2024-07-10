@@ -606,10 +606,12 @@ class Sweep(models.Model):
 
     @staticmethod
     def location(source):
-        fn_name = colorize("Sweep.location()", "green")
+        myname = colorize("Sweep.location()", "green")
         parts = radar.re_2parts.search(source)
         if parts is None:
             day = Day.objects.filter(name=source)
+            if len(day) == 0:
+                return {"longitude": -97.43730160, "latitude": 35.1812820, "last": "00000000"}
         else:
             parts = parts.groupdict()
             day = Day.objects.filter(name=parts["name"])
@@ -621,21 +623,25 @@ class Sweep(models.Model):
         hour = day.last_hour()
         if hour is None:
             message = colorize(f" {source} has no data for the day ", "warning")
-            logger.warn(f"{fn_name}   {message}")
+            logger.warn(f"{myname}   {message}")
             return {"longitude": -97.43730160, "latitude": 35.1812820, "last": ymd}
         ss = datetime.datetime.strptime(f"{ymd}{hour:02d}0000Z", r"%Y%m%d%H%M%SZ").replace(tzinfo=tzinfo)
         ee = datetime.datetime.strptime(f"{ymd}{hour:02d}5959.9Z", r"%Y%m%d%H%M%S.%fZ").replace(tzinfo=tzinfo)
         name = day.name
-        sweep = Sweep.objects.filter(time__range=[ss, ee], name=name).last()
-        if sweep is None:
+        query = Sweep.objects.filter(time__range=[ss, ee], name=name)
+        if query is None:
             message = colorize(f"{name} not found", "red")
-            logger.warn(f"{fn_name} {message}")
+            logger.warn(f"{myname} {message}")
             return {"longitude": -97.43730160, "latitude": 35.1812820, "last": ymd}
-        data = sweep.load()
+        sweep = query.first()
+        try:
+            data = sweep.load()
+        except:
+            return {"longitude": -97.43730160, "latitude": 35.1812820, "last": ymd}
         if hasattr(data["latitude"], "mask") and (data["latitude"].mask or data["longitude"].mask):
             date = datetime.datetime.fromtimestamp(data["time"]).strftime(r"%Y%m%d-%H%M%S")
             message = colorize(f" {name}-{date} has invalid location ", "warning")
-            logger.warn(f"{fn_name} {message}")
+            logger.warn(f"{myname} {message}")
             return {"longitude": -97.43730160, "latitude": 35.1812820, "last": ymd}
         return {"longitude": data["longitude"], "latitude": data["latitude"], "last": ymd}
 

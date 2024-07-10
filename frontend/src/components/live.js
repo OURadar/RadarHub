@@ -8,6 +8,7 @@
 //
 
 import { Ingest } from "./ingest";
+import { FIFOBuffer } from "./fifo";
 
 class Live extends Ingest {
   constructor(pathway, label = "") {
@@ -28,6 +29,7 @@ class Live extends Ingest {
       },
       health: { time: 0 },
       control: { time: 0 },
+      ray: new FIFOBuffer(),
     };
     this.live = {};
 
@@ -58,6 +60,8 @@ class Live extends Ingest {
       }
     } else if (type == "ray") {
       //console.log(payload);
+      // this.data.ray.enqueue(payload);
+      // console.log(`Ray ${this.data.ray.size()}`);
     }
     this.onUpdate(this.state.tic++);
   }

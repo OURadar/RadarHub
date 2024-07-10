@@ -9,7 +9,7 @@
     <script>
       if (!document.location.toString().includes("/503/")) {
         setInterval(() => {
-          fetch("/stats/cache/").then((response) => {
+          fetch("/data/stat/cache/").then((response) => {
             if (response.status == 200) {
               // Server is back up
               window.location.reload();

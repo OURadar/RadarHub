@@ -33,7 +33,6 @@ export class App extends React.Component {
 
     this.handleOverlayLoad = this.handleOverlayLoad.bind(this);
 
-    console.log("App5");
     console.log(props);
   }
 
@@ -83,7 +82,7 @@ export class App extends React.Component {
         <TopBar
           mode={this.user.preference.colors.name}
           ingest={this.ingest}
-          onThemeChange={() => user.current.nextMode()}
+          onThemeChange={() => this.user.nextMode()}
         />
         <div id="split-panel">
           <div id="split-panel-left" className="container">

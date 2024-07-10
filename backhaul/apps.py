@@ -1,9 +1,8 @@
 import sys
 import logging
 
-from django.conf import settings
-
 from django.apps import AppConfig
+from django.conf import settings
 
 logger = logging.getLogger("backhaul")
 

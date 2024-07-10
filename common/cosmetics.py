@@ -71,3 +71,11 @@ def byte_string(payload):
 
         p = f"{payload[0:1]}"
         return p + payload_binary(payload[1:8]) + " ... " + payload_binary(payload[-3:])
+
+
+def truncate_array(arr, front=3, back=3):
+    if len(arr) > front + back:
+        truncated = arr[:front] + ["..."] + arr[-back:]
+    else:
+        truncated = arr
+    return truncated

@@ -18,8 +18,8 @@ from pathlib import Path
 
 from common import color_name_value
 
-VERBOSE = 1
-SIMULATE = True
+VERBOSE = 2
+SIMULATE = False
 
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
 # SECURITY WARNING
@@ -247,14 +247,13 @@ BRANCH = os.popen("git rev-parse --abbrev-ref HEAD").read().strip()
 
 # Radar Collection
 #
-# RADARS = { '_PREFIX_': {'name': _NAME_, 'pathway': '_PATHWAY_', 'summary': '_SCAN_FOR_SUMMARY_' } }
+# RADARS = { '_PATHWAY_': {'name': _NAME_, 'prefix': '_PREFIX_', 'summary': '_SCAN_FOR_SUMMARY_' } }
 #
+RADARS = {
+    "demo": {"name": "Demo", "prefix": "DX", "folder": "Demo", "summary": "E4.0"},
+}
 if "radars" in settings:
-    RADARS = settings["radars"]
-else:
-    RADARS = {
-        "DX": {"name": "Demo", "pathway": "demo", "summary": "E2.4"},
-    }
+    RADARS.update(settings["radars"])
 
 # FIFO source to list for new files for fifo2db.py
 #

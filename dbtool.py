@@ -31,7 +31,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "radarhub.settings")
 django.setup()
 
 from django.conf import settings
-from common import colorize, color_name_value, dailylog
+from common import colorize, color_name_value, dailylog, truncate_array
 from frontend.models import Sweep, File, Day, Visitor
 
 __prog__ = os.path.splitext(os.path.basename(sys.argv[0]))[0]
@@ -46,12 +46,6 @@ pattern_yyyy = re.compile(r"20[0-9][0-9]")
 pattern_yyyymmdd = re.compile(r"20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])")
 pattern_x_yyyymmdd = re.compile(r"(?<=[-/])20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])")
 
-radar_name_by_pathway = {}
-for name, item in settings.RADARS.items():
-    pathway = item["pathway"].lower()
-    radar_name_by_pathway[pathway] = name
-
-
 """
     Parse name, date, datetime, etc. from a source string
 
@@ -64,7 +58,7 @@ for name, item in settings.RADARS.items():
 
 
 def params_from_source(source, dig=False):
-    fn_name = colorize("params_from_source()", "green")
+    myname = colorize("params_from_source()", "green")
     file = None
     name = None
     day_string = None
@@ -78,13 +72,15 @@ def params_from_source(source, dig=False):
             query = source
         v1 = color_name_value("name", name)
         v2 = color_name_value("query", query)
-        logger.debug(f"{fn_name}   {v1}   {v2}")
-        if len(query) == 5:
+        logger.debug(f"{myname}   {v1}   {v2}")
+        # Like 2024*
+        if len(query) < 6:
             y = int(query[0:4])
             start = datetime.datetime(y, 1, 1, tzinfo=tzinfo)
             end = datetime.datetime(y, 12, 31, tzinfo=tzinfo)
             date_range = [start, end]
-        elif len(query) == 7:
+        # Like 202401*
+        elif len(query) > 6:
             y = int(query[0:4])
             m = int(query[4:6])
             start = datetime.datetime(y, m, 1, tzinfo=tzinfo)
@@ -96,6 +92,8 @@ def params_from_source(source, dig=False):
             end = datetime.datetime(y, m, 1, tzinfo=tzinfo)
             end -= datetime.timedelta(days=1)
             date_range = [start, end]
+        else:
+            logger.warning(f"Error. Please specify YYYY* or a YYYYMM*, e.g., 2024* or 202407*")
     elif os.path.exists(source):
         if os.path.isdir(source):
             if source[-1] == "/":
@@ -103,8 +101,9 @@ def params_from_source(source, dig=False):
             folder, day_string = os.path.split(source)
             if "/" in folder:
                 pathway = os.path.basename(os.path.dirname(folder)).lower()
-                if pathway in radar_name_by_pathway:
-                    name = radar_name_by_pathway[pathway]
+                # name = next((key for key, item in settings.RADARS.items() if item["pathway"] == pathway), None)
+                # name = settings.RADARS[pathway]["prefix"] if pathway in settings.RADARS else None
+                name = settings.RADARS.get(pathway, {}).get("prefix", None)
             elif dig:
                 files = list_files(source)
                 file = os.path.basename(files[0]) if len(files) else None
@@ -116,7 +115,7 @@ def params_from_source(source, dig=False):
                 logger.warning(f'Expected "_original" in source folder {folder}')
             day_string = os.path.basename(folder)
         if file:
-            logger.debug(f"{fn_name} file[0] = {file}")
+            logger.debug(f"{myname} file[0] = {file}")
             c = os.path.splitext(file)[0].split("-")
             name = c[0]
             time_string = c[1] + c[2]
@@ -143,7 +142,7 @@ def params_from_source(source, dig=False):
         start = datetime.datetime(source_date.year, source_date.month, source_date.day, tzinfo=tzinfo)
         date_range = [start, start + datetime.timedelta(days=1)]
         if name is None:
-            logger.debug(f"{fn_name} Only day string from {source}")
+            logger.debug(f"{myname} Only day string from {source}")
     return {
         "file": file,
         "name": name,
@@ -177,7 +176,7 @@ def xz_folder(folder, **kwargs):
     skip = kwargs.get("skip", None)
     single = kwargs.get("single", False)
     progress = kwargs.get("progress", None)
-    quick_insert = kwargs.get("quick_insert", True)
+    quick_insert = kwargs.get("quick_insert", False)
     verbose = kwargs.get("verbose", 0)
 
     show = colorize("xz_folder()", "green")
@@ -818,7 +817,8 @@ def check_day(source, format=""):
     logger.info(show)
     params = params_from_source(source)
     if params["name"] is None:
-        names = list(settings.RADARS.keys())
+        # names = list(settings.RADARS.keys())
+        names = [item["prefix"] for item in settings.RADARS.values()]
     elif isinstance(params["name"], str):
         names = [params["name"]]
     else:
@@ -859,12 +859,16 @@ def check_source(source, progress=True, remove=False):
     logger.info(show)
     params = params_from_source(source, dig=True)
     if params["name"] is None:
-        names = list(settings.RADARS.keys())
+        # names = list(settings.RADARS.keys())
+        names = [item["prefix"] for item in settings.RADARS.values()]
     elif isinstance(params["name"], str):
         names = [params["name"]]
     else:
         logger.error("Unable to continue")
         pp.pprint(params)
+
+    indent = " " * logger.indent()
+
     for name in names:
         scans = Sweep.objects.filter(time__range=params["date_range"], name=name)
         count = scans.count()
@@ -873,17 +877,31 @@ def check_source(source, progress=True, remove=False):
         logger.info(show)
         if count == 0:
             continue
-        count = 0
         paths = []
-        for scan in tqdm.tqdm(scans) if progress else scans:
+        count = 0
+        removed = 0
+        for scan in tqdm.tqdm(scans, desc=f"{indent}Screening paths ...") if progress else scans:
             if not os.path.exists(scan.path):
                 paths.append(scan.path)
                 count += 1
                 if remove:
                     scan.delete()
-        pp.pprint(paths)
-        s = "s" if count > 1 else ""
-        logger.info(f"{source} has {count} missing file{s}")
+                    removed += 1
+        if count:
+            pp.pprint(truncate_array(paths))
+            s = "s" if count > 1 else ""
+            logger.info(f"{source} has {count} missing file{s}")
+        if removed:
+            logger.info(f"Removed {removed} entries")
+            if not Sweep.objects.filter(time__range=params["date_range"], name=name).exists():
+                day_str = params["date"]
+                logger.info(f"No more entries for {name}. Deleting Day entry ...")
+                day = Day.objects.filter(date=params["date"], name=name)
+                if day:
+                    day = day.first()
+                    day.delete()
+            else:
+                build_day(source, bgor=True)
 
 
 """
@@ -946,24 +964,30 @@ def find_duplicates(source, remove=False):
 def check_latest(source=[], markdown=False):
     show = colorize("check_latest()", "green")
     logger.info(show)
-    if len(source):
-        names = [params_from_source(name)["prefix"] for name in source]
-    else:
-        names = settings.RADARS.keys()
+    # if len(source):
+    #     names = [params_from_source(name)["prefix"] for name in source]
+    # else:
+    #     # names = settings.RADARS.keys()
+    #     names = [item["prefix"] for item in settings.RADARS.values()]
+    pathways = [item["pathway"] for item in settings.RADARS.values()]
     message = "| Radars | Latest Scan | Age |\n|---|---|---|\n"
-    for name in names:
-        day = Day.objects.filter(name=name)
+    for pathway in pathways:
+        prefix = settings.RADARS[pathway]["prefix"]
+        day = Day.objects.filter(name=prefix)
         if day.count() == 0:
             continue
         day = day.latest("date")
         last = day.last_hour_range()
-        file = File.objects.filter(name__startswith=name, date__range=last).latest("date")
+        # file = File.objects.filter(name__startswith=name, date__range=last).latest("date")
+        sweep = Sweep.objects.filter(name=prefix, time__range=last).latest("time")
         show = colorize("last", "orange") + colorize(" = ", "red")
         show += "[" + colorize(last[0], "yellow") + ", " + colorize(last[1], "yellow") + "]"
-        show += "   " + color_name_value("name", file.name)
-        folder = settings.RADARS[name]["pathway"]
-        filename = re.sub("-([a-zA-Z]+).nc", "", file.name)
-        age = file.get_age()
+        show += "   " + color_name_value("name", sweep.path)
+        # folder = settings.RADARS[name]["pathway"]
+        folder = settings.RADARS[pathway]["folder"]
+        filename = re.sub("-([a-zA-Z]+).nc", "", sweep.path)
+        # age = sweep.age()
+        age = "to be implemented"
         ages = ""
         if age.days > 0:
             s = "s" if age.days > 1 else ""
@@ -1435,7 +1459,8 @@ def dbtool_main():
                 )
             )
             return
-        check_source(args.source, remove=True)
+        for source in args.source:
+            check_source(source, remove=True)
     elif args.sweep:
         if args.markdown:
             logger.hideLogOnScreen()
