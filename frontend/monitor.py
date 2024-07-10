@@ -12,13 +12,10 @@ from common.cosmetics import colorize
 
 logger = logging.getLogger("frontend")
 
-radar_prefix_pairs = []
-for prefix, item in settings.RADARS.items():
-    pathway = item["pathway"].lower()
-    radar_prefix_pairs.append((pathway, prefix))
-
 
 def monitor(radar="px1000", name="PX"):
+    time.sleep(2.718281828459045)
+
     show = colorize("monitor.monitor()", "green")
     show += "   " + color_name_value("name", name)
     show += "   " + color_name_value("radar", radar)
@@ -58,7 +55,7 @@ def monitor(radar="px1000", name="PX"):
         payload = {
             "items": [sweep.locator for sweep in delta],
             "hoursActive": [int(c) for c in hourly_count.split(",")],
-            "time": datetime.datetime.utcnow().isoformat(),
+            "time": datetime.datetime.now(datetime.UTC).isoformat(),
         }
         if any([".nc" in item for item in payload["items"]]):
             print("This should not happen:")
@@ -145,13 +142,14 @@ def launch(sender, **kwargs):
     # if tablesExist():
     #     print("Tables exist")
 
-    for radar_prefix in radar_prefix_pairs:
-        if radar_prefix[0] == "demo":
+    for pathway, item in settings.RADARS.items():
+        # pathway = item["pathway"]
+        if pathway == "demo":
             continue
         elif settings.SIMULATE:
-            thread = threading.Thread(target=simulate, args=radar_prefix)
+            thread = threading.Thread(target=simulate, args=(pathway, item["prefix"]))
         else:
-            thread = threading.Thread(target=monitor, args=radar_prefix)
+            thread = threading.Thread(target=monitor, args=(pathway, item["prefix"]))
         thread.daemon = True
         thread.start()
 

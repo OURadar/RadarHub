@@ -30,7 +30,6 @@ class Sweep extends GLView {
     this.offset = (Date.now() % 86400000) / 5000;
     this.state = {
       ...this.state,
-      phase: 0,
       count: 0,
       spin: false,
       useEuler: true,
@@ -71,11 +70,11 @@ class Sweep extends GLView {
     this.overlay.onLoad = props.onOverlayLoad;
     this.assetsComplete = false;
     this.tic = 0;
+    console.log(`I am a Sweep GL View`);
   }
 
   static defaultProps = {
     ...super.defaultProps,
-    sweeps: [],
     origin: {
       longitude: -97.422413,
       latitude: 35.25527,
@@ -300,21 +299,21 @@ class Sweep extends GLView {
 
     // Could update this.geometry.origin
     const geo = this.geometry;
-    const sweep = this.props.sweeps[0];
+    // const sweep = this.props.sweeps[0];
     if (
       Math.abs(geo.origin.longitude - sweep.longitude) > 0.001 ||
       Math.abs(geo.origin.latitude - sweep.latitude) > 0.001
     ) {
       let x0 = geo.origin.longitude.toFixed(6);
       let y0 = geo.origin.latitude.toFixed(6);
-      let x1 = sweep.longitude.toFixed(6);
-      let y1 = sweep.latitude.toFixed(6);
+      // let x1 = sweep.longitude.toFixed(6);
+      // let y1 = sweep.latitude.toFixed(6);
       console.log(`Product: origin (%c${x0}, ${y0}%c) ← (${x1}, ${y1})`, "color: mediumpurple", "color: inherit");
       // Perhaps update geo.range to max range
       // const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
       // const d = Math.sqrt(1 + geo.aspect ** 2);
       // console.log(`r = ${r}   d = ${d}`);
-      this.updateOrigin(sweep.longitude, sweep.latitude);
+      // this.updateOrigin(sweep.longitude, sweep.latitude);
       this.overlay.purge();
       this.overlay.load();
     }
@@ -323,30 +322,30 @@ class Sweep extends GLView {
     if (this.props.sweeps.includes(null)) {
       return;
     }
-    this.assets = this.props.sweeps.map((sweep) => ({
-      time: sweep.time,
-      data: this.regl.texture({
-        shape: [sweep.nr, sweep.nb],
-        data: sweep.values,
-        format: "luminance",
-        type: "uint8",
-      }),
-      points: this.regl.buffer({
-        usage: "static",
-        type: "float",
-        data: sweep.points,
-      }),
-      origins: this.regl.buffer({
-        usage: "static",
-        type: "float",
-        data: sweep.origins,
-      }),
-      elements: this.regl.elements({
-        usage: "static",
-        type: "uint16",
-        data: sweep.elements,
-      }),
-    }));
+    // this.assets = this.props.sweeps.map((sweep) => ({
+    //   time: sweep.time,
+    //   data: this.regl.texture({
+    //     shape: [sweep.nr, sweep.nb],
+    //     data: sweep.values,
+    //     format: "luminance",
+    //     type: "uint8",
+    //   }),
+    //   points: this.regl.buffer({
+    //     usage: "static",
+    //     type: "float",
+    //     data: sweep.points,
+    //   }),
+    //   origins: this.regl.buffer({
+    //     usage: "static",
+    //     type: "float",
+    //     data: sweep.origins,
+    //   }),
+    //   elements: this.regl.elements({
+    //     usage: "static",
+    //     type: "uint16",
+    //     data: sweep.elements,
+    //   }),
+    // }));
     this.assetsComplete = true;
 
     if (this.props.debug) {
@@ -362,12 +361,13 @@ class Sweep extends GLView {
 
   draw() {
     if (this.mount === null) return;
+    // if (
+    //   this.props.sweeps.length != this.assets.length ||
+    //   (this.props.sweeps.length > 0 && this.assets.length > 0 && this.props.sweeps[0].time != this.assets[0].time)
+    // ) {
+    //   this.updateAssets();
+    // }
     if (
-      this.props.sweeps.length != this.assets.length ||
-      (this.props.sweeps.length > 0 && this.assets.length > 0 && this.props.sweeps[0].time != this.assets[0].time)
-    ) {
-      this.updateAssets();
-    } else if (
       this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth * this.ratio ||
       this.canvas.height != this.mount.offsetHeight * this.ratio
@@ -377,34 +377,34 @@ class Sweep extends GLView {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
       this.updateColorbar(this.props.sweeps[0].symbol);
-    } else if (this.props.sweeps.length > 0 && this.palette.symbol != this.props.sweeps[0].symbol) {
-      this.updateColorbar(this.props.sweeps[0].symbol);
-      this.updateAssets();
+      // } else if (this.props.sweeps.length > 0 && this.palette.symbol != this.props.sweeps[0].symbol) {
+      //   this.updateColorbar(this.props.sweeps[0].symbol);
+      //   this.updateAssets();
     }
     this.regl.clear({
       color: this.props.colors.glview,
     });
-    if (this.assetsComplete) {
-      const phase = Math.min(this.props.sweeps.length - 1, ((this.tic / 8) >> 0) % (this.props.sweeps.length + 4));
-      const sweep = this.props.sweeps[phase];
-      if (this.state.phase != phase) {
-        this.setState({ phase: phase, title: sweep.titleString, info: sweep.infoString, age: sweep.age });
-      } else if (this.state.age != sweep.age) {
-        this.setState({ age: sweep.age });
-      }
-      const { data, points, origins, elements } = this.assets[phase];
-      this.vinci({
-        projection: this.geometry.projection,
-        modelview: this.geometry.modelview,
-        viewport: this.geometry.viewport,
-        colormap: this.palette.texture,
-        index: this.palette.index,
-        data: data,
-        points: points,
-        origins: origins,
-        elements: elements,
-      });
-    }
+    // if (this.assetsComplete) {
+    //   const phase = Math.min(this.props.sweeps.length - 1, ((this.tic / 8) >> 0) % (this.props.sweeps.length + 4));
+    //   const sweep = this.props.sweeps[phase];
+    //   if (this.state.phase != phase) {
+    //     this.setState({ phase: phase, title: sweep.titleString, info: sweep.infoString, age: sweep.age });
+    //   } else if (this.state.age != sweep.age) {
+    //     this.setState({ age: sweep.age });
+    //   }
+    //   const { data, points, origins, elements } = this.assets[phase];
+    //   this.vinci({
+    //     projection: this.geometry.projection,
+    //     modelview: this.geometry.modelview,
+    //     viewport: this.geometry.viewport,
+    //     colormap: this.palette.texture,
+    //     index: this.palette.index,
+    //     data: data,
+    //     points: points,
+    //     origins: origins,
+    //     elements: elements,
+    //   });
+    // }
     const shapes = this.overlay.getDrawables();
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);

@@ -411,8 +411,10 @@ class Backhaul(AsyncConsumer):
         if pathway not in pathway_channels or channel != pathway_channels[pathway]["channel"]:
             # This is when a radar connects using pathway that is already occupied,
             # did not wait for a welcome message and starts sending in payloads
-            logger.warning(f"Pathway {pathway} does not exist. Early return.")
-            return
+            # logger.warning(f"Pathway {pathway} does not exist. Early return.")
+            # return
+            logger.info(f"Adding {pathway} to pathway_channels ...")
+            pathway_channel_init(pathway, channel)
 
         # Payload type Response, direct to the earliest request, assumes FIFO
         type_name = payload[0]

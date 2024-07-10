@@ -5,16 +5,13 @@ import pprint
 import struct
 import logging
 import datetime
-
 import numpy as np
 
 from functools import lru_cache
 
-from django.views.decorators.cache import never_cache
-
-# from django.shortcuts import render
-from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.conf import settings
+from django.http import HttpResponse, Http404, HttpResponseForbidden
+from django.views.decorators.cache import never_cache
 
 from .models import Day, Sweep
 from common import colorize, color_name_value, is_valid_time, get_client_ip
@@ -32,10 +29,6 @@ invalid_query = HttpResponse(f"Invalid Query\n", status=204)
 unsupported_request = HttpResponse(f"Unsupported query. Feel free to email data request to: data@arrc.ou.edu\n", status=405)
 forbidden_request = HttpResponseForbidden("Forbidden. Mistaken? Tell my father.\n")
 
-radar_names = {}
-for name, item in settings.RADARS.items():
-    pathway = item["pathway"].lower()
-    radar_names[pathway] = name
 
 # region Helper Functions
 
@@ -120,9 +113,9 @@ def month(_, pathway, day):
         show += "   " + color_name_value("pathway", pathway)
         show += "   " + color_name_value("day", day)
         logger.debug(show)
-    if pathway == "undefined" or pathway not in radar_names or day == "undefined" or pattern_yyyymm.match(day) is None:
+    if pathway == "undefined" or pathway not in settings.RADARS or day == "undefined" or pattern_yyyymm.match(day) is None:
         return invalid_query
-    prefix = radar_names[pathway]
+    prefix = settings.RADARS[pathway]["prefix"]
     array = _month(prefix, day)
     payload = json.dumps(array, separators=(",", ":"))
     return HttpResponse(payload, content_type="application/json")
@@ -159,9 +152,9 @@ def count(_, pathway, day):
         show += "   " + color_name_value("pathway", pathway)
         show += "   " + color_name_value("day", day)
         logger.debug(show)
-    if pathway == "undefined" or pathway not in radar_names or day == "undefined" or not is_valid_time(day):
+    if pathway == "undefined" or pathway not in settings.RADARS or day == "undefined" or not is_valid_time(day):
         return invalid_query
-    prefix = radar_names[pathway]
+    prefix = settings.RADARS[pathway]["prefix"]
     data = {"count": _count(prefix, day)}
     payload = json.dumps(data, separators=(",", ":"))
     return HttpResponse(payload, content_type="application/json")
@@ -241,13 +234,13 @@ def table(request, pathway, day_hour):
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if pathway == "undefined" or pathway not in radar_names or day_hour == "undefined":
+    if pathway == "undefined" or pathway not in settings.RADARS or day_hour == "undefined":
         return invalid_query
     if len(day_hour) not in [8, 13]:
         return invalid_query
     if not is_valid_time(day_hour[:13]):
         return invalid_query
-    prefix = radar_names[pathway]
+    prefix = settings.RADARS[pathway]["prefix"]
     c = day_hour.split("-")
     day = c[0]
     if len(day) > 8:
@@ -300,7 +293,7 @@ def table(request, pathway, day_hour):
 
 @lru_cache(maxsize=1000)
 def _load(pathway, source):
-    prefix = radar_names[pathway]
+    prefix = settings.RADARS[pathway]["prefix"]
     if settings.SIMULATE:
         sweep = Sweep.dummy_data(f"{prefix}-{source}", u8=True)
     else:
@@ -357,7 +350,7 @@ def load(request, pathway, source):
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if pathway == "undefined" or pathway not in radar_names:
+    if pathway == "undefined" or pathway not in settings.RADARS:
         return invalid_query
     payload = _load(pathway, source)
     if payload is None:
@@ -419,10 +412,8 @@ def location(pathway):
         fn_name = colorize("archive.location()", "green")
         show = fn_name + " " + color_name_value("pathway", pathway)
         logger.debug(show)
-    if pathway in radar_names:
-        prefix = radar_names[pathway]
-    else:
-        prefix = None
+    prefix = settings.RADARS.get(pathway, {}).get("prefix", None)
+    logger.debug(f"archives.name   pathway = {pathway}   prefix = {prefix}")
     if prefix is None:
         origins[pathway] = {"longitude": -97.4373016, "latitude": 35.1812820, "last": "20220125"}
     else:
@@ -477,9 +468,9 @@ def catchup(request, pathway, scan="E4.0", symbol="Z"):
     dirty = screen(request)
     if dirty:
         return unsupported_request
-    if pathway == "undefined" or pathway not in radar_names:
+    if pathway == "undefined" or pathway not in settings.RADARS:
         return invalid_query
-    prefix = radar_names[pathway]
+    prefix = settings.RADARS[pathway]["prefix"]
     ymd, hour = latest(prefix)
     if ymd is None:
         data = {

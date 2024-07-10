@@ -40,7 +40,7 @@ tzinfo = datetime.timezone.utc
 radars = settings.RADARS.copy()
 logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, dailyfile=settings.DEBUG)
 # Populate other keys as local parameters
-for name, item in radars.items():
+for item in radars.values():
     item["step"] = 0
     item["count"] = 0
 
@@ -63,8 +63,9 @@ def proper(file, root="/mnt/data", verbose=0):
         return None
     parts = parts.groupdict()
     name = parts["name"]
-    if name not in radars:
-        logger.info(f"Radar {name} not recognized.")
+    entry = next((x for x in radars.values() if x["prefix"] == name), None)
+    if entry is None:
+        logger.info(f"Radar prefix {name} not recognized.")
         return None
     sub = radars[name]["pathway"]
     day = parts["time"][0:8]
@@ -104,7 +105,7 @@ def catchupV1(file, root="/mnt/data"):
         dayTree = date.strftime(r"%Y/%Y%m%d")
         dayFolder = f"{folder}/{dayTree}"
         logger.info(color_name_value("pathway", dayFolder) + "   " + color_name_value("hour", hour))
-        dbtool.xz_folder(dayFolder, hour=hour)
+        dbtool.xz_folder(dayFolder, hour=hour, skip=True)
         date += stride
         hour = 0
 
@@ -112,9 +113,9 @@ def catchupV1(file, root="/mnt/data"):
 def catchup(root="/mnt/data"):
     global radars
     logger.info(colorize("catchup()", "green"))
-    for prefix, radar in radars.items():
-        folder = radar["pathway"]
-        folder = f"{root}/{folder}"
+    for item in radars.values():
+        prefix = item["prefix"]
+        folder = f"{root}/{item['folder']}"
         show = color_name_value("prefix", prefix)
         show += "  " + color_name_value("folder", folder)
         logger.info(show)
@@ -149,59 +150,60 @@ def catchup(root="/mnt/data"):
             dayTree = date.strftime(r"%Y/%Y%m%d")
             dayFolder = f"{folder}/{dayTree}"
             logger.info(color_name_value("folder", dayFolder) + "   " + color_name_value("hour", hour))
-            dbtool.xz_folder(dayFolder, hour=hour)
+            dbtool.xz_folder(dayFolder, hour=hour, skip=True)
             date += stride
             hour = 0
-        radars[prefix]["count"] += 1
+        item["count"] += 1
         minute = int(c[2][2:4])
         step = int(minute / 20)
-        radars[prefix]["step"] = 0 if step == 2 else step + 1
+        item["step"] = 0 if step == 2 else step + 1
         if logger.level > dailylog.logging.WARNING:
             print("")
 
 
 def process(file):
     global radars
-    logger.info(colorize(file, 43))
     if not os.path.exists(file):
+        logger.debug(f"File {file} not found.")
         archive = proper(file)
     else:
         archive = file
+    logger.info(colorize(file, 43) + (" -" if archive is None else ""))
     if archive is None:
-        logger.info(f"Ignoring {file} ...")
         return
     basename = os.path.basename(archive)
     parts = radar.re_3parts.search(basename)
     if parts is None:
-        logger.error(f"Ignoring {archive} ...")
+        logger.error(f"Not a good file pattern. Ignoring {archive} ...")
         return
     parts = parts.groupdict()
     name = parts["name"]
-    if name not in radars:
-        logger.info(f"Radar {name} skipped")
+    entry = next((x for x in radars.values() if x["prefix"] == name), None)
+    if entry is None:
+        logger.info(f"Prefix {name} skipped")
         return
-    scan = parts["scan"]
     time = datetime.datetime.strptime(parts["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=tzinfo)
     sweep = Sweep.objects.filter(time=time, name=name)
     if sweep:
-        logger.debug(f"Sweep {time} {name} exists.")
+        logger.debug(f"Sweep {name}-{time} exists.")
         return
     data, tarinfo = radar.read(archive, want_tarinfo=True)
     if data is None:
         logger.error(f"Failed opening file {archive}")
         return
     kind = data["kind"]
+    scan = parts["scan"]
     symbols = list(data["products"].keys())
     sweep = Sweep(time=time, name=name, kind=kind, scan=scan, symbols=symbols, path=archive, tarinfo=tarinfo)
     sweep.save()
 
     bgor = False
-    if scan.startswith(radars[name]["summary"]):
+    if scan.startswith(radar["summary"]):
         step = time.minute // 20
-        target = radars[name]["step"]
+        target = radar["step"]
         logger.debug(f"{step} vs {target}")
-        if radars[name]["step"] == step:
-            radars[name]["step"] = 0 if step == 2 else radars[name]["step"] + 1
+        if radar["step"] == step:
+            radar["step"] = 0 if step == 2 else radar["step"] + 1
             bgor = True
     day, mode = dbtool.build_day(f"{name}-{time.strftime(r'%Y%m%d')}", bgor=bgor)
     u = "+" if bgor else ""
@@ -260,10 +262,11 @@ def listen(host="10.197.14.59", port=9000):
             logger.debug(f"files = {files}")
 
             for file in files[:-1]:
+                logger.debug(f"listen() -> '{file}' ({len(file)})")
+                if len(file) == 0:
+                    continue
                 # At this point, the filename is considered good
                 file = os.path.expanduser(file)
-
-                # Read in the sweep based on the known patterns: .nc, _V06, etc.
                 process(file)
 
         # Out of the second keepReading loop. Maybe there was an error in select(), close and retry
@@ -335,10 +338,9 @@ def read(pipe="/tmp/radarhub.fifo"):
 
             files = files.split("\n")
             for file in files:
-                logger.debug(f"read() -> {file}")
-                if file == initstring:
+                logger.debug(f"read() -> '{file}' ({len(file)})")
+                if file == initstring or len(file) == 0:
                     continue
-
                 # At this point, the filename is considered good
                 file = os.path.expanduser(file)
                 process(file)
@@ -367,7 +369,7 @@ def fifo2db():
             {__prog__} -p /tmp/radarhub.fifo
         """
         ),
-        epilog="Copyright (c) 2021-2022 Boonleng Cheong",
+        epilog="Copyright (c) Boonleng Cheong",
     )
     parser.add_argument("source", default=None, type=str, nargs="?", help="source to retrieve files")
     parser.add_argument("--port", default=9000, help="sets the port (default = 9000)")
@@ -420,7 +422,7 @@ def fifo2db():
             print(f"Unable to generate {s}")
             return
         elif args.test == 3:
-            catchupV1()
+            catchup()
             return
         else:
             print("Unknown test")

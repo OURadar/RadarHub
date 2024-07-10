@@ -7,8 +7,6 @@ from django.apps import AppConfig
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-# from django.db.models.signals import post_migrate
-
 from common import color_name_value
 from common.cosmetics import colorize
 from common.dailylog import MultiLineFormatter
@@ -16,11 +14,6 @@ from common.dailylog import MultiLineFormatter
 logger = logging.getLogger("frontend")
 
 worker_started = False
-
-radar_prefix_pairs = []
-for prefix, item in settings.RADARS.items():
-    pathway = item["pathway"].lower()
-    radar_prefix_pairs.append((pathway, prefix))
 
 
 class FrontendConfig(AppConfig):
@@ -104,8 +97,6 @@ class FrontendConfig(AppConfig):
                 aid.extractall("frontend/static/")
             os.remove(file_dst)
 
-        # Connect the signal
         from . import monitor
 
         monitor.launch(sender=self)
-        # post_migrate.connect(monitor.launch, sender=self)

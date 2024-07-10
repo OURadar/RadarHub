@@ -11,9 +11,7 @@ from .archives import location
 
 logger = logging.getLogger("frontend")
 
-pathways = [x["pathway"].lower() for x in settings.RADARS.values()]
-radar_names = dict([(x["pathway"].lower(), x["name"]) for x in settings.RADARS.values()])
-default_pathway = pathways[0]
+default_pathway = list(settings.RADARS.keys())[0]
 
 if settings.DEBUG:
     show = (
@@ -24,6 +22,8 @@ if settings.DEBUG:
         + color_name_value("settings.VERSION", settings.VERSION)
         + "\n"
         + color_name_value("settings.BRANCH", settings.BRANCH)
+        + "\n"
+        + color_name_value("default_pathway", default_pathway)
     )
     logger.debug(show)
 
@@ -31,8 +31,8 @@ if settings.DEBUG:
 
 
 def make_vars(request, pathway=default_pathway):
-    if pathway not in radar_names:
-        logger.warning(f"Pathway {pathway} not in radar_names. Not registered.")
+    if pathway not in settings.RADARS:
+        logger.warning(f"Pathway {pathway} not in settings.RADARS. Not registered.")
         raise Http404
     user = get_user(request)
     try:
@@ -49,11 +49,11 @@ def make_vars(request, pathway=default_pathway):
         "branch": settings.BRANCH,
         "origin": origin,
         "pathway": pathway,
-        "name": radar_names[pathway],
+        "name": settings.RADARS[pathway]["name"],
     }
     if request.path == "/" or request.path == "/index.html":
-        pathways_to_exclude = ["px10k"]
-        radars_to_show = {p: n for p, n in radar_names.items() if p not in pathways_to_exclude}
+        pathways_to_exclude = ["px10k", "demo"]
+        radars_to_show = {p: i["name"] for p, i in settings.RADARS.items() if p not in pathways_to_exclude}
         output["radars"] = radars_to_show
     return output
 
@@ -111,7 +111,7 @@ def _archive(request, pathway, profileGL=False):
     if settings.DEBUG and settings.VERBOSE:
         show += "   " + color_name_value("profileGL", profileGL)
     logger.info(show)
-    if pathway not in pathways:
+    if pathway not in settings.RADARS:
         raise Http404
     if profileGL:
         vars["profileGL"] = True
