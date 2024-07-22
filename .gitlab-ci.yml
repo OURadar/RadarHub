@@ -1,48 +1,60 @@
 stages:
   - build
 
-python-3.10.14:
-  tags:
-    - linux
-  stage: build
-  image: python:3.10.14
+.python_common: &python_common
   before_script:
     - apt update -y
     - apt install -y libsasl2-dev libldap2-dev libssl-dev
     - pip install --upgrade pip
   script:
-    - cd ${CI_PROJECT_DIR}
     - pip install -r requirements.txt
     - python --version
     - ./dbtool.py --version
-    - cd reporter
+    - python manage.py makemigrations
+    - python manage.py migrate
+    - cd ${CI_PROJECT_DIR}/reporter
     - make
 
-python-3.11.9:
-  tags:
-    - linux
-  stage: build
-  image: python:3.11.9
-  before_script:
-    - apt update -y
-    - apt install -y libsasl2-dev libldap2-dev libssl-dev
-    - pip install --upgrade pip
-  script:
-    - cd ${CI_PROJECT_DIR}
-    - pip install -r requirements.txt
-    - python --version
-    - ./dbtool.py --version
-    - cd reporter
-    - make
-
-node:
-  tags:
-    - linux
-  stage: build
-  image: node
+.node_common: &node_common
   before_script:
     - apt update -y
     - cd ${CI_PROJECT_DIR}/frontend
     - npm install
   script:
     - npm run build
+
+python-3.10.14:
+  tags:
+    - linux
+  stage: build
+  image: python:3.10.14
+  <<: *python_common
+
+python-3.11.9:
+  tags:
+    - linux
+  stage: build
+  image: python:3.11.9
+  <<: *python_common
+
+python-3.12.4:
+  tags:
+    - linux
+  stage: build
+  image: python:3.12.4
+  <<: *python_common
+
+node-22.4:
+  tags:
+    - linux
+  stage: build
+  image: node:22.4
+  <<: *node_common
+
+node-latest:
+  tags:
+    - linux
+  stage: build
+  image: node
+  allow_failure: true
+  <<: *node_common

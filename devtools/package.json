@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "shapefile": "^0.6.6",
+    "shapefile.js": "^1.1.4",
+    "shpjs": "^6.0.1"
+  }
+}

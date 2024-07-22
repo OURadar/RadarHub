@@ -97,10 +97,7 @@ function shapefile2ShpJSON(data) {
           lines.push(polygon);
         });
       });
-    } else if (
-      shape.geometry.type.includes("Polygon") ||
-      shape.geometry.type.includes("MultiLineString")
-    ) {
+    } else if (shape.geometry.type.includes("Polygon") || shape.geometry.type.includes("MultiLineString")) {
       shape.geometry.coordinates.forEach((polygon) => {
         lines.push(polygon);
       });
@@ -163,10 +160,7 @@ function shapefile2TransformJSON(data) {
       let qlat = Math.round((coord[1] - b[1]) / w[1]) * w[1] + b[1];
       let x = qlon - lon;
       let y = qlat - lat;
-      const p = [
-        parseInt(Math.round(x / w[0])),
-        parseInt(Math.round(y / w[1])),
-      ];
+      const p = [parseInt(Math.round(x / w[0])), parseInt(Math.round(y / w[1]))];
       arc.push(p);
       // Reconstruct coordinate
       point[0] += p[0];
@@ -211,13 +205,10 @@ function shapefile2TransformJSON(data) {
 }
 
 function convert({ src, keys, isLabel }, method = 1) {
-  const dst =
-    method == 0
-      ? src.concat(".json")
-      : src.split(".").slice(0, -1).join(".").concat(".stq.json");
+  const dst = method == 0 ? src.concat(".json") : src.split(".").slice(0, -1).join(".").concat(".stqv1.json");
   console.log(`Generating ${dst} ...`);
 
-  require("../frontend/node_modules/shapefile")
+  require("./node_modules/shapefile")
     .open(src)
     .then((source) => handleShapefile(source, keys, isLabel))
     // .then((list) => sortByWeight(list))
@@ -230,13 +221,13 @@ function convert({ src, keys, isLabel }, method = 1) {
           console.log(`Map ${dst} contains ${count} parts`);
         } else {
           dict = shapefile2TransformJSON(list);
-          console.log(`count = ${dict.count}`);
           let count = dict.arcs.length.toLocaleString();
           console.log(`Transformed map ${dst} contains ${count} lines`);
         }
         require("fs").writeFileSync(dst, JSON.stringify(dict));
       } else {
-        fs.writeFileSync(dst, JSON.stringify(list, replacer));
+        console.log(list.slice(0, 21));
+        require("fs").writeFileSync(dst, JSON.stringify(list, replacer));
       }
     });
 }
@@ -260,23 +251,31 @@ function convert({ src, keys, isLabel }, method = 1) {
 //   },
 // ];
 
-const configs = [
-  {
-    src: "../frontend/static/maps/United States/gz_2010_us_050_00_500k.shp",
-    isLabel: false,
-  },
-  {
-    src: "../frontend/static/maps/United States/intrstat.shp",
-    isLabel: false,
-  },
-];
-
 // const configs = [
 //   {
-//     src: "../frontend/static/maps/United States/intrstat.shp",
+//     src: "../frontend/static/maps/United States/_extracted/gz_2010_us_050_00_500k.shp",
+//     isLabel: false,
+//   },
+//   {
+//     src: "../frontend/static/maps/United States/_extracted/intrstat.shp",
 //     isLabel: false,
 //   },
 // ];
+
+const configs = [
+  {
+    src: "../frontend/static/maps/United States/_extracted/intrstat.shp",
+    isLabel: false,
+  },
+  {
+    src: "../frontend/static/maps/United States/_extracted/citiesx020.shp",
+    keys: {
+      name: "NAME",
+      population: "POP_2000",
+    },
+    isLabel: true,
+  },
+];
 
 configs.forEach((config) => {
   convert(config);

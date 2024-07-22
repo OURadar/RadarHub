@@ -90,7 +90,6 @@ class Overlay {
       },
       {
         // file: "/static/maps/United States/cb_2021_us_county_500k.stq.json",
-        // file: "/static/maps/United States/gz_2010_us_050_00_500k.shp",
         file: "/static/maps/United States/gz_2010_us_050_00_500k.stq.json",
         color: this.colors.county,
         limits: [0.5, 2.0 * scale],
@@ -107,7 +106,7 @@ class Overlay {
         fixed: false,
       },
       {
-        file: "/static/maps/United States/states-10m.json",
+        file: "/static/maps/United States/states-10m.stq.json",
         color: this.colors.state,
         limits: [1.3 * scale, 4.0 * scale],
         weight: 1.3,

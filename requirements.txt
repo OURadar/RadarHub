@@ -12,7 +12,7 @@ netCDF4
 numpy
 oauthlib
 pyparsing
-psycopg2
+psycopg2-binary
 radar-data
 tqdm
 Twisted[tls,http2]
