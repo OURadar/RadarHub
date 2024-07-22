@@ -266,10 +266,6 @@ async function makeLabels({ name, model, keys }, colors) {
     return handleShapefileJSON(name)
       .then((array) => parseArray(array, keys, colors))
       .catch((error) => console.error(error.stack));
-  } else if (ext == "shp") {
-    return handleShapefile(name)
-      .then((array) => parseArray(array, keys, colors))
-      .catch((error) => console.error(error.stack));
   } else {
     console.log(`%cUnable to handle ${name}`, "color: red");
     return [];
@@ -352,20 +348,20 @@ async function handleShapefileJSON(name) {
   return fetch(name, { cache: "force-cache" }).then((text) => text.json());
 }
 
-async function handleShapefile(name) {
-  return require("shapefile")
-    .open(name)
-    .then((source) => {
-      let array = [];
-      return source.read().then(function retrieve(result) {
-        if (result.done) {
-          return array;
-        }
-        array.push(result.value);
-        return source.read().then(retrieve);
-      });
-    });
-}
+// async function handleShapefile(name) {
+//   return require("shapefile")
+//     .open(name)
+//     .then((source) => {
+//       let array = [];
+//       return source.read().then(function retrieve(result) {
+//         if (result.done) {
+//           return array;
+//         }
+//         array.push(result.value);
+//         return source.read().then(retrieve);
+//       });
+//     });
+// }
 
 function parseArray(array, keys, colors) {
   let labels = [];

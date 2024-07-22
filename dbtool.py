@@ -19,7 +19,6 @@ import radar
 import django
 import pprint
 import shutil
-import tarfile
 import argparse
 import textwrap
 import datetime
@@ -32,7 +31,7 @@ django.setup()
 
 from django.conf import settings
 from common import colorize, color_name_value, dailylog, truncate_array
-from frontend.models import Sweep, File, Day, Visitor
+from frontend.models import Sweep, Day, Visitor
 
 __prog__ = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
@@ -93,27 +92,24 @@ def params_from_source(source, dig=False):
             end -= datetime.timedelta(days=1)
             date_range = [start, end]
         else:
-            logger.warning(f"Error. Please specify YYYY* or a YYYYMM*, e.g., 2024* or 202407*")
+            logger.warning(f"{myname} Error. Please specify YYYY* or a YYYYMM*, e.g., 2024* or 202407*")
+    if os.path.isdir(source):
+        if source[-1] == "/":
+            source = source[:-1]
+        folder, day_string = os.path.split(source)
+        if "/" in folder:
+            pathway = os.path.basename(os.path.dirname(folder)).lower()
+            name = settings.RADARS.get(pathway, {}).get("prefix", None)
+        elif dig:
+            files = list_files(source)
+            file = os.path.basename(files[0]) if len(files) else None
     elif os.path.exists(source):
-        if os.path.isdir(source):
-            if source[-1] == "/":
-                source = source[:-1]
-            folder, day_string = os.path.split(source)
-            if "/" in folder:
-                pathway = os.path.basename(os.path.dirname(folder)).lower()
-                # name = next((key for key, item in settings.RADARS.items() if item["pathway"] == pathway), None)
-                # name = settings.RADARS[pathway]["prefix"] if pathway in settings.RADARS else None
-                name = settings.RADARS.get(pathway, {}).get("prefix", None)
-            elif dig:
-                files = list_files(source)
-                file = os.path.basename(files[0]) if len(files) else None
+        folder, file = os.path.split(source)
+        if "_original" in folder:
+            folder, _ = os.path.split(folder)
         else:
-            folder, file = os.path.split(source)
-            if "_original" in folder:
-                folder, _ = os.path.split(folder)
-            else:
-                logger.warning(f'Expected "_original" in source folder {folder}')
-            day_string = os.path.basename(folder)
+            logger.warning(f"{myname} Expected '_original' in source folder {folder}")
+        day_string = os.path.basename(folder)
         if file:
             logger.debug(f"{myname} file[0] = {file}")
             c = os.path.splitext(file)[0].split("-")
@@ -421,303 +417,6 @@ def xz_folder(folder, **kwargs):
     # Make a Day entry
     day_str = parts["time"][:8]
     build_day(f"{name}-{day_str}", bgor=True)
-
-    e = tm.time() - e
-    a = len(archives) / e
-    show = colorize(f"{e:.2f}", "teal")
-    logger.info(f"Total elapsed time = {show} sec ({a:,.0f} files / sec)")
-
-
-"""
-    Insert a folder with .tar.xz / .txz archives to the database
-
-             folder - path to insert, e.g., /mnt/data/PX1000/2022/20220128
-               hour - start hour to examine
-           check_db - check the database for existence (update or create)
-    use_bulk_update - use django's bulk update/create functions
-            verbose - verbosity level
-"""
-
-
-def xz_folder_v1(folder, hour=0, check_db=True, bulk_update=True, args=None):
-    try:
-        progress = args.progress
-    except:
-        progress = None
-    try:
-        skip = args.skip
-    except:
-        skip = True
-    try:
-        verbose = args.verbose
-    except:
-        verbose = 0
-    show = colorize("xz_folder()", "green")
-    show += "   " + color_name_value("folder", folder)
-    show += "   " + color_name_value("check_db", check_db)
-    show += "   " + color_name_value("bulk_update", bulk_update)
-    show += "   " + color_name_value("skip", skip)
-    logger.info(show)
-
-    use_mp = "linux" in sys.platform
-    basename = os.path.basename(folder)
-    s = pattern_yyyymmdd.search(basename)
-    if s:
-        s = s.group(0)
-    else:
-        logger.info(f"Error searching YYYYMMDD in folder name {basename}")
-        return
-
-    raw_archives = list_files(folder)
-    if len(raw_archives) == 0:
-        logger.info(f"No files in {folder}. Unable to continue.")
-        return
-
-    d = check_day(folder)
-    if d:
-        d = d[0]
-
-    if not check_db and d:
-        show = colorize(" WARNING ", "warning")
-        logger.warning(f"{show} There are {d.count:,d} existing entries.")
-        logger.warning(f"{show} Quick insert will result in duplicates. Try -i instead.")
-        ans = input("Do you still want to continue (y/[n])? ")
-        if not ans == "y":
-            logger.info("Whew. Nothing happend.")
-            return
-
-    if d.count == len(raw_archives):
-        logger.warning(f"Number of files == Day({basename}).count = {d.count:,}")
-        if skip is None:
-            ans = input("Do you still want to continue (y/[n])? ")
-            if not ans == "y":
-                logger.info(f"Folder {folder} skipped")
-                return
-        elif skip == True:
-            logger.info(f"Folder {folder} skipped")
-            return
-
-    day_string = f"{s[0:4]}-{s[4:6]}-{s[6:8]}"
-    date_range = [f"{day_string} {hour:02d}:00Z", f"{day_string} 23:59:59.9Z"]
-    show = colorize("date_range", "orange") + colorize(" = ", "red")
-    show += "[" + colorize(date_range[0], "yellow") + ", " + colorize(date_range[1], "yellow") + "]"
-    logger.debug(show)
-
-    archives = []
-    for archive in raw_archives:
-        basename = os.path.basename(archive)
-        file_hour = int(basename.split("-")[2][0:2])
-        if file_hour >= hour:
-            archives.append(archive)
-
-    def process_archives_v1(id, run, lock, queue, out):
-        while run.value == 1:
-            task = None
-            lock.acquire()
-            if not queue.empty():
-                task = queue.get()
-            lock.release()
-            if task:
-                archive = task["archive"]
-                ramfile = task["ramfile"]
-                logger.debug(f"{id:02d}: {archive} {ramfile}")
-                xx = []
-                try:
-                    with tarfile.open(archive) as tar:
-                        for info in tar.getmembers():
-                            xx.append([info.name, info.offset, info.offset_data, info.size, archive])
-                        out.put({"name": os.path.basename(archive), "xx": xx})
-                except tarfile.ReadError:
-                    logger.warning(f"Failed to open {archive}")
-                    os.system(f"rm -f {archive}")
-                except EOFError:
-                    logger.warning(f"Truncated file {archive}")
-                    os.system(f"rm -f {archive}")
-                os.remove(ramfile)
-            else:
-                tm.sleep(0.1)
-        logger.debug(f"{id} done")
-        return
-
-    keys = []
-    output = {}
-    indent = " " * logger.indent()
-
-    # Extracting parameters of the archives
-    desc = "Pass 1 / 2 - Scanning archives"
-    logger.info(f"{desc} ...")
-
-    e = tm.time()
-
-    if use_mp:
-        task_queue = multiprocessing.Queue()
-        db_queue = multiprocessing.Queue()
-        lock = multiprocessing.Lock()
-        run = multiprocessing.Value("i", 1)
-
-        count = multiprocessing.cpu_count()
-
-        processes = []
-        for n in range(count):
-            p = multiprocessing.Process(target=process_archives_v1, args=(n, run, lock, task_queue, db_queue))
-            processes.append(p)
-            p.start()
-
-        for archive in tqdm.tqdm(archives, desc=f"{indent}{desc}") if progress else archives:
-            # Copy the file to ramdisk and queue the work after the file is copied
-            basename = os.path.basename(archive)
-            if os.path.exists("/mnt/ramdisk"):
-                ramfile = f"/mnt/ramdisk/{basename}"
-            else:
-                ramfile = f"{basename}"
-            shutil.copy(archive, ramfile)
-            task_queue.put({"archive": archive, "ramfile": ramfile})
-            while task_queue.qsize() > 2 * count:
-                tm.sleep(0.1)
-            while not db_queue.empty():
-                out = db_queue.get()
-                key = out["name"]
-                keys.append(key)
-                output[key] = out
-
-        while task_queue.qsize() > 0:
-            tm.sleep(0.1)
-        run.value = 0
-        for p in processes:
-            p.join()
-
-        while not db_queue.empty():
-            out = db_queue.get()
-            key = out["name"]
-            keys.append(key)
-            output[key] = out
-    else:
-        for archive in tqdm.tqdm(archives) if progress else archives:
-            xx = []
-            try:
-                with tarfile.open(archive) as tar:
-                    for info in tar.getmembers():
-                        xx.append([info.name, info.offset, info.offset_data, info.size, archive])
-                key = os.path.basename(archive)
-                keys.append(key)
-                output[key] = {"name": key, "xx": xx}
-            except:
-                logger.warning(f"Archive {archive} failed.")
-                pass
-
-    # Consolidating results
-    keys = sorted(keys)
-
-    if check_db:
-        entries = File.objects.filter(date__range=date_range)
-        pattern = re.compile(r"(?<=-)20[0-9][0-9][012][0-9][0-3][0-9]-[012][0-9][0-5][0-9][0-5][0-9]")
-
-        def __handle_data__(xx, use_re_pattern=False, save=False):
-            files = []
-            count_create = 0
-            count_update = 0
-            count_ignore = 0
-
-            for yy in xx:
-                (name, offset, offset_data, size, archive) = yy
-                n = entries.filter(name=name)
-                if n:
-                    x = n[0]
-                    if x.path != archive or x.size != size or x.offset != offset or x.offset_data != offset_data:
-                        mode = "U"
-                        x.path = archive
-                        x.size = size
-                        x.offset = offset
-                        x.offset_data = offset_data
-                        count_update += 1
-                    else:
-                        mode = "I"
-                        count_ignore += 1
-                else:
-                    mode = "N"
-                    if use_re_pattern:
-                        s = pattern.search(archive).group(0)
-                        date = f"{s[0:4]}-{s[4:6]}-{s[6:8]} {s[9:11]}:{s[11:13]}:{s[13:15]}Z"
-                    else:
-                        c = name.split("-")
-                        date = datetime.datetime.strptime(c[1] + c[2], r"%Y%m%d%H%M%S").replace(tzinfo=tzinfo)
-                    x = File.objects.create(name=name, path=archive, date=date, size=size, offset=offset, offset_data=offset_data)
-                    count_create += 1
-                logger.debug(f"{mode} : {name} {offset} {offset_data} {size} {archive}")
-                if mode != "I":
-                    if save:
-                        x.save()
-                    files.append(x)
-            return files, count_create, count_update, count_ignore
-
-        t = tm.time()
-        count_create = 0
-        count_update = 0
-        count_ignore = 0
-
-        if bulk_update:
-            desc = "Pass 2 / 2 - Gathering entries"
-            logger.info(f"{desc} ...")
-            array_of_files = []
-            for key in tqdm.tqdm(keys, desc=f"{indent}{desc}") if progress else keys:
-                xx = output[key]["xx"]
-                files, cc, cu, ci = __handle_data__(xx)
-                array_of_files.append(files)
-                count_create += cc
-                count_update += cu
-                count_ignore += ci
-            if count_create > 0 or count_update > 0:
-                files = [s for symbols in array_of_files for s in symbols]
-                logger.info(f"Updating database ... {len(files):,d} entries")
-                File.objects.bulk_update(files, ["name", "path", "date", "size", "offset", "offset_data"], batch_size=1000)
-            else:
-                logger.debug("No new File entries")
-            t = tm.time() - t
-            a = len(files) / t
-            logger.info(f"Bulk update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}")
-        else:
-            for key in tqdm.tqdm(keys, desc=f"{indent}{desc}") if progress else keys:
-                xx = output[key]["xx"]
-                _, cc, cu, ci = __handle_data__(xx, save=True)
-                count_create += cc
-                count_update += cu
-                count_ignore += ci
-            t = tm.time() - t
-            a = len((count_create + count_update)) / t
-            logger.info(
-                f"Individual update {t:.2f} sec ({a:,.0f} files / sec)   c: {count_create}  u: {count_update}  i: {count_ignore}"
-            )
-    else:
-
-        def __sweep_files__(xx):
-            files = []
-            for yy in xx:
-                (name, offset, offset_data, size, archive) = yy
-                c = name.split("-")
-                date = datetime.datetime.strptime(c[1] + c[2], r"%Y%m%d%H%M%S").replace(tzinfo=tzinfo)
-                x = File(name=name, path=archive, date=date, size=size, offset=offset, offset_data=offset_data)
-                files.append(x)
-            return files
-
-        t = tm.time()
-        desc = "Pass 2 / 2 - Creating entries"
-        logger.info(f"{desc} ...")
-        if verbose:
-            array_of_files = []
-            for key in tqdm.tqdm(keys, desc=desc) if progress else keys:
-                xx = output[key]["xx"]
-                files = __sweep_files__(xx)
-                array_of_files.append(files)
-        else:
-            array_of_files = [__sweep_files__(output[key]["xx"]) for key in keys]
-        files = [s for symbols in array_of_files for s in symbols]
-        File.objects.bulk_create(files)
-        t = tm.time() - t
-        a = len(files) / t
-        logger.info(f"Bulk create {t:.2f} sec ({a:,.0f} files / sec)")
-
-    # Make a Day entry
-    build_day(folder, bgor=True)
 
     e = tm.time() - e
     a = len(archives) / e
@@ -1281,7 +980,6 @@ def dbtool_main():
     parser.add_argument("-f", "--find-duplicates", action="store_true", help="finds duplicate Sweep entries in the database")
     parser.add_argument("--format", default="pretty", choices=["raw", "short", "pretty"], help="sets output format")
     parser.add_argument("-i", dest="insert", action="store_true", help="inserts a folder")
-    parser.add_argument("-j", dest="old_insert", action="store_true", help="inserts a folder")
     parser.add_argument("-I", dest="quick_insert", action="store_true", help="inserts (without check) a folder")
     parser.add_argument("--last", action="store_true", help="shows the absolute last entry in the database")
     parser.add_argument("-l", "--latest", action="store_true", help="shows the latest entries of each radar")
@@ -1313,14 +1011,6 @@ def dbtool_main():
         if args.verbose > 1:
             logger.setLevel(dailylog.logging.DEBUG)
             logger.streamHandler.setLevel(dailylog.logging.DEBUG)
-
-    if "*" in args.source:
-        logger.info("Expanding asterisk ...")
-        args.source = glob.glob(args.source)
-        if len(args.source) == 0:
-            logger.info("No match")
-            return
-        logger.info(args.source)
 
     if args.check_day:
         if len(args.source) == 0:
@@ -1403,24 +1093,6 @@ def dbtool_main():
             if len(args.source) > 1:
                 logger.info("...")
             xz_folder(folder, **vars(args))
-    elif args.old_insert:
-        if len(args.source) == 0:
-            print(
-                textwrap.dedent(
-                    f"""
-                -j needs at least a source folder, e.g.,
-
-                { __prog__} -j /mnt/data/PX1000/2022/20220223
-            """
-                )
-            )
-            return
-        logger.info("Inserting folder(s) with .txz / .tar.xz archives")
-        for folder in args.source:
-            folder = folder[:-1] if folder[-1] == "/" else folder
-            if len(args.source) > 1:
-                logger.info("...")
-            xz_folder_v1(folder, hour=args.hour, check_db=True, args=args)
     elif args.quick_insert:
         if len(args.source) == 0:
             print(

@@ -44,6 +44,9 @@ for item in radars.values():
     item["step"] = 0
     item["count"] = 0
 
+check = colorize("✓", "green")
+ballot = colorize("✗", "orange")
+
 
 def signalHandler(sig, frame):
     global keepReading
@@ -118,10 +121,13 @@ def catchup(root="/mnt/data"):
         folder = f"{root}/{item['folder']}"
         show = color_name_value("prefix", prefix)
         show += "  " + color_name_value("folder", folder)
-        logger.info(show)
         if not Day.objects.filter(name=prefix).exists():
-            logger.info("Skipping ...")
+            logger.info(f"{show}   {check}")
             continue
+        elif not os.path.isdir(folder):
+            logger.info(f"{show}   {ballot}")
+            continue
+        logger.info(show)
         folderYear = sorted(glob.glob(f"{folder}/20[0-9][0-9]"))[-1]
         year = os.path.basename(folderYear)
         path = f"{folderYear}/{year}[012][0-9][0-3][0-9]"
@@ -141,7 +147,7 @@ def catchup(root="/mnt/data"):
         basename = os.path.basename(file)
         c = basename.split("-")
         d = c[1]
-        filedate = datetime.date(int(d[0:4]), int(d[4:6]), int(d[6:8]))
+        filedate = datetime.datetime.strptime(d, r"%Y%m%d").date()
         day = Day.objects.filter(name=prefix).latest("date")
         hour = day.last_hour()
         date = day.date
@@ -149,13 +155,15 @@ def catchup(root="/mnt/data"):
         while date <= filedate:
             dayTree = date.strftime(r"%Y/%Y%m%d")
             dayFolder = f"{folder}/{dayTree}"
-            logger.info(color_name_value("folder", dayFolder) + "   " + color_name_value("hour", hour))
+            folderInfo = color_name_value("folder", dayFolder)
+            hourInfo = color_name_value("hour", hour)
+            logger.info(f"{folderInfo}   {hourInfo}")
             dbtool.xz_folder(dayFolder, hour=hour, skip=True)
             date += stride
             hour = 0
         item["count"] += 1
         minute = int(c[2][2:4])
-        step = int(minute / 20)
+        step = minute // 20
         item["step"] = 0 if step == 2 else step + 1
         if logger.level > dailylog.logging.WARNING:
             print("")
@@ -168,7 +176,7 @@ def process(file):
         archive = proper(file)
     else:
         archive = file
-    logger.info(colorize(file, 43) + (" -" if archive is None else ""))
+    logger.info(colorize(file, 43) + " " + (ballot if archive is None else check))
     if archive is None:
         return
     basename = os.path.basename(archive)

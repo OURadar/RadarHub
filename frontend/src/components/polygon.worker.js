@@ -19,12 +19,8 @@ self.onmessage = ({ data: { type, payload } }) => {
     const model = payload.model;
     const origin = payload.origin;
     const type = name.split(".").pop();
-    if (type == "shp") {
-      handleShapefile(name)
-        .then((lines) => filterLines(lines, origin))
-        .then((lines) => lines2points(lines))
-        .then((points) => makeBuffer(name, points))
-        .then((buffer) => self.postMessage({ buffer }));
+    if (type == "zip") {
+      handleZipFile(name);
     } else if (type == "json") {
       handleJSON(name)
         .then((lines) => (thin ? filterLines(lines, origin) : lines))
@@ -154,32 +150,8 @@ async function handleJSON(name) {
     });
 }
 
-async function handleShapefile(name) {
-  return require("shapefile")
-    .open(name)
-    .then((source) => {
-      let lines = [];
-      return source.read().then(function retrieve(result) {
-        if (result.done) {
-          return lines;
-        }
-        const shape = result.value;
-        if (shape.geometry.type.includes("MultiPolygon")) {
-          shape.geometry.coordinates.forEach((multipolygon) => {
-            multipolygon.forEach((polygon) => {
-              lines.push(polygon);
-            });
-          });
-        } else if (shape.geometry.type.includes("Polygon") || shape.geometry.type.includes("MultiLineString")) {
-          shape.geometry.coordinates.forEach((polygon) => {
-            lines.push(polygon);
-          });
-        } else if (shape.geometry.type.includes("LineString")) {
-          lines.push(shape.geometry.coordinates);
-        }
-        return source.read().then(retrieve);
-      });
-    });
+async function handleZipFile(name) {
+  console.log(`Coming soon ...`);
 }
 
 function filterLines(inputLines, origin) {
