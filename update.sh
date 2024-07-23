@@ -7,6 +7,7 @@ pip install -r requirements.txt
 
 cd frontend
 npm update
+npm prune
 npm run build
 cd -
 

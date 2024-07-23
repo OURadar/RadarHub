@@ -1,6 +1,6 @@
 const Path = require("path");
-// const { CleanWebpackPlugin } = require("clean-webpack-plugin");
-// const BundleTracker = require("webpack-bundle-tracker");
+
+const BundleTracker = require("webpack-bundle-tracker");
 
 module.exports = [
   {
@@ -21,9 +21,11 @@ module.exports = [
     output: {
       filename: "[name].[chunkhash:8].js",
       path: Path.resolve(__dirname, "static/frontend"),
+      publicPath: "/static/frontend/",
+      clean: true,
     },
     resolve: {
-      alias: { components: Path.resolve(__dirname, "./src/components") },
+      alias: { components: Path.resolve(__dirname, "src/components") },
       extensions: [".js", ".jsx", ".json"],
     },
     module: {
@@ -46,14 +48,12 @@ module.exports = [
       minimize: true,
       splitChunks: { chunks: "all" },
     },
+    plugins: [new BundleTracker({ path: __dirname, filename: "webpack-output.json" })],
     watchOptions: {
       ignored: "**/node_modules",
     },
   },
 ];
-
-//
-// plugins: [new CleanWebpackPlugin({ verbose: true }), new BundleTracker({ filename: "webpack-output.json" })],
 
 //
 // If webpack display messages like this
