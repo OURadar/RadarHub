@@ -1,8 +1,9 @@
 // A standalone script to test some ideas
 //
 
-const { read } = require("fs");
-const { mat4, vec3 } = require("../frontend/node_modules/gl-matrix");
+import { mat4, vec3 } from "gl-matrix";
+import { readFileSync } from "fs";
+import shp from "shpjs";
 
 function deg2rad(x) {
   return (x * Math.PI) / 180.0;
@@ -62,48 +63,48 @@ function transformMat4(out, a, m) {
   return out;
 }
 
-function handleShapefile(source, fields) {
-  let raw = [];
-  let stringKey = "";
-  let weightKey = "";
+// function handleShapefile(source, fields) {
+//   let raw = [];
+//   let stringKey = "";
+//   let weightKey = "";
 
-  const digest = () => {
-    raw.sort((a, b) => {
-      if (a.weight < b.weight) return +1;
-      if (a.weight > b.weight) return -1;
-      return 0;
-    });
-    // console.log(`raw has ${raw.length.toLocaleString()} elements`);
-    raw = raw.slice(-2000);
-    return raw;
-  };
+//   const digest = () => {
+//     raw.sort((a, b) => {
+//       if (a.weight < b.weight) return +1;
+//       if (a.weight > b.weight) return -1;
+//       return 0;
+//     });
+//     // console.log(`raw has ${raw.length.toLocaleString()} elements`);
+//     raw = raw.slice(-2000);
+//     return raw;
+//   };
 
-  const handleLabel = (label) => {
-    if (stringKey == "") {
-      const keys = Object.keys(label.properties);
-      stringKey = keys[fields[0]];
-      weightKey = keys[fields[1]];
-      console.log(`${stringKey}, ${weightKey}`);
-    }
-    const lon = label.geometry.coordinates[0][0];
-    const lat = label.geometry.coordinates[0][1];
-    raw.push({
-      text: label.properties[stringKey],
-      weight: label.properties[weightKey],
-      coord: [deg2rad(lon), deg2rad(lat)],
-      point: coord2point(lon, lat),
-      color: "$ffffff",
-      stroke: "#000000",
-    });
-  };
-  return source.read().then(function retrieve(result) {
-    if (result.done) {
-      return digest();
-    }
-    handleLabel(result.value);
-    return source.read().then(retrieve);
-  });
-}
+//   const handleLabel = (label) => {
+//     if (stringKey == "") {
+//       const keys = Object.keys(label.properties);
+//       stringKey = keys[fields[0]];
+//       weightKey = keys[fields[1]];
+//       console.log(`${stringKey}, ${weightKey}`);
+//     }
+//     const lon = label.geometry.coordinates[0][0];
+//     const lat = label.geometry.coordinates[0][1];
+//     raw.push({
+//       text: label.properties[stringKey],
+//       weight: label.properties[weightKey],
+//       coord: [deg2rad(lon), deg2rad(lat)],
+//       point: coord2point(lon, lat),
+//       color: "$ffffff",
+//       stroke: "#000000",
+//     });
+//   };
+//   return source.read().then(function retrieve(result) {
+//     if (result.done) {
+//       return digest();
+//     }
+//     handleLabel(result.value);
+//     return source.read().then(retrieve);
+//   });
+// }
 
 function makeBuffer(file, labels) {
   const name = file.includes("@") ? file : file.split("/").pop();
@@ -368,15 +369,39 @@ function evalHypot() {
   console.log(`Math.hypot(x, y, z): ${(1000 * (t0 - t1)) / count} ms`);
 }
 
+function shpLabels(features, fields) {
+  const stringKey = Object.keys(features[0].properties)[fields[0]];
+  const weightKey = Object.keys(features[0].properties)[fields[1]];
+  console.log(`Using ${stringKey} & ${weightKey} ...`);
+  const labels = features.map((feature) => {
+    const lon = feature.geometry.coordinates[0];
+    const lat = feature.geometry.coordinates[1];
+    return {
+      text: feature.properties[stringKey],
+      weight: feature.properties[weightKey],
+      coord: [deg2rad(lon), deg2rad(lat)],
+      point: coord2point(lon, lat),
+      color: "$ffffff",
+      stroke: "#000000",
+    };
+  });
+  return labels;
+}
+
 async function testMap() {
-  const file = "../frontend/static/maps/World/_extracted/cities.shp";
-  let buffer = await require("./node_modules/shapefile")
-    .open(file)
-    .then((source) => handleShapefile(source, [0, 6]))
-    .then((labels) => makeBuffer(file, labels))
-    .then((buffer) => single(buffer))
-    .then((buffer) => revise(buffer));
-  return buffer;
+  const file = "../frontend/static/maps/World/cities.zip";
+  const data = readFileSync(file);
+  const geojson = await shp(data);
+  const labels = shpLabels(geojson.features, [0, 6])
+    .sort((a, b) => {
+      if (a.weight < b.weight) return +1;
+      if (a.weight > b.weight) return -1;
+      return 0;
+    })
+    .slice(-2000);
+  let buffer = makeBuffer(file, labels);
+  buffer = single(buffer);
+  buffer = revise(buffer);
 }
 
 //
@@ -387,4 +412,4 @@ console.log("Hypot Evaluation:");
 evalHypot();
 
 console.log("Opacity Revision:");
-testMap();
+await testMap();
