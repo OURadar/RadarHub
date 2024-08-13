@@ -49,7 +49,7 @@ let state = {
   sweeps: [],
   verbose: 0,
 };
-const nameStyle = "background-color: #bf9140; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+const nameStyle = "background: #bf9140; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
 const frameCount = 15;
 
 const sweepParser = new Parser()
@@ -146,7 +146,7 @@ function reviseGridPaths() {
   grid.pathsActive[3] = index != last.index;
   if (state.verbose > 1) {
     console.debug(
-      `%carchive.worker.reviseGridPaths %c${scan}%c`,
+      `%carchive.worker.reviseGridPaths%c ${scan}%c`,
       nameStyle,
       "color: dodgerblue",
       "",
@@ -612,12 +612,12 @@ function geometry(sweep) {
 
 function setGridIndex(index) {
   if (state.verbose > 1) {
-    console.debug(`%carchive.worker.setGridIndex %c${index}%c ← ${grid.index}`, nameStyle, "color: dodgerblue", "");
+    console.debug(`%carchive.worker.setGridIndex%c ${index}%c ← ${grid.index}`, nameStyle, "color: dodgerblue", "");
   }
   if (index < 0 || index >= grid.items.length) {
     if (state.verbose > 1) {
       console.debug(
-        `%carchive.worker.setGridIndex %cindex%c == ${index}. Early return.`,
+        `%carchive.worker.setGridIndex%c index%c == ${index}. Early return.`,
         nameStyle,
         "color: dodgerblue",
         ""
@@ -658,7 +658,7 @@ self.onmessage = ({ data: { task, name, date, symbol } }) => {
   }
   if (state.verbose) {
     let more = day > 0 ? `   day = ${day.format("YYYYMMDD-HHMM")}` : "";
-    console.log(`%carchive.worker.onmessage%c ${task}${more}`, "color: hotpink", "");
+    console.log(`%carchive.worker.onmessage%c ${task}${more}`, nameStyle, "");
   }
   if (task == "init") {
     init(name);
@@ -711,9 +711,10 @@ function table(day, mode = "select") {
     "color: mediumpurple",
     ""
   );
-  // Same time, just a symbol change (this part should be phased out, no need to have symbol in the table)
-  // Could highlight where selected product is available
+  // Same time, just return the current table
   if (dateTimeString == grid.dateTimeString) {
+    console.info(`%carchive.worker.table%c Same time %c${dateTimeString}%c ...`);
+    self.postMessage({ type: "table", grid: grid });
     return;
   }
   // Different time, fetch from the server
@@ -749,6 +750,7 @@ function table(day, mode = "select") {
             setGridIndex(index);
           }
           if (grid.hour < 0) {
+            self.postMessage({ type: "table", grid: grid });
             self.postMessage({ type: "message", payload: "No Data" });
             return;
           }
@@ -789,7 +791,7 @@ function month(day) {
 
 function toggle(name = "toggle") {
   if (state.verbose > 1) {
-    console.debug(`%carchive.worker.toggle %c${name}`, nameStyle, "color: dodgerblue");
+    console.debug(`%carchive.worker.toggle%c ${name}`, nameStyle, "color: dodgerblue");
   }
   if (name == state.update) {
     self.postMessage({ type: "state", payload: { update: state.update } });
