@@ -119,7 +119,7 @@ export function App(props) {
         }
         return;
       }
-      if (e.key != key) {
+      if (e.key != key || e.target != document.body) {
         return;
       }
       let symbol = e.key.toUpperCase();

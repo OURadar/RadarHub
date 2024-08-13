@@ -28,8 +28,7 @@ import Button from "@mui/material/Button";
 import { Scroller } from "./scroller";
 
 const badgeColors = ["warning", "gray", "clear", "rain", "heavy"];
-const nameStyle =
-  "background-color: mediumseagreen; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+const nameStyle = "background: indianred; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
 
 function ServerDay(props) {
   const { day, outsideCurrentMonth, ...other } = props;
@@ -45,6 +44,9 @@ function ServerDay(props) {
   );
 }
 
+const minDate = dayjs.utc("20000101");
+const maxDate = dayjs.utc().endOf("month");
+
 const Calendar = React.memo(function Calendar({ archive, day }) {
   return (
     <div id="calendarContainer">
@@ -52,10 +54,17 @@ const Calendar = React.memo(function Calendar({ archive, day }) {
         <DatePicker
           label="Date"
           value={day}
-          minDate={dayjs.utc("20000101")}
-          maxDate={dayjs.utc().endOf("month")}
+          minDate={minDate}
+          maxDate={maxDate}
           onOpen={() => archive.getMonthTable(day)}
-          onChange={(newDay) => archive.setDayHour(newDay, null)}
+          onChange={(newDay) => {
+            if (newDay.isValid() && newDay.isAfter(minDate) && newDay.isBefore(maxDate)) {
+              console.debug(`%cCalendar.onChange%c ${newDay.format("YYYYMMDD")}`, nameStyle, "");
+              archive.setDayHour(newDay, null);
+            } else {
+              console.warn(`%cCalendar.onChange%c invalid date`, nameStyle, "");
+            }
+          }}
           onYearChange={(newDay) => archive.getMonthTable(newDay)}
           onMonthChange={(newDay) => archive.getMonthTable(newDay)}
           slots={{ day: ServerDay }}
@@ -170,14 +179,15 @@ class Browser extends Component {
       return;
     }
     const travel = start + this.value.subsetDepth - grid.items.length;
-    const recent = this.props.archive.isLatestVolume();
     // console.log(`travel = ${travel}`);
     if (travel < -stem && this.props.archive.state.liveUpdate != "offline") {
       // Scrolled far enough, disabling live update
       this.props.archive.disableLiveUpdate();
-    } else if (travel == 0 && recent && this.props.archive.state.liveUpdate == "offline") {
+    } else if (travel == 0 && this.props.archive.state.liveUpdate == "offline") {
       // Scrolled close enough, enabling live update
-      this.props.archive.enableLiveUpdate();
+      if (this.props.archive.isLatestVolume()) {
+        this.props.archive.enableLiveUpdate();
+      }
     }
     if (!this.value.taskPending && start != this.value.subsetStart) {
       let maxIndex = Math.max(0, grid.items.length - stem - body - grid.counts[1] / 2);
@@ -231,7 +241,7 @@ class Browser extends Component {
 
   componentDidUpdate() {
     const archive = this.props.archive;
-    if (archive.grid == null || archive.grid.items.length == 0 || archive.grid.tic == this.state.tic) {
+    if (archive.grid == null || archive.grid.tic == this.state.tic) {
       return;
     }
     this.setState({ tic: archive.grid.tic });
