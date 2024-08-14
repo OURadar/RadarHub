@@ -38,6 +38,9 @@ __prog__ = os.path.basename(sys.argv[0])
 keepReading = True
 tzinfo = datetime.timezone.utc
 radars = settings.RADARS.copy()
+
+print(radars)
+
 logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, dailyfile=settings.DEBUG)
 # Populate other keys as local parameters
 for item in radars.values():
@@ -70,7 +73,7 @@ def proper(file, root="/mnt/data", verbose=0):
     if entry is None:
         logger.info(f"Radar prefix {name} not recognized.")
         return None
-    sub = radars[name]["pathway"]
+    sub = entry["folder"]
     day = parts["time"][0:8]
     year = parts["time"][0:4]
     dayTree = f"{year}/{day}"
@@ -186,8 +189,8 @@ def process(file):
         return
     parts = parts.groupdict()
     name = parts["name"]
-    entry = next((x for x in radars.values() if x["prefix"] == name), None)
-    if entry is None:
+    selectedRadar = next((x for x in radars.values() if x["prefix"] == name), None)
+    if selectedRadar is None:
         logger.info(f"Prefix {name} skipped")
         return
     time = datetime.datetime.strptime(parts["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=tzinfo)
@@ -206,12 +209,12 @@ def process(file):
     sweep.save()
 
     bgor = False
-    if scan.startswith(radar["summary"]):
+    if scan.startswith(selectedRadar["summary"]):
         step = time.minute // 20
-        target = radar["step"]
+        target = selectedRadar["step"]
         logger.debug(f"{step} vs {target}")
-        if radar["step"] == step:
-            radar["step"] = 0 if step == 2 else radar["step"] + 1
+        if selectedRadar["step"] == step:
+            selectedRadar["step"] = 0 if step == 2 else selectedRadar["step"] + 1
             bgor = True
     day, mode = dbtool.build_day(f"{name}-{time.strftime(r'%Y%m%d')}", bgor=bgor)
     u = "+" if bgor else ""
