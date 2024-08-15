@@ -172,25 +172,25 @@ def catchup(root="/mnt/data"):
             print("")
 
 
-def process(file):
+def process(source):
     global radars
-    if not os.path.exists(file):
-        logger.debug(f"File {file} not found.")
-        archive = proper(file)
+    if not os.path.exists(source):
+        logger.debug(f"File {source} not found.")
+        file = proper(source)
     else:
-        archive = file
-    logger.info(colorize(file, 43) + " " + (ballot if archive is None else check))
-    if archive is None:
+        file = source
+    logger.info(colorize(source, 43) + " " + (ballot if file is None else check))
+    if file is None:
         return
-    basename = os.path.basename(archive)
+    basename = os.path.basename(file)
     parts = radar.re_3parts.search(basename)
     if parts is None:
-        logger.error(f"Not a good file pattern. Ignoring {archive} ...")
+        logger.error(f"Not a good file pattern. Ignoring {file} ...")
         return
     parts = parts.groupdict()
     name = parts["name"]
-    selectedRadar = next((x for x in radars.values() if x["prefix"] == name), None)
-    if selectedRadar is None:
+    item = next((x for x in radars.values() if x["prefix"] == name), None)
+    if item is None:
         logger.info(f"Prefix {name} skipped")
         return
     time = datetime.datetime.strptime(parts["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=tzinfo)
@@ -198,23 +198,25 @@ def process(file):
     if sweep:
         logger.debug(f"Sweep {name}-{time} exists.")
         return
-    data, tarinfo = radar.read(archive, want_tarinfo=True)
+    data, tarinfo = radar.read(file, want_tarinfo=True)
     if data is None:
-        logger.error(f"Failed opening file {archive}")
+        logger.error(f"Failed opening file {file}")
         return
+    if tarinfo is None:
+        tarinfo = {}
     kind = data["kind"]
     scan = parts["scan"]
     symbols = list(data["products"].keys())
-    sweep = Sweep(time=time, name=name, kind=kind, scan=scan, symbols=symbols, path=archive, tarinfo=tarinfo)
+    sweep = Sweep(time=time, name=name, kind=kind, scan=scan, symbols=symbols, path=file, tarinfo=tarinfo)
     sweep.save()
 
     bgor = False
-    if scan.startswith(selectedRadar["summary"]):
+    if scan.startswith(item["summary"]):
         step = time.minute // 20
-        target = selectedRadar["step"]
+        target = item["step"]
         logger.debug(f"{step} vs {target}")
-        if selectedRadar["step"] == step:
-            selectedRadar["step"] = 0 if step == 2 else selectedRadar["step"] + 1
+        if item["step"] == step:
+            item["step"] = 0 if step == 2 else item["step"] + 1
             bgor = True
     day, mode = dbtool.build_day(f"{name}-{time.strftime(r'%Y%m%d')}", bgor=bgor)
     u = "+" if bgor else ""

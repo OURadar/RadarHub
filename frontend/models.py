@@ -20,6 +20,7 @@ from django.conf import settings
 from django.core.validators import int_list_validator
 from django.utils.translation import gettext_lazy
 from django.db import models
+from functools import lru_cache
 
 from . import algos
 
@@ -324,6 +325,13 @@ class Day(models.Model):
         day_hour = f"{day} {hour:02d}"
         return [f"{day_hour}:00:00Z", f"{day_hour}:59:59.9Z"]
 
+    def latest_datetime_range(self):
+        if self.date is None:
+            return None
+        end_time = datetime.datetime(self.date.year, self.date.month, self.date.day, self.last_hour(), 59, 59)
+        beg_time = end_time - datetime.timedelta(hours=2)
+        return [beg_time.strftime(r"%Y-%m-%d %H:%M:%SZ"), end_time.strftime(r"%Y-%m-%d %H:%M:%SZ")]
+
     def day_range(self):
         if self.date is None:
             return None
@@ -528,8 +536,15 @@ class Sweep(models.Model):
     def locator(self):
         return f"{self.time.strftime(r'%Y%m%d-%H%M%S')}-{self.scan}"
 
+    @lru_cache(maxsize=128)
+    def read_all(self, verbose=0):
+        return radar.read(self.path, tarinfo=self.tarinfo, verbose=verbose)
+
     def load(self, symbols=["Z", "V", "W", "D", "P", "R"], finite=False, verbose=0):
-        self.data = radar.read(self.path, symbols=symbols, tarinfo=self.tarinfo, verbose=verbose)
+        if "*" in self.tarinfo and self.data is None:
+            self.data = self.read_all(verbose=verbose)
+        else:
+            self.data = radar.read(self.path, symbols=symbols, tarinfo=self.tarinfo, verbose=verbose)
         if verbose > 1:
             func = colorize("Sweep.load()", "green")
             print(f"{func} {self.__str__()}")

@@ -8,18 +8,18 @@ from django.conf import settings
 from django_eventstream import send_event
 
 from common import color_name_value
-from common.cosmetics import colorize
+from common.cosmetics import colorize, pretty_object_name
+
+from .archives import load_source_string
 
 logger = logging.getLogger("frontend")
 
 
-def monitor(radar="px1000", name="PX"):
+def monitor(pathway="px1000", name="PX"):
     time.sleep(2.718281828459045)
 
-    show = colorize("monitor.monitor()", "green")
-    show += "   " + color_name_value("name", name)
-    show += "   " + color_name_value("radar", radar)
-    logger.info(show)
+    myname = pretty_object_name("monitor.monitor", name, pathway)
+    logger.info(f"{myname} started")
 
     from .models import Day, Sweep
 
@@ -28,40 +28,48 @@ def monitor(radar="px1000", name="PX"):
     if day.exists():
         day = day.latest("date")
         hourly_count = day.hourly_count
-        sweeps = Sweep.objects.filter(time__range=day.last_hour_range(), name=name)
+        sweeps = Sweep.objects.filter(time__range=day.latest_datetime_range(), name=name)
     else:
         hourly_count = ",".join("0" * 24)
-        logger.info(f"No Day objects yet for {radar} / {name}")
+        logger.info(f"{myname} No Day objects yet for {pathway} / {name}")
+    count = len(sweeps)
+    logger.info(f"{myname} building cache ...")
+    for sweep in sweeps[max(0, count - 16) : count]:
+        source_string = f"{name}-{sweep.locator}-Z"
+        load_source_string(source_string)
 
     no_day_warning = 0
     while True:
-        time.sleep(3.0)
         day = Day.objects.filter(name=name)
         if not day.exists():
             no_day_warning += 1
             if no_day_warning < 3 or no_day_warning % 100 == 0:
-                logger.info(f"No Day objects yet for {radar} / {name}")
+                logger.info(f"{myname} No Day objects yet for {pathway} / {name}")
+            time.sleep(3.0)
             continue
         day = day.latest("date")
         if hourly_count == day.hourly_count:
+            time.sleep(1.0)
             continue
         if settings.VERBOSE > 1:
             day.show()
         hourly_count = day.hourly_count
-        latest_sweeps = Sweep.objects.filter(time__range=day.last_hour_range(), name=name)
+        latest_sweeps = Sweep.objects.filter(time__range=day.latest_datetime_range(), name=name)
         delta = [sweep for sweep in latest_sweeps if sweep not in sweeps]
         if len(delta) == 0:
+            time.sleep(1.0)
             continue
+        # Do a read to cache the latest data
+        for sweep in delta:
+            source_string = f"{name}-{sweep.locator}-Z"
+            logger.debug(f"{myname} Caching {source_string} ...")
+            load_source_string(source_string)
         payload = {
             "items": [sweep.locator for sweep in delta],
             "hoursActive": [int(c) for c in hourly_count.split(",")],
             "time": datetime.datetime.now(datetime.UTC).isoformat(),
         }
-        if any([".nc" in item for item in payload["items"]]):
-            print("This should not happen:")
-            print(payload["items"])
-            print(delta)
-        send_event("sse", radar, payload)
+        send_event("sse", pathway, payload)
         sweeps = latest_sweeps
 
 

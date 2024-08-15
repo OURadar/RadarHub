@@ -72,7 +72,7 @@ def stat(request, mode=""):
     if dirty:
         return forbidden_request
     if mode == "cache":
-        cache_info = _load.cache_info()
+        cache_info = load_source_string.cache_info()
         payload = str(cache_info)
     elif mode == "403":
         return forbidden_request
@@ -292,12 +292,11 @@ def table(request, pathway, day_hour):
 
 
 @lru_cache(maxsize=1000)
-def _load(pathway, source):
-    prefix = settings.RADARS[pathway]["prefix"]
+def load_source_string(source_string):
     if settings.SIMULATE:
-        sweep = Sweep.dummy_data(f"{prefix}-{source}", u8=True)
+        sweep = Sweep.dummy_data(source_string, u8=True)
     else:
-        sweep = Sweep.read(f"{prefix}-{source}", u8=True)
+        sweep = Sweep.read(source_string, u8=True)
     symbol = list(sweep["u8"].keys())[0]
     # Down-sample the sweep if the gate spacing is too fine (to save internet bandwidth)
     elevations = sweep["elevations"]
@@ -319,7 +318,7 @@ def _load(pathway, source):
     au16 = np.array(azimuths / 360.0 * 65536.0, dtype=np.uint16)
     attr = 1 if sweep["txrx"] == "B" else 0
     head = struct.pack(
-        "hhhhddddffffffff",
+        "<hhhhddddffffffff",
         *values.shape,
         len(info),
         attr,
@@ -352,7 +351,9 @@ def load(request, pathway, source):
         return unsupported_request
     if pathway == "undefined" or pathway not in settings.RADARS:
         return invalid_query
-    payload = _load(pathway, source)
+    prefix = settings.RADARS[pathway]["prefix"]
+    source_string = f"{prefix}-{source}"
+    payload = load_source_string(source_string)
     if payload is None:
         return HttpResponse(f"Data {source} not found", status=204)
     response = HttpResponse(payload, content_type="application/octet-stream")
@@ -408,18 +409,15 @@ def latest(name):
 
 def location(pathway):
     global origins
-    if settings.VERBOSE > 1:
-        fn_name = colorize("archive.location()", "green")
-        show = fn_name + " " + color_name_value("pathway", pathway)
-        logger.debug(show)
+    myname = colorize("archive.location()", "green")
     prefix = settings.RADARS.get(pathway, {}).get("prefix", None)
-    logger.debug(f"archives.name   pathway = {pathway}   prefix = {prefix}")
+    logger.debug(f"{myname} {color_name_value('pathway', pathway)}   {color_name_value('prefix', prefix)}")
     if prefix is None:
         origins[pathway] = {"longitude": -97.4373016, "latitude": 35.1812820, "last": "20220125"}
     else:
         origins[pathway] = Sweep.location(prefix)
     if settings.VERBOSE > 1:
-        logger.debug(f"{fn_name} origins = {origins}")
+        logger.debug(f"{myname} {color_name_value('origins', origins)}")
     return origins[pathway]
 
 

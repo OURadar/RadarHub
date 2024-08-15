@@ -7,8 +7,8 @@
 colors = {
     "red": 196,
     "orange": 214,
-    "yellow": 227,
-    "green": 118,
+    "yellow": 228,
+    "green": 154,
     "mint": 43,
     "teal": 87,
     "cyan": 14,
@@ -17,6 +17,7 @@ colors = {
     "purple": 141,
     "white": 15,
     "gray": 239,
+    "gold": 220,
     "black": 232,
 }
 
@@ -34,6 +35,17 @@ def colorize(text, color="white", end="\033[m"):
         return f"{code}{text}{end}"
     else:
         return text
+
+
+def pretty_object_name(classname, name, origin=None):
+    g = f"\033[38;5;{colors['green']}m"
+    y = f"\033[38;5;{colors['gold']}m"
+    p = f"\033[38;5;{colors['purple']}m"
+    w = f"\033[38;5;{colors['white']}m"
+    b = f"\033[38;5;{colors['cyan']}m"
+    if origin is None:
+        return f"{g}{classname}{y}[{p}{name}{y}]\033[m"
+    return f"{g}{classname}{y}[{p}{name}{w}:{b}{origin}{y}]\033[m"
 
 
 def hex2rgba(strs):
