@@ -1,12 +1,18 @@
 import os
 import json
+import logging
 
 from django.contrib.auth import get_user
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db.utils import ConnectionHandler
 from django.utils.connection import ConnectionProxy
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django_eventstream import send_event
 
 from common import colorize, color_name_value, get_client_ip
+
+logger = logging.getLogger("frontend")
 
 # Stats
 
@@ -104,3 +110,23 @@ def size(request):
     response = HttpResponse(payload, content_type="application/json")
     response["Cache-Control"] = "max-age=60"
     return response
+
+
+@csrf_exempt
+@require_POST
+def relay(request):
+    myname = colorize("stats.relay()", "green")
+    headers = dict(request.headers)
+    # print(f"{myname} {color_name_value('headers', headers)}")
+    if "localhost" not in headers.get("Host"):
+        return JsonResponse({"status": "error", "message": "Not allowed"}, status=403)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
+    pathway = data.get("pathway", "unknown")
+    items = data.get("items", [])
+    logger.info(f"{myname} {color_name_value('items', items)}   {color_name_value('pathway', pathway)}")
+    data.pop("pathway")
+    send_event("sse", pathway, data)
+    return JsonResponse({"status": "ok"})

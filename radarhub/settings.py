@@ -18,7 +18,7 @@ from pathlib import Path
 
 from common import color_name_value
 
-VERBOSE = 2
+VERBOSE = 1
 SIMULATE = False
 
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING

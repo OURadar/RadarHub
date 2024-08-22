@@ -64,6 +64,7 @@ def params_from_source(source, dig=False):
     date_range = None
     source_date = None
     source_datetime = None
+    # print(f"{myname}   source = {source}")
     if "*" == source[-1]:
         if "-" in source:
             name, query = source.split("-")
@@ -71,13 +72,14 @@ def params_from_source(source, dig=False):
             query = source
         v1 = color_name_value("name", name)
         v2 = color_name_value("query", query)
-        logger.debug(f"{myname}   {v1}   {v2}")
+        logger.debug(f"{myname} {v1}   {v2}")
+        # Exactly *
+        if len(query) == 1:
+            date_range = [datetime.datetime(2000, 1, 1, tzinfo=tzinfo), datetime.datetime(2100, 1, 1, tzinfo=tzinfo)]
         # Like 2024*
-        if len(query) < 6:
+        elif len(query) < 6:
             y = int(query[0:4])
-            start = datetime.datetime(y, 1, 1, tzinfo=tzinfo)
-            end = datetime.datetime(y, 12, 31, tzinfo=tzinfo)
-            date_range = [start, end]
+            date_range = [datetime.datetime(y, 1, 1, tzinfo=tzinfo), datetime.datetime(y, 12, 31, tzinfo=tzinfo)]
         # Like 202401*
         elif len(query) > 6:
             y = int(query[0:4])
@@ -126,6 +128,8 @@ def params_from_source(source, dig=False):
             day_string = day_string.group(0)
     elif "-" in source:
         name, day_string = source.split("-")
+        if "*" in day_string:
+            day_string = None
     else:
         day_string = pattern_yyyymmdd.search(source)
         if day_string:
@@ -254,14 +258,10 @@ def xz_folder(folder, **kwargs):
         logger.info(f"Kind is {kind} ({kindString})")
     symbols = " ".join(list(first["products"].keys()))
 
-    def process_archives(id, run, lock, queue, out):
-        while run.value == 1:
-            task = None
-            lock.acquire()
-            if not queue.empty():
-                task = queue.get()
-            lock.release()
-            if task:
+    def process_archives(id, run, queue, out):
+        while run.value:
+            try:
+                task = queue.get(False)
                 archive = task["archive"]
                 ramfile = task["ramfile"]
                 logger.debug(f"{id:02d}: {archive} {ramfile}")
@@ -276,8 +276,9 @@ def xz_folder(folder, **kwargs):
                 else:
                     logger.error(f"Error. Unable to parse {archive}")
                 os.remove(ramfile)
-            else:
+            except:
                 tm.sleep(0.1)
+                pass
         logger.debug(f"{id} done")
         return
 
@@ -295,14 +296,13 @@ def xz_folder(folder, **kwargs):
     if use_mp:
         task_queue = multiprocessing.Queue()
         db_queue = multiprocessing.Queue()
-        lock = multiprocessing.Lock()
         run = multiprocessing.Value("i", 1)
 
         count = multiprocessing.cpu_count()
 
         processes = []
         for n in range(count):
-            p = multiprocessing.Process(target=process_archives, args=(n, run, lock, task_queue, db_queue))
+            p = multiprocessing.Process(target=process_archives, args=(n, run, task_queue, db_queue))
             processes.append(p)
             p.start()
 
@@ -552,13 +552,11 @@ def check_day(source, format=""):
 
 
 def check_source(source, progress=True, remove=False):
-    show = colorize("check_file()", "green")
-    show += "   " + color_name_value("source", source)
-    show += "   " + color_name_value("remove", remove)
-    logger.info(show)
+    myname = colorize("check_source()", "green")
+    logger.info(f"{myname}   {color_name_value('source', source)}   {color_name_value('remove', remove)}")
     params = params_from_source(source, dig=True)
-    if params["name"] is None:
-        # names = list(settings.RADARS.keys())
+    print(params)
+    if params["name"] is None or params["name"] == "*":
         names = [item["prefix"] for item in settings.RADARS.values()]
     elif isinstance(params["name"], str):
         names = [params["name"]]
@@ -571,9 +569,7 @@ def check_source(source, progress=True, remove=False):
     for name in names:
         scans = Sweep.objects.filter(time__range=params["date_range"], name=name)
         count = scans.count()
-        show = color_name_value("name", name)
-        show += "  " + color_name_value("count", count)
-        logger.info(show)
+        logger.info(f"{myname} {color_name_value('name', name)}  {color_name_value('count', count)}")
         if count == 0:
             continue
         paths = []
@@ -676,8 +672,7 @@ def check_latest(source=[], markdown=False):
         if day.count() == 0:
             continue
         day = day.latest("date")
-        last = day.last_hour_range()
-        # file = File.objects.filter(name__startswith=name, date__range=last).latest("date")
+        last = day.latest_datetime_range
         sweep = Sweep.objects.filter(name=prefix, time__range=last).latest("time")
         show = colorize("last", "orange") + colorize(" = ", "red")
         show += "[" + colorize(last[0], "yellow") + ", " + colorize(last[1], "yellow") + "]"
@@ -1121,16 +1116,7 @@ def dbtool_main():
         check_latest(args.source, markdown=args.markdown)
     elif args.prune:
         if len(args.source) == 0:
-            print(
-                textwrap.dedent(
-                    f"""
-                --prune needs a source, e.g.,
-
-                { __prog__} --prune RAXPOL-20211006
-            """
-                )
-            )
-            return
+            args.source = "*"
         for source in args.source:
             check_source(source, remove=True)
     elif args.sweep:

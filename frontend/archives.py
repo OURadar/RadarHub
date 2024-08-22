@@ -5,9 +5,9 @@ import pprint
 import struct
 import logging
 import datetime
+import threading
+import multiprocessing
 import numpy as np
-
-from functools import lru_cache
 
 from django.conf import settings
 from django.http import HttpResponse, Http404, HttpResponseForbidden
@@ -20,6 +20,13 @@ logger = logging.getLogger("frontend")
 
 origins = {}
 
+lock = threading.Lock()
+task_workers = []
+task_queue = multiprocessing.Queue()
+data_queue = multiprocessing.Queue()
+worker_run = multiprocessing.Value("i", 1)
+agg_output = {}
+
 pp = pprint.PrettyPrinter(indent=1, depth=3, width=80, sort_dicts=False)
 
 pattern_yyyymm = re.compile(r"20[0-9][0-9](0[0-9]|1[012])")
@@ -30,7 +37,7 @@ unsupported_request = HttpResponse(f"Unsupported query. Feel free to email data 
 forbidden_request = HttpResponseForbidden("Forbidden. Mistaken? Tell my father.\n")
 
 
-# region Helper Functions
+# region Helpers
 
 
 def binary(request, name):
@@ -72,8 +79,8 @@ def stat(request, mode=""):
     if dirty:
         return forbidden_request
     if mode == "cache":
-        cache_info = load_source_string.cache_info()
-        payload = str(cache_info)
+        # cache_info = load_by_source_string.cache_info()
+        payload = "cache_info"
     elif mode == "403":
         return forbidden_request
     else:
@@ -281,18 +288,16 @@ def table(request, pathway, day_hour):
     return HttpResponse(payload, content_type="application/json")
 
 
-# region Data
+# region Display Data
 
 """
-    Load a sweep - returns a dictionary
+    load_display_data_by_source_string
 
-    pathway - the radar pathway, e.g., px1000, raxpol, etc.
-    source - the source of the sweep, e.g., 20230616-020024-E2.6-Z
+    source_string - the source of the sweep, e.g., PX-20230616-020024-E2.6-Z
 """
 
 
-@lru_cache(maxsize=1000)
-def load_source_string(source_string):
+def load_display_data_by_source_string(source_string):
     if settings.SIMULATE:
         sweep = Sweep.dummy_data(source_string, u8=True)
     else:
@@ -310,7 +315,7 @@ def load_source_string(source_string):
         gatewidth *= float(stride)
         values = values[:, ::stride]
     info = json.dumps(
-        {"wf": sweep["waveform"], "prf": sweep["prf"]},
+        {"wf": sweep["waveform"], "prf": round(float(sweep["prf"]), 1)},
         separators=(",", ":"),
     )
     # Final assembly of the payload
@@ -340,11 +345,19 @@ def load_source_string(source_string):
     return payload
 
 
-def load(request, pathway, source):
+"""
+    Load a sweep - returns a dictionary
+
+    pathway - the radar pathway, e.g., px1000, raxpol, etc.
+    locator - the locator of the sweep, e.g., 20230616-020024-E2.6-Z
+"""
+
+
+def load(request, pathway, locator):
     if settings.VERBOSE > 1:
         show = colorize("archive.load()", "green")
         show += "   " + color_name_value("pathway", pathway)
-        show += "   " + color_name_value("source", source)
+        show += "   " + color_name_value("locator", locator)
         logger.debug(show)
     dirty = screen(request)
     if dirty:
@@ -352,10 +365,9 @@ def load(request, pathway, source):
     if pathway == "undefined" or pathway not in settings.RADARS:
         return invalid_query
     prefix = settings.RADARS[pathway]["prefix"]
-    source_string = f"{prefix}-{source}"
-    payload = load_source_string(source_string)
+    payload = load_display_data_by_source_string(f"{prefix}-{locator}")
     if payload is None:
-        return HttpResponse(f"Data {source} not found", status=204)
+        return HttpResponse(f"Data {locator} not found", status=204)
     response = HttpResponse(payload, content_type="application/octet-stream")
     response["Cache-Control"] = "max-age=604800"
     return response
@@ -389,7 +401,7 @@ def latest(name):
         show += "   " + color_name_value("name", name)
         show += "   " + color_name_value("day", ymd)
         logger.info(show)
-    hour = day.last_hour()
+    hour = day.last_hour
     if hour is None:
         show = colorize("archive.latest()", "green")
         show += "   " + colorize(" WARNING ", "warning")
@@ -428,7 +440,7 @@ def location(pathway):
 
 def _latest_scan(prefix, scan="E4.0"):
     day = Day.objects.filter(name=prefix).latest("date")
-    last = day.last_hour_range()
+    last = day.latest_datetime_range
     sweeps = Sweep.objects.filter(time__range=last, name=prefix, scan=scan)
     if sweeps.exists():
         sweep = sweeps.latest("time")

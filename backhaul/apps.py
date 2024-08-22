@@ -4,6 +4,8 @@ import logging
 from django.apps import AppConfig
 from django.conf import settings
 
+from product import ProductServer
+
 logger = logging.getLogger("backhaul")
 
 
@@ -16,8 +18,7 @@ class BackhaulConfig(AppConfig):
         if "runworker" not in prog:
             return
 
-        root_logger = logging.getLogger()
-        if len(root_logger.handlers) == 0:
+        if len(logger.handlers) == 0:
             console = logging.StreamHandler()
             console.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(message)s"))
             console.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
@@ -29,3 +30,10 @@ class BackhaulConfig(AppConfig):
         from . import consumers
 
         consumers.reset()
+
+        from . import monitor
+
+        monitor.launch()
+
+        productServer = ProductServer(logger=logger, cache=10000)
+        productServer.start()
