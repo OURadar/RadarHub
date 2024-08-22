@@ -34,7 +34,7 @@ from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
 from reporter.enums import RadarHubType
-from common import colorize, color_name_value, byte_string
+from common import colorize, color_name_value, byte_string, pretty_object_name
 
 logger = logging.getLogger("backhaul")
 
@@ -82,9 +82,9 @@ def reset():
 
 async def _runloop(pathway):
     global pathway_channels
-    name = colorize(pathway, "pink")
+    myname = pretty_object_name("Backhaul._runloop", pathway)
     with lock:
-        logger.info(f"Backhaul._runloop {name} started")
+        logger.info(f"{myname} started")
 
     payload_queue = pathway_channels[pathway]["payloads"]
 
@@ -92,7 +92,7 @@ async def _runloop(pathway):
     while pathway_channels[pathway]["channel"]:
         qs = payload_queue.qsize()
         if qs > 80:
-            logger.warning(f"{name} qs:{qs}, purging ...")
+            logger.warning(f"{myname} qs:{qs}, purging ...")
             while payload_queue.qsize() > 5:
                 payload_queue.get()
                 payload_queue.task_done()
@@ -101,7 +101,7 @@ async def _runloop(pathway):
             if settings.DEBUG and settings.VERBOSE > 2:
                 show = byte_string(payload)
                 show = colorize(show, "orange")
-                logger.debug(f"Backhaul._runloop qs:{qs:02d} {name} {show} ({len(payload)})")
+                logger.debug(f"{myname} qs:{qs:02d} {show} ({len(payload)})")
             await channel_layer.group_send(pathway, {"type": "messageUser", "message": payload})
             payload_queue.task_done()
         else:
@@ -109,8 +109,8 @@ async def _runloop(pathway):
             if age >= 30.0:
                 channel = pathway_channels[pathway]["channel"]
                 with lock:
-                    logger.info(f"Kicking out {name} (age = {age:.2f} s) ...")
-                    logger.info(f"Channel {channel}")
+                    logger.info(f"{myname} Retiring (age = {age:.2f} s) ...")
+                    logger.info(f"{myname} Channel {channel}")
                 await channel_layer.send(
                     pathway_channels[pathway]["channel"],
                     {"type": "disconnectRadar", "message": f"You are so quiet. Someone else wants /ws/{pathway}/. Bye."},
@@ -126,7 +126,7 @@ async def _runloop(pathway):
             await asyncio.sleep(0.02)
 
     with lock:
-        logger.info(f"runloop {name} retired")
+        logger.info(f"{myname} retired")
 
 
 def runloop(pathway):

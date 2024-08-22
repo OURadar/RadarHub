@@ -96,7 +96,7 @@ def catchupV1(file, root="/mnt/data"):
     if not Day.objects.filter(name=prefix).exists():
         return
     day = Day.objects.filter(name=prefix).latest("date")
-    hour = day.last_hour()
+    hour = day.last_hour
     if prefix in radars:
         sub = radars[prefix]["pathway"]
         folder = f"{root}/{sub}"
@@ -152,7 +152,7 @@ def catchup(root="/mnt/data"):
         d = c[1]
         filedate = datetime.datetime.strptime(d, r"%Y%m%d").date()
         day = Day.objects.filter(name=prefix).latest("date")
-        hour = day.last_hour()
+        hour = day.last_hour
         date = day.date
         stride = datetime.timedelta(days=1)
         while date <= filedate:

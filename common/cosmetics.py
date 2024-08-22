@@ -19,6 +19,7 @@ colors = {
     "gray": 239,
     "gold": 220,
     "black": 232,
+    "skyblue": 45,
 }
 
 highlights = {"info": "\033[48;5;6;38;5;15m", "warning": "\033[48;5;172;38;5;15m", "error": "\033[1;48;5;3;38;5;15m"}
@@ -59,7 +60,16 @@ def hex2rgba(strs):
 def color_name_value(name, value):
     show = colorize(name, "orange")
     show += colorize(" = ", "red")
-    show += colorize(value, "yellow" if isinstance(value, str) else "purple")
+    comma_len = len(colorize(", ", "red"))
+    if isinstance(value, list):
+        show += colorize("[", "gold")
+        for v in value:
+            show += colorize(f'"{v}"', "yellow" if isinstance(v, str) else "purple")
+            show += colorize(", ", "red")
+        show = show[:-comma_len]
+        show += colorize("]", "gold")
+    else:
+        show += colorize(value, "yellow" if isinstance(value, str) else "purple")
     return show
 
 
