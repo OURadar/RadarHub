@@ -85,18 +85,24 @@ def develop(request, pathway):
     return render(request, "frontend/develop.html", context)
 
 
-# Control
+# Main
 
 
-def control(request, pathway):
+def main(request, entry="archive", pathway=default_pathway, **kwargs):
     vars = make_vars(request, pathway)
-    show = colorize("views.control()", "green")
+    show = colorize("views.main()", "green")
+    show += "   " + color_name_value("entry", entry)
     show += "   " + color_name_value("pathway", pathway)
-    show += "   " + color_name_value("ip", vars["ip"])
-    show += "   " + color_name_value("user", vars["user"])
+    show += "   " + color_name_value("user", vars.get("user", "anon"))
+    show += "   " + color_name_value("ip", vars.get("ip", "unknown"))
+    if pathway not in settings.RADARS:
+        raise Http404
+    if kwargs.get("profileGL", False):
+        vars["profileGL"] = True
+        show += "   " + color_name_value("profileGL", True)
     logger.info(show)
-    context = {"vars": vars, "css": settings.CSS_HASH}
-    return render(request, "frontend/control.html", context)
+    context = {"entry": entry, "vars": vars, "css": settings.CSS_HASH}
+    return render(request, f"frontend/single.html", context)
 
 
 # Archive
@@ -120,11 +126,13 @@ def _archive(request, pathway, profileGL=False):
 
 
 def archive(request, pathway):
-    return _archive(request, pathway, False)
+    # return _archive(request, "archive", pathway, False)
+    return main(request, "archive", pathway)
 
 
 def archive_profile(request):
-    return _archive(request, default_pathway, True)
+    # return _archive(request, "archive", default_pathway, True)
+    return main(request, "archive", profileGL=True)
 
 
 #

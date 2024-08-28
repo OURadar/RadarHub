@@ -8,7 +8,7 @@
 //
 
 import React, { Component } from "react";
-import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import { detectMob } from "./common";
 import { Scope } from "./scope";
 import { Scope2 } from "./scope2";

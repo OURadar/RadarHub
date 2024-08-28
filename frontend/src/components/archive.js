@@ -177,12 +177,19 @@ class Archive extends Ingest {
       return;
     }
     day = day.hour(hour);
+    day = day.minute(0);
     if (this.state.verbose) {
-      let dateTimeString = day.format("YYYYMMDD-HH00");
+      let dateTimeString = day.format("YYYYMMDD-HHMM");
       console.log(`%carchive.table%c   day = ${dateTimeString}   hour = ${hour}`, nameStyle, "");
     }
     this.state.itemsUpdating = true;
     this.worker.postMessage({ task: "table", date: day.unix() });
+    setTimeout(() => {
+      if (this.state.itemsUpdating) {
+        console.error(`%carchive.table%c Timed out`, nameStyle, "");
+        this.state.itemsUpdating = false;
+      }
+    }, 3000);
   }
 
   loadIndex(index) {
@@ -260,6 +267,12 @@ class Archive extends Ingest {
     }
     this.state.itemsUpdating = true;
     this.worker.postMessage({ task: "prepend" });
+    setTimeout(() => {
+      if (this.state.itemsUpdating) {
+        console.error(`%carchive.prepend%c Timed out`, nameStyle, "");
+        this.state.itemsUpdating = false;
+      }
+    }, 3000);
   }
 
   append() {
@@ -275,6 +288,12 @@ class Archive extends Ingest {
     }
     this.state.itemsUpdating = true;
     this.worker.postMessage({ task: "append" });
+    setTimeout(() => {
+      if (this.state.itemsUpdating) {
+        console.error(`%carchive.append%c Timed out`, nameStyle, "");
+        this.state.itemsUpdating = false;
+      }
+    }, 3000);
   }
 
   toggleLiveUpdate(mode = "auto") {

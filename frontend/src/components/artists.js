@@ -20,27 +20,22 @@ export function basic(regl) {
       void main() {
         gl_Position = projection * vec4(position, 0.0, 1.0);
       }`,
-
     frag: `
       precision highp float;
       uniform vec4 color;
       void main() {
         gl_FragColor = color;
       }`,
-
     uniforms: {
       color: regl.prop("color"),
       projection: regl.prop("projection"),
     },
-
     attributes: {
       position: regl.prop("points"),
     },
-
     depth: {
       enable: false,
     },
-
     primitive: regl.prop("primitive"),
     viewport: regl.prop("viewport"),
     count: regl.prop("count"),
@@ -578,7 +573,6 @@ export function simplifiedInstancedLines(regl) {
       uniform vec4 quad;
       varying vec4 normal;
       varying vec4 adjustedColor;
-
       void main() {
         mat4 mvp = projection * view;
         vec4 clip0 = mvp * vec4(pointA, 1.0);
@@ -596,7 +590,6 @@ export function simplifiedInstancedLines(regl) {
         vec4 computedColor = vec4(normal.xzy * quad.z * normal.w, normal.w);
         adjustedColor = mix(computedColor, color * normal.w, quad.y);
       }`,
-
     frag: `
       precision highp float;
       varying vec4 adjustedColor;
@@ -605,7 +598,6 @@ export function simplifiedInstancedLines(regl) {
           discard;
         gl_FragColor = adjustedColor;
       }`,
-
     attributes: {
       position: {
         buffer: roundCapJoin.buffer,
@@ -625,7 +617,6 @@ export function simplifiedInstancedLines(regl) {
         stride: Float32Array.BYTES_PER_ELEMENT * 6,
       },
     },
-
     uniforms: {
       width: regl.prop("width"),
       color: regl.prop("color"),
@@ -634,11 +625,7 @@ export function simplifiedInstancedLines(regl) {
       projection: regl.prop("projection"),
       resolution: ({ viewportWidth, viewportHeight }) => [viewportWidth, viewportHeight],
     },
-
-    depth: {
-      enable: regl.prop("depth"),
-    },
-
+    depth: { enable: regl.prop("depth") },
     blend: {
       enable: true,
       func: {
@@ -646,7 +633,6 @@ export function simplifiedInstancedLines(regl) {
         dst: "one minus src alpha",
       },
     },
-
     count: roundCapJoin.count,
     instances: regl.prop("segments"),
     viewport: regl.prop("viewport"),
@@ -685,7 +671,6 @@ export function instancedPatches(regl) {
         gl_Position = modelPoint;
         a = opacity;
       }`,
-
     frag: `
       precision highp float;
       uniform sampler2D texture;
@@ -697,7 +682,6 @@ export function instancedPatches(regl) {
         }
         gl_FragColor = texture2D(texture, uv) * a;
       }`,
-
     attributes: {
       position: {
         buffer: buffer,
@@ -720,7 +704,6 @@ export function instancedPatches(regl) {
         divisor: 1,
       },
     },
-
     uniforms: {
       projection: regl.prop("projection"),
       resolution: ({ viewportWidth, viewportHeight }) => [viewportWidth, viewportHeight],
@@ -728,11 +711,9 @@ export function instancedPatches(regl) {
       bound: regl.prop("bound"),
       scale: regl.prop("scale"),
     },
-
     depth: {
       enable: regl.prop("depth"),
     },
-
     blend: {
       enable: true,
       func: {
@@ -740,7 +721,82 @@ export function instancedPatches(regl) {
         dst: "one minus src alpha",
       },
     },
+    count: 6,
+    instances: regl.prop("count"),
+    viewport: regl.prop("viewport"),
+  });
+}
 
+export function instancedPatches2D(regl) {
+  const buffer = regl.buffer([
+    [-0.5, -0.5],
+    [+0.5, -0.5],
+    [+0.5, +0.5],
+    [-0.5, -0.5],
+    [+0.5, +0.5],
+    [-0.5, +0.5],
+  ]);
+  return regl({
+    vert: `
+      precision highp float;
+      uniform mat4 projection;
+      uniform vec2 resolution;
+      uniform vec2 bound;
+      uniform float scale;
+      attribute vec2 position;
+      attribute vec2 point;
+      attribute vec2 origin;
+      attribute vec2 spread;
+      varying vec2 uv;
+      vec4 modelPoint;
+      void main() {
+        uv = ((position + 0.5) * spread + origin) / bound;
+        modelPoint = projection * vec4(point, 0.0, 1.0);
+        modelPoint.xy += position * spread / scale / resolution * 2.0 * modelPoint.w;
+        gl_Position = modelPoint;
+      }`,
+    frag: `
+      precision highp float;
+      uniform sampler2D texture;
+      varying vec2 uv;
+      void main() {
+        gl_FragColor = texture2D(texture, uv);
+      }`,
+    attributes: {
+      position: {
+        buffer: buffer,
+        divisor: 0,
+      },
+      point: {
+        buffer: regl.prop("points"),
+        divisor: 1,
+      },
+      origin: {
+        buffer: regl.prop("origins"),
+        divisor: 1,
+      },
+      spread: {
+        buffer: regl.prop("spreads"),
+        divisor: 1,
+      },
+    },
+    uniforms: {
+      projection: regl.prop("projection"),
+      resolution: ({ viewportWidth, viewportHeight }) => [viewportWidth, viewportHeight],
+      texture: regl.prop("texture"),
+      bound: regl.prop("bound"),
+      scale: regl.prop("scale"),
+    },
+    depth: {
+      enable: false,
+    },
+    blend: {
+      enable: true,
+      func: {
+        src: "one",
+        dst: "one minus src alpha",
+      },
+    },
     count: 6,
     instances: regl.prop("count"),
     viewport: regl.prop("viewport"),
@@ -760,7 +816,6 @@ export function texturedElements(regl) {
         uv = origin;
         gl_Position = projection * modelview * vec4(position, 1.0);
       }`,
-
     frag: `
       precision highp float;
       uniform sampler2D colormap;
@@ -778,7 +833,6 @@ export function texturedElements(regl) {
       position: regl.prop("points"),
       origin: regl.prop("origins"),
     },
-
     uniforms: {
       projection: regl.prop("projection"),
       modelview: regl.prop("modelview"),
@@ -786,11 +840,9 @@ export function texturedElements(regl) {
       index: regl.prop("index"),
       data: regl.prop("data"),
     },
-
     depth: {
       enable: true,
     },
-
     blend: {
       enable: true,
       func: {
@@ -798,7 +850,100 @@ export function texturedElements(regl) {
         dst: "one minus src alpha",
       },
     },
+    elements: regl.prop("elements"),
+    viewport: regl.prop("viewport"),
+  });
+}
 
+export function texturedElementsTicToc(regl) {
+  return regl({
+    vert: `
+      precision highp float;
+      uniform mat4 projection;
+      uniform mat4 modelview;
+      uniform float toc;
+      attribute vec3 position;
+      attribute vec2 origin;
+      attribute float tic;
+      varying vec2 uv;
+      varying float a;
+      void main() {
+        uv = origin;
+        a = mix(0.7, 1.0, step(abs(tic - toc), 0.1));
+        gl_Position = projection * modelview * vec4(position, 1.0);
+      }`,
+    frag: `
+      precision highp float;
+      uniform sampler2D colormap;
+      uniform sampler2D data;
+      uniform float index;
+      varying vec2 uv;
+      varying float a;
+      void main() {
+        float x = texture2D(data, uv).x;
+        if (x < 1.0 / 255.0)
+          discard;
+        gl_FragColor = texture2D(colormap, vec2(x, index));
+        gl_FragColor.xyz *= a;
+      }`,
+    attributes: {
+      position: regl.prop("points"),
+      origin: regl.prop("origins"),
+      tic: regl.prop("tics"),
+    },
+    uniforms: {
+      projection: regl.prop("projection"),
+      modelview: regl.prop("modelview"),
+      colormap: regl.prop("colormap"),
+      index: regl.prop("index"),
+      data: regl.prop("data"),
+      toc: regl.prop("toc"),
+    },
+    depth: {
+      enable: true,
+    },
+    elements: regl.prop("elements"),
+    viewport: regl.prop("viewport"),
+  });
+}
+
+export function texturedElements2D(regl) {
+  return regl({
+    vert: `
+      precision highp float;
+      uniform mat4 projection;
+      attribute vec2 position;
+      attribute vec2 origin;
+      varying vec2 uv;
+      void main() {
+        uv = origin;
+        gl_Position = projection * vec4(position, 0.0, 1.0);
+      }`,
+    frag: `
+      precision highp float;
+      uniform sampler2D colormap;
+      uniform sampler2D data;
+      uniform float index;
+      varying vec2 uv;
+      void main() {
+        float x = texture2D(data, uv).x;
+        if (x < 1.0 / 255.0)
+          discard;
+        gl_FragColor = texture2D(colormap, vec2(x, index));
+      }`,
+    attributes: {
+      origin: regl.prop("origins"),
+      position: regl.prop("positions"),
+    },
+    uniforms: {
+      projection: regl.prop("projection"),
+      colormap: regl.prop("colormap"),
+      index: regl.prop("index"),
+      data: regl.prop("data"),
+    },
+    depth: {
+      enable: false,
+    },
     elements: regl.prop("elements"),
     viewport: regl.prop("viewport"),
   });

@@ -1,4 +1,5 @@
 asgiref
+blib-py
 channels
 channels_redis
 daphne
@@ -8,6 +9,7 @@ django-auth-ldap
 django-eventstream
 django-webpack-loader
 maxminddb
+multiprocess
 netCDF4
 numpy
 oauthlib

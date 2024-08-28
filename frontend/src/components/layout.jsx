@@ -15,13 +15,10 @@ export function Layout(props) {
     const minLeftPanelWidth = props.minLeftPanelWidth || 400;
     const minRightPanelWidth = props.minRightPanelWidth || 500;
     const maxRightPanelWidth = props.maxRightPanelWidth || 300;
-    var w = localStorage.getItem(props.name || "split-archive-w");
+    const storageName = props.name || "split-archive-w";
+    var w = localStorage.getItem(storageName);
     if (w) {
-      w = clamp(
-        parseFloat(JSON.parse(w)),
-        minRightPanelWidth,
-        window.innerWidth - minLeftPanelWidth
-      );
+      w = clamp(parseFloat(JSON.parse(w)), minRightPanelWidth, window.innerWidth - minLeftPanelWidth);
     } else {
       w = maxRightPanelWidth;
     }
@@ -40,7 +37,8 @@ export function Layout(props) {
       },
       onDragEnd: (_sizes) => {
         w = parseFloat(w).toFixed(1);
-        localStorage.setItem("split-archive-w", JSON.stringify(w));
+        console.log(`Layout.onDragEnd: w = ${w} -> ${props.name}`);
+        localStorage.setItem(storageName, JSON.stringify(w));
       },
     });
   }, []);

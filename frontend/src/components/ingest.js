@@ -64,6 +64,14 @@ class Ingest {
       console.log(`Ingest.handleMessage()`, type, payload);
     }
   }
+
+  disableLiveUpdate() {
+    console.log("Ingest.disableLiveUpdate()");
+  }
+
+  enableLiveUpdate() {
+    console.log("Ingest.enableLiveUpdate()");
+  }
 }
 
 export { Ingest };

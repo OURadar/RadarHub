@@ -47,7 +47,8 @@ Copyright Boonleng Cheong
   height: 351px;
   overflow-y: scroll;
 }
-.indicatorContainer {
+.indicatorContainerLeft,
+.indicatorContainerRight {
   display: block;
   position: relative;
   overflow: hidden;

@@ -83,7 +83,7 @@ class Scope extends Component {
     // screen - projection matrix to screen space
     // projection - model-view-projection matrix for the shaders
     this.geometry = {
-      scaleX: 1 / 1000,
+      scaleX: 1 / 220,
       scaleY: 1 / 60000,
       offsetX: 0,
       offsetY: 0,
@@ -158,9 +158,7 @@ class Scope extends Component {
   }
 
   render() {
-    const str = this.props.debug
-      ? `${this.gesture.message} : ${this.geometry.message} : ${this.state.message}`
-      : "";
+    const str = this.props.debug ? `${this.gesture.message} : ${this.geometry.message} : ${this.state.message}` : "";
     return (
       <div>
         {this.props.showHeader && <SectionHeader name="scope" />}
@@ -226,8 +224,8 @@ class Scope extends Component {
     geo.view[13] = geo.offsetY + h2;
     geo.screen = mat4.ortho([], 0, w, 0, h, 0, -1);
     geo.projection = mat4.multiply([], geo.screen, geo.view);
-    geo.viewport = { x: 0, y: 0, width: w, height: h };
     geo.dataport = { x: a, y: b, width: ww, height: hh };
+    geo.viewport = { x: 0, y: 0, width: w, height: h };
     geo.needsUpdate = false;
   }
 

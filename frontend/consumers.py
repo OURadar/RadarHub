@@ -17,6 +17,7 @@
 import json
 import pprint
 import logging
+import threading
 
 from django.conf import settings
 
@@ -24,14 +25,16 @@ from channels.layers import get_channel_layer
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from reporter.enums import RadarHubType
-from common import colorize, color_name_value, byte_string
+from common import colorize, color_name_value, byte_string, pretty_object_name
 
-logger = logging.getLogger('frontend')
+logger = logging.getLogger("frontend")
 
+lock = threading.Lock()
 tic = 0
 
 pp = pprint.PrettyPrinter(indent=1, depth=2, width=60, sort_dicts=False)
-bug_red = colorize('BUG', 'red')
+bugRed = colorize("BUG", "red")
+
 
 class Null(AsyncWebsocketConsumer):
     async def connect(self):
@@ -40,36 +43,43 @@ class Null(AsyncWebsocketConsumer):
 
 class Radar(AsyncWebsocketConsumer):
     async def connect(self):
-        if 'pathway' not in self.scope['url_route']['kwargs']:
-            logger.error('Keyword "pathway" is expected.')
+        global tic
+        myname = colorize("Radar.connect()", "green")
+        if "pathway" not in self.scope["url_route"]["kwargs"]:
+            logger.error("Keyword 'pathway' is expected.")
             return await self.close()
-        self.pathway = self.scope['url_route']['kwargs']['pathway']
-        self.client_ip = self.scope['client'][0]
-        self.name = self.pathway;
+        self.pathway = self.scope["url_route"]["kwargs"]["pathway"]
+        self.address = self.scope["client"][0]
+        self.name = self.pathway
+        self.prettyName = pretty_object_name("Radar", self.pathway, self.address)
+        myname = self.prettyName + colorize(".connect()", "green")
+        info = color_name_value("capacity", self.channel_layer.get_capacity("backhaul"))
+        info += "   " + color_name_value("tic", tic)
+        logger.debug(f"{myname}   {info}")
+        if tic == 0:
+            await self.channel_layer.send("backhaul", {"type": "resetChannels"})
+        with lock:
+            tic += 1
         await self.channel_layer.send(
-            'backhaul',
+            "backhaul",
             {
-                'type': 'radarInit',
-                'name': self.name,
-                'pathway': self.pathway,
-                'channel': self.channel_name,
-                'client_ip': self.client_ip
-            }
+                "type": "radarInit",
+                "name": self.name,
+                "pathway": self.pathway,
+                "channel": self.channel_name,
+            },
         )
 
     async def disconnect(self, code):
-        show = colorize('Radar.disconnect()', 'green')
-        show += ' ' + colorize(self.name, 'yellow')
-        show += ' @ /ws/radar/' + colorize(self.pathway, 'pink') + '/'
-        show += '  ' + color_name_value('code', code)
-        logger.info(show)
+        myname = self.prettyName + colorize(".disconnect()", "green")
+        logger.info(f"{myname} {color_name_value('code', code)}")
         await self.channel_layer.send(
-            'backhaul',
+            "backhaul",
             {
-                'type': 'radarDisconnect',
-                'pathway': self.pathway,
-                'channel': self.channel_name
-            }
+                "type": "radarDisconnect",
+                "pathway": self.pathway,
+                "channel": self.channel_name,
+            },
         )
         return await super().disconnect(code)
 
@@ -82,181 +92,182 @@ class Radar(AsyncWebsocketConsumer):
     # Type 6 - Command response
     #
     async def receive(self, bytes_data=None):
-        func_name = colorize('Radar.receive()', 'green')
+        myname = self.prettyName + colorize(".receive()", "green")
         if bytes_data is None or len(bytes_data) == 0:
-            logger.info(f'{func_name} nothing')
+            logger.info(f"{myname} nothing")
             return
-
-        if settings.VERBOSE > 2:
-            show = func_name
-            show += ' ' + colorize(self.pathway, 'pink')
-            show += ' ' + byte_string(bytes_data)
-            show += f' ({len(bytes_data)})'
-            logger.debug(show)
-
         payload_type = bytes_data[0]
-
         if payload_type == RadarHubType.Handshake:
             # Type RadarHubType.Handshake (1) should come in as {"command":"radarConnect", "pathway":"demo", "name":"Demo"}
-            text_data = bytes_data[1:].decode('utf-8')
-
+            text_data = bytes_data[1:].decode("utf-8")
             try:
                 request = json.loads(text_data)
             except:
-                logger.error(f'{func_name} invalid JSON = {text_data}')
+                logger.error(f"{myname} invalid JSON = {text_data}")
                 return
-
-            if request.keys() < {'pathway', 'command'}:
-                logger.error(f'{func_name} incomplete message {request}')
+            if request.keys() < {"pathway", "command"}:
+                logger.error(f"{myname} incomplete message {request}")
                 return
-
-            pathway = request['pathway']
+            pathway = request["pathway"]
             if pathway != self.pathway:
-                logger.warning(f'{func_name} {bug_red} pathway = {pathway} != self.pathway = {self.pathway}')
-
-            show = func_name
-            show += ' ' + colorize(text_data, 'yellow')
-            logger.info(show)
-
-            if 'name' in request:
-                self.name = request['name']
-            else:
-                self.name = self.pathway
-
-            show = func_name
-            show += ' ' + colorize(self.name, 'yellow')
-            show += ' @ /ws/radar/' + colorize(self.pathway, 'pink') + '/'
-            show += ' connected'
-            logger.info(show)
-
+                logger.warning(f"{myname} {bugRed} pathway = {pathway} != self.pathway")
+            self.name = request.get("name", self.pathway)
+            global tic
+            logger.info(f"{myname} {colorize(text_data, 'yellow')}   {color_name_value('tic', tic)}")
+            if tic == 0:
+                await self.channel_layer.send("backhaul", {"type": "resetChannels"})
+            with lock:
+                tic += 1
             await self.channel_layer.send(
-                'backhaul',
+                "backhaul",
                 {
-                    'type': request['command'],
-                    'pathway': self.pathway,
-                    'channel': self.channel_name,
-                    'command': request['payload'] if 'payload' in request else None
-                }
+                    "type": request["command"],
+                    "pathway": self.pathway,
+                    "channel": self.channel_name,
+                    "command": request["payload"] if "payload" in request else None,
+                },
             )
-        else:
-            await self.channel_layer.send(
-                'backhaul',
-                {
-                    'type': 'radarMessage',
-                    'pathway': self.pathway,
-                    'channel': self.channel_name,
-                    'payload': bytes_data
-                }
-            )
+            return
+        elif payload_type == RadarHubType.Response:
+            text = bytes_data[1:].decode("utf-8")
+            logger.info(f"{myname} '{colorize(text, 'yellow')}' ({color_name_value('len', len(text))})")
+        elif settings.VERBOSE > 2:
+            logger.debug(f"{myname} {byte_string(bytes_data)} ({len(bytes_data)})")
+        await self.channel_layer.send(
+            "backhaul",
+            {
+                "type": "radarMessage",
+                "pathway": self.pathway,
+                "channel": self.channel_name,
+                "payload": bytes_data,
+            },
+        )
 
     # The following methods are for Backhaul consumer
 
     async def acceptRadar(self, event):
+        myname = self.prettyName + colorize(".acceptRadar()", "green")
+        if event["pathway"] != self.pathway:
+            logger.warning(f"{myname} {bugRed} {event['pathway']} != {self.pathway}")
+        logger.info(myname)
         await self.accept()
 
-    async def disconnectRadar(self, event):
-        message = event['message']
-        func_name = colorize('Radar.disconnectRadar()', 'green')
-        m = color_name_value('event.message', message)
-        logger.info(f'{func_name} {m}')
-        await self.send(event['message'])
+    async def rejectRadar(self, event):
+        myname = self.prettyName + colorize(".rejectRadar()", "green")
+        logger.info(myname)
+        await self.accept()
+        note = event.get("note", None)
+        if note is not None:
+            await self.send(text_data=note)
         await self.close()
 
     async def messageRadar(self, event):
-        await self.send(text_data=event['message'])
+        myname = self.prettyName + colorize(".messageRadar()", "green")
+        logger.info(f"{myname} '{colorize(event['message'], 'yellow')}'")
+        await self.send(text_data=event["message"])
+
+    async def disconnectRadar(self, event):
+        myname = self.prettyName + colorize(".disconnectRadar()", "green")
+        note = event.get("note", None)
+        logger.info(f"{myname} {color_name_value('note', note)}")
+        if note is not None:
+            await self.send(text_data=note)
+        await self.close()
 
 
+# def makePrettyName(classname, name):
+#     return colorize(classname, "green") + "." + colorize(functionname, "yellow")
 class User(AsyncWebsocketConsumer):
     async def connect(self):
-        if 'pathway' not in self.scope['url_route']['kwargs']:
-            logger.error('Keyword "pathway" is expected.')
+        global tic
+        myname = colorize("User.connect()", "green")
+        if "pathway" not in self.scope["url_route"]["kwargs"]:
+            logger.error(f"{myname} Keyword 'pathway' is expected.")
             return await self.close()
-        self.pathway = self.scope['url_route']['kwargs']['pathway']
-        self.client_ip = self.scope['client'][0]
-        show = colorize('User.connect()', 'green')
-        show += ' @ /ws/' + colorize(self.pathway, 'pink') + '/'
-        logger.info(show)
+        self.pathway = self.scope["url_route"]["kwargs"]["pathway"]
+        self.address = self.scope["client"][0]
+        self.prettyName = pretty_object_name("User", self.pathway, self.address)
+        myname = self.prettyName + colorize(".connect()", "green")
+        info = color_name_value("tic", tic)
+        logger.debug(f"{myname}   {info}")
+        if tic == 0:
+            await self.channel_layer.send("backhaul", {"type": "resetChannels"})
+        with lock:
+            tic += 1
         await self.channel_layer.send(
-            'backhaul',
+            "backhaul",
             {
-                'type': 'userInit',
-                'pathway': self.pathway,
-                'channel': self.channel_name,
-                'client_ip': self.client_ip
-            }
+                "type": "userInit",
+                "pathway": self.pathway,
+                "channel": self.channel_name,
+            },
         )
 
     async def disconnect(self, code):
-        show = colorize('User.disconnect()', 'green')
-        show += ' @ /ws/' + colorize(self.pathway, 'pink') + '/'
-        show += '  ' + color_name_value('code', code)
-        logger.info(show)
+        myname = self.prettyName + colorize(".disconnect()", "green")
+        logger.info(f"{myname} {color_name_value('code', code)}")
         await self.channel_layer.send(
-            'backhaul',
+            "backhaul",
             {
-                'type': 'userDisconnect',
-                'pathway': self.pathway,
-                'channel': self.channel_name
-            }
+                "type": "userDisconnect",
+                "pathway": self.pathway,
+                "channel": self.channel_name,
+            },
         )
         return await super().disconnect(code)
 
     # Receive message from frontend, which relays commands from the web app, serialized JSON data.
     async def receive(self, text_data=None):
-        func_name = colorize('User.receive()', 'green')
+        myname = self.prettyName + colorize(".receive()", "green")
         if text_data is None or len(text_data) == 0:
-            logger.warning(f'{func_name} empty text_data')
+            logger.warning(f"{myname} empty text_data")
             return
-
         try:
             request = json.loads(text_data)
         except:
-            logger.error(f'{func_name} invalid JSON = {text_data}')
+            logger.error(f"{myname} invalid JSON = {text_data}")
+            return
+        if request.keys() < {"pathway", "command"}:
+            logger.error(f"{myname} incomplete message {request}")
             return
 
-        if request.keys() < {'pathway', 'command'}:
-            logger.error(f'{func_name} incomplete message {request}')
-            return
-
-        pathway = request['pathway']
+        pathway = request["pathway"]
         if pathway != self.pathway:
-            logger.warning(f'{func_name} {bug_red} pathway = {pathway} != self.pathway = {self.pathway}')
+            logger.warning(f"{myname} {bugRed} {pathway} inconsistent")
 
         if get_channel_layer() != self.channel_layer:
-            logger.warning(f'{func_name} {bug_red} channel_layer changed')
+            logger.warning(f"{myname} {bugRed} channel_layer changed")
 
-        global tic
-
-        show = func_name
-        show += ' ' + colorize(text_data, 'yellow')
-        show += '   ' + color_name_value('tic', tic)
-        logger.info(show)
-
-        tic += 1
+        logger.info(f"{myname} {colorize(text_data, 'yellow')}")
 
         await self.channel_layer.send(
-            'backhaul',
+            "backhaul",
             {
-                'type': request['command'],
-                'pathway': self.pathway,
-                'channel': self.channel_name,
-                'command': request['payload'] if 'payload' in request else None
-            }
+                "type": request["command"],
+                "pathway": self.pathway,
+                "channel": self.channel_name,
+                "command": request["payload"] if "payload" in request else None,
+            },
         )
         return
 
     # The following methods are for Backhaul consumer
 
     async def acceptUser(self, event):
+        myname = self.prettyName + colorize(".acceptUser()", "green")
+        logger.info(myname)
         await self.accept()
 
-    async def disconnectUser(self, event):
-        message = event['message']
-        func_name = colorize('Radar.disconnectUser()', 'green')
-        m = color_name_value('event.message', message)
-        logger.info(f'{func_name} {m}')
-        await self.send(message)
-        await self.close()
-
     async def messageUser(self, event):
-        await self.send(bytes_data=event['message'])
+        myname = self.prettyName + colorize(".messageUser()", "green")
+        if settings.VERBOSE > 2 and settings.DEBUG:
+            logger.debug(f"{myname} {color_name_value('message', event['message'])}")
+        await self.send(bytes_data=event["message"])
+
+    async def disconnectUser(self, event):
+        myname = self.prettyName + colorize(".disconnectUser()", "green")
+        note = event.get("note", None)
+        logger.info(f"{myname} {color_name_value('note', note)}")
+        if note is not None:
+            await self.send(bytes_data=note)
+        await self.close()

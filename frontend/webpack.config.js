@@ -17,6 +17,9 @@ module.exports = [
       index: {
         import: "./src/index.jsx",
       },
+      xx: {
+        import: "./src/xx.jsx",
+      },
     },
     output: {
       filename: "[name].[chunkhash:8].js",

@@ -23,6 +23,9 @@ import { Title } from "./title";
 // More later ... I can't see pass here
 //
 
+const depth = 361;
+const capacity = 512;
+
 class Sweep extends GLView {
   constructor(props) {
     super(props);
@@ -33,7 +36,7 @@ class Sweep extends GLView {
       count: 0,
       spin: false,
       useEuler: true,
-      title: "----/--/-- --:--:-- UTC -- -.-°",
+      title: "-.-° / -.-°",
       info: "Gatewidth: -\nWaveform: -",
       age: "-",
     };
@@ -49,9 +52,8 @@ class Sweep extends GLView {
       ticks: [],
       index: 0,
     };
-    this.assets = [];
     var image = new Image();
-    image.src = "/static/images/colormap.png?v=20230822";
+    image.src = "/static/images/colormap.png";
     image.addEventListener("load", () => {
       this.palette = {
         image: image,
@@ -66,9 +68,9 @@ class Sweep extends GLView {
       };
       this.updateColorbar("Z");
     });
-
     this.overlay.onLoad = props.onOverlayLoad;
     this.assetsComplete = false;
+    this.assets = {};
     this.tic = 0;
     console.log(`I am a Sweep GL View`);
   }
@@ -79,8 +81,7 @@ class Sweep extends GLView {
       longitude: -97.422413,
       latitude: 35.25527,
     },
-    gravity: "right",
-    onOverlayLoad: () => console.log("Product.onOverlayLoad()"),
+    onOverlayLoad: () => console.log("Sweep.onOverlayLoad()"),
     onColorbarClick: () => {},
     onMiddleViewTap: () => {},
   };
@@ -212,6 +213,16 @@ class Sweep extends GLView {
     });
   }
 
+  clearTexture() {
+    this.assets.data.subimage({
+      width: capacity,
+      height: depth,
+      data: new Uint8Array(capacity * depth),
+    });
+    this.assets.row = 0;
+    this.setState({ title: "-.-° / -.-°" });
+  }
+
   updateViewPoint() {
     const geo = this.geometry;
     const t = this.offset + 0.0002 * window.performance.now();
@@ -269,8 +280,6 @@ class Sweep extends GLView {
           count={this.state.count}
           debug={false}
         />
-        <Caption id="ageString" string={this.state.age} />
-        <Caption id="infoString" string={this.state.info} />
         <Symbol
           id="symbol"
           text={this.style.name}
@@ -283,71 +292,69 @@ class Sweep extends GLView {
     );
   }
 
-  updateAssets() {
-    if (this.props.sweeps.length == 0) {
-      return;
+  initAssets() {
+    let x, y, z;
+    let tics = [];
+    let points = [];
+    let origins = [];
+    let elements = [];
+    for (let k = 0; k < depth; k++) {
+      tics.push(0.0, 0.0, 0.0, 0.0);
+      let as = ((k % 360) * 32768) / 180;
+      [x, y, z] = common.unitVectorFromElevationAzimuthInShort(1, as);
+      points.push(10.0 * x, 10.0 * y, 10.0 * z);
+      points.push(69.0 * x, 69.0 * y, 69.0 * z);
+      let ae = (((k + 1) % 360) * 32768) / 180;
+      [x, y, z] = common.unitVectorFromElevationAzimuthInShort(1, ae);
+      points.push(10.0 * x, 10.0 * y, 10.0 * z);
+      points.push(69.0 * x, 69.0 * y, 69.0 * z);
+      let v = (k + 0.5) / depth;
+      origins.push(0.0, v, 1.0, v);
+      origins.push(0.0, v, 1.0, v);
+      let o = k * 4 + 2;
+      elements.push(o - 2, o - 1, o);
+      elements.push(o - 1, o, o + 1);
     }
 
-    this.assetsComplete = false;
-    this.assets.forEach((x) => {
-      x.data?.destroy();
-      x.points?.destroy();
-      x.origins?.destroy();
-      x.elements?.destroy();
-    });
-    this.assets = [];
-
-    // Could update this.geometry.origin
-    const geo = this.geometry;
-    // const sweep = this.props.sweeps[0];
-    if (
-      Math.abs(geo.origin.longitude - sweep.longitude) > 0.001 ||
-      Math.abs(geo.origin.latitude - sweep.latitude) > 0.001
-    ) {
-      let x0 = geo.origin.longitude.toFixed(6);
-      let y0 = geo.origin.latitude.toFixed(6);
-      // let x1 = sweep.longitude.toFixed(6);
-      // let y1 = sweep.latitude.toFixed(6);
-      console.log(`Product: origin (%c${x0}, ${y0}%c) ← (${x1}, ${y1})`, "color: mediumpurple", "color: inherit");
-      // Perhaps update geo.range to max range
-      // const r = sweep.rangeStart + sweep.nr * sweep.rangeSpacing;
-      // const d = Math.sqrt(1 + geo.aspect ** 2);
-      // console.log(`r = ${r}   d = ${d}`);
-      // this.updateOrigin(sweep.longitude, sweep.latitude);
-      this.overlay.purge();
-      this.overlay.load();
-    }
-    this.setState({ title: sweep.titleString, info: sweep.infoString, age: sweep.age });
-
-    if (this.props.sweeps.includes(null)) {
-      return;
-    }
-    // this.assets = this.props.sweeps.map((sweep) => ({
-    //   time: sweep.time,
-    //   data: this.regl.texture({
-    //     shape: [sweep.nr, sweep.nb],
-    //     data: sweep.values,
-    //     format: "luminance",
-    //     type: "uint8",
-    //   }),
-    //   points: this.regl.buffer({
-    //     usage: "static",
-    //     type: "float",
-    //     data: sweep.points,
-    //   }),
-    //   origins: this.regl.buffer({
-    //     usage: "static",
-    //     type: "float",
-    //     data: sweep.origins,
-    //   }),
-    //   elements: this.regl.elements({
-    //     usage: "static",
-    //     type: "uint16",
-    //     data: sweep.elements,
-    //   }),
-    // }));
+    this.assets = {
+      data: this.regl.texture({
+        shape: [capacity, depth],
+        data: new Uint8Array(capacity * depth),
+        format: "luminance",
+        type: "uint8",
+        wrap: "clamp",
+        min: "nearest",
+        mag: "nearest",
+      }),
+      tics: this.regl.buffer({
+        usage: "dynamic",
+        type: "float",
+        data: tics,
+      }),
+      points: this.regl.buffer({
+        usage: "dynamic",
+        type: "float",
+        data: points,
+      }),
+      origins: this.regl.buffer({
+        usage: "static",
+        type: "float",
+        data: origins,
+      }),
+      elements: this.regl.elements({
+        usage: "static",
+        type: "uint16",
+        data: elements,
+      }),
+      beam: this.regl.buffer({
+        usage: "dynamic",
+        type: "float",
+        data: [0.0, 0.0, 0.0, 0.0, 10.0, 1.0],
+      }),
+      toc: 0.0,
+      row: 0,
+    };
     this.assetsComplete = true;
-
     if (this.props.debug) {
       console.log(
         `%cProduct.updateAssets()%c` +
@@ -361,12 +368,43 @@ class Sweep extends GLView {
 
   draw() {
     if (this.mount === null) return;
-    // if (
-    //   this.props.sweeps.length != this.assets.length ||
-    //   (this.props.sweeps.length > 0 && this.assets.length > 0 && this.props.sweeps[0].time != this.assets[0].time)
-    // ) {
-    //   this.updateAssets();
-    // }
+    if (!this.assetsComplete) {
+      this.initAssets();
+    }
+    // Update data buffer: dequeue the rays from FIFO, up to 6 rays
+    let ray = null;
+    for (let k = 0; k < 6 && this.palette && this.props.fifo.hasData(); k++) {
+      ray = this.props.fifo.dequeue();
+      if (ray.viewNeedsClear) {
+        this.assets.data.subimage({
+          width: capacity,
+          height: depth,
+          data: new Uint8Array(capacity * depth),
+        });
+      }
+      this.assets.points.subdata(ray.points, this.assets.row * Float32Array.BYTES_PER_ELEMENT * 12);
+      this.assets.data.subimage(
+        {
+          width: Math.min(capacity, ray.values.length),
+          height: 1,
+          data: ray.values,
+        },
+        0,
+        this.assets.row
+      );
+      this.assets.tics.subdata(ray.tics, this.assets.row * Float32Array.BYTES_PER_ELEMENT * 4);
+      this.assets.row = (this.assets.row + 1) % depth;
+    }
+    if (ray) {
+      this.assets.beam.subdata([
+        vec3.transformMat4([], ray.points.slice(6, 9), this.geometry.model),
+        vec3.transformMat4([], ray.points.slice(9, 12), this.geometry.model),
+      ]);
+      this.assets.toc = ray.toc;
+      this.setState({
+        title: `EL ${ray.elevation}° / AZ ${ray.azimuth}°`,
+      });
+    }
     if (
       this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth * this.ratio ||
@@ -376,36 +414,42 @@ class Sweep extends GLView {
     } else if (this.labelFaceColor != this.props.colors.label.face) {
       this.labelFaceColor = this.props.colors.label.face;
       this.overlay.updateColors(this.props.colors);
-      this.updateColorbar(this.props.sweeps[0].symbol);
-      // } else if (this.props.sweeps.length > 0 && this.palette.symbol != this.props.sweeps[0].symbol) {
-      //   this.updateColorbar(this.props.sweeps[0].symbol);
-      //   this.updateAssets();
+      // this.updateColorbar(this.props.sweeps[0].symbol);
     }
     this.regl.clear({
       color: this.props.colors.glview,
     });
-    // if (this.assetsComplete) {
-    //   const phase = Math.min(this.props.sweeps.length - 1, ((this.tic / 8) >> 0) % (this.props.sweeps.length + 4));
-    //   const sweep = this.props.sweeps[phase];
-    //   if (this.state.phase != phase) {
-    //     this.setState({ phase: phase, title: sweep.titleString, info: sweep.infoString, age: sweep.age });
-    //   } else if (this.state.age != sweep.age) {
-    //     this.setState({ age: sweep.age });
-    //   }
-    //   const { data, points, origins, elements } = this.assets[phase];
-    //   this.vinci({
-    //     projection: this.geometry.projection,
-    //     modelview: this.geometry.modelview,
-    //     viewport: this.geometry.viewport,
-    //     colormap: this.palette.texture,
-    //     index: this.palette.index,
-    //     data: data,
-    //     points: points,
-    //     origins: origins,
-    //     elements: elements,
-    //   });
-    // }
     const shapes = this.overlay.getDrawables();
+    if (this.assetsComplete && this.palette.texture) {
+      const { data, tics, points, origins, elements, beam, toc } = this.assets;
+      // console.log(`Drawing ${this.assets.row} sweeps`);
+      this.raphael({
+        projection: this.geometry.projection,
+        modelview: this.geometry.modelview,
+        viewport: this.geometry.viewport,
+        colormap: this.palette.texture,
+        index: this.palette.index,
+        toc: toc,
+        tics: tics,
+        data: data,
+        points: points,
+        origins: origins,
+        elements: elements,
+      });
+      // console.log(beam);
+      this.picaso({
+        projection: this.geometry.projection,
+        viewport: this.geometry.viewport,
+        view: this.geometry.view,
+        points: beam,
+        segments: 1,
+        width: 2.0 * this.ratio,
+        color: [1.0, 1.0, 1.0, 1.0],
+        quad: [1.0, 1.0, 1.0, 1.0],
+        depth: false,
+      });
+    }
+    // console.log(shapes.poly[0].points.slice(0, 6), shapes.poly[0].quad);
     if (shapes.poly) this.picaso(shapes.poly);
     if (shapes.text) this.gogh(shapes.text);
     if (this.state.spin && !this.gesture.panInProgress) {

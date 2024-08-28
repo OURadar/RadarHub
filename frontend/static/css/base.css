@@ -132,6 +132,12 @@ Copyright Boonleng Cheong
   src: url(/static/fonts/HelveticaNeueLt.ttf) format("truetype");
 }
 
+@font-face {
+  font-family: TickLabelFont;
+  font-style: normal;
+  src: url(/static/fonts/SpaceMono-Regular.ttf) format("truetype");
+}
+
 body,
 html {
   margin: 0;
@@ -164,7 +170,7 @@ select:hover {
 
 .fill {
   position: relative;
-  height: 100%;
+  height: 100%;fullHeightMinusTopbar
   width: 100%;
 }
 .fog {
@@ -391,9 +397,18 @@ p {
   height: 100%;
   overflow-y: hidden;
 }
+.fullHeightScrollable {
+  height: 100%;
+  overflow-y: scroll;
+}
 .fullWidth {
   width: 100%;
   overflow-x: hidden;
+}
+.fullHeightMinusTopbar {
+  display: block;
+  height: calc(100% - var(--topbar-height));
+  position: relative;
 }
 .absolute {
   position: absolute;
@@ -809,6 +824,7 @@ p {
 }
 #title text {
   fill: var(--system-foreground);
+  user-select: none;
   white-space: pre;
 }
 #colorbar {

@@ -109,7 +109,7 @@ class Scope2 extends Scope {
     geo.view[5] = geo.scaleY * h;
     geo.view[12] = geo.offsetX;
     geo.view[13] = geo.offsetY + h2;
-    geo.screen1 = mat4.ortho([], 0, w, 0, h, 0, -1);
+    geo.screen1 = mat4.ortho([], 0, w, 0, h, 1, -1);
     geo.screen2 = translateY([], geo.screen1, y2 - b);
     geo.projection = mat4.multiply([], geo.screen1, geo.view);
     geo.dataport1 = { x: a, y: y2, width: ww, height: hh };

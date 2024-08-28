@@ -85,15 +85,7 @@ export function prettyString(input) {
 // https://stackoverflow.com/questions/11381673/detecting-a-mobile-browser
 //
 export function detectMob() {
-  const toMatch = [
-    /Android/i,
-    /webOS/i,
-    /iPhone/i,
-    /iPad/i,
-    /iPod/i,
-    /BlackBerry/i,
-    /Windows Phone/i,
-  ];
+  const toMatch = [/Android/i, /webOS/i, /iPhone/i, /iPad/i, /iPod/i, /BlackBerry/i, /Windows Phone/i];
 
   return toMatch.some((toMatchItem) => {
     return navigator.userAgent.match(toMatchItem);
@@ -311,8 +303,7 @@ export const mat4String = function (m, dec = 3, len = 9, all = true) {
       `    ${w0} ${w1} ${w2} ${w3}\n` +
       `    ${t0} ${t1} ${t2} ${t3}`
     );
-  else
-    return `${u0} ${u1} ${u2} ${u3}   ${v0} ${v1} ${v2} ${v3}   ${w0} ${w1} ${w2} ${w3}   ${t0} ${t1} ${t2} ${t3}`;
+  else return `${u0} ${u1} ${u2} ${u3}   ${v0} ${v1} ${v2} ${v3}   ${w0} ${w1} ${w2} ${w3}   ${t0} ${t1} ${t2} ${t3}`;
 };
 
 /**
@@ -351,11 +342,27 @@ export const vec4String = function (v, dec = 3, len = 9) {
  * @returns width of text rendered using font
  */
 export function displayTextWidth(text, font) {
-  let canvas =
-    displayTextWidth.canvas ||
-    (displayTextWidth.canvas = document.createElement("canvas"));
+  let canvas = displayTextWidth.canvas || (displayTextWidth.canvas = document.createElement("canvas"));
   let context = canvas.getContext("2d");
   context.font = font;
   let metrics = context.measureText(text);
   return metrics.width;
+}
+
+/**
+ * Compute unit vector from 16-bit elevation/azimuth pair
+ * where they are assumed to be in the range of [0, 65535] or [-32768, 32767]
+ *
+ * @param {*} e integer elevation
+ * @param {*} a integer azimuth
+ * @returns unit vector [x, y, z]
+ */
+export function unitVectorFromElevationAzimuthInShort(e, a) {
+  const er = (e * Math.PI) / 32768.0;
+  const ar = (a * Math.PI) / 32768.0;
+  let ce = Math.cos(er);
+  let se = Math.sin(er);
+  let ca = Math.cos(ar);
+  let sa = Math.sin(ar);
+  return [ce * sa, ce * ca, se];
 }

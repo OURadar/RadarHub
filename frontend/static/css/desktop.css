@@ -3,9 +3,9 @@ Desktop style sheet
 Copyright Boonleng Cheong
 */
 :root {
-  --font-size: 14px;
+  --font-size: 12px;
   --button-height: 36px;
-  --indicator-height: 25px;
+  --indicator-height: 20px;
   --button-border-top: solid 1px var(--border-accent);
   --button-border-right: solid 1px var(--border-accent);
   --button-border-bottom: solid 1px var(--border-accent);
@@ -34,15 +34,21 @@ Copyright Boonleng Cheong
 }
 
 .controlContainer {
-  columns: 7 220px;
+  columns: 7 200px;
 }
-.healthContainer {
-  column-count: 2;
-}
-.indicatorContainer {
+.indicatorContainerLeft,
+.indicatorContainerRight {
   display: inline-block;
-  columns: 5 220px;
   overflow: auto;
+  vertical-align: top;
+}
+.indicatorContainerLeft {
+  width: 40%;
+  columns: 5 120px;
+}
+.indicatorContainerRight {
+  width: 60%;
+  columns: 5 180px;
 }
 .ledIndicator,
 .labelIndicator {
@@ -68,8 +74,8 @@ Copyright Boonleng Cheong
 }
 .labelTitle {
   top: calc(var(--indicator-height) * 0.2);
-  right: calc(50% + var(--padding));
-  width: calc(50% - var(--padding));
+  right: calc(45% + var(--padding));
+  width: calc(55% - var(--padding));
   font-weight: 500;
   text-align: right;
 }
@@ -78,7 +84,7 @@ Copyright Boonleng Cheong
   background-color: var(--gray7);
   top: 0;
   right: 0;
-  width: 50%;
+  width: 45%;
   height: var(--indicator-height);
   border-radius: var(--button-border-radius);
   border: 1px solid var(--border-accent);
@@ -134,6 +140,9 @@ Copyright Boonleng Cheong
 #split-panel-right {
   display: block;
   height: 100vh;
+}
+#split-panel-right {
+  overflow-y: scroll;
 }
 
 /* Browser */

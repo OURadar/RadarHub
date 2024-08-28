@@ -3,6 +3,7 @@ import sys
 
 from .cosmetics import *
 from .dailylog import *
+from .fifobuffer import *
 from .network import *
 from .sanity import *
 
