@@ -60,16 +60,8 @@ function Health(props) {
     <div>
       <SectionHeader name="health" />
       <div className="healthContainer">
-        {listLEDs.length > 0 && (
-          <div>
-            <div className="indicatorContainer">{listLEDs}</div>
-          </div>
-        )}
-        {listLabels.length > 0 && (
-          <div>
-            <div className="indicatorContainer">{listLabels}</div>
-          </div>
-        )}
+        {listLEDs.length > 0 && <div className="indicatorContainerLeft">{listLEDs}</div>}
+        {listLabels.length > 0 && <div className="indicatorContainerRight">{listLabels}</div>}
       </div>
     </div>
   );

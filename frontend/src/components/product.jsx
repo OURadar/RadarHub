@@ -80,7 +80,6 @@ class Product extends GLView {
       longitude: -97.422413,
       latitude: 35.25527,
     },
-    gravity: "right",
     onOverlayLoad: () => console.log("Product.onOverlayLoad()"),
     onColorbarClick: () => {},
     onMiddleViewTap: () => {},

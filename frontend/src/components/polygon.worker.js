@@ -59,8 +59,7 @@ async function builtInGeometryDirect(name, model) {
         const a = (k * 2.0 * Math.PI) / sides;
         const p = [r * Math.sin(a), r * Math.cos(a), h];
         const q = vec3.transformMat4([], p, model);
-        x.push(q);
-        x.push(q);
+        x.push(q, q);
       }
       x.push(o);
     });

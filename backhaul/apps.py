@@ -1,10 +1,11 @@
 import sys
+import signal
 import logging
+import threading
 
 from django.apps import AppConfig
 from django.conf import settings
 
-from product import ProductServer
 
 logger = logging.getLogger("backhaul")
 
@@ -17,6 +18,8 @@ class BackhaulConfig(AppConfig):
         prog = " ".join(sys.argv[:3])
         if "runworker" not in prog:
             return
+
+        threading.current_thread().name = "Backhaul"
 
         if len(logger.handlers) == 0:
             console = logging.StreamHandler()
@@ -34,6 +37,3 @@ class BackhaulConfig(AppConfig):
         from . import monitor
 
         monitor.launch()
-
-        productServer = ProductServer(logger=logger, cache=10000)
-        productServer.start()

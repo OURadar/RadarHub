@@ -89,6 +89,7 @@ export class App extends React.Component {
             <div className="fullHeight">
               <SectionHeader name="product" isMobile={false} />
               <Sweep
+                fifo={this.ingest.data.ray}
                 colors={this.user.preference.colors}
                 gravity="right"
                 debug={this.props.debug}

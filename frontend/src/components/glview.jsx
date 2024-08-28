@@ -21,7 +21,7 @@ class GLView extends Component {
   constructor(props) {
     super(props);
     this.ratio = window.devicePixelRatio > 1 ? 2 : 1;
-    this.style = props.style;
+    this.gravity = props.gravity;
     this.canvas = document.createElement("canvas");
     this.canvas.style.width = "100%";
     this.canvas.style.height = "100%";
@@ -54,42 +54,6 @@ class GLView extends Component {
       tic: 0,
       message: "glView",
     };
-
-    // Our artists
-    this.picaso = artists.simplifiedInstancedLines(this.regl);
-    this.monet = artists.instancedLines(this.regl, 0);
-    this.gogh = artists.instancedPatches(this.regl);
-    this.vinci = artists.texturedElements(this.regl);
-    this.basic = artists.basic(this.regl);
-    this.basic3 = artists.basic3(this.regl);
-    this.sphere = artists.sphere(this.regl);
-    this.sphere2 = artists.sphere2(this.regl);
-    this.element3 = artists.element3(this.regl);
-    this.michelangelo = artists.rect2(this.regl);
-
-    // Bind some methods
-    this.updateOrigin = this.updateOrigin.bind(this);
-    this.updateProjection = this.updateProjection.bind(this);
-    this.draw = this.draw.bind(this);
-    this.pan = this.pan.bind(this);
-    this.tilt = this.tilt.bind(this);
-    this.roll = this.roll.bind(this);
-    this.dolly = this.dolly.bind(this);
-    this.tap = this.tap.bind(this);
-    this.taptap = this.taptap.bind(this);
-    this.magnify = this.magnify.bind(this);
-    this.fitToData = this.fitToData.bind(this);
-
-    // User interaction
-    this.gesture = new Gesture(this.canvas, this.constants.bounds);
-    this.gesture.handlePan = this.pan;
-    this.gesture.handleTilt = this.tilt;
-    this.gesture.handleRoll = this.roll;
-    this.gesture.handleDolly = this.dolly;
-    this.gesture.handleSingleTap = this.tap;
-    this.gesture.handleDoubleTap = this.taptap;
-    this.gesture.handleMagnify = this.magnify;
-
     // Important parameters for WebGL. Don't want to use React state
     // Convention:
     // Root elements (model, quaternion, translation, scale) for radar
@@ -99,13 +63,11 @@ class GLView extends Component {
     //  - view = view matrix derived from eye
     //  - projection = projection matrix to GL view
     const r = 150;
-
     let fixView = mat4.create();
     let fixProjection = mat4.create();
     let fixTranslation = vec3.fromValues(0, 0, 2 * common.earthRadius);
     mat4.lookAt(fixView, fixTranslation, [0, 0, 0], [0, 1, 0]);
     mat4.perspective(fixProjection, 1, 1, 1, 30000);
-
     this.geometry = {
       origin: {
         longitude: 0,
@@ -156,7 +118,39 @@ class GLView extends Component {
       needsUpdate: true,
       message: "geo",
     };
-
+    // Our artists
+    this.picaso = artists.simplifiedInstancedLines(this.regl);
+    this.monet = artists.instancedLines(this.regl, 0);
+    this.gogh = artists.instancedPatches(this.regl);
+    this.vinci = artists.texturedElements(this.regl);
+    this.raphael = artists.texturedElementsTicToc(this.regl);
+    this.basic = artists.basic(this.regl);
+    this.basic3 = artists.basic3(this.regl);
+    this.sphere = artists.sphere(this.regl);
+    this.sphere2 = artists.sphere2(this.regl);
+    this.element3 = artists.element3(this.regl);
+    this.michelangelo = artists.rect2(this.regl);
+    // Bind some methods
+    this.updateProjection = this.updateProjection.bind(this);
+    this.updateOrigin = this.updateOrigin.bind(this);
+    this.draw = this.draw.bind(this);
+    this.pan = this.pan.bind(this);
+    this.tilt = this.tilt.bind(this);
+    this.roll = this.roll.bind(this);
+    this.dolly = this.dolly.bind(this);
+    this.tap = this.tap.bind(this);
+    this.taptap = this.taptap.bind(this);
+    this.magnify = this.magnify.bind(this);
+    this.fitToData = this.fitToData.bind(this);
+    // User interaction
+    this.gesture = new Gesture(this.canvas, this.constants.bounds);
+    this.gesture.handlePan = this.pan;
+    this.gesture.handleTilt = this.tilt;
+    this.gesture.handleRoll = this.roll;
+    this.gesture.handleDolly = this.dolly;
+    this.gesture.handleMagnify = this.magnify;
+    this.gesture.handleSingleTap = this.tap;
+    this.gesture.handleDoubleTap = this.taptap;
     // Other built-in assets
     this.rings = new Rings(this.regl, [1, 60, 120, 250], 60);
     let earth = require("./earth-grid");
@@ -201,7 +195,7 @@ class GLView extends Component {
       longitude: 20.0,
       latitude: 10.0,
     },
-    style: "right",
+    gravity: "right",
     sx: {
       pt: 7,
       pb: 7,
@@ -293,9 +287,7 @@ class GLView extends Component {
   }
 
   draw() {
-    if (this.mount === null) {
-      return;
-    }
+    if (this.mount === null) return;
     if (
       this.geometry.needsUpdate ||
       this.canvas.width != this.mount.offsetWidth * this.ratio ||

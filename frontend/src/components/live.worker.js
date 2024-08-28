@@ -8,6 +8,7 @@
 //
 
 import { Parser } from "binary-parser";
+import { unitVectorFromElevationAzimuthInShort } from "./common";
 
 let socket = null;
 let pathway;
@@ -40,31 +41,18 @@ let scope = {
   },
   count: 0,
 };
-
-const sweepHeaderParser = new Parser()
-  .endianess("little")
-  .uint16("nb")
-  .uint16("nr")
-  .uint16("nx")
-  .uint16("reserved")
-  .doublele("time")
-  .doublele("longitude")
-  .doublele("latitude")
-  .doublele("doubleReserved")
-  .floatle("sweepElevation")
-  .floatle("sweepAzimuth")
-  .floatle("rangeStart")
-  .floatle("rangeSpacing")
-  .string("info", { length: "nx" });
+let toc = 0;
 
 const rayParser = new Parser()
   .endianess("little")
   .uint8("type")
-  .uint8("tick")
+  .uint8("flag")
   .int16("ei16s")
   .int16("ei16e")
   .uint16("au16s")
   .uint16("au16e")
+  .uint16("rs")
+  .uint16("rd")
   .uint16("count")
   .array("values", {
     type: "uint8",
@@ -100,16 +88,16 @@ self.onmessage = ({ data: { task, payload } }) => {
 
 function connect(target, url) {
   pathway = target;
-  self.postMessage({ type: "message", payload: "Connecting ..." });
+  self.postMessage({ type: "message", state: { liveUpdate: "offline" }, payload: "Connecting ..." });
 
   socket = new WebSocket(url);
   socket.binaryType = "arraybuffer";
 
   socket.onopen = (_e) => {
-    self.postMessage({ type: "message", payload: "Hub Connected" });
+    self.postMessage({ type: "message", state: { liveUpdate: "online" }, payload: "Hub Connected" });
     socket.send(
       JSON.stringify({
-        command: "userConnect",
+        command: "userGreet",
         pathway: pathway,
       })
     );
@@ -197,11 +185,29 @@ function connect(target, url) {
     } else if (type == enums.RadialZ) {
       // Display of a radial of Z
       const payload = rayParser.parse(new Uint8Array(e.data));
-      payload.startElevation = (payload.ei16s * 180.0) / 32768.0;
-      payload.endElevation = (payload.ei16e * 180.0) / 32768.0;
-      payload.startAzimuth = (payload.au16s * 180.0) / 32768.0;
-      payload.endAzimuth = (payload.au16e * 180.0) / 32768.0;
-      // console.log(payload);
+      payload.azimuth = ((payload.au16e * 180.0) / 32768.0).toFixed(2);
+      payload.elevation = ((payload.ei16e * 180.0) / 32768.0).toFixed(2);
+      let x, y, z;
+      const rs = payload.rs * 0.1;
+      const re = (512 * (payload.rd * 0.0001)).toFixed(2);
+      payload.points = [];
+      [x, y, z] = unitVectorFromElevationAzimuthInShort(payload.ei16s, payload.au16s);
+      payload.points.push(rs * x, rs * y, rs * z);
+      payload.points.push(re * x, re * y, re * z);
+      [x, y, z] = unitVectorFromElevationAzimuthInShort(payload.ei16e, payload.au16e);
+      payload.points.push(rs * x, rs * y, rs * z);
+      payload.points.push(re * x, re * y, re * z);
+      // sweepTic = payload.flag & 0xc0;
+      // rayTic = payload.flag & 0x3f;
+      const tic = payload.flag & 0xc0;
+      payload.tics = new Float32Array(4).fill(tic);
+      payload.toc = tic;
+      let delta = tic - toc;
+      if (delta < 0) delta += 64;
+      if (delta > 1) {
+        console.log(`Ray skip detected: delta = ${delta}`);
+      }
+      toc = payload.tic;
       self.postMessage({
         type: "ray",
         payload: payload,

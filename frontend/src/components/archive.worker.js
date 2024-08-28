@@ -80,6 +80,50 @@ const sweepParser = new Parser()
     },
   });
 
+//
+
+self.onmessage = ({ data: { task, name, date, symbol } }) => {
+  let day = dayjs.utc(0);
+  if (date !== undefined) {
+    day = dayjs.utc(date * 1000);
+  }
+  if (state.verbose) {
+    let more = day > 0 ? `   day = ${day.format("YYYYMMDD-HHMM")}` : "";
+    console.log(`%carchive.worker.onmessage%c ${task}${more}`, nameStyle, "");
+  }
+  if (task == "init") {
+    init(name);
+  } else if (task == "table") {
+    table(day);
+  } else if (task == "month") {
+    month(day);
+  } else if (task == "toggle") {
+    toggle(name);
+  } else if (task == "catchup") {
+    catchup();
+  } else if (task == "prepend") {
+    prepend();
+  } else if (task == "append") {
+    append();
+  } else if (task == "change") {
+    change(symbol);
+  } else if (task == "select") {
+    select(name);
+  } else if (task == "forward") {
+    navigateForward();
+  } else if (task == "backward") {
+    navigateBackward();
+  } else if (task == "forward-scan") {
+    navigateForwardScan();
+  } else if (task == "backward-scan") {
+    navigateBackwardScan();
+  } else if (task == "dummy") {
+    dummy();
+  } else {
+    return;
+  }
+};
+
 // IMPORTANT: During prepend/append mode, use this before updating
 // grid.counts = buffer.counts after fetch(/data/table/...) because
 // grid.index needs to propagate to the next table in order to
@@ -107,9 +151,19 @@ function suggestGridIndex(mode, { counts, items }) {
         }
         k++;
       }
-      index = k;
+      if (k < items.length) {
+        index = k;
+      } else {
+        index = counts[0];
+      }
     } else {
-      index = 0;
+      console.log(
+        `%carchive.worker.suggestGridIndex%c ${grid.scan} not in grid.itemsGrouped   counts =`,
+        nameStyle,
+        "",
+        counts
+      );
+      index = counts[0];
     }
   }
   return index;
@@ -268,7 +322,7 @@ function connect(force = false) {
   });
   source.addEventListener("error", (_event) => {
     console.error(`EventSource error`, source.readyState, EventSource.CONNECTING);
-    fetch("/state/cache/").then((response) => {
+    fetch("/state/cache/", "no-cache").then((response) => {
       if (response.status == 503) {
         // Server went into maintenance mode
         self.postMessage({ type: "503" });
@@ -617,9 +671,8 @@ function setGridIndex(index) {
   if (index < 0 || index >= grid.items.length) {
     if (state.verbose > 1) {
       console.debug(
-        `%carchive.worker.setGridIndex%c index%c == ${index}. Early return.`,
+        `%carchive.worker.setGridIndex%c index = ${index} (< 0 or >= grid.items.length = ${grid.items.length}). Early return.`,
         nameStyle,
-        "color: dodgerblue",
         ""
       );
     }
@@ -651,48 +704,6 @@ function setGridIndex(index) {
 
 //
 
-self.onmessage = ({ data: { task, name, date, symbol } }) => {
-  let day = dayjs.utc(0);
-  if (date !== undefined) {
-    day = dayjs.utc(date * 1000);
-  }
-  if (state.verbose) {
-    let more = day > 0 ? `   day = ${day.format("YYYYMMDD-HHMM")}` : "";
-    console.log(`%carchive.worker.onmessage%c ${task}${more}`, nameStyle, "");
-  }
-  if (task == "init") {
-    init(name);
-  } else if (task == "table") {
-    table(day);
-  } else if (task == "month") {
-    month(day);
-  } else if (task == "toggle") {
-    toggle(name);
-  } else if (task == "catchup") {
-    catchup();
-  } else if (task == "prepend") {
-    prepend();
-  } else if (task == "append") {
-    append();
-  } else if (task == "change") {
-    change(symbol);
-  } else if (task == "select") {
-    select(name);
-  } else if (task == "forward") {
-    navigateForward();
-  } else if (task == "backward") {
-    navigateBackward();
-  } else if (task == "forward-scan") {
-    navigateForwardScan();
-  } else if (task == "backward-scan") {
-    navigateBackwardScan();
-  } else if (task == "dummy") {
-    dummy();
-  } else {
-    return;
-  }
-};
-
 function init(newPathway) {
   pathway = newPathway;
   if (state.verbose) {
@@ -705,7 +716,7 @@ function init(newPathway) {
 function table(day, mode = "select") {
   let dateTimeString = day.format("YYYYMMDD-HH00");
   console.info(
-    `%carchive.worker.table%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString} ${grid.index}`,
+    `%carchive.worker.table%c ${pathway} %c${dateTimeString}%c ← ${grid.dateTimeString}   ${mode}   ${grid.index}   ${grid.scan}`,
     nameStyle,
     "",
     "color: mediumpurple",
@@ -713,13 +724,19 @@ function table(day, mode = "select") {
   );
   // Same time, just return the current table
   if (dateTimeString == grid.dateTimeString) {
-    console.info(`%carchive.worker.table%c Same time %c${dateTimeString}%c ...`);
+    console.info(
+      `%carchive.worker.table%c Same time %c${dateTimeString}%c ...`,
+      nameStyle,
+      "",
+      "color: dodgerblue",
+      ""
+    );
     self.postMessage({ type: "table", grid: grid });
     return;
   }
   // Different time, fetch from the server
   const url = `/data/table/${pathway}/${dateTimeString}/`;
-  fetch(url)
+  fetch(url, { cache: "no-cache" })
     .then((response) => {
       if (response.status == 200) {
         response.json().then((buffer) => {
@@ -772,7 +789,7 @@ function month(day) {
   let dayString = day.format("YYYYMM01");
   console.info(`%carchive.worker.month%c ${pathway} ${dayString}`, nameStyle, "");
   const url = `/data/month/${pathway}/${dayString}/`;
-  fetch(url)
+  fetch(url, { cache: "no-cache" })
     .then((response) => {
       if (response.status == 200)
         response.json().then((buffer) => {
@@ -835,7 +852,7 @@ function toggle(name = "toggle") {
 
 function catchup() {
   console.info(`%carchive.worker.catchup%c ${pathway}`, nameStyle, "color: dodgerblue");
-  fetch(`/data/catchup/${pathway}/`).then((response) => {
+  fetch(`/data/catchup/${pathway}/`, { cache: "no-cache" }).then((response) => {
     if (response.status == 200) {
       response
         .json()

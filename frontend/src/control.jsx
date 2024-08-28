@@ -1,10 +1,10 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import { App } from "./components/app5";
+import { App } from "./components/appC";
 
-let text = document.getElementById("params")?.textContent || "{}";
-let params = JSON.parse(text);
+const text = document.getElementById("params")?.textContent || "{}";
+const params = JSON.parse(text);
 
 const container = document.getElementById("app");
 const root = createRoot(container);

@@ -10,10 +10,17 @@
 import { Ingest } from "./ingest";
 import { FIFOBuffer } from "./fifo";
 
+const nameStyle = "background-color: seagreen; color: white; padding: 2px 4px; border-radius: 3px; margin: -2px 0";
+
 class Live extends Ingest {
   constructor(pathway, label = "") {
     super(pathway, label);
 
+    this.state = {
+      ...this.state,
+      liveUpdate: false,
+      viewNeedsClear: false,
+    };
     this.data = {
       ...this.data,
       t: null,
@@ -31,7 +38,6 @@ class Live extends Ingest {
       control: { time: 0 },
       ray: new FIFOBuffer(),
     };
-    this.live = {};
 
     this.connect = this.connect.bind(this);
     this.execute = this.execute.bind(this);
@@ -42,9 +48,14 @@ class Live extends Ingest {
     this.init();
   }
 
-  handleMessage({ data: { type, payload } }) {
+  handleMessage({ data: { type, state, payload } }) {
     if (type == "message") {
+      this.state = {
+        ...this.state,
+        ...state,
+      };
       this.showMessage(payload);
+      console.log(this.state);
     } else if (type == "response") {
       this.showResponse(payload, 2500);
     } else if (type == "health") {
@@ -59,9 +70,9 @@ class Live extends Ingest {
         this.data.t = new Float32Array(Array(payload.count).keys());
       }
     } else if (type == "ray") {
-      //console.log(payload);
-      // this.data.ray.enqueue(payload);
-      // console.log(`Ray ${this.data.ray.size()}`);
+      payload.viewNeedsClear = this.state.viewNeedsClear;
+      this.data.ray.enqueue(payload);
+      this.state.viewNeedsClear = false;
     }
     this.onUpdate(this.state.tic++);
   }
@@ -70,7 +81,7 @@ class Live extends Ingest {
 
   init() {
     if (this.state.verbose) {
-      console.log(`%live.init()%c   pathway = ${this.pathway}`, "color: lightseagreen", "");
+      console.info(`%clive.init()%c   pathway = ${this.pathway}`, nameStyle, "");
     }
     this.worker.postMessage({ task: "init", name: this.pathway });
     // this.worker.postMessage({ task: "init" });
@@ -81,7 +92,7 @@ class Live extends Ingest {
     this.onUpdate(this.state.tic++);
     const p = window.location.protocol == "https:" ? "wss" : "ws";
     const url = `${p}://${window.location.host}/ws/${this.pathway}/`;
-    console.log(`live.js Connecting ${this.pathway}`);
+    console.log(`%clive.connect()%c Connecting ${this.pathway}`, nameStyle, "");
     this.worker.postMessage({
       task: "connect",
       payload: {
@@ -102,6 +113,20 @@ class Live extends Ingest {
     this.worker.postMessage({
       task: "disconnect",
     });
+  }
+
+  disableLiveUpdate() {
+    // this.worker.postMessage({ task: "toggle", name: "offline" });
+    console.log(`%clive.disableLiveUpdate()%c`, nameStyle, "");
+  }
+
+  enableLiveUpdate() {
+    // this.worker.postMessage({ task: "toggle", name: "scan" });
+    console.log(`%clive.enableLiveUpdate()%c`, nameStyle, "");
+  }
+
+  clearView() {
+    this.state.viewNeedsClear = true;
   }
 }
 

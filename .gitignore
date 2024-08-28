@@ -29,4 +29,4 @@ reporter/simple
 reporter/secret
 reporter/data
 reporter/dgen
-webpack-*.json
+webpack-output.json

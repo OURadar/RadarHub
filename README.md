@@ -569,7 +569,7 @@ rm ${folder}/migrations/__pycache__/*.pyc
 Useful command to test of the eventstream is working properly when setting `SIMULATE = True` in `radarhub.settings.py`:
 
 ```shell
-curl -N http://localhost:8000
+curl -N http://localhost:8000/events/
 ```
 
 ## Logrotate

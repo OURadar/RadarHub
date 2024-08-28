@@ -23,6 +23,7 @@ import radar
 import pprint
 import logging
 import datetime
+import threading
 import numpy as np
 
 from django.conf import settings
@@ -33,7 +34,6 @@ from django.db import models
 from . import algos
 
 from common import colorize, get_user_agent_string, is_valid_time
-from product import ProductClient
 
 # __prog__ = os.path.basename(sys.argv[0])
 # logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, dailyfile=settings.DEBUG)
@@ -71,6 +71,10 @@ dummy_data = {
         "V": np.array([[1, -3, 4], [-12, -10, -9], [11, 9, 3], [-3, -10, -9]], dtype=np.float32),
     },
 }
+
+lock = threading.Lock()
+client = None
+
 
 # Some helper functions
 
@@ -563,22 +567,29 @@ class Sweep(models.Model):
     def locator(self):
         return f"{self.time.strftime(r'%Y%m%d-%H%M%S')}-{self.scan}"
 
-    def read_all(self, verbose=0):
-        return radar.read(self.path, tarinfo=self.tarinfo, verbose=verbose)
+    # def read_all(self, verbose=0):
+    #     return radar.read(self.path, tarinfo=self.tarinfo, verbose=verbose)
 
     def load(self, symbols=["Z", "V", "W", "D", "P", "R"], finite=False, verbose=0, suppress=False):
-        if "*" in self.tarinfo:
-            if verbose > 1:
-                logger.debug(f"Loading {self.name}-{self.locator} @ {self.path} ...")
-            # self.data = self.read_all(verbose=verbose)
-            # self.data = radar.read(self.path, tarinfo=self.tarinfo, verbose=verbose)
-            client = ProductClient()
-            self.data = client.get(self.path)
-        else:
-            self.data = radar.read(self.path, symbols=symbols, tarinfo=self.tarinfo, verbose=verbose)
+        # if "*" in self.tarinfo:
+        #     if verbose > 1:
+        #         logger.debug(f"Loading {self.name}-{self.locator} @ {self.path} ...")
+        #     self.data = self.read_all(verbose=verbose)
+        #
+        #     client = ProductClient()
+        #     self.data = client.get(self.path)
+        # else:
+        #     self.data = radar.read(self.path, symbols=symbols, tarinfo=self.tarinfo, verbose=verbose)
+        myname = colorize("Sweep.load()", "green")
+        global client
+        with lock:
+            if client is None:
+                logger.debug(f"{myname} Creating ProductClient ...")
+                from product import ProductClient
+                client = ProductClient(n=4)
+        self.data = client.get(self.path, tarinfo=self.tarinfo)
         if verbose > 1:
-            func = colorize("Sweep.load()", "green")
-            print(f"{func} {self.__str__()}")
+            print(f"{myname} {self.__str__()}")
             print("tarinfo =")
             pp.pprint(self.tarinfo)
             print("data =")

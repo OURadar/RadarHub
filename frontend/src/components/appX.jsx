@@ -24,7 +24,7 @@ import { Navigation } from "./navigation";
 import { MenuUpdate } from "./menu-update";
 import { MenuArrow } from "./menu-arrow";
 import { HelpPage } from "./help";
-import { TermPopup, TermSheet } from "./term";
+import { TermPopup } from "./term";
 
 const useConstructor = (callback = () => {}) => {
   const used = React.useRef(false);
@@ -119,8 +119,15 @@ export function App(props) {
         }
         return;
       }
-      if (e.key != key || e.target != document.body) {
+      if (e.key != key) {
         return;
+      }
+      if (e.target != document.body) {
+        console.log(`%cApp.event.keyup%c`, nameStyle, "", e.target);
+        console.log(`%cApp.event.keyup%c`, nameStyle, "", e.target.type);
+        if (e.target.type != "button") {
+          return;
+        }
       }
       let symbol = e.key.toUpperCase();
       const styles = ["Z", "V", "W", "D", "P", "R", "U", "Y", "I"];
@@ -145,7 +152,7 @@ export function App(props) {
     window.addEventListener("focus", handleFocus);
   }, []);
 
-  const product = (
+  const view = (
     <div className="fullHeight">
       <Product
         gravity={(isMobile && "top") || "right"}
@@ -213,13 +220,13 @@ export function App(props) {
         <ThemeProvider theme={user.current.preference.theme}>
           {(isMobile && (
             <div>
-              <div className={`fullHeight panel ${panel === 0 ? "active" : "inactive"}`}>{product}</div>
+              <div className={`fullHeight panel ${panel === 0 ? "active" : "inactive"}`}>{view}</div>
               <div className={`fullHeight panel ${panel === 1 ? "active" : "inactive"}`}>{browser}</div>
               <Navigation value={panel} onChange={(_, value) => setPanel(value)} />
             </div>
           )) || (
             <div>
-              <Layout name="split-archive-width" left={product} right={browser} />
+              <Layout name="split-archive-width" left={view} right={browser} />
               <HelpPage open={showHelpSheet} onClose={() => setShowHelpSheet(false)} />
             </div>
           )}
