@@ -5,11 +5,14 @@ import redis
 import pprint
 import random
 import signal
+import asyncio
 import logging
 import datetime
 import threading
 
 from django.conf import settings
+
+from channels.layers import get_channel_layer
 
 from frontend.models import Day, Sweep
 from common import colorize, color_name_value, pretty_object_name
@@ -155,6 +158,9 @@ def simulate():
 
 
 def cleanup(signum, frame):
+    from . import consumers
+
+    consumers.hangup()
     if signum == signal.SIGINT:
         if sigIntHandler:
             sigIntHandler(signum, frame)
@@ -164,7 +170,6 @@ def cleanup(signum, frame):
     sys.exit(0)
 
 
-# SIGINT = 2   SIGUSR1 = 10   SIGTERM = 15
 def signalHandler(signum, frame):
     print("")
     signalName = {2: "SIGINT", 10: "SIGUSR1", 15: "SIGTERM"}
