@@ -280,7 +280,7 @@ void handleOpen(RKWebSocket *w) {
     int r;
     r = sprintf(R->welcome,
         "%c{"
-            "\"command\":\"radarConnect\", "
+            "\"command\":\"radarInit\", "
             "\"pathway\":\"%s\", "
             "\"radar\":\"%s\""
         "}",

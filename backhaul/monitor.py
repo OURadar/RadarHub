@@ -5,17 +5,14 @@ import redis
 import pprint
 import random
 import signal
-import asyncio
 import logging
 import datetime
 import threading
 
 from django.conf import settings
 
-from channels.layers import get_channel_layer
-
 from frontend.models import Day, Sweep
-from common import colorize, color_name_value, pretty_object_name
+from common import colorize, color_name_value
 from product import ProductServer
 
 logger = logging.getLogger("backhaul")

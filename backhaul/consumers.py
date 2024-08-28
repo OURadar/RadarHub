@@ -122,12 +122,6 @@ def hangup():
     with lock:
         for registry in pathwayRegistry.values():
             registry["hangup"] = True
-    # for registry in pathwayRegistry.values():
-    #     k = 0
-    #     while registry["channel"] and k < 3:
-    #         time.sleep(0.1)
-    #         k += 1
-    #     print(f"k = {k}")
 
 
 def reset():
