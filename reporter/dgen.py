@@ -195,7 +195,7 @@ def handleOpen(ws):
         print(f'ONOPEN')
     if R.verbose < 3:
         websocket.enableTrace(False)
-    message = json.dumps({'name':R.name, 'command':'radarInit'})
+    message = json.dumps({'name':R.name, 'command':'radarGreet'})
     payload = RadarHubType.Handshake.to_bytes(1, 'little') + bytes(message, 'utf-8')
     ws.send(payload)
     controls = {
