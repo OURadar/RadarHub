@@ -28,6 +28,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "radarhub.settings")
 django.setup()
 
 import dbtool
+import product
 
 from django.conf import settings
 from frontend.models import Sweep, Day
@@ -50,6 +51,8 @@ for item in radars.values():
 check = colorize("✓", "green")
 ballot = colorize("✗", "orange")
 
+productServer = product.ProductServer(4, logger=logger)
+
 
 def signalHandler(sig, frame):
     global keepReading
@@ -57,6 +60,7 @@ def signalHandler(sig, frame):
     # Print a return line for cosmetic
     print("\r")
     logger.info("SIGINT received, finishing up ...")
+    productServer.stop()
 
 
 def proper(file, root="/mnt/data", verbose=0):
@@ -447,6 +451,11 @@ def fifo2db():
 
     logger.info("--- Started ---")
     logger.info(f"Using timezone {tzinfo}")
+
+    logger.info("Starting product server ...")
+    productServer.start()
+
+    tm.sleep(0.25)
 
     catchup()
 

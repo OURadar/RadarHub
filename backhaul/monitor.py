@@ -21,7 +21,7 @@ pp = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
 
 relay = redis.StrictRedis()
 
-productServer = ProductServer(logger=logger, cache=5000)
+productServer = ProductServer(logger=logger, cache=1000)
 
 sigIntHandler = signal.getsignal(signal.SIGINT)
 sigTermHandler = signal.getsignal(signal.SIGTERM)
