@@ -16,9 +16,9 @@ logger = None
 
 
 # Not recommended. Keep here for reference
-class ProductClientRedis:
+class ClientRedis:
     def __init__(self):
-        self.name = "ProductClient"
+        self.name = "ClientRedis"
         self.relay = redis.StrictRedis()
         self.pubsub = self.relay.pubsub()
 
@@ -47,9 +47,9 @@ class ProductClientRedis:
         return info
 
 
-class ProductClient:
+class Client:
     def __init__(self, n=1, **kwargs):
-        self.name = colorize("ProductClient", "green")
+        self.name = colorize("Client", "green")
         self.lock = threading.Lock()
         self.n = clamp(n, 1, 16)
         global logger
@@ -78,7 +78,7 @@ class ProductClient:
             send(sock, json.dumps({"path": path, "tarinfo": tarinfo}).encode())
             data = recv(sock)
             if data is None:
-                myname = pretty_object_name("ProductClient.get", i)
+                myname = pretty_object_name("Client.get", i)
                 logger.error(f"{myname} No data")
                 return None
             # data = zlib.decompress(data)
@@ -92,7 +92,7 @@ class ProductClient:
             send(sock, json.dumps({"stats": 1}).encode())
             message = recv(sock)
             if message is None:
-                myname = colorize("ProductClient.stats()", "green")
+                myname = colorize("Client.stats()", "green")
                 logger.error(f"{myname} No message")
                 return None
         return message.decode("utf-8")

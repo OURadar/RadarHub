@@ -5,7 +5,7 @@ import pprint
 import threading
 
 from common import FIFOBuffer
-from product import ProductClient
+from product import Client
 
 pp = pprint.PrettyPrinter(indent=1, depth=1, width=120, sort_dicts=False)
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     files = sorted(glob.glob("/mnt/data/PX1000/2024/20240820/_original/*xz"))
     # files = sorted(glob.glob(os.path.expanduser("~/Downloads/data/moment/20240711/*xz")))
 
-    client = ProductClient(n=6)
+    client = Client(n=6)
 
     tic = time.time()
     fifo = FIFOBuffer()

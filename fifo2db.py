@@ -51,7 +51,7 @@ for item in radars.values():
 check = colorize("✓", "green")
 ballot = colorize("✗", "orange")
 
-productServer = product.ProductServer(4, logger=logger)
+productServer = product.Server(4, logger=logger, cache=18)
 
 
 def signalHandler(sig, frame):

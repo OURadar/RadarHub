@@ -571,22 +571,14 @@ class Sweep(models.Model):
     #     return radar.read(self.path, tarinfo=self.tarinfo, verbose=verbose)
 
     def load(self, symbols=["Z", "V", "W", "D", "P", "R"], finite=False, verbose=0, suppress=False):
-        # if "*" in self.tarinfo:
-        #     if verbose > 1:
-        #         logger.debug(f"Loading {self.name}-{self.locator} @ {self.path} ...")
-        #     self.data = self.read_all(verbose=verbose)
-        #
-        #     client = ProductClient()
-        #     self.data = client.get(self.path)
-        # else:
-        #     self.data = radar.read(self.path, symbols=symbols, tarinfo=self.tarinfo, verbose=verbose)
         myname = colorize("Sweep.load()", "green")
         global client
         with lock:
             if client is None:
-                logger.debug(f"{myname} Creating ProductClient ...")
-                from product import ProductClient
-                client = ProductClient(n=4)
+                logger.debug(f"{myname} Creating product.Client ...")
+                from product import Client
+
+                client = Client(n=4)
         self.data = client.get(self.path, tarinfo=self.tarinfo)
         if verbose > 1:
             print(f"{myname} {self.__str__()}")

@@ -26,7 +26,7 @@ from django.conf import settings
 from frontend.models import Sweep
 
 from common import FIFOBuffer
-from product import ProductClient
+from product import Client
 
 __prog__ = os.path.basename(sys.argv[0])
 missing_headers = {
@@ -55,7 +55,7 @@ def quick_check(data, file):
 def load_by_path(path="/mnt/data/PX1000/2024/20240820/_original/"):
     print(f"load_by_path() {path} ...")
     files = sorted(glob.glob(os.path.join(path, "*.*")))
-    productClient = ProductClient(n=4)
+    client = Client(n=4)
 
     def getfile(file, pc):
         print(f"Req: {file} ...")
@@ -65,7 +65,7 @@ def load_by_path(path="/mnt/data/PX1000/2024/20240820/_original/"):
     tic = time.time()
     fifo = FIFOBuffer()
     for file in files[-100:]:
-        th = threading.Thread(target=getfile, args=(file, productClient))
+        th = threading.Thread(target=getfile, args=(file, client))
         th.start()
         fifo.enqueue(th)
         while fifo.size() >= 8:
@@ -290,5 +290,5 @@ if __name__ == "__main__":
     elif args.verb[0] == "fun":
         fun(*args.source)
 
-    # stat = ProductClient().stats()
+    # stat = Client().stats()
     # print(stat)

@@ -1,7 +1,7 @@
 import time
 import logging
 
-from product import ProductServer
+from product import Server
 
 if __name__ == "__main__":
 
@@ -11,7 +11,7 @@ if __name__ == "__main__":
     handler.setLevel(logging.INFO)
     logger.addHandler(handler)
 
-    productServer = ProductServer(logger=logger, cache=200, signal=True)
+    productServer = Server(logger=logger, cache=200, signal=True)
     productServer.start()
 
     try:

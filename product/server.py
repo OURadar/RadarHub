@@ -23,9 +23,9 @@ cache = None
 logger = None
 
 
-class ProductServerRedis:
+class ServerRedis:
     def __init__(self, n=8, **kwargs):
-        self.name = colorize("ProductServer", "green")
+        self.name = colorize("ServerRedis", "green")
         self.relay = redis.StrictRedis()
         self.pubsub = self.relay.pubsub()
         self.taskQueue = mp.Queue()
@@ -51,8 +51,8 @@ class ProductServerRedis:
             signal.signal(signal.SIGTERM, self._signalHandler)
 
     def _reader(self, id):
-        myname = pretty_object_name("ProductServer.reader", id)
-        setproctitle(f"{getproctitle()} # ProductServer.reader[{id}]")
+        myname = pretty_object_name("ServerRedis.reader", id)
+        setproctitle(f"{getproctitle()} # ServerRedis.reader[{id}]")
         logger.info(f"{myname} Started")
         while self.run.value:
             try:
@@ -73,7 +73,7 @@ class ProductServerRedis:
         logger.info(f"{myname} Stopped")
 
     def _requestHandler(self, id):
-        myname = pretty_object_name(f"ProductServer.request", id)
+        myname = pretty_object_name(f"ServerRedis.request", id)
         self.pubsub.subscribe(CHANNEL)
         tag = colorize("Cache", "orange")
         logger.info(f"{myname} Started")
@@ -99,7 +99,7 @@ class ProductServerRedis:
         logger.info(f"{myname} Stopped")
 
     def _responseHandler(self, id):
-        myname = pretty_object_name(f"ProductServer.respond", id)
+        myname = pretty_object_name(f"ServerRedis.respond", id)
         logger.info(f"{myname} Started")
         tag = colorize("Drive", "skyblue")
         while self.run.value:
@@ -146,9 +146,9 @@ class ProductServerRedis:
         self.pubsub.close()
 
 
-class ProductServer:
+class Server:
     def __init__(self, n=8, **kwargs):
-        self.name = colorize("ProductServer", "green")
+        self.name = colorize("Server", "green")
         self.clients = {}
         self.tasked = {}
         self.lock = threading.Lock()
@@ -179,8 +179,8 @@ class ProductServer:
             signal.signal(signal.SIGTERM, self._signalHandler)
 
     def _reader(self, id):
-        myname = pretty_object_name("ProductServer.reader", f"{id:02d}")
-        setproctitle(f"{getproctitle()} # ProductServer.reader[{id}]")
+        myname = pretty_object_name("Server.reader", f"{id:02d}")
+        setproctitle(f"{getproctitle()} # Server.reader[{id}]")
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         with self.mpLock:
             self.readerRun.value += 1
@@ -203,8 +203,8 @@ class ProductServer:
         logger.info(f"{myname} Stopped")
 
     def _publisher(self, id):
-        # myname = colorize(f"ProductServer.publisher", "green")
-        myname = pretty_object_name("ProductServer.publisher", f"{id:02d}")
+        # myname = colorize(f"Server.publisher", "green")
+        myname = pretty_object_name("Server.publisher", f"{id:02d}")
         logger.info(f"{myname} Started")
         tag = colorize("Drive", "skyblue")
         while self.publisherRun.value:
@@ -231,7 +231,7 @@ class ProductServer:
 
     def _concierge(self, clientSocket):
         fileno = clientSocket.fileno()
-        myname = pretty_object_name("ProductServer.concierge", fileno)
+        myname = pretty_object_name("Server.concierge", fileno)
         logger.info(f"{myname} Started")
         tag = colorize("Cache", "orange")
         while self.publisherRun.value:
@@ -271,7 +271,7 @@ class ProductServer:
         logger.info(f"{myname} Stopped")
 
     def _connector(self):
-        myname = colorize("ProductServer.connector", "green")
+        myname = colorize("Server.connector", "green")
         sd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sd.bind(("localhost", 6969))
@@ -305,7 +305,7 @@ class ProductServer:
         self.connectorThread.start()
 
     def _signalHandler(self, signum, frame):
-        myname = colorize("ProductServer.signalHandler", "green")
+        myname = colorize("Server.signalHandler", "green")
         signalName = {2: "SIGINT", 10: "SIGUSR1", 15: "SIGTERM"}
         print("")
         logger.info(f"{myname} {signalName.get(signum, 'UNKNOWN')} received")
