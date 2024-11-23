@@ -73,28 +73,36 @@ function overview() {
 			echo
 		fi
 		# file="${folder}/access.log"
-		file="/var/log/nginx/access.log"
-		if [ -f ${file} ]; then
-			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 7 ${file} | logparse.py
-			echo
-		fi
-		file="${folder}/fifo2db-v1.log"
-		if [ -f ${file} ]; then
-			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 7 ${file}
-			echo
-		fi
+		# file="/var/log/nginx/access.log"
+		# if [ -f ${file} ]; then
+		# 	echo -e "\033[4;38;5;45m${file}\033[m"
+		# 	tail -n 7 ${file} | logparse.py
+		# 	echo
+		# fi
+		# file="${folder}/fifo2db-v1.log"
+		# if [ -f ${file} ]; then
+		# 	echo -e "\033[4;38;5;45m${file}\033[m"
+		# 	tail -n 7 ${file}
+		# 	echo
+		# fi
 		file="${folder}/fifo2db.log"
-		if [ -f ${file} ]; then
+		if [[ -f ${file} && $(stat -c %s ${file}) -gt 0 ]]; then
 			echo -e "\033[4;38;5;45m${file}\033[m"
 			tail -n 7 ${file}
+			echo
+		elif [ -f ${file}.1.gz ]; then
+			echo -e "\033[4;38;5;45m${file}.1.gz\033[m"
+			zcat ${file}.1.gz | tail -n 7
 			echo
 		fi
 		file="${folder}/dbtool.log"
-		if [ -f ${file} ]; then
+		if [[ -f ${file} && $(stat -c %s ${file}) -gt 0 ]]; then
 			echo -e "\033[4;38;5;45m${file}\033[m"
 			tail -n 7 ${file}
+			echo
+		elif [ -f ${file}.1.gz ]; then
+			echo -e "\033[4;38;5;45m${file}.1.gz\033[m"
+			zcat ${file}.1.gz | tail -n 7
 			echo
 		fi
 	fi
