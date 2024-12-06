@@ -51,6 +51,7 @@ for item in radars.values():
 check = colorize("✓", "green")
 ignore = colorize("✓", "yellow")
 missing = colorize("✗", "orange")
+processed = colorize("✓✓", "green")
 
 productServer = product.Server(4, logger=logger, cache=18)
 
@@ -198,7 +199,6 @@ def process(source):
     if item is None:
         logger.info(f"{colorize(source, 43)} {ignore}")
         return
-    logger.info(f"{colorize(source, 43)} {check}")
     time = datetime.datetime.strptime(parts["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=tzinfo)
     sweep = Sweep.objects.filter(time=time, name=name)
     if sweep:
@@ -215,6 +215,7 @@ def process(source):
     symbols = list(data["products"].keys())
     sweep = Sweep(time=time, name=name, kind=kind, scan=scan, symbols=symbols, path=file, tarinfo=tarinfo)
     sweep.save()
+    logger.info(f"{colorize(source, 43)} {processed}")
 
     bgor = False
     if scan.startswith(item["summary"]):
