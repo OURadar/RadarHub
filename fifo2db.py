@@ -49,7 +49,8 @@ for item in radars.values():
     item["count"] = 0
 
 check = colorize("✓", "green")
-ballot = colorize("✗", "orange")
+ignore = colorize("✓", "yellow")
+missing = colorize("✗", "orange")
 
 productServer = product.Server(4, logger=logger, cache=18)
 
@@ -132,7 +133,7 @@ def catchup(root="/mnt/data"):
             logger.info(f"{show}   {check}")
             continue
         elif not os.path.isdir(folder):
-            logger.info(f"{show}   {ballot}")
+            logger.info(f"{show}   {missing}")
             continue
         logger.info(show)
         folderYear = sorted(glob.glob(f"{folder}/20[0-9][0-9]"))[-1]
@@ -183,8 +184,8 @@ def process(source):
         file = proper(source)
     else:
         file = source
-    logger.info(colorize(source, 43) + " " + (ballot if file is None else check))
     if file is None:
+        logger.info(f"{colorize(source, 43)} {missing}")
         return
     basename = os.path.basename(file)
     parts = radar.re_3parts.search(basename)
@@ -195,8 +196,9 @@ def process(source):
     name = parts["name"]
     item = next((x for x in radars.values() if x["prefix"] == name), None)
     if item is None:
-        logger.info(f"Prefix {name} skipped")
+        logger.info(f"{colorize(source, 43)} {ignore}")
         return
+    logger.info(f"{colorize(source, 43)} {check}")
     time = datetime.datetime.strptime(parts["time"], r"%Y%m%d-%H%M%S").replace(tzinfo=tzinfo)
     sweep = Sweep.objects.filter(time=time, name=name)
     if sweep:
