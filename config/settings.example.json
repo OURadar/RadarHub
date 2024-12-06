@@ -5,13 +5,28 @@
     "pass": "_radarhub_password_"
   },
   "fifo": {
-    "tcp": "10.197.14.59:9000"
+    "tcp": "10.197.14.52:9000"
   },
   "host": "radarhub.arrc.ou.edu",
   "radars": {
-    "px1000": { "name": "PX-1000", "prefix": "PX", "folder": "PX1000", "summary": "E4.0" },
-    "px10k": { "name": "PX-10k", "prefix": "PX10K", "folder": "PX10k", "summary": "E4.0" },
-    "raxpol": { "name": "RaXPol", "prefix": "RAXPOL", "folder": "raxpol", "summary": "E4.0" }
+    "px1000": {
+      "name": "PX-1000",
+      "prefix": "PX",
+      "folder": "PX1000",
+      "summary": "E4.0"
+    },
+    "px10k": {
+      "name": "PX-10k",
+      "prefix": "PX10K",
+      "folder": "PX10k",
+      "summary": "E4.0"
+    },
+    "raxpol": {
+      "name": "RaXPol",
+      "prefix": "RAXPOL",
+      "folder": "raxpol",
+      "summary": "E4.0"
+    }
   },
   "secret": "django-insecure-5zk9_rg=98@@h+e6*iw63l9h*v_bo9+_xum)"
 }
