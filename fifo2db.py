@@ -421,7 +421,7 @@ def fifo2db():
             args.source = settings.FIFO["pipe"]
             args.pipe = True
         else:
-            args.source = "10.197.14.59:9000"
+            args.source = "10.197.14.52:9000"
     if ":" in args.source:
         args.source, args.port = args.source.split(":")
         args.port = int(args.port)
