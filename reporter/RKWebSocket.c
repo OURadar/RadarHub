@@ -246,12 +246,19 @@ static int RKWebSocketConnect(RKWebSocket *R) {
         printf("%s", buf);
     }
 
-    RKSocketWrite(R, strlen(buf));
-    do {
-        r = RKSocketRead(R, r, RKWebSocketFrameSize - r);
-    } while (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL);
-    if (r < 0) {
+    r = RKSocketWrite(R, strlen(buf));
+    if (r <= 0) {
         fprintf(stderr, "Error during handshake.\n");
+        return -1;
+    }
+    buf[0] = '\0';
+    k = 0;
+    r = 0;
+    do {
+        r += RKSocketRead(R, r, RKWebSocketFrameSize - r);
+    } while (k++ < 300 && R->wantActive && (r == 0 || strstr((char *)buf, "\r\n\r\n") == NULL));
+    if (r <= 0) {
+        fprintf(stderr, "Timed out during handshake  (r = %d)\n", r);
         fprintf(stderr, "%s", (char *)buf);
         return -1;
     }
