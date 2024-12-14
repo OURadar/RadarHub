@@ -176,7 +176,7 @@ static void RKShowWebsocketFrameHeader(RKWebSocket *R) {
 }
 
 static int RKWebSocketConnect(RKWebSocket *R) {
-    int r;
+    int r, k;
     char *c;
     struct hostent *entry = gethostbyname(R->host);
     if (entry == NULL) {
