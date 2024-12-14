@@ -12,14 +12,12 @@ import { mat4 } from "gl-matrix";
 import * as theme from "./theme";
 import * as common from "./common";
 import * as artists from "./artists";
-import * as instanced from "./instanced";
 import { SectionHeader } from "./section-header";
 import { Gesture } from "./gesture";
 import { Texture } from "./texture";
 
 import { Colorbar } from "./colorbar";
 import { Symbol } from "./symbol";
-import { Title } from "./title";
 
 import { GLText } from "./gltext";
 
@@ -70,17 +68,16 @@ class ScopeB extends Component {
       rangeX: common.tickChoices(0.1, 5),
       rangeY: common.tickChoices(1, 5),
       bounds: {
-        top: props.c,
-        right: props.c,
+        top: props.t,
+        right: props.r,
         bottom: props.b,
-        left: props.a,
+        left: props.l,
       },
     };
     this.state = {
       tic: 0,
       count: 0,
       message: "b-scope",
-      title: "-.-° / -.-°",
     };
     this.palette = {
       image: null,
@@ -166,6 +163,7 @@ class ScopeB extends Component {
     // User interaction
     this.gesture = new Gesture(this.canvas, this.constants.bounds);
     this.gesture.handlePan = this.pan;
+    this.gesture.handleDolly = this.magnify;
     this.gesture.handleMagnify = this.magnify;
     this.gesture.handleDoubleTap = this.taptap;
     // Other built-in assets
@@ -321,7 +319,6 @@ class ScopeB extends Component {
           onClick={this.props.onColorbarClick}
           count={this.state.count}
         />
-        <Title string={this.state.title} />
       </div>
     );
   }
@@ -541,7 +538,7 @@ class ScopeB extends Component {
       const v = this.assets.row / depth;
       this.assets.positions.subdata([0.0, v, 1.0, v, 0.0, v, 1.0, v]);
       this.assets.origins.subdata([0.0, v, 1.0, v, 0.0, v, 1.0, v], 8 * Float32Array.BYTES_PER_ELEMENT);
-      this.setState({ title: `EL ${ray.elevation}° / AZ ${ray.azimuth}°` });
+      // this.setState({ title: `EL ${ray.elevation}° / AZ ${ray.azimuth}°` });
     }
     if (this.palette.texture) {
       const { positions, elements, origins, data } = this.assets;
@@ -594,7 +591,6 @@ class ScopeB extends Component {
   }
 
   pan(x, y) {
-    console.log(`pan ${x}, ${y}`);
     const geo = this.geometry;
     geo.offsetX += x * geo.v2dx;
     geo.offsetY += y * geo.v2dy;
@@ -603,12 +599,14 @@ class ScopeB extends Component {
 
   taptap(x, y) {
     //this.fitToData();
+    geo.scaleX = 1.0;
+    geo.scaleY = 1.0;
   }
 
   magnify(mx, my, _d, _x, _y) {
     const geo = this.geometry;
-    const scaleX = common.clamp(geo.scaleX * mx, 1 / 10000, 1 / 10);
-    const scaleY = common.clamp(geo.scaleY * my, 1 / 70000, 1 / 10);
+    const scaleX = common.clamp(geo.scaleX * mx, 1, 10);
+    const scaleY = common.clamp(geo.scaleY * my, 1, 10);
     geo.scaleX = scaleX;
     geo.scaleY = scaleY;
     geo.needsUpdate = true;

@@ -155,6 +155,9 @@ def simulate():
 
 
 def cleanup(signum, frame):
+    from . import consumers
+
+    consumers.hangup()
     if signum == signal.SIGINT:
         if sigIntHandler:
             sigIntHandler(signum, frame)
@@ -164,7 +167,6 @@ def cleanup(signum, frame):
     sys.exit(0)
 
 
-# SIGINT = 2   SIGUSR1 = 10   SIGTERM = 15
 def signalHandler(signum, frame):
     print("")
     signalName = {2: "SIGINT", 10: "SIGUSR1", 15: "SIGTERM"}

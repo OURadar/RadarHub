@@ -30,6 +30,7 @@ static char *RKGetHandshakeArgument(const char *buf, const char *key) {
 }
 
 static int RKSocketRead(RKWebSocket *R, uint32_t origin, size_t size) {
+    R->tic++;
     if (R->useSSL) {
         return SSL_read(R->ssl, R->frame + origin, size);
     }
@@ -37,6 +38,7 @@ static int RKSocketRead(RKWebSocket *R, uint32_t origin, size_t size) {
 }
 
 static int RKSocketWrite(RKWebSocket *R, size_t size) {
+    R->tic++;
     if (R->useSSL) {
         return SSL_write(R->ssl, R->frame, size);
     }
@@ -56,7 +58,7 @@ static size_t RKWebSocketFrameEncode(void *buf, RFC6455_OPCODE code, const void 
             r = 0;
         } else {
             r = strlen((char *)src);
-        } 
+        }
     } else {
         r = size;
     }
@@ -177,6 +179,10 @@ static int RKWebSocketConnect(RKWebSocket *R) {
     int r;
     char *c;
     struct hostent *entry = gethostbyname(R->host);
+    if (entry == NULL) {
+        fprintf(stderr, "Error resolving '%s'", R->host);
+        return -1;
+    }
     c = inet_ntoa(*((struct in_addr *)entry->h_addr_list[0]));
     if (c) {
         strcpy(R->ip, c);
@@ -310,9 +316,12 @@ void *transporter(void *in) {
     fd_set efd;
     struct timeval timeout;
     time_t s1, s0;
-    
+
     uint32_t origin = 0;
     uint32_t total = 0;
+    uint32_t *p32;
+
+    R->tic = 1;
 
     while (R->wantActive) {
 
@@ -333,7 +342,13 @@ void *transporter(void *in) {
             timeout.tv_usec = R->timeoutDeltaMicroseconds;
             r = select(R->sd + 1, NULL, &wfd, &efd, &timeout);
             if (r > 0) {
-                if (FD_ISSET(R->sd, &wfd)) {
+                if (FD_ISSET(R->sd, &efd)) {
+                    // Exceptions
+                    if (R->verbose) {
+                        fprintf(stderr, "Error. Exceptions during write cycle.\n");
+                    }
+                    break;
+                } else if (FD_ISSET(R->sd, &wfd)) {
                     // Ready to write. Keep sending the payloads until the tail catches up
                     while (R->payloadTail != R->payloadHead) {
                         uint16_t tail = R->payloadTail == RKWebSocketPayloadDepth - 1 ? 0 : R->payloadTail + 1;
@@ -360,12 +375,6 @@ void *transporter(void *in) {
                         }
                         R->payloadTail = tail;
                     }
-                } else if (FD_ISSET(R->sd, &efd)) {
-                    // Exceptions
-                    if (R->verbose) {
-                        fprintf(stderr, "Error. Exceptions during write cycle.\n");
-                    }
-                    break;
                 } else {
                     // This shall not reach
                     printf("... w\n");
@@ -391,7 +400,14 @@ void *transporter(void *in) {
             timeout.tv_usec = R->timeoutDeltaMicroseconds;
             r = select(R->sd + 1, &rfd, NULL, &efd, &timeout);
             if (r > 0) {
-                if (FD_ISSET(R->sd, &rfd)) {
+                if (FD_ISSET(R->sd, &efd)) {
+                    // Exceptions
+                    if (R->verbose) {
+                        fprintf(stderr, "Error. Exceptions during read cycle.\n");
+                    }
+                    R->connected = false;
+                    break;
+                } else if (FD_ISSET(R->sd, &rfd)) {
                     // There is something to read
                     r = RKSocketRead(R, origin, RKWebSocketFrameSize);
                     if (r <= 0) {
@@ -428,13 +444,6 @@ void *transporter(void *in) {
                             OPCODE_STRING(h->opcode), (char *)anchor, size > 64 ? " ..." : "", size);
                     }
                     R->timeoutCount = 0;
-                } else if (FD_ISSET(R->sd, &efd)) {
-                    // Exceptions
-                    if (R->verbose) {
-                        fprintf(stderr, "Error. Exceptions during read cycle.\n");
-                    }
-                    R->connected = false;
-                    break;
                 } else {
                     // This shall not reach
                     printf("... r\n");
@@ -453,7 +462,8 @@ void *transporter(void *in) {
                     char *word = words[rand() % 8];
                     r = RKWebSocketPing(R, word, strlen(word));
                     if (R->verbose > 1) {
-                        ws_mask_key key = {.u32 = *((uint32_t *)&R->frame[2])};
+                        p32 = (uint32_t *)&R->frame[2];
+                        ws_mask_key key = {.u32 = *p32};
                         for (i = 0; i < 4; i++) {
                             uword[i] = R->frame[6 + i] ^ key.code[i % 4];
                         }

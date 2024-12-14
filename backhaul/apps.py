@@ -1,6 +1,5 @@
 import sys
 import logging
-import threading
 
 from django.apps import AppConfig
 from django.conf import settings
@@ -17,8 +16,6 @@ class BackhaulConfig(AppConfig):
         prog = " ".join(sys.argv[:3])
         if "runworker" not in prog:
             return
-
-        threading.current_thread().name = "Backhaul"
 
         if len(logger.handlers) == 0:
             console = logging.StreamHandler()
