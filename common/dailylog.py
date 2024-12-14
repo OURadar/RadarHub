@@ -40,7 +40,7 @@ class Logger(logging.Logger):
         if dailyfile:
             self.formatter = MultiLineFormatter("%(asctime)s : %(message)s", datefmt=r"%H:%M:%S")
         else:
-            self.formatter = MultiLineFormatter("%(asctime)s : %(message)s", datefmt=r"%y/%m/%d %H:%M:%S")
+            self.formatter = MultiLineFormatter("%(asctime)s %(levelname)-7s %(message)s")
         self.init = False
         handler = logging.StreamHandler()
         handler.setFormatter(self.formatter)
@@ -95,7 +95,9 @@ class Logger(logging.Logger):
 
     def indent(self):
         return self.formatter.get_header_length(
-            logging.LogRecord(name=self.name, level=self.level, pathname=self.home, lineno=0, msg="", args=(), exc_info=None)
+            logging.LogRecord(
+                name=self.name, level=self.level, pathname=self.home, lineno=0, msg="", args=(), exc_info=None
+            )
         )
 
 

@@ -106,6 +106,17 @@ function overview() {
 			echo
 		fi
 	fi
+	# Show cleanup log
+	file="/var/log/radarhub/cleanup.log"
+	if [[ -f ${file} && $(stat -c %s ${file}) -gt 0 ]]; then
+			echo -e "\033[4;38;5;45m${file}\033[m"
+			tail -n 7 ${file}
+			echo
+	elif [ -f ${file}.1.gz ]; then
+			echo -e "\033[4;38;5;45m${file}.1.gz\033[m"
+			zcat ${file}.1.gz | tail -n 7
+			echo
+	fi
 }
 
 function follow() {

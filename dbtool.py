@@ -205,7 +205,9 @@ def xz_folder(folder, **kwargs):
 
     if quick_insert and d:
         show = colorize(" WARNING ", "warning")
-        logger.warning(f"{show} There {'are' if d.count > 1 else 'is'} {d.count:,d} existing entr{'ies' if d.count > 1 else 'y'}.")
+        logger.warning(
+            f"{show} There {'are' if d.count > 1 else 'is'} {d.count:,d} existing entr{'ies' if d.count > 1 else 'y'}."
+        )
         logger.warning(f"{show} Quick insert will result in duplicates. Try normal insert instead.")
         ans = input("Do you still want to continue (y/[n])? ")
         if not ans == "y":
@@ -409,10 +411,14 @@ def xz_folder(folder, **kwargs):
         if len(creates):
             Sweep.objects.bulk_create(creates)
         if len(updates):
-            Sweep.objects.bulk_update(updates, ["time", "name", "kind", "scan", "path", "symbols", "tarinfo"], batch_size=1000)
+            Sweep.objects.bulk_update(
+                updates, ["time", "name", "kind", "scan", "path", "symbols", "tarinfo"], batch_size=1000
+            )
         t = tm.time() - t
         a = len(keys) / t
-        logger.info(f"Updated {t:.2f} sec ({a:,.0f} files / sec)   c: {len(creates)}  u: {len(updates)}  i: {count_ignore}")
+        logger.info(
+            f"Updated {t:.2f} sec ({a:,.0f} files / sec)   c: {len(creates)}  u: {len(updates)}  i: {count_ignore}"
+        )
 
     # Make a Day entry
     day_str = parts["time"][:8]
@@ -972,7 +978,7 @@ def dbtool_main():
     parser.add_argument("-c", "--check-day", action="store_true", help="checks entries from the Day table")
     parser.add_argument("-C", "--check-sweep", action="store_true", help="checks entries from the Sweep table")
     parser.add_argument("-d", dest="build_day", action="store_true", help="builds a Day entry")
-    parser.add_argument("-f", "--find-duplicates", action="store_true", help="finds duplicate Sweep entries in the database")
+    parser.add_argument("-f", "--find-duplicates", action="store_true", help="finds duplicate Sweep entries")
     parser.add_argument("--format", default="pretty", choices=["raw", "short", "pretty"], help="sets output format")
     parser.add_argument("-i", dest="insert", action="store_true", help="inserts a folder")
     parser.add_argument("-I", dest="quick_insert", action="store_true", help="inserts (without check) a folder")
@@ -989,7 +995,7 @@ def dbtool_main():
     parser.add_argument("-s", dest="sweep", action="store_true", help="shows a sweep summary")
     parser.add_argument("--show-city", action="store_true", help="shows city of IP location")
     parser.add_argument("--single", action="store_true", default=False, help="uses single-threading")
-    parser.add_argument("--skip", dest="skip", action="store_true", default=None, help="skips folders with Day.county == count")
+    parser.add_argument("--skip", action="store_true", default=None, help="skips when with Day.county == count")
     parser.add_argument("--no-skip", dest="skip", action="store_false", default=None, help="do no skip folders")
     parser.add_argument("-u", "--update", action="store_true", help="updates visitor table from access log")
     parser.add_argument("-v", dest="verbose", default=1, action="count", help="increases verbosity (default = 1)")

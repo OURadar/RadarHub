@@ -31,7 +31,7 @@ class FrontendConfig(AppConfig):
         root_logger = logging.getLogger()
         if len(root_logger.handlers):
             for h in root_logger.handlers:
-                h.setFormatter(MultiLineFormatter("%(asctime)s %(levelname)-8s %(message)s"))
+                h.setFormatter(MultiLineFormatter("%(asctime)s %(levelname)-7s %(message)s"))
                 h.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
         elif settings.DEBUG and settings.VERBOSE:
             h = logging.StreamHandler()
