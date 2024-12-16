@@ -23,12 +23,12 @@ stages:
   script:
     - npm run build
 
-python-3.8.19:
-  tags:
-    - linux
-  stage: build
-  image: python:3.8.19
-  <<: *python_common
+# python-3.8.19:
+#   tags:
+#     - linux
+#   stage: build
+#   image: python:3.8.19
+#   <<: *python_common
 
 python-3.10.14:
   tags:
