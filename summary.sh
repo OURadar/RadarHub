@@ -28,7 +28,7 @@ var_log="/var/log/radarhub"
 function overview() {
 	clear
 
-	check_user_process radarhub python dgen fifoshare fiforead fifo2db | textout "Processes" seagreen
+	check_user_process radarhub python dgen fifoshare fiforead fifo2db ldm | textout "Processes" seagreen
 
 	if [ -f /lib/systemd/system/redis-server.service ]; then
 		echo
@@ -77,12 +77,6 @@ function overview() {
 		# if [ -f ${file} ]; then
 		# 	echo -e "\033[4;38;5;45m${file}\033[m"
 		# 	tail -n 7 ${file} | logparse.py
-		# 	echo
-		# fi
-		# file="${folder}/fifo2db-v1.log"
-		# if [ -f ${file} ]; then
-		# 	echo -e "\033[4;38;5;45m${file}\033[m"
-		# 	tail -n 7 ${file}
 		# 	echo
 		# fi
 		file="${folder}/fifo2db.log"

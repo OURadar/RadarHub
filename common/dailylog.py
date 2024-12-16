@@ -42,11 +42,11 @@ class Logger(logging.Logger):
         else:
             self.formatter = MultiLineFormatter("%(asctime)s %(levelname)-7s %(message)s")
         self.init = False
-        handler = logging.StreamHandler()
-        handler.setFormatter(self.formatter)
-        handler.setLevel(logging.DEBUG)
-        self.streamHandler = handler
-        self.addHandler(handler)
+        streamHandler = logging.StreamHandler()
+        streamHandler.setFormatter(self.formatter)
+        streamHandler.setLevel(logging.DEBUG)
+        self.streamHandler = streamHandler
+        self.addHandler(streamHandler)
         self.setLevel(logging.INFO)
         self.refresh()
         self.init = True

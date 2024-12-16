@@ -40,7 +40,7 @@ keepReading = True
 tzinfo = datetime.timezone.utc
 radars = settings.RADARS.copy()
 
-print(radars)
+# print(radars)
 
 logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, dailyfile=settings.DEBUG)
 # Populate other keys as local parameters

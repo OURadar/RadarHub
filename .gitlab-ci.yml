@@ -37,11 +37,11 @@ python-3.11.9:
   image: python:3.11.9
   <<: *python_common
 
-python-3.12.4:
+python-3.12.8:
   tags:
     - linux
   stage: build
-  image: python:3.12.4
+  image: python:3.12.8
   <<: *python_common
 
 node-22.4:
