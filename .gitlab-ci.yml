@@ -33,7 +33,7 @@ python-3.8.19:
     - apt install -y libsasl2-dev libldap2-dev libssl-dev
     - pip install --upgrade pip
   script:
-    - pip install -r compat/requirements-38.txt
+    - pip install -r blob/requirements-38.txt
     - python --version
     - ./dbtool.py --version
     - python manage.py makemigrations

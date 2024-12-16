@@ -33,6 +33,7 @@ import product
 from django.conf import settings
 from frontend.models import Sweep, Day
 from common import colorize, color_name_value, dailylog
+from common import check, ignore, missing, processed
 
 __prog__ = os.path.basename(sys.argv[0])
 
@@ -47,11 +48,6 @@ logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, d
 for item in radars.values():
     item["step"] = 0
     item["count"] = 0
-
-check = colorize("✓", "green")
-ignore = colorize("✓", "yellow")
-missing = colorize("✗", "orange")
-processed = colorize("✓✓", "green")
 
 productServer = product.Server(4, logger=logger, cache=18)
 
