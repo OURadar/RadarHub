@@ -218,7 +218,9 @@ async def _runLoop(pathway):
                     rs = rs * 0.1
                     rd = rd * 0.1
                     qs = payloadQueue.qsize()
-                    logger.info(f"{myname} {s0} d{d} E{ei:.1f}-{ee:.1f} A{ai:.1f}-{ae:.1f} r[{rs:.1f},{rd:.1f}] {n} q{qs}")
+                    logger.info(
+                        f"{myname} {s0} d{d} E{ei:.1f}-{ee:.1f} A{ai:.1f}-{ae:.1f} r[{rs:.1f},{rd:.1f}] {n} q{qs}"
+                    )
                 t1 = t0
                 s1 = s0
             # Keep the latest copy of Control, Health, or Scope as welcome message for others
@@ -459,10 +461,14 @@ class Backhaul(AsyncConsumer):
         pathway = message["pathway"]
         channel = message["channel"]
 
+        print(f"{myname} {pathway} {channel}")
+
         if pathway in pathwayRegistry and pathwayRegistry[pathway]["channel"] is not None:
             last = time.monotonic() - pathwayRegistry[pathway]["updated"]
             if last < 5.0:
-                logger.info(f"{myname} {colorize(pathway, 'pink')} is occupied (last = {last:.2f} s), rejecting new connection ...")
+                logger.info(
+                    f"{myname} {colorize(pathway, 'pink')} is occupied (last = {last:.2f} s), rejecting new connection ..."
+                )
                 await channelLayer.send(
                     channel,
                     {
@@ -472,7 +478,9 @@ class Backhaul(AsyncConsumer):
                 )
                 return
             # If the pathway is stale, disconnect the old radar
-            logger.info(f"{myname} {colorize(pathway, 'pink')} is stale (last = {last:.2f} s), allowing the new connection ...")
+            logger.info(
+                f"{myname} {colorize(pathway, 'pink')} is stale (last = {last:.2f} s), allowing the new connection ..."
+            )
             await channelLayer.send(
                 pathwayRegistry[pathway]["channel"],
                 {

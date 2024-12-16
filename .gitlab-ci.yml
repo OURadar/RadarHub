@@ -23,12 +23,23 @@ stages:
   script:
     - npm run build
 
-# python-3.8.19:
-#   tags:
-#     - linux
-#   stage: build
-#   image: python:3.8.19
-#   <<: *python_common
+python-3.8.19:
+  tags:
+    - linux
+  stage: build
+  image: python:3.8.19
+  before_script:
+    - apt update -y
+    - apt install -y libsasl2-dev libldap2-dev libssl-dev
+    - pip install --upgrade pip
+  script:
+    - pip install -r compat/requirements-38.txt
+    - python --version
+    - ./dbtool.py --version
+    - python manage.py makemigrations
+    - python manage.py migrate
+    - cd ${CI_PROJECT_DIR}/reporter
+    - make
 
 python-3.10.14:
   tags:
