@@ -21,7 +21,7 @@ pp = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
 
 relay = redis.StrictRedis()
 
-productServer = NullServer() if settings.PRODUCER == "localhost" else Server(logger=logger, cache=1000)
+productServer = Server(logger=logger, cache=1000) if settings.PRODUCER == "localhost" else NullServer()
 
 sigIntHandler = signal.getsignal(signal.SIGINT)
 sigTermHandler = signal.getsignal(signal.SIGTERM)

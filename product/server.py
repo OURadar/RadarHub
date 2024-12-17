@@ -148,7 +148,9 @@ class ServerRedis:
 class NullServer:
     def __init__(self):
         self.readerRun = mp.Value("i", 1)
-        return 0
+
+    def start(self, delay=0.1):
+        pass
 
     def stop(self, callback=None, args=()):
         self.readerRun.value = 0

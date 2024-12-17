@@ -576,11 +576,14 @@ class Sweep(models.Model):
         with lock:
             if client is None:
                 logger.debug(f"{myname} Creating producer.Client using {settings.PRODUCER} ...")
-                # from product import Client
-                # client = Client(n=4)
-                import producer
-                # client = producer.Client(host="dcv01", n=8)
-                client = producer.Client(host=settings.PRODUCER, n=8)
+                print(f"{myname} Creating producer.Client using {settings.PRODUCER} ...")
+                if settings.PRODUCER == "localhost":
+                    from product import Client
+                    client = Client(n=4)
+                else:
+                    import producer
+                    client = producer.Client(host=settings.PRODUCER, n=8)
+        print(f"Retrieving {self.path} ...")
         self.data = client.get(self.path, tarinfo=self.tarinfo)
         if verbose > 1:
             print(f"{myname} {self.__str__()}")
