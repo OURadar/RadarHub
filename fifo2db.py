@@ -52,7 +52,7 @@ for item in radars.values():
     item["step"] = 0
     item["count"] = 0
 
-productServer = producer.Server(4, logger=logger, cache=18)
+# productServer = producer.Server(4, logger=logger, cache=18)
 
 
 def signalHandler(sig, frame):
@@ -61,7 +61,7 @@ def signalHandler(sig, frame):
     # Print a return line for cosmetic
     print("\r")
     logger.info("SIGINT received, finishing up ...")
-    productServer.stop()
+    # productServer.stop()
 
 
 def proper(file, root="/mnt/data", verbose=0):
