@@ -13,7 +13,7 @@ from django.conf import settings
 
 from frontend.models import Day, Sweep
 from common import colorize, color_name_value, pretty_object_name
-from product import Server
+from product import Server, NullServer
 
 logger = logging.getLogger("backhaul")
 
@@ -21,7 +21,7 @@ pp = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
 
 relay = redis.StrictRedis()
 
-productServer = Server(logger=logger, cache=1000)
+productServer = NullServer() if settings.PRODUCER == "localhost" else Server(logger=logger, cache=1000)
 
 sigIntHandler = signal.getsignal(signal.SIGINT)
 sigTermHandler = signal.getsignal(signal.SIGTERM)

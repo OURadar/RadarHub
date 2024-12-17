@@ -145,6 +145,16 @@ class ServerRedis:
         self.run.value = 0
         self.pubsub.close()
 
+class NullServer:
+    def __init__(self):
+        self.readerRun = mp.Value("i", 1)
+        return 0
+
+    def stop(self, callback=None, args=()):
+        self.readerRun.value = 0
+        if callback:
+            callback(*args)
+        return 0
 
 class Server:
     def __init__(self, n=8, **kwargs):
