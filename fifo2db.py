@@ -28,7 +28,10 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "radarhub.settings")
 django.setup()
 
 import dbtool
-import product
+
+# Replace with Producer eventually
+# import product
+import producer
 
 from django.conf import settings
 from frontend.models import Sweep, Day
@@ -49,7 +52,7 @@ for item in radars.values():
     item["step"] = 0
     item["count"] = 0
 
-productServer = product.Server(4, logger=logger, cache=18)
+productServer = producer.Server(4, logger=logger, cache=18)
 
 
 def signalHandler(sig, frame):
