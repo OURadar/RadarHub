@@ -582,8 +582,7 @@ class Sweep(models.Model):
                     client = Client(n=8)
                 else:
                     import producer
-                    client = producer.Client(n=8, host=settings.PRODUCER, signal=False)
-        print(f"Retrieving {self.path} ...")
+                    client = producer.Client(n=8, host=settings.PRODUCER, signal=False, logger=logger)
         self.data = client.get(self.path, tarinfo=self.tarinfo)
         if verbose > 1:
             print(f"{myname} {self.__str__()}")
