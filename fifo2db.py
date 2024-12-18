@@ -29,10 +29,6 @@ django.setup()
 
 import dbtool
 
-# Replace with Producer eventually
-# import product
-import producer
-
 from django.conf import settings
 from frontend.models import Sweep, Day
 from common import colorize, color_name_value, dailylog
@@ -43,7 +39,6 @@ __prog__ = os.path.basename(sys.argv[0])
 keepReading = True
 tzinfo = datetime.timezone.utc
 radars = settings.RADARS.copy()
-
 # print(radars)
 
 logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, dailyfile=settings.DEBUG)
@@ -52,8 +47,6 @@ for item in radars.values():
     item["step"] = 0
     item["count"] = 0
 
-# productServer = producer.Server(4, logger=logger, cache=18)
-
 
 def signalHandler(sig, frame):
     global keepReading
@@ -61,7 +54,6 @@ def signalHandler(sig, frame):
     # Print a return line for cosmetic
     print("\r")
     logger.info("SIGINT received, finishing up ...")
-    # productServer.stop()
 
 
 def proper(file, root="/mnt/data", verbose=0):
@@ -453,11 +445,6 @@ def fifo2db():
 
     logger.info("--- Started ---")
     logger.info(f"Using timezone {tzinfo}")
-
-    logger.info("Starting product server ...")
-    productServer.start()
-
-    tm.sleep(0.25)
 
     catchup()
 
