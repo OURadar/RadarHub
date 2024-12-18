@@ -28,11 +28,15 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "radarhub.settings")
 django.setup()
 
 import dbtool
-import product
+
+# Replace with Producer eventually
+# import product
+import producer
 
 from django.conf import settings
 from frontend.models import Sweep, Day
 from common import colorize, color_name_value, dailylog
+from common import check, ignore, missing, processed
 
 __prog__ = os.path.basename(sys.argv[0])
 
@@ -48,12 +52,7 @@ for item in radars.values():
     item["step"] = 0
     item["count"] = 0
 
-check = colorize("✓", "green")
-ignore = colorize("✓", "yellow")
-missing = colorize("✗", "orange")
-processed = colorize("✓✓", "green")
-
-productServer = product.Server(4, logger=logger, cache=18)
+# productServer = producer.Server(4, logger=logger, cache=18)
 
 
 def signalHandler(sig, frame):
@@ -62,7 +61,7 @@ def signalHandler(sig, frame):
     # Print a return line for cosmetic
     print("\r")
     logger.info("SIGINT received, finishing up ...")
-    productServer.stop()
+    # productServer.stop()
 
 
 def proper(file, root="/mnt/data", verbose=0):

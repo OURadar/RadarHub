@@ -18,7 +18,7 @@ from pathlib import Path
 
 from common import color_name_value
 
-VERBOSE = 1
+VERBOSE = 2
 SIMULATE = False
 
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
@@ -258,10 +258,12 @@ if "radars" in settings:
 # FIFO source to list for new files for fifo2db.py
 #
 # FIFO = { 'tcp': '_IP_ADDRESS_:_PORT_' } or { 'pipe': '/tmp/radarhub.fifo' }
-if "fifo" in settings:
-    FIFO = settings["fifo"]
-else:
-    FIFO = {"pipe": "/tmp/radarhub.fifo"}
+FIFO = settings.get("fifo", {"pipe", "/tmp/radarhub.fifo"})
+
+# PRODUCER source
+#
+# PRODUCER = "localhost" or another IP address, e.g., "10.197.14.52"
+PRODUCER = settings.get("producer", "localhost")
 
 # Prevent HttpResponse 301 for permanent forwards
 # APPEND_SLASH = False
