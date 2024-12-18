@@ -12,8 +12,8 @@ import threading
 from django.conf import settings
 
 from frontend.models import Day, Sweep
-from common import colorize, color_name_value, pretty_object_name
-from product import Server, NullServer
+from common import colorize, color_name_value
+# from product import Server, NullServer
 
 logger = logging.getLogger("backhaul")
 
@@ -21,11 +21,12 @@ pp = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
 
 relay = redis.StrictRedis()
 
-productServer = Server(logger=logger, cache=1000) if settings.PRODUCER == "localhost" else NullServer()
+# Use NullServer at the interim
+# productServer = Server(logger=logger, cache=1000) if settings.PRODUCER == "localhost" else NullServer()
 
 sigIntHandler = signal.getsignal(signal.SIGINT)
 sigTermHandler = signal.getsignal(signal.SIGTERM)
-
+wantActive = True
 
 def relay_event(data):
     logger.info(f"Relaying event ... {color_name_value('items', data['items'])}")
@@ -73,7 +74,7 @@ def monitor(delay=1.0):
     logger.info(f"{myname} Started")
 
     no_day_warning = 0
-    while productServer.readerRun.value:
+    while wantActive:
         busy_count = 0
         for pathway, item in settings.RADARS.items():
             if pathway == "demo":
@@ -113,7 +114,7 @@ def monitor(delay=1.0):
             if settings.VERBOSE > 1 and settings.DEBUG:
                 logger.debug(f"{myname} Sleeping ...")
             for _ in range(10):
-                if not productServer.readerRun.value:
+                if not wantActive:
                     break
                 time.sleep(0.1)
 
@@ -131,7 +132,7 @@ def simulate():
     tic = 0
     block = 1
     scans = ["E2.0", "E4.0", "E6.0", "E8.0", "E10.0"]
-    while productServer.readerRun.value:
+    while wantActive:
         for pathway in settings.RADARS.keys():
             if pathway == "demo":
                 continue
@@ -149,30 +150,32 @@ def simulate():
                 tic += 1
             data = {"pathway": pathway, "items": items, "hoursActive": hourly_count, "time": sweep_time.isoformat()}
             relay_event(data)
-        time.sleep(5)
+        for _ in range(50):
+            if not wantActive:
+                break
+            time.sleep(0.1)
 
     logger.info(f"{myname} Stopped")
 
 
 def cleanup(signum, frame):
     from . import consumers
-
     consumers.hangup()
-    if signum == signal.SIGINT:
-        if sigIntHandler:
-            sigIntHandler(signum, frame)
-    if signum == signal.SIGTERM:
-        if sigTermHandler:
-            sigTermHandler(signum, frame)
+    if signum == signal.SIGINT and sigIntHandler:
+        sigIntHandler(signum, frame)
+    if signum == signal.SIGTERM and sigTermHandler:
+        sigTermHandler(signum, frame)
     sys.exit(0)
 
 
 def signalHandler(signum, frame):
     print("")
+    global wantActive
+    wantActive = False
     signalName = {2: "SIGINT", 10: "SIGUSR1", 15: "SIGTERM"}
     logger.info(f"Signal {signalName.get(signum, 'UNKNOWN')} received")
-    productServer.stop(callback=cleanup, args=(signum, frame))
-
+    time.sleep(0.1)
+    cleanup(signum, frame)
 
 def launch():
     if settings.SIMULATE:
@@ -181,13 +184,12 @@ def launch():
         thread = threading.Thread(target=monitor, args=(0.42,), daemon=True)
     thread.start()
 
-    productServer.start(delay=0.21)
-
     signal.signal(signal.SIGUSR1, signalHandler)
     signal.signal(signal.SIGTERM, signalHandler)
     signal.signal(signal.SIGINT, signalHandler)
 
 
 def stop():
-    productServer.stop()
-    logger.info("Backhaul monitor stopped")
+    global wantActive
+    wantActive = False
+    # logger.info("Backhaul monitor stopped")

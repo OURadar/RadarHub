@@ -579,10 +579,10 @@ class Sweep(models.Model):
                 print(f"{myname} Creating producer.Client using {settings.PRODUCER} ...")
                 if settings.PRODUCER == "localhost":
                     from product import Client
-                    client = Client(n=4)
+                    client = Client(n=8)
                 else:
                     import producer
-                    client = producer.Client(host=settings.PRODUCER, n=8)
+                    client = producer.Client(n=8, host=settings.PRODUCER, signal=False)
         print(f"Retrieving {self.path} ...")
         self.data = client.get(self.path, tarinfo=self.tarinfo)
         if verbose > 1:
