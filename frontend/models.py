@@ -22,6 +22,7 @@ import json
 import radar
 import pprint
 import logging
+import producer
 import datetime
 import threading
 import numpy as np
@@ -575,14 +576,8 @@ class Sweep(models.Model):
         global client
         with lock:
             if client is None:
-                logger.debug(f"{myname} Creating producer.Client using {settings.PRODUCER} ...")
-                print(f"{myname} Creating producer.Client using {settings.PRODUCER} ...")
-                if settings.PRODUCER == "localhost":
-                    from product import Client
-                    client = Client(n=8)
-                else:
-                    import producer
-                    client = producer.Client(n=8, host=settings.PRODUCER, signal=False, logger=logger)
+                logger.info(f"{myname} Creating producer.Client using {settings.PRODUCER} ...")
+                client = producer.Client(n=8, host=settings.PRODUCER, logger=logger, signal=False)
         self.data = client.get(self.path, tarinfo=self.tarinfo)
         if verbose > 1:
             print(f"{myname} {self.__str__()}")
