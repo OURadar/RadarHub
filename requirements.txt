@@ -15,8 +15,8 @@ numpy
 oauthlib
 pyparsing
 psycopg2-binary
-radar-data
 setproctitle
 tqdm
 Twisted[tls,http2]
 websocket_client
+radar-data==1.0.0.dev0

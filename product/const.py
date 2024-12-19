@@ -1,1 +1,0 @@
-CHANNEL = "ch-request"
