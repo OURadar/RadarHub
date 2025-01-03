@@ -12,8 +12,7 @@ import threading
 from django.conf import settings
 
 from frontend.models import Day, Sweep
-from common import colorize, color_name_value
-# from product import Server, NullServer
+from common import colorize, colored_variables
 
 logger = logging.getLogger("backhaul")
 
@@ -21,24 +20,26 @@ pp = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
 
 relay = redis.StrictRedis()
 
-# Use NullServer at the interim
-# productServer = Server(logger=logger, cache=1000) if settings.PRODUCER == "localhost" else NullServer()
-
 sigIntHandler = signal.getsignal(signal.SIGINT)
 sigTermHandler = signal.getsignal(signal.SIGTERM)
 wantActive = True
 
+
 def relay_event(data):
-    logger.info(f"Relaying event ... {color_name_value('items', data['items'])}")
+    myname = colorize("relay_event()", "green")
+    logger.info(f"{myname}   {colored_variables(data['items'])}")
     json_data = json.dumps(data).encode("utf-8")
     relay.publish("sse-relay", json_data)
 
 
 def monitor(delay=1.0):
     myname = colorize("monitor()", "green")
+    Sweep.useDataShop(1)
+    collection = {}
+
     # Django 5 discourages the use of the ORM before the app registry is ready
     time.sleep(delay)
-    collection = {}
+
     for pathway, item in settings.RADARS.items():
         if pathway == "demo":
             continue
@@ -53,7 +54,7 @@ def monitor(delay=1.0):
             hourly_count = ",".join("0" * 24)
             logger.info(f"{myname} No Day objects yet for {pathway} / {name}")
         count = len(sweeps)
-        logger.info(f"{myname} Building cache for {color_name_value('pathway', pathway)} ...")
+        logger.info(f"{myname} Building cache for {colored_variables(pathway)} ...")
         threads = []
 
         def _load_sweep(sweep):
@@ -160,6 +161,7 @@ def simulate():
 
 def cleanup(signum, frame):
     from . import consumers
+
     consumers.hangup()
     if signum == signal.SIGINT and sigIntHandler:
         sigIntHandler(signum, frame)
@@ -176,6 +178,7 @@ def signalHandler(signum, frame):
     logger.info(f"Signal {signalName.get(signum, 'UNKNOWN')} received")
     time.sleep(0.1)
     cleanup(signum, frame)
+
 
 def launch():
     if settings.SIMULATE:

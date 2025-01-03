@@ -6,9 +6,10 @@ import threading
 from django.conf import settings
 from django_eventstream import send_event
 
-from common import color_name_value, pretty_object_name
+from common import colored_variables, pretty_object_name
 
 logger = None
+
 
 class Relay:
     def __init__(self, **kwargs):
@@ -27,7 +28,8 @@ class Relay:
             if message["type"] != "message":
                 continue
             data = json.loads(message["data"])
-            logger.debug(f"{self.name} {color_name_value('items', data['items'])}")
+            items = data.get("items", [])
+            logger.debug(f"{self.name} {colored_variables(items)}")
             pathway = data.pop("pathway")
             send_event("sse", pathway, data)
 

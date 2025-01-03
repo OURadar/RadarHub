@@ -4,8 +4,12 @@
 #   Created by Boonleng Cheong
 #
 
+import inspect
+
+from pathlib import Path
+
 colors = {
-    "red": 196,
+    "red": 197,
     "orange": 214,
     "yellow": 228,
     "green": 154,
@@ -21,8 +25,13 @@ colors = {
     "black": 232,
     "skyblue": 45,
 }
-
-highlights = {"info": "\033[48;5;6;38;5;15m", "warning": "\033[48;5;172;38;5;15m", "error": "\033[1;48;5;3;38;5;15m"}
+highlights = {
+    "info": "\033[48;5;6;38;5;15m",
+    "warning": "\033[48;5;172;38;5;15m",
+    "error": "\033[1;48;5;3;38;5;15m",
+}
+log_format = "%(asctime)s %(levelname)-7s %(message)s"
+log_indent = " " * 32
 
 
 def colorize(text, color="white", end="\033[m"):
@@ -61,15 +70,34 @@ def color_name_value(name, value):
     show = colorize(name, "orange")
     show += colorize(" = ", "red")
     comma_len = len(colorize(", ", "red"))
-    if isinstance(value, list):
-        show += colorize("[", "gold")
-        for v in value:
-            show += colorize(f'"{v}"', "yellow" if isinstance(v, str) else "purple")
-            show += colorize(", ", "red")
-        show = show[:-comma_len]
-        show += colorize("]", "gold")
-    else:
-        show += colorize(value, "yellow" if isinstance(value, str) else "purple")
+
+    def color_value(value):
+        if isinstance(value, list):
+            show = colorize("[", "gold")
+            for v in value:
+                show += color_value(v)
+                show += colorize(", ", "white")
+            show = show[:-comma_len]
+            show += colorize("]", "gold")
+            return show
+        elif isinstance(value, dict):
+            show = colorize("{", "gold")
+            for k, v in value.items():
+                show += colorize(f"{k}", "yellow")
+                show += colorize(": ", "white")
+                show += color_value(v)
+                show += colorize(", ", "white")
+            show = show[:-comma_len]
+            show += colorize("}", "gold")
+            return show
+        elif isinstance(value, int) or isinstance(value, float) or value is None:
+            return colorize(f"{value}", "purple")
+        elif isinstance(value, str) or isinstance(value, Path):
+            return colorize(f"{value}", "yellow")
+        else:
+            return colorize(f"{value}", "cyan")
+
+    show += color_value(value)
     return show
 
 
@@ -115,3 +143,40 @@ check = colorize("✓", "green")
 ignore = colorize("✓", "yellow")
 missing = colorize("✗", "orange")
 processed = colorize("✓✓", "green")
+
+
+#
+# colored_variables(*vars, **kwargs)
+#
+# Inspired by:
+# https://stackoverflow.com/questions/2749796/how-to-get-the-original-variable-name-of-variable-passed-to-a-function
+#
+def colored_variables(*vars, **kwargs):
+    """
+    Print the variable names and values in color.
+
+    Limitation: This is a hack and does not work when there are multiple parentheses in the same line.
+    """
+    sep = kwargs.get("sep", "   ")
+    frame = inspect.currentframe()
+    frame = inspect.getouterframes(frame)[1]
+    string = inspect.getframeinfo(frame[0]).code_context[0].strip()
+    source = string[string.rfind("(") + 1 : string.find(")")]
+    names = source.split(",")
+    text = []
+    for name, value in zip(names, vars):
+        if "=" in name:
+            continue
+        text.append(color_name_value(name.strip(), value))
+    return sep.join(text)
+
+
+if __name__ == "__main__":
+    a = 1
+    b = "hello"
+    c = [1, 2, 3]
+    myname = colorize("main()", "green")
+    x = colored_variables(a, b, c, sep="   ")
+    print(f"{myname}   {x}")
+
+    print(f"{myname}   {colored_variables(a, b, c, sep='   ')}")

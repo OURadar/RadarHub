@@ -14,7 +14,7 @@ from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.views.decorators.cache import never_cache
 
 from .models import Day, Sweep
-from common import colorize, color_name_value, is_valid_time, get_client_ip
+from common import colorize, colored_variables, is_valid_time, get_client_ip
 
 logger = logging.getLogger("frontend")
 
@@ -29,11 +29,13 @@ agg_output = {}
 
 pp = pprint.PrettyPrinter(indent=1, depth=3, width=80, sort_dicts=False)
 
-pattern_yyyymm = re.compile(r"20[0-9][0-9](0[0-9]|1[012])")
-pattern_bad_agents = re.compile(r"[Ww]get|[Cc]url|ureq")
+re_yyyymm = re.compile(r"20\d{2}(0[0-9]|1[012])")
+re_yyyymmdd = re.compile(r"20\d{2}(0[0-9]|1[012])([012]\d|3[01])")
+re_bad_agents = re.compile(r"[Ww]get|[Cc]url|ureq")
 
 invalid_query = HttpResponse(f"Invalid Query\n", status=204)
-unsupported_request = HttpResponse(f"Unsupported query. Feel free to email data request to: data@arrc.ou.edu\n", status=405)
+nice_reply = "If you believe the data exist, please email data request to data@arrc.ou.edu"
+not_allowed_request = HttpResponse(f"Method not allowed. {nice_reply}\n", status=405)
 forbidden_request = HttpResponseForbidden("Forbidden. Mistaken? Tell my father.\n")
 
 
@@ -42,50 +44,41 @@ forbidden_request = HttpResponseForbidden("Forbidden. Mistaken? Tell my father.\
 
 def binary(request, name):
     ip = get_client_ip(request)
-    dirty = screen(request)
-    show = colorize("binary()", "green")
-    show += "   " + color_name_value("name", name)
-    show += "   " + color_name_value("ip", ip)
-    show += "   " + color_name_value("dirty", dirty)
-    logger.info(show)
+    dirty = is_dirty_request(request)
+    myname = colorize("binary()", "green")
+    logger.info(f"{myname}   {colored_variables(name, ip, dirty)}")
     payload = b"\x01\x02\x03\x04\x05\x06\x07\x08"
     response = HttpResponse(payload, content_type="application/octet-stream")
     return response
 
 
 def header(_, name):
-    show = colorize("header()", "green")
-    show += "   " + color_name_value("name", name)
-    logger.debug(show)
+    myname = colorize("header()", "green")
+    logger.debug(f"{myname}   {colored_variables(name)}")
     data = {"elev": 0.5, "count": 2000}
     payload = json.dumps(data)
     response = HttpResponse(payload, content_type="application/json")
     return response
 
 
-def screen(request):
+def is_dirty_request(request):
+    if isinstance(request, str) and request == "django-test":
+        return False
     headers = dict(request.headers)
     headers.pop("Cookie", None)
-    dirty = False
     if "Accept-Encoding" not in headers or "gzip" not in headers["Accept-Encoding"]:
-        dirty = True
+        return True
     # if 'Referer' not in request.headers and 'Connection' not in request.headers:
-    #     dirty = True
-    return dirty
+    #     return True
+    return False
 
 
 def stat(request, mode=""):
-    dirty = screen(request)
-    if dirty:
+    if is_dirty_request(request):
         return forbidden_request
-    if mode == "cache":
-        # cache_info = load_by_source_string.cache_info()
-        payload = "cache_info"
     elif mode == "403":
         return forbidden_request
-    else:
-        raise Http404
-    return HttpResponse(payload, content_type="text/plain")
+    raise Http404
 
 
 # region Month
@@ -114,13 +107,13 @@ def _month(prefix, day):
     return array
 
 
-def month(_, pathway, day):
+def month(request, pathway, day):
     if settings.VERBOSE > 1:
-        show = colorize("archive.month()", "green")
-        show += "   " + color_name_value("pathway", pathway)
-        show += "   " + color_name_value("day", day)
-        logger.debug(show)
-    if pathway == "undefined" or pathway not in settings.RADARS or day == "undefined" or pattern_yyyymm.match(day) is None:
+        myname = colorize("archive.month()", "green")
+        logger.debug(f"{myname}   {colored_variables(pathway, day)}")
+    if is_dirty_request(request):
+        return forbidden_request
+    if pathway == "undefined" or pathway not in settings.RADARS or day == "undefined" or re_yyyymm.match(day) is None:
         return invalid_query
     prefix = settings.RADARS[pathway]["prefix"]
     array = _month(prefix, day)
@@ -153,12 +146,13 @@ def _count(prefix, day):
     return [0] * 24
 
 
-def count(_, pathway, day):
+def count(request, pathway, day):
     if settings.VERBOSE > 1:
-        show = colorize("archive.count()", "green")
-        show += "   " + color_name_value("pathway", pathway)
-        show += "   " + color_name_value("day", day)
-        logger.debug(show)
+        myname = colorize("archive.count()", "green")
+        logger.debug(f"{myname}   {colored_variables(pathway, day)}")
+    if is_dirty_request(request):
+        return not_allowed_request
+    # Request from JavaScript could have "undefined" as a string when not defined
     if pathway == "undefined" or pathway not in settings.RADARS or day == "undefined" or not is_valid_time(day):
         return invalid_query
     prefix = settings.RADARS[pathway]["prefix"]
@@ -235,23 +229,22 @@ def _table_block(prefix, day_hour):
 
 
 def table(request, pathway, day_hour):
-    show = colorize("archive.table()", "green")
-    show += "   " + color_name_value("day_hour", day_hour)
-    logger.debug(show)
-    dirty = screen(request)
-    if dirty:
-        return unsupported_request
-    if pathway == "undefined" or pathway not in settings.RADARS or day_hour == "undefined":
+    myname = colorize("archive.table()", "green")
+    if settings.VERBOSE > 1:
+        logger.debug(f"{myname}   {colored_variables(pathway, day_hour)}")
+    if is_dirty_request(request):
+        return not_allowed_request
+    if pathway == "undefined" or pathway not in settings.RADARS:
+        logger.debug(f"Invalid pathway = {pathway}")
         return invalid_query
-    if len(day_hour) not in [8, 13]:
-        return invalid_query
-    if not is_valid_time(day_hour[:13]):
+    if day_hour == "undefined" or not is_valid_time(day_hour):
+        logger.debug(f"Invalid day_hour = {day_hour}")
         return invalid_query
     prefix = settings.RADARS[pathway]["prefix"]
     c = day_hour.split("-")
     day = c[0]
-    if len(day) > 8:
-        logger.warning(f"Invalid day_hour = {day_hour} -> day = {day}")
+    if not re_yyyymmdd.match(day):
+        logger.warning(f"Invalid day = {day} <- {day_hour}")
         return invalid_query
     hourly_count = _count(prefix, day)
     if len(c) > 1:
@@ -266,17 +259,10 @@ def table(request, pathway, day_hour):
             hour = hours_with_data[0]
             day_hour = f"{day}-{hour:02d}00"
             if settings.VERBOSE > 1:
-                show = colorize("archive.table()", "green")
-                show += "   " + color_name_value("day_hour", day_hour)
-                show += "   (override)"
-                logger.debug(show)
+                logger.debug(f"{myname}   {colored_variables(day_hour)}   [auto selected]")
         else:
             if settings.VERBOSE > 1:
-                show = colorize("archive.table()", "green")
-                show += "   " + color_name_value("pathway", pathway)
-                show += "   " + color_name_value("day_hour", day_hour)
-                show += "   " + color_name_value("hourly_count", "0's")
-                logger.debug(show)
+                logger.debug(f"{myname}   {colored_variables(pathway, day_hour)}   [empty]")
             message = "empty"
             hour = -1
     else:
@@ -288,7 +274,7 @@ def table(request, pathway, day_hour):
     return HttpResponse(payload, content_type="application/json")
 
 
-# region Display Data
+# region Display
 
 """
     load_display_data_by_source_string
@@ -302,22 +288,29 @@ def load_display_data_by_source_string(source_string):
         sweep = Sweep.dummy_data(source_string, u8=True)
     else:
         sweep = Sweep.read(source_string, u8=True)
+    # The sweep is not found or the sweep is empty (symbol not valid/found)
+    if sweep is None or not sweep["u8"]:
+        return None
     symbol = list(sweep["u8"].keys())[0]
     # Down-sample the sweep if the gate spacing is too fine (to save internet bandwidth)
     elevations = sweep["elevations"]
     azimuths = sweep["azimuths"]
     values = sweep["u8"][symbol]
     gatewidth = 1.0e-3 * sweep["gatewidth"]
+    # Only show up to gate 400 for bistatic data
     if sweep["txrx"] == "B":
         values = values[:, :400]
     elif values.shape[1] > 1000:
         stride = values.shape[1] // 1000
         gatewidth *= float(stride)
         values = values[:, ::stride]
-    info = json.dumps(
-        {"wf": sweep["waveform"], "prf": round(float(sweep["prf"]), 1)},
-        separators=(",", ":"),
-    )
+    if sweep.get("comment", None):
+        info = json.dumps({"comment": sweep["comment"]}, separators=(",", ":"))
+    else:
+        info = json.dumps(
+            {"wf": sweep["waveform"], "prf": round(float(sweep["prf"]), 1)},
+            separators=(",", ":"),
+        )
     # Final assembly of the payload
     ei16 = np.array(elevations / 180.0 * 32768.0, dtype=np.int16)
     au16 = np.array(azimuths / 360.0 * 65536.0, dtype=np.uint16)
@@ -355,25 +348,22 @@ def load_display_data_by_source_string(source_string):
 
 def load(request, pathway, locator):
     if settings.VERBOSE > 1:
-        show = colorize("archive.load()", "green")
-        show += "   " + color_name_value("pathway", pathway)
-        show += "   " + color_name_value("locator", locator)
-        logger.debug(show)
-    dirty = screen(request)
-    if dirty:
-        return unsupported_request
+        myname = colorize("archive.load()", "green")
+        logger.debug(f"{myname}   {colored_variables(pathway, locator)}")
+    if is_dirty_request(request):
+        return not_allowed_request
     if pathway == "undefined" or pathway not in settings.RADARS:
         return invalid_query
     prefix = settings.RADARS[pathway]["prefix"]
     payload = load_display_data_by_source_string(f"{prefix}-{locator}")
     if payload is None:
-        return HttpResponse(f"Data {locator} not found", status=204)
+        return HttpResponse(f"{prefix}-{locator} not found. {nice_reply}", status=205)
     response = HttpResponse(payload, content_type="application/octet-stream")
     response["Cache-Control"] = "max-age=604800"
     return response
 
 
-# region Miscellaneous
+# region Misc
 
 """
     Latest date - returns the latest YYYYMMDD and HH
@@ -387,27 +377,18 @@ def load(request, pathway, locator):
 def latest(name):
     if name is None:
         return None, None
-    day = Day.objects.filter(name=name)
-    if day.exists():
-        day = day.latest("date")
-    else:
-        show = colorize("archive.date()", "green")
-        show += "   " + colorize("Empty Day table.", "white")
-        logger.warning(show)
+    myname = colorize("archive.latest()", "green")
+    query = Day.objects.filter(name=name)
+    if not query:
+        logger.debug(f"{myname} No Day entry for {colored_variables(name)}")
         return None, None
+    day = query.latest("date")
     ymd = day.date.strftime(r"%Y%m%d")
-    if settings.VERBOSE > 1:
-        show = colorize("archive.latest()", "green")
-        show += "   " + color_name_value("name", name)
-        show += "   " + color_name_value("day", ymd)
-        logger.info(show)
+    if settings.VERBOSE:
+        logger.debug(f"{myname}   {colored_variables(name, ymd)}")
     hour = day.last_hour
     if hour is None:
-        show = colorize("archive.latest()", "green")
-        show += "   " + colorize(" WARNING ", "warning")
-        show += "   " + colorize(f"Day {day.date} with", "white")
-        show += color_name_value(" .hourly_count", "zeros")
-        logger.warning(show)
+        logger.debug(f"{myname}   {day} has empty hourly_count")
         return None, None
     return ymd, hour
 
@@ -423,13 +404,11 @@ def location(pathway):
     global origins
     myname = colorize("archive.location()", "green")
     prefix = settings.RADARS.get(pathway, {}).get("prefix", None)
-    logger.debug(f"{myname} {color_name_value('pathway', pathway)}   {color_name_value('prefix', prefix)}")
+    logger.debug(f"{myname}   {colored_variables(pathway, prefix)}")
     if prefix is None:
-        origins[pathway] = {"longitude": -97.4373016, "latitude": 35.1812820, "last": "20220125"}
-    else:
-        origins[pathway] = Sweep.location(prefix)
-    if settings.VERBOSE > 1:
-        logger.debug(f"{myname} {color_name_value('origins', origins)}")
+        return {"longitude": -97.4373016, "latitude": 35.1812820, "last": "20090103"}
+    origins[pathway] = Sweep.location(prefix)
+    logger.debug(f"{myname}   {colored_variables(origins)}")
     return origins[pathway]
 
 
@@ -472,12 +451,10 @@ def _years(prefix):
 @never_cache
 def catchup(request, pathway, scan="E4.0", symbol="Z"):
     if settings.VERBOSE > 1:
-        show = colorize("archive.catchup()", "green")
-        show += "   " + color_name_value("pathway", pathway)
-        logger.debug(show)
-    dirty = screen(request)
-    if dirty:
-        return unsupported_request
+        myname = colorize("archive.catchup()", "green")
+        logger.debug(f"{myname}   {colored_variables(pathway, scan, symbol)}")
+    if is_dirty_request(request):
+        return not_allowed_request
     if pathway == "undefined" or pathway not in settings.RADARS:
         return invalid_query
     prefix = settings.RADARS[pathway]["prefix"]

@@ -7,11 +7,12 @@ from django.apps import AppConfig
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from common import color_name_value
-from common.cosmetics import colorize
+from common import colorize, colored_variables
+from common import log_format
 from common.dailylog import MultiLineFormatter
 
 logger = logging.getLogger("frontend")
+
 worker_started = False
 
 
@@ -24,18 +25,15 @@ class FrontendConfig(AppConfig):
         if "runserver" not in prog and "daphne" not in prog:
             return
 
-        # Django 5 discourages access of database in ready() method, will revisit this later
-        # if not tablesExist():
-        #     return
-
+        # Set up logging
         root_logger = logging.getLogger()
         if len(root_logger.handlers):
             for h in root_logger.handlers:
-                h.setFormatter(MultiLineFormatter("%(asctime)s %(levelname)-7s %(message)s"))
+                h.setFormatter(MultiLineFormatter(log_format))
                 h.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
         elif settings.DEBUG and settings.VERBOSE:
             h = logging.StreamHandler()
-            h.setFormatter(MultiLineFormatter("%(levelname)-8s %(message)s"))
+            h.setFormatter(MultiLineFormatter("%(levelname)-7s %(message)s"))
             logger.addHandler(h)
             logger.setLevel(logging.DEBUG if settings.VERBOSE > 1 else logging.INFO)
 
@@ -52,17 +50,13 @@ class FrontendConfig(AppConfig):
         # important: only one of them has RUN_MAIN == "true"
         if "daphne" in prog:
             prog = "daphne " + " ".join(sys.argv[1:6])
-        run_main = os.environ.get("RUN_MAIN", None)
+        run_main = bool(os.environ.get("RUN_MAIN", None))
         show = colorize(prog, "teal")
-        show += "   " + color_name_value("run_main", run_main)
-        logger.info(show)
+        logger.info(f"{show}   {colored_variables(run_main)}")
         if "runserver" in prog and not run_main:
             return
 
-        show = color_name_value("DEBUG", settings.DEBUG)
-        show += "   " + color_name_value("SIMULATE", settings.SIMULATE)
-        show += "   " + color_name_value("VERBOSE", settings.VERBOSE)
-        logger.info(show)
+        logger.info(colored_variables(settings.DEBUG, settings.SIMULATE, settings.VERBOSE))
 
         if "data" in settings.DATABASES and "postgresql" in settings.DATABASES["data"]["ENGINE"]:
             logger.info("Using 🐘 \033[48;5;25;38;5;15m PostgreSQL \033[m ...")
@@ -74,10 +68,16 @@ class FrontendConfig(AppConfig):
         else:
             logger.info("Using 🔓 \033[48;5;88;38;5;15m insecure \033[m secret key ...")
 
+        # Django 5 discourages the use of the ORM before the app registry is ready. Hopefully, here is late enough.
+        from frontend.models import Sweep
+
+        # Make use of the DataShop to retrieve Sweep data
+        Sweep.useDataShop()
+
+        # There is an extra worker when running using manage.py runserver
         global worker_started
         if worker_started:
-            show = color_name_value("worker_started", worker_started)
-            logger.info(f"Already has a worker   {show}")
+            logger.info(f"Already has a worker   {colored_variables(worker_started)}")
             return
         worker_started = True
 
