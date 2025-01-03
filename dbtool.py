@@ -15,48 +15,46 @@ import re
 import sys
 import glob
 import tqdm
-import radar
 import django
 import pprint
-import shutil
+import logging
 import argparse
 import textwrap
 import datetime
 import logparse
-import multiprocessing
 import time as tm
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "radarhub.settings")
 django.setup()
 
 from django.conf import settings
-from common import colorize, color_name_value, dailylog, truncate_array
+from common import colorize, truncate_array, colored_variables
+from common import log_format, log_indent
 from frontend.models import Sweep, Day, Visitor
+from setproctitle import setproctitle
 
 __prog__ = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
 tzinfo = datetime.timezone.utc
-logger = dailylog.Logger(__prog__, home=settings.LOG_DIR, dailyfile=settings.DEBUG)
+logger = logging.getLogger(__prog__)
 
-radar.setLogger(logger)
 
 pp = pprint.PrettyPrinter(indent=1, depth=3, width=120, sort_dicts=False)
-pattern_yyyy = re.compile(r"20[0-9][0-9]")
-pattern_yyyymmdd = re.compile(r"20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])")
-pattern_x_yyyymmdd = re.compile(r"(?<=[-/])20[0-9][0-9](0[0-9]|1[012])([0-2][0-9]|3[01])")
-
-"""
-    Parse name, date, datetime, etc. from a source string
-
-    source - could either be:
-              - a string with day only, e.g., YYYYMMDD
-              - a string with name and day, e.g., PX-20220127,
-              - a path to the data, e.g., /mnt/data/PX1000/2022/20220127
-    dig - dig deeper for the name if the source is a folder
-"""
+pattern_yyyy = re.compile(r"20\d{2}")
+pattern_yyyymmdd = re.compile(r"20\d{2}(0[0-9]|1[012])([0-2]\d|3[01])")
+pattern_x_yyyymmdd = re.compile(r"(?<=[-/])20\d{2}(0\d|1[012])([0-2]\d|3[01])")
 
 
 def params_from_source(source, dig=False):
+    """
+    Parse name, date, datetime, etc. from a source string
+
+    - source - could either be:
+        - a string with day only, e.g., YYYYMMDD
+        - a string with name and day, e.g., PX-20220127,
+        - a path to the data, e.g., /mnt/data/PX1000/2022/20220127
+    - dig - dig deeper for the name if the source is a folder
+    """
     myname = colorize("params_from_source()", "green")
     file = None
     name = None
@@ -64,15 +62,13 @@ def params_from_source(source, dig=False):
     date_range = None
     source_date = None
     source_datetime = None
-    # print(f"{myname}   source = {source}")
+    logger.debug(f"{myname}   {colored_variables(source, dig)}")
     if "*" == source[-1]:
         if "-" in source:
             name, query = source.split("-")
         else:
             query = source
-        v1 = color_name_value("name", name)
-        v2 = color_name_value("query", query)
-        logger.debug(f"{myname} {v1}   {v2}")
+        logger.debug(f"{myname}   {colored_variables(name, query)}")
         # Exactly *
         if len(query) == 1:
             date_range = [datetime.datetime(2000, 1, 1, tzinfo=tzinfo), datetime.datetime(2100, 1, 1, tzinfo=tzinfo)]
@@ -152,14 +148,12 @@ def params_from_source(source, dig=False):
     }
 
 
-"""
+def list_files(folder):
+    """
     List .txz or .tar.xz files in a folder
 
-    folder - path to list, e.g., /mnt/data/PX1000/2022/20220128
-"""
-
-
-def list_files(folder):
+    - folder - path to list, e.g., /mnt/data/PX1000/2022/20220128
+    """
     files = sorted(glob.glob(os.path.join(folder, "[A-Za-z0-9]*.txz")))
     if len(files) == 0:
         files = sorted(glob.glob(os.path.join(folder, "[A-Za-z0-9]*.tar.xz")))
@@ -172,6 +166,26 @@ def list_files(folder):
 
 
 def xz_folder(folder, **kwargs):
+    """
+    Inspects a folder with .xz archives and create Sweep entries for the database.
+
+    Parameters:
+    - `folder`: the folder with .xz archives, e.g., /mnt/data/PX1000/2022/20220128
+
+    Optional parameters:
+    - hour=0 - only insert files after this hour, e.g., hour=2
+    - skip=False - skip the folder if it already has the same number of entries
+    - single=True - do not use multiprocessing
+    - progress=True - show progress bar
+    - quick_insert=True - insert without checking for duplicates
+    - verbose=0 - verbosity level
+
+    """
+    import radar
+    import shutil
+
+    radar.set_logger(logger)
+
     hour = kwargs.get("hour", 0)
     skip = kwargs.get("skip", None)
     single = kwargs.get("single", False)
@@ -179,13 +193,13 @@ def xz_folder(folder, **kwargs):
     quick_insert = kwargs.get("quick_insert", False)
     verbose = kwargs.get("verbose", 0)
 
-    show = colorize("xz_folder()", "green")
-    show += "   " + color_name_value("folder", folder)
-    show += "   " + color_name_value("verbose", verbose)
-    show += "   " + color_name_value("quick_insert", quick_insert)
-    logger.info(show)
+    myname = colorize("xz_folder()", "green")
+    logger.info(f"{myname}   {colored_variables(folder, verbose, quick_insert)}")
 
     use_mp = "linux" in sys.platform and not single
+    if use_mp:
+        import multiprocessing
+
     basename = os.path.basename(folder)
     s = pattern_yyyymmdd.search(basename)
     if s:
@@ -215,7 +229,7 @@ def xz_folder(folder, **kwargs):
             return
 
     if d.count == len(raw_archives):
-        logger.warning(f"Files in {folder} == Day({basename}).count = {d.count:,}")
+        logger.info(f"Files in {folder} == Day({basename}).count = {d.count:,}")
         if skip is None:
             ans = input("Do you still want to continue (y/[n])? ")
             if not ans == "y":
@@ -261,6 +275,7 @@ def xz_folder(folder, **kwargs):
     symbols = " ".join(list(first["products"].keys()))
 
     def process_archives(id, run, queue, out):
+        setproctitle(f"{__prog__} # process_archives[{id}]")
         while run.value:
             try:
                 task = queue.get(False)
@@ -281,12 +296,11 @@ def xz_folder(folder, **kwargs):
             except:
                 tm.sleep(0.1)
                 pass
-        logger.debug(f"{id} done")
+        logger.debug(f"process_archives[{id:02}] done")
         return
 
     keys = []
     output = {}
-    indent = " " * logger.indent()
 
     # Extracting parameters of the archives
     desc = "Pass 1 / 2 - Scanning archives"
@@ -300,7 +314,7 @@ def xz_folder(folder, **kwargs):
         db_queue = multiprocessing.Queue()
         run = multiprocessing.Value("i", 1)
 
-        count = multiprocessing.cpu_count()
+        count = min(multiprocessing.cpu_count(), 12)
 
         processes = []
         for n in range(count):
@@ -308,7 +322,14 @@ def xz_folder(folder, **kwargs):
             processes.append(p)
             p.start()
 
-        for path in tqdm.tqdm(archives, desc=f"{indent}{desc}") if progress else archives:
+        def _dequeue_and_update():
+            while not db_queue.empty():
+                out = db_queue.get()
+                key = out["file"]
+                keys.append(key)
+                output[key] = out["info"]
+
+        for path in tqdm.tqdm(archives, desc=f"{log_indent}{desc}") if progress else archives:
             # Copy the file to ramdisk and queue the work after the file is copied
             basename = os.path.basename(path)
             if os.path.exists("/mnt/ramdisk"):
@@ -317,25 +338,17 @@ def xz_folder(folder, **kwargs):
                 ramfile = f"{basename}"
             shutil.copy(path, ramfile)
             task_queue.put({"archive": path, "ramfile": ramfile})
+            # Wait if the task queue is too long
             while task_queue.qsize() > 2 * count:
                 tm.sleep(0.1)
-            while not db_queue.empty():
-                out = db_queue.get()
-                key = out["file"]
-                keys.append(key)
-                output[key] = out["info"]
-
+            _dequeue_and_update()
+        # Wait for the tasks to finish
         while task_queue.qsize() > 0:
             tm.sleep(0.1)
         run.value = 0
         for p in processes:
             p.join()
-
-        while not db_queue.empty():
-            out = db_queue.get()
-            key = out["file"]
-            keys.append(key)
-            output[key] = out["info"]
+        _dequeue_and_update()
     else:
         for path in tqdm.tqdm(archives) if progress else archives:
             basename = os.path.basename(path)
@@ -354,75 +367,81 @@ def xz_folder(folder, **kwargs):
         pprint.pp(output)
 
     # Consolidating results
-    keys = sorted(keys)
-    entries = Sweep.objects.filter(time__range=time_range, name=name)
-    if len(entries) == 0:
-        logger.debug(f"No Swwep entries for {name} {time_range}. Overriding quick_insert = True ...")
-        quick_insert = True
+    if len(keys) == 0:
 
-    if quick_insert:
-
-        t = tm.time()
-        desc = "Pass 2 / 2 - Creating entries"
-        if not progress:
-            logger.info(f"{desc} ...")
-        creates = []
-        for key in tqdm.tqdm(keys, desc=f"{indent}{desc}") if progress else keys:
-            time, scan, path, tarinfo = output[key]
-            x = Sweep(time=time, name=name, kind=kind, scan=scan, path=path, symbols=symbols, tarinfo=tarinfo)
-            creates.append(x)
-        Sweep.objects.bulk_create(creates)
-        t = tm.time() - t
-        a = len(creates) / t
-        logger.info(f"Created {t:.2f} sec ({a:,.0f} files / sec)")
+        desc = "Pass 2 / 2 - No new entries. Skipping ..."
+        print(f"{log_indent}{desc}")
 
     else:
 
-        t = tm.time()
+        keys = sorted(keys)
         entries = Sweep.objects.filter(time__range=time_range, name=name)
-        desc = "Pass 2 / 2 - Gathering entries"
-        if not progress:
-            show = color_name_value("name", name)
-            logger.info(f"{desc} ... {show}")
-        creates = []
-        updates = []
-        count_ignore = 0
-        for key in tqdm.tqdm(keys, desc=f"{indent}{desc}") if progress else keys:
-            time, scan, path, tarinfo = output[key]
-            n = entries.filter(time=time)
-            if n:
-                x = n.first()
-                if x.scan != scan or x.path != path or x.symbols != symbols or x.tarinfo != tarinfo:
-                    mode = "U"
-                    x.kind = kind
-                    x.scan = scan
-                    x.path = path
-                    x.symbols = symbols
-                    x.tarinfo = tarinfo
-                    updates.append(x)
-                else:
-                    mode = "I"
-                    count_ignore += 1
-            else:
-                mode = "N"
+        if len(entries) == 0:
+            logger.debug(f"No Swwep entries for {name} {time_range}. Overriding quick_insert = True ...")
+            quick_insert = True
+
+        if quick_insert:
+
+            t = tm.time()
+            desc = "Pass 2 / 2 - Creating entries"
+            if not progress:
+                logger.info(f"{desc} ...")
+            creates = []
+            for key in tqdm.tqdm(keys, desc=f"{log_indent}{desc}") if progress else keys:
+                time, scan, path, tarinfo = output[key]
                 x = Sweep(time=time, name=name, kind=kind, scan=scan, path=path, symbols=symbols, tarinfo=tarinfo)
                 creates.append(x)
-            logger.debug(f"{mode} : {name} {time.strftime(r'%Y%m%d-%H%M%S')} @ {path}")
-        if len(creates):
             Sweep.objects.bulk_create(creates)
-        if len(updates):
-            Sweep.objects.bulk_update(
-                updates, ["time", "name", "kind", "scan", "path", "symbols", "tarinfo"], batch_size=1000
-            )
-        t = tm.time() - t
-        a = len(keys) / t
-        logger.info(
-            f"Updated {t:.2f} sec ({a:,.0f} files / sec)   c: {len(creates)}  u: {len(updates)}  i: {count_ignore}"
-        )
+            t = tm.time() - t
+            a = len(creates) / t
+            logger.info(f"Created {t:.2f} sec ({a:,.0f} files / sec)")
 
-    # Make a Day entry
-    day_str = parts["time"][:8]
-    build_day(f"{name}-{day_str}", bgor=True)
+        else:
+
+            t = tm.time()
+            entries = Sweep.objects.filter(time__range=time_range, name=name)
+            desc = "Pass 2 / 2 - Gathering entries"
+            if not progress:
+                logger.info(f"{desc} ... {colored_variables(name)}")
+            creates = []
+            updates = []
+            count_ignore = 0
+            for key in tqdm.tqdm(keys, desc=f"{log_indent}{desc}") if progress else keys:
+                time, scan, path, tarinfo = output[key]
+                n = entries.filter(time=time)
+                if n:
+                    x = n.first()
+                    if x.scan != scan or x.path != path or x.symbols != symbols or x.tarinfo != tarinfo:
+                        mode = "U"
+                        x.kind = kind
+                        x.scan = scan
+                        x.path = path
+                        x.symbols = symbols
+                        x.tarinfo = tarinfo
+                        updates.append(x)
+                    else:
+                        mode = "I"
+                        count_ignore += 1
+                else:
+                    mode = "N"
+                    x = Sweep(time=time, name=name, kind=kind, scan=scan, path=path, symbols=symbols, tarinfo=tarinfo)
+                    creates.append(x)
+                logger.debug(f"{mode} : {name} {time.strftime(r'%Y%m%d-%H%M%S')} @ {path}")
+            if len(creates):
+                Sweep.objects.bulk_create(creates)
+            if len(updates):
+                Sweep.objects.bulk_update(
+                    updates, ["time", "name", "kind", "scan", "path", "symbols", "tarinfo"], batch_size=1000
+                )
+            t = tm.time() - t
+            a = len(keys) / t
+            logger.info(
+                f"Updated {t:.2f} sec ({a:,.0f} files / sec)   c: {len(creates)}  u: {len(updates)}  i: {count_ignore}"
+            )
+
+        # Make a Day entry
+        day_str = parts["time"][:8]
+        build_day(f"{name}-{day_str}", bgor=True)
 
     e = tm.time() - e
     a = len(archives) / e
@@ -430,19 +449,16 @@ def xz_folder(folder, **kwargs):
     logger.info(f"Total elapsed time = {show} sec ({a:,.0f} files / sec)")
 
 
-"""
+def build_day(source, bgor=False, verbose=0):
+    """
     Build an entry to the Day table
 
-    source - common source pattern (see params_from_source())
-    bgor - compute the bgor values of the day
-"""
-
-
-def build_day(source, bgor=False, verbose=0):
+    - source - common source pattern (see params_from_source())
+    - bgor - compute the bgor values of the day
+    """
+    myname = colorize("build_day()", "green")
     if verbose:
-        show = colorize("build_day()", "green")
-        show += "   " + color_name_value("source", source)
-        logger.debug(show)
+        logger.debug(f"{myname}   {colored_variables(source, bgor)}")
 
     params = params_from_source(source, dig=True)
     name = params["name"]
@@ -474,8 +490,7 @@ def build_day(source, bgor=False, verbose=0):
         day = day.first()
     else:
         day = Day(date=date, name=name)
-        show = color_name_value("day", day.__repr__(format="short"))
-        logger.info(f"New {show}")
+    logger.info(f"{mode} {day}")
 
     total = 0
     counts = [0] * 24
@@ -499,7 +514,7 @@ def build_day(source, bgor=False, verbose=0):
 
     if day is not None and bgor:
         day.summarize()
-        logger.info(f"{mode} {day.__repr__()}")
+        logger.info(f"{mode} {day.strfday(format='full')}")
 
     tic = tm.time() - tic
 
@@ -509,17 +524,14 @@ def build_day(source, bgor=False, verbose=0):
     return day, mode
 
 
-"""
+def check_day(source, format=""):
+    """
     Check a Day entry from the database
 
-    source - common source pattern (see params_from_source())
-"""
-
-
-def check_day(source, format=""):
-    show = colorize("check_day()", "green")
-    show += "   " + color_name_value("source", source)
-    logger.info(show)
+    - source - common source pattern (see params_from_source())
+    """
+    myname = colorize("check_day()", "green")
+    logger.info(f"{myname}   {colored_variables(source)}")
     params = params_from_source(source)
     if params["name"] is None:
         # names = list(settings.RADARS.keys())
@@ -543,23 +555,21 @@ def check_day(source, format=""):
             continue
         for d in dd:
             ddd.append(d)
-            show = d.__repr__(format=format)
+            show = d.strfday(format=format)
             logger.info(f"R {show}")
     if len(ddd) == 0:
         logger.info(f"Day entry of {source} does not exist")
     return ddd
 
 
-"""
+def check_source(source, progress=True, remove=False):
+    """
     Check Sweep entries and verify existence of Sweep.path
 
-    source - common source pattern (see params_from_source())
-"""
-
-
-def check_source(source, progress=True, remove=False):
+    - source - common source pattern (see params_from_source())
+    """
     myname = colorize("check_source()", "green")
-    logger.info(f"{myname}   {color_name_value('source', source)}   {color_name_value('remove', remove)}")
+    logger.info(f"{myname}   {colored_variables(source, progress, remove)}")
     params = params_from_source(source, dig=True)
     print(params)
     if params["name"] is None or params["name"] == "*":
@@ -570,18 +580,16 @@ def check_source(source, progress=True, remove=False):
         logger.error("Unable to continue")
         pp.pprint(params)
 
-    indent = " " * logger.indent()
-
     for name in names:
         scans = Sweep.objects.filter(time__range=params["date_range"], name=name)
         count = scans.count()
-        logger.info(f"{myname} {color_name_value('name', name)}  {color_name_value('count', count)}")
+        logger.info(f"{myname}   {colored_variables(name, count)}")
         if count == 0:
             continue
         paths = []
         count = 0
         removed = 0
-        for scan in tqdm.tqdm(scans, desc=f"{indent}Screening paths ...") if progress else scans:
+        for scan in tqdm.tqdm(scans, desc=f"{log_indent}Screening paths ...") if progress else scans:
             if not os.path.exists(scan.path):
                 paths.append(scan.path)
                 count += 1
@@ -605,26 +613,19 @@ def check_source(source, progress=True, remove=False):
                 build_day(source, bgor=True)
 
 
-"""
-    Finds duplicate File entries
-
-    source - common source pattern (see params_from_source())
-    remove - remove duplicate entries (copy > 1) if set to True
-"""
-
-
 def find_duplicates(source, remove=False):
-    show = colorize("find_duplicates()", "green")
-    show += "   " + color_name_value("source", source)
-    show += "   " + color_name_value("remove", remove)
-    logger.info(show)
+    """
+    Finds duplicate Sweep entries
+
+    - source - common source pattern (see params_from_source())
+    - remove - remove duplicate entries (copy > 1) if set to True
+    """
+    myname = colorize("find_duplicates()", "green")
+    logger.info(f"{myname}   {colored_variables(source, remove)}")
     params = params_from_source(source)
     date_range = params["date_range"]
     name = params["name"]
-
-    show = colorize("date_range", "orange") + colorize(" = ", "red")
-    show += "[" + colorize(date_range[0], "yellow") + ", " + colorize(date_range[1], "yellow") + "]"
-    logger.info(show)
+    logger.info(f"{myname}   {colored_variables(date_range, name)}")
 
     if name:
         entries = Sweep.objects.filter(time__range=date_range, name=name)
@@ -635,11 +636,9 @@ def find_duplicates(source, remove=False):
         logger.info("No match")
         return
 
-    indent = " " * logger.indent()
-
     count = 0
     removed = 0
-    for file in tqdm.tqdm(files, desc=f"{indent}Checking duplicates"):
+    for file in tqdm.tqdm(files, desc=f"{log_indent}Checking duplicates"):
         if files.count(file) == 1:
             continue
         count += 1
@@ -657,79 +656,66 @@ def find_duplicates(source, remove=False):
         logger.info(f"Removed {removed} files")
 
 
-"""
-    Check for latest entries from each radar
-"""
-
-
 def check_latest(source=[], markdown=False):
-    show = colorize("check_latest()", "green")
-    logger.info(show)
-    # if len(source):
-    #     names = [params_from_source(name)["prefix"] for name in source]
-    # else:
-    #     # names = settings.RADARS.keys()
-    #     names = [item["prefix"] for item in settings.RADARS.values()]
-    pathways = [item["pathway"] for item in settings.RADARS.values()]
+    """
+    Check for latest entries from each radar
+    """
+    myname = colorize("check_latest()", "green")
+    logger.info(f"{myname}   {colored_variables(source, markdown)}")
+    pathways = [k for k, v in settings.RADARS.items() if v["prefix"] in source]
+    logger.debug(f"{myname}   {source} -> {pathways}")
     message = "| Radars | Latest Scan | Age |\n|---|---|---|\n"
     for pathway in pathways:
         prefix = settings.RADARS[pathway]["prefix"]
         day = Day.objects.filter(name=prefix)
-        if day.count() == 0:
+        if not day:
             continue
         day = day.latest("date")
-        last = day.latest_datetime_range
-        sweep = Sweep.objects.filter(name=prefix, time__range=last).latest("time")
-        show = colorize("last", "orange") + colorize(" = ", "red")
-        show += "[" + colorize(last[0], "yellow") + ", " + colorize(last[1], "yellow") + "]"
-        show += "   " + color_name_value("name", sweep.path)
-        # folder = settings.RADARS[name]["pathway"]
+        latest = day.latest_datetime_range
+        sweep = Sweep.objects.filter(name=prefix, time__range=latest).latest("time")
         folder = settings.RADARS[pathway]["folder"]
-        filename = re.sub("-([a-zA-Z]+).nc", "", sweep.path)
-        # age = sweep.age()
-        age = "to be implemented"
-        ages = ""
+        logger.info(f"{myname}   {colored_variables(latest)}")
+        logger.info(f"{myname}   {colored_variables(sweep.path)}")
+        age = sweep.age
+        age_str = ""
         if age.days > 0:
             s = "s" if age.days > 1 else ""
-            ages += f"{age.days} day{s} "
+            age_str += f"{age.days} day{s} "
         hours = age.seconds // 3600
         if hours > 0:
             s = "s" if hours > 1 else ""
-            ages += f"{hours} hour{s} "
+            age_str += f"{hours} hour{s} "
         mins = (age.seconds - 3600 * hours) // 60
         s = "s" if mins > 1 else ""
-        ages += f"{mins} min{s}"
-        message += f"{folder} | {filename} | {ages} |\n"
-        logger.info(show)
+        age_str += f"{mins} min{s}"
+        logger.info(f"{myname}   {colored_variables(age_str)}")
+        message += f"{folder} | {sweep.path} | {age_str} |\n"
+        # logger.info(show)
     if markdown:
         print(message)
     return message
 
 
-"""
-    Show sweep summary
-
-    source - name in either one of the following forms:
-              - [PREFIX]-YYYYMMDD-hhmm
-              - [PREFIX]
-
-             e.g., 'RAXPOL'
-                   'PX-20130520-191000-E2.6'
-"""
-
-
 def show_sweep_summary(source, markdown=False):
-    show = colorize("show_sweep_summary()", "green")
-    show += "   " + color_name_value("source", source)
-    logger.info(show)
+    """Show sweep summary.
+
+    - source (str): name in either one of the following forms:
+        - [PREFIX]-YYYYMMDD-hhmm
+        - [PREFIX]
+    - markdown (bool, optional): Defaults to False.
+
+    """
+    myname = colorize("show_sweep_summary()", "green")
+    logger.info(f"{myname}   {colored_variables(source, markdown)}")
     c = source.split("-")
     name = c[0]
     if len(c) >= 2:
-        date = datetime.datetime.strptime(c[1] + c[2], r"%Y%m%d%H%M%S").replace(tzinfo=tzinfo)
-        o = Sweep.objects.filter(date=date, name=name).last()
+        t = datetime.datetime.strptime(c[1] + c[2], r"%Y%m%d%H%M%S").replace(tzinfo=tzinfo)
+        o = Sweep.objects.filter(time=t, name=name).last()
     else:
         logger.info(f"Retrieving last entry with name = {name} ...")
-        o = Sweep.objects.filter(name=name).last()
+        d = Day.objects.filter(name=name).last()
+        o = Sweep.objects.filter(time__range=d.latest_datetime_range, name=name).last()
     if o:
         logger.debug(o.__repr__())
         o.summary(markdown=markdown)
@@ -737,18 +723,15 @@ def show_sweep_summary(source, markdown=False):
         logger.info(f"No entry found for {source}")
 
 
-"""
-    Shows visitor summary, something like:
-
-| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |
-| --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |
-| 75.111.159.35   |       13,836,684 |        1,361,384 |        42 |       macOS / Chrome | 2022/07/22 | Texas, United States           |
-| 186.221.73.23   |    1,380,023,303 |      151,369,900 |     3,797 |       Linux / Chrome | 2022/07/22 | Goiás, Brazil                  |
-| 174.109.29.230  |    1,413,313,725 |      281,190,422 |    14,658 |  Windows 10 / Chrome | 2022/07/22 | North Carolina, United States  |
-"""
-
-
 def show_visitor_log(markdown=False, show_city=False, recent=0):
+    """Shows visitor summary, something like:
+
+    | IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |
+    | --------------- |----------------- |----------------- | --------- | -------------------- | ---------- | ------------------------------ |
+    | 75.111.159.35   |       13,836,684 |        1,361,384 |        42 |       macOS / Chrome | 2022/07/22 | Texas, United States           |
+    | 186.221.73.23   |    1,380,023,303 |      151,369,900 |     3,797 |       Linux / Chrome | 2022/07/22 | Goiás, Brazil                  |
+    | 174.109.29.230  |    1,413,313,725 |      281,190,422 |    14,658 |  Windows 10 / Chrome | 2022/07/22 | North Carolina, United States  |
+    """
     print(
         "| IP Address      |      Payload (B) |    Bandwidth (B) |     Count |         OS / Browser | Last Visit | Location                       |"
     )
@@ -779,15 +762,12 @@ def show_visitor_log(markdown=False, show_city=False, recent=0):
         show_visitor(visitor, markdown=markdown)
 
 
-"""
+def update_visitors(verbose=0):
+    """
     Update Visitor table
-"""
-
-
-def update_visitors(verbose=1):
-    show = colorize("update_visitors()", "green")
-    show += "   " + color_name_value("verbose", verbose)
-    logger.info(show)
+    """
+    myname = colorize("update_visitors()", "green")
+    logger.info(f"{myname}  {colored_variables(verbose)}")
 
     visitors = {}
     uu = re.compile(r"(/data/load|/data/list)")
@@ -945,10 +925,10 @@ def dbtool_main():
             {__prog__} -i --skip --progress /mnt/data/PX1000/2022/2022*
             {__prog__} -i --no-skip --progress /mnt/data/PX1000/2022/202206*
             {__prog__} -l
-            {__prog__} -l RAXPOL-
-            {__prog__} -l RAXPOL- PX-
+            {__prog__} -l RAXPOL
+            {__prog__} -l RAXPOL PX
             {__prog__} -s
-            {__prog__} -s RAXPOL-
+            {__prog__} -s RAXPOL
             {__prog__} -s PX-20130520-191000
             {__prog__} -f 20220225
             {__prog__} -f RAXPOL-20220225
@@ -1004,14 +984,9 @@ def dbtool_main():
     parser.add_argument("-z", dest="test", action="store_true", help="dev")
     args = parser.parse_args()
 
-    if args.quiet:
-        args.verbose = 0
-        logger.hideLogOnScreen()
-    elif args.verbose:
-        logger.showLogOnScreen()
-        if args.verbose > 1:
-            logger.setLevel(dailylog.logging.DEBUG)
-            logger.streamHandler.setLevel(dailylog.logging.DEBUG)
+    # Set logger level to INFO by default
+    level = logging.DEBUG if args.verbose > 1 else logging.WARNING if args.quiet else logging.INFO
+    logging.basicConfig(format=log_format, level=level)
 
     if args.check_day:
         if len(args.source) == 0:
@@ -1073,7 +1048,7 @@ def dbtool_main():
                 )
             )
             return
-        logger.info(f"Finding duplicates ...")
+        logger.info("Finding duplicates ...")
         for folder in args.source:
             find_duplicates(folder, remove=args.remove)
     elif args.insert:
@@ -1115,7 +1090,7 @@ def dbtool_main():
     elif args.last:
         logger.info("Retrieving the absolute last entry ...")
         o = Sweep.objects.last()
-        logger.info(o.__repr__())
+        logger.info(o)
     elif args.latest:
         if args.markdown:
             logger.hideLogOnScreen()
@@ -1139,10 +1114,8 @@ def dbtool_main():
         params = params_from_source("RAXPOL-202202*")
         pp.pprint(params)
     elif args.update:
-        update_visitors(verbose=args.verbose)
+        update_visitors(verbose=0 if args.quiet else args.verbose)
     elif args.visitor:
-        if args.markdown:
-            logger.hideLogOnScreen()
         show_visitor_log(markdown=args.markdown, show_city=args.show_city, recent=0 if args.all else args.recent)
     elif args.check_path:
         for folder in args.source:

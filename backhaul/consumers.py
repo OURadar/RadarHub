@@ -54,7 +54,7 @@ from channels.layers import get_channel_layer
 from channels.consumer import AsyncConsumer
 
 from reporter.enums import RadarHubType
-from common import colorize, color_name_value, byte_string, pretty_object_name
+from common import colorize, byte_string, pretty_object_name
 
 logger = logging.getLogger("backhaul")
 
@@ -518,10 +518,10 @@ class Backhaul(AsyncConsumer):
         assert event.keys() >= {"pathway", "channel"}, f"{myname} incomplete input {event}"
         pathway = event["pathway"]
         channel = event["channel"]
-        myname += " " + pretty_object_name("", pathway, channel[-8:])
+        myname = "Backhaul.radarGreet" + pretty_object_name("_", pathway, channel[-8:])
         # A message can still come through during rejectRadar, so check again
         if pathway not in pathwayRegistry or channel != pathwayRegistry[pathway]["channel"]:
-            existing = pretty_object_name("", pathway, pathwayRegistry.get(pathway, {}).get("channel", "-")[-8:])
+            existing = pretty_object_name("_", pathway, pathwayRegistry.get(pathway, {}).get("channel", "-")[-8:])
             logger.debug(f"{myname} expected {existing}, discarding ...")
             return
         # Launch a run loop for this pathway

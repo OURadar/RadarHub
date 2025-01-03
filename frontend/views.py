@@ -1,29 +1,25 @@
 import logging
+import django.http
 
-from django.shortcuts import render
-from django.http import Http404, HttpResponse
 from django.conf import settings
-from django.views.decorators.http import require_GET
 from django.contrib.auth import get_user
+from django.views.decorators.http import require_GET
+from django.shortcuts import render
 
-from common import colorize, color_name_value, get_client_ip
+from common import colorize, colored_variables, get_client_ip
 from .archives import location
 
 logger = logging.getLogger("frontend")
-
 default_pathway = list(settings.RADARS.keys())[0]
 
 if settings.DEBUG:
     show = (
-        color_name_value("settings.CODE_HASH", settings.CODE_HASH)
-        + "\n"
-        + color_name_value("settings.CSS_HASH", settings.CSS_HASH)
-        + "\n"
-        + color_name_value("settings.VERSION", settings.VERSION)
-        + "\n"
-        + color_name_value("settings.BRANCH", settings.BRANCH)
-        + "\n"
-        + color_name_value("default_pathway", default_pathway)
+        f"{colored_variables(settings.CODE_HASH)}\n"
+        + f"{colored_variables(settings.CSS_HASH)}\n"
+        + f"{colored_variables(settings.VERSION)}\n"
+        + f"{colored_variables(settings.BRANCH)}\n"
+        + f"{colored_variables(settings.ENTRIES)}\n"
+        + f"{colored_variables(default_pathway)}\n"
     )
     logger.debug(show)
 
@@ -31,30 +27,29 @@ if settings.DEBUG:
 
 
 def make_vars(request, pathway=default_pathway):
-    if pathway not in settings.RADARS:
-        logger.warning(f"Pathway {pathway} not in settings.RADARS. Not registered.")
-        raise Http404
+    """
+    Make the variables for the context dictionary.
+
+    That way, some of the variables are available in the templates.
+    """
     user = get_user(request)
-    try:
-        email = user.email
-    except:
-        email = None
-    origin = location(pathway)
-    output = {
-        "ip": get_client_ip(request),
-        "user": email,
-        "css_hash": settings.CSS_HASH,
-        "code_hash": settings.CODE_HASH,
-        "version": settings.VERSION,
-        "branch": settings.BRANCH,
-        "origin": origin,
-        "pathway": pathway,
-        "name": settings.RADARS[pathway]["name"],
-    }
     if request.path == "/" or request.path == "/index.html":
         pathways_to_exclude = ["px10k", "demo"]
         radars_to_show = {p: i["name"] for p, i in settings.RADARS.items() if p not in pathways_to_exclude}
-        output["radars"] = radars_to_show
+    else:
+        radars_to_show = []
+    output = {
+        "pathway": pathway,
+        "name": settings.RADARS.get(pathway, {}).get("name", ""),
+        "user": user.email if user.is_authenticated else None,
+        "ip": get_client_ip(request),
+        "version": settings.VERSION,
+        "branch": settings.BRANCH,
+        "css_hash": settings.CSS_HASH,
+        "code_hash": settings.CODE_HASH,
+        "origin": location(pathway) if pathway in settings.RADARS else None,
+        "radars": radars_to_show,
+    }
     return output
 
 
@@ -62,6 +57,9 @@ def make_vars(request, pathway=default_pathway):
 
 
 def index(request):
+    """
+    Some variables are necessary to repeat
+    """
     vars = make_vars(request)
     context = {
         "vars": vars,
@@ -73,65 +71,31 @@ def index(request):
     return render(request, "frontend/index.html", context)
 
 
-def develop(request, pathway):
-    vars = make_vars(request, pathway)
-    context = {
-        "vars": vars,
-        "css": settings.CSS_HASH,
-        "code": settings.CODE_HASH,
-        "branch": settings.BRANCH,
-        "version": settings.VERSION,
-    }
-    return render(request, "frontend/develop.html", context)
-
-
 # Main
+# TODO: Update templates to use new "vars" dictionary
 
 
 def main(request, entry="archive", pathway=default_pathway, **kwargs):
+    myname = colorize("views.main()", "green")
     vars = make_vars(request, pathway)
-    show = colorize("views.main()", "green")
-    show += "   " + color_name_value("entry", entry)
-    show += "   " + color_name_value("pathway", pathway)
-    show += "   " + color_name_value("user", vars.get("user", "anon"))
-    show += "   " + color_name_value("ip", vars.get("ip", "unknown"))
     if pathway not in settings.RADARS:
-        raise Http404
+        return page404(request, None)
+    if entry not in settings.ENTRIES:
+        return page404(request, None)
     if kwargs.get("profileGL", False):
         vars["profileGL"] = True
-        show += "   " + color_name_value("profileGL", True)
-    logger.info(show)
+    ip = vars.get("ip", "-")
+    user = vars.get("user", "anon")
+    logger.info(f"{myname} {colored_variables(entry, pathway, user, ip)}")
     context = {"entry": entry, "vars": vars, "css": settings.CSS_HASH}
     return render(request, f"frontend/single.html", context)
 
 
-# Archive
-
-
-def _archive(request, pathway, profileGL=False):
-    vars = make_vars(request, pathway)
-    show = colorize("views.archive()", "green")
-    show += "   " + color_name_value("pathway", pathway)
-    show += "   " + color_name_value("ip", vars["ip"])
-    show += "   " + color_name_value("user", vars["user"])
-    if settings.DEBUG and settings.VERBOSE:
-        show += "   " + color_name_value("profileGL", profileGL)
-    logger.info(show)
-    if pathway not in settings.RADARS:
-        raise Http404
-    if profileGL:
-        vars["profileGL"] = True
-    context = {"vars": vars, "css": settings.CSS_HASH}
-    return render(request, "frontend/archive.html", context)
-
-
 def archive(request, pathway):
-    # return _archive(request, "archive", pathway, False)
     return main(request, "archive", pathway)
 
 
 def archive_profile(request):
-    # return _archive(request, "archive", default_pathway, True)
     return main(request, "archive", profileGL=True)
 
 
@@ -140,13 +104,15 @@ def archive_profile(request):
 
 @require_GET
 def robots_txt(request):
+    logger.info(f"robots.txt from {get_client_ip(request)}")
     lines = [
         "User-Agent: *",
         "Disallow: /archive/",
         "Disallow: /control/",
         "Disallow: /data/",
     ]
-    return HttpResponse("\n".join(lines), content_type="text/plain")
+    content = "\n".join(lines)
+    return django.http.HttpResponse(content, content_type="text/plain")
 
 
 def view(request, page):
@@ -155,15 +121,21 @@ def view(request, page):
 
 
 def page400(request, exception):
+    if settings.VERBOSE > 1 and exception:
+        logger.error(f"404: {exception}")
     context = {"css": settings.CSS_HASH}
     return render(request, f"400.html", context, status=400)
 
 
 def page403(request, exception):
+    if settings.VERBOSE > 1 and exception:
+        logger.error(f"404: {exception}")
     context = {"css": settings.CSS_HASH}
     return render(request, f"403.html", context, status=403)
 
 
 def page404(request, exception):
+    if settings.VERBOSE > 1 and exception:
+        logger.error(f"404: {exception}")
     context = {"css": settings.CSS_HASH}
     return render(request, f"404.html", context, status=404)

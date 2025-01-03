@@ -25,15 +25,29 @@ if [ -z "${BLIB_HOME}" ]; then BLIB_HOME="${HOME}/Developer/blib-sh"; fi; . ${BL
 home_log="${HOME}/logs"
 var_log="/var/log/radarhub"
 
+function view() {
+	file=${1}
+	count=${2}
+	if [[ -f ${file} && $(stat -c %s ${file}) -gt 0 ]]; then
+		echo -e "\033[4;38;5;45m${file}\033[m"
+		tail -n ${count} ${file}
+		echo
+	elif [ -f ${file}.1.gz ]; then
+		echo -e "\033[4;38;5;45m${file}.1.gz\033[m"
+		zcat ${file}.1.gz | tail -n ${count}
+		echo
+	fi
+}
+
 function overview() {
 	clear
 
 	check_user_process radarhub python dgen fifoshare fiforead fifo2db ldm | textout "Processes" seagreen
 
-	if [ -f /lib/systemd/system/redis-server.service ]; then
-		echo
-		systemctl status redis --no-pager --lines 0
-	fi
+#	if [ -f /lib/systemd/system/redis-server.service ]; then
+#		echo
+#		systemctl status redis --no-pager --lines 0
+#	fi
 
 	if [ -f /lib/systemd/system/supervisor.service ]; then
 		echo
@@ -44,13 +58,13 @@ function overview() {
 
 	if [[ "${DJANGO_DEBUG}" == "true" && -d "${home_log}" ]]; then
 		# Logs through common.dailylog with dailyfile = True
-		folder="${HOME}/logs"
-		file=$(ls -t ${folder}/fifo2db-* 2>/dev/null | sort | tail -n 1)
-		if [ ! -z "${file}" ]; then
-			echo -e "\033[1;4;38;5;45m${file}\033[m"
-			tail -n 10 ${file}
-			echo
-		fi
+		# folder="${HOME}/logs"
+		# file=$(ls -t ${folder}/fifo2db-* 2>/dev/null | sort | tail -n 1)
+		# if [ ! -z "${file}" ]; then
+		# 	echo -e "\033[1;4;38;5;45m${file}\033[m"
+		# 	tail -n 10 ${file}
+		# 	echo
+		# fi
 		file=$(ls -t ${folder}/dbtool-* 2>/dev/null | sort | tail -n 1)
 		if [ ! -z "${file}" ]; then
 			echo -e "\033[1;4;38;5;45m${file}\033[m"
@@ -58,59 +72,13 @@ function overview() {
 			echo
 		fi
 	elif [ -d "${var_log}" ]; then
-		# Supervisord logging
-		folder=${var_log}
-		file="${folder}/frontend.log"
-		if [ -f ${file} ]; then
-			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 7 ${file}
-			echo
-		fi
-		file="${folder}/backhaul.log"
-		if [ -f ${file} ]; then
-			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 7 ${file}
-			echo
-		fi
-		# file="${folder}/access.log"
-		# file="/var/log/nginx/access.log"
-		# if [ -f ${file} ]; then
-		# 	echo -e "\033[4;38;5;45m${file}\033[m"
-		# 	tail -n 7 ${file} | logparse.py
-		# 	echo
-		# fi
-		file="${folder}/fifo2db.log"
-		if [[ -f ${file} && $(stat -c %s ${file}) -gt 0 ]]; then
-			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 7 ${file}
-			echo
-		elif [ -f ${file}.1.gz ]; then
-			echo -e "\033[4;38;5;45m${file}.1.gz\033[m"
-			zcat ${file}.1.gz | tail -n 7
-			echo
-		fi
-		file="${folder}/dbtool.log"
-		if [[ -f ${file} && $(stat -c %s ${file}) -gt 0 ]]; then
-			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 7 ${file}
-			echo
-		elif [ -f ${file}.1.gz ]; then
-			echo -e "\033[4;38;5;45m${file}.1.gz\033[m"
-			zcat ${file}.1.gz | tail -n 7
-			echo
-		fi
+		view /var/log/radarhub/frontend.log 7
+		view /var/log/radarhub/backhaul.log 7
+		view /var/log/radarhub/dbtool.log 7
 	fi
-	# Show cleanup log
-	file="/var/log/radarhub/cleanup.log"
-	if [[ -f ${file} && $(stat -c %s ${file}) -gt 0 ]]; then
-			echo -e "\033[4;38;5;45m${file}\033[m"
-			tail -n 7 ${file}
-			echo
-	elif [ -f ${file}.1.gz ]; then
-			echo -e "\033[4;38;5;45m${file}.1.gz\033[m"
-			zcat ${file}.1.gz | tail -n 7
-			echo
-	fi
+	view /var/log/radarhub/fifo2db.log 7
+	view /var/log/radarhub/datashop.log 7
+	view /var/log/radarhub/cleanup.log 7
 }
 
 function follow() {

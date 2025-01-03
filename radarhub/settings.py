@@ -11,12 +11,14 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
+import re
 import glob
 import json
+import hashlib
 
 from pathlib import Path
 
-from common import color_name_value
+from common import colored_variables
 
 VERBOSE = 2
 SIMULATE = False
@@ -44,12 +46,6 @@ RECEPTION_DIR = BASE_DIR / "reception"
 DATABASE_DIR = BASE_DIR / "database"
 LOG_DIR = os.path.expanduser("~/logs") if DEBUG else "/var/log/radarhub"
 
-if VERBOSE > 1:
-    show = color_name_value("BASE_DIR", str(BASE_DIR)) + "\n"
-    show += color_name_value("CONFIG_DIR", str(CONFIG_DIR)) + "\n"
-    show += color_name_value("FRONTEND_DIR", str(FRONTEND_DIR)) + "\n"
-    show += color_name_value("LOG_DIR", LOG_DIR)
-    print(show)
 
 if not os.path.isdir(LOG_DIR):
     print(f"Creating directory {LOG_DIR} ...")
@@ -57,11 +53,7 @@ if not os.path.isdir(LOG_DIR):
 
 # User settings
 file = CONFIG_DIR / "settings.json"
-if os.path.exists(file):
-    with open(file) as fid:
-        settings = json.load(fid)
-else:
-    settings = {}
+settings = json.load(open(file, "r")) if os.path.exists(file) else {}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -155,10 +147,6 @@ DATABASES = {
 }
 
 if "database" in settings:
-    if VERBOSE > 1:
-        show = color_name_value("user", settings["database"]["user"])
-        show += "   " + color_name_value("pass", settings["database"]["pass"])
-        print(show)
     DATABASES["data"] = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "radarhub",
@@ -176,18 +164,10 @@ DATABASE_ROUTERS = ["radarhub.dbrouter.DbRouter"]
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 
@@ -260,10 +240,10 @@ if "radars" in settings:
 # FIFO = { 'tcp': '_IP_ADDRESS_:_PORT_' } or { 'pipe': '/tmp/radarhub.fifo' }
 FIFO = settings.get("fifo", {"pipe", "/tmp/radarhub.fifo"})
 
-# PRODUCER source
+# DATASHOP source
 #
-# PRODUCER = "localhost" or another IP address, e.g., "10.197.14.52"
-PRODUCER = settings.get("producer", "localhost")
+# DATASHOP = "localhost" or another IP address, e.g., "10.197.14.52"
+DATASHOP = settings.get("datashop", "localhost")
 
 # Prevent HttpResponse 301 for permanent forwards
 # APPEND_SLASH = False
@@ -285,16 +265,6 @@ LOGGING = {
         },
     },
 }
-
-# Miscellaneous Small Databases
-# https://db-ip.com/db/download/ip-to-city-lite
-#
-# User Agent Strings
-# http://www.useragentstring.com
-
-IP_DATABASE = BASE_DIR / "dbip-city-lite-2024-06.mmdb"
-
-USER_AGENT_TABLE = BASE_DIR / "user-agent-strings.json"
 
 #
 
@@ -349,17 +319,30 @@ WEBPACK_LOADER = {
 
 # CSS / JS Hash
 
-text = ""
-for file in sorted(glob.glob("frontend/static/css/*.css")):
-    with open(file) as fid:
-        lines = fid.readlines()
-        text += "".join(lines)
-x = hash(text)
-CSS_HASH = f"{x:08x}"[-8:]
-for file in sorted(glob.glob("frontend/src/components/*.js")):
-    with open(file) as fid:
-        lines = fid.readlines()
-        text += "".join(lines)
-x = hash(text)
-CODE_HASH = f"{x:08x}"[-8:]
-del x
+
+def hashFiles(files):
+    content = "".join(open(file).read() for file in sorted(files)).encode()
+    return hashlib.sha256(content).hexdigest()[-8:]
+
+
+CSS_HASH = hashFiles(glob.glob(os.path.join(FRONTEND_DIR / "static/css", "*.css")))
+
+CODE_HASH = hashFiles(glob.glob(os.path.join(FRONTEND_DIR / "src/components", "*.js*")))
+
+
+# Webpack entries
+
+
+def getWebpackEntries(file):
+    if os.path.exists(file):
+        text = " ".join([line.strip() for line in open(file).readlines()])
+        return re.findall(r"(?<=\s)[a-z]*(?=:\s\{\simport)", text)
+    return ["index"]
+
+
+ENTRIES = getWebpackEntries(FRONTEND_DIR / "webpack.config.js")
+
+if VERBOSE > 1 and DEBUG:
+    print(colored_variables(BASE_DIR, CONFIG_DIR, FRONTEND_DIR, LOG_DIR, sep="\n"))
+    print(colored_variables(settings["database"]["user"], settings["database"]["pass"], sep="\n"))
+    print(colored_variables(CSS_HASH, CODE_HASH, ENTRIES, sep="\n"))

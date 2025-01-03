@@ -4,10 +4,9 @@
     "user": "radarhub",
     "pass": "_radarhub_password_"
   },
-  "fifo": {
-    "tcp": "10.197.14.52:9000"
-  },
+  "fifo": { "tcp": "10.197.14.52:9000" },
   "host": "radarhub.arrc.ou.edu",
+  "datashop": "10.197.14.52",
   "radars": {
     "px1000": {
       "name": "PX-1000",

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 #  fifo2db.py
 #  Create Sweep entries from fifoshare to the database
@@ -18,6 +16,7 @@ import django
 import select
 import signal
 import socket
+import logging
 import argparse
 import datetime
 import textwrap
@@ -27,25 +26,28 @@ import time as tm
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "radarhub.settings")
 django.setup()
 
-import dbtool
+from dbtool import build_day, xz_folder
 
 from django.conf import settings
 from frontend.models import Sweep, Day
-from common import colorize, color_name_value, dailylog
-from common import check, ignore, missing, processed
+from common import colorize, colored_variables
+from common import check, ignore, missing, processed, log_format
 
-__prog__ = os.path.basename(sys.argv[0])
+__prog__ = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
 keepReading = True
 tzinfo = datetime.timezone.utc
 radars = settings.RADARS.copy()
 # print(radars)
 
-logger = dailylog.Logger(os.path.splitext(__prog__)[0], home=settings.LOG_DIR, dailyfile=settings.DEBUG)
+logger = logging.getLogger(__prog__)
+
 # Populate other keys as local parameters
 for item in radars.values():
     item["step"] = 0
     item["count"] = 0
+
+datashop = radar.product.Client(n=1, host="localhost", port=50000)
 
 
 def signalHandler(sig, frame):
@@ -83,51 +85,20 @@ def proper(file, root="/mnt/data", verbose=0):
     return filename
 
 
-def catchupV1(file, root="/mnt/data"):
-    logger.info(colorize("catchup()", "green"))
-    logger.info(color_name_value("file", file))
-    basename = os.path.basename(file)
-    c = basename.split("-")
-    d = c[1]
-    prefix = c[0] + "-"
-    if not Day.objects.filter(name=prefix).exists():
-        return
-    day = Day.objects.filter(name=prefix).latest("date")
-    hour = day.last_hour
-    if prefix in radars:
-        sub = radars[prefix]["pathway"]
-        folder = f"{root}/{sub}"
-    else:
-        logger.warning(f"Radar {prefix} not recognized.")
-        return
-
-    date = day.date
-    stride = datetime.timedelta(days=1)
-    filedate = datetime.date(int(d[0:4]), int(d[4:6]), int(d[6:8]))
-    while date <= filedate:
-        dayTree = date.strftime(r"%Y/%Y%m%d")
-        dayFolder = f"{folder}/{dayTree}"
-        logger.info(color_name_value("pathway", dayFolder) + "   " + color_name_value("hour", hour))
-        dbtool.xz_folder(dayFolder, hour=hour, skip=True)
-        date += stride
-        hour = 0
-
-
 def catchup(root="/mnt/data"):
     global radars
-    logger.info(colorize("catchup()", "green"))
+    myname = colorize("catchup()", "green")
     for item in radars.values():
         prefix = item["prefix"]
         folder = f"{root}/{item['folder']}"
-        show = color_name_value("prefix", prefix)
-        show += "  " + color_name_value("folder", folder)
+        show = f"{myname}   {colored_variables(prefix, folder)}"
         if not Day.objects.filter(name=prefix).exists():
             logger.info(f"{show}   {check}")
             continue
         elif not os.path.isdir(folder):
             logger.info(f"{show}   {missing}")
             continue
-        logger.info(show)
+        logger.info(f"{show}   {processed}")
         folderYear = sorted(glob.glob(f"{folder}/20[0-9][0-9]"))[-1]
         year = os.path.basename(folderYear)
         path = f"{folderYear}/{year}[012][0-9][0-3][0-9]"
@@ -155,17 +126,15 @@ def catchup(root="/mnt/data"):
         while date <= filedate:
             dayTree = date.strftime(r"%Y/%Y%m%d")
             dayFolder = f"{folder}/{dayTree}"
-            folderInfo = color_name_value("folder", dayFolder)
-            hourInfo = color_name_value("hour", hour)
-            logger.info(f"{folderInfo}   {hourInfo}")
-            dbtool.xz_folder(dayFolder, hour=hour, skip=True)
+            logger.info(f"{myname}   {colored_variables(folder, hour)}")
+            xz_folder(dayFolder, hour=hour, skip=True)
             date += stride
             hour = 0
         item["count"] += 1
         minute = int(c[2][2:4])
         step = minute // 20
         item["step"] = 0 if step == 2 else step + 1
-        if logger.level > dailylog.logging.WARNING:
+        if logger.level > logging.WARNING:
             print("")
 
 
@@ -195,7 +164,8 @@ def process(source):
     if sweep:
         logger.debug(f"Sweep {name}-{time} exists.")
         return
-    data, tarinfo = radar.read(file, want_tarinfo=True)
+    # data, tarinfo = radar.read(file, want_tarinfo=True)
+    data, tarinfo = datashop.get(file, want_tarinfo=True)
     if data is None:
         logger.error(f"Failed opening file {file}")
         return
@@ -203,7 +173,8 @@ def process(source):
         tarinfo = {}
     kind = data["kind"]
     scan = parts["scan"]
-    symbols = list(data["products"].keys())
+    # symbols = list(data["products"].keys())
+    symbols = " ".join(list(data["products"].keys()))
     sweep = Sweep(time=time, name=name, kind=kind, scan=scan, symbols=symbols, path=file, tarinfo=tarinfo)
     sweep.save()
     logger.info(f"{colorize(source, 43)} {processed}")
@@ -216,14 +187,15 @@ def process(source):
         if item["step"] == step:
             item["step"] = 0 if step == 2 else item["step"] + 1
             bgor = True
-    day, mode = dbtool.build_day(f"{name}-{time.strftime(r'%Y%m%d')}", bgor=bgor)
+    day, mode = build_day(f"{name}-{time.strftime(r'%Y%m%d')}", bgor=bgor)
     u = "+" if bgor else ""
     logger.info(f"{mode} {day.__repr__()}{u}")
 
 
-def listen(host="10.197.14.59", port=9000):
-    if not isinstance(port, int):
-        port = int(port)
+def listen(host="10.197.14.59", port: int = 9000):
+    myname = colorize("listen()", "green")
+    logger.info(f"{myname}   {colored_variables(host, port)}")
+
     global keepReading
     keepReading = True
     while keepReading:
@@ -250,7 +222,6 @@ def listen(host="10.197.14.59", port=9000):
             # Check if the socket is ready to read
             readyToRead, _, selectError = select.select([sock], [], [sock], 0.1)
             if selectError:
-                # logger.warning('Error in select() {}'.format(selectError))
                 logger.error(f"Error in select() {selectError}")
                 break
             elif readyToRead:
@@ -291,6 +262,9 @@ def listen(host="10.197.14.59", port=9000):
 
 
 def read(pipe="/tmp/radarhub.fifo"):
+    myname = colorize("read()", "green")
+    logger.info(f"{myname}   {colored_variables(pipe)}")
+
     global keepReading
     keepReading = True
 
@@ -307,20 +281,14 @@ def read(pipe="/tmp/radarhub.fifo"):
             fid.write(string)
 
     initstring = ":/radarhub/rocks"
-    threading.Thread(
-        target=initpipe,
-        args=(
-            pipe,
-            initstring,
-        ),
-    ).start()
+    threading.Thread(target=initpipe, args=(pipe, initstring)).start()
 
     while keepReading:
         # Open the pipe
         try:
             fid = open(pipe)
-        except:
-            logger.warning("Pipe not available")
+        except Exception as e:
+            logger.warning(f"Pipe not available {e}")
             k = 5
             while k > 0:
                 # logger.debug('Try again in {} second{} ... '.format(k, 's' if k > 1 else ''), end='\r')
@@ -366,7 +334,7 @@ def read(pipe="/tmp/radarhub.fifo"):
                 k -= 1
 
 
-def fifo2db():
+def main():
     parser = argparse.ArgumentParser(
         prog=__prog__,
         formatter_class=argparse.RawTextHelpFormatter,
@@ -383,7 +351,7 @@ def fifo2db():
         epilog="Copyright (c) Boonleng Cheong",
     )
     parser.add_argument("source", default=None, type=str, nargs="?", help="source to retrieve files")
-    parser.add_argument("--port", default=9000, help="sets the port (default = 9000)")
+    parser.add_argument("--port", default=9000, type=int, help="sets the port (default = 9000)")
     parser.add_argument("-p", dest="pipe", action="store_true", help="reads from a pipe")
     parser.add_argument(
         "-t",
@@ -402,10 +370,8 @@ def fifo2db():
     parser.add_argument("-v", dest="verbose", default=0, action="count", help="increases verbosity")
     args = parser.parse_args()
 
-    if args.verbose:
-        if args.verbose > 1:
-            logger.setLevel(dailylog.logging.DEBUG)
-        logger.showLogOnScreen()
+    # Set logger level to INFO by default
+    logging.basicConfig(format=log_format, level=logging.DEBUG if args.verbose else logging.INFO)
 
     # Populate the default source if not specified
     if args.source is None:
@@ -421,7 +387,6 @@ def fifo2db():
         args.port = int(args.port)
 
     if args.test > 0:
-        logger.showLogOnScreen()
         if args.test == 1:
             logger.info("Test 1: Handling a corrupted archive")
             process("blob/FAKE-20220205-100000-E4.0.tar.xz")
@@ -439,22 +404,11 @@ def fifo2db():
             print("Unknown test")
             return
 
-    # Catch kill signals to exit gracefully
-    signal.signal(signal.SIGINT, signalHandler)
-    signal.signal(signal.SIGTERM, signalHandler)
-
-    logger.info("--- Started ---")
-    logger.info(f"Using timezone {tzinfo}")
-
-    catchup()
+    # catchup()
 
     if args.pipe:
-        logger.info(color_name_value("pipe", args.source))
         read(args.source)
     else:
-        show = color_name_value("host", args.source)
-        show += "   " + color_name_value("port", args.port)
-        logger.info(show)
         listen(args.source, port=args.port)
 
     logger.info("--- Finished ---")
@@ -463,4 +417,12 @@ def fifo2db():
 ###
 
 if __name__ == "__main__":
-    fifo2db()
+    # Catch kill signals to exit gracefully
+    signal.signal(signal.SIGINT, signalHandler)
+    signal.signal(signal.SIGTERM, signalHandler)
+
+    logger.info("--- Started ---")
+    logger.info(f"Using timezone {tzinfo}")
+
+    main()
+    # threading.Thread(target=main, daemon=True).start()

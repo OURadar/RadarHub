@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django_eventstream import send_event
 
-from common import colorize, color_name_value, get_client_ip
+from common import colorize, colored_variables, get_client_ip
 
 logger = logging.getLogger("frontend")
 
@@ -18,8 +18,8 @@ logger = logging.getLogger("frontend")
 
 
 def profile(request):
-    show = colorize("stats.profile()", "green")
-    show += "   " + color_name_value("request", request)
+    myname = colorize("stats.profile()", "green")
+    logger.debug(f"{myname}   {colored_variables(request)}")
     user = get_user(request)
     try:
         email = user.email
@@ -62,7 +62,9 @@ def check_sqlite_size(connection):
 
 def list_postgres_tables(connection):
     with connection.cursor() as cursor:
-        cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;")
+        cursor.execute(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"
+        )
         tables = [row[0] for row in cursor.fetchall()]
         print(tables)
         summary = {}
@@ -86,6 +88,7 @@ def list_sqlite_tables(connection):
 
 
 def size(request):
+    myname = colorize("stats.size()", "green")
     connections = ConnectionHandler()
     summary = {}
     for kind in ["data", "default"]:
@@ -99,11 +102,7 @@ def size(request):
             tables = list_postgres_tables(connection)
         else:
             size = "Unknown"
-        show = colorize("stats.size()", "green")
-        show += "   " + color_name_value("kind", kind)
-        show += "   " + color_name_value("engine", engine)
-        show += "   " + color_name_value("size", size)
-        print(show)
+        logger.debug(f"{myname}   {colored_variables(kind, engine, size)}")
         summary[kind] = {"total": size, **tables}
 
     payload = json.dumps(summary)
@@ -117,7 +116,6 @@ def size(request):
 def relay(request):
     myname = colorize("stats.relay()", "green")
     headers = dict(request.headers)
-    # print(f"{myname} {color_name_value('headers', headers)}")
     if "localhost" not in headers.get("Host"):
         return JsonResponse({"status": "error", "message": "Not allowed"}, status=403)
     try:
@@ -126,7 +124,7 @@ def relay(request):
         return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
     pathway = data.get("pathway", "unknown")
     items = data.get("items", [])
-    logger.info(f"{myname} {color_name_value('items', items)}   {color_name_value('pathway', pathway)}")
+    logger.info(f"{myname} {colored_variables(pathway, items)}")
     data.pop("pathway")
     send_event("sse", pathway, data)
     return JsonResponse({"status": "ok"})

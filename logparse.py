@@ -116,7 +116,9 @@ class LogParser:
         if x:
             x = x.groupdict()
             self.ip = x["ip"]
-            self.datetime = datetime.datetime.strptime(x["time"], r"%d/%b/%Y:%H:%M:%S").replace(tzinfo=datetime.timezone.utc)
+            self.datetime = datetime.datetime.strptime(x["time"], r"%d/%b/%Y:%H:%M:%S").replace(
+                tzinfo=datetime.timezone.utc
+            )
             self.compression = float(x["compression"]) if "compression" in x and "-" not in x["compression"] else 1
             self.user_agent = x["user_agent"] if "user_agent" in x else ""
             self.os_browser = get_user_agent_string(self.user_agent, width=20)
@@ -136,7 +138,11 @@ class LogParser:
                     self.visitors[self.ip]["network"] += self.bytes
                     self.visitors[self.ip]["payload"] += int(self.bytes * self.compression)
                 else:
-                    self.visitors[self.ip] = {"count": 1, "network": self.bytes, "payload": int(self.bytes * self.compression)}
+                    self.visitors[self.ip] = {
+                        "count": 1,
+                        "network": self.bytes,
+                        "payload": int(self.bytes * self.compression),
+                    }
         else:
             self.__blank__()
 
@@ -172,7 +178,11 @@ class LogParser:
 
     def _str_status_url(self):
         w = (self.width - 3) // 2
-        u = self.url[:w] + "..." + self.url[-w:] if self.url and len(self.url) > self.width else self.url if self.url else "-"
+        u = (
+            self.url[:w] + "..." + self.url[-w:]
+            if self.url and len(self.url) > self.width
+            else self.url if self.url else "-"
+        )
         s = str(self.status) if self.status > 0 else " - "
         return self._color_code_status() + s + " " + u + "\033[m"
 
@@ -307,14 +317,18 @@ if __name__ == "__main__":
         epilog="Copyright (c) 2022 Boonleng Cheong",
     )
     parser.add_argument("source", type=str, nargs="*", help="source(s) to process")
-    parser.add_argument("-a", dest="access", action="store_true", help="checks nginx access log")
-    parser.add_argument("-c", dest="count", action="store_true", help="counts number of unique visitors")
-    parser.add_argument("-f", dest="format", choices={"all", "url", "loc", "agent"}, default="loc", help="format (default = loc)")
-    parser.add_argument("-p", dest="parser", choices={"radarhub", "nginx"}, default="nginx", help="log parser (default = nginx)")
-    parser.add_argument("-q", dest="quiet", action="store_true", help="operates in quiet mode and shows summary only")
-    parser.add_argument("-s", dest="summary", action="store_true", help="shows summary")
-    parser.add_argument("-v", dest="verbose", default=1, action="count", help="increases verbosity (default = 1)")
-    parser.add_argument("-w", dest="width", type=int, help="uses specific width")
+    parser.add_argument("-a", "--access", action="store_true", help="checks nginx access log")
+    parser.add_argument("-c", "--count", action="store_true", help="counts number of unique visitors")
+    parser.add_argument(
+        "-f", "--format", choices={"all", "url", "loc", "agent"}, default="loc", help="format (default = loc)"
+    )
+    parser.add_argument(
+        "-p", "--parser", choices={"radarhub", "nginx"}, default="nginx", help="log parser (default = nginx)"
+    )
+    parser.add_argument("-q", "--quiet", action="store_true", help="operates in quiet mode and shows summary only")
+    parser.add_argument("-s", "--summary", action="store_true", help="shows summary")
+    parser.add_argument("-v", "--verbose", default=1, action="count", help="increases verbosity (default = 1)")
+    parser.add_argument("-w", "--width", type=int, help="uses specific width")
     parser.add_argument("-x", action="store_true", help="experimental")
     parser.add_argument("--all", action="store_true", help="same as -f all")
     parser.add_argument("--no-bot", dest="hide_bot", action="store_true", help="hides traffic created by bots")
