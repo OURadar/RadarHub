@@ -449,7 +449,14 @@ http {
 	gzip_buffers 16 8k;
 	gzip_http_version 1.1;
 	gzip_min_length 256;
-	gzip_types text/plain text/css text/javascript application/json application/javascript application/octet-stream;
+    gzip_types
+        application/json
+        application/javascript
+        application/octet-stream
+        text/plain
+        text/html
+        text/css
+        text/xml;
 
 	###
 }
@@ -499,6 +506,7 @@ autostart = true
 autorestart = true
 redirect_stderr = true
 stdout_logfile = /var/log/radarhub/frontend.log
+stopwaitsecs = 5
 priority = 1
 
 [program:radarhub.backhaul]
@@ -510,6 +518,7 @@ autostart = true
 autorestart = true
 redirect_stderr = true
 stdout_logfile = /var/log/radarhub/backhaul.log
+stopwaitsecs = 5
 priority = 2
 
 [program:radarhub.dgen]
@@ -519,6 +528,7 @@ autostart = true
 autorestart = true
 redirect_stderr = true
 stdout_logfile = /var/log/radarhub/dgen.log
+stopwaitsecs = 5
 priority = 3
 ```
 

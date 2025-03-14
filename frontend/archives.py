@@ -73,9 +73,11 @@ def is_dirty_request(request):
     return False
 
 
-def stat(request, mode=""):
+def stat(request, mode="alive"):
     if is_dirty_request(request):
         return forbidden_request
+    if mode == "alive":
+        return HttpResponse("Alive\n", content_type="text/plain")
     elif mode == "403":
         return forbidden_request
     raise Http404
@@ -308,7 +310,7 @@ def load_display_data_by_source_string(source_string):
         info = json.dumps({"comment": sweep["comment"]}, separators=(",", ":"))
     else:
         info = json.dumps(
-            {"wf": sweep["waveform"], "prf": round(float(sweep["prf"]), 1)},
+            {"wf": sweep["waveform"], "prf": round(sweep["prf"])},
             separators=(",", ":"),
         )
     # Final assembly of the payload

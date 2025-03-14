@@ -490,7 +490,6 @@ def build_day(source, bgor=False, verbose=0):
         day = day.first()
     else:
         day = Day(date=date, name=name)
-    logger.info(f"{mode} {day}")
 
     total = 0
     counts = [0] * 24
@@ -514,12 +513,13 @@ def build_day(source, bgor=False, verbose=0):
 
     if day is not None and bgor:
         day.summarize()
-        logger.info(f"{mode} {day.strfday(format='full')}")
+        logger.debug(f"{mode} {day.strfday(format='full')}")
+    else:
+        logger.debug(f"{mode} {day}")
 
     tic = tm.time() - tic
 
-    if verbose:
-        logger.debug(f"Elapsed time: {tic:.2f}s")
+    logger.debug(f"Elapsed time: {tic:.2f}s")
 
     return day, mode
 
