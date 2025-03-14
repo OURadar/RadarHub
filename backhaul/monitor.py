@@ -34,6 +34,7 @@ def relay_event(data):
 
 def monitor(delay=1.0):
     myname = colorize("monitor()", "green")
+    Sweep.setLogger(logger)
     Sweep.useDataShop(1)
     collection = {}
 
@@ -58,6 +59,7 @@ def monitor(delay=1.0):
         threads = []
 
         def _load_sweep(sweep):
+            logger.info(f"{myname} Loading {name}-{sweep.locator} ...")
             sweep.load()
 
         for sweep in sweeps[max(0, count - 16) : count]:

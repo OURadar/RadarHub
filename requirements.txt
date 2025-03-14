@@ -19,4 +19,4 @@ setproctitle
 tqdm
 Twisted[tls,http2]
 websocket_client
-radar-data==1.0.0.dev0
+radar-data

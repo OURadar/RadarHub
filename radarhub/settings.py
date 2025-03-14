@@ -20,7 +20,7 @@ from pathlib import Path
 
 from common import colored_variables
 
-VERBOSE = 2
+VERBOSE = 1
 SIMULATE = False
 
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
@@ -30,6 +30,8 @@ SIMULATE = False
 # SECURITY WARNING    SECURITY WARNING    SECURITY WARNING    SECURITY WARNING
 
 DEBUG = bool(os.getenv("DJANGO_DEBUG"))
+if DEBUG:
+    VERBOSE = 2
 
 # Production should not have SIMULATE
 if not DEBUG:
@@ -53,21 +55,13 @@ if not os.path.isdir(LOG_DIR):
 
 # User settings
 file = CONFIG_DIR / "settings.json"
-settings = json.load(open(file, "r")) if os.path.exists(file) else {}
+user_settings = json.load(open(file, "r")) if os.path.exists(file) else {}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-if "secret" in settings:
-    SECRET_KEY = settings["secret"]
-else:
-    file = CONFIG_DIR / "secret.key"
-    if os.path.exists(file):
-        with open(file) as fid:
-            SECRET_KEY = fid.read().strip()
-    else:
-        SECRET_KEY = "django-insecure-5zk9_rg=98@@h+e6*iw63l9h*v_bo9+_xum)"
+SECRET_KEY = user_settings.get("secret", "django-insecure-5zk9_rg=98@@h+e6*iw63l9h*v_bo9+_xum)")
 
 ALLOWED_HOSTS = ["*"]
 
@@ -146,13 +140,13 @@ DATABASES = {
     }
 }
 
-if "database" in settings:
+if "database" in user_settings:
     DATABASES["data"] = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "radarhub",
-        "HOST": settings["database"]["host"],
-        "USER": settings["database"]["user"],
-        "PASSWORD": settings["database"]["pass"],
+        "HOST": user_settings["database"]["host"],
+        "USER": user_settings["database"]["user"],
+        "PASSWORD": user_settings["database"]["pass"],
         "PORT": "5432",
     }
 else:
@@ -215,35 +209,32 @@ CHANNEL_LAYERS = {
 # Software version & branch
 #
 # Extract from frontend/package.json
-#
+
 file = FRONTEND_DIR / "package.json"
-if os.path.exists(file):
-    with open(file, "r") as fid:
-        s = json.load(fid)
-    VERSION = s["version"] if "version" in s else "0.0.0"
-else:
-    VERSION = "0.0.0"
+VERSION = json.load(open(file)).get("version", "0.0.0") if os.path.exists(file) else "0.0.0"
 BRANCH = os.popen("git rev-parse --abbrev-ref HEAD").read().strip()
 
 # Radar Collection
 #
 # RADARS = { '_PATHWAY_': {'name': _NAME_, 'prefix': '_PREFIX_', 'summary': '_SCAN_FOR_SUMMARY_' } }
-#
+
 RADARS = {
     "demo": {"name": "Demo", "prefix": "DX", "folder": "Demo", "summary": "E4.0"},
 }
-if "radars" in settings:
-    RADARS.update(settings["radars"])
+if "radars" in user_settings:
+    RADARS.update(user_settings["radars"])
 
 # FIFO source to list for new files for fifo2db.py
 #
 # FIFO = { 'tcp': '_IP_ADDRESS_:_PORT_' } or { 'pipe': '/tmp/radarhub.fifo' }
-FIFO = settings.get("fifo", {"pipe", "/tmp/radarhub.fifo"})
+
+FIFO = user_settings.get("fifo", {"pipe", "/tmp/radarhub.fifo"})
 
 # DATASHOP source
 #
 # DATASHOP = "localhost" or another IP address, e.g., "10.197.14.52"
-DATASHOP = settings.get("datashop", "localhost")
+
+DATASHOP = user_settings.get("datashop", "localhost")
 
 # Prevent HttpResponse 301 for permanent forwards
 # APPEND_SLASH = False
@@ -294,8 +285,8 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
 
 SOCIALACCOUNT_QUERY_EMAIL = True
 
-if "socialaccounts" in settings:
-    SOCIALACCOUNT_PROVIDERS = settings["socialaccounts"]
+if "socialaccounts" in user_settings:
+    SOCIALACCOUNT_PROVIDERS = user_settings["socialaccounts"]
 else:
     SOCIALACCOUNT_PROVIDERS = {"google": {"SCOPE": ["profile", "email"], "AUTH_PARAMS": {"access_type": "online"}}}
 
@@ -317,7 +308,7 @@ WEBPACK_LOADER = {
     },
 }
 
-# CSS / JS Hash
+# CSS / JS / JSX files to SHA-256 Hash
 
 
 def hashFiles(files):
@@ -344,5 +335,5 @@ ENTRIES = getWebpackEntries(FRONTEND_DIR / "webpack.config.js")
 
 if VERBOSE > 1 and DEBUG:
     print(colored_variables(BASE_DIR, CONFIG_DIR, FRONTEND_DIR, LOG_DIR, sep="\n"))
-    print(colored_variables(settings["database"]["user"], settings["database"]["pass"], sep="\n"))
+    print(colored_variables(user_settings["database"]["user"], user_settings["database"]["pass"], sep="\n"))
     print(colored_variables(CSS_HASH, CODE_HASH, ENTRIES, sep="\n"))

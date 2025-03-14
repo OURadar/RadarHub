@@ -92,7 +92,7 @@ class Reporter:
         self.verbose = verbose
         self.wantActive = True
         self.connected = False
-        self.go = False
+        self.go = True
         self.rate = 1.0
         self.ws = None
 
@@ -133,13 +133,12 @@ class Reporter:
             w[-a:] = w[:a][::-1]
             return w
 
-        w = tukeywin(N)
-        w *= a
+        w = a * tukeywin(N)
 
-        mask = np.random.randint(0, 32768, size=3 * N, dtype=np.int16) % int(1.0 / 0.4) == 0
-        noise = np.random.randint(-n, n, size=3 * N, dtype=np.int16)
-        noise[mask] = np.random.randint(1, 32768, size=np.sum(mask), dtype=np.int16)
-        noise[mask] = np.random.randint(0, 32768, size=np.sum(mask), dtype=np.int16) % noise[mask] - noise[mask] / 2
+        mask = np.random.randint(0, a, size=5 * N, dtype=np.int16) % int(1.0 / 0.4) == 0
+        noise = np.random.randint(-n, n, size=5 * N, dtype=np.int16)
+        noise[mask] = np.random.randint(1, n, size=np.sum(mask), dtype=np.int16)
+        noise[mask] = np.random.randint(0, n, size=np.sum(mask), dtype=np.int16) % noise[mask] - noise[mask] / 2
 
         while not self.connected and self.wantActive:
             time.sleep(0.1)
@@ -152,13 +151,18 @@ class Reporter:
             # Ascope
             omega = 0.1 * (t + self.rate * 777.0 * t**2 - j)
             if self.go:
-                pulse = np.concatenate(
-                    (np.array(w * np.cos(omega), dtype=np.int16), np.array(w * np.sin(omega), dtype=np.int16))
-                )
+                pulse = np.hstack(
+                    (
+                        w * np.cos(omega),
+                        w * np.sin(omega),
+                        w * np.cos(omega),
+                        w * np.sin(omega),
+                    )
+                ).astype(np.int16)
             else:
-                pulse = np.zeros((2 * N,), dtype=np.int16)
+                pulse = np.zeros((4 * N,), dtype=np.int16)
             origin = np.random.randint(0, N)
-            pulse += noise[origin : origin + 2 * N]
+            pulse += noise[origin : origin + 4 * N]
             payload = RadarHubType.Scope.to_bytes(1, "little") + bytearray(pulse)
             self.ws.send(payload)
 
@@ -167,6 +171,7 @@ class Reporter:
                 k = int(j / ht) % hdepth
                 payload = RadarHubType.Health.to_bytes(1, "little") + bytes(healthStrings[k], "utf-8")
                 self.ws.send(payload)
+
             time.sleep(s)
             j += 1
 

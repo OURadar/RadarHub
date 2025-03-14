@@ -576,7 +576,8 @@ class Backhaul(AsyncConsumer):
         myname += " " + pretty_object_name("", pathway, channel[-8:])
         # A radarDisconnect can still come through during rejectRadar, so check again
         if pathway not in pathwayRegistry or channel != pathwayRegistry[pathway]["channel"]:
-            existing = pretty_object_name("", pathway, pathwayRegistry.get(pathway, {}).get("channel", "-")[-8:])
+            channel = pathwayRegistry.get(pathway, {}).get("channel", None)
+            existing = pretty_object_name("", pathway, channel[-8:] if channel else "-")
             logger.debug(f"{myname} expected {existing}, discarding ...")
             return
         # Remove the channel from the pathway, channel = None for updatePathwayRegistry()

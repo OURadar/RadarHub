@@ -187,9 +187,7 @@ def process(source):
         if item["step"] == step:
             item["step"] = 0 if step == 2 else item["step"] + 1
             bgor = True
-    day, mode = build_day(f"{name}-{time.strftime(r'%Y%m%d')}", bgor=bgor)
-    u = "+" if bgor else ""
-    logger.info(f"{mode} {day.__repr__()}{u}")
+    build_day(f"{name}-{time.strftime(r'%Y%m%d')}", bgor=bgor)
 
 
 def listen(host="10.197.14.59", port: int = 9000):

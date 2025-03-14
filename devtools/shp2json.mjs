@@ -1,5 +1,5 @@
 //
-//  shp2json.js
+//  shp2json.mjs
 //  RadarHub
 //
 //  Created by Boonleng Cheong on 7/22/2024.

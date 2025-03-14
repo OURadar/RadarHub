@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# util.py
+# rhutil.py
 # A collection of utility functions for RadarHub
 #
 # Created by Boonleng Cheong

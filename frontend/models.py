@@ -499,14 +499,11 @@ class Sweep(models.Model):
                 return None
         else:
             self.data = datashop.get(self.path, tarinfo=self.tarinfo)
-        if verbose > 1:
-            print(f"{myname} {self.__str__()}")
-            print("tarinfo =")
-            pp.pprint(self.tarinfo)
-            print("data =")
-            pp.pprint(self.data)
         if suppress:
             return
+        if "products" not in self.data:
+            logger.info(f"{myname} {self} has no products (check storage)")
+            return None
         products = self.data["products"]
         output = {k: v for k, v in self.data.items() if k != "products"}
         if finite:
@@ -650,3 +647,8 @@ class Sweep(models.Model):
                 host = settings.DATASHOP
                 port = 50000
             datashop = radar.product.Client(host=host, port=port, logger=logger, count=n, signal=False)
+
+    @staticmethod
+    def setLogger(newLogger):
+        global logger
+        logger = newLogger
